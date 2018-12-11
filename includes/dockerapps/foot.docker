@@ -1,0 +1,5 @@
+
+networks:
+  proxy:
+    external:
+      name: traefik_proxy

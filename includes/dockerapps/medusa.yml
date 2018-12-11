@@ -1,0 +1,27 @@
+
+#STARTmedusa#
+  medusa-%USER%:
+    image: xataz/medusa
+    restart: unless-stopped
+    container_name: medusa-%USER%
+    labels:
+      - traefik.enable=true
+      - traefik.backend=medusa-%USER%
+      - traefik.frontend.rule=%TRAEFIKURL%
+      - traefik.backend.port=8080
+      - traefik.docker.network=traefik_proxy
+      - traefik.frontend.auth.basic=%VAR%
+    volumes:
+      - /home/%USER%/medusa/Medias/series:/tv:rw
+      - /home/%USER%/torrents:/downloads
+      - /home/%USER%/medusa/config:/config
+    environment:
+      - /etc/localtime:/etc/localtime:ro
+      - TZ=Paris/Europe
+      - UID=%UID%
+      - GID=%GID%
+      - MEDUSA_WEBROOT=%URI%
+      - MEDUSA_TVDIRS=/tv
+    networks:
+      - proxy
+#ENDmedusa#

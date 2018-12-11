@@ -1,0 +1,23 @@
+
+#STARTradarr#
+  radarr-%USER%:
+    image: linuxserver/radarr
+    container_name: radarr-%USER%
+    restart: unless-stopped
+    labels:
+      - traefik.enable=true
+      - traefik.frontend.rule=%TRAEFIKURL%
+      - traefik.frontend.auth.basic=%VAR%
+      - traefik.port=7878
+      - traefik.docker.network=traefik_proxy
+    environment:
+      - PUID=%UID%
+      - PGID=%GID%
+      - WEBROOT=%URI%
+    volumes:
+      - /home/%USER%/radarr/config:/config
+      - /home/%USER%/rtorrent/torrents:/data/torrents
+      - /home/%USER%/radarr/TV:/tv
+    networks:
+      - proxy
+#ENDradarr#
