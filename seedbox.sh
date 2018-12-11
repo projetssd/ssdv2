@@ -64,9 +64,4 @@ esac
 
 else
 	script_option
-fi	
-
-
-
-
-
+fi
