@@ -35,6 +35,8 @@ case $PORT_CHOICE in
 			define_parameters
 			## install traefik
 			install_traefik
+			pause
+			script_option
 		else
 		script_option
 		fi
