@@ -58,97 +58,50 @@ function check_dir() {
 	fi
 }
 
-function first_install() {
-	if [[ ! -d "/etc/seedboxcompose/" ]]; then
-	        clear
-		echo -e "${BLUE}##########################################${NC}"
-		echo -e "${BLUE}###    INSTALLATION SEEDBOX-COMPOSE    ###${NC}"
-		echo -e "${BLUE}##########################################${NC}"
-		conf_dir
-		## Install base packages
-		install_base_packages
-		## Checking system version
-		checking_system
-		## Check for docker on system
-		install_docker
-		## Installing ZSH
-		install_zsh
-		## Defines parameters for dockers : password, domains and replace it in docker-compose file
-		define_parameters
-		## Install Traefik
-		install_traefik
-	else
-		clear
-		echo -e " ${RED}--> Seedbox-Compose already installed !${NC}"
-	        script_option
-	fi
-}
-
 function script_option() {
 	if [[ -d "$CONFDIR" ]]; then
-		ACTION=$(whiptail --title "Seedbox-Compose" --menu "Welcome to Seedbox-Compose Script. Please choose an action below :" 18 80 10 \
-			"1" "Seedbox-Compose already installed !" \
-			"2" "Manage Users" \
-			"3" "Manage Apps" \
-			"4" "Manage Backups" \
-			"5" "Manage Docker" \
-			"6" "Install FTP Server" \
-			"7" "Disable htaccess protection" \
-			"8" "Uninstall Seedbox-Compose"  3>&1 1>&2 2>&3)
+	clear
+	logo
+	echo ""
+	echo -e "${CCYAN}INSTALLATION${CEND}"
+	echo -e "${CGREEN}${CEND}"
+	echo -e "${CGREEN}   1) Seedbox déjà installée ${CEND}"
+	echo -e "${CGREEN}   2) Ajout/Supression d'utilisateurs${CEND}"
+	echo -e "${CGREEN}   3) Ajout/Supression d'Applis${CEND}"
+
+	echo -e ""
+	read -p "Votre choix [1-3]: " -e -i 1 PORT_CHOICE
+
+	case $PORT_CHOICE in
+		1) ## Installation de la seedbox
+		clear
 		echo ""
-		case $ACTION in
-		"1")
-		  clear
-		  echo ""
-		  echo -e "${YELLOW}### Seedbox-Compose already installed !###${NC}"
-		  if (whiptail --title "Seedbox already installed" --yesno "You're in trouble with Seedbox-compose ? Uninstall and try again ?" 7 90) then
-				uninstall_seedbox
-			else
-				script_option
-			fi
-		  ;;
-		"2")
-			SCRIPT="MANAGEUSERS"
-			;;
-		"3")
-			SCRIPT="MANAGEAPPS"
-			;;
-		"4")
-			ACTIONBACKUP=$(whiptail --title "Manage Backup" --menu "Choose an action for backups !" 10 75 2 \
-				"1" "Create a backup now of my Home !" \
-				"2" "Schedule a backup for my data !" 3>&1 1>&2 2>&3)
-			echo ""
-			case $ACTIONBACKUP in
-			"1")
-			  backup_docker_conf
-			  ;;
-			"2")
-			  schedule_backup_seedbox
-			  ;;
-			 esac
-			;;
-		"5")
-			# manage_docker
-			;;
-		"6")
-			SCRIPT="INSTALLFTPSERVER"
-			;;
-		"7")
-			SCRIPT="DELETEHTACCESS"
-			;;
-		"8")
-			SCRIPT="UNINSTALL"
-			;;
-		esac
-	else
-		ACTION=$(whiptail --title "Seedbox-Compose" --menu "Welcome to Seedbox-Compose installation !" 10 75 2 \
-			"1" "Install Seedbox-Compose" 3>&1 1>&2 2>&3)
-		echo ""
-		case $ACTION in
-		"1")
-			SCRIPT="INSTALL"
-			;;
-		esac
+		echo -e "${YELLOW}### Seedbox-Compose déjà installée !###${NC}"
+		if (whiptail --title "Seedbox-Compose déjà installée" --yesno "Vous avez des erreurs dans votre Seedbox ? Desinstall et Reinstall ?" 7 90) then
+			uninstall_seedbox
+		else
+			script_option
+		fi
+		;;
+
+		2)
+		clear
+		logo
+		## Ajout d'Utilisateurs
+		## Defines parameters for dockers : password, domains and replace it in docker-compose file
+		clear
+			manage_users
+ 		;;
+
+		3)
+		clear
+		logo
+		echo -e "${CGREEN}   2) Ajout/Supression d'Applis${CEND}"
+		echo""
+		clear
+			manage_apps
+		;;
+	esac
 	fi
 }
 
@@ -162,7 +115,7 @@ function install_base_packages() {
 	echo ""
 	echo -e "${BLUE}### INSTALLATION DES PACKAGES ###${NC}"
 	#sed -ri 's/deb\ cdrom/#deb\ cdrom/g' /etc/apt/sources.list
-	whiptail --title "Base Package" --msgbox "Seedbox-Compose va maintenant installer les packages et vérifier la mise à jour du système" 10 60
+	whiptail --title "Base Package" --msgbox "Seedbox-Compose va maintenant installer les Pré-Requis et vérifier la mise à jour du système" 10 60
 	echo -e " ${BWHITE}* Installation apache2-utils, unzip, git, curl ...${NC}"
 	{
 	NUMPACKAGES=$(cat $PACKAGESFILE | wc -l)
@@ -707,9 +660,10 @@ function manage_users() {
 			install_services
 			docker_compose
 			resume_seedbox
-			#backup_docker_conf
-			#schedule_backup_seedbox
+			pause
+			script_option
 			;;
+
 		"2" )
 			echo -e "${GREEN}###   SUPRESSION SEEDBOX USER   ###${NC}"
 			echo -e "${GREEN}-----------------------------------${NC}"
@@ -744,6 +698,8 @@ function manage_users() {
 			echo""
 			echo -e "${BLUE}### $SEEDUSER a été supprimé ###${NC}"
 			echo ""
+			pause
+			script_option
 			;;
 	esac
 }
@@ -785,7 +741,8 @@ function manage_apps() {
 				add_install_services
 				docker_compose
 				resume_seedbox
-				#backup_docker_conf
+				pause
+				script_option
 			;;
 		"2" ) ## Suppression APP
 			echo -e " ${BWHITE}* Edit my app${NC}"
@@ -812,6 +769,8 @@ function manage_apps() {
 			echo""
 			echo -e "${BLUE}### $APPSELECTED a été supprimé ###${NC}"
 			echo ""
+			pause
+			script_option
 			;;
 			
 	esac
@@ -1097,8 +1056,8 @@ function uninstall_seedbox() {
 			"2" "User uninstall (delete a suer)" 3>&1 1>&2 2>&3)
 		case $UNINSTALL in
 		"1")
-		  	if (whiptail --title "Uninstall Seedbox" --yesno "Do you really want to uninstall Seedbox ?" 7 75) then
-		  		echo -e " ${BWHITE}* All files, dockers and configuration will be uninstall${NC}"
+		  	if (whiptail --title "Uninstall Seedbox" --yesno "Voulez vous vraiment supprimer la Seedbox ?" 7 75) then
+		  		echo -e " ${BWHITE}* Tous les fichiers de configurations data et docker seront supprimés${NC}"
 				if (whiptail --title "Dockers configuration" --yesno "Do you want to backup your Dockers configuration ?" 7 75) then
 					DOBACKUP="yes"
 				else
@@ -1112,28 +1071,17 @@ function uninstall_seedbox() {
 							checking_errors $?
 						fi
 						USERHOMEDIR="/home/$seeduser"
-						echo -e " ${BWHITE}* Deleting user...${NC}"
+						echo -e " ${BWHITE}* Suppression user...${NC}"
 						userdel -rf $seeduser > /dev/null 2>&1
 						checking_errors $?
-						echo -e " ${BWHITE}* Deleting data in your Home directory...${NC}"
+						echo -e " ${BWHITE}* Suppression home...${NC}"
 						rm -Rf $USERHOMEDIR
 						checking_errors $?
-						echo -e " ${BWHITE}* Deleting nginx configuration${NC}"
-						service nginx stop > /dev/null 2>&1
-						rm -Rf /etc/nginx/conf.d/*
-						checking_errors $?
-						echo -e " ${BWHITE}* Deleting group...${NC}"
+						echo -e " ${BWHITE}* Suppression group...${NC}"
 						groupdel $SEEDGROUP > /dev/null 2>&1
 						checking_errors $?
-						echo -e " ${BWHITE}* Stopping Dockers...${NC}"
-						docker stop $(docker ps) > /dev/null 2>&1
-						checking_errors $?
-						echo -e " ${BWHITE}* Removing Dockers...${NC}"
-						docker rm $(docker ps -a) > /dev/null 2>&1
-						checking_errors $?
-						echo -e " ${BWHITE}* Removing Cronjob...${NC}"
-						USERLINE=$(grep -n "$seeduser" $CRONTABFILE | cut -d: -f1)
-						sed -i ''$USERLINE'd' $CRONTABFILE
+						echo -e " ${BWHITE}* Suppression Containers...${NC}"
+						docker rm -f $(docker ps -aq) > /dev/null 2>&1
 						checking_errors $?
 					done
 					echo -e " ${BWHITE}* Removing Seedbox-compose directory...${NC}"
@@ -1164,7 +1112,7 @@ function uninstall_seedbox() {
 
 function pause() {
 	echo ""
-	echo -e "${YELLOW}###  -->PRESS ENTER TO CONTINUE<--  ###${NC}"
+	echo -e "${YELLOW}###  -->APPUYER SUR ENTREE POUR CONTINUER<--  ###${NC}"
 	read
 	echo ""
 }
