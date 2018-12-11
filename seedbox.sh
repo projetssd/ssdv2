@@ -47,6 +47,7 @@ echo -e "${CCYAN}INSTALLATION${CEND}"
 		logo
 		## Ajout d'Utilisateurs
 		## Defines parameters for dockers : password, domains and replace it in docker-compose file
+		clear
 		manage_users
  		;;
 
@@ -55,6 +56,7 @@ echo -e "${CCYAN}INSTALLATION${CEND}"
 		logo
 		echo -e "${CGREEN}   2) Ajout/Supression d'Applis${CEND}"
 		echo""
+		clear
 		manage_apps
 		;;
 

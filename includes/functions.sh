@@ -1,3 +1,5 @@
+#!/bin/bash
+
 function logo () {
 
 ## Black        0;30     Dark Gray     1;30
@@ -32,9 +34,6 @@ printf "      ${color3}\`./${color1} /    ${color3}.-.${color1}\`${nocolor}    $
 printf "         ${color1}\`-..-${color3}(   )${nocolor}    Uptime: `/usr/bin/uptime -p`\n"
 printf "               ${color3}\`-\`${nocolor}\n"
 }
-
-#!/bin/bash
-
 
 function check_domain() {
 	if (whiptail --title "Domain access" --yesno "Etes vous sûr que vos dns sont bien configurés ? On peut les tester maintenant ;)" 10 90) then
@@ -708,8 +707,8 @@ function manage_users() {
 			install_services
 			docker_compose
 			resume_seedbox
-			backup_docker_conf
-			schedule_backup_seedbox
+			#backup_docker_conf
+			#schedule_backup_seedbox
 			;;
 		"2" )
 			echo -e "${GREEN}###   SUPRESSION SEEDBOX USER   ###${NC}"
@@ -786,7 +785,7 @@ function manage_apps() {
 				add_install_services
 				docker_compose
 				resume_seedbox
-				backup_docker_conf
+				#backup_docker_conf
 			;;
 		"2" ) ## Suppression APP
 			echo -e " ${BWHITE}* Edit my app${NC}"
