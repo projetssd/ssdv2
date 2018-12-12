@@ -2,15 +2,6 @@
 
 function logo () {
 
-## Black        0;30     Dark Gray     1;30
-## Red          0;31     Light Red     1;31
-## Green        0;32     Light Green   1;32
-## Brown/Orange 0;33     Yellow        1;33
-## Blue         0;34     Light Blue    1;34
-## Purple       0;35     Light Purple  1;35
-## Cyan         0;36     Light Cyan    1;36
-## Light Gray   0;37     White         1;37
-
 color1='\033[1;31m'    # light red
 color2='\033[1;35m'    # light purple
 color3='\033[0;33m'    # light yellow
@@ -36,12 +27,10 @@ printf "               ${color3}\`-\`${nocolor}\n"
 }
 
 function check_domain() {
-	if (whiptail --title "Domain access" --yesno "Etes vous sûr que vos dns sont bien configurés ? On peut les tester maintenant ;)" 10 90) then
 		TESTDOMAIN=$1
 		echo -e " ${BWHITE}* Checking domain - ping $TESTDOMAIN...${NC}"
 		ping -c 1 $TESTDOMAIN | grep "$IPADDRESS" > /dev/null
 		checking_errors $?
-	fi
 }
 
 function check_dir() {
@@ -88,7 +77,7 @@ function script_option() {
 		3)
 		clear
 		logo
-		echo -e "${CGREEN}   2) Ajout/Supression d'Applis${CEND}"
+		## Ajout d'Applications
 		echo""
 		clear
 			manage_apps
@@ -106,7 +95,6 @@ function conf_dir() {
 function install_base_packages() {
 	echo ""
 	echo -e "${BLUE}### INSTALLATION DES PACKAGES ###${NC}"
-	#sed -ri 's/deb\ cdrom/#deb\ cdrom/g' /etc/apt/sources.list
 	whiptail --title "Base Package" --msgbox "Seedbox-Compose va maintenant installer les Pré-Requis et vérifier la mise à jour du système" 10 60
 	echo -e " ${BWHITE}* Installation apache2-utils, unzip, git, curl ...${NC}"
 	{
@@ -125,18 +113,20 @@ function install_base_packages() {
 function checking_system() {
 	echo -e "${BLUE}### VERIFICATION SYSTEME ###${NC}"
 	echo -e " ${BWHITE}* Vérification du système OS${NC}"
-	TMPSOURCESDIR="/opt/seedbox-compose/includes/sources.list"
 	TMPSYSTEM=$(gawk -F= '/^NAME/{print $2}' /etc/os-release)
 	TMPCODENAME=$(lsb_release -sc)
 	TMPRELEASE=$(cat /etc/debian_version)
 	if [[ $(echo $TMPSYSTEM | sed 's/\"//g') == "Debian GNU/Linux" ]]; then
 		SYSTEMOS="Debian"
-		if [[ $(echo $TMPRELEASE | grep "8") != "" ]]; then
-			SYSTEMRELEASE="8"
-			SYSTEMCODENAME="jessie"
-		elif [[ $(echo $TMPRELEASE | grep "7") != "" ]]; then
+		if [[ $(echo $TMPRELEASE | grep "7") != "" ]]; then
 			SYSTEMRELEASE="7"
 			SYSTEMCODENAME="wheezy"
+		elif [[ $(echo $TMPRELEASE | grep "8") != "" ]]; then
+			SYSTEMRELEASE="8"
+			SYSTEMCODENAME="jessie"
+		elif [[ $(echo $TMPRELEASE | grep "9") != "" ]]; then
+			SYSTEMRELEASE="9"
+			SYSTEMCODENAME="stretch"
 		fi
 	elif [[ $(echo $TMPSYSTEM | sed 's/\"//g') == "Ubuntu" ]]; then
 		SYSTEMOS="Ubuntu"
@@ -154,17 +144,6 @@ function checking_system() {
 	echo -e "	${YELLOW}--> System OS : $SYSTEMOS${NC}"
 	echo -e "	${YELLOW}--> Release : $SYSTEMRELEASE${NC}"
 	echo -e "	${YELLOW}--> Codename : $SYSTEMCODENAME${NC}"
-	case $SYSTEMCODENAME in
-		"jessie" )
-			echo -e " ${BWHITE}* Creating sources.list${NC}"
-			rm /etc/apt/sources.list -R
-			cp "$TMPSOURCESDIR/debian.jessie" "$SOURCESLIST"
-			checking_errors $?
-			;;
-		"wheezy" )
-			echo -e "	${YELLOW}--> Please upgrade to Debian Jessie !${NC}"
-			;;
-	esac
 	echo -e " ${BWHITE}* Updating & upgrading system${NC}"
 	apt-get update > /dev/null 2>&1
 	apt-get upgrade -y > /dev/null 2>&1
@@ -278,7 +257,7 @@ function define_parameters() {
 		"Merci de taper votre nom de Domaine :" 7 50 3>&1 1>&2 2>&3)
 	else
 		DOMAIN="localhost"
-fi
+	fi
 	echo ""
 }
 
@@ -295,7 +274,7 @@ function create_user() {
         		"Création d'un groupe pour la Seedbox" 7 50 3>&1 1>&2 2>&3)
         	fi
 	fi
-    egrep "^$SEEDGROUP" /etc/group >/dev/null
+    	egrep "^$SEEDGROUP" /etc/group >/dev/null
 	if [[ "$?" != "0" ]]; then
 		echo -e " ${BWHITE}* Création du groupe $SEEDGROUP"
 	    groupadd $SEEDGROUP
@@ -519,7 +498,6 @@ function add_install_services() {
 		FQDNTMP=""
 		
 	done
-	
 	echo $PORT >> $FILEPORTPATH
 	echo ""
 }
