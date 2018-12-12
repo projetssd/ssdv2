@@ -9,7 +9,7 @@ echo ""
 if [[ ! -d "/etc/seedboxcompose/" ]]; then
 echo -e "${CCYAN}INSTALLATION${CEND}"
 echo -e "${CGREEN}${CEND}"
-echo -e "${CGREEN}   1) Installation/réinstallation seedbox ${CEND}"
+echo -e "${CGREEN}   1) Installation Seedbox ${CEND}"
 echo -e "${CGREEN}   2) Ajout/Supression d'utilisateurs${CEND}"
 echo -e "${CGREEN}   3) Ajout/Supression d'Applis${CEND}"
 echo -e ""
@@ -23,18 +23,16 @@ case $PORT_CHOICE in
 		if [[ ! -d "/etc/seedboxcompose/" ]]; then
 	    		clear
 			conf_dir
-			## Install base packages
 			install_base_packages
-			## Checking system version
 			checking_system
-			## Check for docker on system
 			install_docker
-			## Installing ZSH
 			install_zsh
-			## Defines parameters for dockers : password, domains and replace it in docker-compose file
 			define_parameters
-			## install traefik
 			install_traefik
+			choose_services
+			install_services
+			docker_compose
+			resume_seedbox
 			pause
 			script_option
 		else
@@ -45,18 +43,10 @@ case $PORT_CHOICE in
 
 	2)
 	clear
-	logo
-	## Ajout d'Utilisateurs
-	## Defines parameters for dockers : password, domains and replace it in docker-compose file
-	clear
 	manage_users
  	;;
 
 	3)
-	clear
-	logo
-	echo -e "${CGREEN}   2) Ajout/Supression d'Applis${CEND}"
-	echo""
 	clear
 	manage_apps
 	;;

@@ -41,15 +41,7 @@ function check_domain() {
 		echo -e " ${BWHITE}* Checking domain - ping $TESTDOMAIN...${NC}"
 		ping -c 1 $TESTDOMAIN | grep "$IPADDRESS" > /dev/null
 		checking_errors $?
-		# for line in $(cat $SERVICESAVAILABLE)
-		# do
-		# 	DOCKERAPPLICATION=$(echo $line | cut -d\- -f1)
-		# 	echo -e " ${BWHITE}* Ping $DOCKERAPPLICATION.$TESTDOMAIN...${NC}"
-		# 	ping -c 1 ${DOCKERAPPLICATION,,}.$TESTDOMAIN | grep "$IPADDRESS" > /dev/null 2>&1
-		# 	checking_errors $?
-		# done
 	fi
-	# pause
 }
 
 function check_dir() {
@@ -77,7 +69,7 @@ function script_option() {
 		clear
 		echo ""
 		echo -e "${YELLOW}### Seedbox-Compose déjà installée !###${NC}"
-		if (whiptail --title "Seedbox-Compose déjà installée" --yesno "Vous avez des erreurs dans votre Seedbox ? Desinstall et Reinstall ?" 7 90) then
+		if (whiptail --title "Seedbox-Compose déjà installée" --yesno "Désinstaller complètement la Seedbox ?" 7 90) then
 			uninstall_seedbox
 		else
 			script_option
@@ -719,14 +711,14 @@ function manage_apps() {
 	SEEDUSER=$(whiptail --title "App Manager" --menu \
 	                "Merci de sélectionner l'Utilisateur" 12 50 3 \
 	                "${TABUSERS[@]}"  3>&1 1>&2 2>&3)
-	[[ "$?" = 1 ]] && break;
+	
 	## INFORMATIONS UTILISATEUR
 	USERDOCKERCOMPOSEFILE="/home/$SEEDUSER/docker-compose.yml"
 	USERRESUMEFILE="/home/$SEEDUSER/resume"
 	echo ""
-	echo -e "${GREEN}### Gestion des Applis pour : $SEEDUSER ###${NC}"
-	echo -e " ${BWHITE}* Docker-Compose file : $USERDOCKERCOMPOSEFILE${NC}"
-	echo -e " ${BWHITE}* Resume file : $USERRESUMEFILE${NC}"
+	echo -e "${GREEN}### Gestion des Applis pour: $SEEDUSER ###${NC}"
+	echo -e " ${BWHITE}* Docker-Compose file: $USERDOCKERCOMPOSEFILE${NC}"
+	echo -e " ${BWHITE}* Resume file: $USERRESUMEFILE${NC}"
 	echo ""
 	## CHOOSE AN ACTION FOR APPS
 	ACTIONONAPP=$(whiptail --title "App Manager" --menu \
@@ -757,8 +749,6 @@ function manage_apps() {
 			              "Sélectionner l'Appli à supprimer" 19 45 11 \
 			              "${TABSERVICES[@]}"  3>&1 1>&2 2>&3)
 
-			# rm -rf /home/$SEEDUSER/$SERVICE /dev/null 2>&1
-			#[[ "$?" = 1 ]] && break;
 			echo -e " ${GREEN}   * $APPSELECTED${NC}"
 			cd /home/$SEEDUSER
 			docker-compose rm -fs "$APPSELECTED"-"$SEEDUSER"
@@ -774,127 +764,6 @@ function manage_apps() {
 			;;
 			
 	esac
-}
-
-function install_ftp_server() {
-	echo -e "${BLUE}##########################################${NC}"
-	echo -e "${BLUE}###          INSTALL FTP SERVER        ###${NC}"
-	echo -e "${BLUE}##########################################${NC}"
-	PROFTPDFOLDER="/etc/proftpd/"
-	PROFTPDCONFFILE="proftpd.conf"
-	PROFTPDTLSCONFFILE="tls.conf"
-	BASEPROFTPDFILE="/opt/seedbox-compose/includes/config/proftpd.conf"
-	BASEPROFTPDTLSFILELETSENCRYPT="/opt/seedbox-compose/includes/config/proftpd.tls.letsencrypt.conf"
-	BASEPROFTPDTLSFILEOPENSSL="/opt/seedbox-compose/includes/config/proftpd.tls.openssl.conf"
-	PROFTPDBAKCONF="/etc/proftpd/proftpd.conf.bak"
-	PROFTPDTLSBAKCONF="/etc/proftpd/tls.conf.bak"
-	if [[ ! -d "$PROFTPDFOLDER" ]]; then
-		if (whiptail --title "Use FTP Server" --yesno "Do you want to install FTP server ?" 7 50) then
-			FTPSERVERNAME=$(whiptail --title "FTPServer Name" --inputbox \
-			"Please enter a name for your FTP Server :" 7 50 "SeedBox" 3>&1 1>&2 2>&3)
-			echo -e " ${BWHITE}--> Installing proftpd...${NC}"
-			apt-get -qq install proftpd -y
-			checking_errors $?
-			if (whiptail --title "FTP Over SSL" --yesno "Do you want to use FTP with SSL ? (FTPs)" 7 60) then
-				if (whiptail --title "FTPs Let's Encrypt" --yesno "Do you want to generate a Let's Encrypt certificate for FTPs ?" 7 70) then
-					LEEMAIL=$(whiptail --title "Email address" --inputbox \
-					"Please enter your email address :" 7 50 "$CONTACTEMAIL" 3>&1 1>&2 2>&3)
-					LEDOMAIN=$(whiptail --title "LE Domain" --inputbox \
-					"Please enter your domain for FTP access :" 7 50 "ftp.$DOMAIN" 3>&1 1>&2 2>&3)
-					echo -e " ${BWHITE}--> Stoping nginx...${NC}"
-					service nginx stop
-					checking_errors $?
-					echo -e " ${BWHITE}--> Generating certificate...${NC}"
-					generate_ssl_cert $LEEMAIL $LEDOMAIN
-					checking_errors $?
-					USEFTPSLE="yes"
-				else
-					FTPSEMAIL=$(whiptail --title "OpenSSL Generation" --inputbox \
-					"Email address" 7 50 "$CONTACTEMAIL" 3>&1 1>&2 2>&3)
-					FTPSDOMAIN=$(whiptail --title "OpenSSL Generation" --inputbox \
-					"Domain or FQDN" 7 50 "ftp.$DOMAIN" 3>&1 1>&2 2>&3)
-					FTPSCC=$(whiptail --title "OpenSSL Generation" --inputbox \
-					"Coutry code (FR, GB ...)" 7 50 "FR" 3>&1 1>&2 2>&3)
-					FTPSSTATE=$(whiptail --title "OpenSSL Generation" --inputbox \
-					"State (Ile de France, Bretagne ...)" 7 50 "Nottingham" 3>&1 1>&2 2>&3)
-					FTPSLOCALITY=$(whiptail --title "OpenSSL Generation" --inputbox \
-					"Locality (Paris, London ...)" 7 50 "Marseille" 3>&1 1>&2 2>&3)
-					FTPSORGANIZATION=$(whiptail --title "OpenSSL Generation" --inputbox \
-					"Organization (Apple Inc. ...)" 7 50 "Linux" 3>&1 1>&2 2>&3)
-					FTPSORGANIZATIONALUNIT=$(whiptail --title "OpenSSL Generation" --inputbox \
-					"Organizationnal Unit (Export, Production ...)" 7 50 "Tech" 3>&1 1>&2 2>&3)
-					FTPSPASSWORD=$(whiptail --title "OpenSSL Generation" --passwordbox "Password" 7 50 3>&1 1>&2 2>&3)
-					echo -e " ${BWHITE}--> Generating key request...${NC}"
-					openssl genrsa -des3 -passout pass:$FTPSPASSWORD -out /etc/ssl/private/$FTPSDOMAIN.key 2048 -noout > /dev/null 2>&1
-					checking_errors $?
-					echo -e " ${BWHITE}--> Removing passphrase from key...${NC}"
-					openssl rsa -in /etc/ssl/private/$FTPSDOMAIN.key -passin pass:$FTPSPASSWORD -out /etc/ssl/private/$FTPSDOMAIN.key > /dev/null 2>&1
-					checking_errors $?
-					echo -e " ${BWHITE}--> Generating Certificate file...${NC}"
-					openssl req -new -x509 -key /etc/ssl/private/$FTPSDOMAIN.key -out /etc/ssl/certs/$FTPSDOMAIN.crt -passin pass:$FTPSPASSWORD \
-    					-subj "/C=$FTPSCC/ST=$FTPSSTATE/L=$FTPSLOCALITY/O=$FTPSORGANIZATION/OU=$FTPSORGANIZATIONALUNIT/CN=$FTPSDOMAIN/emailAddress=$FTPSEMAIL" > /dev/null 2>&1
-    				checking_errors $?
-					USEFTPSOPENSSL="yes"
-				fi
-		 		if (whiptail --title "Force FTPs" --yesno "Do you want to force FTPs ?" 7 60) then
-		 			TLSREQUIRED="on"
-		 		else
-		 			TLSREQUIRED="off"
-		 		fi
-			fi
-			echo -e " ${BWHITE}--> Creating base configuration file...${NC}"
-			mv "$PROFTPDFOLDER$PROFTPDCONFFILE" "$PROFTPDBAKCONF"
-	 	 	cat "$BASEPROFTPDFILE" >> "$PROFTPDFOLDER$PROFTPDCONFFILE"
-	 	 	sed -i -e "s/ServerName\ \"Debian\"/ServerName\ \"$FTPSERVERNAME\"/g" "$PROFTPDFOLDER$PROFTPDCONFFILE"
-	 		checking_errors $?
-	 		if [[ "$USEFTPSLE" == "yes" ]]; then
-		 		echo -e " ${BWHITE}--> Creating SSL configuration file...${NC}"
-		 		sed -i -e "s/#Include\ \/etc\/\proftpd\/tls.conf/Include\ \/etc\/\proftpd\/tls.conf/g" "$PROFTPDFOLDER$PROFTPDCONFFILE"
-		 		mv "$PROFTPDFOLDER$PROFTPDTLSCONFFILE" "$PROFTPDTLSBAKCONF"
-		 	 	cat "$BASEPROFTPDTLSFILELETSENCRYPT" >> "$PROFTPDFOLDER$PROFTPDTLSCONFFILE"
-	 			sed -i "s|%TLSREQUIRED%|$TLSREQUIRED|g" "$PROFTPDFOLDER$PROFTPDTLSCONFFILE"
-		 	 	sed -i "s|%DOMAIN%|$LEDOMAIN|g" "$PROFTPDFOLDER$PROFTPDTLSCONFFILE"
-		 	 	checking_errors $?
-	 		fi
-	 		if [[ "$USEFTPSOPENSSL" == "yes" ]]; then
-		 		echo -e " ${BWHITE}--> Creating SSL configuration file...${NC}"
-		 		sed -i -e "s/#Include\ \/etc\/\proftpd\/tls.conf/Include\ \/etc\/\proftpd\/tls.conf/g" "$PROFTPDFOLDER$PROFTPDCONFFILE"
-		 		mv "$PROFTPDFOLDER$PROFTPDTLSCONFFILE" "$PROFTPDTLSBAKCONF"
-		 	 	cat "$BASEPROFTPDTLSFILEOPENSSL" >> "$PROFTPDFOLDER$PROFTPDTLSCONFFILE"
-	 			sed -i "s|%TLSREQUIRED%|$TLSREQUIRED|g" "$PROFTPDFOLDER$PROFTPDTLSCONFFILE"
-		 	 	sed -i "s|%DOMAIN%|$FTPSDOMAIN|g" "$PROFTPDFOLDER$PROFTPDTLSCONFFILE"
-		 	 	checking_errors $?
-	 		fi
-	 		echo -e " ${BWHITE}--> Restarting service...${NC}"
-	 		service proftpd restart
-	 		checking_errors $?
-	 	else
-	 		echo -e " ${BWHITE}* Fine, nothing will be installed !${NC}"
-		fi
-	else
-		echo -e " ${YELLOW}* FTP Server already installed !${NC}"
-		echo -e "	${RED}--> Please check manually Proftpd configuration${NC}"
-		if (whiptail --title "FTP Server" --yesno "FTP Server already exist ! Do you want to reconfigure service ?" 7 75) then
-			FTPSERVERNAME=$(whiptail --title "FTPServer Name" --inputbox \
-			"Please enter a name for your FTP Server :" 7 50 "SeedBox" 3>&1 1>&2 2>&3)
-			echo -e " ${BWHITE}* Reconfigure... ${NC}"
-			echo -e " ${BWHITE}* Cleaning files... ${NC}"
-			if [[ -f "$PROFTPDBAKCONF" ]]; then
-				rm $PROFTPDBAKCONF -R
-				checking_errors $?
-			fi
-			echo -e " ${BWHITE}* Creating configuration file...${NC}"
-			mv "$PROFTPDFOLDER$PROFTPDCONFFILE" "$PROFTPDFOLDER$PROFTPDCONFFILE.bak"
-	 	 	cat "$BASEPROFTPDFILE" >> "$PROFTPDFOLDER$PROFTPDCONFFILE"
-	 	 	sed -i -e "s/ServerName\ \"Debian\"/ServerName\ \"$FTPSERVERNAME\"/g" "$PROFTPDFOLDER$PROFTPDCONFFILE"
-	 	 	checking_errors $?
-	 	 	echo -e " ${BWHITE}* Restarting proftpd...${NC}"
-	 	 	service proftpd restart
-	 		checking_errors $?
-	 		checking_errors $?
-	 	fi
-	fi
-	echo ""
 }
 
 function resume_seedbox() {
@@ -918,129 +787,25 @@ function resume_seedbox() {
 			echo -e "	--> $APPINSTALLED --> ${YELLOW}$IPADDRESS:$PORTINSTALLED${NC}"
 		done
 	fi
-	if [[ -d "$PROFTPDFOLDER" ]]; then
-		echo ""
-		echo -e " ${BWHITE}* Accès FTP avec IDs de:${NC}"
-		echo -e "	--> IP Address : ${YELLOW}$IPADDRESS${NC}"
-		if [[ "$DOMAIN" != "localhost" ]]; then
-			echo -e "	--> Domain : ${YELLOW}$DOMAIN${NC}"
-		fi
-	fi
-
+	
 	IDENT="/etc/seedboxcompose/passwd/.htpasswd-$SEEDUSER"	
 	if [[ ! -d $IDENT ]]; then
 	PASSE=$(grep $SEEDUSER /etc/seedboxcompose/passwd/login | cut -d ' ' -f2)
 	echo ""
 	echo -e " ${BWHITE}* Vos IDs :${NC}"
-	echo -e "	--> Utilisateur : ${YELLOW}$SEEDUSER${NC}"
-	echo -e "	--> Password : ${YELLOW}$PASSE${NC}"
+	echo -e "	--> Utilisateur: ${YELLOW}$SEEDUSER${NC}"
+	echo -e "	--> Password: ${YELLOW}$PASSE${NC}"
 	echo ""
 
 	else
 
 	echo -e " ${BWHITE}* Here is your IDs :${NC}"
-	echo -e "	--> Utilisateur : ${YELLOW}$HTUSER${NC}"
-	echo -e "	--> Password : ${YELLOW}$HTPASSWORD${NC}"
+	echo -e "	--> Utilisateur: ${YELLOW}$HTUSER${NC}"
+	echo -e "	--> Password: ${YELLOW}$HTPASSWORD${NC}"
 	echo ""
 	echo ""
 	fi
 	rm -Rf $SERVICESPERUSER > /dev/null 2>&1
-	# if [[ -f "/home/$SEEDUSER/downloads/medias/supervisord.log" ]]; then
-	# 	mv /home/$SEEDUSER/downloads/medias/supervisord.log /home/$SEEDUSER/downloads/medias/.supervisord.log > /dev/null 2>&1
-	# 	mv /home/$SEEDUSER/downloads/medias/supervisord.pid /home/$SEEDUSER/downloads/medias/.supervisord.pid > /dev/null 2>&1
-	# fi
-	# chown $SEEDUSER: -R /home/$SEEDUSER/downloads/{tv;movies;medias}
-	# chmod 775: -R /home/$SEEDUSER/downloads/{tv;movies;medias}
-}
-
-function backup_docker_conf() {
-	BACKUPDIR="/var/backups/"
-	BACKUPNAME="backup-sc-$SEEDUSER-"
-	echo ""
-	BACKUP="$BACKUPDIR$BACKUPNAME$BACKUPDATE.tar.gz"
-	if [[ "$SEEDUSER" != "" ]]; then
-		if (whiptail --title "Backup Dockers conf" --yesno "Do you want backup configuration for $SEEDUSER ?" 10 60) then
-			echo -e "${BLUE}##########################################${NC}"
-			echo -e "${BLUE}###         BACKUP DOCKER CONF         ###${NC}"
-			echo -e "${BLUE}##########################################${NC}"
-			USERBACKUP=$SEEDUSER
-		else
-			exit 1
-		fi
-	else
-		USERBACKUP=$(whiptail --title "Backup User" --inputbox "Enter username to backup configuration" 10 60 3>&1 1>&2 2>&3)
-	fi
-	DOCKERCONFDIR="/home/$USERBACKUP/dockers/"
-	if [[ -d "$DOCKERCONFDIR" ]]; then
-		mkdir -p $BACKUPDIR
-		echo -e " ${BWHITE}* Backing up Dockers conf..."
-		tar cvpzf $BACKUP $DOCKERCONFDIR > /dev/null 2>&1
-		echo -e "	${GREEN}--> Backup successfully created in $BACKUP${NC}"
-	else
-		echo -e "	${YELLOW}--> Please launch the script to install Seedbox before make a Backup !${NC}"
-	fi
-}
-
-function schedule_backup_seedbox() {
-	CRONTABFILE="/etc/crontab"
-	if (whiptail --title "Schedule Backup" --yesno "Do you want to schedule a configuration backup ?" 10 60) then
-		if [[ "$SEEDUSER" == "" ]]; then
-			SEEDUSER=$(whiptail --title "Username" --inputbox \
-			"Please enter your username :" 7 50 \
-			3>&1 1>&2 2>&3)
-		fi
-		MODELSCRIPT="/opt/seedbox-compose/includes/config/model-backup.sh"
-		BACKUPSCRIPT="/home/$SEEDUSER/backup-dockers.sh"
-		TMPCRONFILE="/tmp/crontab"
-		if [[ -d "/home/$SEEDUSER" ]]; then
-			grep -R "$SEEDUSER" "$CRONTABFILE" > /dev/null 2>&1
-			if [[ "$?" != "0" ]]; then
-				BACKUPDIR=$(whiptail --title "Schedule Backup" --inputbox \
-					"Please choose backup destination" 7 65 "/var/backups/" \
-					3>&1 1>&2 2>&3)
-				DAILYRET=$(whiptail --title "Schedule Backup" --inputbox \
-					"How many days you want to keep your daily backups ? (Default : 14 backups)" 9 85 "14" \
-					3>&1 1>&2 2>&3)
-				WEEKLYRET=$(whiptail --title "Schedule Backup" --inputbox \
-					"How many days you want to keep your weekly backups ? (Default : 8 backups)" 9 85 "60" \
-					3>&1 1>&2 2>&3)
-				MONTHLYRET=$(whiptail --title "Schedule Backup" --inputbox \
-					"How many days you want to keep your monthly backups ? (Default : 10 backups)" 9 85 "300" \
-					3>&1 1>&2 2>&3)
-				touch $BACKUPSCRIPT
-				cat $MODELSCRIPT >> $BACKUPSCRIPT
-				sed -i "s|%USER%|$SEEDUSER|g" "$BACKUPSCRIPT"
-				sed -i "s|%BACKUPDIR%|$BACKUPDIR|g" "$BACKUPSCRIPT"
-				sed -i "s|%DAILYRET%|$DAILYRET|g" "$BACKUPSCRIPT"
-				sed -i "s|%WEEKLYRET%|$WEEKLYRET|g" "$BACKUPSCRIPT"
-				sed -i "s|%MONTHLYRET%|$MONTHLYRET|g" "$BACKUPSCRIPT"
-				SCHEDULEBACKUP="@daily bash $BACKUPSCRIPT >/dev/null 2>&1"
-				echo $SCHEDULEBACKUP >> $TMPCRONFILE
-				cat "$TMPCRONFILE" >> "$CRONTABFILE"
-				echo -e " ${BWHITE}* Backup successfully scheduled :${NC}"
-				echo -e "	${BWHITE}-->${NC} In ${YELLOW}$BACKUPDIR ${NC}"
-				echo -e "	${BWHITE}-->${NC} For ${YELLOW}$SEEDUSER ${NC}"
-				echo -e "	${BWHITE}-->${NC} Keep ${YELLOW}$DAILYRET days daily backups ${NC}"
-				echo -e "	${BWHITE}-->${NC} Keep ${YELLOW}$WEEKLYRET days weekly backups ${NC}"
-				echo -e "	${BWHITE}-->${NC} Keep ${YELLOW}$MONTHLYRET days monthly backups ${NC}"
-				echo ""
-				rm $TMPCRONFILE
-			else
-				if (whiptail --title "Schedule Backup" --yesno "A cronjob is already configured for $SEEDUSER. Do you want to delete this job ?" 10 80) then
-					USERLINE=$(grep -n "$SEEDUSER" $CRONTABFILE | cut -d: -f1)
-					sed -i ''$USERLINE'd' $CRONTABFILE
-					echo -e " ${BWHITE}* Cronjob for $SEEDUSER has been deleted !${NC}"
-					rm -Rf $BACKUPSCRIPT
-					schedule_backup_seedbox
-				else
-					break
-				fi
-			fi
-		else
-			echo -e " ${YELLOW}--> Please install Seedbox for $SEEDUSER before backup${NC}"
-			echo ""
-		fi
-	fi
 }
 
 function uninstall_seedbox() {
@@ -1048,67 +813,28 @@ function uninstall_seedbox() {
 	echo -e "${BLUE}##########################################${NC}"
 	echo -e "${BLUE}###          UNINSTALL SEEDBOX         ###${NC}"
 	echo -e "${BLUE}##########################################${NC}"
-	BACKUPDIR="/var/backups"
-	CRONTABFILE="/etc/crontab"
 	SEEDGROUP=$(cat $GROUPFILE)
-	UNINSTALL=$(whiptail --title "Seedbox-Compose" --menu "Choose what you want uninstall" 10 75 2 \
-			"1" "Full uninstall (all files and dockers)" \
-			"2" "User uninstall (delete a suer)" 3>&1 1>&2 2>&3)
-		case $UNINSTALL in
-		"1")
-		  	if (whiptail --title "Uninstall Seedbox" --yesno "Voulez vous vraiment supprimer la Seedbox ?" 7 75) then
-		  		echo -e " ${BWHITE}* Tous les fichiers de configurations data et docker seront supprimés${NC}"
-				if (whiptail --title "Dockers configuration" --yesno "Do you want to backup your Dockers configuration ?" 7 75) then
-					DOBACKUP="yes"
-				else
-					for seeduser in $(cat $USERSFILE)
-					do
-						if [[ "$DOBACKUP" == "yes" ]]; then
-							BACKUPNAME="$BACKUPDIR/backup-seedbox-$seeduser-$backupdate.tar.gz"
-							DOCKERCONFDIR="/home/$seeduser/dockers/"
-							echo -e " ${BWHITE}* Backing up dockers configuration for $seeduser...${NC}"
-							tar cvpzf $BACKUPNAME $DOCKERCONFDIR > /dev/null 2>&1
-							checking_errors $?
-						fi
-						USERHOMEDIR="/home/$seeduser"
-						echo -e " ${BWHITE}* Suppression user...${NC}"
-						userdel -rf $seeduser > /dev/null 2>&1
-						checking_errors $?
-						echo -e " ${BWHITE}* Suppression home...${NC}"
-						rm -Rf $USERHOMEDIR
-						checking_errors $?
-						echo -e " ${BWHITE}* Suppression group...${NC}"
-						groupdel $SEEDGROUP > /dev/null 2>&1
-						checking_errors $?
-						echo -e " ${BWHITE}* Suppression Containers...${NC}"
-						docker rm -f $(docker ps -aq) > /dev/null 2>&1
-						checking_errors $?
-					done
-					echo -e " ${BWHITE}* Removing Seedbox-compose directory...${NC}"
-					rm -Rf /etc/seedboxcompose
-					checking_errors $?
-					cd /opt && rm -Rf seedbox-compose
-					if (whiptail --title "Cloning repo" --yesno "Do you want to redownload Seedbox-compose ?" 7 75) then
-						git clone https://github.com/bilyboy785/seedbox-compose.git > /dev/null 2>&1
-					fi
-					pause
-					script_option
-				fi
-			fi
-		;;
-		"2")
-			if (whiptail --title "Uninstall Seedbox" --yesno "Do you really want to uninstall Seedbox ?" 7 75) then
-				if (whiptail --title "Dockers configuration" --yesno "Do you want to backup your Dockers configuration ?" 7 75) then
-					echo -e " ${BWHITE}* All files, dockers and configuration will be uninstall${NC}"
-					echo -e "	${RED}--> Under developpment${NC}"
-				else
-					echo -e " ${BWHITE}* Everything will be deleted !${NC}"
-					echo -e "	${RED}--> Under developpment${NC}"
-				fi
-			fi
-		;;
-		esac
-	echo ""
+	for seeduser in $(cat $USERSFILE)
+	do
+		USERHOMEDIR="/home/$seeduser"
+		echo -e " ${BWHITE}* Suppression users...${NC}"
+		userdel -rf $seeduser > /dev/null 2>&1
+		checking_errors $?
+		echo -e " ${BWHITE}* Suppression home...${NC}"
+		rm -Rf $USERHOMEDIR
+		checking_errors $?
+		echo -e " ${BWHITE}* Suppression group...${NC}"
+		groupdel $SEEDGROUP > /dev/null 2>&1
+		checking_errors $?
+		echo -e " ${BWHITE}* Suppression Containers...${NC}"
+		docker rm -f $(docker ps -aq) > /dev/null 2>&1
+		checking_errors $?
+	done
+	echo -e " ${BWHITE}* Removing Seedbox-compose directory...${NC}"
+	rm -Rf /etc/seedboxcompose
+	checking_errors $?
+	cd /opt && rm -Rf seedbox-compose
+	pause
 }
 
 function pause() {
