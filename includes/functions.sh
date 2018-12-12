@@ -388,7 +388,7 @@ function install_services() {
 
 
 		SUBURI=$(whiptail --title "Type d'Accès" --menu \
-	            "Accès aux Applis :" 10 45 2 \
+	            "Choississez votre accès à $line :" 10 45 2 \
 	            "1" "Sous Domaine" \
 	            "2" "URI" 3>&1 1>&2 2>&3)
 
@@ -461,7 +461,7 @@ function add_install_services() {
 		cat /opt/seedbox-compose/includes/dockerapps/foot.docker >> $DOCKERCOMPOSEFILE
 
 		SUBURI=$(whiptail --title "Type d'Accès" --menu \
-	            "Accès aux Applis :" 10 45 2 \
+	            "Choississez votre accès à $line :" 10 45 2 \
 	            "1" "Sous Domaine" \
 	            "2" "URI" 3>&1 1>&2 2>&3)
 
