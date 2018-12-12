@@ -395,7 +395,7 @@ function install_services() {
 	    	case $SUBURI in
 	        	"1" )
 				PROXYACCESS="SUBDOMAIN"
-				FQDNTMP="$line.$DOMAIN"
+				FQDNTMP="$line-$SEEDUSER.$DOMAIN"
 				FQDN=$(whiptail --title "SSL Sous Domaine" --inputbox \
 				"Souhaitez vous utiliser un autre Sous Domaine pour $line ? default :" 7 75 "$FQDNTMP" 3>&1 1>&2 2>&3)
 				ACCESSURL=$FQDN
@@ -468,7 +468,7 @@ function add_install_services() {
 	    	case $SUBURI in
 	        	"1" )
 				PROXYACCESS="SUBDOMAIN"
-				FQDNTMP="$line.$DOMAIN"
+				FQDNTMP="$line-$SEEDUSER.$DOMAIN"
 				FQDN=$(whiptail --title "SSL Subdomain" --inputbox \
 				"Souhaitez vous utiliser un autre Sous Domaine pour $line ? default :" 7 75 "$FQDNTMP" 3>&1 1>&2 2>&3)
 				ACCESSURL=$FQDN
