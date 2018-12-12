@@ -402,6 +402,7 @@ function install_services() {
 				check_domain $ACCESSURL
 				TRAEFIKURL=(Host:$ACCESSURL)
 				sed -i "s|%TRAEFIKURL%|$TRAEFIKURL|g" /home/$SEEDUSER/docker-compose.yml
+				sed -i '/WEBROOT=%URI%/d' /home/$SEEDUSER/docker-compose.yml
 				echo "$line-$PORT-$FQDN" >> $INSTALLEDFILE
 				URI="/"
 	        	;;
@@ -473,6 +474,7 @@ function add_install_services() {
 				ACCESSURL=$FQDN
 				TRAEFIKURL=(Host:$ACCESSURL)
 				sed -i "s|%TRAEFIKURL%|$TRAEFIKURL|g" /home/$SEEDUSER/docker-compose.yml
+				sed -i '/WEBROOT/d' /home/$SEEDUSER/docker-compose.yml
 				check_domain $ACCESSURL
 				echo "$line-$PORT-$FQDN" >> $INSTALLEDFILE
 				URI="/"
@@ -521,6 +523,7 @@ function docker_compose() {
 function config_post_compose() {
 	if [[ "$PROXYACCESS" == "URI" ]]; then
 		echo -e "${BLUE}### CONFIG POST COMPOSE ###${NC}"
+
 		grep -R "sonarr" "$INSTALLEDFILE" > /dev/null 2>&1	
 		if [[ "$?" == "0" ]]; then
 			SONARR=$(grep -R "sonarr" /home/$SEEDUSER/resume | cut -d'/' -f2)
@@ -545,6 +548,24 @@ function config_post_compose() {
 			checking_errors $?
 		fi
 
+		grep -R "rtorrent" "$INSTALLEDFILE" > /dev/null 2>&1	
+		if [[ "$?" == "0" ]]; then
+			RTORRENT=$(grep -R "rtorrent" /home/$SEEDUSER/resume | cut -d'/' -f2)
+			echo -e " ${BWHITE}* Processing rtorrent config file...${NC}"
+			sed -i "s|%URI%|$RTORRENT|g" /home/$SEEDUSER/docker-compose.yml
+			docker restart rtorrent-$SEEDUSER > /dev/null 2>&1
+			checking_errors $?
+		fi
+
+		grep -R "medusa" "$INSTALLEDFILE" > /dev/null 2>&1	
+		if [[ "$?" == "0" ]]; then
+			MEDUSA=$(grep -R "medusa" /home/$SEEDUSER/resume | cut -d'/' -f2)
+			echo -e " ${BWHITE}* Processing medusa config file...${NC}"
+			sed -i "s|%URI%|$MEDUSA|g" /home/$SEEDUSER/docker-compose.yml
+			docker restart medusa-$SEEDUSER > /dev/null 2>&1
+			checking_errors $?
+		fi
+
 	else
 		
 		echo -e "${BLUE}### CONFIG POST COMPOSE ###${NC}"
@@ -556,35 +577,6 @@ function config_post_compose() {
 			docker-compose rm -fs medusa-$SEEDUSER > /dev/null 2>&1 && docker-compose up -d medusa-$SEEDUSER > /dev/null 2>&1
 			checking_errors $?
 		fi
-
-		grep -R "sonarr" "$INSTALLEDFILE" > /dev/null 2>&1
-		if [[ "$?" == "0" ]]; then
-			echo -e " ${BWHITE}* Processing sonarr config file...${NC}"
-			cd /home/$SEEDUSER/
-			sed -i '/WEBROOT/d' docker-compose.yml
-			docker-compose rm -fs sonarr-$SEEDUSER > /dev/null 2>&1 && docker-compose up -d sonarr-$SEEDUSER > /dev/null 2>&1
-			checking_errors $?
-		fi
-
-		grep -R "radarr" "$INSTALLEDFILE" > /dev/null 2>&1
-		if [[ "$?" == "0" ]]; then
-			echo -e " ${BWHITE}* Processing radarr config file...${NC}"
-			cd /home/$SEEDUSER/
-			sed -i '/WEBROOT/d' docker-compose.yml
-			docker-compose rm -fs radarr-$SEEDUSER > /dev/null 2>&1 && docker-compose up -d radarr-$SEEDUSER > /dev/null 2>&1
-			checking_errors $?
-		fi
-
-		grep -R "rtorrent" "$INSTALLEDFILE" > /dev/null 2>&1
-		if [[ "$?" == "0" ]]; then
-			echo -e " ${BWHITE}* Processing rtorrent config file...${NC}"
-			cd /home/$SEEDUSER/
-			rm -rf rtorrent
-			sed -i '/WEBROOT/d' docker-compose.yml
-			docker-compose rm -fs rtorrent-$SEEDUSER > /dev/null 2>&1 && docker-compose up -d rtorrent-$SEEDUSER > /dev/null 2>&1
-			checking_errors $?
-		fi
-
 	fi
 }
 
