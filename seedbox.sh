@@ -32,6 +32,7 @@ case $PORT_CHOICE in
 			choose_services
 			install_services
 			docker_compose
+			choose_media
 			resume_seedbox
 			pause
 			script_option

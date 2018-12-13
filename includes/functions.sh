@@ -337,6 +337,33 @@ function choose_services() {
 	rm /tmp/menuservices.txt
 }
 
+function choose_media() {
+	echo -e "${BLUE}### DOSSIERS MEDIAS ###${NC}"
+	echo -e " ${BWHITE}--> Création des dossiers Medias : ${NC}"
+	for media in $(cat $MEDIAVAILABLE);
+	do
+		service=$(echo $media | cut -d\- -f1)
+		desc=$(echo $media | cut -d\- -f2)
+		echo "$service $desc off" >> /tmp/menumedia.txt
+	done
+	MEDIASTOINSTALL=$(whiptail --title "Gestion des dossiers Medias" --checklist \
+	"Medias à ajouter pour $SEEDUSER (Barre espace pour la sélection)" 28 60 17 \
+	$(cat /tmp/menumedia.txt) 3>&1 1>&2 2>&3)
+	MEDIASPERUSER="$MEDIASUSER$SEEDUSER"
+	touch $MEDIASPERUSER
+	for MEDDOCKER in $MEDIASTOINSTALL
+	do
+		echo -e "	${GREEN}* $(echo $MEDDOCKER | tr -d '"')${NC}"
+		echo $(echo ${MEDDOCKER,,} | tr -d '"') >> $MEDIASPERUSER
+	done
+	for line in $(cat $MEDIASPERUSER);
+	do
+	line=$(echo $line | sed 's/\(.\)/\U\1/')
+	mkdir -p /home/$SEEDUSER/Medias/$line
+	done
+	rm /tmp/menumedia.txt
+}
+
 function add_user_htpasswd() {
 	HTFOLDER="$CONFDIR/passwd/"
 	mkdir -p $CONFDIR/passwd
@@ -631,6 +658,7 @@ function manage_users() {
 			choose_services
 			install_services
 			docker_compose
+			choose_media
 			resume_seedbox
 			pause
 			script_option
