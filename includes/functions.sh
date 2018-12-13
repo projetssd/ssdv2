@@ -755,9 +755,23 @@ function resume_seedbox() {
 	if [[ "$DOMAIN" != "localhost" ]]; then
 		for line in $(cat $INSTALLEDFILE);
 		do
+			if [[ "$PROXYACCESS" == "SUBDOMAIN" ]]; then
+				NOMBRE=$(sed -n "/$SEEDUSER/=" /etc/seedboxcompose/users)
+				if [ $NOMBRE -le 1 ] ; then
+					ACCESSDOMAIN=$(echo $line | cut -d\- -f3)
+					DOCKERAPP=$(echo $line | cut -d\- -f1)
+					echo -e "	--> ${BWHITE}$DOCKERAPP${NC} --> ${YELLOW}$ACCESSDOMAIN${NC}"
+				else
+					ACCESS=$(echo $line | cut -d\- -f3)
+					ACCESSDOMAIN=$(echo $line | cut -d\- -f4)
+					DOCKERAPP=$(echo $line | cut -d\- -f1)
+					echo -e "	--> ${BWHITE}$DOCKERAPP${NC} --> ${YELLOW}$ACCESS-$ACCESSDOMAIN${NC}"
+				fi
+			else
 			ACCESSDOMAIN=$(echo $line | cut -d\- -f3)
 			DOCKERAPP=$(echo $line | cut -d\- -f1)
 			echo -e "	--> ${BWHITE}$DOCKERAPP${NC} --> ${YELLOW}$ACCESSDOMAIN${NC}"
+			fi
 		done
 	else
 		for line in $(cat $INSTALLEDFILE);
