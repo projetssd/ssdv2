@@ -1,6 +1,6 @@
 #!/bin/bash
 
-function logo () {
+function logo() {
 
 color1='\033[1;31m'    # light red
 color2='\033[1;35m'    # light purple
@@ -395,7 +395,12 @@ function install_services() {
 	    	case $SUBURI in
 	        	"1" )
 				PROXYACCESS="SUBDOMAIN"
-				FQDNTMP="$line-$SEEDUSER.$DOMAIN"
+				NOMBRE=$(sed -n "/$SEEDUSER/=" /etc/seedboxcompose/users)
+				if [ $NOMBRE -le 1 ] ; then
+					FQDNTMP="$line.$DOMAIN"
+				else
+					FQDNTMP="$line-$SEEDUSER.$DOMAIN"
+				fi
 				FQDN=$(whiptail --title "SSL Sous Domaine" --inputbox \
 				"Souhaitez vous utiliser un autre Sous Domaine pour $line ? default :" 7 75 "$FQDNTMP" 3>&1 1>&2 2>&3)
 				ACCESSURL=$FQDN
@@ -468,7 +473,12 @@ function add_install_services() {
 	    	case $SUBURI in
 	        	"1" )
 				PROXYACCESS="SUBDOMAIN"
-				FQDNTMP="$line-$SEEDUSER.$DOMAIN"
+				NOMBRE=$(sed -n "/$SEEDUSER/=" /etc/seedboxcompose/users)
+				if [ $NOMBRE -le 1 ] ; then
+					FQDNTMP="$line.$DOMAIN"
+				else
+					FQDNTMP="$line-$SEEDUSER.$DOMAIN"
+				fi
 				FQDN=$(whiptail --title "SSL Subdomain" --inputbox \
 				"Souhaitez vous utiliser un autre Sous Domaine pour $line ? default :" 7 75 "$FQDNTMP" 3>&1 1>&2 2>&3)
 				ACCESSURL=$FQDN
