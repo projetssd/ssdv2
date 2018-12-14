@@ -46,7 +46,7 @@ function script_option() {
 	echo ""
 	echo -e "${CCYAN}INSTALLATION${CEND}"
 	echo -e "${CGREEN}${CEND}"
-	echo -e "${CGREEN}   1) Seedbox déjà installée ${CEND}"
+	echo -e "${CGREEN}   1) Desinstaller la seedbox ${CEND}"
 	echo -e "${CGREEN}   2) Ajout/Supression d'utilisateurs${CEND}"
 	echo -e "${CGREEN}   3) Ajout/Supression d'Applis${CEND}"
 
