@@ -492,32 +492,11 @@ function add_install_services() {
 		sed -i "s|%IPADDRESS%|$IPADDRESS|g" $DOCKERCOMPOSEFILE
 		cat /opt/seedbox-compose/includes/dockerapps/foot.docker >> $DOCKERCOMPOSEFILE
 
-		SUBURI=$(whiptail --title "Type d'Accès" --menu \
-	            "Choississez votre accès à $line :" 10 45 2 \
-	            "1" "Sous Domaine" \
-	            "2" "URI" 3>&1 1>&2 2>&3)
+			APPLI=$(echo $(sed q /home/$SEEDUSER/resume) | cut -d\- -f1)
+			DOM=$(echo $(sed q /home/$SEEDUSER/resume) | cut -d\- -f3)
+			FQD="$DOMAIN/"$SEEDUSER"_$APPLI"
 
-	    	case $SUBURI in
-	        	"1" )
-				PROXYACCESS="SUBDOMAIN"
-				NOMBRE=$(sed -n "/$SEEDUSER/=" /etc/seedboxcompose/users)
-				if [ $NOMBRE -le 1 ] ; then
-					FQDNTMP="$line.$DOMAIN"
-				else
-					FQDNTMP="$line-$SEEDUSER.$DOMAIN"
-				fi
-				FQDN=$(whiptail --title "SSL Subdomain" --inputbox \
-				"Souhaitez vous utiliser un autre Sous Domaine pour $line ? default :" 7 75 "$FQDNTMP" 3>&1 1>&2 2>&3)
-				ACCESSURL=$FQDN
-				TRAEFIKURL=(Host:$ACCESSURL)
-				sed -i "s|%TRAEFIKURL%|$TRAEFIKURL|g" /home/$SEEDUSER/docker-compose.yml
-				sed -i '/WEBROOT/d' /home/$SEEDUSER/docker-compose.yml
-				check_domain $ACCESSURL
-				echo "$line-$PORT-$FQDN" >> $INSTALLEDFILE
-				URI="/"
-	        	;;
-
-	        	"2" )
+			if [[ "$DOM" == "$FQD" ]]; then
 				PROXYACCESS="URI"
 				FQDN=$DOMAIN
 				FQDNTMP="/$SEEDUSER"_"$line"
@@ -529,13 +508,29 @@ function add_install_services() {
 				sed -i "s|%URI%|$URI|g" /home/$SEEDUSER/docker-compose.yml
 				check_domain $DOMAIN
 				echo "$line-$PORT-$FQDN$URI" >> $INSTALLEDFILE
-			;;
-				
-	    	esac
+			else
+				PROXYACCESS="SUBDOMAIN"
+				NOMBRE=$(sed -n "/$SEEDUSER/=" /etc/seedboxcompose/users)
+					if [ $NOMBRE -le 1 ] ; then
+						FQDNTMP="$line.$DOMAIN"
+					else
+						FQDNTMP="$line-$SEEDUSER.$DOMAIN"
+					fi
+				FQDN=$(whiptail --title "SSL Subdomain" --inputbox \
+				"Souhaitez vous utiliser un autre Sous Domaine pour $line ? default :" 7 75 "$FQDNTMP" 3>&1 1>&2 2>&3)
+				ACCESSURL=$FQDN
+				TRAEFIKURL=(Host:$ACCESSURL)
+				sed -i "s|%TRAEFIKURL%|$TRAEFIKURL|g" /home/$SEEDUSER/docker-compose.yml
+				sed -i '/WEBROOT/d' /home/$SEEDUSER/docker-compose.yml
+				check_domain $ACCESSURL
+				echo "$line-$PORT-$FQDN" >> $INSTALLEDFILE
+				URI="/"
+			fi
+	
 		PORT=$PORT+1
 		FQDN=""
 		FQDNTMP=""
-		
+
 	done
 	echo $PORT >> $FILEPORTPATH
 	echo ""
