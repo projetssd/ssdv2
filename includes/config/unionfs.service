@@ -1,0 +1,15 @@
+[Unit]
+Description=UnionFS Mount (plexdrive)
+AssertPathIsDirectory=/home/%SEEDUSER%/Medias
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/unionfs-fuse -o cow -o allow_other /home/%SEEDUSER%/local=RW:/mnt/rclone/%SEEDUSER%=RO /home/%SEEDUSER%/Medias
+#ExecStop=/bin/fusermount -u /home/%SEEDUSER%/Medias
+Restart=on-abort
+RestartSec=5
+StartLimitInterval=60s
+StartLimitBurst=3
+
+[Install]
+WantedBy=default.target
