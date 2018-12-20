@@ -39,12 +39,12 @@ function check_dir() {
 	fi
 }
 
-function script_option() {
+function script_classique() {
 	if [[ -d "$CONFDIR" ]]; then
 	clear
 	logo
 	echo ""
-	echo -e "${CCYAN}INSTALLATION${CEND}"
+	echo -e "${CCYAN}SEEDBOX CLASSIQUE${CEND}"
 	echo -e "${CGREEN}${CEND}"
 	echo -e "${CGREEN}   1) Desinstaller la seedbox ${CEND}"
 	echo -e "${CGREEN}   2) Ajout/Supression d'utilisateurs${CEND}"
@@ -61,7 +61,7 @@ function script_option() {
 		if (whiptail --title "Seedbox-Compose déjà installée" --yesno "Désinstaller complètement la Seedbox ?" 7 90) then
 			uninstall_seedbox
 		else
-			script_option
+			script_classique
 		fi
 		;;
 
@@ -85,6 +85,54 @@ function script_option() {
 	esac
 	fi
 }
+
+function script_plexdrive() {
+	if [[ -d "$CONFDIR" ]]; then
+	clear
+	logo
+	echo ""
+	echo -e "${CCYAN}SEEDBOX RCLONE/PLEXDRIVE${CEND}"
+	echo -e "${CGREEN}${CEND}"
+	echo -e "${CGREEN}   1) Desinstaller la seedbox ${CEND}"
+	echo -e "${CGREEN}   2) Ajout/Supression d'utilisateurs${CEND}"
+	echo -e "${CGREEN}   3) Ajout/Supression d'Applis${CEND}"
+
+	echo -e ""
+	read -p "Votre choix [1-3]: " -e -i 1 PORT_CHOICE
+
+	case $PORT_CHOICE in
+		1) ## Installation de la seedbox
+		clear
+		echo ""
+		echo -e "${YELLOW}### Seedbox-Compose déjà installée !###${NC}"
+		if (whiptail --title "Seedbox-Compose déjà installée" --yesno "Désinstaller complètement la Seedbox ?" 7 90) then
+			uninstall_seedbox
+		else
+			script_plexdrive
+		fi
+		;;
+
+		2)
+		clear
+		logo
+		## Ajout d'Utilisateurs
+		## Defines parameters for dockers : password, domains and replace it in docker-compose file
+		clear
+			manage_users
+ 		;;
+
+		3)
+		clear
+		logo
+		## Ajout d'Applications
+		echo""
+		clear
+			manage_apps
+		;;
+	esac
+	fi
+}
+
 
 function conf_dir() {
 	if [[ ! -d "$CONFDIR" ]]; then
@@ -182,10 +230,72 @@ function install_traefik() {
 		docker network create traefik_proxy > /dev/null 2>&1
 		docker-compose up -d > /dev/null 2>&1
 		checking_errors $?
-		echo ""
-
 	else
-		echo -e " ${YELLOW}* traefik is already installed !${NC}"
+		echo -e " ${YELLOW}* Traefik est déjà installé !${NC}"
+	fi
+	echo ""
+}
+
+function install_plexdrive() {
+	echo -e "${BLUE}### PLEXDRIVE ###${NC}"
+	echo -e " ${BWHITE}* Installation plexdrive${NC}"
+	PLEXDRIVE="/usr/bin/plexdrive"
+
+	if [[ ! -e "$PLEXDRIVE" ]]; then
+		cd /tmp
+		wget $(curl -s https://api.github.com/repos/dweidenfeld/plexdrive/releases/latest | grep 'browser_' | cut -d\" -f4 | grep plexdrive-linux-amd64) -q -O plexdrive > /dev/null 2>&1
+		chmod -c +x /tmp/plexdrive > /dev/null 2>&1
+		#install plexdrive
+		mv -v /tmp/plexdrive /usr/bin/ > /dev/null 2>&1
+		chown -c root:root /usr/bin/plexdrive > /dev/null 2>&1
+		plexdrive mount -c /root/.plexdrive -o allow_other /mnt/plexdrive
+		cp "$BASEDIR/includes/config/plexdrive.service" "/etc/systemd/system/plexdrive.service" > /dev/null 2>&1
+		systemctl daemon-reload > /dev/null 2>&1
+		systemctl enable plexdrive.service > /dev/null 2>&1
+		systemctl start plexdrive.service > /dev/null 2>&1
+		checking_errors $?
+	else
+		echo -e " ${YELLOW}* Plexdrive est déjà installé !${NC}"
+	fi
+	echo ""
+}
+
+function install_rclone() {
+	echo -e "${BLUE}### RCLONE ###${NC}"
+	echo -e " ${BWHITE}* Installation rclone${NC}"
+	RCLONE="/usr/bin/rclone"
+	if [[ ! -e "$RCLONE" ]]; then
+		curl https://rclone.org/install.sh | bash > /dev/null 2>&1
+		REMOTECRYPT=$(whiptail --title "Remote crypté" --inputbox \
+		"Saisir votre Remote crypté Plexdrive:" 7 50 3>&1 1>&2 2>&3)
+		cp "$BASEDIR/includes/config/rclone.service" "/etc/systemd/system/rclone.service" > /dev/null 2>&1
+		sed -i "s|%REMOTECRYPT%|$REMOTECRYPT|g" /etc/systemd/system/rclone.service
+		systemctl daemon-reload > /dev/null 2>&1
+		systemctl enable rclone.service > /dev/null 2>&1
+		service rclone start
+		checking_errors $?
+		echo -e " ${BWHITE}--> Montage rclone en cours, merci de patienter... : ${NC}"
+		sleep 15
+	else
+		echo -e " ${YELLOW}* Rclone est déjà installé !${NC}"
+	fi
+	echo ""
+}
+
+function unionfs_fuse() {
+	echo -e "${BLUE}### Unionfs-Fuse ###${NC}"
+	echo -e " ${BWHITE}* Installation Unionfs${NC}"
+	UNIONFS="/etc/systemd/system/unionfs-$SEEDUSER.service"
+	if [[ ! -e "$UNIONFS" ]]; then
+		cp "$BASEDIR/includes/config/unionfs.service" "/etc/systemd/system/unionfs-$SEEDUSER.service" > /dev/null 2>&1
+		sed -i "s|%SEEDUSER%|$SEEDUSER|g" /etc/systemd/system/unionfs-$SEEDUSER.service
+		systemctl daemon-reload > /dev/null 2>&1
+		systemctl enable unionfs-$SEEDUSER.service > /dev/null 2>&1
+		systemctl start unionfs-$SEEDUSER.service > /dev/null 2>&1
+		checking_errors $?
+	else
+		echo -e " ${YELLOW}* Unionfs est déjà installé pour l'utilisateur $SEEDUSER !${NC}"
+		systemctl restart unionfs-$SEEDUSER.service
 	fi
 	echo ""
 }
@@ -337,7 +447,7 @@ function choose_services() {
 	rm /tmp/menuservices.txt
 }
 
-function choose_media() {
+function choose_media_folder_classique() {
 	echo -e "${BLUE}### DOSSIERS MEDIAS ###${NC}"
 	echo -e " ${BWHITE}--> Création des dossiers Medias : ${NC}"
 	for media in $(cat $MEDIAVAILABLE);
@@ -362,6 +472,56 @@ function choose_media() {
 	mkdir -p /home/$SEEDUSER/Medias/$line
 	done
 	rm /tmp/menumedia.txt
+}
+
+function choose_media_folder_plexdrive() {
+	echo -e "${BLUE}### DOSSIERS MEDIAS ###${NC}"
+	FOLDER="/mnt/rclone/$SEEDUSER"
+	if [[ -d "$FOLDER" ]]; then
+		cd /mnt/rclone/$SEEDUSER
+		ls -Ad */ | sed 's,/$,,g' > /home/media.txt
+		mkdir -p /home/$SEEDUSER/Medias
+		echo -e " ${BWHITE}--> Récupération des dossiers Utilisateur à partir de Gdrive... : ${NC}"
+		for line in $(cat /home/media.txt);
+		do
+		mkdir -p /home/$SEEDUSER/local/$line
+		echo -e "	${GREEN}--> Le dossier ${NC}${YELLOW}$line${NC}${GREEN} a été ajouté avec succès !${NC}"
+		done
+	else
+		mkdir -p /mnt/rclone/$SEEDUSER
+		mkdir -p /home/$SEEDUSER/Medias
+		echo -e " ${BWHITE}--> Création des dossiers Medias ${NC}"
+		echo ""
+		echo -e " ${YELLOW}--> ### Veuillez patienter, création en cours des dossiers sur Gdrive ### ${NC}"
+		for media in $(cat $MEDIAVAILABLE);
+		do
+			service=$(echo $media | cut -d\- -f1)
+			desc=$(echo $media | cut -d\- -f2)
+			echo "$service $desc off" >> /tmp/menumedia.txt
+		done
+		MEDIASTOINSTALL=$(whiptail --title "Gestion des dossiers Medias" --checklist \
+		"Medias à ajouter pour $SEEDUSER (Barre espace pour la sélection)" 28 60 17 \
+		$(cat /tmp/menumedia.txt) 3>&1 1>&2 2>&3)
+		MEDIASPERUSER="$MEDIASUSER$SEEDUSER"
+		touch $MEDIASPERUSER
+		for MEDDOCKER in $MEDIASTOINSTALL
+		do
+			echo -e "	${GREEN}* $(echo $MEDDOCKER | tr -d '"')${NC}"
+			echo $(echo ${MEDDOCKER,,} | tr -d '"') >> $MEDIASPERUSER
+		done
+		for line in $(cat $MEDIASPERUSER);
+		do
+		line=$(echo $line | sed 's/\(.\)/\U\1/')
+		mkdir -p /home/$SEEDUSER/local/$line
+		mkdir -p /mnt/rclone/$SEEDUSER/$line 
+		done
+		rm /tmp/menumedia.txt
+	fi
+	echo ""
+	MEDIA="/home/media.txt"
+	if [[ -e "$MEDIA" ]]; then
+		rm /home/media.txt
+	fi
 }
 
 function add_user_htpasswd() {
@@ -646,23 +806,37 @@ function manage_users() {
 	                "2" "Supprimer Seedbox Utilisateur" 3>&1 1>&2 2>&3)
 	case $MANAGEUSER in
 		"1" )
+			PLEXDRIVE="/usr/bin/plexdrive"
 			echo -e "${GREEN}###   NOUVELLE SEEDBOX USER   ###${NC}"
 			echo -e "${GREEN}---------------------------------${NC}"
 			echo ""
 			define_parameters
-			choose_services
-			install_services
-			docker_compose
-			choose_media
-			resume_seedbox
-			pause
-			script_option
+			if [[ -e "$PLEXDRIVE" ]]; then
+				choose_media_folder_plexdrive
+				unionfs_fuse
+				pause
+				choose_services
+				install_services
+				docker_compose
+				resume_seedbox
+				pause
+				script_plexdrive
+			else
+				choose_media_folder_classique
+				choose_services
+				install_services
+				docker_compose
+				resume_seedbox
+				pause
+				script_classique
+			fi
 			;;
 
 		"2" )
 			echo -e "${GREEN}###   SUPRESSION SEEDBOX USER   ###${NC}"
 			echo -e "${GREEN}-----------------------------------${NC}"
 			echo ""
+			PLEXDRIVE="/usr/bin/plexdrive"
 			TMPGROUP=$(cat $GROUPFILE)
 			TABUSERS=()
 			for USERSEED in $(members $TMPGROUP)
@@ -683,6 +857,14 @@ function manage_users() {
 			checking_errors $?
 			docker-compose rm -fs > /dev/null 2>&1
 			echo ""
+			if [[ -e "$PLEXDRIVE" ]]; then
+				echo -e "${BLUE}### SUPPRESSION USER RCLONE/PLEXDRIVE ###${NC}"
+				systemctl stop unionfs-$SEEDUSER.service  
+				rm /etc/systemd/system/unionfs-$SEEDUSER.service
+				checking_errors $?
+				echo""
+			fi
+			rm -rf /mnt/rclone/$SEEDUSER
 		        echo -e "${BLUE}### SUPPRESSION USER ###${NC}"
 			rm -rf /home/$SEEDUSER > /dev/null 2>&1
 			userdel -rf $SEEDUSER > /dev/null 2>&1
@@ -694,7 +876,11 @@ function manage_users() {
 			echo -e "${BLUE}### $SEEDUSER a été supprimé ###${NC}"
 			echo ""
 			pause
-			script_option
+			if [[ -e "$PLEXDRIVE" ]]; then
+				script_plexdrive
+			else
+				script_classique
+			fi
 			;;
 	esac
 }
@@ -731,13 +917,17 @@ function manage_apps() {
 			#[[ "$?" = 1 ]] && break;
 	case $ACTIONONAPP in
 		"1" ) ## Ajout APP
-				choose_services
-				add_app_htpasswd
-				add_install_services
-				docker_compose
-				resume_seedbox
-				pause
-				script_option
+			choose_services
+			add_app_htpasswd
+			add_install_services
+			docker_compose
+			resume_seedbox
+			pause
+			if [[ -e "$PLEXDRIVE" ]]; then
+				script_plexdrive
+			else
+				script_classique
+			fi
 			;;
 		"2" ) ## Suppression APP
 			echo -e " ${BWHITE}* Edit my app${NC}"
@@ -763,7 +953,11 @@ function manage_apps() {
 			echo -e "${BLUE}### $APPSELECTED a été supprimé ###${NC}"
 			echo ""
 			pause
-			script_option
+			if [[ -e "$PLEXDRIVE" ]]; then
+				script_plexdrive
+			else
+				script_classique
+			fi
 			;;
 			
 	esac
@@ -837,6 +1031,13 @@ function uninstall_seedbox() {
 		echo -e " ${BWHITE}* Suppression users...${NC}"
 		userdel -rf $seeduser > /dev/null 2>&1
 		checking_errors $?
+		if [[ -e "$PLEXDRIVE" ]]; then
+			echo -e "${BLUE}### SUPPRESSION USER RCLONE/PLEXDRIVE ###${NC}"
+			rm /etc/systemd/system/unionfs*.service
+			fusermount -uz /home/$seeduser/Medias
+			checking_errors $?
+			echo""
+		fi
 		echo -e " ${BWHITE}* Suppression home...${NC}"
 		rm -Rf $USERHOMEDIR
 		checking_errors $?
@@ -846,6 +1047,7 @@ function uninstall_seedbox() {
 		echo -e " ${BWHITE}* Suppression Containers...${NC}"
 		docker rm -f $(docker ps -aq) > /dev/null 2>&1
 		checking_errors $?
+
 	done
 	echo -e " ${BWHITE}* Removing Seedbox-compose directory...${NC}"
 	rm -Rf /etc/seedboxcompose

@@ -7,16 +7,15 @@ logo
 echo ""
 
 if [[ ! -d "/etc/seedboxcompose/" ]]; then
-echo -e "${CCYAN}INSTALLATION${CEND}"
+echo -e "${CCYAN}INSTALLATION SEEDBOX DOCKER${CEND}"
 echo -e "${CGREEN}${CEND}"
-echo -e "${CGREEN}   1) Installation Seedbox ${CEND}"
-echo -e "${CGREEN}   2) Ajout/Supression d'utilisateurs${CEND}"
-echo -e "${CGREEN}   3) Ajout/Supression d'Applis${CEND}"
+echo -e "${CGREEN}   1) Installation Seedbox Classique ${CEND}"
+echo -e "${CGREEN}   2) Installation Seedbox Plexdrive${CEND}"
 echo -e ""
-read -p "Votre choix [1-3]: " -e -i 1 PORT_CHOICE
+read -p "Votre choix [1-2]: " -e -i 1 CHOICE
 
-case $PORT_CHOICE in
-	1) ## Installation de la seedbox
+case $CHOICE in
+	1) ## Installation de la seedbox classique
 
 	if [ $USER = "root" ] ; then
 	check_dir $PWD
@@ -29,30 +28,55 @@ case $PORT_CHOICE in
 			install_zsh
 			define_parameters
 			install_traefik
+			choose_media_folder_classique
 			choose_services
 			install_services
 			docker_compose
-			choose_media
 			resume_seedbox
 			pause
-			script_option
+			script_classique
 		else
-		script_option
+		script_classique
 		fi
 	fi
 	;;
 
-	2)
-	clear
-	manage_users
- 	;;
+	2) ## Installation de la seedbox Plexdrive
 
-	3)
-	clear
-	manage_apps
+	if [ $USER = "root" ] ; then
+	check_dir $PWD
+		if [[ ! -d "/etc/seedboxcompose/" ]]; then
+	    		clear
+			conf_dir
+			install_base_packages
+			checking_system
+			install_docker
+			install_zsh
+			define_parameters
+			install_traefik
+			install_plexdrive
+			install_rclone
+			choose_media_folder_plexdrive
+			unionfs_fuse
+			pause
+			choose_services
+			install_services
+			docker_compose
+			resume_seedbox
+			pause
+			script_plexdrive
+		else
+		script_plexdrive
+		fi
+	fi
 	;;
 esac
 
 else
-	script_option
+	PLEXDRIVE="/usr/bin/plexdrive"
+	if [[ -e "$PLEXDRIVE" ]]; then
+		script_plexdrive
+	else
+		script_classique
+	fi
 fi

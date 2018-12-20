@@ -14,3 +14,6 @@ tree
 openssl
 members
 dnsutils
+fuse
+unionfs-fuse
+
