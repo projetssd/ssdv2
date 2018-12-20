@@ -472,6 +472,7 @@ function choose_media_folder_classique() {
 	mkdir -p /home/$SEEDUSER/Medias/$line
 	done
 	rm /tmp/menumedia.txt
+	echo ""
 }
 
 function choose_media_folder_plexdrive() {
