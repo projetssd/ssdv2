@@ -307,9 +307,9 @@ function install_rclone() {
 
 function unionfs_fuse() {
 	echo -e "${BLUE}### Unionfs-Fuse ###${NC}"
-	echo -e " ${BWHITE}* Installation Unionfs${NC}"
 	UNIONFS="/etc/systemd/system/unionfs-$SEEDUSER.service"
 	if [[ ! -e "$UNIONFS" ]]; then
+		echo -e " ${BWHITE}* Installation Unionfs${NC}"
 		cp "$BASEDIR/includes/config/unionfs.service" "/etc/systemd/system/unionfs-$SEEDUSER.service" > /dev/null 2>&1
 		sed -i "s|%SEEDUSER%|$SEEDUSER|g" /etc/systemd/system/unionfs-$SEEDUSER.service
 		systemctl daemon-reload > /dev/null 2>&1
