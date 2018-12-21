@@ -1047,6 +1047,7 @@ function uninstall_seedbox() {
 	do
 		USERHOMEDIR="/home/$seeduser"
 		echo -e " ${BWHITE}* Suppression users...${NC}"
+		PLEXDRIVE="/usr/bin/plexdrive"
 		userdel -rf $seeduser > /dev/null 2>&1
 		checking_errors $?
 		if [[ -e "$PLEXDRIVE" ]]; then
