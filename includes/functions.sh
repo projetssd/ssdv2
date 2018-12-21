@@ -747,7 +747,7 @@ function config_post_compose() {
 			rm "/home/$SEEDUSER/sonarr/config/config.xml" > /dev/null 2>&1
 			cp "$BASEDIR/includes/config/sonarr.config.xml" "/home/$SEEDUSER/sonarr/config/config.xml" > /dev/null 2>&1
 			sed -i "s|%URI%|$SONARR|g" /home/$SEEDUSER/sonarr/config/config.xml
-			sed -i "s|%URI%|$SONARR|g" /home/$SEEDUSER/docker-compose.yml
+			#sed -i "s|%URI%|$SONARR|g" /home/$SEEDUSER/docker-compose.yml
 			docker restart sonarr-$SEEDUSER > /dev/null 2>&1
 			checking_errors $?
 		fi
@@ -759,7 +759,7 @@ function config_post_compose() {
 			rm "/home/$SEEDUSER/radarr/config/config.xml" > /dev/null 2>&1
 			cp "$BASEDIR/includes/config/radarr.config.xml" "/home/$SEEDUSER/radarr/config/config.xml" > /dev/null 2>&1
 			sed -i "s|%URI%|$RADARR|g" /home/$SEEDUSER/radarr/config/config.xml
-			sed -i "s|%URI%|$RADARR|g" /home/$SEEDUSER/docker-compose.yml
+			#sed -i "s|%URI%|$RADARR|g" /home/$SEEDUSER/docker-compose.yml
 			docker restart radarr-$SEEDUSER > /dev/null 2>&1
 			checking_errors $?
 		fi
@@ -768,7 +768,7 @@ function config_post_compose() {
 		if [[ "$?" == "0" ]]; then
 			RTORRENT=$(grep -R "rtorrent" /home/$SEEDUSER/resume | cut -d'/' -f2)
 			echo -e " ${BWHITE}* Processing rtorrent config file...${NC}"
-			sed -i "s|%URI%|$RTORRENT|g" /home/$SEEDUSER/docker-compose.yml
+			#sed -i "s|%URI%|$RTORRENT|g" /home/$SEEDUSER/docker-compose.yml
 			docker restart rtorrent-$SEEDUSER > /dev/null 2>&1
 			checking_errors $?
 		fi
@@ -777,7 +777,7 @@ function config_post_compose() {
 		if [[ "$?" == "0" ]]; then
 			MEDUSA=$(grep -R "medusa" /home/$SEEDUSER/resume | cut -d'/' -f2)
 			echo -e " ${BWHITE}* Processing medusa config file...${NC}"
-			sed -i "s|%URI%|$MEDUSA|g" /home/$SEEDUSER/docker-compose.yml
+			#sed -i "s|%URI%|$MEDUSA|g" /home/$SEEDUSER/docker-compose.yml
 			docker restart medusa-$SEEDUSER > /dev/null 2>&1
 			checking_errors $?
 		fi
