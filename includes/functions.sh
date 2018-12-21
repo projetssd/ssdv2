@@ -680,7 +680,7 @@ function add_install_services() {
 			DOM=$(echo $(sed q /home/$SEEDUSER/resume) | cut -d\- -f3)
 			FQD="$DOMAIN/"$SEEDUSER"_$APPLI"
 
-			if [[ "$DOM" == "$FQD" ]]; then
+			if [[ "$DOM" == "$FQD" ]] && [[ "$line" != "plex" ]]; then
 				PROXYACCESS="URI"
 				FQDN=$DOMAIN
 				FQDNTMP="/$SEEDUSER"_"$line"
@@ -782,8 +782,27 @@ function config_post_compose() {
 			checking_errors $?
 		fi
 
+		grep -R "plex" "$INSTALLEDFILE" > /dev/null 2>&1	
+		if [[ "$?" == "0" ]]; then
+			echo -e " ${BWHITE}* Processing plex config file...${NC}"
+			cd /home/$SEEDUSER
+			# CLAIM pour Plex
+			echo ""
+			echo -e "${BWHITE}* Un token est nécéssaire pour AUTHENTIFIER le serveur Plex ${NC}"
+			echo -e "${BWHITE}* Pour obtenir un identifiant CLAIM, allez à cette adresse et copier le dans le terminal ${NC}"
+			echo -e "${CRED}* https://www.plex.tv/claim/ ${CEND}"
+			echo ""
+			read -rp "CLAIM = " CLAIM
+			if [ -n "$CLAIM" ]
+			then
+				sed -i "s|%CLAIM%|$CLAIM|g" /home/$SEEDUSER/docker-compose.yml
+			fi
+			rm -rf /home/$SEEDUSER/plex
+			docker-compose rm -fs plex-$SEEDUSER > /dev/null 2>&1 
+			docker-compose up -d plex-$SEEDUSER > /dev/null 2>&1
+			checking_errors $?
+		fi
 	else
-		
 		echo -e "${BLUE}### CONFIG POST COMPOSE ###${NC}"
 		grep -R "medusa" "$INSTALLEDFILE" > /dev/null 2>&1
 		if [[ "$?" == "0" ]]; then
@@ -791,6 +810,26 @@ function config_post_compose() {
 			cd /home/$SEEDUSER/
 			sed -i '/MEDUSA_WEBROOT/d' docker-compose.yml
 			docker-compose rm -fs medusa-$SEEDUSER > /dev/null 2>&1 && docker-compose up -d medusa-$SEEDUSER > /dev/null 2>&1
+			checking_errors $?
+		fi
+
+		grep -R "plex" "$INSTALLEDFILE" > /dev/null 2>&1	
+		if [[ "$?" == "0" ]]; then
+			echo -e " ${BWHITE}* Processing plex config file...${NC}"
+			cd /home/$SEEDUSER
+			# CLAIM pour Plex
+			echo ""
+			echo -e "${BWHITE}* Un token est nécéssaire pour AUTHENTIFIER le serveur Plex ${NC}"
+			echo -e "${BWHITE}* Pour obtenir un identifiant CLAIM, allez à cette adresse et copier le dans le terminal ${NC}"
+			echo -e "${CRED}* https://www.plex.tv/claim/ ${CEND}"
+			echo ""
+			read -rp "CLAIM = " CLAIM
+			if [ -n "$CLAIM" ]
+			then
+				sed -i "s|%CLAIM%|$CLAIM|g" /home/$SEEDUSER/docker-compose.yml
+			fi
+			rm -rf /home/$SEEDUSER/plex
+			docker-compose rm -fs plex-$SEEDUSER > /dev/null 2>&1 && docker-compose up -d plex-$SEEDUSER > /dev/null 2>&1
 			checking_errors $?
 		fi
 	fi
