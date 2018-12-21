@@ -238,22 +238,27 @@ function install_traefik() {
 
 function install_plexdrive() {
 	echo -e "${BLUE}### PLEXDRIVE ###${NC}"
-	echo -e " ${BWHITE}* Installation plexdrive${NC}"
+	mkdir -p /mnt/plexdrive > /dev/null 2>&1
 	PLEXDRIVE="/usr/bin/plexdrive"
 
 	if [[ ! -e "$PLEXDRIVE" ]]; then
+		echo -e " ${BWHITE}* Installation plexdrive${NC}"
 		cd /tmp
 		wget $(curl -s https://api.github.com/repos/dweidenfeld/plexdrive/releases/latest | grep 'browser_' | cut -d\" -f4 | grep plexdrive-linux-amd64) -q -O plexdrive > /dev/null 2>&1
 		chmod -c +x /tmp/plexdrive > /dev/null 2>&1
 		#install plexdrive
 		mv -v /tmp/plexdrive /usr/bin/ > /dev/null 2>&1
 		chown -c root:root /usr/bin/plexdrive > /dev/null 2>&1
+		echo ""
+		echo -e " ${YELLOW}* Une fois la configuration Plexdrive terminée, tapez ${NC}${CPURPLE}CTRL + C${NC}${YELLOW} pour poursuivre le script !${NC}"
+		echo ""
 		plexdrive mount -c /root/.plexdrive -o allow_other /mnt/plexdrive
 		cp "$BASEDIR/includes/config/plexdrive.service" "/etc/systemd/system/plexdrive.service" > /dev/null 2>&1
 		systemctl daemon-reload > /dev/null 2>&1
 		systemctl enable plexdrive.service > /dev/null 2>&1
 		systemctl start plexdrive.service > /dev/null 2>&1
-		checking_errors $?
+		echo ""
+		echo -e " ${GREEN}* Configuration Plexdrive terminée avec succés !${NC}"
 	else
 		echo -e " ${YELLOW}* Plexdrive est déjà installé !${NC}"
 	fi
@@ -262,10 +267,29 @@ function install_plexdrive() {
 
 function install_rclone() {
 	echo -e "${BLUE}### RCLONE ###${NC}"
-	echo -e " ${BWHITE}* Installation rclone${NC}"
+	mkdir /mnt/rclone > /dev/null 2>&1
 	RCLONE="/usr/bin/rclone"
-	if [[ ! -e "$RCLONE" ]]; then
+	SEARCH=$(find /root/.config/rclone -name rclone.conf > /dev/null 2>&1)
+	if [[ ! -e "$RCLONE" ]] || [[ ! -e "$SEARCH" ]]; then
+		echo -e " ${BWHITE}* Installation rclone${NC}"
 		curl https://rclone.org/install.sh | bash > /dev/null 2>&1
+		mkdir -p /root/.config/rclone
+			echo ""
+			read -rp "Edition du fichier rclone.conf ? (o/n) : " FILE
+			if [[ "$FILE" = "o" ]] || [[ "$FILE" = "O" ]]; then
+    				echo -e "${YELLOW}\nColler le contenu de rclone.conf avec le clic droit, appuyez ensuite sur la touche Entrée et Taper ${CPURPLE}STOP${CEND}${YELLOW} pour poursuivre le script.\n${NC}"   				
+				while :
+    				do		
+        			read -p "" EXCLUDEPATH
+        			if [[ "$EXCLUDEPATH" = "STOP" ]] || [[ "$EXCLUDEPATH" = "stop" ]]; then
+            				break
+        			fi
+        			echo "$EXCLUDEPATH" >> /root/.config/rclone/rclone.conf
+    				done
+			fi
+			echo ""
+			echo -e " ${GREEN}* Configuration rclone terminée avec succés !${NC}"
+		pause
 		REMOTECRYPT=$(whiptail --title "Remote crypté" --inputbox \
 		"Saisir votre Remote crypté Plexdrive:" 7 50 3>&1 1>&2 2>&3)
 		cp "$BASEDIR/includes/config/rclone.service" "/etc/systemd/system/rclone.service" > /dev/null 2>&1
@@ -273,11 +297,10 @@ function install_rclone() {
 		systemctl daemon-reload > /dev/null 2>&1
 		systemctl enable rclone.service > /dev/null 2>&1
 		service rclone start
-		checking_errors $?
-		echo -e " ${BWHITE}--> Montage rclone en cours, merci de patienter... : ${NC}"
+		echo -e " ${BWHITE}* Montage rclone en cours, merci de patienter... ${NC}"
 		sleep 15
 	else
-		echo -e " ${YELLOW}* Rclone est déjà installé !${NC}"
+		echo -e " ${YELLOW}* rclone est déjà installé !${NC}"
 	fi
 	echo ""
 }
@@ -1034,8 +1057,17 @@ function uninstall_seedbox() {
 		checking_errors $?
 		if [[ -e "$PLEXDRIVE" ]]; then
 			echo -e "${BLUE}### SUPPRESSION USER RCLONE/PLEXDRIVE ###${NC}"
+			service rclone stop
+			service plexdrive stop
+			service unionfs-bobo stop
+			rm /usr/bin/plexdrive
+			rm /usr/bin/rclone
 			rm /etc/systemd/system/unionfs*.service
 			fusermount -uz /home/$seeduser/Medias
+			rm -rf /mnt/plexdrive
+			rm -rf /mnt/rclone
+			rm -rf /root/.plexdrive
+			rm -rf /root/.config/rclone
 			checking_errors $?
 			echo""
 		fi
