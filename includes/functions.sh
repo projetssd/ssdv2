@@ -739,82 +739,38 @@ function docker_compose() {
 function config_post_compose() {
 	if [[ "$PROXYACCESS" == "URI" ]]; then
 		echo -e "${BLUE}### CONFIG POST COMPOSE ###${NC}"
-
-		grep -R "sonarr" "$INSTALLEDFILE" > /dev/null 2>&1	
-		if [[ "$?" == "0" ]]; then
+	
+		if [[ "$line" == "sonarr" ]]; then
 			SONARR=$(grep -R "sonarr" /home/$SEEDUSER/resume | cut -d'/' -f2)
 			echo -e " ${BWHITE}* Processing sonarr config file...${NC}"
 			rm "/home/$SEEDUSER/sonarr/config/config.xml" > /dev/null 2>&1
 			cp "$BASEDIR/includes/config/sonarr.config.xml" "/home/$SEEDUSER/sonarr/config/config.xml" > /dev/null 2>&1
 			sed -i "s|%URI%|$SONARR|g" /home/$SEEDUSER/sonarr/config/config.xml
-			#sed -i "s|%URI%|$SONARR|g" /home/$SEEDUSER/docker-compose.yml
 			docker restart sonarr-$SEEDUSER > /dev/null 2>&1
 			checking_errors $?
 		fi
 
-		grep -R "radarr" "$INSTALLEDFILE" > /dev/null 2>&1	
-		if [[ "$?" == "0" ]]; then
+		if [[ "$line" == "radarr" ]]; then
 			RADARR=$(grep -R "radarr" /home/$SEEDUSER/resume | cut -d'/' -f2)
 			echo -e " ${BWHITE}* Processing radarr config file...${NC}"
 			rm "/home/$SEEDUSER/radarr/config/config.xml" > /dev/null 2>&1
 			cp "$BASEDIR/includes/config/radarr.config.xml" "/home/$SEEDUSER/radarr/config/config.xml" > /dev/null 2>&1
 			sed -i "s|%URI%|$RADARR|g" /home/$SEEDUSER/radarr/config/config.xml
-			#sed -i "s|%URI%|$RADARR|g" /home/$SEEDUSER/docker-compose.yml
 			docker restart radarr-$SEEDUSER > /dev/null 2>&1
-			checking_errors $?
-		fi
-
-		grep -R "rtorrent" "$INSTALLEDFILE" > /dev/null 2>&1	
-		if [[ "$?" == "0" ]]; then
-			RTORRENT=$(grep -R "rtorrent" /home/$SEEDUSER/resume | cut -d'/' -f2)
-			echo -e " ${BWHITE}* Processing rtorrent config file...${NC}"
-			#sed -i "s|%URI%|$RTORRENT|g" /home/$SEEDUSER/docker-compose.yml
-			docker restart rtorrent-$SEEDUSER > /dev/null 2>&1
-			checking_errors $?
-		fi
-
-		grep -R "medusa" "$INSTALLEDFILE" > /dev/null 2>&1	
-		if [[ "$?" == "0" ]]; then
-			MEDUSA=$(grep -R "medusa" /home/$SEEDUSER/resume | cut -d'/' -f2)
-			echo -e " ${BWHITE}* Processing medusa config file...${NC}"
-			#sed -i "s|%URI%|$MEDUSA|g" /home/$SEEDUSER/docker-compose.yml
-			docker restart medusa-$SEEDUSER > /dev/null 2>&1
-			checking_errors $?
-		fi
-
-		grep -R "plex" "$INSTALLEDFILE" > /dev/null 2>&1	
-		if [[ "$?" == "0" ]]; then
-			echo -e " ${BWHITE}* Processing plex config file...${NC}"
-			cd /home/$SEEDUSER
-			# CLAIM pour Plex
-			echo ""
-			echo -e "${BWHITE}* Un token est nécéssaire pour AUTHENTIFIER le serveur Plex ${NC}"
-			echo -e "${BWHITE}* Pour obtenir un identifiant CLAIM, allez à cette adresse et copier le dans le terminal ${NC}"
-			echo -e "${CRED}* https://www.plex.tv/claim/ ${CEND}"
-			echo ""
-			read -rp "CLAIM = " CLAIM
-			if [ -n "$CLAIM" ]
-			then
-				sed -i "s|%CLAIM%|$CLAIM|g" /home/$SEEDUSER/docker-compose.yml
-			fi
-			rm -rf /home/$SEEDUSER/plex
-			docker-compose rm -fs plex-$SEEDUSER > /dev/null 2>&1 
-			docker-compose up -d plex-$SEEDUSER > /dev/null 2>&1
 			checking_errors $?
 		fi
 	else
 		echo -e "${BLUE}### CONFIG POST COMPOSE ###${NC}"
-		grep -R "medusa" "$INSTALLEDFILE" > /dev/null 2>&1
-		if [[ "$?" == "0" ]]; then
+
+		if [[ "$line" == "medusa" ]]; then
 			echo -e " ${BWHITE}* Processing medusa config file...${NC}"
 			cd /home/$SEEDUSER/
 			sed -i '/MEDUSA_WEBROOT/d' docker-compose.yml
 			docker-compose rm -fs medusa-$SEEDUSER > /dev/null 2>&1 && docker-compose up -d medusa-$SEEDUSER > /dev/null 2>&1
 			checking_errors $?
 		fi
-
-		grep -R "plex" "$INSTALLEDFILE" > /dev/null 2>&1	
-		if [[ "$?" == "0" ]]; then
+	
+		if [[ "$line" == "plex" ]]; then
 			echo -e " ${BWHITE}* Processing plex config file...${NC}"
 			cd /home/$SEEDUSER
 			# CLAIM pour Plex
@@ -927,7 +883,6 @@ function manage_users() {
 				checking_errors $?
 				echo""
 			fi
-			rm -rf /mnt/rclone/$SEEDUSER
 		        echo -e "${BLUE}### SUPPRESSION USER ###${NC}"
 			rm -rf /home/$SEEDUSER > /dev/null 2>&1
 			userdel -rf $SEEDUSER > /dev/null 2>&1
@@ -1098,10 +1053,10 @@ function uninstall_seedbox() {
 			echo -e "${BLUE}### SUPPRESSION USER RCLONE/PLEXDRIVE ###${NC}"
 			service rclone stop
 			service plexdrive stop
-			service unionfs-bobo stop
+			service unionfs-$seeduser stop
 			rm /usr/bin/plexdrive
 			rm /usr/bin/rclone
-			rm /etc/systemd/system/unionfs*.service
+			rm /etc/systemd/system/unionfs-$seeduser.service
 			fusermount -uz /home/$seeduser/Medias
 			rm -rf /mnt/plexdrive
 			rm -rf /mnt/rclone
