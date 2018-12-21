@@ -997,13 +997,12 @@ function resume_seedbox() {
 					DOCKERAPP=$(echo $line | cut -d\- -f1)
 					echo -e "	--> ${BWHITE}$DOCKERAPP${NC} --> ${YELLOW}$ACCESSDOMAIN${NC}"
 				else
-					ACCESS=$(echo $line | cut -d\- -f3)
-					ACCESSDOMAIN=$(echo $line | cut -d\- -f4)
+					ACCESSDOMAIN=$(echo $line | cut -d\- -f3-4)
 					DOCKERAPP=$(echo $line | cut -d\- -f1)
-					echo -e "	--> ${BWHITE}$DOCKERAPP${NC} --> ${YELLOW}$ACCESS-$ACCESSDOMAIN${NC}"
+					echo -e "	--> ${BWHITE}$DOCKERAPP${NC} --> ${YELLOW}$ACCESSDOMAIN${NC}"
 				fi
 			else
-			ACCESSDOMAIN=$(echo $line | cut -d\- -f3)
+			ACCESSDOMAIN=$(echo $line | cut -d\- -f3-4)
 			DOCKERAPP=$(echo $line | cut -d\- -f1)
 			echo -e "	--> ${BWHITE}$DOCKERAPP${NC} --> ${YELLOW}$ACCESSDOMAIN${NC}"
 			fi
@@ -1058,8 +1057,6 @@ function uninstall_seedbox() {
 			rm /usr/bin/plexdrive
 			rm /usr/bin/rclone
 			rm /etc/systemd/system/unionfs-$seeduser.service
-			rm /etc/systemd/system/plexdrive.service
-			rm /etc/systemd/system/rclone.service
 			fusermount -uz /home/$seeduser/Medias
 			rm -rf /mnt/plexdrive
 			rm -rf /mnt/rclone
