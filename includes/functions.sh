@@ -1058,6 +1058,8 @@ function uninstall_seedbox() {
 			rm /usr/bin/plexdrive
 			rm /usr/bin/rclone
 			rm /etc/systemd/system/unionfs-$seeduser.service
+			rm /etc/systemd/system/plexdrive.service
+			rm /etc/systemd/system/rclone.service
 			fusermount -uz /home/$seeduser/Medias
 			rm -rf /mnt/plexdrive
 			rm -rf /mnt/rclone
