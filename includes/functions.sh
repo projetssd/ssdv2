@@ -624,18 +624,34 @@ function install_services() {
 	        	;;
 
 	        	"2" )
-				PROXYACCESS="URI"
-				FQDN=$DOMAIN
-				FQDNTMP="/$SEEDUSER"_"$line"
-				ACCESSURL=$(whiptail --title "SSL Subdomain" --inputbox \
-				"Souhaitez vous utiliser une autre URI pour $line ? default :" 7 75 "$FQDNTMP" 3>&1 1>&2 2>&3)
-				URI=$ACCESSURL
-				TRAEFIKURL=(Host:$DOMAIN';'PathPrefix:$URI)
-				sed -i "s|%TRAEFIKURL%|$TRAEFIKURL|g" /home/$SEEDUSER/docker-compose.yml
-				sed -i "s|%URI%|$URI|g" /home/$SEEDUSER/docker-compose.yml
-				check_domain $DOMAIN
-				echo "$line-$PORT-$FQDN$URI" >> $INSTALLEDFILE
-				
+				if [[ "$line" = "plex" ]]; then
+					NOMBRE=$(sed -n "/$SEEDUSER/=" /etc/seedboxcompose/users)
+					if [ $NOMBRE -le 1 ] ; then
+						FQDNTMP="$line.$DOMAIN"
+					else
+						FQDNTMP="$line-$SEEDUSER.$DOMAIN"
+					fi
+					FQDN=$(whiptail --title "SSL Sous Domaine" --inputbox \
+					"$line n'est proposé qu'en sous domaine. default :" 7 75 "$FQDNTMP" 3>&1 1>&2 2>&3)
+					ACCESSURL=$FQDN
+					check_domain $ACCESSURL
+					TRAEFIKURL=(Host:$ACCESSURL)
+					sed -i "s|%TRAEFIKURL%|$TRAEFIKURL|g" /home/$SEEDUSER/docker-compose.yml
+					sed -i '/WEBROOT=%URI%/d' /home/$SEEDUSER/docker-compose.yml
+					echo "$line-$PORT-$FQDN" >> $INSTALLEDFILE
+				else
+					PROXYACCESS="URI"
+					FQDN=$DOMAIN
+					FQDNTMP="/$SEEDUSER"_"$line"
+					ACCESSURL=$(whiptail --title "SSL Subdomain" --inputbox \
+					"Souhaitez vous utiliser une autre URI pour $line ? default :" 7 75 "$FQDNTMP" 3>&1 1>&2 2>&3)
+					URI=$ACCESSURL
+					TRAEFIKURL=(Host:$DOMAIN';'PathPrefix:$URI)
+					sed -i "s|%TRAEFIKURL%|$TRAEFIKURL|g" /home/$SEEDUSER/docker-compose.yml
+					sed -i "s|%URI%|$URI|g" /home/$SEEDUSER/docker-compose.yml
+					check_domain $DOMAIN
+					echo "$line-$PORT-$FQDN$URI" >> $INSTALLEDFILE
+				fi
 			;;
 				
 	    	esac
@@ -676,8 +692,8 @@ function add_install_services() {
 		sed -i "s|%IPADDRESS%|$IPADDRESS|g" $DOCKERCOMPOSEFILE
 		cat /opt/seedbox-compose/includes/dockerapps/foot.docker >> $DOCKERCOMPOSEFILE
 
-			APPLI=$(echo $(sed q /home/$SEEDUSER/resume) | cut -d\- -f1)
-			DOM=$(echo $(sed q /home/$SEEDUSER/resume) | cut -d\- -f3)
+			APPLI=$(echo $(sed -n 2p /home/$SEEDUSER/resume) | cut -d\- -f1)
+			DOM=$(echo $(sed -n 2p /home/$SEEDUSER/resume) | cut -d\- -f3)
 			FQD="$DOMAIN/"$SEEDUSER"_$APPLI"
 
 			if [[ "$DOM" == "$FQD" ]] && [[ "$line" != "plex" ]]; then
@@ -695,11 +711,11 @@ function add_install_services() {
 			else
 				PROXYACCESS="SUBDOMAIN"
 				NOMBRE=$(sed -n "/$SEEDUSER/=" /etc/seedboxcompose/users)
-					if [ $NOMBRE -le 1 ] ; then
-						FQDNTMP="$line.$DOMAIN"
-					else
-						FQDNTMP="$line-$SEEDUSER.$DOMAIN"
-					fi
+				if [ $NOMBRE -le 1 ] ; then
+					FQDNTMP="$line.$DOMAIN"
+				else
+					FQDNTMP="$line-$SEEDUSER.$DOMAIN"
+				fi
 				FQDN=$(whiptail --title "SSL Subdomain" --inputbox \
 				"Souhaitez vous utiliser un autre Sous Domaine pour $line ? default :" 7 75 "$FQDNTMP" 3>&1 1>&2 2>&3)
 				ACCESSURL=$FQDN
@@ -737,9 +753,11 @@ function docker_compose() {
 }
 
 function config_post_compose() {
+for line in $(cat $SERVICESPERUSER);
+do
+	echo -e "${BLUE}### CONFIG POST COMPOSE ###${NC}"
 	if [[ "$PROXYACCESS" == "URI" ]]; then
-		echo -e "${BLUE}### CONFIG POST COMPOSE ###${NC}"
-	
+
 		if [[ "$line" == "sonarr" ]]; then
 			SONARR=$(grep -R "sonarr" /home/$SEEDUSER/resume | cut -d'/' -f2)
 			echo -e " ${BWHITE}* Processing sonarr config file...${NC}"
@@ -759,8 +777,26 @@ function config_post_compose() {
 			docker restart radarr-$SEEDUSER > /dev/null 2>&1
 			checking_errors $?
 		fi
+
+		if [[ "$line" == "plex" ]]; then
+			echo -e " ${BWHITE}* Processing plex config file...${NC}"
+			cd /home/$SEEDUSER
+			# CLAIM pour Plex
+			echo ""
+			echo -e "${BWHITE}* Un token est nécéssaire pour AUTHENTIFIER le serveur Plex ${NC}"
+			echo -e "${BWHITE}* Pour obtenir un identifiant CLAIM, allez à cette adresse et copier le dans le terminal ${NC}"
+			echo -e "${CRED}* https://www.plex.tv/claim/ ${CEND}"
+			echo ""
+			read -rp "CLAIM = " CLAIM
+			if [ -n "$CLAIM" ]
+			then
+				sed -i "s|%CLAIM%|$CLAIM|g" /home/$SEEDUSER/docker-compose.yml
+			fi
+			rm -rf /home/$SEEDUSER/plex
+			docker-compose rm -fs plex-$SEEDUSER > /dev/null 2>&1 && docker-compose up -d plex-$SEEDUSER > /dev/null 2>&1
+			checking_errors $?
+		fi
 	else
-		echo -e "${BLUE}### CONFIG POST COMPOSE ###${NC}"
 
 		if [[ "$line" == "medusa" ]]; then
 			echo -e " ${BWHITE}* Processing medusa config file...${NC}"
@@ -789,6 +825,8 @@ function config_post_compose() {
 			checking_errors $?
 		fi
 	fi
+echo ""
+done
 }
 
 function valid_htpasswd() {
@@ -1042,40 +1080,44 @@ function uninstall_seedbox() {
 	echo -e "${BLUE}###          UNINSTALL SEEDBOX         ###${NC}"
 	echo -e "${BLUE}##########################################${NC}"
 	SEEDGROUP=$(cat $GROUPFILE)
+	PLEXDRIVE="/usr/bin/plexdrive"
+	if [[ -e "$PLEXDRIVE" ]]; then
+		echo -e " ${BWHITE}* Suppression Plexdrive/rclone...${NC}"
+		service rclone stop
+		service plexdrive stop
+		rm /etc/systemd/system/rclone.service
+		rm /etc/systemd/system/plexdrive.service
+		rm /usr/bin/rclone
+		rm -rf /mnt/plexdrive
+		rm -rf /mnt/rclone
+		rm -rf /root/.plexdrive
+		rm -rf /root/.config/rclone
+		checking_errors $?
+	fi
+
 	for seeduser in $(cat $USERSFILE)
 	do
 		USERHOMEDIR="/home/$seeduser"
-		echo -e " ${BWHITE}* Suppression users...${NC}"
-		PLEXDRIVE="/usr/bin/plexdrive"
-		userdel -rf $seeduser > /dev/null 2>&1
-		checking_errors $?
+		echo -e " ${BWHITE}* Suppression users $seeduser...${NC}"
 		if [[ -e "$PLEXDRIVE" ]]; then
-			echo -e "${BLUE}### SUPPRESSION USER RCLONE/PLEXDRIVE ###${NC}"
-			service rclone stop
-			service plexdrive stop
 			service unionfs-$seeduser stop
-			rm /usr/bin/plexdrive
-			rm /usr/bin/rclone
 			rm /etc/systemd/system/unionfs-$seeduser.service
-			fusermount -uz /home/$seeduser/Medias
-			rm -rf /mnt/plexdrive
-			rm -rf /mnt/rclone
-			rm -rf /root/.plexdrive
-			rm -rf /root/.config/rclone
 			checking_errors $?
 			echo""
 		fi
-		echo -e " ${BWHITE}* Suppression home...${NC}"
+		userdel -rf $seeduser > /dev/null 2>&1
+		checking_errors $?
+		echo -e " ${BWHITE}* Suppression home $seeduser...${NC}"
 		rm -Rf $USERHOMEDIR
 		checking_errors $?
-		echo -e " ${BWHITE}* Suppression group...${NC}"
-		groupdel $SEEDGROUP > /dev/null 2>&1
-		checking_errors $?
-		echo -e " ${BWHITE}* Suppression Containers...${NC}"
-		docker rm -f $(docker ps -aq) > /dev/null 2>&1
-		checking_errors $?
-
 	done
+	rm /usr/bin/plexdrive > /dev/null 2>&1
+	echo -e " ${BWHITE}* Suppression Containers...${NC}"
+	docker rm -f $(docker ps -aq) > /dev/null 2>&1
+	checking_errors $?
+	echo -e " ${BWHITE}* Suppression group...${NC}"
+	groupdel $SEEDGROUP > /dev/null 2>&1
+	checking_errors $?
 	echo -e " ${BWHITE}* Removing Seedbox-compose directory...${NC}"
 	rm -Rf /etc/seedboxcompose
 	checking_errors $?
