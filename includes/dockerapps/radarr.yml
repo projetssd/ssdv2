@@ -17,7 +17,7 @@
     volumes:
       - /home/%USER%/radarr/config:/config
       - /home/%USER%/rtorrent/torrents:/data/torrents
-      - /home/%USER%/radarr/TV:/tv
+      - /home/%USER%/radarr/Medias/Films:/tv
     networks:
       - proxy
 #ENDradarr#

@@ -13,7 +13,7 @@
       - traefik.frontend.auth.basic=%VAR%
     volumes:
       - /home/%USER%/medusa/Medias/series:/tv:rw
-      - /home/%USER%/torrents:/downloads
+      - /home/%USER%/rtorrent/torrents:/downloads
       - /home/%USER%/medusa/config:/config
     environment:
       - /etc/localtime:/etc/localtime:ro
