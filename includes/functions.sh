@@ -800,8 +800,8 @@ do
 			checking_errors $?
 			PLEXDRIVE="/usr/bin/plexdrive"
 			## Récupération du token de plex
-			docker exec -ti plex grep -E -o "PlexOnlineToken=.{0,22}" /config/Library/Application\ Support/Plex\ Media\ Server/Preferences.xml > ${VOLUMES_ROOT_PATH}/plex/token.txt
-			TOKEN=$(grep PlexOnlineToken ${VOLUMES_ROOT_PATH}/plex/token.txt | cut -d '=' -f2 | cut -c2-21)
+			docker exec -ti plex-$SEEDUSER grep -E -o "PlexOnlineToken=.{0,22}" /config/Library/Application\ Support/Plex\ Media\ Server/Preferences.xml > /home/$SEEDUSER/plex_autoscan/token.txt
+			TOKEN=$(grep PlexOnlineToken /home/$SEEDUSER/plex_autoscan/token.txt | cut -d '=' -f2 | cut -c2-21)
 
 			if [[ -e "$PLEXDRIVE" ]]; then
 				USERID=$(id -u $SEEDUSER)
@@ -813,10 +813,13 @@ do
 				hash -r pip
 				pip3 install --no-cache-dir --upgrade -r /home/$SEEDUSER/plex_dupefinder/requirements.txt
 				pip install --no-cache-dir --upgrade -r /home/$SEEDUSER/plex_autoscan/requirements.txt
-				chown -R $USERID:$GRPID /home/$SEEDUSER/plex_autoscan
-				chown -R $USERID:$GRPID /home/$SEEDUSER/plex_dupefinder
+				#chown -R $USERID:$GRPID /home/$SEEDUSER/plex_dupefinder
+				rm /home/$SEEDUSER/plex_autoscan/config/default.config
 				cp "$BASEDIR/includes/config/plex_autoscan/config.json" "/home/$SEEDUSER/plex_autoscan/config/config.json" > /dev/null 2>&1
 				sed -i "s|%TOKEN%|$TOKEN|g" /home/$SEEDUSER/plex_autoscan/config/config.json
+				sed -i "s|%SEEDUSER%|$SEEDUSER|g" /home/$SEEDUSER/plex_autoscan/config/config.json
+				chown -R $USERID:$GRPID /home/$SEEDUSER/plex_autoscan
+
 			fi
 		fi
 done

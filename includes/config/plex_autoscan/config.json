@@ -1,5 +1,5 @@
 {
-  "DOCKER_NAME": "plex-$SEEDUSER",
+  "DOCKER_NAME": "plex-%SEEDUSER%",
   "GDRIVE": {
     "CLIENT_ID": "",
     "CLIENT_SECRET": "",
