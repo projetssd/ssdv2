@@ -819,6 +819,7 @@ do
 				sed -i "s|%TOKEN%|$TOKEN|g" /home/$SEEDUSER/plex_autoscan/config/config.json
 				sed -i "s|%SEEDUSER%|$SEEDUSER|g" /home/$SEEDUSER/plex_autoscan/config/config.json
 				chown -R $USERID:$GRPID /home/$SEEDUSER/plex_autoscan
+				chown -R $USERID:$GRPID /home/$SEEDUSER/plex
 
 			fi
 		fi
