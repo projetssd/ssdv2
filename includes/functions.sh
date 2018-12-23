@@ -756,10 +756,10 @@ function config_post_compose() {
 for line in $(cat $SERVICESPERUSER);
 do
 	echo -e "${BLUE}### CONFIG POST COMPOSE ###${NC}"
-	if [[ "$PROXYACCESS" == "URI" ]]; then
-
-		if [[ "$line" == "sonarr" ]]; then
-			SONARR=$(grep -R "sonarr" /home/$SEEDUSER/resume | cut -d'/' -f2)
+	FQD="$SEEDUSER"_"$line"
+	SONARR=$(grep -R "sonarr" /home/$SEEDUSER/resume | cut -d'/' -f2)
+	RADARR=$(grep -R "radarr" /home/$SEEDUSER/resume | cut -d'/' -f2)
+		if [[ "$FQD" == "$SONARR" ]]; then
 			echo -e " ${BWHITE}* Processing sonarr config file...${NC}"
 			rm "/home/$SEEDUSER/sonarr/config/config.xml" > /dev/null 2>&1
 			cp "$BASEDIR/includes/config/sonarr.config.xml" "/home/$SEEDUSER/sonarr/config/config.xml" > /dev/null 2>&1
@@ -768,8 +768,7 @@ do
 			checking_errors $?
 		fi
 
-		if [[ "$line" == "radarr" ]]; then
-			RADARR=$(grep -R "radarr" /home/$SEEDUSER/resume | cut -d'/' -f2)
+		if [[ "$FQD" == "$RADARR" ]]; then
 			echo -e " ${BWHITE}* Processing radarr config file...${NC}"
 			rm "/home/$SEEDUSER/radarr/config/config.xml" > /dev/null 2>&1
 			cp "$BASEDIR/includes/config/radarr.config.xml" "/home/$SEEDUSER/radarr/config/config.xml" > /dev/null 2>&1
@@ -796,35 +795,6 @@ do
 			docker-compose rm -fs plex-$SEEDUSER > /dev/null 2>&1 && docker-compose up -d plex-$SEEDUSER > /dev/null 2>&1
 			checking_errors $?
 		fi
-	else
-
-		if [[ "$line" == "medusa" ]]; then
-			echo -e " ${BWHITE}* Processing medusa config file...${NC}"
-			cd /home/$SEEDUSER/
-			sed -i '/MEDUSA_WEBROOT/d' docker-compose.yml
-			docker-compose rm -fs medusa-$SEEDUSER > /dev/null 2>&1 && docker-compose up -d medusa-$SEEDUSER > /dev/null 2>&1
-			checking_errors $?
-		fi
-	
-		if [[ "$line" == "plex" ]]; then
-			echo -e " ${BWHITE}* Processing plex config file...${NC}"
-			cd /home/$SEEDUSER
-			# CLAIM pour Plex
-			echo ""
-			echo -e "${BWHITE}* Un token est nécéssaire pour AUTHENTIFIER le serveur Plex ${NC}"
-			echo -e "${BWHITE}* Pour obtenir un identifiant CLAIM, allez à cette adresse et copier le dans le terminal ${NC}"
-			echo -e "${CRED}* https://www.plex.tv/claim/ ${CEND}"
-			echo ""
-			read -rp "CLAIM = " CLAIM
-			if [ -n "$CLAIM" ]
-			then
-				sed -i "s|%CLAIM%|$CLAIM|g" /home/$SEEDUSER/docker-compose.yml
-			fi
-			rm -rf /home/$SEEDUSER/plex
-			docker-compose rm -fs plex-$SEEDUSER > /dev/null 2>&1 && docker-compose up -d plex-$SEEDUSER > /dev/null 2>&1
-			checking_errors $?
-		fi
-	fi
 echo ""
 done
 }
