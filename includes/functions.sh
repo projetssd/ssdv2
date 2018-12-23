@@ -1072,7 +1072,6 @@ function uninstall_seedbox() {
 		if [[ -e "$PLEXDRIVE" ]]; then
 			service unionfs-$seeduser stop
 			rm /etc/systemd/system/unionfs-$seeduser.service
-			checking_errors $?
 		fi
 		userdel -rf $seeduser > /dev/null 2>&1
 		checking_errors $?
