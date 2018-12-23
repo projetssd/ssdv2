@@ -755,36 +755,40 @@ function docker_compose() {
 function config_post_compose() {
 for line in $(cat $SERVICESPERUSER);
 do
-	echo -e "${BLUE}### CONFIG POST COMPOSE ###${NC}"
 	FQD="$SEEDUSER"_"$line"
 	SONARR=$(grep -R "sonarr" /home/$SEEDUSER/resume | cut -d'/' -f2)
 	RADARR=$(grep -R "radarr" /home/$SEEDUSER/resume | cut -d'/' -f2)
 		if [[ "$FQD" == "$SONARR" ]]; then
+			echo -e "${BLUE}### CONFIG POST COMPOSE ###${NC}"
 			echo -e " ${BWHITE}* Processing sonarr config file...${NC}"
 			rm "/home/$SEEDUSER/sonarr/config/config.xml" > /dev/null 2>&1
 			cp "$BASEDIR/includes/config/sonarr.config.xml" "/home/$SEEDUSER/sonarr/config/config.xml" > /dev/null 2>&1
 			sed -i "s|%URI%|$SONARR|g" /home/$SEEDUSER/sonarr/config/config.xml
 			docker restart sonarr-$SEEDUSER > /dev/null 2>&1
 			checking_errors $?
+			echo ""
 		fi
 
 		if [[ "$FQD" == "$RADARR" ]]; then
+			echo -e "${BLUE}### CONFIG POST COMPOSE ###${NC}"
 			echo -e " ${BWHITE}* Processing radarr config file...${NC}"
 			rm "/home/$SEEDUSER/radarr/config/config.xml" > /dev/null 2>&1
 			cp "$BASEDIR/includes/config/radarr.config.xml" "/home/$SEEDUSER/radarr/config/config.xml" > /dev/null 2>&1
 			sed -i "s|%URI%|$RADARR|g" /home/$SEEDUSER/radarr/config/config.xml
 			docker restart radarr-$SEEDUSER > /dev/null 2>&1
 			checking_errors $?
+			echo ""
 		fi
 
 		if [[ "$line" == "plex" ]]; then
+			echo -e "${BLUE}### CONFIG POST COMPOSE ###${NC}"
 			echo -e " ${BWHITE}* Processing plex config file...${NC}"
 			cd /home/$SEEDUSER
 			# CLAIM pour Plex
 			echo ""
-			echo -e "${BWHITE}* Un token est nécéssaire pour AUTHENTIFIER le serveur Plex ${NC}"
-			echo -e "${BWHITE}* Pour obtenir un identifiant CLAIM, allez à cette adresse et copier le dans le terminal ${NC}"
-			echo -e "${CRED}* https://www.plex.tv/claim/ ${CEND}"
+			echo -e " ${BWHITE}* Un token est nécéssaire pour AUTHENTIFIER le serveur Plex ${NC}"
+			echo -e " ${BWHITE}* Pour obtenir un identifiant CLAIM, allez à cette adresse et copier le dans le terminal ${NC}"
+			echo -e " ${CRED}* https://www.plex.tv/claim/ ${CEND}"
 			echo ""
 			read -rp "CLAIM = " CLAIM
 			if [ -n "$CLAIM" ]
@@ -794,8 +798,8 @@ do
 			rm -rf /home/$SEEDUSER/plex
 			docker-compose rm -fs plex-$SEEDUSER > /dev/null 2>&1 && docker-compose up -d plex-$SEEDUSER > /dev/null 2>&1
 			checking_errors $?
+			echo ""
 		fi
-echo ""
 done
 }
 
@@ -990,7 +994,6 @@ function manage_apps() {
 }
 
 function resume_seedbox() {
-	echo ""
 	echo -e "${BLUE}##########################################${NC}"
 	echo -e "${BLUE}###     INFORMATION SEEDBOX INSTALL    ###${NC}"
 	echo -e "${BLUE}##########################################${NC}"
