@@ -1073,13 +1073,13 @@ function uninstall_seedbox() {
 			service unionfs-$seeduser stop
 			rm /etc/systemd/system/unionfs-$seeduser.service
 			checking_errors $?
-			echo""
 		fi
 		userdel -rf $seeduser > /dev/null 2>&1
 		checking_errors $?
 		echo -e " ${BWHITE}* Suppression home $seeduser...${NC}"
 		rm -Rf $USERHOMEDIR
 		checking_errors $?
+		echo ""
 	done
 	rm /usr/bin/plexdrive > /dev/null 2>&1
 	echo -e " ${BWHITE}* Suppression Containers...${NC}"
