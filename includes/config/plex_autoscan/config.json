@@ -77,6 +77,6 @@
     ]
   },
   "SERVER_USE_SQLITE": true,
-  "USE_DOCKER": TRUE,
+  "USE_DOCKER": true,
   "USE_SUDO": false
 }
