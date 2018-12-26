@@ -236,6 +236,60 @@ function install_traefik() {
 	echo ""
 }
 
+function install_portainer() {
+	docker ps | grep portainer > /dev/null 2>&1
+	PORTAINER="$CONFDIR/docker/portainer/"
+	PORTAINERCOMPOSEFILE="$PORTAINER/docker-compose.yml"
+
+	if [[ ! -d "$PORTAINER" ]]; then
+		mkdir -p $PORTAINER
+		touch $PORTAINERCOMPOSEFILE
+
+		if (whiptail --title "Docker Portainer" --yesno "Voulez vous installer portainer" 7 50) then
+			echo -e " ${BWHITE}* Installation de portainer !${NC}"
+			cat /opt/seedbox-compose/includes/dockerapps/head.docker > $PORTAINERCOMPOSEFILE
+			cat "/opt/seedbox-compose/includes/dockerapps/portainer.yml" >> $PORTAINERCOMPOSEFILE
+			cat /opt/seedbox-compose/includes/dockerapps/foot.docker >> $PORTAINERCOMPOSEFILE
+			sed -i "s|%DOMAIN%|$DOMAIN|g" $PORTAINERCOMPOSEFILE
+			sed -i "s|%PORTAINER%|$PORTAINER|g" $PORTAINERCOMPOSEFILE
+			cd $PORTAINER
+			docker-compose up -d > /dev/null 2>&1
+			checking_errors $?
+		else
+			echo -e " ${BWHITE}--> portainer ne sera pas installé !${NC}"
+		fi
+	else
+		echo -e " ${BWHITE}--> portainer est déjà installé !${NC}"
+	fi
+}
+
+function install_watchtower() {
+	docker ps | grep watchtower > /dev/null 2>&1
+	WATCHTOWER="$CONFDIR/docker/watchtower/"
+	WATCHTOWERCOMPOSEFILE="$WATCHTOWER/docker-compose.yml"
+
+	if [[ ! -d "$WATCHTOWER" ]]; then
+		mkdir -p $WATCHTOWER
+		touch $WATCHTOWERCOMPOSEFILE
+
+		if (whiptail --title "Docker watchtower" --yesno "Voulez vous installer watchtower" 7 50) then
+			echo -e " ${BWHITE}* Installation de portainer !${NC}"
+			cat /opt/seedbox-compose/includes/dockerapps/head.docker > $WATCHTOWERCOMPOSEFILE
+			cat "/opt/seedbox-compose/includes/dockerapps/watchtower.yml" >> $WATCHTOWERCOMPOSEFILE
+			cat /opt/seedbox-compose/includes/dockerapps/foot.docker >> $WATCHTOWERCOMPOSEFILE
+			sed -i "s|%DOMAIN%|$DOMAIN|g" $WATCHTOWERCOMPOSEFILE
+			sed -i "s|%PORTAINER%|$PORTAINER|g" $WATCHTOWERCOMPOSEFILE
+			cd $WATCHTOWER
+			docker-compose up -d > /dev/null 2>&1
+			checking_errors $?
+		else
+			echo -e " ${BWHITE}--> watchtower ne sera pas installé !${NC}"
+		fi
+	else
+		echo -e " ${BWHITE}--> watchtower est déjà installé !${NC}"
+	fi
+}
+
 function install_plexdrive() {
 	echo -e "${BLUE}### PLEXDRIVE ###${NC}"
 	mkdir -p /mnt/plexdrive > /dev/null 2>&1
@@ -736,7 +790,6 @@ function add_install_services() {
 	echo ""
 }
 
-
 function docker_compose() {
 	echo -e "${BLUE}### DOCKERCOMPOSE ###${NC}"
 	ACTDIR="$PWD"
@@ -798,30 +851,6 @@ do
 			rm -rf /home/$SEEDUSER/plex
 			docker-compose rm -fs plex-$SEEDUSER > /dev/null 2>&1 && docker-compose up -d plex-$SEEDUSER > /dev/null 2>&1
 			checking_errors $?
-			PLEXDRIVE="/usr/bin/plexdrive"
-
-			if [[ -e "$PLEXDRIVE" ]]; then
-				USERID=$(id -u $SEEDUSER)
-				GRPID=$(id -g $SEEDUSER)
-				apt install python-pip python3-pip
-				git clone --depth 1 --single-branch https://github.com/l3uddz/plex_autoscan.git /home/$SEEDUSER/plex_autoscan
-				git clone --depth 1 --single-branch https://github.com/l3uddz/plex_dupefinder.git /home/$SEEDUSER/plex_dupefinder
-				pip install --no-cache-dir --upgrade pip setuptools wheel
-				hash -r pip
-				pip3 install --no-cache-dir --upgrade -r /home/$SEEDUSER/plex_dupefinder/requirements.txt
-				pip install --no-cache-dir --upgrade -r /home/$SEEDUSER/plex_autoscan/requirements.txt
-				#chown -R $USERID:$GRPID /home/$SEEDUSER/plex_dupefinder
-				rm /home/$SEEDUSER/plex_autoscan/config/default.config
-				cp "$BASEDIR/includes/config/plex_autoscan/config.json" "/home/$SEEDUSER/plex_autoscan/config/config.json" > /dev/null 2>&1
-				## Récupération du token de plex
-				docker exec -ti plex-$SEEDUSER grep -E -o "PlexOnlineToken=.{0,22}" /config/Library/Application\ Support/Plex\ Media\ Server/Preferences.xml > /home/$SEEDUSER/plex_autoscan/token.txt
-				TOKEN=$(grep PlexOnlineToken /home/$SEEDUSER/plex_autoscan/token.txt | cut -d '=' -f2 | cut -c2-21)
-				sed -i "s|%TOKEN%|$TOKEN|g" /home/$SEEDUSER/plex_autoscan/config/config.json
-				sed -i "s|%SEEDUSER%|$SEEDUSER|g" /home/$SEEDUSER/plex_autoscan/config/config.json
-				chown -R $USERID:$GRPID /home/$SEEDUSER/plex_autoscan
-				chown -R $USERID:$GRPID /home/$SEEDUSER/plex
-
-			fi
 		fi
 done
 }

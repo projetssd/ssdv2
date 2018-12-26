@@ -1,0 +1,23 @@
+  
+#STARTjackett#
+  jackett-%USER%:
+    image: xataz/jackett
+    container_name: jackett-%USER%
+    restart: unless-stopped
+    hostname: jackett
+    labels:
+      - traefik.enable=true
+      - traefik.frontend.rule=%TRAEFIKURL%
+      - traefik.frontend.auth.basic=%VAR%
+      - traefik.port=9117
+      - traefik.docker.network=traefik_proxy
+    environment:
+      - TZ=Paris/Europe
+      - PUID=%UID%
+      - PGID=%GID%
+    volumes:
+      - /home/%USER%/Jackett/config:/config
+      - /home/%USER%/Jackett/downloads:/downloads
+    networks:
+      - proxy
+#ENDjackett#

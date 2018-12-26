@@ -1,0 +1,13 @@
+
+#STARTwatchtower#
+  watchtower:
+    image: v2tec/watchtower
+    container_name: watchtower
+    hostname: watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --schedule "0 0 4 * * *" --cleanup
+    networks:
+      - proxy
+#ENDwatchtower#

@@ -1,0 +1,18 @@
+
+#STARTportainer#
+  portainer:
+    image: portainer/portainer
+    container_name: portainer
+    restart: unless-stopped
+    hostname: portainer
+    labels:
+      - traefik.enable=true
+      - traefik.frontend.rule=Host:portainer.%DOMAIN%
+      - traefik.port=9000
+      - traefik.docker.network=traefik_proxy
+    volumes:
+      - %PORTAINER%/data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - proxy
+#ENDportainer#
