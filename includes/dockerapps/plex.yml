@@ -1,7 +1,7 @@
 
 #STARTplex#
   plex-%USER%:
-    image: plexinc/pms-docker
+    image: laster13/plex
     container_name: plex-%USER%
     hostname: plex-%USER%
     restart: unless-stopped
