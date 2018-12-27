@@ -16,8 +16,8 @@
       - PUID=%UID%
       - PGID=%GID%
     volumes:
-      - /home/%USER%/Jackett/config:/config
-      - /home/%USER%/Jackett/downloads:/downloads
+      - /home/%USER%/docker/Jackett/config:/config
+      - /home/%USER%/docker/Jackett/downloads:/downloads
     networks:
       - proxy
 #ENDjackett#

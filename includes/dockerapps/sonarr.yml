@@ -14,9 +14,9 @@
       - UID=%UID%
       - GID=%GID%
     volumes:
-      - /home/%USER%/sonarr/config:/config
-      - /home/%USER%/rtorrent/torrents:/data/torrents
-      - /home/%USER%/sonarr/Medias/Series:/tv
+      - /home/%USER%/docker/sonarr/config:/config
+      - /home/%USER%/docker/rtorrent/torrents:/data/torrents
+      - /home/%USER%/docker/sonarr/Medias/Series:/tv
     networks:
       - proxy
 #ENDsonarr#

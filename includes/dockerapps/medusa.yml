@@ -12,9 +12,9 @@
       - traefik.docker.network=traefik_proxy
       - traefik.frontend.auth.basic=%VAR%
     volumes:
-      - /home/%USER%/medusa/Medias/series:/tv:rw
-      - /home/%USER%/rtorrent/torrents:/downloads
-      - /home/%USER%/medusa/config:/config
+      - /home/%USER%/docker/medusa/Medias/series:/tv:rw
+      - /home/%USER%/docker/rtorrent/torrents:/downloads
+      - /home/%USER%/docker/medusa/config:/config
     environment:
       - /etc/localtime:/etc/localtime:ro
       - TZ=Paris/Europe

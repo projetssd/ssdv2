@@ -702,7 +702,6 @@ function install_services() {
 		sed -i "s|%DOMAIN%|$DOMAIN|g" $DOCKERCOMPOSEFILE
 		sed -i "s|%USER%|$SEEDUSER|g" $DOCKERCOMPOSEFILE
 		sed -i "s|%EMAIL%|$CONTACTEMAIL|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%IPADDRESS%|$IPADDRESS|g" $DOCKERCOMPOSEFILE
 		cat /opt/seedbox-compose/includes/dockerapps/foot.docker >> $DOCKERCOMPOSEFILE
 		NOMBRE=$(sed -n "/$SEEDUSER/=" /etc/seedboxcompose/users)
 		if [ $NOMBRE -le 1 ] ; then
@@ -715,7 +714,6 @@ function install_services() {
 		ACCESSURL=$FQDN
 		TRAEFIKURL=(Host:$ACCESSURL)
 		sed -i "s|%TRAEFIKURL%|$TRAEFIKURL|g" /home/$SEEDUSER/docker-compose.yml
-		sed -i '/WEBROOT/d' /home/$SEEDUSER/docker-compose.yml
 		check_domain $ACCESSURL
 		echo "$line-$PORT-$FQDN" >> $INSTALLEDFILE
 		URI="/"

@@ -16,10 +16,10 @@
     ports:
       - %PORT%:45000
     volumes:
-      - /home/%USER%/rtorrent/torrents:/data/torrents
-      - /home/%USER%/rtorrent/watch:/data/.watch
-      - /home/%USER%/rtorrent/data:/data
-      - /home/%USER%/rtorrent/config:/config
+      - /home/%USER%/docker/rtorrent/torrents:/data/torrents
+      - /home/%USER%/docker/rtorrent/watch:/data/.watch
+      - /home/%USER%/docker/rtorrent/data:/data
+      - /home/%USER%/docker/rtorrent/config:/config
     networks:
       - proxy
 #ENDrtorrent#

@@ -17,8 +17,8 @@
     healthcheck:
       disable: true
     volumes:
-      - /home/%USER%/Medias:/mnt
-      - /home/%USER%/plex/config:/config
+      - /home/%USER%/docker/Medias:/data
+      - /home/%USER%/docker/plex/config:/config
       - /dev/shm:/transcode
     networks:
       - proxy
