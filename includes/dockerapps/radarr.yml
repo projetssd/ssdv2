@@ -13,7 +13,6 @@
     environment:
       - PUID=%UID%
       - PGID=%GID%
-      - WEBROOT=%URI%
     volumes:
       - /home/%USER%/radarr/config:/config
       - /home/%USER%/rtorrent/torrents:/data/torrents

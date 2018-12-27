@@ -20,7 +20,6 @@
       - TZ=Paris/Europe
       - UID=%UID%
       - GID=%GID%
-      - MEDUSA_WEBROOT=%URI%
       - MEDUSA_TVDIRS=/tv
     networks:
       - proxy

@@ -13,7 +13,6 @@
     environment:
       - UID=%UID%
       - GID=%GID%
-      - WEBROOT=%URI%
     ports:
       - %PORT%:45000
     volumes:

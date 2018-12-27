@@ -93,7 +93,7 @@ function script_plexdrive() {
 	echo ""
 	echo -e "${CCYAN}SEEDBOX RCLONE/PLEXDRIVE${CEND}"
 	echo -e "${CGREEN}${CEND}"
-	echo -e "${CGREEN}   1) Desinstaller la seedbox ${CEND}"
+	echo -e "${CGREEN}   1) Désinstaller la seedbox ${CEND}"
 	echo -e "${CGREEN}   2) Ajout/Supression d'utilisateurs${CEND}"
 	echo -e "${CGREEN}   3) Ajout/Supression d'Applis${CEND}"
 
@@ -210,9 +210,12 @@ function checking_errors() {
 function install_traefik() {
 	echo -e "${BLUE}### TRAEFIK ###${NC}"
 	TRAEFIK="$CONFDIR/docker/traefik/"
-
 	TRAEFIKCOMPOSEFILE="$TRAEFIK/docker-compose.yml"
 	TRAEFIKTOML="$TRAEFIK/traefik.toml"
+	INSTALLEDFILE="$CONFDIR/resume"
+	if [[ ! -f "$INSTALLEDFILE" ]]; then
+	touch $INSTALLEDFILE> /dev/null 2>&1
+	fi
 
 	if [[ ! -d "$TRAEFIK" ]]; then
 		echo -e " ${BWHITE}* Installation Traefik${NC}"
@@ -229,6 +232,7 @@ function install_traefik() {
 		cd $TRAEFIK
 		docker network create traefik_proxy > /dev/null 2>&1
 		docker-compose up -d > /dev/null 2>&1
+		echo "portainer-port-traefik.$DOMAIN" >> $INSTALLEDFILE
 		checking_errors $?
 	else
 		echo -e " ${YELLOW}* Traefik est déjà installé !${NC}"
@@ -237,7 +241,11 @@ function install_traefik() {
 }
 
 function install_portainer() {
-	docker ps | grep portainer > /dev/null 2>&1
+	echo -e "${BLUE}### PORTAINER ###${NC}"
+	INSTALLEDFILE="$CONFDIR/resume"
+	if [[ ! -f "$INSTALLEDFILE" ]]; then
+	touch $INSTALLEDFILE> /dev/null 2>&1
+	fi
 	PORTAINER="$CONFDIR/docker/portainer/"
 	PORTAINERCOMPOSEFILE="$PORTAINER/docker-compose.yml"
 
@@ -254,6 +262,7 @@ function install_portainer() {
 			sed -i "s|%PORTAINER%|$PORTAINER|g" $PORTAINERCOMPOSEFILE
 			cd $PORTAINER
 			docker-compose up -d > /dev/null 2>&1
+			echo "portainer-port-portainer.$DOMAIN" >> $INSTALLEDFILE
 			checking_errors $?
 		else
 			echo -e " ${BWHITE}--> portainer ne sera pas installé !${NC}"
@@ -261,10 +270,15 @@ function install_portainer() {
 	else
 		echo -e " ${BWHITE}--> portainer est déjà installé !${NC}"
 	fi
+	echo ""
 }
 
 function install_watchtower() {
-	docker ps | grep watchtower > /dev/null 2>&1
+	echo -e "${BLUE}### WATCHTOWER ###${NC}"
+	INSTALLEDFILE="$CONFDIR/resume"
+	if [[ ! -f "$INSTALLEDFILE" ]]; then
+	touch $INSTALLEDFILE> /dev/null 2>&1
+	fi
 	WATCHTOWER="$CONFDIR/docker/watchtower/"
 	WATCHTOWERCOMPOSEFILE="$WATCHTOWER/docker-compose.yml"
 
@@ -281,6 +295,7 @@ function install_watchtower() {
 			sed -i "s|%PORTAINER%|$PORTAINER|g" $WATCHTOWERCOMPOSEFILE
 			cd $WATCHTOWER
 			docker-compose up -d > /dev/null 2>&1
+			echo "portainer-port-watchtower.$DOMAIN" >> $INSTALLEDFILE
 			checking_errors $?
 		else
 			echo -e " ${BWHITE}--> watchtower ne sera pas installé !${NC}"
@@ -288,6 +303,7 @@ function install_watchtower() {
 	else
 		echo -e " ${BWHITE}--> watchtower est déjà installé !${NC}"
 	fi
+	echo ""
 }
 
 function install_plexdrive() {
@@ -324,7 +340,7 @@ function install_rclone() {
 	mkdir /mnt/rclone > /dev/null 2>&1
 	RCLONE="/usr/bin/rclone"
 	SEARCH=$(find /root/.config/rclone -name rclone.conf > /dev/null 2>&1)
-	if [[ ! -e "$RCLONE" ]] || [[ ! -e "$SEARCH" ]]; then
+	if [[ ! -f "$RCLONE" ]] || [[ ! -f "$SEARCH" ]]; then
 		echo -e " ${BWHITE}* Installation rclone${NC}"
 		curl https://rclone.org/install.sh | bash > /dev/null 2>&1
 		mkdir -p /root/.config/rclone
@@ -342,8 +358,6 @@ function install_rclone() {
     				done
 			fi
 			echo ""
-			echo -e " ${GREEN}* Configuration rclone terminée avec succés !${NC}"
-		pause
 		REMOTECRYPT=$(whiptail --title "Remote crypté" --inputbox \
 		"Saisir votre Remote crypté Plexdrive:" 7 50 3>&1 1>&2 2>&3)
 		cp "$BASEDIR/includes/config/rclone.service" "/etc/systemd/system/rclone.service" > /dev/null 2>&1
@@ -353,6 +367,7 @@ function install_rclone() {
 		service rclone start
 		echo -e " ${BWHITE}* Montage rclone en cours, merci de patienter... ${NC}"
 		sleep 15
+		checking_errors $?
 	else
 		echo -e " ${YELLOW}* rclone est déjà installé !${NC}"
 	fi
@@ -438,13 +453,8 @@ function define_parameters() {
 	else
 		TIMEZONE=$TIMEZONEDEF
 	fi
-
-	if (whiptail --title "Nom de Domaine" --yesno "Souhaitez vous utiliser un nom de Domaine?" 7 50) then
-		DOMAIN=$(whiptail --title "Votre nom de Domaine" --inputbox \
-		"Merci de taper votre nom de Domaine :" 7 50 3>&1 1>&2 2>&3)
-	else
-		DOMAIN="localhost"
-	fi
+	DOMAIN=$(whiptail --title "Votre nom de Domaine" --inputbox \
+	"Merci de taper votre nom de Domaine :" 7 50 3>&1 1>&2 2>&3)
 	echo ""
 }
 
@@ -454,6 +464,43 @@ function create_user() {
 		SEEDGROUP=$(whiptail --title "Group" --inputbox \
         	"Création d'un groupe pour la Seedbox" 7 50 3>&1 1>&2 2>&3)
 		echo "$SEEDGROUP" > "$GROUPFILE"
+
+    		egrep "^$SEEDGROUP" /etc/group >/dev/null
+		if [[ "$?" != "0" ]]; then
+			echo -e " ${BWHITE}* Création du groupe $SEEDGROUP"
+	    	groupadd $SEEDGROUP
+	    	checking_errors $?
+		else
+			SEEDGROUP=$TMPGROUP
+	    	echo -e " ${YELLOW}* Le groupe $SEEDGROUP existe déjà.${NC}"
+		fi
+
+		if [[ ! -f "$USERSFILE" ]]; then
+			touch $USERSFILE
+		fi
+		SEEDUSER=$(whiptail --title "Administrateur" --inputbox \
+			"Nom d'Administrateur de la Seedbox :" 7 50 3>&1 1>&2 2>&3)
+		PASSWORD=$(whiptail --title "Password" --passwordbox \
+			"Mot de passe :" 7 50 3>&1 1>&2 2>&3)
+		egrep "^$SEEDUSER" /etc/passwd >/dev/null
+		if [ $? -eq 0 ]; then
+			echo -e " ${YELLOW}* L'utilisateur existe déjà !${NC}"
+			USERID=$(id -u $SEEDUSER)
+			GRPID=$(id -g $SEEDUSER)
+			echo -e " ${BWHITE}* Ajout de $SEEDUSER in $SEEDGROUP"
+			usermod -a -G $SEEDGROUP $SEEDUSER
+			checking_errors $?
+		else
+			PASS=$(perl -e 'print crypt($ARGV[0], "password")' $PASSWORD)
+			echo -e " ${BWHITE}* Ajout de $SEEDUSER au système"
+			useradd -m -g $SEEDGROUP -p $PASS -s /bin/false $SEEDUSER > /dev/null 2>&1
+			checking_errors $?
+			USERID=$(id -u $SEEDUSER)
+			GRPID=$(id -g $SEEDUSER)
+		fi
+		add_user_htpasswd $SEEDUSER $PASSWORD
+		echo $SEEDUSER >> $USERSFILE
+		return
 	else
 		TMPGROUP=$(cat $GROUPFILE)
 		if [[ "$TMPGROUP" == "" ]]; then
@@ -461,6 +508,7 @@ function create_user() {
         		"Création d'un groupe pour la Seedbox" 7 50 3>&1 1>&2 2>&3)
         	fi
 	fi
+
     	egrep "^$SEEDGROUP" /etc/group >/dev/null
 	if [[ "$?" != "0" ]]; then
 		echo -e " ${BWHITE}* Création du groupe $SEEDGROUP"
@@ -482,7 +530,7 @@ function create_user() {
 		echo -e " ${YELLOW}* L'utilisateur existe déjà !${NC}"
 		USERID=$(id -u $SEEDUSER)
 		GRPID=$(id -g $SEEDUSER)
-		echo -e " ${BWHITE}* Adding $SEEDUSER in $SEEDGROUP"
+		echo -e " ${BWHITE}* Ajout de $SEEDUSER in $SEEDGROUP"
 		usermod -a -G $SEEDGROUP $SEEDUSER
 		checking_errors $?
 	else
@@ -625,100 +673,6 @@ function add_user_htpasswd() {
 }
 
 function install_services() {
-	INSTALLEDFILE="/home/$SEEDUSER/resume"
-	touch $INSTALLEDFILE > /dev/null 2>&1
-	if [[ -f "$FILEPORTPATH" ]]; then
-		declare -i PORT=$(cat $FILEPORTPATH | tail -1)
-	else
-		declare -i PORT=$FIRSTPORT
-	fi
-
-	DOCKERCOMPOSEFILE="/home/$SEEDUSER/docker-compose.yml"
-	touch $DOCKERCOMPOSEFILE
-	cat /opt/seedbox-compose/includes/dockerapps/head.docker > $DOCKERCOMPOSEFILE
-	for line in $(cat $SERVICESPERUSER);
-	do
-		#check_domain "$line.$DOMAIN"
-		
-		cat "/opt/seedbox-compose/includes/dockerapps/$line.yml" >> $DOCKERCOMPOSEFILE
-		sed -i "s|%TIMEZONE%|$TIMEZONE|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%UID%|$USERID|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%GID%|$GRPID|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%PORT%|$PORT|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%VAR%|$VAR|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%DOMAIN%|$DOMAIN|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%USER%|$SEEDUSER|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%EMAIL%|$CONTACTEMAIL|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%IPADDRESS%|$IPADDRESS|g" $DOCKERCOMPOSEFILE
-
-
-		SUBURI=$(whiptail --title "Type d'Accès" --menu \
-	            "Choississez votre accès à $line :" 10 45 2 \
-	            "1" "Sous Domaine" \
-	            "2" "URI" 3>&1 1>&2 2>&3)
-
-	    	case $SUBURI in
-	        	"1" )
-				PROXYACCESS="SUBDOMAIN"
-				NOMBRE=$(sed -n "/$SEEDUSER/=" /etc/seedboxcompose/users)
-				if [ $NOMBRE -le 1 ] ; then
-					FQDNTMP="$line.$DOMAIN"
-				else
-					FQDNTMP="$line-$SEEDUSER.$DOMAIN"
-				fi
-				FQDN=$(whiptail --title "SSL Sous Domaine" --inputbox \
-				"Souhaitez vous utiliser un autre Sous Domaine pour $line ? default :" 7 75 "$FQDNTMP" 3>&1 1>&2 2>&3)
-				ACCESSURL=$FQDN
-				check_domain $ACCESSURL
-				TRAEFIKURL=(Host:$ACCESSURL)
-				sed -i "s|%TRAEFIKURL%|$TRAEFIKURL|g" /home/$SEEDUSER/docker-compose.yml
-				sed -i '/WEBROOT=%URI%/d' /home/$SEEDUSER/docker-compose.yml
-				echo "$line-$PORT-$FQDN" >> $INSTALLEDFILE
-				URI="/"
-	        	;;
-
-	        	"2" )
-				if [[ "$line" = "plex" ]]; then
-					NOMBRE=$(sed -n "/$SEEDUSER/=" /etc/seedboxcompose/users)
-					if [ $NOMBRE -le 1 ] ; then
-						FQDNTMP="$line.$DOMAIN"
-					else
-						FQDNTMP="$line-$SEEDUSER.$DOMAIN"
-					fi
-					FQDN=$(whiptail --title "SSL Sous Domaine" --inputbox \
-					"$line n'est proposé qu'en sous domaine. default :" 7 75 "$FQDNTMP" 3>&1 1>&2 2>&3)
-					ACCESSURL=$FQDN
-					check_domain $ACCESSURL
-					TRAEFIKURL=(Host:$ACCESSURL)
-					sed -i "s|%TRAEFIKURL%|$TRAEFIKURL|g" /home/$SEEDUSER/docker-compose.yml
-					sed -i '/WEBROOT=%URI%/d' /home/$SEEDUSER/docker-compose.yml
-					echo "$line-$PORT-$FQDN" >> $INSTALLEDFILE
-				else
-					PROXYACCESS="URI"
-					FQDN=$DOMAIN
-					FQDNTMP="/$SEEDUSER"_"$line"
-					ACCESSURL=$(whiptail --title "SSL Subdomain" --inputbox \
-					"Souhaitez vous utiliser une autre URI pour $line ? default :" 7 75 "$FQDNTMP" 3>&1 1>&2 2>&3)
-					URI=$ACCESSURL
-					TRAEFIKURL=(Host:$DOMAIN';'PathPrefix:$URI)
-					sed -i "s|%TRAEFIKURL%|$TRAEFIKURL|g" /home/$SEEDUSER/docker-compose.yml
-					sed -i "s|%URI%|$URI|g" /home/$SEEDUSER/docker-compose.yml
-					check_domain $DOMAIN
-					echo "$line-$PORT-$FQDN$URI" >> $INSTALLEDFILE
-				fi
-			;;
-				
-	    	esac
-		PORT=$PORT+1
-		FQDN=""
-		FQDNTMP=""
-	done
-	cat /opt/seedbox-compose/includes/dockerapps/foot.docker >> $DOCKERCOMPOSEFILE
-	echo $PORT >> $FILEPORTPATH
-	echo ""
-}
-
-function add_install_services() {
 	USERID=$(id -u $SEEDUSER)
 	GRPID=$(id -g $SEEDUSER)
 	INSTALLEDFILE="/home/$SEEDUSER/resume"
@@ -730,6 +684,11 @@ function add_install_services() {
 	fi
 
 	DOCKERCOMPOSEFILE="/home/$SEEDUSER/docker-compose.yml"
+	if [[ ! -f "$DOCKERCOMPOSEFILE" ]]; then
+	cat /opt/seedbox-compose/includes/dockerapps/head.docker > $DOCKERCOMPOSEFILE
+	cat /opt/seedbox-compose/includes/dockerapps/foot.docker >> $DOCKERCOMPOSEFILE
+	fi
+
 	for line in $(cat $SERVICESPERUSER);
 	do
 		#check_domain "$line.$DOMAIN"
@@ -745,41 +704,21 @@ function add_install_services() {
 		sed -i "s|%EMAIL%|$CONTACTEMAIL|g" $DOCKERCOMPOSEFILE
 		sed -i "s|%IPADDRESS%|$IPADDRESS|g" $DOCKERCOMPOSEFILE
 		cat /opt/seedbox-compose/includes/dockerapps/foot.docker >> $DOCKERCOMPOSEFILE
-
-			APPLI=$(echo $(sed -n 2p /home/$SEEDUSER/resume) | cut -d\- -f1)
-			DOM=$(echo $(sed -n 2p /home/$SEEDUSER/resume) | cut -d\- -f3)
-			FQD="$DOMAIN/"$SEEDUSER"_$APPLI"
-
-			if [[ "$DOM" == "$FQD" ]] && [[ "$line" != "plex" ]]; then
-				PROXYACCESS="URI"
-				FQDN=$DOMAIN
-				FQDNTMP="/$SEEDUSER"_"$line"
-				ACCESSURL=$(whiptail --title "SSL Subdomain" --inputbox \
-				"Souhaitez vous utiliser une autre URI pour $line ? default :" 7 75 "$FQDNTMP" 3>&1 1>&2 2>&3)
-				URI=$ACCESSURL
-				TRAEFIKURL=(Host:$DOMAIN';'PathPrefix:$URI)
-				sed -i "s|%TRAEFIKURL%|$TRAEFIKURL|g" /home/$SEEDUSER/docker-compose.yml
-				sed -i "s|%URI%|$URI|g" /home/$SEEDUSER/docker-compose.yml
-				check_domain $DOMAIN
-				echo "$line-$PORT-$FQDN$URI" >> $INSTALLEDFILE
-			else
-				PROXYACCESS="SUBDOMAIN"
-				NOMBRE=$(sed -n "/$SEEDUSER/=" /etc/seedboxcompose/users)
-				if [ $NOMBRE -le 1 ] ; then
-					FQDNTMP="$line.$DOMAIN"
-				else
-					FQDNTMP="$line-$SEEDUSER.$DOMAIN"
-				fi
-				FQDN=$(whiptail --title "SSL Subdomain" --inputbox \
-				"Souhaitez vous utiliser un autre Sous Domaine pour $line ? default :" 7 75 "$FQDNTMP" 3>&1 1>&2 2>&3)
-				ACCESSURL=$FQDN
-				TRAEFIKURL=(Host:$ACCESSURL)
-				sed -i "s|%TRAEFIKURL%|$TRAEFIKURL|g" /home/$SEEDUSER/docker-compose.yml
-				sed -i '/WEBROOT/d' /home/$SEEDUSER/docker-compose.yml
-				check_domain $ACCESSURL
-				echo "$line-$PORT-$FQDN" >> $INSTALLEDFILE
-				URI="/"
-			fi
+		NOMBRE=$(sed -n "/$SEEDUSER/=" /etc/seedboxcompose/users)
+		if [ $NOMBRE -le 1 ] ; then
+			FQDNTMP="$line.$DOMAIN"
+		else
+			FQDNTMP="$line-$SEEDUSER.$DOMAIN"
+		fi
+		FQDN=$(whiptail --title "SSL Subdomain" --inputbox \
+		"Souhaitez vous utiliser un autre Sous Domaine pour $line ? default :" 7 75 "$FQDNTMP" 3>&1 1>&2 2>&3)
+		ACCESSURL=$FQDN
+		TRAEFIKURL=(Host:$ACCESSURL)
+		sed -i "s|%TRAEFIKURL%|$TRAEFIKURL|g" /home/$SEEDUSER/docker-compose.yml
+		sed -i '/WEBROOT/d' /home/$SEEDUSER/docker-compose.yml
+		check_domain $ACCESSURL
+		echo "$line-$PORT-$FQDN" >> $INSTALLEDFILE
+		URI="/"
 	
 		PORT=$PORT+1
 		FQDN=""
@@ -808,33 +747,8 @@ function docker_compose() {
 function config_post_compose() {
 for line in $(cat $SERVICESPERUSER);
 do
-	FQD="$SEEDUSER"_"$line"
-	SONARR=$(grep -R "sonarr" /home/$SEEDUSER/resume | cut -d'/' -f2)
-	RADARR=$(grep -R "radarr" /home/$SEEDUSER/resume | cut -d'/' -f2)
-		if [[ "$FQD" == "$SONARR" ]]; then
-			echo -e "${BLUE}### CONFIG POST COMPOSE ###${NC}"
-			echo -e " ${BWHITE}* Processing sonarr config file...${NC}"
-			rm "/home/$SEEDUSER/sonarr/config/config.xml" > /dev/null 2>&1
-			cp "$BASEDIR/includes/config/sonarr.config.xml" "/home/$SEEDUSER/sonarr/config/config.xml" > /dev/null 2>&1
-			sed -i "s|%URI%|$SONARR|g" /home/$SEEDUSER/sonarr/config/config.xml
-			docker restart sonarr-$SEEDUSER > /dev/null 2>&1
-			checking_errors $?
-			echo ""
-		fi
-
-		if [[ "$FQD" == "$RADARR" ]]; then
-			echo -e "${BLUE}### CONFIG POST COMPOSE ###${NC}"
-			echo -e " ${BWHITE}* Processing radarr config file...${NC}"
-			rm "/home/$SEEDUSER/radarr/config/config.xml" > /dev/null 2>&1
-			cp "$BASEDIR/includes/config/radarr.config.xml" "/home/$SEEDUSER/radarr/config/config.xml" > /dev/null 2>&1
-			sed -i "s|%URI%|$RADARR|g" /home/$SEEDUSER/radarr/config/config.xml
-			docker restart radarr-$SEEDUSER > /dev/null 2>&1
-			checking_errors $?
-			echo ""
-		fi
-
 		if [[ "$line" == "plex" ]]; then
-			echo -e "${BLUE}### CONFIG POST COMPOSE ###${NC}"
+			echo -e "${BLUE}### CONFIG POST COMPOSE PLEX###${NC}"
 			echo -e " ${BWHITE}* Processing plex config file...${NC}"
 			cd /home/$SEEDUSER
 			# CLAIM pour Plex
@@ -851,6 +765,7 @@ do
 			rm -rf /home/$SEEDUSER/plex
 			docker-compose rm -fs plex-$SEEDUSER > /dev/null 2>&1 && docker-compose up -d plex-$SEEDUSER > /dev/null 2>&1
 			checking_errors $?
+			echo ""
 		fi
 done
 }
@@ -1001,7 +916,7 @@ function manage_apps() {
 		"1" ) ## Ajout APP
 			choose_services
 			add_app_htpasswd
-			add_install_services
+			install_services
 			docker_compose
 			resume_seedbox
 			pause
@@ -1050,34 +965,19 @@ function resume_seedbox() {
 	echo -e "${BLUE}###     INFORMATION SEEDBOX INSTALL    ###${NC}"
 	echo -e "${BLUE}##########################################${NC}"
 	echo -e " ${BWHITE}* Accès Applis à partir de URL :${NC}"
-	if [[ "$DOMAIN" != "localhost" ]]; then
-		for line in $(cat $INSTALLEDFILE);
-		do
-			if [[ "$PROXYACCESS" == "SUBDOMAIN" ]]; then
-				NOMBRE=$(sed -n "/$SEEDUSER/=" /etc/seedboxcompose/users)
-				if [ $NOMBRE -le 1 ] ; then
-					ACCESSDOMAIN=$(echo $line | cut -d\- -f3)
-					DOCKERAPP=$(echo $line | cut -d\- -f1)
-					echo -e "	--> ${BWHITE}$DOCKERAPP${NC} --> ${YELLOW}$ACCESSDOMAIN${NC}"
-				else
-					ACCESSDOMAIN=$(echo $line | cut -d\- -f3-4)
-					DOCKERAPP=$(echo $line | cut -d\- -f1)
-					echo -e "	--> ${BWHITE}$DOCKERAPP${NC} --> ${YELLOW}$ACCESSDOMAIN${NC}"
-				fi
-			else
+	for line in $(cat $INSTALLEDFILE);
+	do
+		NOMBRE=$(sed -n "/$SEEDUSER/=" /etc/seedboxcompose/users)
+		if [ $NOMBRE -le 1 ] ; then
+			ACCESSDOMAIN=$(echo $line | cut -d\- -f3)
+			DOCKERAPP=$(echo $line | cut -d\- -f1)
+			echo -e "	--> ${BWHITE}$DOCKERAPP${NC} --> ${YELLOW}$ACCESSDOMAIN${NC}"
+		else
 			ACCESSDOMAIN=$(echo $line | cut -d\- -f3-4)
 			DOCKERAPP=$(echo $line | cut -d\- -f1)
 			echo -e "	--> ${BWHITE}$DOCKERAPP${NC} --> ${YELLOW}$ACCESSDOMAIN${NC}"
-			fi
-		done
-	else
-		for line in $(cat $INSTALLEDFILE);
-		do
-			APPINSTALLED=$(echo $line | cut -d\- -f1)
-			PORTINSTALLED=$(echo $line | cut -d\- -f2 | sed 's! !!g')
-			echo -e "	--> $APPINSTALLED --> ${YELLOW}$IPADDRESS:$PORTINSTALLED${NC}"
-		done
-	fi
+		fi
+	done
 	
 	IDENT="/etc/seedboxcompose/passwd/.htpasswd-$SEEDUSER"	
 	if [[ ! -d $IDENT ]]; then

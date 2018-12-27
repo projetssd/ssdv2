@@ -56,12 +56,8 @@ case $CHOICE in
 			install_traefik
 			install_plexdrive
 			install_rclone
-			choose_media_folder_plexdrive
-			unionfs_fuse
-			pause
-			choose_services
-			install_services
-			docker_compose
+			install_portainer
+			install_watchtower
 			resume_seedbox
 			pause
 			script_plexdrive
