@@ -58,7 +58,7 @@ function script_classique() {
 		clear
 		echo ""
 		echo -e "${YELLOW}### Seedbox-Compose déjà installée !###${NC}"
-		if (whiptail --title "Seedbox-Compose déjà installée" --yesno "Désinstaller complètement la Seedbox ?" 7 90) then
+		if (whiptail --title "Seedbox-Compose déjà installée" --yesno "Désinstaller complètement la Seedbox ?" 7 50) then
 			uninstall_seedbox
 		else
 			script_classique
@@ -105,7 +105,7 @@ function script_plexdrive() {
 		clear
 		echo ""
 		echo -e "${YELLOW}### Seedbox-Compose déjà installée !###${NC}"
-		if (whiptail --title "Seedbox-Compose déjà installée" --yesno "Désinstaller complètement la Seedbox ?" 7 90) then
+		if (whiptail --title "Seedbox-Compose déjà installée" --yesno "Désinstaller complètement la Seedbox ?" 7 50) then
 			uninstall_seedbox
 		else
 			script_plexdrive
@@ -232,7 +232,7 @@ function install_traefik() {
 		cd $TRAEFIK
 		docker network create traefik_proxy > /dev/null 2>&1
 		docker-compose up -d > /dev/null 2>&1
-		echo "portainer-port-traefik.$DOMAIN" >> $INSTALLEDFILE
+		echo "traefik-port-traefik.$DOMAIN" >> $INSTALLEDFILE
 		checking_errors $?
 	else
 		echo -e " ${YELLOW}* Traefik est déjà installé !${NC}"
@@ -295,7 +295,6 @@ function install_watchtower() {
 			sed -i "s|%PORTAINER%|$PORTAINER|g" $WATCHTOWERCOMPOSEFILE
 			cd $WATCHTOWER
 			docker-compose up -d > /dev/null 2>&1
-			echo "portainer-port-watchtower.$DOMAIN" >> $INSTALLEDFILE
 			checking_errors $?
 		else
 			echo -e " ${BWHITE}--> watchtower ne sera pas installé !${NC}"
