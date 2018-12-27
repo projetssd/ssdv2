@@ -28,10 +28,8 @@ case $CHOICE in
 			install_zsh
 			define_parameters
 			install_traefik
-			choose_media_folder_classique
-			choose_services
-			install_services
-			docker_compose
+			install_portainer
+			install_watchtower
 			resume_seedbox
 			pause
 			script_classique
