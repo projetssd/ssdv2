@@ -398,7 +398,23 @@ function install_rclone() {
 		sleep 15
 		checking_errors $?
 	else
-		echo -e " ${YELLOW}* rclone est déjà installé !${NC}"
+		REMOTEPLEX=$(grep -iC 2 "/mnt/plexdrive" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
+		REMOTECRYPT=$(grep "\[" /root/.config/rclone/rclone.conf | sed -n 3p | sed "s/\]//g" | sed "s/\[//g")
+		clear
+		echo -e " ${BWHITE}* Remote chiffré rclone${NC} --> ${YELLOW}$REMOTECRYPT:${NC}"
+		checking_errors $?
+		echo ""
+		echo -e " ${BWHITE}* Remote chiffré plexdrive${NC} --> ${YELLOW}$REMOTEPLEX:${NC}"
+		checking_errors $?
+		echo ""
+		cp "$BASEDIR/includes/config/rclone.service" "/etc/systemd/system/rclone.service" > /dev/null 2>&1
+		sed -i "s|%REMOTEPLEX%|$REMOTEPLEX:|g" /etc/systemd/system/rclone.service
+		systemctl daemon-reload > /dev/null 2>&1
+		systemctl enable rclone.service > /dev/null 2>&1
+		service rclone start
+		echo -e " ${BWHITE}* Montage rclone en cours, merci de patienter... ${NC}"
+		sleep 15
+		checking_errors $?
 	fi
 	echo ""
 }
