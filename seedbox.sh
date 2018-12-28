@@ -6,7 +6,7 @@ clear
 logo
 echo ""
 
-if [[ ! -d "/etc/seedboxcompose/" ]]; then
+if [[ ! -d "$CONFDIR" ]]; then
 echo -e "${CCYAN}INSTALLATION SEEDBOX DOCKER${CEND}"
 echo -e "${CGREEN}${CEND}"
 echo -e "${CGREEN}   1) Installation Seedbox Classique ${CEND}"
@@ -19,7 +19,7 @@ case $CHOICE in
 
 	if [ $USER = "root" ] ; then
 	check_dir $PWD
-		if [[ ! -d "/etc/seedboxcompose/" ]]; then
+		if [[ ! -d "$CONFDIR" ]]; then
 	    		clear
 			conf_dir
 			install_base_packages
@@ -43,7 +43,7 @@ case $CHOICE in
 
 	if [ $USER = "root" ] ; then
 	check_dir $PWD
-		if [[ ! -d "/etc/seedboxcompose/" ]]; then
+		if [[ ! -d "$CONFDIR" ]]; then
 	    		clear
 			conf_dir
 			install_base_packages

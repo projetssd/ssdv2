@@ -265,7 +265,7 @@ function install_portainer() {
 			echo "portainer-port-portainer.$DOMAIN" >> $INSTALLEDFILE
 			checking_errors $?
 		else
-			echo -e " ${BWHITE}--> portainer ne sera pas installé !${NC}"
+			echo -e " ${BWHITE}--> portainer n'est pas installé !${NC}"
 		fi
 	else
 		echo -e " ${BWHITE}--> portainer est déjà installé !${NC}"
@@ -297,7 +297,7 @@ function install_watchtower() {
 			docker-compose up -d > /dev/null 2>&1
 			checking_errors $?
 		else
-			echo -e " ${BWHITE}--> watchtower ne sera pas installé !${NC}"
+			echo -e " ${BWHITE}--> watchtower n'est pas installé !${NC}"
 		fi
 	else
 		echo -e " ${BWHITE}--> watchtower est déjà installé !${NC}"
@@ -337,28 +337,38 @@ function install_plexdrive() {
 function install_rclone() {
 	echo -e "${BLUE}### RCLONE ###${NC}"
 	mkdir /mnt/rclone > /dev/null 2>&1
-	RCLONE="/usr/bin/rclone"
-	SEARCH=$(find /root/.config/rclone -name rclone.conf > /dev/null 2>&1)
-	if [[ ! -f "$RCLONE" ]] || [[ ! -f "$SEARCH" ]]; then
+	RCLONECONF="/root/.config/rclone/rclone.conf"
+	if [[ ! -f "$RCLONECONF" ]]; then
 		echo -e " ${BWHITE}* Installation rclone${NC}"
 		curl https://rclone.org/install.sh | bash > /dev/null 2>&1
 		mkdir -p /root/.config/rclone
-			echo ""
-			read -rp "Edition du fichier rclone.conf ? (o/n) : " FILE
-			if [[ "$FILE" = "o" ]] || [[ "$FILE" = "O" ]]; then
-    				echo -e "${YELLOW}\nColler le contenu de rclone.conf avec le clic droit, appuyez ensuite sur la touche Entrée et Taper ${CPURPLE}STOP${CEND}${YELLOW} pour poursuivre le script.\n${NC}"   				
-				while :
-    				do		
-        			read -p "" EXCLUDEPATH
-        			if [[ "$EXCLUDEPATH" = "STOP" ]] || [[ "$EXCLUDEPATH" = "stop" ]]; then
+		echo ""
+    		echo -e "${YELLOW}\nColler le contenu de rclone.conf avec le clic droit, appuyez ensuite sur la touche Entrée et Taper ${CPURPLE}STOP${CEND}${YELLOW} pour poursuivre le script.\n${NC}"   				
+		while :
+    		do		
+        	read -p "" EXCLUDEPATH
+        		if [[ "$EXCLUDEPATH" = "STOP" ]] || [[ "$EXCLUDEPATH" = "stop" ]]; then
             				break
-        			fi
-        			echo "$EXCLUDEPATH" >> /root/.config/rclone/rclone.conf
-    				done
-			fi
-			echo ""
+        		fi
+        	echo "$EXCLUDEPATH" >> /root/.config/rclone/rclone.conf
+    		done
+		echo ""
 		REMOTECRYPT=$(whiptail --title "Remote crypté" --inputbox \
-		"Saisir votre Remote crypté Plexdrive:" 7 50 3>&1 1>&2 2>&3)
+		"Saisir votre Remote crypté Plexdrive, ex: google:" 7 60 3>&1 1>&2 2>&3)
+		REMOTE=` echo $REMOTECRYPT| sed " s/\://g" `
+		VERIF=$(grep $REMOTE /root/.config/rclone/rclone.conf)
+
+		while [[ "[$REMOTE]" != "$VERIF" ]]
+		do
+			REMOTECRYPT=$(whiptail --title "Remote crypté non valide" --inputbox \
+			"Saisir à nouveau votre Remote crypté Plexdrive, ex: google:" 7 60 3>&1 1>&2 2>&3)
+			REMOTE=` echo $REMOTECRYPT| sed " s/\://g" `
+			VERIF=$(grep $REMOTE /root/.config/rclone/rclone.conf)
+		done
+
+		echo -e " ${BWHITE}* Vérification du remote crypté... ${NC}"
+		checking_errors $?
+		echo ""
 		cp "$BASEDIR/includes/config/rclone.service" "/etc/systemd/system/rclone.service" > /dev/null 2>&1
 		sed -i "s|%REMOTECRYPT%|$REMOTECRYPT|g" /etc/systemd/system/rclone.service
 		systemctl daemon-reload > /dev/null 2>&1
@@ -702,7 +712,7 @@ function install_services() {
 		sed -i "s|%USER%|$SEEDUSER|g" $DOCKERCOMPOSEFILE
 		sed -i "s|%EMAIL%|$CONTACTEMAIL|g" $DOCKERCOMPOSEFILE
 		cat /opt/seedbox-compose/includes/dockerapps/foot.docker >> $DOCKERCOMPOSEFILE
-		NOMBRE=$(sed -n "/$SEEDUSER/=" /etc/seedboxcompose/users)
+		NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
 		if [ $NOMBRE -le 1 ] ; then
 			FQDNTMP="$line.$DOMAIN"
 		else
@@ -768,8 +778,8 @@ done
 }
 
 function valid_htpasswd() {
-	if [[ -d "/etc/seedboxcompose/" ]]; then
-		HTFOLDER="/etc/seedboxcompose/passwd/"
+	if [[ -d "$CONFDIR" ]]; then
+		HTFOLDER="$CONFDIR/passwd/"
 		mkdir -p $HTFOLDER
 		HTTEMPFOLDER="/tmp/"
 		HTFILE=".htpasswd-$SEEDUSER"
@@ -783,8 +793,8 @@ function valid_htpasswd() {
 }
 
 function add_app_htpasswd() {
-	if [[ -d "/etc/seedboxcompose/" ]]; then
-		HTFOLDER="/etc/seedboxcompose/passwd/"
+	if [[ -d "$CONFDIR" ]]; then
+		HTFOLDER="$CONFDIR/passwd/"
 		HTFILE=".htpasswd-$SEEDUSER"
 		VAR=$(sed -e 's/\$/\$$/g' "$HTFOLDER$HTFILE")
 	fi
@@ -862,9 +872,9 @@ function manage_users() {
 		        echo -e "${BLUE}### SUPPRESSION USER ###${NC}"
 			rm -rf /home/$SEEDUSER > /dev/null 2>&1
 			userdel -rf $SEEDUSER > /dev/null 2>&1
-			sed -i "/$SEEDUSER/d" /etc/seedboxcompose/users
-			rm /etc/seedboxcompose/passwd/.htpasswd-$SEEDUSER
-			sed -n -i "/$SEEDUSER/!p" /etc/seedboxcompose/passwd/login
+			sed -i "/$SEEDUSER/d" $CONFDIR/users
+			rm $CONFDIR/passwd/.htpasswd-$SEEDUSER
+			sed -n -i "/$SEEDUSER/!p" $CONFDIR/passwd/login
 			checking_errors $?
 			echo""
 			echo -e "${BLUE}### $SEEDUSER a été supprimé ###${NC}"
@@ -964,7 +974,7 @@ function resume_seedbox() {
 	echo -e " ${BWHITE}* Accès Applis à partir de URL :${NC}"
 	for line in $(cat $INSTALLEDFILE);
 	do
-		NOMBRE=$(sed -n "/$SEEDUSER/=" /etc/seedboxcompose/users)
+		NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
 		if [ $NOMBRE -le 1 ] ; then
 			ACCESSDOMAIN=$(echo $line | cut -d\- -f3)
 			DOCKERAPP=$(echo $line | cut -d\- -f1)
@@ -976,9 +986,9 @@ function resume_seedbox() {
 		fi
 	done
 	
-	IDENT="/etc/seedboxcompose/passwd/.htpasswd-$SEEDUSER"	
+	IDENT="$CONFDIR/passwd/.htpasswd-$SEEDUSER"	
 	if [[ ! -d $IDENT ]]; then
-	PASSE=$(grep $SEEDUSER /etc/seedboxcompose/passwd/login | cut -d ' ' -f2)
+	PASSE=$(grep $SEEDUSER $CONFDIR/passwd/login | cut -d ' ' -f2)
 	echo ""
 	echo -e " ${BWHITE}* Vos IDs :${NC}"
 	echo -e "	--> Utilisateur: ${YELLOW}$SEEDUSER${NC}"
@@ -1003,7 +1013,7 @@ function uninstall_seedbox() {
 	echo -e "${BLUE}##########################################${NC}"
 	SEEDGROUP=$(cat $GROUPFILE)
 	PLEXDRIVE="/usr/bin/plexdrive"
-	ADMIN=$(head -1 /etc/seedboxcompose/users)
+	ADMIN=$(head -1 $CONFDIR/users)
 	if [[ -e "$PLEXDRIVE" ]]; then
 		echo -e " ${BWHITE}* Suppression Plexdrive/rclone...${NC}"
 		service rclone stop
@@ -1041,7 +1051,7 @@ function uninstall_seedbox() {
 	groupdel $SEEDGROUP > /dev/null 2>&1
 	checking_errors $?
 	echo -e " ${BWHITE}* Removing Seedbox-compose directory...${NC}"
-	rm -Rf /etc/seedboxcompose
+	rm -Rf $CONFDIR
 	checking_errors $?
 	cd /opt && rm -Rf seedbox-compose
 	pause
