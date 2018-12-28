@@ -88,7 +88,6 @@ function script_classique() {
 			script_classique
 		fi
 		;;
-
 		2)
 		clear
 		logo
@@ -97,7 +96,6 @@ function script_classique() {
 		clear
 			manage_users
  		;;
-
 		3)
 		clear
 		logo
@@ -135,7 +133,6 @@ function script_plexdrive() {
 			script_plexdrive
 		fi
 		;;
-
 		2)
 		clear
 		logo
@@ -144,7 +141,6 @@ function script_plexdrive() {
 		clear
 			manage_users
  		;;
-
 		3)
 		clear
 		logo
@@ -370,7 +366,7 @@ function install_rclone() {
 		curl https://rclone.org/install.sh | bash > /dev/null 2>&1
 		mkdir -p /root/.config/rclone
 		echo ""
-    		echo -e "${YELLOW}\nColler le contenu de rclone.conf avec le clic droit, appuyez ensuite sur la touche Entrée et Taper ${CPURPLE}STOP${CEND}${YELLOW} pour poursuivre le script.\n${NC}"   				
+    		echo -e "${YELLOW}\nColler le contenu de rclone.conf avec le clic droit, appuyer ensuite sur la touche Entrée et Taper ${CPURPLE}STOP${CEND}${YELLOW} pour poursuivre le script.\n${NC}"   				
 		while :
     		do		
         	read -p "" EXCLUDEPATH
@@ -500,7 +496,6 @@ function create_user() {
 		SEEDGROUP=$(whiptail --title "Group" --inputbox \
         	"Création d'un groupe pour la Seedbox" 7 50 3>&1 1>&2 2>&3)
 		echo "$SEEDGROUP" > "$GROUPFILE"
-
     		egrep "^$SEEDGROUP" /etc/group >/dev/null
 		if [[ "$?" != "0" ]]; then
 			echo -e " ${BWHITE}* Création du groupe $SEEDGROUP"
@@ -510,7 +505,6 @@ function create_user() {
 			SEEDGROUP=$TMPGROUP
 	    	echo -e " ${YELLOW}* Le groupe $SEEDGROUP existe déjà.${NC}"
 		fi
-
 		if [[ ! -f "$USERSFILE" ]]; then
 			touch $USERSFILE
 		fi
@@ -544,7 +538,6 @@ function create_user() {
         		"Création d'un groupe pour la Seedbox" 7 50 3>&1 1>&2 2>&3)
         	fi
 	fi
-
     	egrep "^$SEEDGROUP" /etc/group >/dev/null
 	if [[ "$?" != "0" ]]; then
 		echo -e " ${BWHITE}* Création du groupe $SEEDGROUP"
@@ -718,13 +711,11 @@ function install_services() {
 	else
 		declare -i PORT=$FIRSTPORT
 	fi
-
 	DOCKERCOMPOSEFILE="/home/$SEEDUSER/docker-compose.yml"
 	if [[ ! -f "$DOCKERCOMPOSEFILE" ]]; then
 	cat /opt/seedbox-compose/includes/dockerapps/head.docker > $DOCKERCOMPOSEFILE
 	cat /opt/seedbox-compose/includes/dockerapps/foot.docker >> $DOCKERCOMPOSEFILE
 	fi
-
 	for line in $(cat $SERVICESPERUSER);
 	do
 		#check_domain "$line.$DOMAIN"
@@ -757,7 +748,6 @@ function install_services() {
 		PORT=$PORT+1
 		FQDN=""
 		FQDNTMP=""
-
 	done
 	echo $PORT >> $FILEPORTPATH
 	echo ""
@@ -989,8 +979,7 @@ function manage_apps() {
 			else
 				script_classique
 			fi
-			;;
-			
+			;;	
 	esac
 }
 
@@ -1012,23 +1001,20 @@ function resume_seedbox() {
 			echo -e "	--> ${BWHITE}$DOCKERAPP${NC} --> ${YELLOW}$ACCESSDOMAIN${NC}"
 		fi
 	done
-	
 	IDENT="$CONFDIR/passwd/.htpasswd-$SEEDUSER"	
 	if [[ ! -d $IDENT ]]; then
-	PASSE=$(grep $SEEDUSER $CONFDIR/passwd/login | cut -d ' ' -f2)
-	echo ""
-	echo -e " ${BWHITE}* Vos IDs :${NC}"
-	echo -e "	--> Utilisateur: ${YELLOW}$SEEDUSER${NC}"
-	echo -e "	--> Password: ${YELLOW}$PASSE${NC}"
-	echo ""
-
+		PASSE=$(grep $SEEDUSER $CONFDIR/passwd/login | cut -d ' ' -f2)
+		echo ""
+		echo -e " ${BWHITE}* Vos IDs :${NC}"
+		echo -e "	--> Utilisateur: ${YELLOW}$SEEDUSER${NC}"
+		echo -e "	--> Password: ${YELLOW}$PASSE${NC}"
+		echo ""
 	else
-
-	echo -e " ${BWHITE}* Here is your IDs :${NC}"
-	echo -e "	--> Utilisateur: ${YELLOW}$HTUSER${NC}"
-	echo -e "	--> Password: ${YELLOW}$HTPASSWORD${NC}"
-	echo ""
-	echo ""
+		echo -e " ${BWHITE}* Here is your IDs :${NC}"
+		echo -e "	--> Utilisateur: ${YELLOW}$HTUSER${NC}"
+		echo -e "	--> Password: ${YELLOW}$HTPASSWORD${NC}"
+		echo ""
+		echo ""
 	fi
 	rm -Rf $SERVICESPERUSER > /dev/null 2>&1
 }
@@ -1036,7 +1022,7 @@ function resume_seedbox() {
 function uninstall_seedbox() {
 	clear
 	echo -e "${BLUE}##########################################${NC}"
-	echo -e "${BLUE}###          UNINSTALL SEEDBOX         ###${NC}"
+	echo -e "${BLUE}###       DESINSTALLATION SEEDBOX      ###${NC}"
 	echo -e "${BLUE}##########################################${NC}"
 	SEEDGROUP=$(cat $GROUPFILE)
 	PLEXDRIVE="/usr/bin/plexdrive"
@@ -1054,7 +1040,6 @@ function uninstall_seedbox() {
 		rm -rf /root/.config/rclone
 		checking_errors $?
 	fi
-
 	for seeduser in $(cat $USERSFILE)
 	do
 		USERHOMEDIR="/home/$seeduser"
