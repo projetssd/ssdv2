@@ -1003,6 +1003,7 @@ function uninstall_seedbox() {
 	echo -e "${BLUE}##########################################${NC}"
 	SEEDGROUP=$(cat $GROUPFILE)
 	PLEXDRIVE="/usr/bin/plexdrive"
+	ADMIN=$(head -1 /etc/seedboxcompose/users)
 	if [[ -e "$PLEXDRIVE" ]]; then
 		echo -e " ${BWHITE}* Suppression Plexdrive/rclone...${NC}"
 		service rclone stop
@@ -1021,7 +1022,7 @@ function uninstall_seedbox() {
 	do
 		USERHOMEDIR="/home/$seeduser"
 		echo -e " ${BWHITE}* Suppression users $seeduser...${NC}"
-		if [[ -e "$PLEXDRIVE" ]]; then
+		if [[ -e "$PLEXDRIVE" ]] && [[ "$seeduser" != "$ADMIN" ]]; then
 			service unionfs-$seeduser stop
 			rm /etc/systemd/system/unionfs-$seeduser.service
 		fi
