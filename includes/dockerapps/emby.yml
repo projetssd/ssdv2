@@ -1,0 +1,22 @@
+  
+#STARTemby#
+  emby-%USER%:
+    image: emby/embyserver
+    container_name: emby-%USER%
+    restart: unless-stopped
+    labels:
+      - traefik.enable=true
+      - traefik.frontend.rule=%TRAEFIKURL%
+      - traefik.frontend.auth.basic=%VAR%
+      - traefik.port=8989
+      - traefik.docker.network=traefik_proxy
+    volumes:
+      - /home/%USER%/docker/emby/conf:/config:rw
+      - /home/%USER%/docker/emby/data:/data:rw
+    environment:
+      - UID=%UID%
+      - GID=%GID%
+      - TZ=%TIMEZONE%
+    networks:
+      - proxy
+#ENDemby#
