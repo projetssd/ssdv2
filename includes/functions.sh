@@ -376,24 +376,12 @@ function install_rclone() {
         	echo "$EXCLUDEPATH" >> /root/.config/rclone/rclone.conf
     		done
 		echo ""
-		REMOTECRYPT=$(whiptail --title "Remote chiffré" --inputbox \
-		"Saisir votre Remote chiffré Plexdrive, ex: google:" 7 70 3>&1 1>&2 2>&3)
-		REMOTE=` echo $REMOTECRYPT| sed " s/\://g" `
-		VERIF=$(grep $REMOTE /root/.config/rclone/rclone.conf)
-
-		while [[ "[$REMOTE]" != "$VERIF" ]]
-		do
-			REMOTECRYPT=$(whiptail --title "Remote chiffré non valide" --inputbox \
-			"Saisir à nouveau votre Remote chiffré Plexdrive, ex: google:" 7 70 3>&1 1>&2 2>&3)
-			REMOTE=` echo $REMOTECRYPT| sed " s/\://g" `
-			VERIF=$(grep $REMOTE /root/.config/rclone/rclone.conf)
-		done
-
-		echo -e " ${BWHITE}* Vérification du remote chiffré plexdrive... ${NC}"
-		checking_errors $?
+		REMOTECRYPT=$(grep -iC 2 "/mnt/plexdrive" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
+		clear
+		echo -e " ${BWHITE}* Remote chiffré plexdrive: $REMOTECRYPT:${NC}"
 		echo ""
 		cp "$BASEDIR/includes/config/rclone.service" "/etc/systemd/system/rclone.service" > /dev/null 2>&1
-		sed -i "s|%REMOTECRYPT%|$REMOTECRYPT|g" /etc/systemd/system/rclone.service
+		sed -i "s|%REMOTECRYPT%|$REMOTECRYPT:|g" /etc/systemd/system/rclone.service
 		systemctl daemon-reload > /dev/null 2>&1
 		systemctl enable rclone.service > /dev/null 2>&1
 		service rclone start
