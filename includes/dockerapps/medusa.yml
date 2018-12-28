@@ -16,8 +16,7 @@
       - /home/%USER%/docker/rtorrent/torrents:/downloads
       - /home/%USER%/docker/medusa/config:/config
     environment:
-      - /etc/localtime:/etc/localtime:ro
-      - TZ=Paris/Europe
+      - TZ=%TIMEZONE%
       - UID=%UID%
       - GID=%GID%
       - MEDUSA_TVDIRS=/tv

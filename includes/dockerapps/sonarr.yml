@@ -13,6 +13,7 @@
     environment:
       - UID=%UID%
       - GID=%GID%
+      - TZ=%TIMEZONE%
     volumes:
       - /home/%USER%/docker/sonarr/config:/config
       - /home/%USER%/docker/rtorrent/torrents:/data/torrents
