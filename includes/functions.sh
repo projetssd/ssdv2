@@ -35,25 +35,29 @@ function check_domain() {
 
 function rclone_aide() {
 echo ""
-echo -e "${BLUE}### EXEMPLE RCLONE.CONF ###${NC}"
+echo -e "${CCYAN}### TRES IMPORTANT - RESPECTER L ORDRE D AFFICHAGE DES REMOTES ###${NC}"
+echo ""
+echo -e "    ${YELLOW}1) Remote non chiffré${NC}"
+echo -e "    ${YELLOW}2) Remote chiffré Plexdrive${NC}"
+echo -e "    ${YELLOW}3) Remote chiffré Rclone${NC}"
 echo ""
 echo -e "${BWHITE}[remote non chiffré]${NC}"
 echo -e "${CGREEN}type = drive${CEND}"
 echo -e "${CGREEN}token = {"access_token":"XXXXXXXXXXXX"}${CEND}"
 echo ""
-echo -e "${BWHITE}[remote chiffré]${NC}"
-echo -e "${CGREEN}type = crypt${CEND}"
-echo -e "${CGREEN}remote = ${CEND}${BWHITE}<remote non chiffré>:${NC}${CGREEN}crypte${CEND}"
-echo -e "${CGREEN}filename_encryption = standard${CEND}"
-echo -e "${CGREEN}password = XXXXXXXXXXXXXXX${CEND}"
-echo -e "${CGREEN}password2 = XXXXXXXXXXXXXXX${CEND}"
-echo ""
-echo -e "${BWHITE}[remote plexdrive]${NC}"
+echo -e "${BWHITE}[remote_chiffré_plexdrive]${NC}"
 echo -e "${CGREEN}type = crypt${CEND}"
 echo -e "${CGREEN}remote = /mnt/plexdrive/crypte${CEND}"
 echo -e "${CGREEN}filename_encryption = standard${CEND}"
 echo -e "${CGREEN}password = -XXXXXXXXXXXXXXXXXX${CEND}"
 echo -e "${CGREEN}password2 = XXXXXXXXXXXXXXXXXXXX${CEND}"
+echo ""
+echo -e "${BWHITE}[remote_chiffré_rclone]${NC}"
+echo -e "${CGREEN}type = crypt${CEND}"
+echo -e "${CGREEN}remote = ${CEND}${BWHITE}<remote non chiffré>:${NC}${CGREEN}crypte${CEND}"
+echo -e "${CGREEN}filename_encryption = standard${CEND}"
+echo -e "${CGREEN}password = XXXXXXXXXXXXXXX${CEND}"
+echo -e "${CGREEN}password2 = XXXXXXXXXXXXXXX${CEND}"
 echo ""
 }
 
@@ -376,12 +380,17 @@ function install_rclone() {
         	echo "$EXCLUDEPATH" >> /root/.config/rclone/rclone.conf
     		done
 		echo ""
-		REMOTECRYPT=$(grep -iC 2 "/mnt/plexdrive" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
+		REMOTEPLEX=$(grep -iC 2 "/mnt/plexdrive" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
+		REMOTECRYPT=$(grep "\[" /root/.config/rclone/rclone.conf | sed -n 3p | sed "s/\]//g" | sed "s/\[//g")
 		clear
-		echo -e " ${BWHITE}* Remote chiffré plexdrive: $REMOTECRYPT:${NC}"
+		echo -e " ${BWHITE}* Remote chiffré rclone${NC} --> ${YELLOW}$REMOTECRYPT:${NC}"
+		checking_errors $?
+		echo ""
+		echo -e " ${BWHITE}* Remote chiffré plexdrive${NC} --> ${YELLOW}$REMOTEPLEX:${NC}"
+		checking_errors $?
 		echo ""
 		cp "$BASEDIR/includes/config/rclone.service" "/etc/systemd/system/rclone.service" > /dev/null 2>&1
-		sed -i "s|%REMOTECRYPT%|$REMOTECRYPT:|g" /etc/systemd/system/rclone.service
+		sed -i "s|%REMOTEPLEX%|$REMOTEPLEX:|g" /etc/systemd/system/rclone.service
 		systemctl daemon-reload > /dev/null 2>&1
 		systemctl enable rclone.service > /dev/null 2>&1
 		service rclone start
