@@ -33,6 +33,30 @@ function check_domain() {
 		checking_errors $?
 }
 
+function rclone_aide() {
+echo ""
+echo -e "${BLUE}### EXEMPLE RCLONE.CONF ###${NC}"
+echo ""
+echo -e "${BWHITE}[remote non chiffré]${NC}"
+echo -e "${CGREEN}type = drive${CEND}"
+echo -e "${CGREEN}token = {"access_token":"XXXXXXXXXXXX"}${CEND}"
+echo ""
+echo -e "${BWHITE}[remote chiffré]${NC}"
+echo -e "${CGREEN}type = crypt${CEND}"
+echo -e "${CGREEN}remote = ${CEND}${BWHITE}<remote non chiffré>:${NC}${CGREEN}crypte${CEND}"
+echo -e "${CGREEN}filename_encryption = standard${CEND}"
+echo -e "${CGREEN}password = XXXXXXXXXXXXXXX${CEND}"
+echo -e "${CGREEN}password2 = XXXXXXXXXXXXXXX${CEND}"
+echo ""
+echo -e "${BWHITE}[remote plexdrive]${NC}"
+echo -e "${CGREEN}type = crypt${CEND}"
+echo -e "${CGREEN}remote = /mnt/plexdrive/crypte${CEND}"
+echo -e "${CGREEN}filename_encryption = standard${CEND}"
+echo -e "${CGREEN}password = -XXXXXXXXXXXXXXXXXX${CEND}"
+echo -e "${CGREEN}password2 = XXXXXXXXXXXXXXXXXXXX${CEND}"
+echo ""
+}
+
 function check_dir() {
 	if [[ $1 != $BASEDIR ]]; then
 		cd $BASEDIR
@@ -340,6 +364,9 @@ function install_rclone() {
 	RCLONECONF="/root/.config/rclone/rclone.conf"
 	if [[ ! -f "$RCLONECONF" ]]; then
 		echo -e " ${BWHITE}* Installation rclone${NC}"
+		clear
+		rclone_aide
+		pause
 		curl https://rclone.org/install.sh | bash > /dev/null 2>&1
 		mkdir -p /root/.config/rclone
 		echo ""
@@ -353,20 +380,20 @@ function install_rclone() {
         	echo "$EXCLUDEPATH" >> /root/.config/rclone/rclone.conf
     		done
 		echo ""
-		REMOTECRYPT=$(whiptail --title "Remote crypté" --inputbox \
-		"Saisir votre Remote crypté Plexdrive, ex: google:" 7 60 3>&1 1>&2 2>&3)
+		REMOTECRYPT=$(whiptail --title "Remote chiffré" --inputbox \
+		"Saisir votre Remote chiffré Plexdrive, ex: google:" 7 70 3>&1 1>&2 2>&3)
 		REMOTE=` echo $REMOTECRYPT| sed " s/\://g" `
 		VERIF=$(grep $REMOTE /root/.config/rclone/rclone.conf)
 
 		while [[ "[$REMOTE]" != "$VERIF" ]]
 		do
-			REMOTECRYPT=$(whiptail --title "Remote crypté non valide" --inputbox \
-			"Saisir à nouveau votre Remote crypté Plexdrive, ex: google:" 7 60 3>&1 1>&2 2>&3)
+			REMOTECRYPT=$(whiptail --title "Remote chiffré non valide" --inputbox \
+			"Saisir à nouveau votre Remote chiffré Plexdrive, ex: google:" 7 70 3>&1 1>&2 2>&3)
 			REMOTE=` echo $REMOTECRYPT| sed " s/\://g" `
 			VERIF=$(grep $REMOTE /root/.config/rclone/rclone.conf)
 		done
 
-		echo -e " ${BWHITE}* Vérification du remote crypté... ${NC}"
+		echo -e " ${BWHITE}* Vérification du remote chiffré plexdrive... ${NC}"
 		checking_errors $?
 		echo ""
 		cp "$BASEDIR/includes/config/rclone.service" "/etc/systemd/system/rclone.service" > /dev/null 2>&1
