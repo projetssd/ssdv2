@@ -536,7 +536,7 @@ function create_user() {
 		else
 			PASS=$(perl -e 'print crypt($ARGV[0], "password")' $PASSWORD)
 			echo -e " ${BWHITE}* Ajout de $SEEDUSER au système"
-			useradd -m -g $SEEDGROUP -p $PASS -s /bin/false $SEEDUSER > /dev/null 2>&1
+			useradd -g $SEEDGROUP -p $PASS -s /bin/false $SEEDUSER > /dev/null 2>&1
 			checking_errors $?
 			USERID=$(id -u $SEEDUSER)
 			GRPID=$(id -g $SEEDUSER)
@@ -744,7 +744,7 @@ function install_services() {
 		sed -i "s|%EMAIL%|$CONTACTEMAIL|g" $DOCKERCOMPOSEFILE
 		cat /opt/seedbox-compose/includes/dockerapps/foot.docker >> $DOCKERCOMPOSEFILE
 		NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
-		if [ $NOMBRE -le 1 ] ; then
+		if [ $NOMBRE -le 2 ] ; then
 			FQDNTMP="$line.$DOMAIN"
 		else
 			FQDNTMP="$line-$SEEDUSER.$DOMAIN"

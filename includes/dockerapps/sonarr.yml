@@ -17,7 +17,7 @@
     volumes:
       - /home/%USER%/docker/sonarr/config:/config
       - /home/%USER%/docker/rtorrent/torrents:/data/torrents
-      - /home/%USER%/docker/sonarr/Medias/Series:/tv
+      - /home/%USER%/Medias/Series:/tv
     networks:
       - proxy
 #ENDsonarr#
