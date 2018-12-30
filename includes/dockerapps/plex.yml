@@ -15,6 +15,7 @@
       - PLEX_UID=%UID%
       - PLEX_GID=%GID%
       - TZ=%TIMEZONE%
+      - LD_LIBRARY_PATH=/usr/lib/plexmediaserver
     healthcheck:
       disable: true
     volumes:

@@ -807,6 +807,26 @@ do
 done
 }
 
+function plex_sections() {
+			echo -e "${BLUE}### CREATION DES SECTIONS PLEX###${NC}"
+			cd /mnt/rclone/$SEEDUSER
+			ls -Ad */ | sed 's,/$,,g' > /home/$SEEDUSER/sections.txt
+			echo -e " ${BWHITE}* Sections en cours de création, patientez...${NC}"
+			sleep 15
+			for sections in $(cat /home/$SEEDUSER/sections.txt);
+			do
+			COMPTEUR=1
+			docker exec plex-$SEEDUSER /usr/lib/plexmediaserver/Plex\ Media\ Scanner -n $sections --type $COMPTEUR --location /data/$sections
+			echo -e "	${BWHITE}* $sections ${NC}"
+			COMPTEUR=$COMPTEUR+1
+			done
+			cd /home/$SEEDUSER
+			sed -i '/PATH/d' docker-compose.yml
+			docker-compose rm -fs plex-$SEEDUSER > /dev/null 2>&1 && docker-compose up -d plex-$SEEDUSER > /dev/null 2>&1
+			checking_errors $?
+			echo ""
+}
+
 function valid_htpasswd() {
 	if [[ -d "$CONFDIR" ]]; then
 		HTFOLDER="$CONFDIR/passwd/"
@@ -853,6 +873,7 @@ function manage_users() {
 				choose_services
 				install_services
 				docker_compose
+				plex_sections
 				resume_seedbox
 				pause
 				script_plexdrive
