@@ -807,23 +807,99 @@ do
 done
 }
 
+decompte() {
+    i=$1
+    while [[ $i -ge 0 ]]
+      do
+        echo -e "\033[1;37m\r * "$var ""$i""s" \c\033[0m"
+        sleep 1
+        i=$(expr $i - 1)
+    done
+    echo -e ""
+}
+
 function plex_sections() {
 			echo -e "${BLUE}### CREATION DES SECTIONS PLEX###${NC}"
+
+			## récupération de la liste des dossiers user
 			cd /mnt/rclone/$SEEDUSER
 			ls -Ad */ | sed 's,/$,,g' > /home/$SEEDUSER/sections.txt
-			echo -e " ${BWHITE}* Sections en cours de création, patientez...${NC}"
-			sleep 15
-			for sections in $(cat /home/$SEEDUSER/sections.txt);
+
+			FILMS=$(grep -E 'films|film|Films|FILMS|MOVIES|Movies|movies|movie|VIDEOS|VIDEO|Video|Videos' /home/$SEEDUSER/sections.txt)
+			SERIES=$(grep -E 'series|TV|tv|Series|SERIES|SERIES TV|Series TV|series tv|serie tv|serie TV|series TV|Shows' /home/$SEEDUSER/sections.txt)
+			ANIMES=$(grep -E 'ANIMES|ANIME|Animes|Anime|Animation|ANIMATION|animes|anime' /home/$SEEDUSER/sections.txt)
+			MUSIC=$(grep -E 'MUSIC|Music|music|Musiques|Musique|MUSIQUE|MUSIQUES|musiques|musique' /home/$SEEDUSER/sections.txt)
+
+			var="Sections en cours de création, patientez..."
+			decompte 30
+
+			## création des bibliothèques plex
+			for x in $(cat /home/$SEEDUSER/sections.txt);
 			do
-			COMPTEUR=1
-			docker exec plex-$SEEDUSER /usr/lib/plexmediaserver/Plex\ Media\ Scanner -n $sections --type $COMPTEUR --location /data/$sections
-			echo -e "	${BWHITE}* $sections ${NC}"
-			COMPTEUR=$COMPTEUR+1
+				if [[ "$x" == "$ANIMES" ]]; then
+					docker exec plex-$SEEDUSER /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section $x --type 2 --location /data/$x --lang fr
+					echo -e "	${BWHITE}* $x ${NC}"
+				
+				elif [[ "$x" == "$SERIES" ]]; then
+					docker exec plex-$SEEDUSER /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section $x --type 2 --location /data/$x --lang fr
+					echo -e "	${BWHITE}* $x ${NC}"
+				
+				elif [[ "$x" == "$MUSIC" ]]; then
+					docker exec plex-$SEEDUSER /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section $x --type 8 --location /data/$x --lang fr
+					echo -e "	${BWHITE}* $x ${NC}"
+				else
+					docker exec plex-$SEEDUSER /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section $x --type 1 --location /data/$x --lang fr
+					echo -e "	${BWHITE}* $x ${NC}"
+				fi
 			done
+
+			## configuration plex_autoscan
 			cd /home/$SEEDUSER
 			sed -i '/PATH/d' docker-compose.yml
+			sed -i 's/\/var\/lib\/plexmediaserver/\/config/g' /home/$SEEDUSER/docker/plex/config/plex_autoscan/config.json
 			docker-compose rm -fs plex-$SEEDUSER > /dev/null 2>&1 && docker-compose up -d plex-$SEEDUSER > /dev/null 2>&1
 			checking_errors $?
+			echo""
+			var="Plex_autoscan en cours de configuration, patientez..."
+			decompte 20
+			docker exec -ti plex-$SEEDUSER /plex_autoscan/scan.py sections > plex.log
+			checking_errors $?
+			echo ""
+
+			## Récupération du token de plex
+			echo -e " ${BWHITE}* Récupération du token Plex${NC}"
+			docker exec -ti plex-$SEEDUSER grep -E -o "PlexOnlineToken=.{0,22}" /config/Library/Application\ Support/Plex\ Media\ Server/Preferences.xml > /home/$SEEDUSER/token.txt
+			TOKEN=$(grep PlexOnlineToken /home/$SEEDUSER/token.txt | cut -d '=' -f2 | cut -c2-21)
+
+			for i in `seq 1 50`;
+			do
+   				var=$(grep "$i: " plex.log | cut -d: -f2 | cut -d ' ' -f2-3)
+   				if [ -n "$var" ]
+   				then
+     				echo "$i" "$var"
+   				fi 
+			done > categories.log
+			PLEXCANFILE="/home/$SEEDUSER/docker/plex/config/plex_autoscan/config.json"
+			cat "$BASEDIR/includes/config/plex_autoscan/config.json" > $PLEXCANFILE
+
+
+			ID_FILMS=$(grep -E 'films|film|Films|FILMS|MOVIES|Movies|movies|movie|VIDEOS|VIDEO|Video|Videos' categories.log | cut -d: -f1 | cut -d ' ' -f1)
+			ID_SERIES=$(grep -E 'series|TV|tv|Series|SERIES|SERIES TV|Series TV|series tv|serie tv|serie TV|series TV|Shows' categories.log | cut -d: -f1 | cut -d ' ' -f1)
+			ID_ANIMES=$(grep -E 'ANIMES|ANIME|Animes|Anime|Animation|ANIMATION|animes|anime' categories.log | cut -d: -f1 | cut -d ' ' -f1)
+			ID_MUSIC=$(grep -E 'MUSIC|Music|music|Musiques|Musique|MUSIQUE|MUSIQUES|musiques|musique' categories.log | cut -d: -f1 | cut -d ' ' -f1)
+			
+			sed -i "s|%TOKEN%|$TOKEN|g" $PLEXCANFILE
+			sed -i "s|%FILMS%|$FILMS|g" $PLEXCANFILE
+			sed -i "s|%SERIES%|$SERIES|g" $PLEXCANFILE
+			sed -i "s|%MUSIC%|$MUSIC|g" $PLEXCANFILE
+			sed -i "s|%ANIMES%|$ANIMES|g" $PLEXCANFILE
+			sed -i "s|%ID_FILMS%|$ID_FILMS|g" $PLEXCANFILE
+			sed -i "s|%ID_SERIES%|$ID_SERIES|g" $PLEXCANFILE
+			sed -i "s|%ID_ANIMES%|$ID_ANIMES|g" $PLEXCANFILE
+			sed -i "s|%ID_MUSIC%|$ID_MUSIC|g" $PLEXCANFILE
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" $PLEXCANFILE
+			docker-compose restart plex-$SEEDUSER > /dev/null 2>&1
+			checking_errors $?	
 			echo ""
 }
 
