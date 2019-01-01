@@ -785,7 +785,7 @@ function config_post_compose() {
 for line in $(cat $SERVICESPERUSER);
 do
 		if [[ "$line" == "plex" ]]; then
-			echo -e "${BLUE}### CONFIG POST COMPOSE PLEX###${NC}"
+			echo -e "${BLUE}### CONFIG POST COMPOSE PLEX ###${NC}"
 			echo -e " ${BWHITE}* Processing plex config file...${NC}"
 			cd /home/$SEEDUSER
 			# CLAIM pour Plex
@@ -819,7 +819,7 @@ decompte() {
 }
 
 function plex_sections() {
-			echo -e "${BLUE}### CREATION DES SECTIONS PLEX###${NC}"
+			echo -e "${BLUE}### CREATION DES BIBLIOTHEQUES PLEX ###${NC}"
 
 			## récupération de la liste des dossiers user
 			cd /mnt/rclone/$SEEDUSER
@@ -830,6 +830,7 @@ function plex_sections() {
 			ANIMES=$(grep -E 'ANIMES|ANIME|Animes|Anime|Animation|ANIMATION|animes|anime' /home/$SEEDUSER/sections.txt)
 			MUSIC=$(grep -E 'MUSIC|Music|music|Musiques|Musique|MUSIQUE|MUSIQUES|musiques|musique' /home/$SEEDUSER/sections.txt)
 
+			##compteur
 			var="Sections en cours de création, patientez..."
 			decompte 30
 
@@ -860,6 +861,8 @@ function plex_sections() {
 			docker-compose rm -fs plex-$SEEDUSER > /dev/null 2>&1 && docker-compose up -d plex-$SEEDUSER > /dev/null 2>&1
 			checking_errors $?
 			echo""
+
+			##compteur
 			var="Plex_autoscan en cours de configuration, patientez..."
 			decompte 20
 			docker exec -ti plex-$SEEDUSER /plex_autoscan/scan.py sections > plex.log
@@ -882,7 +885,6 @@ function plex_sections() {
 			PLEXCANFILE="/home/$SEEDUSER/docker/plex/config/plex_autoscan/config.json"
 			cat "$BASEDIR/includes/config/plex_autoscan/config.json" > $PLEXCANFILE
 
-
 			ID_FILMS=$(grep -E 'films|film|Films|FILMS|MOVIES|Movies|movies|movie|VIDEOS|VIDEO|Video|Videos' categories.log | cut -d: -f1 | cut -d ' ' -f1)
 			ID_SERIES=$(grep -E 'series|TV|tv|Series|SERIES|SERIES TV|Series TV|series tv|serie tv|serie TV|series TV|Shows' categories.log | cut -d: -f1 | cut -d ' ' -f1)
 			ID_ANIMES=$(grep -E 'ANIMES|ANIME|Animes|Anime|Animation|ANIMATION|animes|anime' categories.log | cut -d: -f1 | cut -d ' ' -f1)
@@ -898,8 +900,32 @@ function plex_sections() {
 			sed -i "s|%ID_ANIMES%|$ID_ANIMES|g" $PLEXCANFILE
 			sed -i "s|%ID_MUSIC%|$ID_MUSIC|g" $PLEXCANFILE
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" $PLEXCANFILE
-			docker-compose restart plex-$SEEDUSER > /dev/null 2>&1
 			checking_errors $?	
+			echo ""
+
+			## Configuration plex_dupefinder
+			for line in $(cat $INSTALLEDFILE);
+			do
+				NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
+				if [ $NOMBRE -le 1 ] ; then
+					ACCESSDOMAIN=$(echo $line | cut -d\- -f3)
+					DOCKERAPP=$(echo $line | cut -d\- -f1)
+				else
+					ACCESSDOMAIN=$(echo $line | cut -d\- -f3-4)
+					DOCKERAPP=$(echo $line | cut -d\- -f1)
+				fi
+			done
+			echo -e " ${BWHITE}* Configuration Plex_dupefinder${NC}"
+			PLEXDUPE="/home/$SEEDUSER/docker/plex/config/plex_dupefinder/config.json"
+			cat "$BASEDIR/includes/config/plex_dupefinder/config.json" > $PLEXDUPE
+			sed -i "s|%TOKEN%|$TOKEN|g" $PLEXDUPE
+			sed -i "s|%FILMS%|$FILMS|g" $PLEXDUPE
+			sed -i "s|%SERIES%|$SERIES|g" $PLEXDUPE
+			sed -i "s|%ID_FILMS%|$ID_FILMS|g" $PLEXDUPE
+			sed -i "s|%ID_SERIES%|$ID_SERIES|g" $PLEXDUPE
+			sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" $PLEXDUPE
+			docker-compose restart plex-$SEEDUSER > /dev/null 2>&1
+			checking_errors $?
 			echo ""
 }
 
