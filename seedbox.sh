@@ -25,7 +25,6 @@ case $CHOICE in
 			install_base_packages
 			checking_system
 			install_docker
-			install_zsh
 			define_parameters
 			install_traefik
 			install_portainer
@@ -49,7 +48,6 @@ case $CHOICE in
 			install_base_packages
 			checking_system
 			install_docker
-			install_zsh
 			define_parameters
 			install_traefik
 			install_plexdrive

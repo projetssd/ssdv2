@@ -47,14 +47,14 @@ echo -e "${CGREEN}token = {"access_token":"XXXXXXXXXXXX"}${CEND}"
 echo ""
 echo -e "${BWHITE}[remote_chiffré_plexdrive]${NC}"
 echo -e "${CGREEN}type = crypt${CEND}"
-echo -e "${CGREEN}remote = /mnt/plexdrive/crypte${CEND}"
+echo -e "${CGREEN}remote = /mnt/plexdrive/Media${CEND}"
 echo -e "${CGREEN}filename_encryption = standard${CEND}"
 echo -e "${CGREEN}password = -XXXXXXXXXXXXXXXXXX${CEND}"
 echo -e "${CGREEN}password2 = XXXXXXXXXXXXXXXXXXXX${CEND}"
 echo ""
 echo -e "${BWHITE}[remote_chiffré_rclone]${NC}"
 echo -e "${CGREEN}type = crypt${CEND}"
-echo -e "${CGREEN}remote = ${CEND}${BWHITE}<remote non chiffré>:${NC}${CGREEN}crypte${CEND}"
+echo -e "${CGREEN}remote = ${CEND}${BWHITE}<remote non chiffré>:${NC}${CGREEN}Media${CEND}"
 echo -e "${CGREEN}filename_encryption = standard${CEND}"
 echo -e "${CGREEN}password = XXXXXXXXXXXXXXX${CEND}"
 echo -e "${CGREEN}password2 = XXXXXXXXXXXXXXX${CEND}"
@@ -437,24 +437,6 @@ function unionfs_fuse() {
 	echo ""
 }
 
-function install_zsh() {
-	echo -e "${BLUE}### ZSH-OHMYZSH ###${NC}"
-	ZSHDIR="/usr/share/zsh"
-	OHMYZSHDIR="/root/.oh-my-zsh/"
-	if [[ ! -d "$OHMYZSHDIR" ]]; then
-		echo -e " * Installation ZSH"
-		apt-get install -y zsh > /dev/null 2>&1
-		checking_errors $?
-		echo -e " * Cloning Oh-My-ZSH"
-		wget -q https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh -O - | sh > /dev/null 2>&1
-		sed -i -e 's/^\ZSH_THEME=\"robbyrussell\"/ZSH_THEME=\"bira\"/g' ~/.zshrc > /dev/null 2>&1
-		sed -i -e 's/^\# DISABLE_AUTO_UPDATE=\"true\"/DISABLE_AUTO_UPDATE=\"true\"/g' ~root/.zshrc > /dev/null 2>&1
-	else
-		echo -e " ${YELLOW}* ZSH est délà installé !${NC}"
-	fi
-	echo ""
-}
-
 function install_docker() {
 	echo -e "${BLUE}### DOCKER ###${NC}"
 	dpkg-query -l docker > /dev/null 2>&1
@@ -481,6 +463,56 @@ function install_docker() {
 		echo -e " ${YELLOW}* Docker est déjà installé !${NC}"
 		echo ""
 	fi
+}
+
+function install_cloudplow() {
+	echo -e "${BLUE}### CLOUDPLOW ###${NC}"
+	echo -e " ${BWHITE}* Installation cloudplow${NC}"
+
+	## install cloudplow
+	git clone https://github.com/l3uddz/cloudplow /home/$SEEDUSER/cloudplow > /dev/null 2>&1
+	chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/cloudplow
+	cd /home/$SEEDUSER/cloudplow
+	python3 -m pip install -r requirements.txt > /dev/null 2>&1
+	mv /home/$SEEDUSER/cloudplow/config.json.sample /home/$SEEDUSER/cloudplow/config.json
+
+	## récupération des variables
+	SEEDGROUP=$(cat $GROUPFILE)
+	docker ps | grep -q plex-$SEEDUSER
+	if [ $? = 0 ]; then
+	docker exec -ti plex-$SEEDUSER grep -E -o "PlexOnlineToken=.{0,22}" /config/Library/Application\ Support/Plex\ Media\ Server/Preferences.xml > /home/$SEEDUSER/token.txt
+	TOKEN=$(grep PlexOnlineToken /home/$SEEDUSER/token.txt | cut -d '=' -f2 | cut -c2-21)
+	fi
+
+	REMOTECRYPT=$(grep "\[" /root/.config/rclone/rclone.conf | sed -n 3p | sed "s/\]//g" | sed "s/\[//g")
+	for line in $(cat $INSTALLEDFILE);
+	do
+		NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
+		if [ $NOMBRE -le 1 ] ; then
+			ACCESSDOMAIN=$(echo $line | cut -d\- -f3)
+		else
+			ACCESSDOMAIN=$(echo $line | cut -d\- -f3-4)
+		fi
+	done
+
+	## intégration des variables dans config.json
+	CLOUDPLOW="/home/$SEEDUSER/cloudplow/config.json"
+	cat "$BASEDIR/includes/config/cloudplow/config.json" > $CLOUDPLOW
+	sed -i "s|%SEEDUSER%|$SEEDUSER|g" $CLOUDPLOW
+	sed -i "s|%SEEDGROUP%|$SEEDGROUP|g" $CLOUDPLOW
+	sed -i "s|%TOKEN%|$TOKEN|g" $CLOUDPLOW
+	sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" $CLOUDPLOW
+	sed -i "s|%REMOTECRYPT%|$REMOTECRYPT|g" $CLOUDPLOW
+
+	## configuration cloudplow.service
+	cp "$BASEDIR/includes/config/cloudplow.service" "/etc/systemd/system/cloudplow-$SEEDUSER.service" > /dev/null 2>&1
+	sed -i "s|%SEEDUSER%|$SEEDUSER|g" /etc/systemd/system/cloudplow-$SEEDUSER.service
+	sed -i "s|%SEEDGROUP%|$SEEDGROUP|g" /etc/systemd/system/cloudplow-$SEEDUSER.service
+	systemctl daemon-reload > /dev/null 2>&1
+	systemctl enable cloudplow-$SEEDUSER.service > /dev/null 2>&1
+	systemctl start cloudplow-$SEEDUSER.service > /dev/null 2>&1
+	checking_errors $?
+	echo ""
 }
 
 function define_parameters() {
@@ -731,7 +763,6 @@ function install_services() {
 	fi
 	for line in $(cat $SERVICESPERUSER);
 	do
-		#check_domain "$line.$DOMAIN"
 		sed -i -n -e :a -e '1,5!{P;N;D;};N;ba' $DOCKERCOMPOSEFILE
 		cat "/opt/seedbox-compose/includes/dockerapps/$line.yml" >> $DOCKERCOMPOSEFILE
 		sed -i "s|%TIMEZONE%|$TIMEZONE|g" $DOCKERCOMPOSEFILE
@@ -787,6 +818,7 @@ do
 		if [[ "$line" == "plex" ]]; then
 			echo -e "${BLUE}### CONFIG POST COMPOSE PLEX ###${NC}"
 			echo -e " ${BWHITE}* Processing plex config file...${NC}"
+			PLEXDRIVE="/usr/bin/plexdrive"
 			cd /home/$SEEDUSER
 			# CLAIM pour Plex
 			echo ""
@@ -802,6 +834,10 @@ do
 			rm -rf /home/$SEEDUSER/plex
 			docker-compose rm -fs plex-$SEEDUSER > /dev/null 2>&1 && docker-compose up -d plex-$SEEDUSER > /dev/null 2>&1
 			checking_errors $?
+			echo""
+			if [[ -e "$PLEXDRIVE" ]]; then
+				plex_sections
+			fi
 			echo ""
 		fi
 done
@@ -909,10 +945,8 @@ function plex_sections() {
 				NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
 				if [ $NOMBRE -le 1 ] ; then
 					ACCESSDOMAIN=$(echo $line | cut -d\- -f3)
-					DOCKERAPP=$(echo $line | cut -d\- -f1)
 				else
 					ACCESSDOMAIN=$(echo $line | cut -d\- -f3-4)
-					DOCKERAPP=$(echo $line | cut -d\- -f1)
 				fi
 			done
 			echo -e " ${BWHITE}* Configuration Plex_dupefinder${NC}"
@@ -975,7 +1009,7 @@ function manage_users() {
 				choose_services
 				install_services
 				docker_compose
-				plex_sections
+				install_cloudplow
 				resume_seedbox
 				pause
 				script_plexdrive
@@ -1006,7 +1040,7 @@ function manage_users() {
 			SEEDUSER=$(whiptail --title "Gestion des Applis" --menu \
 	                		"Merci de sélectionner l'Utilisateur" 12 50 3 \
 	                		"${TABUSERS[@]}"  3>&1 1>&2 2>&3)
-			[[ "$?" = 1 ]] && break;
+			#[[ "$?" = 1 ]] && break;
 			## RESUME USER INFORMATIONS
 			USERDOCKERCOMPOSEFILE="/home/$SEEDUSER/docker-compose.yml"
 			USERRESUMEFILE="/home/$SEEDUSER/resume"
@@ -1017,8 +1051,10 @@ function manage_users() {
 			echo ""
 			if [[ -e "$PLEXDRIVE" ]]; then
 				echo -e "${BLUE}### SUPPRESSION USER RCLONE/PLEXDRIVE ###${NC}"
+				systemctl stop cloudplow-$SEEDUSER.service
 				systemctl stop unionfs-$SEEDUSER.service  
 				rm /etc/systemd/system/unionfs-$SEEDUSER.service
+				rm /etc/systemd/system/cloudplow-$SEEDUSER.service
 				checking_errors $?
 				echo""
 			fi
@@ -1182,7 +1218,9 @@ function uninstall_seedbox() {
 		echo -e " ${BWHITE}* Suppression users $seeduser...${NC}"
 		if [[ -e "$PLEXDRIVE" ]] && [[ "$seeduser" != "$ADMIN" ]]; then
 			service unionfs-$seeduser stop
+			service cloudplow-$seeduser stop
 			rm /etc/systemd/system/unionfs-$seeduser.service
+			rm /etc/systemd/system/cloudplow-$seeduser.service
 		fi
 		userdel -rf $seeduser > /dev/null 2>&1
 		checking_errors $?
