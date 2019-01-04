@@ -482,18 +482,16 @@ function install_cloudplow() {
 	if [ $? = 0 ]; then
 	docker exec -ti plex-$SEEDUSER grep -E -o "PlexOnlineToken=.{0,22}" /config/Library/Application\ Support/Plex\ Media\ Server/Preferences.xml > /home/$SEEDUSER/token.txt
 	TOKEN=$(grep PlexOnlineToken /home/$SEEDUSER/token.txt | cut -d '=' -f2 | cut -c2-21)
+	NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
+			if [ $NOMBRE -le 1 ] ; then
+				ACCESSDOMAIN=$(grep plex $INSTALLEDFILE | cut -d\- -f3)
+			else
+				ACCESSDOMAIN=$(grep plex $INSTALLEDFILE | cut -d\- -f3-4)
+			fi
 	fi
 
 	REMOTECRYPT=$(grep "\[" /root/.config/rclone/rclone.conf | sed -n 3p | sed "s/\]//g" | sed "s/\[//g")
-	for line in $(cat $INSTALLEDFILE);
-	do
-		NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
-		if [ $NOMBRE -le 1 ] ; then
-			ACCESSDOMAIN=$(echo $line | cut -d\- -f3)
-		else
-			ACCESSDOMAIN=$(echo $line | cut -d\- -f3-4)
-		fi
-	done
+
 
 	## intégration des variables dans config.json
 	CLOUDPLOW="/home/$SEEDUSER/cloudplow/config.json"
@@ -909,7 +907,6 @@ function plex_sections() {
 			echo -e " ${BWHITE}* Récupération du token Plex${NC}"
 			docker exec -ti plex-$SEEDUSER grep -E -o "PlexOnlineToken=.{0,22}" /config/Library/Application\ Support/Plex\ Media\ Server/Preferences.xml > /home/$SEEDUSER/token.txt
 			TOKEN=$(grep PlexOnlineToken /home/$SEEDUSER/token.txt | cut -d '=' -f2 | cut -c2-21)
-
 			for i in `seq 1 50`;
 			do
    				var=$(grep "$i: " plex.log | cut -d: -f2 | cut -d ' ' -f2-3)
@@ -940,15 +937,12 @@ function plex_sections() {
 			echo ""
 
 			## Configuration plex_dupefinder
-			for line in $(cat $INSTALLEDFILE);
-			do
-				NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
-				if [ $NOMBRE -le 1 ] ; then
-					ACCESSDOMAIN=$(echo $line | cut -d\- -f3)
-				else
-					ACCESSDOMAIN=$(echo $line | cut -d\- -f3-4)
-				fi
-			done
+			NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
+			if [ $NOMBRE -le 1 ] ; then
+				ACCESSDOMAIN=$(grep plex $INSTALLEDFILE | cut -d\- -f3)
+			else
+				ACCESSDOMAIN=$(grep plex $INSTALLEDFILE | cut -d\- -f3-4)
+			fi
 			echo -e " ${BWHITE}* Configuration Plex_dupefinder${NC}"
 			PLEXDUPE="/home/$SEEDUSER/docker/plex/config/plex_dupefinder/config.json"
 			cat "$BASEDIR/includes/config/plex_dupefinder/config.json" > $PLEXDUPE
@@ -960,7 +954,6 @@ function plex_sections() {
 			sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" $PLEXDUPE
 			docker-compose restart plex-$SEEDUSER > /dev/null 2>&1
 			checking_errors $?
-			echo ""
 }
 
 function valid_htpasswd() {
