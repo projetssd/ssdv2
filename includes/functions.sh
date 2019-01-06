@@ -995,9 +995,9 @@ function plex_sections() {
 			do
 				NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
 				if [ $NOMBRE -le 1 ] ; then
-					ACCESSDOMAIN=$(echo $line | cut -d\- -f3)
+					ACCESSDOMAIN=$(grep plex $INSTALLEDFILE | cut -d\- -f3)
 				else
-					ACCESSDOMAIN=$(echo $line | cut -d\- -f3-4)
+					ACCESSDOMAIN=$(grep plex $INSTALLEDFILE | cut -d\- -f3-4)
 				fi
 			done
 			
