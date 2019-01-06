@@ -1,7 +1,7 @@
 
 #STARTplex#
   plex-%USER%:
-    image: laster13/plex
+    image: plexinc/pms-docker
     container_name: plex-%USER%
     hostname: plex-%USER%
     restart: unless-stopped
@@ -16,6 +16,8 @@
       - PLEX_GID=%GID%
       - TZ=%TIMEZONE%
       - LD_LIBRARY_PATH=/usr/lib/plexmediaserver
+    ports:
+      - %PORTPLEX%:32400
     healthcheck:
       disable: true
     volumes:

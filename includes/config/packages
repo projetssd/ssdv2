@@ -16,6 +16,8 @@ members
 dnsutils
 fuse
 unionfs-fuse
+python
+python-pip
 python3
 python3-pip
 

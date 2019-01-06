@@ -157,7 +157,6 @@ function script_plexdrive() {
 	fi
 }
 
-
 function conf_dir() {
 	if [[ ! -d "$CONFDIR" ]]; then
 		mkdir $CONFDIR > /dev/null 2>&1
@@ -513,6 +512,27 @@ function install_cloudplow() {
 	echo ""
 }
 
+function install_plex_autoscan() {
+	echo -e "${BLUE}### PLEX_AUTOSCAN ###${NC}"
+	echo -e " ${BWHITE}* Installation plex_autoscan${NC}"
+
+	## install plex_autoscan
+	SEEDGROUP=$(cat $GROUPFILE)
+	git clone https://github.com/l3uddz/plex_autoscan /home/$SEEDUSER/plex_autoscan > /dev/null 2>&1
+	chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/plex_autoscan
+	cd /home/$SEEDUSER/plex_autoscan
+	python -m pip install -r requirements.txt > /dev/null 2>&1
+
+	## configuration plex_autoscan.service
+	cp "$BASEDIR/includes/config/plex_autoscan/plex_autoscan.service" "/etc/systemd/system/plex_autoscan-$SEEDUSER.service" > /dev/null 2>&1
+	sed -i "s|%SEEDUSER%|$SEEDUSER|g" /etc/systemd/system/plex_autoscan-$SEEDUSER.service
+	sed -i "s|%SEEDGROUP%|$SEEDGROUP|g" /etc/systemd/system/plex_autoscan-$SEEDUSER.service
+	systemctl daemon-reload > /dev/null 2>&1
+	systemctl enable plex_autoscan-$SEEDUSER.service > /dev/null 2>&1
+	checking_errors $?
+	echo ""
+}
+
 function define_parameters() {
 	echo -e "${BLUE}### INFORMATIONS UTILISATEURS ###${NC}"
 	USEDOMAIN="y"
@@ -749,11 +769,22 @@ function install_services() {
 	GRPID=$(id -g $SEEDUSER)
 	INSTALLEDFILE="/home/$SEEDUSER/resume"
 	touch $INSTALLEDFILE > /dev/null 2>&1
+
+	## port rtorrent
 	if [[ -f "$FILEPORTPATH" ]]; then
 		declare -i PORT=$(cat $FILEPORTPATH | tail -1)
 	else
 		declare -i PORT=$FIRSTPORT
 	fi
+
+	## poRt plex
+	if [[ -f "$PLEXPORTPATH" ]]; then
+		declare -i PORTPLEX=$(cat $PLEXPORTPATH | tail -1)
+	else
+		declare -i PORTPLEX=32400
+	fi
+
+	## préparation du docker-compose
 	DOCKERCOMPOSEFILE="/home/$SEEDUSER/docker-compose.yml"
 	if [[ ! -f "$DOCKERCOMPOSEFILE" ]]; then
 	cat /opt/seedbox-compose/includes/dockerapps/head.docker > $DOCKERCOMPOSEFILE
@@ -767,6 +798,7 @@ function install_services() {
 		sed -i "s|%UID%|$USERID|g" $DOCKERCOMPOSEFILE
 		sed -i "s|%GID%|$GRPID|g" $DOCKERCOMPOSEFILE
 		sed -i "s|%PORT%|$PORT|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%PORTPLEX%|$PORTPLEX|g" $DOCKERCOMPOSEFILE
 		sed -i "s|%VAR%|$VAR|g" $DOCKERCOMPOSEFILE
 		sed -i "s|%DOMAIN%|$DOMAIN|g" $DOCKERCOMPOSEFILE
 		sed -i "s|%USER%|$SEEDUSER|g" $DOCKERCOMPOSEFILE
@@ -788,10 +820,12 @@ function install_services() {
 		URI="/"
 	
 		PORT=$PORT+1
+		PORTPLEX=$PORTPLEX+1
 		FQDN=""
 		FQDNTMP=""
 	done
 	echo $PORT >> $FILEPORTPATH
+	echo $PORTPLEX >> $PLEXPORTPATH
 	echo ""
 }
 
@@ -799,9 +833,6 @@ function docker_compose() {
 	echo -e "${BLUE}### DOCKERCOMPOSE ###${NC}"
 	ACTDIR="$PWD"
 	cd /home/$SEEDUSER/
-	echo -e " ${BWHITE}* Starting docker...${NC}"
-	service docker restart
-	checking_errors $?
 	echo -e " ${BWHITE}* Docker-composing, Merci de patienter...${NC}"
 	docker-compose up -d > /dev/null 2>&1
 	checking_errors $?
@@ -829,8 +860,6 @@ do
 			then
 				sed -i "s|%CLAIM%|$CLAIM|g" /home/$SEEDUSER/docker-compose.yml
 			fi
-			rm -rf /home/$SEEDUSER/plex
-			docker-compose rm -fs plex-$SEEDUSER > /dev/null 2>&1 && docker-compose up -d plex-$SEEDUSER > /dev/null 2>&1
 			checking_errors $?
 			echo""
 			if [[ -e "$PLEXDRIVE" ]]; then
@@ -866,7 +895,7 @@ function plex_sections() {
 
 			##compteur
 			var="Sections en cours de création, patientez..."
-			decompte 30
+			decompte 15
 
 			## création des bibliothèques plex
 			for x in $(cat /home/$SEEDUSER/sections.txt);
@@ -891,17 +920,19 @@ function plex_sections() {
 			## configuration plex_autoscan
 			cd /home/$SEEDUSER
 			sed -i '/PATH/d' docker-compose.yml
-			sed -i 's/\/var\/lib\/plexmediaserver/\/config/g' /home/$SEEDUSER/docker/plex/config/plex_autoscan/config.json
 			docker-compose rm -fs plex-$SEEDUSER > /dev/null 2>&1 && docker-compose up -d plex-$SEEDUSER > /dev/null 2>&1
 			checking_errors $?
 			echo""
-
+			install_plex_autoscan
 			##compteur
 			var="Plex_autoscan en cours de configuration, patientez..."
-			decompte 20
-			docker exec -ti plex-$SEEDUSER /plex_autoscan/scan.py sections > plex.log
-			checking_errors $?
-			echo ""
+			#decompte 15
+			mv /home/$SEEDUSER/plex_autoscan/config/default.config /home/$SEEDUSER/plex_autoscan/config/config.json
+			sed -i 's/\/var\/lib\/plexmediaserver/\/config/g' /home/$SEEDUSER/plex_autoscan/config/config.json
+			sed -i 's/"DOCKER_NAME": ""/"DOCKER_NAME": "plex-'$SEEDUSER'"/g' /home/$SEEDUSER/plex_autoscan/config/config.json
+			sed -i 's/"USE_DOCKER": false/"USE_DOCKER": true/g' /home/$SEEDUSER/plex_autoscan/config/config.json
+			/home/$SEEDUSER/plex_autoscan/scan.py sections > /dev/null 2>&1
+			/home/$SEEDUSER/plex_autoscan/scan.py sections > plex.log
 
 			## Récupération du token de plex
 			echo -e " ${BWHITE}* Récupération du token Plex${NC}"
@@ -915,15 +946,23 @@ function plex_sections() {
      				echo "$i" "$var"
    				fi 
 			done > categories.log
-			PLEXCANFILE="/home/$SEEDUSER/docker/plex/config/plex_autoscan/config.json"
+			PLEXCANFILE="/home/$SEEDUSER/plex_autoscan/config/config.json"
 			cat "$BASEDIR/includes/config/plex_autoscan/config.json" > $PLEXCANFILE
 
 			ID_FILMS=$(grep -E 'films|film|Films|FILMS|MOVIES|Movies|movies|movie|VIDEOS|VIDEO|Video|Videos' categories.log | cut -d: -f1 | cut -d ' ' -f1)
 			ID_SERIES=$(grep -E 'series|TV|tv|Series|SERIES|SERIES TV|Series TV|series tv|serie tv|serie TV|series TV|Shows' categories.log | cut -d: -f1 | cut -d ' ' -f1)
 			ID_ANIMES=$(grep -E 'ANIMES|ANIME|Animes|Anime|Animation|ANIMATION|animes|anime' categories.log | cut -d: -f1 | cut -d ' ' -f1)
 			ID_MUSIC=$(grep -E 'MUSIC|Music|music|Musiques|Musique|MUSIQUE|MUSIQUES|musiques|musique' categories.log | cut -d: -f1 | cut -d ' ' -f1)
+
+			if [[ -f "$SCANPORTPATH" ]]; then
+				declare -i PORT=$(cat $SCANPORTPATH | tail -1)
+			else
+				declare -i PORT=3470
+			fi
+
 			
 			sed -i "s|%TOKEN%|$TOKEN|g" $PLEXCANFILE
+			sed -i "s|%PORT%|$PORT|g" $PLEXCANFILE
 			sed -i "s|%FILMS%|$FILMS|g" $PLEXCANFILE
 			sed -i "s|%SERIES%|$SERIES|g" $PLEXCANFILE
 			sed -i "s|%MUSIC%|$MUSIC|g" $PLEXCANFILE
@@ -933,27 +972,12 @@ function plex_sections() {
 			sed -i "s|%ID_ANIMES%|$ID_ANIMES|g" $PLEXCANFILE
 			sed -i "s|%ID_MUSIC%|$ID_MUSIC|g" $PLEXCANFILE
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" $PLEXCANFILE
-			checking_errors $?	
-			echo ""
-
-			## Configuration plex_dupefinder
-			NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
-			if [ $NOMBRE -le 1 ] ; then
-				ACCESSDOMAIN=$(grep plex $INSTALLEDFILE | cut -d\- -f3)
-			else
-				ACCESSDOMAIN=$(grep plex $INSTALLEDFILE | cut -d\- -f3-4)
-			fi
-			echo -e " ${BWHITE}* Configuration Plex_dupefinder${NC}"
-			PLEXDUPE="/home/$SEEDUSER/docker/plex/config/plex_dupefinder/config.json"
-			cat "$BASEDIR/includes/config/plex_dupefinder/config.json" > $PLEXDUPE
-			sed -i "s|%TOKEN%|$TOKEN|g" $PLEXDUPE
-			sed -i "s|%FILMS%|$FILMS|g" $PLEXDUPE
-			sed -i "s|%SERIES%|$SERIES|g" $PLEXDUPE
-			sed -i "s|%ID_FILMS%|$ID_FILMS|g" $PLEXDUPE
-			sed -i "s|%ID_SERIES%|$ID_SERIES|g" $PLEXDUPE
-			sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" $PLEXDUPE
-			docker-compose restart plex-$SEEDUSER > /dev/null 2>&1
+			systemctl start plex_autoscan-$SEEDUSER.service > /dev/null 2>&1
 			checking_errors $?
+			PORT=$PORT+1
+			echo $PORT >> $SCANPORTPATH
+
+			echo ""
 }
 
 function valid_htpasswd() {
