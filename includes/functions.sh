@@ -533,6 +533,20 @@ function install_plex_autoscan() {
 	echo ""
 }
 
+function install_plex_dupefinder() {
+	echo -e "${BLUE}### PLEX_DUPEFINDER ###${NC}"
+	echo -e " ${BWHITE}* Installation plex_dupefinder${NC}"
+
+	## install plex_dupefinder
+	SEEDGROUP=$(cat $GROUPFILE)
+	git clone https://github.com/l3uddz/plex_dupefinder /home/$SEEDUSER/plex_dupefinder > /dev/null 2>&1
+	chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/plex_dupefinder
+	cd /home/$SEEDUSER/plex_dupefinder
+	python3 -m pip install -r requirements.txt > /dev/null 2>&1
+	python3 plexdupes.py > /dev/null 2>&1
+}
+
+
 function define_parameters() {
 	echo -e "${BLUE}### INFORMATIONS UTILISATEURS ###${NC}"
 	USEDOMAIN="y"
@@ -960,7 +974,6 @@ function plex_sections() {
 				declare -i PORT=3470
 			fi
 
-			
 			sed -i "s|%TOKEN%|$TOKEN|g" $PLEXCANFILE
 			sed -i "s|%PORT%|$PORT|g" $PLEXCANFILE
 			sed -i "s|%FILMS%|$FILMS|g" $PLEXCANFILE
@@ -972,12 +985,43 @@ function plex_sections() {
 			sed -i "s|%ID_ANIMES%|$ID_ANIMES|g" $PLEXCANFILE
 			sed -i "s|%ID_MUSIC%|$ID_MUSIC|g" $PLEXCANFILE
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" $PLEXCANFILE
+			echo ""
+
+			## installation plex_dupefinder
+			install_plex_dupefinder
+
+			## récupération nom de domaine
+			for line in $(cat $INSTALLEDFILE);
+			do
+				NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
+				if [ $NOMBRE -le 1 ] ; then
+					ACCESSDOMAIN=$(echo $line | cut -d\- -f3)
+				else
+					ACCESSDOMAIN=$(echo $line | cut -d\- -f3-4)
+				fi
+			done
+			
+			## intégration des variables
+			PLEXDUPEFILE="/home/$SEEDUSER/plex_dupefinder/config.json"
+			cat "$BASEDIR/includes/config/plex_dupefinder/config.json" > $PLEXDUPEFILE
+			sed -i "s|%ID_FILMS%|$ID_FILMS|g" $PLEXDUPEFILE
+			sed -i "s|%ID_SERIES%|$ID_SERIES|g" $PLEXDUPEFILE
+			sed -i "s|%FILMS%|$FILMS|g" $PLEXDUPEFILE
+			sed -i "s|%SERIES%|$SERIES|g" $PLEXDUPEFILE
+			sed -i "s|%TOKEN%|$TOKEN|g" $PLEXDUPEFILE
+			sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" $PLEXDUPEFILE
+
+			## mise en place d'un cron pour le lancement de plexdupefinder
+			crontab -l > mycron > /dev/null 2>&1
+			echo "*/1 * * * * python3 /home/$SEEDUSER/plex_dupefinder/plexdupes.py > /dev/null 2>&1" >> mycron 
+			crontab mycron
+			rm mycron
+			
+			## lancement plex_autoscan
 			systemctl start plex_autoscan-$SEEDUSER.service > /dev/null 2>&1
 			checking_errors $?
 			PORT=$PORT+1
 			echo $PORT >> $SCANPORTPATH
-
-			echo ""
 }
 
 function valid_htpasswd() {
