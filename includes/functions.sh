@@ -952,6 +952,7 @@ function plex_sections() {
 			echo -e " ${BWHITE}* Récupération du token Plex${NC}"
 			docker exec -ti plex-$SEEDUSER grep -E -o "PlexOnlineToken=.{0,22}" /config/Library/Application\ Support/Plex\ Media\ Server/Preferences.xml > /home/$SEEDUSER/token.txt
 			TOKEN=$(grep PlexOnlineToken /home/$SEEDUSER/token.txt | cut -d '=' -f2 | cut -c2-21)
+			checking_errors $?
 			for i in `seq 1 50`;
 			do
    				var=$(grep "$i: " plex.log | cut -d: -f2 | cut -d ' ' -f2-3)
