@@ -1,5 +1,5 @@
 #!/bin/bash
-
+##########
 function logo() {
 
 color1='\033[1;31m'    # light red
@@ -345,7 +345,7 @@ function install_plexdrive() {
 		echo -e " ${YELLOW}* Une fois la configuration Plexdrive terminée, tapez ${NC}${CPURPLE}CTRL + C${NC}${YELLOW} pour poursuivre le script !${NC}"
 		echo ""
 		plexdrive mount -c /root/.plexdrive -o allow_other /mnt/plexdrive
-		cp "$BASEDIR/includes/config/plexdrive.service" "/etc/systemd/system/plexdrive.service" > /dev/null 2>&1
+		cp "$BASEDIR/includes/config/systemd/plexdrive.service" "/etc/systemd/system/plexdrive.service" > /dev/null 2>&1
 		systemctl daemon-reload > /dev/null 2>&1
 		systemctl enable plexdrive.service > /dev/null 2>&1
 		systemctl start plexdrive.service > /dev/null 2>&1
@@ -388,7 +388,7 @@ function install_rclone() {
 		echo -e " ${BWHITE}* Remote chiffré plexdrive${NC} --> ${YELLOW}$REMOTEPLEX:${NC}"
 		checking_errors $?
 		echo ""
-		cp "$BASEDIR/includes/config/rclone.service" "/etc/systemd/system/rclone.service" > /dev/null 2>&1
+		cp "$BASEDIR/includes/config/systemd/rclone.service" "/etc/systemd/system/rclone.service" > /dev/null 2>&1
 		sed -i "s|%REMOTEPLEX%|$REMOTEPLEX:|g" /etc/systemd/system/rclone.service
 		systemctl daemon-reload > /dev/null 2>&1
 		systemctl enable rclone.service > /dev/null 2>&1
@@ -406,7 +406,7 @@ function install_rclone() {
 		echo -e " ${BWHITE}* Remote chiffré plexdrive${NC} --> ${YELLOW}$REMOTEPLEX:${NC}"
 		checking_errors $?
 		echo ""
-		cp "$BASEDIR/includes/config/rclone.service" "/etc/systemd/system/rclone.service" > /dev/null 2>&1
+		cp "$BASEDIR/includes/config/systemd/rclone.service" "/etc/systemd/system/rclone.service" > /dev/null 2>&1
 		sed -i "s|%REMOTEPLEX%|$REMOTEPLEX:|g" /etc/systemd/system/rclone.service
 		systemctl daemon-reload > /dev/null 2>&1
 		systemctl enable rclone.service > /dev/null 2>&1
@@ -423,7 +423,7 @@ function unionfs_fuse() {
 	UNIONFS="/etc/systemd/system/unionfs-$SEEDUSER.service"
 	if [[ ! -e "$UNIONFS" ]]; then
 		echo -e " ${BWHITE}* Installation Unionfs${NC}"
-		cp "$BASEDIR/includes/config/unionfs.service" "/etc/systemd/system/unionfs-$SEEDUSER.service" > /dev/null 2>&1
+		cp "$BASEDIR/includes/config/systemd/unionfs.service" "/etc/systemd/system/unionfs-$SEEDUSER.service" > /dev/null 2>&1
 		sed -i "s|%SEEDUSER%|$SEEDUSER|g" /etc/systemd/system/unionfs-$SEEDUSER.service
 		systemctl daemon-reload > /dev/null 2>&1
 		systemctl enable unionfs-$SEEDUSER.service > /dev/null 2>&1
@@ -469,11 +469,11 @@ function install_cloudplow() {
 	echo -e " ${BWHITE}* Installation cloudplow${NC}"
 
 	## install cloudplow
-	git clone https://github.com/l3uddz/cloudplow /home/$SEEDUSER/cloudplow > /dev/null 2>&1
-	chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/cloudplow
-	cd /home/$SEEDUSER/cloudplow
+	git clone https://github.com/l3uddz/cloudplow /home/$SEEDUSER/scripts/cloudplow > /dev/null 2>&1
+	chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/scripts/cloudplow
+	cd /home/$SEEDUSER/scripts/cloudplow
 	python3 -m pip install -r requirements.txt > /dev/null 2>&1
-	mv /home/$SEEDUSER/cloudplow/config.json.sample /home/$SEEDUSER/cloudplow/config.json
+	mv /home/$SEEDUSER/scripts/cloudplow/config.json.sample /home/$SEEDUSER/scripts/cloudplow/config.json
 
 	## récupération des variables
 	SEEDGROUP=$(cat $GROUPFILE)
@@ -493,7 +493,7 @@ function install_cloudplow() {
 
 
 	## intégration des variables dans config.json
-	CLOUDPLOW="/home/$SEEDUSER/cloudplow/config.json"
+	CLOUDPLOW="/home/$SEEDUSER/scripts/cloudplow/config.json"
 	cat "$BASEDIR/includes/config/cloudplow/config.json" > $CLOUDPLOW
 	sed -i "s|%SEEDUSER%|$SEEDUSER|g" $CLOUDPLOW
 	sed -i "s|%SEEDGROUP%|$SEEDGROUP|g" $CLOUDPLOW
@@ -502,13 +502,14 @@ function install_cloudplow() {
 	sed -i "s|%REMOTECRYPT%|$REMOTECRYPT|g" $CLOUDPLOW
 
 	## configuration cloudplow.service
-	cp "$BASEDIR/includes/config/cloudplow.service" "/etc/systemd/system/cloudplow-$SEEDUSER.service" > /dev/null 2>&1
+	cp "$BASEDIR/includes/config/systemd/cloudplow.service" "/etc/systemd/system/cloudplow-$SEEDUSER.service" > /dev/null 2>&1
 	sed -i "s|%SEEDUSER%|$SEEDUSER|g" /etc/systemd/system/cloudplow-$SEEDUSER.service
 	sed -i "s|%SEEDGROUP%|$SEEDGROUP|g" /etc/systemd/system/cloudplow-$SEEDUSER.service
 	systemctl daemon-reload > /dev/null 2>&1
 	systemctl enable cloudplow-$SEEDUSER.service > /dev/null 2>&1
 	systemctl start cloudplow-$SEEDUSER.service > /dev/null 2>&1
 	checking_errors $?
+	rm /home/$SEEDUSER/token.txt
 	echo ""
 }
 
@@ -518,13 +519,13 @@ function install_plex_autoscan() {
 
 	## install plex_autoscan
 	SEEDGROUP=$(cat $GROUPFILE)
-	git clone https://github.com/l3uddz/plex_autoscan /home/$SEEDUSER/plex_autoscan > /dev/null 2>&1
-	chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/plex_autoscan
-	cd /home/$SEEDUSER/plex_autoscan
+	git clone https://github.com/l3uddz/plex_autoscan /home/$SEEDUSER/scripts/plex_autoscan > /dev/null 2>&1
+	chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/scripts/plex_autoscan
+	cd /home/$SEEDUSER/scripts/plex_autoscan
 	python -m pip install -r requirements.txt > /dev/null 2>&1
 
 	## configuration plex_autoscan.service
-	cp "$BASEDIR/includes/config/plex_autoscan/plex_autoscan.service" "/etc/systemd/system/plex_autoscan-$SEEDUSER.service" > /dev/null 2>&1
+	cp "$BASEDIR/includes/config/systemd/plex_autoscan.service" "/etc/systemd/system/plex_autoscan-$SEEDUSER.service" > /dev/null 2>&1
 	sed -i "s|%SEEDUSER%|$SEEDUSER|g" /etc/systemd/system/plex_autoscan-$SEEDUSER.service
 	sed -i "s|%SEEDGROUP%|$SEEDGROUP|g" /etc/systemd/system/plex_autoscan-$SEEDUSER.service
 	systemctl daemon-reload > /dev/null 2>&1
@@ -539,9 +540,9 @@ function install_plex_dupefinder() {
 
 	## install plex_dupefinder
 	SEEDGROUP=$(cat $GROUPFILE)
-	git clone https://github.com/l3uddz/plex_dupefinder /home/$SEEDUSER/plex_dupefinder > /dev/null 2>&1
-	chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/plex_dupefinder
-	cd /home/$SEEDUSER/plex_dupefinder
+	git clone https://github.com/l3uddz/plex_dupefinder /home/$SEEDUSER/scripts/plex_dupefinder > /dev/null 2>&1
+	chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/scripts/plex_dupefinder
+	cd /home/$SEEDUSER/scripts/plex_dupefinder
 	python3 -m pip install -r requirements.txt > /dev/null 2>&1
 	python3 plexdupes.py > /dev/null 2>&1
 }
@@ -600,7 +601,7 @@ function create_user() {
 		else
 			PASS=$(perl -e 'print crypt($ARGV[0], "password")' $PASSWORD)
 			echo -e " ${BWHITE}* Ajout de $SEEDUSER au système"
-			useradd -g $SEEDGROUP -p $PASS -s /bin/false $SEEDUSER > /dev/null 2>&1
+			useradd -M -g $SEEDGROUP -p $PASS -s /bin/bash $SEEDUSER > /dev/null 2>&1
 			checking_errors $?
 			USERID=$(id -u $SEEDUSER)
 			GRPID=$(id -g $SEEDUSER)
@@ -642,7 +643,10 @@ function create_user() {
 	else
 		PASS=$(perl -e 'print crypt($ARGV[0], "password")' $PASSWORD)
 		echo -e " ${BWHITE}* Ajout de $SEEDUSER au système"
-		useradd -m -g $SEEDGROUP -p $PASS -s /bin/false $SEEDUSER > /dev/null 2>&1
+		useradd -M -g $SEEDGROUP -p $PASS -s /bin/bash $SEEDUSER > /dev/null 2>&1
+		mkdir -p /home/$SEEDUSER
+		chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER
+		chmod 755 /home/$SEEDUSER
 		checking_errors $?
 		USERID=$(id -u $SEEDUSER)
 		GRPID=$(id -g $SEEDUSER)
@@ -719,6 +723,8 @@ function choose_media_folder_plexdrive() {
 		mkdir -p /home/$SEEDUSER/local/$line
 		echo -e "	${GREEN}--> Le dossier ${NC}${YELLOW}$line${NC}${GREEN} a été ajouté avec succès !${NC}"
 		done
+		chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/local
+		chmod -R 755 /home/$SEEDUSER/local
 	else
 		mkdir -p /mnt/rclone/$SEEDUSER
 		mkdir -p /home/$SEEDUSER/Medias
@@ -747,6 +753,8 @@ function choose_media_folder_plexdrive() {
 		mkdir -p /home/$SEEDUSER/local/$line
 		mkdir -p /mnt/rclone/$SEEDUSER/$line 
 		done
+		chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/local
+		chmod -R 755 /home/$SEEDUSER/local
 		rm /tmp/menumedia.txt
 	fi
 	echo ""
@@ -938,15 +946,12 @@ function plex_sections() {
 			checking_errors $?
 			echo""
 			install_plex_autoscan
-			##compteur
-			var="Plex_autoscan en cours de configuration, patientez..."
-			#decompte 15
-			mv /home/$SEEDUSER/plex_autoscan/config/default.config /home/$SEEDUSER/plex_autoscan/config/config.json
-			sed -i 's/\/var\/lib\/plexmediaserver/\/config/g' /home/$SEEDUSER/plex_autoscan/config/config.json
-			sed -i 's/"DOCKER_NAME": ""/"DOCKER_NAME": "plex-'$SEEDUSER'"/g' /home/$SEEDUSER/plex_autoscan/config/config.json
-			sed -i 's/"USE_DOCKER": false/"USE_DOCKER": true/g' /home/$SEEDUSER/plex_autoscan/config/config.json
-			/home/$SEEDUSER/plex_autoscan/scan.py sections > /dev/null 2>&1
-			/home/$SEEDUSER/plex_autoscan/scan.py sections > plex.log
+			mv /home/$SEEDUSER/scripts/plex_autoscan/config/default.config /home/$SEEDUSER/scripts/plex_autoscan/config/config.json
+			sed -i 's/\/var\/lib\/plexmediaserver/\/config/g' /home/$SEEDUSER/scripts/plex_autoscan/config/config.json
+			sed -i 's/"DOCKER_NAME": ""/"DOCKER_NAME": "plex-'$SEEDUSER'"/g' /home/$SEEDUSER/scripts/plex_autoscan/config/config.json
+			sed -i 's/"USE_DOCKER": false/"USE_DOCKER": true/g' /home/$SEEDUSER/scripts/plex_autoscan/config/config.json
+			/home/$SEEDUSER/scripts/plex_autoscan/scan.py sections > /dev/null 2>&1
+			/home/$SEEDUSER/scripts/plex_autoscan/scan.py sections > plex.log
 
 			## Récupération du token de plex
 			echo -e " ${BWHITE}* Récupération du token Plex${NC}"
@@ -961,7 +966,7 @@ function plex_sections() {
      				echo "$i" "$var"
    				fi 
 			done > categories.log
-			PLEXCANFILE="/home/$SEEDUSER/plex_autoscan/config/config.json"
+			PLEXCANFILE="/home/$SEEDUSER/scripts/plex_autoscan/config/config.json"
 			cat "$BASEDIR/includes/config/plex_autoscan/config.json" > $PLEXCANFILE
 
 			ID_FILMS=$(grep -E 'films|film|Films|FILMS|MOVIES|Movies|movies|movie|VIDEOS|VIDEO|Video|Videos' categories.log | cut -d: -f1 | cut -d ' ' -f1)
@@ -1003,7 +1008,7 @@ function plex_sections() {
 			done
 			
 			## intégration des variables
-			PLEXDUPEFILE="/home/$SEEDUSER/plex_dupefinder/config.json"
+			PLEXDUPEFILE="/home/$SEEDUSER/scripts/plex_dupefinder/config.json"
 			cat "$BASEDIR/includes/config/plex_dupefinder/config.json" > $PLEXDUPEFILE
 			sed -i "s|%ID_FILMS%|$ID_FILMS|g" $PLEXDUPEFILE
 			sed -i "s|%ID_SERIES%|$ID_SERIES|g" $PLEXDUPEFILE
@@ -1014,15 +1019,19 @@ function plex_sections() {
 
 			## mise en place d'un cron pour le lancement de plexdupefinder
 			crontab -l > mycron > /dev/null 2>&1
-			echo "*/1 * * * * python3 /home/$SEEDUSER/plex_dupefinder/plexdupes.py > /dev/null 2>&1" >> mycron 
+			echo "*/1 * * * * python3 /home/$SEEDUSER/scripts/plex_dupefinder/plexdupes.py >> /home/$SEEDUSER/scripts/plex_dupefinder/activity.log" >> mycron 
 			crontab mycron
 			rm mycron
 			
 			## lancement plex_autoscan
+			# chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/scripts/plex_autoscan
 			systemctl start plex_autoscan-$SEEDUSER.service > /dev/null 2>&1
 			checking_errors $?
 			PORT=$PORT+1
 			echo $PORT >> $SCANPORTPATH
+			chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/scripts
+			rm /home/$SEEDUSER/sections.txt
+			rm /home/$SEEDUSER/token.txt
 }
 
 function valid_htpasswd() {
@@ -1114,8 +1123,13 @@ function manage_users() {
 			if [[ -e "$PLEXDRIVE" ]]; then
 				echo -e "${BLUE}### SUPPRESSION USER RCLONE/PLEXDRIVE ###${NC}"
 				systemctl stop cloudplow-$SEEDUSER.service
-				systemctl stop unionfs-$SEEDUSER.service  
+				systemctl stop plex_autoscan-$SEEDUSER.service
+				systemctl stop unionfs-$SEEDUSER.service
+				systemctl disable unionfs-$SEEDUSER.service > /dev/null 2>&1
+				systemctl disable cloudplow-$SEEDUSER.service > /dev/null 2>&1
+				systemctl disable plex_autoscan-$SEEDUSER.service > /dev/null 2>&1
 				rm /etc/systemd/system/unionfs-$SEEDUSER.service
+				rm /etc/systemd/system/plex_autoscan-$SEEDUSER.service
 				rm /etc/systemd/system/cloudplow-$SEEDUSER.service
 				checking_errors $?
 				echo""

@@ -1,0 +1,15 @@
+[Unit]
+Description=Plex Autoscan
+After=network-online.target
+
+[Service]
+User=root
+Group=root
+Type=simple
+WorkingDirectory=/home/%SEEDUSER%/scripts/plex_autoscan
+ExecStart=/home/%SEEDUSER%/scripts/plex_autoscan/scan.py server --loglevel=INFO
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=default.target
