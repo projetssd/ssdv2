@@ -1,5 +1,5 @@
 defaultEntryPoints = ["https","http"]
-InsecureSkipVerify = true
+#InsecureSkipVerify = true
 
 [api]
 entryPoint = "traefik"

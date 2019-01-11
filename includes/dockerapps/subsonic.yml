@@ -1,0 +1,23 @@
+
+#STARTsubsonic#
+  subsonic-%USER%:
+    container_name: subsonic-%USER%
+    image: hurricane/subsonic
+    restart: unless-stopped
+    labels:
+      - traefik.enable=true
+      - traefik.frontend.rule=%TRAEFIKURL%
+      - traefik.port=4040
+      - traefik.docker.network=traefik_proxy
+    environment:
+      - APP_UID=%UID%
+      - APP_GID=%UID%
+      - TZ=%TIMEZONE%
+    volumes:
+      - /home/%USER%/docker/subsonic/log:/subsonic
+      - /home/%USER%/docker/subsonic/music:/music
+      - /home/%USER%/docker/subsonic/podcast:/podcast
+      - /home/%USER%/docker/subsonic/playlists:/playlists
+    networks:
+      - proxy
+#ENDsubsonic#

@@ -882,11 +882,24 @@ do
 				sed -i "s|%CLAIM%|$CLAIM|g" /home/$SEEDUSER/docker-compose.yml
 			fi
 			checking_errors $?
-			echo""
+			echo ""
 			if [[ -e "$PLEXDRIVE" ]]; then
 				plex_sections
 			fi
-			echo ""
+		fi
+
+		if [[ "$line" == "subsonic" ]]; then
+		echo -e "${BLUE}### CONFIG POST COMPOSE SUBSONIC ###${NC}"
+		echo -e " ${BWHITE}* Mise à jour subsonic...${NC}"
+		docker exec subsonic-$SEEDUSER update > /dev/null 2>&1
+		docker restart subsonic-$SEEDUSER > /dev/null 2>&1
+		docker exec subsonic-$SEEDUSER bash -c "echo '127.0.0.1 localhost.localdomain localhost subsonic.org' >> /etc/hosts"
+		checking_errors $?
+		echo ""
+		echo -e "${BLUE}### SUBSONIC PREMIUM ###${NC}"
+		echo -e "${BWHITE}	-->foo@bar.com${NC}"
+		echo -e "${BWHITE}	-->f3ada405ce890b6f8204094deb12d8a8${NC}"
+		echo ""
 		fi
 done
 }
@@ -1028,6 +1041,8 @@ function plex_sections() {
 			chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/scripts
 			rm /home/$SEEDUSER/sections.txt
 			rm /home/$SEEDUSER/token.txt
+			echo ""
+			install_cloudplow
 }
 
 function valid_htpasswd() {
@@ -1076,7 +1091,6 @@ function manage_users() {
 				choose_services
 				install_services
 				docker_compose
-				install_cloudplow
 				resume_seedbox
 				pause
 				script_plexdrive
@@ -1118,15 +1132,18 @@ function manage_users() {
 			echo ""
 			if [[ -e "$PLEXDRIVE" ]]; then
 				echo -e "${BLUE}### SUPPRESSION USER RCLONE/PLEXDRIVE ###${NC}"
-				systemctl stop cloudplow-$SEEDUSER.service
-				systemctl stop plex_autoscan-$SEEDUSER.service
+				PLEXAUTOSCAN="/etc/systemd/system/plex_autoscan-$SEEDUSER.service"
+				if [[ -e "$PLEXAUTOSCAN" ]]; then
+					systemctl stop cloudplow-$SEEDUSER.service
+					systemctl stop plex_autoscan-$SEEDUSER.service
+					systemctl disable cloudplow-$SEEDUSER.service > /dev/null 2>&1
+					systemctl disable plex_autoscan-$SEEDUSER.service > /dev/null 2>&1
+					rm /etc/systemd/system/plex_autoscan-$SEEDUSER.service
+					rm /etc/systemd/system/cloudplow-$SEEDUSER.service
+				fi
 				systemctl stop unionfs-$SEEDUSER.service
 				systemctl disable unionfs-$SEEDUSER.service > /dev/null 2>&1
-				systemctl disable cloudplow-$SEEDUSER.service > /dev/null 2>&1
-				systemctl disable plex_autoscan-$SEEDUSER.service > /dev/null 2>&1
 				rm /etc/systemd/system/unionfs-$SEEDUSER.service
-				rm /etc/systemd/system/plex_autoscan-$SEEDUSER.service
-				rm /etc/systemd/system/cloudplow-$SEEDUSER.service
 				checking_errors $?
 				echo""
 			fi
@@ -1287,12 +1304,20 @@ function uninstall_seedbox() {
 	for seeduser in $(cat $USERSFILE)
 	do
 		USERHOMEDIR="/home/$seeduser"
+		PLEXAUTOSCAN="/etc/systemd/system/plex_autoscan-$SEEDUSER.service"
 		echo -e " ${BWHITE}* Suppression users $seeduser...${NC}"
 		if [[ -e "$PLEXDRIVE" ]] && [[ "$seeduser" != "$ADMIN" ]]; then
+				if [[ -e "$PLEXAUTOSCAN" ]]; then
+					systemctl stop cloudplow-$SEEDUSER.service
+					systemctl stop plex_autoscan-$SEEDUSER.service
+					systemctl disable cloudplow-$SEEDUSER.service > /dev/null 2>&1
+					systemctl disable plex_autoscan-$SEEDUSER.service > /dev/null 2>&1
+					rm /etc/systemd/system/plex_autoscan-$SEEDUSER.service
+					rm /etc/systemd/system/cloudplow-$SEEDUSER.service
+				fi
 			service unionfs-$seeduser stop
-			service cloudplow-$seeduser stop
+			systemctl disable unionfs-$SEEDUSER.service > /dev/null 2>&1
 			rm /etc/systemd/system/unionfs-$seeduser.service
-			rm /etc/systemd/system/cloudplow-$seeduser.service
 		fi
 		userdel -rf $seeduser > /dev/null 2>&1
 		checking_errors $?
