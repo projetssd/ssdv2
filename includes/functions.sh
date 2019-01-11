@@ -35,29 +35,25 @@ function check_domain() {
 
 function rclone_aide() {
 echo ""
-echo -e "${CCYAN}### TRES IMPORTANT - RESPECTER L ORDRE D AFFICHAGE DES REMOTES ###${NC}"
+echo -e "${CCYAN}### MODELE RCLONE.CONF ###${NC}"
 echo ""
-echo -e "    ${YELLOW}1) Remote non chiffré${NC}"
-echo -e "    ${YELLOW}2) Remote chiffré Plexdrive${NC}"
-echo -e "    ${YELLOW}3) Remote chiffré Rclone${NC}"
+echo -e "${YELLOW}[remote non chiffré]${NC}"
+echo -e "${BWHITE}type = drive${NC}"
+echo -e "${BWHITE}token = {"access_token":"XXXXXXXXXXXX"}${NC}"
 echo ""
-echo -e "${BWHITE}[remote non chiffré]${NC}"
-echo -e "${CGREEN}type = drive${CEND}"
-echo -e "${CGREEN}token = {"access_token":"XXXXXXXXXXXX"}${CEND}"
-echo ""
-echo -e "${BWHITE}[remote_chiffré_plexdrive]${NC}"
-echo -e "${CGREEN}type = crypt${CEND}"
-echo -e "${CGREEN}remote = /mnt/plexdrive/Media${CEND}"
-echo -e "${CGREEN}filename_encryption = standard${CEND}"
-echo -e "${CGREEN}password = -XXXXXXXXXXXXXXXXXX${CEND}"
-echo -e "${CGREEN}password2 = XXXXXXXXXXXXXXXXXXXX${CEND}"
+echo -e "${YELLOW}[remote_chiffré_plexdrive]${NC}"
+echo -e "${BWHITE}type = crypt${NC}"
+echo -e "${BWHITE}remote = ${NC}${YELLOW}/mnt/plexdrive/Medias${NC}"
+echo -e "${BWHITE}filename_encryption = standard${NC}"
+echo -e "${BWHITE}password = -xxxxxxxxxxxxxxxxxx${NC}"
+echo -e "${BWHITE}password2 = xxxxxxxxxxxxxxxxxx${NC}"
 echo ""
 echo -e "${BWHITE}[remote_chiffré_rclone]${NC}"
-echo -e "${CGREEN}type = crypt${CEND}"
-echo -e "${CGREEN}remote = ${CEND}${BWHITE}<remote non chiffré>:${NC}${CGREEN}Media${CEND}"
-echo -e "${CGREEN}filename_encryption = standard${CEND}"
-echo -e "${CGREEN}password = XXXXXXXXXXXXXXX${CEND}"
-echo -e "${CGREEN}password2 = XXXXXXXXXXXXXXX${CEND}"
+echo -e "${BWHITE}type = crypt${NC}"
+echo -e "${BWHITE}remote = ${NC}${YELLOW}<remote non chiffré>:${NC}${BWHITE}Medias${NC}"
+echo -e "${BWHITE}filename_encryption = standard${NC}"
+echo -e "${BWHITE}password = xxxxxxxxxxxxxxxxxx${NC}"
+echo -e "${BWHITE}password2 = xxxxxxxxxxxxxxxxxx${NC}"
 echo ""
 }
 
@@ -379,8 +375,9 @@ function install_rclone() {
         	echo "$EXCLUDEPATH" >> /root/.config/rclone/rclone.conf
     		done
 		echo ""
+		REMOTE=$(grep -iC 2 "token" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
 		REMOTEPLEX=$(grep -iC 2 "/mnt/plexdrive" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
-		REMOTECRYPT=$(grep "\[" /root/.config/rclone/rclone.conf | sed -n 3p | sed "s/\]//g" | sed "s/\[//g")
+		REMOTECRYPT=$(grep -v -e $REMOTEPLEX -e $REMOTE /root/.config/rclone/rclone.conf | grep "\[" | sed "s/\[//g" | sed "s/\]//g")
 		clear
 		echo -e " ${BWHITE}* Remote chiffré rclone${NC} --> ${YELLOW}$REMOTECRYPT:${NC}"
 		checking_errors $?
@@ -397,8 +394,9 @@ function install_rclone() {
 		sleep 15
 		checking_errors $?
 	else
+		REMOTE=$(grep -iC 2 "token" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
 		REMOTEPLEX=$(grep -iC 2 "/mnt/plexdrive" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
-		REMOTECRYPT=$(grep "\[" /root/.config/rclone/rclone.conf | sed -n 3p | sed "s/\]//g" | sed "s/\[//g")
+		REMOTECRYPT=$(grep -v -e $REMOTEPLEX -e $REMOTE /root/.config/rclone/rclone.conf | grep "\[" | sed "s/\[//g" | sed "s/\]//g")
 		clear
 		echo -e " ${BWHITE}* Remote chiffré rclone${NC} --> ${YELLOW}$REMOTECRYPT:${NC}"
 		checking_errors $?
@@ -489,8 +487,9 @@ function install_cloudplow() {
 			fi
 	fi
 
-	REMOTECRYPT=$(grep "\[" /root/.config/rclone/rclone.conf | sed -n 3p | sed "s/\]//g" | sed "s/\[//g")
-
+	REMOTE=$(grep -iC 2 "token" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
+	REMOTEPLEX=$(grep -iC 2 "/mnt/plexdrive" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
+	REMOTECRYPT=$(grep -v -e $REMOTEPLEX -e $REMOTE /root/.config/rclone/rclone.conf | grep "\[" | sed "s/\[//g" | sed "s/\]//g")
 
 	## intégration des variables dans config.json
 	CLOUDPLOW="/home/$SEEDUSER/scripts/cloudplow/config.json"
