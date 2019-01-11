@@ -1,0 +1,22 @@
+
+#STARTheimdall#
+  heimdall-%USER%:
+    container_name: heimdall-%USER%
+    image: linuxserver/heimdall
+    restart: unless-stopped
+    labels:
+      - traefik.enable=true
+      - traefik.frontend.rule=%TRAEFIKURL%
+      - traefik.frontend.auth.basic=%VAR%
+      - traefik.port=443
+      - traefik.docker.network=traefik_proxy
+      - traefik.protocol=https
+    environment:
+      - PUID=%UID%
+      - PGID=%GID%
+      - TZ=%TIMEZONE%
+    volumes:
+      - /home/%USER%/docker/heimdall/config:/config
+    networks:
+      - proxy
+#ENDheimdall#

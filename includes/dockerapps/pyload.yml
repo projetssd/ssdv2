@@ -1,0 +1,21 @@
+  
+#STARTpyload#
+  pyload-%USER%:
+    container_name: pyload-%USER%
+    image: writl/pyload
+    restart: unless-stopped
+    labels:
+      - traefik.enable=true
+      - traefik.frontend.rule=%TRAEFIKURL%
+      - traefik.frontend.auth.basic=%VAR%
+      - traefik.port=8000
+      - traefik.docker.network=traefik_proxy
+    environment:
+      - TZ=%TIMEZONE%
+      - UID=%UID%
+      - GID=%GID%
+    volumes:
+      - /home/%USER%/docker/pyload/download:/opt/pyload/Downloads:rw
+      - /home/%USER%/docker/pyload/config:/opt/pyload/pyload-config:rw
+    networks:
+      - proxy

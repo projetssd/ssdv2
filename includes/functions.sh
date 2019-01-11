@@ -798,7 +798,7 @@ function install_services() {
 		declare -i PORT=$FIRSTPORT
 	fi
 
-	## poRt plex
+	## port plex
 	if [[ -f "$PLEXPORTPATH" ]]; then
 		declare -i PORTPLEX=$(cat $PLEXPORTPATH | tail -1)
 	else

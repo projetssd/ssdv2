@@ -1,8 +1,14 @@
 Plex-PlexMediaServer
 Emby-EmbyMediaServer
 Radarr-MoviesAutomation-ForkSonarr
+Watcher-MoviesAutomation
 Sonarr-TVShowsAutomation
 Medusa-TVShowsAutomation
 Rtorrent-TorrentClient
+Flood-NecessiteInstallRutorrent
 Jackett-TorrentProviders
-
+Pyload-DownloadManager
+Tautulli-FeatureRichDashboardOfStatistics
+Lidarr-MusicCollectionManager
+Heimdall-OrganiseLinksWebApplications
+Ombi-PlexRequestAndUserManagementSystem

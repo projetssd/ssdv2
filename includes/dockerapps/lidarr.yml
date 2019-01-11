@@ -1,0 +1,23 @@
+
+#STARTlidarr#  
+  lidarr-%USER%:
+    container_name: lidarr-%USER%
+    image: linuxserver/lidarr
+    restart: unless-stopped
+    labels:
+      - traefik.enable=true
+      - traefik.frontend.rule=%TRAEFIKURL%
+      - traefik.frontend.auth.basic=%VAR%
+      - traefik.port=8686
+      - traefik.docker.network=traefik_proxy
+    volumes:
+      - /home/%USER%/Medias/Music:/music:rw
+      - /home/%USER%/docker/lidarr/config:/config
+      - /home/%USER%/docker/rtorrent/torrents:/data/torrents
+    environment:
+      - PUID=%UID%
+      - PGID=%GID%
+      - TZ=%TIMEZONE%
+    networks:
+      - proxy
+#ENDlidarr#
