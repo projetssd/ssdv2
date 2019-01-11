@@ -1,0 +1,35 @@
+  
+#STARTnextcloud#
+  nextcloud-%USER%:
+    container_name: nextcloud-%USER%
+    image: nextcloud
+    volumes:
+      - /home/%USER%/docker/nextcloud:/var/www/html
+    labels:
+      - traefik.backend=nextcloud
+      - traefik.port=80
+      - traefik.frontend.rule=%TRAEFIKURL%
+      - traefik.enable=true
+      - traefik.docker.network=traefik_proxy
+      - traefik.frontend.auth.basic=%VAR%
+    depends_on:
+      - mariadb-%USER%
+    networks:
+      - proxy
+      - internal
+
+  mariadb-%USER%:
+    image: mariadb
+    container_name: mariadb-%USER%
+    environment:
+      - MYSQL_USER=nextcloud
+      - MYSQL_PASSWORD=nextcloud
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_RANDOM_ROOT_PASSWORD=yes
+    volumes:
+      - /home/%USER%/docker/mariadb:/var/lib/mysql
+    networks:
+      - internal
+    labels:
+      - traefik.enable=false
+#ENDnextcloud#
