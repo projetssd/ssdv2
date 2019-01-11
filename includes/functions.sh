@@ -1018,10 +1018,7 @@ function plex_sections() {
 			sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" $PLEXDUPEFILE
 
 			## mise en place d'un cron pour le lancement de plexdupefinder
-			crontab -l > mycron > /dev/null 2>&1
-			echo "*/1 * * * * python3 /home/$SEEDUSER/scripts/plex_dupefinder/plexdupes.py >> /home/$SEEDUSER/scripts/plex_dupefinder/activity.log" >> mycron 
-			crontab mycron
-			rm mycron
+			(crontab -l | grep . ; echo "*/1 * * * * python3 /home/$SEEDUSER/scripts/plex_dupefinder/plexdupes.py >> /home/$SEEDUSER/scripts/plex_dupefinder/activity.log") | crontab -
 			
 			## lancement plex_autoscan
 			# chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/scripts/plex_autoscan

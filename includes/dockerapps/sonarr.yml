@@ -11,8 +11,8 @@
       - traefik.port=8989
       - traefik.docker.network=traefik_proxy
     environment:
-      - UID=%UID%
-      - GID=%GID%
+      - PUID=%UID%
+      - PGID=%GID%
       - TZ=%TIMEZONE%
     volumes:
       - /home/%USER%/docker/sonarr/config:/config

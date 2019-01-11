@@ -13,8 +13,10 @@
     environment:
       - UID=%UID%
       - GID=%GID%
+      - DHT_RTORRENT=on
+      - PORT_RTORRENT=%PORT%
     ports:
-      - %PORT%:45000
+      - %PORT%:%PORT%
     volumes:
       - /home/%USER%/docker/rtorrent/torrents:/data/torrents
       - /home/%USER%/docker/rtorrent/watch:/data/.watch
