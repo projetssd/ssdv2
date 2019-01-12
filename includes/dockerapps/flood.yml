@@ -4,7 +4,6 @@
     image: xataz/rtorrent-flood
     container_name: flood-%USER%
     restart: unless-stopped
-    tty: true
     labels:
       - traefik.enable=true
       - traefik.frontend.rule=%TRAEFIKURL%

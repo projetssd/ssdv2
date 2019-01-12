@@ -858,6 +858,7 @@ function docker_compose() {
 	ACTDIR="$PWD"
 	cd /home/$SEEDUSER/
 	echo -e " ${BWHITE}* Docker-composing, Merci de patienter...${NC}"
+	export COMPOSE_HTTP_TIMEOUT=600
 	docker-compose up -d > /dev/null 2>&1
 	checking_errors $?
 	echo ""
@@ -974,6 +975,11 @@ function plex_sections() {
 			cd /home/$SEEDUSER
 			sed -i '/PATH/d' docker-compose.yml
 			docker-compose rm -fs plex-$SEEDUSER > /dev/null 2>&1 && docker-compose up -d plex-$SEEDUSER > /dev/null 2>&1
+			checking_errors $?
+			echo""
+			##compteur
+			var="Plex est en cours de configuration, patientez..."
+			decompte 15
 			checking_errors $?
 			echo""
 			install_plex_autoscan
