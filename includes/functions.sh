@@ -1218,6 +1218,15 @@ function manage_apps() {
 			#[[ "$?" = 1 ]] && break;
 	case $ACTIONONAPP in
 		"1" ) ## Ajout APP
+			CURRTIMEZONE=$(cat /etc/timezone)
+			TIMEZONEDEF=$(whiptail --title "Timezone" --inputbox \
+			"Merci de vérifier votre timezone" 7 66 "$CURRTIMEZONE" \
+			3>&1 1>&2 2>&3)
+			if [[ $TIMEZONEDEF == "" ]]; then
+				TIMEZONE=$CURRTIMEZONE
+			else
+				TIMEZONE=$TIMEZONEDEF
+			fi
 			choose_services
 			add_app_htpasswd
 			install_services
