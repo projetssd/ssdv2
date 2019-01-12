@@ -39,7 +39,7 @@ echo -e "${CCYAN}### MODELE RCLONE.CONF ###${NC}"
 echo ""
 echo -e "${YELLOW}[remote non chiffré]${NC}"
 echo -e "${BWHITE}type = drive${NC}"
-echo -e "${BWHITE}token = {"access_token":"XXXXXXXXXXXX"}${NC}"
+echo -e "${BWHITE}token = {"access_token":"xxxxxxxxxxxxxxxxxx"}${NC}"
 echo ""
 echo -e "${YELLOW}[remote_chiffré_plexdrive]${NC}"
 echo -e "${BWHITE}type = crypt${NC}"
@@ -1249,6 +1249,8 @@ function manage_apps() {
 			if [[ "$APPSELECTED" == "nextcloud" ]]; then
 				docker-compose rm -fs mariadb-"$SEEDUSER"
 				docker network prune -f > /dev/null 2>&1
+				DOCKERCOMPOSEFILE="/home/$SEEDUSER/docker-compose.yml"
+				sed -i -n -e :a -e '1,2!{P;N;D;};N;ba' $DOCKERCOMPOSEFILE
 			fi
 			sed -i "/#START"$APPSELECTED"#/,/#END"$APPSELECTED"#/d" /home/$SEEDUSER/docker-compose.yml
 			sed -i "/$APPSELECTED/d" /home/$SEEDUSER/resume
@@ -1327,16 +1329,16 @@ function uninstall_seedbox() {
 	for seeduser in $(cat $USERSFILE)
 	do
 		USERHOMEDIR="/home/$seeduser"
-		PLEXAUTOSCAN="/etc/systemd/system/plex_autoscan-$SEEDUSER.service"
+		PLEXAUTOSCAN="/etc/systemd/system/plex_autoscan-$seeduser.service"
 		echo -e " ${BWHITE}* Suppression users $seeduser...${NC}"
 		if [[ -e "$PLEXDRIVE" ]] && [[ "$seeduser" != "$ADMIN" ]]; then
 				if [[ -e "$PLEXAUTOSCAN" ]]; then
-					systemctl stop cloudplow-$SEEDUSER.service
-					systemctl stop plex_autoscan-$SEEDUSER.service
-					systemctl disable cloudplow-$SEEDUSER.service > /dev/null 2>&1
-					systemctl disable plex_autoscan-$SEEDUSER.service > /dev/null 2>&1
-					rm /etc/systemd/system/plex_autoscan-$SEEDUSER.service
-					rm /etc/systemd/system/cloudplow-$SEEDUSER.service
+					systemctl stop cloudplow-$seeduser.service
+					systemctl stop plex_autoscan-$seeduser.service
+					systemctl disable cloudplow-$seeduser.service > /dev/null 2>&1
+					systemctl disable plex_autoscan-$seeduser.service > /dev/null 2>&1
+					rm /etc/systemd/system/plex_autoscan-$seeduser.service
+					rm /etc/systemd/system/cloudplow-$seeduser.service
 				fi
 			service unionfs-$seeduser stop
 			systemctl disable unionfs-$SEEDUSER.service > /dev/null 2>&1

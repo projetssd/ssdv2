@@ -11,7 +11,7 @@
       - traefik.docker.network=traefik_proxy
     environment:
       - APP_UID=%UID%
-      - APP_GID=%UID%
+      - APP_GID=%GID%
       - TZ=%TIMEZONE%
     volumes:
       - /home/%USER%/docker/subsonic/log:/subsonic
