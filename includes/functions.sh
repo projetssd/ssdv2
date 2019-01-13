@@ -825,9 +825,6 @@ function install_services() {
 		sed -i "s|%USER%|$SEEDUSER|g" $DOCKERCOMPOSEFILE
 		sed -i "s|%EMAIL%|$CONTACTEMAIL|g" $DOCKERCOMPOSEFILE
 		cat /opt/seedbox-compose/includes/dockerapps/foot.docker >> $DOCKERCOMPOSEFILE
-		if [[ "$line" == "nextcloud" ]]; then
-			cat /opt/seedbox-compose/includes/dockerapps/nextcloud_foot_docker >> $DOCKERCOMPOSEFILE
-		fi
 		NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
 		if [ $NOMBRE -le 2 ] ; then
 			FQDNTMP="$line.$DOMAIN"
@@ -839,6 +836,7 @@ function install_services() {
 		ACCESSURL=$FQDN
 		TRAEFIKURL=(Host:$ACCESSURL)
 		sed -i "s|%TRAEFIKURL%|$TRAEFIKURL|g" /home/$SEEDUSER/docker-compose.yml
+		sed -i "s|%ACCESSURL%|$ACCESSURL|g" $DOCKERCOMPOSEFILE
 		check_domain $ACCESSURL
 		echo "$line-$PORT-$FQDN" >> $INSTALLEDFILE
 		URI="/"
@@ -905,22 +903,6 @@ do
 		echo -e "${BWHITE}	--> f3ada405ce890b6f8204094deb12d8a8${NC}"
 		echo ""
 		fi
-
-		if [[ "$line" == "nextcloud" ]]; then
-		echo -e "${BLUE}### CONFIG POST COMPOSE NEXTCLOUD ###${NC}"
-		echo ""
-		echo -e " ${BLUE} ## Identifiants de connexion MySQL/MariadDB ##${NC}"
-		echo -e " ${BWHITE}* Utilisateur de la base de donnée...${NC}"
-		echo -e "${YELLOW}	--> nextcloud${NC}"
-		echo -e " ${BWHITE}* Mot de passe de la base de donnée...${NC}"
-		echo -e "${YELLOW}	--> nextcloud${NC}"
-		echo -e " ${BWHITE}* Nom de la base de donnée...${NC}"
-		echo -e "${YELLOW}	--> nextcloud${NC}"
-		echo -e " ${BWHITE}* localhost, remplacer par...${NC}"
-		echo -e "${YELLOW}	--> mariadb-$SEEDUSER${NC}"
-		echo ""
-		fi
-
 done
 }
 
@@ -1261,12 +1243,6 @@ function manage_apps() {
 			echo -e " ${GREEN}   * $APPSELECTED${NC}"
 			cd /home/$SEEDUSER
 			docker-compose rm -fs "$APPSELECTED"-"$SEEDUSER"
-			if [[ "$APPSELECTED" == "nextcloud" ]]; then
-				docker-compose rm -fs mariadb-"$SEEDUSER"
-				docker network prune -f > /dev/null 2>&1
-				DOCKERCOMPOSEFILE="/home/$SEEDUSER/docker-compose.yml"
-				sed -i -n -e :a -e '1,2!{P;N;D;};N;ba' $DOCKERCOMPOSEFILE
-			fi
 			sed -i "/#START"$APPSELECTED"#/,/#END"$APPSELECTED"#/d" /home/$SEEDUSER/docker-compose.yml
 			sed -i "/$APPSELECTED/d" /home/$SEEDUSER/resume
 			rm -rf /home/$SEEDUSER/$APPSELECTED
