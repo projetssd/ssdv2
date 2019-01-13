@@ -12,7 +12,7 @@
       - traefik.docker.network=traefik_proxy
     volumes:
       - /home/%USER%/docker/emby/conf:/config:rw
-      - /home/%USER%/docker/emby/data:/data:rw
+      - /home/%USER%/Medias:/data:rw
     environment:
       - UID=%UID%
       - GID=%GID%

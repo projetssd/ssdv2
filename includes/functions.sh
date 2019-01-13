@@ -712,12 +712,13 @@ function choose_media_folder_classique() {
 function choose_media_folder_plexdrive() {
 	echo -e "${BLUE}### DOSSIERS MEDIAS ###${NC}"
 	FOLDER="/mnt/rclone/$SEEDUSER"
+	MEDIASPERUSER="$MEDIASUSER$SEEDUSER"
 	if [[ -d "$FOLDER" ]]; then
 		cd /mnt/rclone/$SEEDUSER
-		ls -Ad */ | sed 's,/$,,g' > /home/media.txt
+		ls -Ad */ | sed 's,/$,,g' > $MEDIASPERUSER
 		mkdir -p /home/$SEEDUSER/Medias
 		echo -e " ${BWHITE}--> Récupération des dossiers Utilisateur à partir de Gdrive... : ${NC}"
-		for line in $(cat /home/media.txt);
+		for line in $(cat $MEDIASPERUSER);
 		do
 		mkdir -p /home/$SEEDUSER/local/$line
 		echo -e "	${GREEN}--> Le dossier ${NC}${YELLOW}$line${NC}${GREEN} a été ajouté avec succès !${NC}"
@@ -744,7 +745,7 @@ function choose_media_folder_plexdrive() {
 		for MEDDOCKER in $MEDIASTOINSTALL
 		do
 			echo -e "	${GREEN}* $(echo $MEDDOCKER | tr -d '"')${NC}"
-			echo $(echo ${MEDDOCKER,,} | tr -d '"') >> $MEDIASPERUSER
+			echo $(echo ${MEDDOCKER} | tr -d '"') >> $MEDIASPERUSER
 		done
 		for line in $(cat $MEDIASPERUSER);
 		do
@@ -757,9 +758,20 @@ function choose_media_folder_plexdrive() {
 		rm /tmp/menumedia.txt
 	fi
 	echo ""
-	MEDIA="/home/media.txt"
-	if [[ -e "$MEDIA" ]]; then
-		rm /home/media.txt
+}
+
+function replace_media_compose() {
+	MEDIASPERUSER="$MEDIASUSER$SEEDUSER"
+	if [[ -e "$MEDIASPERUSER" ]]; then
+		FILMS=$(grep -E 'films|film|Films|FILMS|MOVIES|Movies|movies|movie|VIDEOS|VIDEO|Video|Videos' $MEDIASPERUSER)
+		SERIES=$(grep -E 'series|TV|tv|Series|SERIES|SERIES TV|Series TV|series tv|serie tv|serie TV|series TV|Shows' $MEDIASPERUSER)
+		ANIMES=$(grep -E 'ANIMES|ANIME|Animes|Anime|Animation|ANIMATION|animes|anime' $MEDIASPERUSER)
+		MUSIC=$(grep -E 'MUSIC|Music|music|Musiques|Musique|MUSIQUE|MUSIQUES|musiques|musique' $MEDIASPERUSER)
+	else
+		FILMS=$(grep -E 'films|film|Films|FILMS|MOVIES|Movies|movies|movie|VIDEOS|VIDEO|Video|Videos' /tmp/menumedia.txt)
+		SERIES=$(grep -E 'series|TV|tv|Series|SERIES|SERIES TV|Series TV|series tv|serie tv|serie TV|series TV|Shows' /tmp/menumedia.txt)
+		ANIMES=$(grep -E 'ANIMES|ANIME|Animes|Anime|Animation|ANIMATION|animes|anime' /tmp/menumedia.txt)
+		MUSIC=$(grep -E 'MUSIC|Music|music|Musiques|Musique|MUSIQUE|MUSIQUES|musiques|musique' /tmp/menumedia.txt)
 	fi
 }
 
@@ -786,6 +798,7 @@ function add_user_htpasswd() {
 }
 
 function install_services() {
+	replace_media_compose
 	USERID=$(id -u $SEEDUSER)
 	GRPID=$(id -g $SEEDUSER)
 	INSTALLEDFILE="/home/$SEEDUSER/resume"
@@ -824,6 +837,10 @@ function install_services() {
 		sed -i "s|%DOMAIN%|$DOMAIN|g" $DOCKERCOMPOSEFILE
 		sed -i "s|%USER%|$SEEDUSER|g" $DOCKERCOMPOSEFILE
 		sed -i "s|%EMAIL%|$CONTACTEMAIL|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%FILMS%|$FILMS|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%SERIES%|$SERIES|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%ANIMES%|$ANIMES|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%MUSIC%|$MUSIC|g" $DOCKERCOMPOSEFILE
 		cat /opt/seedbox-compose/includes/dockerapps/foot.docker >> $DOCKERCOMPOSEFILE
 		NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
 		if [ $NOMBRE -le 2 ] ; then
@@ -919,22 +936,13 @@ decompte() {
 
 function plex_sections() {
 			echo -e "${BLUE}### CREATION DES BIBLIOTHEQUES PLEX ###${NC}"
-
-			## récupération de la liste des dossiers user
-			cd /mnt/rclone/$SEEDUSER
-			ls -Ad */ | sed 's,/$,,g' > /home/$SEEDUSER/sections.txt
-
-			FILMS=$(grep -E 'films|film|Films|FILMS|MOVIES|Movies|movies|movie|VIDEOS|VIDEO|Video|Videos' /home/$SEEDUSER/sections.txt)
-			SERIES=$(grep -E 'series|TV|tv|Series|SERIES|SERIES TV|Series TV|series tv|serie tv|serie TV|series TV|Shows' /home/$SEEDUSER/sections.txt)
-			ANIMES=$(grep -E 'ANIMES|ANIME|Animes|Anime|Animation|ANIMATION|animes|anime' /home/$SEEDUSER/sections.txt)
-			MUSIC=$(grep -E 'MUSIC|Music|music|Musiques|Musique|MUSIQUE|MUSIQUES|musiques|musique' /home/$SEEDUSER/sections.txt)
-
+			replace_media_compose
 			##compteur
 			var="Sections en cours de création, patientez..."
 			decompte 15
 
 			## création des bibliothèques plex
-			for x in $(cat /home/$SEEDUSER/sections.txt);
+			for x in $(cat $MEDIASPERUSER);
 			do
 				if [[ "$x" == "$ANIMES" ]]; then
 					docker exec plex-$SEEDUSER /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section $x --type 2 --location /data/$x --lang fr
@@ -1046,7 +1054,6 @@ function plex_sections() {
 			PORT=$PORT+1
 			echo $PORT >> $SCANPORTPATH
 			chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/scripts
-			rm /home/$SEEDUSER/sections.txt
 			rm /home/$SEEDUSER/token.txt
 			echo ""
 			install_cloudplow

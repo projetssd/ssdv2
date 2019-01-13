@@ -11,7 +11,7 @@
       - traefik.port=8686
       - traefik.docker.network=traefik_proxy
     volumes:
-      - /home/%USER%/Medias/Music:/music:rw
+      - /home/%USER%/Medias/%MUSIC%:/music:rw
       - /home/%USER%/docker/lidarr/config:/config
       - /home/%USER%/docker/rtorrent/torrents:/data/torrents
     environment:
