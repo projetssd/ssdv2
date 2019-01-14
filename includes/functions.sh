@@ -324,6 +324,62 @@ function install_watchtower() {
 	echo ""
 }
 
+function install_flood() {
+	echo -e "${BLUE}### FLODD ###${NC}"
+	USERID=$(id -u $SEEDUSER)
+	GRPID=$(id -g $SEEDUSER)
+	INSTALLEDFILE="/home/$SEEDUSER/resume"
+	DOCKERCOMPOSEFILE="/home/$SEEDUSER/docker-compose.yml"
+	if [[ ! -f "$INSTALLEDFILE" ]]; then
+		touch $INSTALLEDFILE> /dev/null 2>&1
+	fi
+	if [[ ! -f "$DOCKERCOMPOSEFILE" ]]; then
+		cat /opt/seedbox-compose/includes/dockerapps/head.docker > $DOCKERCOMPOSEFILE
+		cat /opt/seedbox-compose/includes/dockerapps/foot.docker >> $DOCKERCOMPOSEFILE
+	fi
+	if (whiptail --title "Docker Flood" --yesno "Voulez vous installer Flood" 7 50) then
+		echo -e " ${BWHITE}* Installation de Flood en cours !${NC}"
+		echo ""
+		git clone https://github.com/jfurrow/flood.git /home/$SEEDUSER/flood > /dev/null 2>&1
+		sed -i -n -e :a -e '1,5!{P;N;D;};N;ba' $DOCKERCOMPOSEFILE
+		cat "/opt/seedbox-compose/includes/dockerapps/flood.yml" >> $DOCKERCOMPOSEFILE
+		sed -i "s|%UID%|$USERID|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%GID%|$GRPID|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%VAR%|$VAR|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%USER%|$SEEDUSER|g" $DOCKERCOMPOSEFILE
+		cat /opt/seedbox-compose/includes/dockerapps/foot.docker >> $DOCKERCOMPOSEFILE
+		NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
+		if [ $NOMBRE -le 2 ] ; then
+			FQDNTMP="flood.$DOMAIN"
+		else
+			FQDNTMP="flood-$SEEDUSER.$DOMAIN"
+		fi
+		FQDN=$(whiptail --title "SSL Subdomain" --inputbox \
+		"Souhaitez vous utiliser un autre Sous Domaine pour flood ? default :" 7 75 "$FQDNTMP" 3>&1 1>&2 2>&3)
+		ACCESSURL=$FQDN
+		TRAEFIKURL=(Host:$ACCESSURL)
+		sed -i "s|%TRAEFIKURL%|$TRAEFIKURL|g" /home/$SEEDUSER/docker-compose.yml
+		check_domain $ACCESSURL
+		echo ""
+		echo "$line-PORT-$FQDN" >> $INSTALLEDFILE
+		URI="/"
+		cd /home/$SEEDUSER
+		echo -e " ${BWHITE}* Compilation de Flood en cours, plusieurs minutes peuvent être nécéssaires, veuillez patienter... !${NC}"
+		docker-compose up -d > /dev/null 2>&1
+		checking_errors $?
+		echo ""
+		rm -rf /home/$SEEDUSER/flood
+		echo -e "${BLUE}### IDENTIFIANTS DE CONNECTION ###${NC}"
+		echo ""
+		echo -e "${BWHITE}host: rtorrent-$SEDDUSER{NC}"
+		echo -e "${BWHITE}port: 5000${NC}"
+
+	else
+		echo -e " ${BWHITE}--> flood n'est pas installé !${NC}"
+	fi
+	echo ""
+}
+
 function install_plexdrive() {
 	echo -e "${BLUE}### PLEXDRIVE ###${NC}"
 	mkdir -p /mnt/plexdrive > /dev/null 2>&1
@@ -1105,6 +1161,7 @@ function manage_users() {
 				choose_services
 				install_services
 				docker_compose
+				install_flood
 				resume_seedbox
 				pause
 				script_plexdrive
@@ -1113,6 +1170,7 @@ function manage_users() {
 				choose_services
 				install_services
 				docker_compose
+				install_flood
 				resume_seedbox
 				pause
 				script_classique
