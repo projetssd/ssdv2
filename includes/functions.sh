@@ -369,8 +369,8 @@ function install_flood() {
 		docker-compose up -d > /dev/null 2>&1
 		checking_errors $?
 		echo ""
-		rm -rf /home/$SEEDUSER/flood
-		echo -e "${BLUE}### IDENTIFIANTS DE CONNECTION ###${NC}"
+		# rm -rf /home/$SEEDUSER/flood
+		echo -e "${BLUE}### IDENTIFIANTS DE CONNECTION FLOOD ###${NC}"
 		echo ""
 		echo -e "${BWHITE}host: rtorrent-$SEDDUSER{NC}"
 		echo -e "${BWHITE}port: 5000${NC}"
