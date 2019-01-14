@@ -325,7 +325,7 @@ function install_watchtower() {
 }
 
 function install_flood() {
-	echo -e "${BLUE}### FLODD ###${NC}"
+	echo -e "${BLUE}### FLOOD ###${NC}"
 	USERID=$(id -u $SEEDUSER)
 	GRPID=$(id -g $SEEDUSER)
 	INSTALLEDFILE="/home/$SEEDUSER/resume"
@@ -338,9 +338,10 @@ function install_flood() {
 		cat /opt/seedbox-compose/includes/dockerapps/foot.docker >> $DOCKERCOMPOSEFILE
 	fi
 	if (whiptail --title "Docker Flood" --yesno "Voulez vous installer Flood" 7 50) then
-		echo -e " ${BWHITE}* Installation de Flood en cours !${NC}"
+		echo -e " ${BWHITE}* Installation de flood en cours !${NC}"
 		echo ""
-		git clone https://github.com/jfurrow/flood.git /home/$SEEDUSER/flood > /dev/null 2>&1
+		cd /home/$SEEDUSER
+		git clone https://github.com/jfurrow/flood.git > /dev/null 2>&1
 		sed -i -n -e :a -e '1,5!{P;N;D;};N;ba' $DOCKERCOMPOSEFILE
 		cat "/opt/seedbox-compose/includes/dockerapps/flood.yml" >> $DOCKERCOMPOSEFILE
 		sed -i "s|%UID%|$USERID|g" $DOCKERCOMPOSEFILE

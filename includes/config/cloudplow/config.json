@@ -60,9 +60,9 @@
                 }
             },
             "remove_empty_dir_depth": 2,
-            "sync_remote": "google:/Patrick",
+            "sync_remote": "google:/Medias",
             "upload_folder": "/home/%SEEDUSER%/local",
-            "upload_remote": "google:/Patrick"
+            "upload_remote": "google:/Medias"
         }
     },
     "syncer": {},
