@@ -1272,6 +1272,7 @@ function manage_apps() {
 			#[[ "$?" = 1 ]] && break;
 	case $ACTIONONAPP in
 		"1" ) ## Ajout APP
+			FLOOD="/home/$SEEDUSER/docker/flood"
 			CURRTIMEZONE=$(cat /etc/timezone)
 			TIMEZONEDEF=$(whiptail --title "Timezone" --inputbox \
 			"Merci de vérifier votre timezone" 7 66 "$CURRTIMEZONE" \
@@ -1285,6 +1286,9 @@ function manage_apps() {
 			add_app_htpasswd
 			install_services
 			docker_compose
+			if [[ ! -d "$FLOOD" ]]; then
+			install_flood
+			fi
 			resume_seedbox
 			pause
 			if [[ -e "$PLEXDRIVE" ]]; then
