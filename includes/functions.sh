@@ -372,7 +372,7 @@ function install_flood() {
 		# rm -rf /home/$SEEDUSER/flood
 		echo -e "${BLUE}### IDENTIFIANTS DE CONNECTION FLOOD ###${NC}"
 		echo ""
-		echo -e "${BWHITE}host: rtorrent-$SEDDUSER{NC}"
+		echo -e "${BWHITE}host: rtorrent-$SEEDUSER{NC}"
 		echo -e "${BWHITE}port: 5000${NC}"
 
 	else
