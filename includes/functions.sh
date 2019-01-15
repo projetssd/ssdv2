@@ -526,7 +526,8 @@ function install_cloudplow() {
 
 	## install cloudplow
 	git clone https://github.com/l3uddz/cloudplow /home/$SEEDUSER/scripts/cloudplow > /dev/null 2>&1
-	chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/scripts/cloudplow
+	cd /home/$SEEDUSER/scripts
+	chown -R root:root cloudplow
 	cd /home/$SEEDUSER/scripts/cloudplow
 	python3 -m pip install -r requirements.txt > /dev/null 2>&1
 	mv /home/$SEEDUSER/scripts/cloudplow/config.json.sample /home/$SEEDUSER/scripts/cloudplow/config.json
@@ -1183,6 +1184,10 @@ function manage_users() {
 				install_services
 				docker_compose
 				install_flood
+				CLOUDPLOW="/home/$SEEDUSER/scripts/cloudplow/config.json"
+				if [[ ! -e "$CLOUDPLOW" ]]; then
+					install_cloudplow
+				fi
 				resume_seedbox
 				pause
 				script_plexdrive

@@ -70,7 +70,7 @@
         "%REMOTECRYPT%": {
             "check_interval": 1,
             "exclude_open_files": true,
-            "max_size_gb": 200,
+            "max_size_gb": 20,
             "opened_excludes": [
                 "/downloads/"
             ],

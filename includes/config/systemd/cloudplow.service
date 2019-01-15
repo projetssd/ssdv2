@@ -3,8 +3,8 @@ Description=cloudplow
 After=network-online.target
 
 [Service]
-User=%SEEDUSER%
-Group=%SEEDGROUP%
+User=root
+Group=root
 Type=simple
 WorkingDirectory=/home/%SEEDUSER%/scripts/cloudplow/
 ExecStart=/usr/bin/python3 /home/%SEEDUSER%/scripts/cloudplow/cloudplow.py run --loglevel=INFO
