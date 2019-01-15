@@ -1148,6 +1148,7 @@ function manage_users() {
 	                "Choisir une action" 10 45 2 \
 	                "1" "Nouvelle Seedbox Utilisateur" \
 	                "2" "Supprimer Seedbox Utilisateur" 3>&1 1>&2 2>&3)
+			[[ "$?" = 1 ]] && script_plexdrive;
 	case $MANAGEUSER in
 		"1" )
 			PLEXDRIVE="/usr/bin/plexdrive"
@@ -1194,7 +1195,7 @@ function manage_users() {
 			SEEDUSER=$(whiptail --title "Gestion des Applis" --menu \
 	                		"Merci de sélectionner l'Utilisateur" 12 50 3 \
 	                		"${TABUSERS[@]}"  3>&1 1>&2 2>&3)
-			#[[ "$?" = 1 ]] && break;
+			[[ "$?" = 1 ]] && script_plexdrive;
 			## RESUME USER INFORMATIONS
 			USERDOCKERCOMPOSEFILE="/home/$SEEDUSER/docker-compose.yml"
 			USERRESUMEFILE="/home/$SEEDUSER/resume"
@@ -1255,6 +1256,7 @@ function manage_apps() {
 	SEEDUSER=$(whiptail --title "App Manager" --menu \
 	                "Merci de sélectionner l'Utilisateur" 12 50 3 \
 	                "${TABUSERS[@]}"  3>&1 1>&2 2>&3)
+			[[ "$?" = 1 ]] && script_plexdrive;
 	
 	## INFORMATIONS UTILISATEUR
 	USERDOCKERCOMPOSEFILE="/home/$SEEDUSER/docker-compose.yml"
@@ -1269,7 +1271,7 @@ function manage_apps() {
 	                "Selectionner une action :" 12 50 3 \
 	                "1" "Ajout Docker Applis"  \
 	                "2" "Supprimer une Appli" 3>&1 1>&2 2>&3)
-			#[[ "$?" = 1 ]] && break;
+			[[ "$?" = 1 ]] && script_plexdrive;
 	case $ACTIONONAPP in
 		"1" ) ## Ajout APP
 			FLOOD="/home/$SEEDUSER/docker/flood"
