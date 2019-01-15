@@ -1,7 +1,7 @@
 
 #STARTrtorrent#
   rtorrent-%USER%:
-    image: xataz/rtorrent-rutorrent
+    image: xataz/rtorrent-rutorrent:filebot
     container_name: rtorrent-%USER%
     restart: unless-stopped
     labels:
@@ -11,6 +11,9 @@
       - traefik.port=8080
       - traefik.docker.network=traefik_proxy
     environment:
+      - FILEBOT_RENAME_METHOD=copy
+      - FILEBOT_RENAME_MOVIES={n} ({y})/{n} ({y})
+      - FILEBOT_RENAME_SERIES={n}/Saison {s}/{n} - {s00e00} - {t}
       - UID=%UID%
       - GID=%GID%
       - DHT_RTORRENT=on
@@ -18,6 +21,7 @@
     ports:
       - %PORT%:%PORT%
     volumes:
+      - /home/%USER%/Medias:/data/Media
       - /home/%USER%/docker/rtorrent/torrents:/data/torrents
       - /home/%USER%/docker/rtorrent/watch:/data/.watch
       - /home/%USER%/docker/rtorrent/data:/data

@@ -365,12 +365,12 @@ function install_flood() {
 		declare -i PORT=$(cat $FILEPORTPATH | tail -1)
 		echo "flood-$PORT-$FQDN" >> $INSTALLEDFILE
 		URI="/"
-		cd /home/$SEEDUSER
 		echo -e " ${BWHITE}* Compilation de Flood en cours, plusieurs minutes peuvent être nécéssaires, veuillez patienter... !${NC}"
 		docker-compose up -d > /dev/null 2>&1
 		checking_errors $?
 		echo ""
-		# rm -rf /home/$SEEDUSER/flood
+		rm -rf /home/$SEEDUSER/flood
+		sed -i '/build/d' $DOCKERCOMPOSEFILE
 		echo -e "${BLUE}### IDENTIFIANTS DE CONNECTION FLOOD ###${NC}"
 		echo ""
 		echo -e "${BWHITE}host: rtorrent-$SEEDUSER${NC}"
@@ -977,6 +977,24 @@ do
 		echo -e "${BWHITE}	--> foo@bar.com${NC}"
 		echo -e "${BWHITE}	--> f3ada405ce890b6f8204094deb12d8a8${NC}"
 		echo ""
+		fi
+
+		if [[ "$line" == "rtorrent" ]]; then
+			replace_media_compose
+			echo -e "${BLUE}### CONFIG POST COMPOSE FILEBOT ###${NC}"
+			echo -e " ${BWHITE}* Mise à jour filebot...${NC}"
+			docker exec -t rtorrent-$SEEDUSER sed -i -e "s#films|movies|film|movie#${FILMS,,}#g" /usr/local/bin/postdl
+			docker exec -t rtorrent-$SEEDUSER sed -i -e "s#music|musics|musique|musiques#${MUSIC,,}#g" /usr/local/bin/postdl
+			docker exec -t rtorrent-$SEEDUSER sed -i -e "s#tv|\"tv shows\"|series|serie#${SERIES,,}#g" /usr/local/bin/postdl
+			docker exec -t rtorrent-$SEEDUSER sed -i -e "s#animes#${ANIMES,,}#g" /usr/local/bin/postdl
+			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/Movies/${FILMS}/g" /usr/local/bin/postdl
+			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/TV/${SERIES}/g" /usr/local/bin/postdl
+			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/Music/${MUSIC}/g" /usr/local/bin/postdl
+			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/Anime/${ANIMES}/g" /usr/local/bin/postdl
+			docker exec -t rtorrent-$SEEDUSER sed -i '/*)/,/;;/d' /usr/local/bin/postdl
+			rm -rf /home/$SEEDUSER/Medias/TV /home/$SEEDUSER/Medias/Movies /home/$SEEDUSER/Medias/Animes /home/$SEEDUSER/Medias/Music
+			checking_errors $?
+			echo ""
 		fi
 done
 }
