@@ -362,7 +362,8 @@ function install_flood() {
 		sed -i "s|%TRAEFIKURL%|$TRAEFIKURL|g" /home/$SEEDUSER/docker-compose.yml
 		check_domain $ACCESSURL
 		echo ""
-		echo "$line-PORT-$FQDN" >> $INSTALLEDFILE
+		declare -i PORT=$(cat $FILEPORTPATH | tail -1)
+		echo "flood-$PORT-$FQDN" >> $INSTALLEDFILE
 		URI="/"
 		cd /home/$SEEDUSER
 		echo -e " ${BWHITE}* Compilation de Flood en cours, plusieurs minutes peuvent être nécéssaires, veuillez patienter... !${NC}"
