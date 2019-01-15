@@ -1193,7 +1193,10 @@ function manage_users() {
 				choose_services
 				install_services
 				docker_compose
+				CLOUDPLOW="/home/$SEEDUSER/scripts/cloudplow"
+				if [[ ! -d "$CLOUDPLOW" ]]; then
 				install_cloudplow
+				fi
 				resume_seedbox
 				pause
 				script_plexdrive
