@@ -525,17 +525,21 @@ function install_cloudplow() {
 	echo -e " ${BWHITE}* Installation cloudplow${NC}"
 
 	## install cloudplow
-	git clone https://github.com/l3uddz/cloudplow /home/$SEEDUSER/scripts/cloudplow > /dev/null 2>&1
+	SCRIPT="/home/$SEEDUSER/scripts/cloudplow"
+	if [[ ! -d "$SCRIPT" ]]; then
+		mkdir -p /home/$SEEDUSER/scripts
+	fi
+	cd /home/$SEEDUSER/scripts
+	git clone https://github.com/l3uddz/cloudplow.git > /dev/null 2>&1
 	cd /home/$SEEDUSER/scripts
 	chown -R root:root cloudplow
 	cd /home/$SEEDUSER/scripts/cloudplow
 	python3 -m pip install -r requirements.txt > /dev/null 2>&1
-	mv /home/$SEEDUSER/scripts/cloudplow/config.json.sample /home/$SEEDUSER/scripts/cloudplow/config.json
 
 	## récupération des variables
 	SEEDGROUP=$(cat $GROUPFILE)
-	docker ps | grep -q plex-$SEEDUSER
-	if [ $? = 0 ]; then
+	grep -R "plex" "$INSTALLEDFILE" > /dev/null 2>&1
+	if [[ "$?" == "0" ]]; then
 	docker exec -ti plex-$SEEDUSER grep -E -o "PlexOnlineToken=.{0,22}" /config/Library/Application\ Support/Plex\ Media\ Server/Preferences.xml > /home/$SEEDUSER/token.txt
 	TOKEN=$(grep PlexOnlineToken /home/$SEEDUSER/token.txt | cut -d '=' -f2 | cut -c2-21)
 	NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
@@ -555,7 +559,10 @@ function install_cloudplow() {
 	cat "$BASEDIR/includes/config/cloudplow/config.json" > $CLOUDPLOW
 	sed -i "s|%SEEDUSER%|$SEEDUSER|g" $CLOUDPLOW
 	sed -i "s|%SEEDGROUP%|$SEEDGROUP|g" $CLOUDPLOW
-	sed -i "s|%TOKEN%|$TOKEN|g" $CLOUDPLOW
+	grep -R "plex" "$INSTALLEDFILE" > /dev/null 2>&1
+	if [[ "$?" == "0" ]]; then
+		sed -i "s|%TOKEN%|$TOKEN|g" $CLOUDPLOW
+	fi
 	sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" $CLOUDPLOW
 	sed -i "s|%REMOTECRYPT%|$REMOTECRYPT|g" $CLOUDPLOW
 
@@ -567,7 +574,10 @@ function install_cloudplow() {
 	systemctl enable cloudplow-$SEEDUSER.service > /dev/null 2>&1
 	systemctl start cloudplow-$SEEDUSER.service > /dev/null 2>&1
 	checking_errors $?
+	grep -R "plex" "$INSTALLEDFILE" > /dev/null 2>&1
+	if [[ "$?" == "0" ]]; then
 	rm /home/$SEEDUSER/token.txt
+	fi
 	echo ""
 }
 
@@ -1183,11 +1193,7 @@ function manage_users() {
 				choose_services
 				install_services
 				docker_compose
-				install_flood
-				CLOUDPLOW="/home/$SEEDUSER/scripts/cloudplow/config.json"
-				if [[ ! -e "$CLOUDPLOW" ]]; then
-					install_cloudplow
-				fi
+				install_cloudplow
 				resume_seedbox
 				pause
 				script_plexdrive
