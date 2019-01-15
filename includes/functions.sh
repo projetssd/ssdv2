@@ -1312,13 +1312,12 @@ function manage_apps() {
 			APPSELECTED=$(whiptail --title "App Manager" --menu \
 			              "Sélectionner l'Appli à supprimer" 19 45 11 \
 			              "${TABSERVICES[@]}"  3>&1 1>&2 2>&3)
-
 			echo -e " ${GREEN}   * $APPSELECTED${NC}"
 			cd /home/$SEEDUSER
 			docker-compose rm -fs "$APPSELECTED"-"$SEEDUSER"
 			sed -i "/#START"$APPSELECTED"#/,/#END"$APPSELECTED"#/d" /home/$SEEDUSER/docker-compose.yml
 			sed -i "/$APPSELECTED/d" /home/$SEEDUSER/resume
-			rm -rf /home/$SEEDUSER/$APPSELECTED
+			rm -rf /home/$SEEDUSER/docker/$APPSELECTED
 			checking_errors $?
 			echo""
 			echo -e "${BLUE}### $APPSELECTED a été supprimé ###${NC}"
