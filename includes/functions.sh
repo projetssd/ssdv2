@@ -524,15 +524,7 @@ function install_cloudplow() {
 	echo -e "${BLUE}### CLOUDPLOW ###${NC}"
 	echo -e " ${BWHITE}* Installation cloudplow${NC}"
 
-	## install cloudplow
-	SCRIPT="/home/$SEEDUSER/scripts/cloudplow"
-	if [[ ! -d "$SCRIPT" ]]; then
-		mkdir -p /home/$SEEDUSER/scripts
-	fi
-	cd /home/$SEEDUSER/scripts
-	git clone https://github.com/l3uddz/cloudplow.git > /dev/null 2>&1
-	cd /home/$SEEDUSER/scripts
-	chown -R root:root cloudplow
+	git clone https://github.com/l3uddz/cloudplow /home/$SEEDUSER/scripts/cloudplow > /dev/null 2>&1
 	cd /home/$SEEDUSER/scripts/cloudplow
 	python3 -m pip install -r requirements.txt > /dev/null 2>&1
 
