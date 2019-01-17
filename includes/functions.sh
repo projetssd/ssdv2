@@ -530,7 +530,11 @@ function install_cloudplow() {
 	cd $CLOUDPLOWFOLDER
 	git clone https://github.com/l3uddz/cloudplow > /dev/null 2>&1
 	python3 -m pip install -r requirements.txt > /dev/null 2>&1
-	mv $CLOUDPLOWFOLDER/cloudplow/config.json.sample $CLOUDPLOWFOLDER/cloudplow/config.json
+
+	CLOUDPLOWFILE="$CLOUDPLOWFOLDER/cloudplow/config.json.sample"
+	if [[ -e "$CLOUDPLOWFILE" ]]; then
+	mv $CLOUDPLOWFILE $CLOUDPLOWFOLDER/cloudplow/config.json
+	fi
 
 	## récupération des variables
 	SEEDGROUP=$(cat $GROUPFILE)
@@ -1186,8 +1190,8 @@ function manage_users() {
 				choose_services
 				install_services
 				docker_compose
-				CLOUDPLOWFILE="/home/$SEEDUSER/scripts/cloudplow/config.json"
-				if [[ ! -e "$CLOUDPLOWFILE" ]]; then
+				CLOUDPLOWFOLDER="/home/$SEEDUSER/scripts/cloudplow"
+				if [[ ! -d "$CLOUDPLOWFOLDER" ]]; then
 				install_cloudplow
 				sed -i "s/\"enabled\"\: true/\"enabled\"\: false/g" /home/$SEEDUSER/scripts/cloudplow/config.json
 				fi
