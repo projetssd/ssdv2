@@ -529,6 +529,7 @@ function install_cloudplow() {
 	fi
 	cd $CLOUDPLOWFOLDER
 	git clone https://github.com/l3uddz/cloudplow > /dev/null 2>&1
+	cd $CLOUDPLOWFOLDER/cloudplow
 	python3 -m pip install -r requirements.txt > /dev/null 2>&1
 
 	CLOUDPLOWFILE="$CLOUDPLOWFOLDER/cloudplow/config.json.sample"
