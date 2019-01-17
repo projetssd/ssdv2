@@ -54,6 +54,17 @@ case $CHOICE in
 			install_rclone
 			install_portainer
 			install_watchtower
+			choose_media_folder_plexdrive
+			unionfs_fuse
+			pause
+			choose_services
+			install_services
+			docker_compose
+			CLOUDPLOWFILE="/home/$SEEDUSER/scripts/cloudplow/config.json"
+			if [[ ! -e "$CLOUDPLOWFILE" ]]; then
+				install_cloudplow
+				sed -i "s/\"enabled\"\: true/\"enabled\"\: false/g" /home/$SEEDUSER/scripts/cloudplow/config.json
+			fi
 			resume_seedbox
 			pause
 			script_plexdrive

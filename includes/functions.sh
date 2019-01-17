@@ -660,6 +660,9 @@ function create_user() {
 			PASS=$(perl -e 'print crypt($ARGV[0], "password")' $PASSWORD)
 			echo -e " ${BWHITE}* Ajout de $SEEDUSER au système"
 			useradd -M -g $SEEDGROUP -p $PASS -s /bin/bash $SEEDUSER > /dev/null 2>&1
+			mkdir -p /home/$SEEDUSER
+			chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER
+			chmod 755 /home/$SEEDUSER
 			checking_errors $?
 			USERID=$(id -u $SEEDUSER)
 			GRPID=$(id -g $SEEDUSER)
@@ -1186,6 +1189,7 @@ function manage_users() {
 				CLOUDPLOWFILE="/home/$SEEDUSER/scripts/cloudplow/config.json"
 				if [[ ! -e "$CLOUDPLOWFILE" ]]; then
 				install_cloudplow
+				sed -i "s/\"enabled\"\: true/\"enabled\"\: false/g" /home/$SEEDUSER/scripts/cloudplow/config.json
 				fi
 				resume_seedbox
 				pause
