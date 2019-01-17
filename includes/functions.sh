@@ -523,10 +523,14 @@ function install_docker() {
 function install_cloudplow() {
 	echo -e "${BLUE}### CLOUDPLOW ###${NC}"
 	echo -e " ${BWHITE}* Installation cloudplow${NC}"
-
-	git clone https://github.com/l3uddz/cloudplow /home/$SEEDUSER/scripts/cloudplow > /dev/null 2>&1
-	cd /home/$SEEDUSER/scripts/cloudplow
+	CLOUDPLOWFOLDER="/home/$SEEDUSER/scripts"
+	if [[ ! -d $CLOUDPLOWFOLDER ]]; then
+	mkdir -p $CLOUDPLOWFOLDER
+	fi
+	cd $CLOUDPLOWFOLDER
+	git clone https://github.com/l3uddz/cloudplow > /dev/null 2>&1
 	python3 -m pip install -r requirements.txt > /dev/null 2>&1
+	mv $CLOUDPLOWFOLDER/cloudplow/config.json.sample $CLOUDPLOWFOLDER/cloudplow/config.json
 
 	## récupération des variables
 	SEEDGROUP=$(cat $GROUPFILE)
@@ -534,12 +538,6 @@ function install_cloudplow() {
 	if [[ "$?" == "0" ]]; then
 	docker exec -ti plex-$SEEDUSER grep -E -o "PlexOnlineToken=.{0,22}" /config/Library/Application\ Support/Plex\ Media\ Server/Preferences.xml > /home/$SEEDUSER/token.txt
 	TOKEN=$(grep PlexOnlineToken /home/$SEEDUSER/token.txt | cut -d '=' -f2 | cut -c2-21)
-	NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
-			if [ $NOMBRE -le 1 ] ; then
-				ACCESSDOMAIN=$(grep plex $INSTALLEDFILE | cut -d\- -f3)
-			else
-				ACCESSDOMAIN=$(grep plex $INSTALLEDFILE | cut -d\- -f3-4)
-			fi
 	fi
 
 	REMOTE=$(grep -iC 2 "token" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
