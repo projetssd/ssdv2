@@ -65,6 +65,7 @@ case $CHOICE in
 				install_cloudplow
 				sed -i "s/\"enabled\"\: true/\"enabled\"\: false/g" /home/$SEEDUSER/scripts/cloudplow/config.json
 			fi
+			install_flood
 			resume_seedbox
 			pause
 			script_plexdrive
