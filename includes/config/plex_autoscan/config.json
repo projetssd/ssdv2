@@ -77,16 +77,20 @@
   "SERVER_PASS": "9c4b81fe234e4d6eb9011cefe514d915",
   "SERVER_PATH_MAPPINGS": {
       "/data/%FILMS%/": [
-          "/movies/"
+          "/movies/",
+          "/data/Media/%FILMS%/"
       ],
       "/data/%SERIES%/": [
-          "/tv/"
+          "/tv/",
+          "/data/Media/%SERIES%/"
       ],
       "/data/%MUSIC%/": [
-          "/music/"
+          "/music/",
+          "/data/Media/%MUSIC%/"
       ],
       "/data/%ANIMES%/": [
-          "/animes/"
+          "/animes/",
+          "/data/Media/%ANIMES%/"
       ]
   },
   "SERVER_PORT": %PORT%,

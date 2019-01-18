@@ -975,6 +975,18 @@ do
 				PORT=$(grep SERVER_PORT /home/$SEEDUSER/scripts/plex_autoscan/config/config.json | cut -d ':' -f2 | sed 's/, //' | sed 's/ //')
 				PLEXCANFILE="/home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_start.sh"
 				cat "$BASEDIR/includes/config/plex_autoscan/plex_autoscan_start.sh" > $PLEXCANFILE
+				chmod 755 $PLEXCANFILE
+				for line in $(cat $INSTALLEDFILE);
+				do
+					NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
+					if [ $NOMBRE -le 1 ] ; then
+						ACCESSDOMAIN=$(grep plex $INSTALLEDFILE | cut -d\- -f3)
+					else
+						ACCESSDOMAIN=$(grep plex $INSTALLEDFILE | cut -d\- -f3-4)
+					fi
+				done
+
+				sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" $PLEXCANFILE
 				sed -i -e "s/%ANIMES%/${ANIMES}/g" $PLEXCANFILE
 				sed -i -e "s/%FILMS%/${FILMS}/g" $PLEXCANFILE
 				sed -i -e "s/%SERIES%/${SERIES}/g" $PLEXCANFILE

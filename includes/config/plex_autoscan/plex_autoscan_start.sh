@@ -16,7 +16,7 @@ FILES=/data/Media/*/*/*
 for f in $FILES
 do
 echo "$f"
-curl -d "eventType=Manual&filepath=$f" http://0.0.0.0:%PORT%/9c4b81fe234e4d6eb9011cefe514d915
+curl -d "eventType=Manual&filepath=$f" http://%ACCESSDOMAIN%:%PORT%/9c4b81fe234e4d6eb9011cefe514d915
 done
 					
 # restore $IFS
