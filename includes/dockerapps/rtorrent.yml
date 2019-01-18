@@ -26,6 +26,7 @@
       - /home/%USER%/docker/rtorrent/watch:/data/.watch
       - /home/%USER%/docker/rtorrent/data:/data
       - /home/%USER%/docker/rtorrent/config:/config
+      - /home/%USER%/scripts:/scripts
     networks:
       - proxy
 #ENDrtorrent#

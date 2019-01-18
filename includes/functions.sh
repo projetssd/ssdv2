@@ -448,8 +448,8 @@ function install_rclone() {
 		systemctl daemon-reload > /dev/null 2>&1
 		systemctl enable rclone.service > /dev/null 2>&1
 		service rclone start
-		echo -e " ${BWHITE}* Montage rclone en cours, merci de patienter... ${NC}"
-		sleep 15
+		var="Montage rclone en cours, merci de patienter..."
+		decompte 15
 		checking_errors $?
 	else
 		REMOTE=$(grep -iC 2 "token" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
@@ -467,8 +467,8 @@ function install_rclone() {
 		systemctl daemon-reload > /dev/null 2>&1
 		systemctl enable rclone.service > /dev/null 2>&1
 		service rclone start
-		echo -e " ${BWHITE}* Montage rclone en cours, merci de patienter... ${NC}"
-		sleep 15
+		var="Montage rclone en cours, merci de patienter..."
+		decompte 15
 		checking_errors $?
 	fi
 	echo ""
@@ -971,6 +971,19 @@ do
 			echo ""
 			if [[ -e "$PLEXDRIVE" ]]; then
 				plex_sections
+				touch /home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_start.sh
+				PORT=$(grep SERVER_PORT /home/$SEEDUSER/scripts/plex_autoscan/config/config.json | cut -d ':' -f2 | sed 's/, //' | sed 's/ //')
+				PLEXCANFILE="/home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_start.sh"
+				cat "$BASEDIR/includes/config/plex_autoscan/plex_autoscan_start.sh" > $PLEXCANFILE
+				sed -i -e "s/%ANIMES%/${ANIMES}/g" $PLEXCANFILE
+				sed -i -e "s/%FILMS%/${FILMS}/g" $PLEXCANFILE
+				sed -i -e "s/%SERIES%/${SERIES}/g" $PLEXCANFILE
+				sed -i -e "s/%MUSIC%/${MUSIC}/g" $PLEXCANFILE
+				sed -i -e "s/%PORT%/${PORT}/g" $PLEXCANFILE
+				grep -R "rtorrent" "$INSTALLEDFILE" > /dev/null 2>&1
+				if [[ "$?" == "0" ]]; then
+					docker exec -t rtorrent-$SEEDUSER sed -i 's/\<unsorted=y\>/& "exec=\/scripts\/plex_autoscan_start.sh"/' /usr/local/bin/postdl
+				fi
 			fi
 		fi
 
@@ -990,19 +1003,21 @@ do
 
 		if [[ "$line" == "rtorrent" ]]; then
 			replace_media_compose
+			rm -rf /home/$SEEDUSER/Medias > /dev/null 2>&1
+			choose_media_folder_plexdrive > /dev/null 2>&1
 			echo -e "${BLUE}### CONFIG POST COMPOSE FILEBOT ###${NC}"
 			echo -e " ${BWHITE}* Mise à jour filebot...${NC}"
-			docker exec -t rtorrent-$SEEDUSER sed -i -e "s#films|movies|film|movie#${FILMS,,}#g" /usr/local/bin/postdl
-			docker exec -t rtorrent-$SEEDUSER sed -i -e "s#music|musics|musique|musiques#${MUSIC,,}#g" /usr/local/bin/postdl
-			docker exec -t rtorrent-$SEEDUSER sed -i -e "s#tv|\"tv shows\"|series|serie#${SERIES,,}#g" /usr/local/bin/postdl
-			docker exec -t rtorrent-$SEEDUSER sed -i -e "s#animes#${ANIMES,,}#g" /usr/local/bin/postdl
 			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/Movies/${FILMS}/g" /usr/local/bin/postdl
 			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/TV/${SERIES}/g" /usr/local/bin/postdl
 			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/Music/${MUSIC}/g" /usr/local/bin/postdl
 			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/Anime/${ANIMES}/g" /usr/local/bin/postdl
 			docker exec -t rtorrent-$SEEDUSER sed -i '/*)/,/;;/d' /usr/local/bin/postdl
-			rm -rf /home/$SEEDUSER/Medias/TV /home/$SEEDUSER/Medias/Movies /home/$SEEDUSER/Medias/Animes /home/$SEEDUSER/Medias/Music
 			checking_errors $?
+			grep -R "plex" "$INSTALLEDFILE" > /dev/null 2>&1
+			if [[ "$?" == "0" ]]; then
+				docker exec -t rtorrent-$SEEDUSER sed -i 's/\<unsorted=y\>/& "exec=\/scripts\/plex_autoscan_start.sh"/' /usr/local/bin/postdl
+			fi
+
 			echo ""
 		fi
 done
