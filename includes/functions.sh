@@ -350,7 +350,7 @@ function install_flood() {
 		sed -i "s|%USER%|$SEEDUSER|g" $DOCKERCOMPOSEFILE
 		cat /opt/seedbox-compose/includes/dockerapps/foot.docker >> $DOCKERCOMPOSEFILE
 		NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
-		if [ $NOMBRE -le 2 ] ; then
+		if [ $NOMBRE -le 1 ] ; then
 			FQDNTMP="flood.$DOMAIN"
 		else
 			FQDNTMP="flood-$SEEDUSER.$DOMAIN"
@@ -910,7 +910,7 @@ function install_services() {
 		sed -i "s|%MUSIC%|$MUSIC|g" $DOCKERCOMPOSEFILE
 		cat /opt/seedbox-compose/includes/dockerapps/foot.docker >> $DOCKERCOMPOSEFILE
 		NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
-		if [ $NOMBRE -le 2 ] ; then
+		if [ $NOMBRE -le 1 ] ; then
 			FQDNTMP="$line.$DOMAIN"
 		else
 			FQDNTMP="$line-$SEEDUSER.$DOMAIN"
@@ -982,7 +982,7 @@ do
 				sed -i -e "s/%PORT%/${PORT}/g" $PLEXCANFILE
 				grep -R "rtorrent" "$INSTALLEDFILE" > /dev/null 2>&1
 				if [[ "$?" == "0" ]]; then
-					docker exec -t rtorrent-$SEEDUSER sed -i 's/\<unsorted=y\>/& "exec=\/scripts\/plex_autoscan_start.sh"/' /usr/local/bin/postdl
+					docker exec -t rtorrent-$SEEDUSER sed -i 's/\<unsorted=y\>/& "exec=\/scripts\/plex_autoscan\/plex_autoscan_start.sh"/' /usr/local/bin/postdl
 				fi
 			fi
 		fi
@@ -1015,7 +1015,7 @@ do
 			checking_errors $?
 			grep -R "plex" "$INSTALLEDFILE" > /dev/null 2>&1
 			if [[ "$?" == "0" ]]; then
-				docker exec -t rtorrent-$SEEDUSER sed -i 's/\<unsorted=y\>/& "exec=\/scripts\/plex_autoscan_start.sh"/' /usr/local/bin/postdl
+				docker exec -t rtorrent-$SEEDUSER sed -i 's/\<unsorted=y\>/& "exec=\/scripts\/plex_autoscan\/plex_autoscan_start.sh"/' /usr/local/bin/postdl
 			fi
 			echo ""
 		fi
@@ -1210,6 +1210,7 @@ function manage_users() {
 				install_cloudplow
 				sed -i "s/\"enabled\"\: true/\"enabled\"\: false/g" /home/$SEEDUSER/scripts/cloudplow/config.json
 				fi
+				install_flood
 				resume_seedbox
 				pause
 				script_plexdrive
