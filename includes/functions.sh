@@ -1017,7 +1017,6 @@ do
 			if [[ "$?" == "0" ]]; then
 				docker exec -t rtorrent-$SEEDUSER sed -i 's/\<unsorted=y\>/& "exec=\/scripts\/plex_autoscan_start.sh"/' /usr/local/bin/postdl
 			fi
-
 			echo ""
 		fi
 done
