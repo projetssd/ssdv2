@@ -1330,7 +1330,7 @@ function manage_apps() {
 	                "Selectionner une action :" 12 50 3 \
 	                "1" "Ajout Docker Applis"  \
 	                "2" "Supprimer une Appli" 3>&1 1>&2 2>&3)
-			[[ "$?" = 1 ]] && script_plexdrive;
+			[[ "$?" != 0 ]] && script_plexdrive;
 	case $ACTIONONAPP in
 		"1" ) ## Ajout APP
 			FLOOD="/home/$SEEDUSER/docker/flood"
@@ -1371,6 +1371,7 @@ function manage_apps() {
 			              "Sélectionner l'Appli à supprimer" 19 45 11 \
 			              "${TABSERVICES[@]}"  3>&1 1>&2 2>&3)
 			echo -e " ${GREEN}   * $APPSELECTED${NC}"
+			[[ "$?" = 1 ]] && script_plexdrive;
 			cd /home/$SEEDUSER
 			docker-compose rm -fs "$APPSELECTED"-"$SEEDUSER"
 			sed -i "/#START"$APPSELECTED"#/,/#END"$APPSELECTED"#/d" /home/$SEEDUSER/docker-compose.yml
