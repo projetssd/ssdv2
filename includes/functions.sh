@@ -396,9 +396,9 @@ function install_plexdrive() {
 		mv -v /tmp/plexdrive /usr/bin/ > /dev/null 2>&1
 		chown -c root:root /usr/bin/plexdrive > /dev/null 2>&1
 		echo ""
-		echo -e " ${YELLOW}* Une fois la configuration Plexdrive terminée, tapez ${NC}${CPURPLE}CTRL + C${NC}${YELLOW} pour poursuivre le script !${NC}"
+		echo -e " ${YELLOW}* Dès que le message ${NC}${CPURPLE}"First cache build process finished!"${NC}${YELLOW} apparait à l'écran, taper ${NC}${CPURPLE}CTRL + C${NC}${YELLOW} pour poursuivre le script !${NC}"
 		echo ""
-		plexdrive mount -c /root/.plexdrive -o allow_other /mnt/plexdrive
+		/usr/bin/plexdrive mount -v 3 /mnt/plexdrive
 		cp "$BASEDIR/includes/config/systemd/plexdrive.service" "/etc/systemd/system/plexdrive.service" > /dev/null 2>&1
 		systemctl daemon-reload > /dev/null 2>&1
 		systemctl enable plexdrive.service > /dev/null 2>&1
