@@ -1041,8 +1041,13 @@ do
 
 		if [[ "$line" == "rtorrent" ]]; then
 			replace_media_compose
+			PLEXDRIVE="/usr/bin/plexdrive"
 			rm -rf /home/$SEEDUSER/Medias > /dev/null 2>&1
+			if [[ -f "$PLEXDRIVE" ]]; then
 			choose_media_folder_plexdrive > /dev/null 2>&1
+			else
+			choose_media_folder_classique > /dev/null 2>&1
+			fi
 			echo -e "${BLUE}### CONFIG POST COMPOSE FILEBOT ###${NC}"
 			echo -e " ${BWHITE}* Mise à jour filebot...${NC}"
 			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/Movies/${FILMS}/g" /usr/local/bin/postdl
