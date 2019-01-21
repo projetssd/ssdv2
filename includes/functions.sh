@@ -332,7 +332,7 @@ function install_watchtower() {
 		touch $WATCHTOWERCOMPOSEFILE
 
 		if (whiptail --title "Docker watchtower" --yesno "Voulez vous installer watchtower" 7 50) then
-			echo -e " ${BWHITE}* Installation de portainer !${NC}"
+			echo -e " ${BWHITE}* Installation de watchtower !${NC}"
 			cat /opt/seedbox-compose/includes/dockerapps/head.docker > $WATCHTOWERCOMPOSEFILE
 			cat "/opt/seedbox-compose/includes/dockerapps/watchtower.yml" >> $WATCHTOWERCOMPOSEFILE
 			cat /opt/seedbox-compose/includes/dockerapps/foot.docker >> $WATCHTOWERCOMPOSEFILE
@@ -1041,12 +1041,16 @@ do
 
 		if [[ "$line" == "rtorrent" ]]; then
 			replace_media_compose
-			PLEXDRIVE="/usr/bin/plexdrive"
 			rm -rf /home/$SEEDUSER/Medias > /dev/null 2>&1
+			PLEXDRIVE="/usr/bin/plexdrive"
 			if [[ -f "$PLEXDRIVE" ]]; then
 			choose_media_folder_plexdrive > /dev/null 2>&1
 			else
-			choose_media_folder_classique > /dev/null 2>&1
+				for line in $(cat $MEDIASPERUSER);
+				do
+					line=$(echo $line | sed 's/\(.\)/\U\1/')
+					mkdir -p /home/$SEEDUSER/Medias/$line
+				done
 			fi
 			echo -e "${BLUE}### CONFIG POST COMPOSE FILEBOT ###${NC}"
 			echo -e " ${BWHITE}* Mise à jour filebot...${NC}"
