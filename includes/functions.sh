@@ -230,7 +230,7 @@ function install_fail2ban() {
 		echo -e "${BLUE}### FAIL2BAN ###${NC}"
 		if (whiptail --title "Docker fail2ban" --yesno "Voulez vous installer fail2ban" 7 50) then
 			echo -e " ${BWHITE}* Installation de Fail2ban !${NC}"
-			apt install fail2ban portsentry -y
+			apt install fail2ban portsentry -y > /dev/null 2>&1
 			SSH=echo ${SSH_CLIENT##* }
 			IP_DOM=$(grep 'Accepted' /var/log/auth.log | cut -d ' ' -f11 | head -1)
 			cp "$BASEDIR/includes/config/fail2ban/custom.conf" "/etc/fail2ban/jail.d/custom.conf" > /dev/null 2>&1
@@ -242,9 +242,9 @@ function install_fail2ban() {
 			sed -i "s|%IP_DOM%|$IP_DOM|g" /etc/fail2ban/jail.d/custom.conf
 			sed -i "s|%IP_DOM%|$IP_DOM|g" /etc/fail2ban/jail.d/traefik.conf
 			cd $CONFDIR/docker/traefik
-			docker-compose restart traefik
-			systemctl restart fail2ban
-			fail2ban-client reload
+			docker-compose restart traefik > /dev/null 2>&1
+			systemctl restart fail2ban > /dev/null 2>&1
+			fail2ban-client reload > /dev/null 2>&1
 			checking_errors $?
 		else
 			echo -e " ${BWHITE}* Fail2ban non installé !${NC}"	
