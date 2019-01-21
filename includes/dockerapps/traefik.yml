@@ -23,7 +23,7 @@ services:
     ports:
       - "80:80"
       - "443:443"
-  command:
+    command:
       - --web
       - --accessLog.filePath=/var/log/access.log
       - --accessLog.filters.statusCodes=400-499
