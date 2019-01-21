@@ -29,6 +29,12 @@ case $CHOICE in
 			install_traefik
 			install_portainer
 			install_watchtower
+			install_fail2ban
+			choose_media_folder_classique
+			choose_services
+			install_services
+			docker_compose
+			install_flood
 			resume_seedbox
 			pause
 			script_classique
@@ -54,6 +60,7 @@ case $CHOICE in
 			install_rclone
 			install_portainer
 			install_watchtower
+			install_fail2ban
 			choose_media_folder_plexdrive
 			unionfs_fuse
 			pause

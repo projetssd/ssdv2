@@ -16,12 +16,17 @@ services:
       - traefik.port=8080
       - traefik.docker.network=traefik_proxy
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro  
+      - /var/run/docker.sock:/var/run/docker.sock:ro
       - %TRAEFIK%traefik.toml:/traefik.toml:ro
-      - %TRAEFIK%letsencrypt/certs:/etc/traefik/acme:rw    
+      - %TRAEFIK%letsencrypt/certs:/etc/traefik/acme:rw
+      - /var/log/traefik:/var/log
     ports:
       - "80:80"
       - "443:443"
+  command:
+      - --web
+      - --accessLog.filePath=/var/log/access.log
+      - --accessLog.filters.statusCodes=400-499
     networks:
       - proxy
 

@@ -226,6 +226,31 @@ function checking_errors() {
 	fi
 }
 
+function install_fail2ban() {
+		echo -e "${BLUE}### FAIL2BAN ###${NC}"
+		if (whiptail --title "Docker fail2ban" --yesno "Voulez vous installer fail2ban" 7 50) then
+			echo -e " ${BWHITE}* Installation de Fail2ban !${NC}"
+			apt install fail2ban portsentry -y
+			SSH=echo ${SSH_CLIENT##* }
+			IP_DOM=$(grep 'Accepted' /var/log/auth.log | cut -d ' ' -f11 | head -1)
+			cp "$BASEDIR/includes/config/fail2ban/custom.conf" "/etc/fail2ban/jail.d/custom.conf" > /dev/null 2>&1
+			cp "$BASEDIR/includes/config/fail2ban/traefik.conf" "/etc/fail2ban/jail.d/traefik.conf" > /dev/null 2>&1
+			cp "$BASEDIR/includes/config/fail2ban/traefik-auth.conf" "/etc/fail2ban/filter.d/traefik-auth.conf" > /dev/null 2>&1
+			cp "$BASEDIR/includes/config/fail2ban/traefik-botsearch.conf" "/etc/fail2ban/filter.d/traefik-botsearch.conf" > /dev/null 2>&1
+			cp "$BASEDIR/includes/config/fail2ban/docker-action.conf" "/etc/fail2ban/action.d/docker-action.conf" > /dev/null 2>&1
+			sed -i "s|%SSH%|$SSH|g" /etc/fail2ban/jail.d/custom.conf
+			sed -i "s|%IP_DOM%|$IP_DOM|g" /etc/fail2ban/jail.d/custom.conf
+			sed -i "s|%IP_DOM%|$IP_DOM|g" /etc/fail2ban/jail.d/traefik.conf
+			cd $CONFDIR/docker/traefik
+			docker-compose restart traefik
+			systemctl restart fail2ban
+			fail2ban-client reload
+			checking_errors $?
+		else
+			echo -e " ${BWHITE}* Fail2ban non installé !${NC}"	
+		fi
+}	
+
 function install_traefik() {
 	echo -e "${BLUE}### TRAEFIK ###${NC}"
 	TRAEFIK="$CONFDIR/docker/traefik/"
@@ -1454,13 +1479,13 @@ function uninstall_seedbox() {
 		echo -e " ${BWHITE}* Suppression users $seeduser...${NC}"
 		if [[ -e "$PLEXDRIVE" ]]; then
 				if [[ -e "$PLEXAUTOSCAN" ]]; then
-					systemctl stop cloudplow-$seeduser.service
 					systemctl stop plex_autoscan-$seeduser.service
-					systemctl disable cloudplow-$seeduser.service > /dev/null 2>&1
 					systemctl disable plex_autoscan-$seeduser.service > /dev/null 2>&1
 					rm /etc/systemd/system/plex_autoscan-$seeduser.service
-					rm /etc/systemd/system/cloudplow-$seeduser.service
 				fi
+			systemctl stop cloudplow-$seeduser.service
+			systemctl disable cloudplow-$seeduser.service > /dev/null 2>&1
+			rm /etc/systemd/system/cloudplow-$seeduser.service
 			service unionfs-$seeduser stop
 			systemctl disable unionfs-$SEEDUSER.service > /dev/null 2>&1
 			rm /etc/systemd/system/unionfs-$seeduser.service
