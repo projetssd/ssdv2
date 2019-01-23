@@ -790,13 +790,13 @@ function choose_media_folder_classique() {
 	for MEDDOCKER in $MEDIASTOINSTALL
 	do
 		echo -e "	${GREEN}* $(echo $MEDDOCKER | tr -d '"')${NC}"
-		echo $(echo ${MEDDOCKER,,} | tr -d '"') >> $MEDIASPERUSER
+		echo $(echo ${MEDDOCKER} | tr -d '"') >> $MEDIASPERUSER
 	done
-	for line in $(cat $MEDIASPERUSER);
-	do
-	line=$(echo $line | sed 's/\(.\)/\U\1/')
-	mkdir -p /home/$SEEDUSER/Medias/$line
-	done
+	#for line in $(cat $MEDIASPERUSER);
+	#do
+	#line=$(echo $line | sed 's/\(.\)/\U\1/')
+	#mkdir -p /home/$SEEDUSER/Medias/$line
+	#done
 	rm /tmp/menumedia.txt
 	echo ""
 }
