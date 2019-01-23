@@ -244,7 +244,6 @@ function install_fail2ban() {
 			cd $CONFDIR/docker/traefik
 			docker-compose restart traefik > /dev/null 2>&1
 			systemctl restart fail2ban > /dev/null 2>&1
-			fail2ban-client reload > /dev/null 2>&1
 			checking_errors $?
 		else
 			echo -e " ${BWHITE}* Fail2ban non installé !${NC}"	
@@ -1041,17 +1040,13 @@ do
 
 		if [[ "$line" == "rtorrent" ]]; then
 			replace_media_compose
-			rm -rf /home/$SEEDUSER/Medias > /dev/null 2>&1
-			PLEXDRIVE="/usr/bin/plexdrive"
-			if [[ -f "$PLEXDRIVE" ]]; then
-			choose_media_folder_plexdrive > /dev/null 2>&1
-			else
-				for line in $(cat $MEDIASPERUSER);
-				do
-					line=$(echo $line | sed 's/\(.\)/\U\1/')
-					mkdir -p /home/$SEEDUSER/Medias/$line
-				done
-			fi
+
+			for line in $(cat $MEDIASPERUSER);
+			do
+				line=$(echo $line | sed 's/\(.\)/\U\1/')
+				mkdir -p /home/$SEEDUSER/Medias/$line
+			done
+
 			echo -e "${BLUE}### CONFIG POST COMPOSE FILEBOT ###${NC}"
 			echo -e " ${BWHITE}* Mise à jour filebot...${NC}"
 			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/Movies/${FILMS}/g" /usr/local/bin/postdl
@@ -1059,6 +1054,16 @@ do
 			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/Music/${MUSIC}/g" /usr/local/bin/postdl
 			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/Anime/${ANIMES}/g" /usr/local/bin/postdl
 			docker exec -t rtorrent-$SEEDUSER sed -i '/*)/,/;;/d' /usr/local/bin/postdl
+			docker exec -ti rtorrent-$SEEDUSER rm -rf /data/Media/Movies > /dev/null 2>&1
+			docker exec -ti rtorrent-$SEEDUSER rm -rf /data/Media/TV > /dev/null 2>&1
+			docker exec -ti rtorrent-$SEEDUSER rm -rf /data/Media/Music > /dev/null 2>&1
+			docker exec -ti rtorrent-$SEEDUSER rm -rf /data/Media/Animes > /dev/null 2>&1
+			for line in $(cat $MEDIASPERUSER);
+			do
+				if [[ "$line" == "Animes" ]]; then
+				mkdir -p /home/$SEEDUSER/Medias/$line
+				fi
+			done
 			checking_errors $?
 			grep -R "plex" "$INSTALLEDFILE" > /dev/null 2>&1
 			if [[ "$?" == "0" ]]; then
