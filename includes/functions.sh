@@ -1040,13 +1040,6 @@ do
 
 		if [[ "$line" == "rtorrent" ]]; then
 			replace_media_compose
-
-			for line in $(cat $MEDIASPERUSER);
-			do
-				line=$(echo $line | sed 's/\(.\)/\U\1/')
-				mkdir -p /home/$SEEDUSER/Medias/$line
-			done
-
 			echo -e "${BLUE}### CONFIG POST COMPOSE FILEBOT ###${NC}"
 			echo -e " ${BWHITE}* Mise à jour filebot...${NC}"
 			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/Movies/${FILMS}/g" /usr/local/bin/postdl
@@ -1058,12 +1051,6 @@ do
 			docker exec -ti rtorrent-$SEEDUSER rm -rf /data/Media/TV > /dev/null 2>&1
 			docker exec -ti rtorrent-$SEEDUSER rm -rf /data/Media/Music > /dev/null 2>&1
 			docker exec -ti rtorrent-$SEEDUSER rm -rf /data/Media/Animes > /dev/null 2>&1
-			for line in $(cat $MEDIASPERUSER);
-			do
-				if [[ "$line" == "Animes" ]]; then
-				mkdir -p /home/$SEEDUSER/Medias/$line
-				fi
-			done
 			checking_errors $?
 			grep -R "plex" "$INSTALLEDFILE" > /dev/null 2>&1
 			if [[ "$?" == "0" ]]; then
