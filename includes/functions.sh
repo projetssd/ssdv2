@@ -696,6 +696,7 @@ function create_user() {
 			checking_errors $?
 			USERID=$(id -u $SEEDUSER)
 			GRPID=$(id -g $SEEDUSER)
+			add_ftp
 		fi
 		add_user_htpasswd $SEEDUSER $PASSWORD
 		echo $SEEDUSER >> $USERSFILE
@@ -741,9 +742,23 @@ function create_user() {
 		checking_errors $?
 		USERID=$(id -u $SEEDUSER)
 		GRPID=$(id -g $SEEDUSER)
+		add_ftp
 	fi
 	add_user_htpasswd $SEEDUSER $PASSWORD
 	echo $SEEDUSER >> $USERSFILE
+}
+
+
+function add_ftp () {
+	docker exec -i ftp /bin/bash << EOX
+	( echo ${PASSWORD} ; echo ${PASSWORD} )|pure-pw useradd ${SEEDUSER} -f /etc/pure-ftpd/passwd/pureftpd.passwd -m -u ftpuser -d /home/ftpusers/${SEEDUSER}
+EOX
+}
+
+function del_ftp () {
+	docker exec -i ftp /bin/bash << EOC
+    pure-pw userdel ${SEEDUSER} -f /etc/pure-ftpd/passwd/pureftpd.passwd
+EOC
 }
 
 function choose_services() {

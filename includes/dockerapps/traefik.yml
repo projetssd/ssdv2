@@ -30,6 +30,19 @@ services:
     networks:
       - proxy
 
+  ftp:
+    image: stilliard/pure-ftpd:hardened
+    container_name: "ftp"
+    restart: unless-stopped
+    volumes:
+      - %TRAEFIK%pure-ftp:/etc/pure-ftpd/passwd
+      - /home:/home/ftpusers
+    ports:
+      - "21:21"
+      - "30000-30009:30000-30009"
+    networks:
+      - proxy
+
 networks:
   proxy:
     external:
