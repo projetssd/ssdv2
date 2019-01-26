@@ -25,8 +25,8 @@ case $CHOICE in
 			install_base_packages
 			checking_system
 			install_docker
-			install_traefik
 			define_parameters
+			install_traefik
 			install_portainer
 			install_watchtower
 			install_fail2ban
