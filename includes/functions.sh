@@ -696,7 +696,7 @@ function create_user() {
 			checking_errors $?
 			USERID=$(id -u $SEEDUSER)
 			GRPID=$(id -g $SEEDUSER)
-			add_ftp
+			add_ftp > /dev/null 2>&1
 		fi
 		add_user_htpasswd $SEEDUSER $PASSWORD
 		echo $SEEDUSER >> $USERSFILE
@@ -742,7 +742,7 @@ function create_user() {
 		checking_errors $?
 		USERID=$(id -u $SEEDUSER)
 		GRPID=$(id -g $SEEDUSER)
-		add_ftp
+		add_ftp > /dev/null 2>&1
 	fi
 	add_user_htpasswd $SEEDUSER $PASSWORD
 	echo $SEEDUSER >> $USERSFILE
