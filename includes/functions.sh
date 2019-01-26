@@ -203,6 +203,9 @@ function checking_system() {
 		elif [[ $(echo $TMPCODENAME | grep "zesty") != "" ]]; then
 			SYSTEMRELEASE="17.14"
 			SYSTEMCODENAME="zesty"
+		elif [[ $(echo $TMPCODENAME | grep "cosmic") != "" ]]; then
+			SYSTEMRELEASE="18.10"
+			SYSTEMCODENAME="cosmic"
 		fi
 	fi
 	echo -e "	${YELLOW}--> System OS : $SYSTEMOS${NC}"
