@@ -185,14 +185,11 @@ function checking_system() {
 	TMPRELEASE=$(cat /etc/debian_version)
 	if [[ $(echo $TMPSYSTEM | sed 's/\"//g') == "Debian GNU/Linux" ]]; then
 		SYSTEMOS="Debian"
-		if [[ $(echo $TMPRELEASE | grep "7") != "" ]]; then
-			SYSTEMRELEASE="7"
-			SYSTEMCODENAME="wheezy"
-		elif [[ $(echo $TMPRELEASE | grep "8") != "" ]]; then
-			SYSTEMRELEASE="8"
+		if [[ $(echo $TMPRELEASE | grep "8") != "" ]]; then
+			SYSTEMRELEASE=$TMPRELEASE
 			SYSTEMCODENAME="jessie"
 		elif [[ $(echo $TMPRELEASE | grep "9") != "" ]]; then
-			SYSTEMRELEASE="9"
+			SYSTEMRELEASE=$TMPRELEASE
 			SYSTEMCODENAME="stretch"
 		fi
 	elif [[ $(echo $TMPSYSTEM | sed 's/\"//g') == "Ubuntu" ]]; then
