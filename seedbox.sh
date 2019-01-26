@@ -27,6 +27,7 @@ case $CHOICE in
 			install_docker
 			define_parameters
 			install_traefik
+			add_ftp > /dev/null 2>&1
 			install_portainer
 			install_watchtower
 			install_fail2ban
@@ -56,6 +57,7 @@ case $CHOICE in
 			install_docker
 			define_parameters
 			install_traefik
+			add_ftp > /dev/null 2>&1
 			install_plexdrive
 			install_rclone
 			install_portainer

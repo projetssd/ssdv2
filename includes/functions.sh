@@ -696,7 +696,6 @@ function create_user() {
 			checking_errors $?
 			USERID=$(id -u $SEEDUSER)
 			GRPID=$(id -g $SEEDUSER)
-			add_ftp > /dev/null 2>&1
 		fi
 		add_user_htpasswd $SEEDUSER $PASSWORD
 		echo $SEEDUSER >> $USERSFILE
@@ -742,7 +741,6 @@ function create_user() {
 		checking_errors $?
 		USERID=$(id -u $SEEDUSER)
 		GRPID=$(id -g $SEEDUSER)
-		add_ftp > /dev/null 2>&1
 	fi
 	add_user_htpasswd $SEEDUSER $PASSWORD
 	echo $SEEDUSER >> $USERSFILE
@@ -1252,6 +1250,7 @@ function manage_users() {
 			echo -e "${GREEN}---------------------------------${NC}"
 			echo ""
 			define_parameters
+			add_ftp > /dev/null 2>&1
 			if [[ -e "$PLEXDRIVE" ]]; then
 				choose_media_folder_plexdrive
 				unionfs_fuse
