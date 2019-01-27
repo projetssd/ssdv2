@@ -1,8 +1,7 @@
 
 #STARTflood#
   flood-%USER%:
-    image: jfurrow/flood
-    build: ./flood/
+    image: wonderfall/rtorrent-flood
     container_name: flood-%USER%
     restart: unless-stopped
     tty: true
@@ -13,16 +12,14 @@
       - traefik.port=3000
       - traefik.docker.network=traefik_proxy
     volumes:
-      - /home/%USER%/docker/rtorrent/data:/data
-      - /home/%USER%/docker/flood/db:/data/server/db
+      - /home/%USER%/docker/flood/data:/data
+      - /home/%USER%/docker/flood/db:/flood-db
       - /etc/localtime:/etc/localtime
     environment:
       - UID=%UID%
       - GID=%GID%
       - FLOOD_SECRET="Hy5qVe50iv7oNmAnZcdwmsUvb"
-      - RTORRENT_SCGI_HOST=rtorrent-%USER%
-      - RTORRENT_SCGI_PORT=5000
-      - FLOOD_ENABLE_SSL=false
+      - RTORRENT_SCGI=5000
     networks:
       - proxy
 #ENDflood#

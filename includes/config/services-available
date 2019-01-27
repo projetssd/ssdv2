@@ -5,6 +5,7 @@ Watcher-MoviesAutomation
 Sonarr-TVShowsAutomation
 Medusa-TVShowsAutomation
 Rtorrent-TorrentClient
+Flood-TorrentClient
 Jackett-TorrentProviders
 Pyload-DownloadManager
 Tautulli-FeatureRichDashboardOfStatistics
