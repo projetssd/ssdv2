@@ -1063,7 +1063,6 @@ do
 			docker exec -ti rtorrent-$SEEDUSER rm -rf /data/Media/Movies > /dev/null 2>&1
 			docker exec -ti rtorrent-$SEEDUSER rm -rf /data/Media/TV > /dev/null 2>&1
 			docker exec -ti rtorrent-$SEEDUSER rm -rf /data/Media/Music > /dev/null 2>&1
-			docker exec -ti rtorrent-$SEEDUSER rm -rf /data/Media/Animes > /dev/null 2>&1
 			checking_errors $?
 			grep -R "plex" "$INSTALLEDFILE" > /dev/null 2>&1
 			if [[ "$?" == "0" ]]; then
