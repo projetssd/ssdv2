@@ -1,7 +1,7 @@
   
 #STARTjackett#
   jackett-%USER%:
-    image: xataz/jackett
+    image: linuxserver/jackett
     container_name: jackett-%USER%
     restart: unless-stopped
     hostname: jackett

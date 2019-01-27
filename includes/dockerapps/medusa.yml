@@ -12,7 +12,8 @@
       - traefik.docker.network=traefik_proxy
       - traefik.frontend.auth.basic=%VAR%
     volumes:
-      - /home/%USER%/Medias/%SERIES%:/tv:rw
+      - /home/%USER%/Medias/%SERIES%:/tv/%SERIES%
+      - /home/%USER%/Medias/%ANIMES%:/tv/%ANIMES%
       - /home/%USER%/docker/rtorrent/torrents:/downloads
       - /home/%USER%/docker/medusa/config:/config
     environment:

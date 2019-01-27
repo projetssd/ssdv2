@@ -81,7 +81,7 @@
           "/data/Media/%FILMS%/"
       ],
       "/data/%SERIES%/": [
-          "/tv/",
+          "/tv/%SERIES%/",
           "/data/Media/%SERIES%/"
       ],
       "/data/%MUSIC%/": [
@@ -89,7 +89,7 @@
           "/data/Media/%MUSIC%/"
       ],
       "/data/%ANIMES%/": [
-          "/animes/",
+          "/tv/%ANIMES%/",
           "/data/Media/%ANIMES%/"
       ]
   },
