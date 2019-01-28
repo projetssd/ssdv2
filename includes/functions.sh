@@ -1033,18 +1033,17 @@ do
 			echo 'system.method.set_key=event.download.finished,filebot,"execute={/usr/local/bin/postdl,$d.get_base_path=,$d.get_name=,$d.get_custom1=}"' >> /home/$SEEDUSER/docker/flood/config/rtorrent/rtorrent.rc
 			echo 'system.method.set_key=event.download.erased,filebot_cleaner,"execute=/usr/local/bin/postrm"' >> /home/$SEEDUSER/docker/flood/config/rtorrent/rtorrent.rc
 
-			pause
 			FILEBOT_RENAME_METHOD=$(grep FILEBOT_RENAME_METHOD /home/$SEEDUSER/docker-compose.yml | cut -d '=' -f2)
 			FILEBOT_RENAME_MOVIES=$(grep FILEBOT_RENAME_MOVIES /home/$SEEDUSER/docker-compose.yml | cut -d '=' -f2)
 			FILEBOT_RENAME_MUSICS=$(grep FILEBOT_RENAME_MUSICS /home/$SEEDUSER/docker-compose.yml | cut -d '=' -f2)
 			FILEBOT_RENAME_SERIES=$(grep FILEBOT_RENAME_SERIES /home/$SEEDUSER/docker-compose.yml | cut -d '=' -f2)
 			FILEBOT_RENAME_ANIMES=$(grep FILEBOT_RENAME_ANIMES /home/$SEEDUSER/docker-compose.yml | cut -d '=' -f2)
 
-			sed -i -e "s/%FILEBOT_RENAME_METHOD%/$FILEBOT_RENAME_METHOD/g" /home/$SEEDUSER/docker/flood/filebot/postdl
-			sed -i -e "s/%FILEBOT_RENAME_MOVIES%/$FILEBOT_RENAME_MOVIES/g" /home/$SEEDUSER/docker/flood/filebot/postdl
-			sed -i -e "s/%FILEBOT_RENAME_MUSICS%/$FILEBOT_RENAME_MUSICS/g" /home/$SEEDUSER/docker/flood/filebot/postdl
-			sed -i -e "s/%FILEBOT_RENAME_SERIES%/$FILEBOT_RENAME_SERIES/g" /home/$SEEDUSER/docker/flood/filebot/postdl
-			sed -i -e "s/%FILEBOT_RENAME_ANIMES%/$FILEBOT_RENAME_ANIMES/g" /home/$SEEDUSER/docker/flood/filebot/postdl
+    			sed -e 's#<FILEBOT_RENAME_MOVIES>#'"$FILEBOT_RENAME_MOVIES"'#' \
+        		    -e 's#<FILEBOT_RENAME_METHOD>#'"$FILEBOT_RENAME_METHOD"'#' \
+        		    -e 's#<FILEBOT_RENAME_MUSICS>#'"$FILEBOT_RENAME_MUSICS"'#' \
+        		    -e 's#<FILEBOT_RENAME_SERIES>#'"$FILEBOT_RENAME_SERIES"'#' \
+        		    -e 's#<FILEBOT_RENAME_ANIMES>#'"$FILEBOT_RENAME_ANIMES"'#' -i /home/$SEEDUSER/docker/flood/filebot/postdl
 
 			chmod +x /home/$SEEDUSER/docker/flood/filebot/postdl
 			chmod +x /home/$SEEDUSER/docker/flood/filebot/postrm
