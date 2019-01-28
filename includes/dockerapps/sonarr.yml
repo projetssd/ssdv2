@@ -17,6 +17,7 @@
     volumes:
       - /home/%USER%/docker/sonarr/config:/config
       - /home/%USER%/docker/rtorrent/torrents:/data/torrents
+      - /home/%USER%/docker/flood/downloads:/downloads/incomplete
       - /home/%USER%/Medias/%SERIES%:/tv/%SERIES%
       - /home/%USER%/Medias/%ANIMES%:/tv/%ANIMES%
     networks:
