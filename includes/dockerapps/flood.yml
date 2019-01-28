@@ -1,7 +1,7 @@
 
 #STARTflood#
   flood-%USER%:
-    image: wonderfall/rtorrent-flood
+    image: kuni00/rtorrent:latest
     container_name: flood-%USER%
     restart: unless-stopped
     tty: true
@@ -13,13 +13,12 @@
       - traefik.docker.network=traefik_proxy
     volumes:
       - /home/%USER%/docker/flood/data:/data
-      - /home/%USER%/docker/flood/db:/flood-db
+      - /home/%USER%/docker/flood/config:/config
+      - /home/%USER%/docker/flood/download:/download
       - /etc/localtime:/etc/localtime
     environment:
       - UID=%UID%
       - GID=%GID%
-      - FLOOD_SECRET="Hy5qVe50iv7oNmAnZcdwmsUvb"
-      - RTORRENT_SCGI=5000
     networks:
       - proxy
 #ENDflood#
