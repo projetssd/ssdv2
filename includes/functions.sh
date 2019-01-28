@@ -349,64 +349,6 @@ function install_watchtower() {
 	echo ""
 }
 
-function install_flood() {
-	echo -e "${BLUE}### FLOOD ###${NC}"
-	USERID=$(id -u $SEEDUSER)
-	GRPID=$(id -g $SEEDUSER)
-	INSTALLEDFILE="/home/$SEEDUSER/resume"
-	DOCKERCOMPOSEFILE="/home/$SEEDUSER/docker-compose.yml"
-	if [[ ! -f "$INSTALLEDFILE" ]]; then
-		touch $INSTALLEDFILE> /dev/null 2>&1
-	fi
-	if [[ ! -f "$DOCKERCOMPOSEFILE" ]]; then
-		cat /opt/seedbox-compose/includes/dockerapps/head.docker > $DOCKERCOMPOSEFILE
-		cat /opt/seedbox-compose/includes/dockerapps/foot.docker >> $DOCKERCOMPOSEFILE
-	fi
-	if (whiptail --title "Docker Flood" --yesno "Voulez vous installer Flood" 7 50) then
-		echo -e " ${BWHITE}* Installation de flood en cours !${NC}"
-		echo ""
-		cd /home/$SEEDUSER
-		git clone https://github.com/jfurrow/flood.git > /dev/null 2>&1
-		sed -i -n -e :a -e '1,5!{P;N;D;};N;ba' $DOCKERCOMPOSEFILE
-		cat "/opt/seedbox-compose/includes/dockerapps/flood.yml" >> $DOCKERCOMPOSEFILE
-		sed -i "s|%UID%|$USERID|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%GID%|$GRPID|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%VAR%|$VAR|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%USER%|$SEEDUSER|g" $DOCKERCOMPOSEFILE
-		cat /opt/seedbox-compose/includes/dockerapps/foot.docker >> $DOCKERCOMPOSEFILE
-		NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
-		if [ $NOMBRE -le 1 ] ; then
-			FQDNTMP="flood.$DOMAIN"
-		else
-			FQDNTMP="flood-$SEEDUSER.$DOMAIN"
-		fi
-		FQDN=$(whiptail --title "SSL Subdomain" --inputbox \
-		"Souhaitez vous utiliser un autre Sous Domaine pour flood ? default :" 7 75 "$FQDNTMP" 3>&1 1>&2 2>&3)
-		ACCESSURL=$FQDN
-		TRAEFIKURL=(Host:$ACCESSURL)
-		sed -i "s|%TRAEFIKURL%|$TRAEFIKURL|g" /home/$SEEDUSER/docker-compose.yml
-		check_domain $ACCESSURL
-		echo ""
-		declare -i PORT=$(cat $FILEPORTPATH | tail -1)
-		echo "flood-$PORT-$FQDN" >> $INSTALLEDFILE
-		URI="/"
-		echo -e " ${BWHITE}* Compilation de Flood en cours, plusieurs minutes peuvent être nécéssaires, veuillez patienter... !${NC}"
-		docker-compose up -d > /dev/null 2>&1
-		checking_errors $?
-		echo ""
-		rm -rf /home/$SEEDUSER/flood
-		sed -i '/build/d' $DOCKERCOMPOSEFILE
-		echo -e "${BLUE}### IDENTIFIANTS DE CONNECTION FLOOD ###${NC}"
-		echo ""
-		echo -e "${BWHITE}host: rtorrent-$SEEDUSER${NC}"
-		echo -e "${BWHITE}port: 5000${NC}"
-
-	else
-		echo -e " ${BWHITE}--> flood n'est pas installé !${NC}"
-	fi
-	echo ""
-}
-
 function install_plexdrive() {
 	echo -e "${BLUE}### PLEXDRIVE ###${NC}"
 	mkdir -p /mnt/plexdrive > /dev/null 2>&1
@@ -1070,6 +1012,54 @@ do
 			fi
 			echo ""
 		fi
+
+		if [[ "$line" == "flood" ]]; then
+			replace_media_compose
+			echo -e "${BLUE}### CONFIG POST COMPOSE FILEBOT ###${NC}"
+			echo -e " ${BWHITE}* Mise à jour filebot...${NC}"
+			sleep 20
+
+			touch /home/$SEEDUSER/docker/flood/filebot/postrm
+			touch /home/$SEEDUSER/docker/flood/filebot/postdl
+
+			POSTRM="/home/$SEEDUSER/docker/flood/filebot/postrm"
+			POSTDL="/home/$SEEDUSER/docker/flood/filebot/postdl"
+
+			cat "$BASEDIR/includes/config/flood/postrm" > $POSTRM
+			cat "$BASEDIR/includes/config/flood/postdl" > $POSTDL
+
+			docker exec -i flood-$SEEDUSER mkdir -p /data/Media
+
+			echo 'system.method.set_key=event.download.finished,filebot,"execute={/usr/local/bin/postdl,$d.get_base_path=,$d.get_name=,$d.get_custom1=}"' >> /home/$SEEDUSER/docker/flood/config/rtorrent/rtorrent.rc
+			echo 'system.method.set_key=event.download.erased,filebot_cleaner,"execute=/usr/local/bin/postrm"' >> /home/$SEEDUSER/docker/flood/config/rtorrent/rtorrent.rc
+
+			pause
+			FILEBOT_RENAME_METHOD=$(grep FILEBOT_RENAME_METHOD /home/$SEEDUSER/docker-compose.yml | cut -d '=' -f2)
+			FILEBOT_RENAME_MOVIES=$(grep FILEBOT_RENAME_MOVIES /home/$SEEDUSER/docker-compose.yml | cut -d '=' -f2)
+			FILEBOT_RENAME_MUSICS=$(grep FILEBOT_RENAME_MUSICS /home/$SEEDUSER/docker-compose.yml | cut -d '=' -f2)
+			FILEBOT_RENAME_SERIES=$(grep FILEBOT_RENAME_SERIES /home/$SEEDUSER/docker-compose.yml | cut -d '=' -f2)
+			FILEBOT_RENAME_ANIMES=$(grep FILEBOT_RENAME_ANIMES /home/$SEEDUSER/docker-compose.yml | cut -d '=' -f2)
+
+			sed -i -e "s/%FILEBOT_RENAME_METHOD%/$FILEBOT_RENAME_METHOD/g" /home/$SEEDUSER/docker/flood/filebot/postdl
+			sed -i -e "s/%FILEBOT_RENAME_MOVIES%/$FILEBOT_RENAME_MOVIES/g" /home/$SEEDUSER/docker/flood/filebot/postdl
+			sed -i -e "s/%FILEBOT_RENAME_MUSICS%/$FILEBOT_RENAME_MUSICS/g" /home/$SEEDUSER/docker/flood/filebot/postdl
+			sed -i -e "s/%FILEBOT_RENAME_SERIES%/$FILEBOT_RENAME_SERIES/g" /home/$SEEDUSER/docker/flood/filebot/postdl
+			sed -i -e "s/%FILEBOT_RENAME_ANIMES%/$FILEBOT_RENAME_ANIMES/g" /home/$SEEDUSER/docker/flood/filebot/postdl
+
+			chmod +x /home/$SEEDUSER/docker/flood/filebot/postdl
+			chmod +x /home/$SEEDUSER/docker/flood/filebot/postrm
+
+			sed -i -e "s/Movies/${FILMS}/g" /home/$SEEDUSER/docker/flood/filebot/postdl
+			sed -i -e "s/TV/${SERIES}/g" /home/$SEEDUSER/docker/flood/filebot/postdl
+			sed -i -e "s/Music/${MUSIC}/g" /home/$SEEDUSER/docker/flood/filebot/postdl
+			sed -i -e "s/Animes/${ANIMES}/g" /home/$SEEDUSER/docker/flood/filebot/postdl
+			checking_errors $?
+			grep -R "plex" "$INSTALLEDFILE" > /dev/null 2>&1
+			if [[ "$?" == "0" ]]; then
+				sed -i 's/\<unsorted=y\>/& "exec=\/scripts\/plex_autoscan\/plex_autoscan_start.sh"/' /home/$SEEDUSER/docker/flood/filebot/postdl
+			fi
+			echo ""
+		fi
 done
 }
 
@@ -1262,7 +1252,6 @@ function manage_users() {
 				install_cloudplow
 				sed -i "s/\"enabled\"\: true/\"enabled\"\: false/g" /home/$SEEDUSER/scripts/cloudplow/config.json
 				fi
-				install_flood
 				resume_seedbox
 				pause
 				script_plexdrive
@@ -1271,7 +1260,6 @@ function manage_users() {
 				choose_services
 				install_services
 				docker_compose
-				install_flood
 				resume_seedbox
 				pause
 				script_classique
@@ -1373,7 +1361,6 @@ function manage_apps() {
 			[[ "$?" != 0 ]] && script_plexdrive;
 	case $ACTIONONAPP in
 		"1" ) ## Ajout APP
-			FLOOD="/home/$SEEDUSER/docker/flood"
 			CURRTIMEZONE=$(cat /etc/timezone)
 			TIMEZONEDEF=$(whiptail --title "Timezone" --inputbox \
 			"Merci de vérifier votre timezone" 7 66 "$CURRTIMEZONE" \
@@ -1387,9 +1374,6 @@ function manage_apps() {
 			add_app_htpasswd
 			install_services
 			docker_compose
-			if [[ ! -d "$FLOOD" ]]; then
-			install_flood
-			fi
 			resume_seedbox
 			pause
 			if [[ -e "$PLEXDRIVE" ]]; then
