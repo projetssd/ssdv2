@@ -59,7 +59,7 @@
                     "timeout": 3600
                 }
             },
-            "remove_empty_dir_depth": 2,
+            "remove_empty_dir_depth": 3,
             "sync_remote": "%REMOTECRYPT%:/%SEEDUSER%",
             "upload_folder": "/home/%SEEDUSER%/local",
             "upload_remote": "%REMOTECRYPT%:/%SEEDUSER%"
