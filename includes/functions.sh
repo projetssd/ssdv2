@@ -1028,7 +1028,6 @@ do
 			cat "$BASEDIR/includes/config/flood/postrm" > $POSTRM
 			cat "$BASEDIR/includes/config/flood/postdl" > $POSTDL
 
-			docker exec -i flood-$SEEDUSER mkdir -p /data/Media/${FILMS} /data/Media/${SERIES} /data/Media/${ANIMES} /data/Media/${MUSIC}
 			docker exec -i flood-$SEEDUSER chown -R abc:abc /data /filebot
 
 			echo 'system.method.set_key=event.download.finished,filebot,"execute={/usr/local/bin/postdl,$d.get_base_path=,$d.get_name=,$d.get_custom1=}"' >> /home/$SEEDUSER/docker/flood/config/rtorrent/rtorrent.rc
