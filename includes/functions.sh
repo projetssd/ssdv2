@@ -995,8 +995,8 @@ do
 
 		if [[ "$line" == "rtorrent" ]]; then
 			replace_media_compose
-			echo -e "${BLUE}### CONFIG POST COMPOSE FILEBOT ###${NC}"
-			echo -e " ${BWHITE}* Mise à jour filebot...${NC}"
+			echo -e "${BLUE}### CONFIG POST COMPOSE FILEBOT RUTORRENT ###${NC}"
+			echo -e " ${BWHITE}* Mise à jour filebot rutorrent...${NC}"
 			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/Movies/${FILMS}/g" /usr/local/bin/postdl
 			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/TV/${SERIES}/g" /usr/local/bin/postdl
 			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/Music/${MUSIC}/g" /usr/local/bin/postdl
@@ -1015,9 +1015,9 @@ do
 
 		if [[ "$line" == "flood" ]]; then
 			replace_media_compose
-			echo -e "${BLUE}### CONFIG POST COMPOSE FILEBOT ###${NC}"
-			echo -e " ${BWHITE}* Mise à jour filebot...${NC}"
-			sleep 20
+			echo -e "${BLUE}### CONFIG POST COMPOSE FILEBOT FLOOD ###${NC}"
+			var="Mise à jour filebot flood, patientez..."
+			decompte 15
 
 			touch /home/$SEEDUSER/docker/flood/filebot/postrm
 			touch /home/$SEEDUSER/docker/flood/filebot/postdl
@@ -1028,7 +1028,8 @@ do
 			cat "$BASEDIR/includes/config/flood/postrm" > $POSTRM
 			cat "$BASEDIR/includes/config/flood/postdl" > $POSTDL
 
-			docker exec -i flood-$SEEDUSER mkdir -p /data/Media
+			docker exec -i flood-$SEEDUSER mkdir -p /data/Media/${FILMS} /data/Media/${SERIES} /data/Media/${ANIMES} /data/Media/${MUSIC}
+			docker exec -i flood-$SEEDUSER chown -R abc:abc /data /filebot
 
 			echo 'system.method.set_key=event.download.finished,filebot,"execute={/usr/local/bin/postdl,$d.get_base_path=,$d.get_name=,$d.get_custom1=}"' >> /home/$SEEDUSER/docker/flood/config/rtorrent/rtorrent.rc
 			echo 'system.method.set_key=event.download.erased,filebot_cleaner,"execute=/usr/local/bin/postrm"' >> /home/$SEEDUSER/docker/flood/config/rtorrent/rtorrent.rc
