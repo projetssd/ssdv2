@@ -1052,11 +1052,13 @@ do
 			sed -i -e "s/TV/${SERIES}/g" /home/$SEEDUSER/docker/flood/filebot/postdl
 			sed -i -e "s/Music/${MUSIC}/g" /home/$SEEDUSER/docker/flood/filebot/postdl
 			sed -i -e "s/Animes/${ANIMES}/g" /home/$SEEDUSER/docker/flood/filebot/postdl
-			checking_errors $?
-			grep -R "plex" "$INSTALLEDFILE" > /dev/null 2>&1
-			if [[ "$?" == "0" ]]; then
-				sed -i 's/\<unsorted=y\>/& "exec=\/scripts\/plex_autoscan\/plex_autoscan_start.sh"/' /home/$SEEDUSER/docker/flood/filebot/postdl
+			
+			PLEXSCAN="/home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_start.sh"
+			if [[ -e "$PLEXSCAN" ]]; then
+			docker cp $PLEXSCAN flood-$SEEDUSER:/filebot
+			sed -i 's/\<unsorted=y\>/& "exec=\/filebot\/plex_autoscan_start.sh"/' /home/$SEEDUSER/docker/flood/filebot/postdl
 			fi
+			checking_errors $?
 			echo ""
 		fi
 done
