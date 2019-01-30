@@ -1028,7 +1028,7 @@ do
 			cat "$BASEDIR/includes/config/flood/postrm" > $POSTRM
 			cat "$BASEDIR/includes/config/flood/postdl" > $POSTDL
 
-			docker exec -i flood-$SEEDUSER chown -R abc:abc /data /filebot
+			#docker exec -i flood-$SEEDUSER chown -R abc:abc /data /filebot
 
 			echo 'system.method.set_key=event.download.finished,filebot,"execute={/usr/local/bin/postdl,$d.get_base_path=,$d.get_name=,$d.get_custom1=}"' >> /home/$SEEDUSER/docker/flood/config/rtorrent/rtorrent.rc
 			echo 'system.method.set_key=event.download.erased,filebot_cleaner,"execute=/usr/local/bin/postrm"' >> /home/$SEEDUSER/docker/flood/config/rtorrent/rtorrent.rc
@@ -1054,10 +1054,10 @@ do
 			sed -i -e "s/Animes/${ANIMES}/g" /home/$SEEDUSER/docker/flood/filebot/postdl
 			
 			PLEXSCAN="/home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_start.sh"
-			if [[ -e "$PLEXSCAN" ]]; then
-			docker cp $PLEXSCAN flood-$SEEDUSER:/filebot
-			sed -i 's/\<unsorted=y\>/& "exec=\/filebot\/plex_autoscan_start.sh"/' /home/$SEEDUSER/docker/flood/filebot/postdl
-			fi
+			#if [[ -e "$PLEXSCAN" ]]; then
+			#docker cp $PLEXSCAN flood-$SEEDUSER:/filebot
+			#sed -i 's/\<unsorted=y\>/& "exec=\/filebot\/plex_autoscan_start.sh"/' /home/$SEEDUSER/docker/flood/filebot/postdl
+			#fi
 			checking_errors $?
 			echo ""
 		fi
