@@ -1296,13 +1296,13 @@ function manage_users() {
 				echo -e "${BLUE}### SUPPRESSION USER RCLONE/PLEXDRIVE ###${NC}"
 				PLEXAUTOSCAN="/etc/systemd/system/plex_autoscan-$SEEDUSER.service"
 				if [[ -e "$PLEXAUTOSCAN" ]]; then
-					systemctl stop cloudplow-$SEEDUSER.service
 					systemctl stop plex_autoscan-$SEEDUSER.service
-					systemctl disable cloudplow-$SEEDUSER.service > /dev/null 2>&1
 					systemctl disable plex_autoscan-$SEEDUSER.service > /dev/null 2>&1
 					rm /etc/systemd/system/plex_autoscan-$SEEDUSER.service
-					rm /etc/systemd/system/cloudplow-$SEEDUSER.service
 				fi
+				systemctl stop cloudplow-$SEEDUSER.service
+				systemctl disable cloudplow-$SEEDUSER.service > /dev/null 2>&1
+				rm /etc/systemd/system/cloudplow-$SEEDUSER.service
 				systemctl stop unionfs-$SEEDUSER.service
 				systemctl disable unionfs-$SEEDUSER.service > /dev/null 2>&1
 				rm /etc/systemd/system/unionfs-$SEEDUSER.service

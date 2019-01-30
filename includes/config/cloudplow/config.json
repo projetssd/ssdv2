@@ -36,7 +36,7 @@
     },
     "remotes": {
         "%REMOTECRYPT%": {
-            "hidden_remote": "%REMOTECRYPT%:",
+            "hidden_remote": "%REMOTECRYPT%:/%SEEDUSER%",
             "rclone_command": "move",
             "rclone_excludes": [
                 "**partial~",
@@ -59,7 +59,7 @@
                     "timeout": 3600
                 }
             },
-            "remove_empty_dir_depth": 3,
+            "remove_empty_dir_depth": 2,
             "sync_remote": "%REMOTECRYPT%:/%SEEDUSER%",
             "upload_folder": "/home/%SEEDUSER%/local",
             "upload_remote": "%REMOTECRYPT%:/%SEEDUSER%"
@@ -70,7 +70,7 @@
         "%REMOTECRYPT%": {
             "check_interval": 1,
             "exclude_open_files": true,
-            "max_size_gb": 20,
+            "max_size_gb": 2,
             "opened_excludes": [
                 "/downloads/"
             ],
