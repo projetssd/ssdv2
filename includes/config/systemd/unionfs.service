@@ -5,7 +5,7 @@ AssertPathIsDirectory=/home/%SEEDUSER%/Medias
 [Service]
 Type=forking
 ExecStart=/usr/bin/unionfs-fuse -o cow -o allow_other /home/%SEEDUSER%/local=RW:/mnt/rclone/%SEEDUSER%=RO /home/%SEEDUSER%/Medias
-#ExecStop=/bin/fusermount -u /home/%SEEDUSER%/Medias
+ExecStop=/bin/fusermount -uz /home/%SEEDUSER%/Medias
 Restart=on-abort
 RestartSec=5
 StartLimitInterval=60s
