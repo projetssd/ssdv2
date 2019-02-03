@@ -23,7 +23,7 @@
     ports:
       - %PORT%:%PORT%
     volumes:
-      - /home/%USER%/Medias:/data/Media
+      #- /home/%USER%/Medias:/data/Media
       - /home/%USER%/docker/rtorrent/torrents:/data/torrents
       - /home/%USER%/docker/rtorrent/watch:/data/.watch
       - /home/%USER%/docker/rtorrent/data:/data
