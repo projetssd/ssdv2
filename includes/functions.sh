@@ -230,7 +230,7 @@ function install_fail2ban() {
 		echo -e "${BLUE}### FAIL2BAN ###${NC}"
 		if (whiptail --title "Docker fail2ban" --yesno "Voulez vous installer fail2ban" 7 50) then
 			echo -e " ${BWHITE}* Installation de Fail2ban !${NC}"
-			apt install fail2ban portsentry -y > /dev/null 2>&1
+			apt install fail2ban -y > /dev/null 2>&1
 			SSH=$(echo ${SSH_CLIENT##* })
 			IP_DOM=$(grep 'Accepted' /var/log/auth.log | cut -d ' ' -f11 | head -1)
 			cp "$BASEDIR/includes/config/fail2ban/custom.conf" "/etc/fail2ban/jail.d/custom.conf" > /dev/null 2>&1
@@ -951,11 +951,17 @@ do
 			echo ""
 			if [[ -e "$PLEXDRIVE" ]]; then
 				plex_sections
-				touch /home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_start.sh
+				touch /home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_rutorrent.sh
+				touch /home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_flood.sh
 				PORT=$(grep SERVER_PORT /home/$SEEDUSER/scripts/plex_autoscan/config/config.json | cut -d ':' -f2 | sed 's/, //' | sed 's/ //')
-				PLEXCANFILE="/home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_start.sh"
+				PLEXCANFILE="/home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_rutorrent.sh"
+				PLEXCANFLOODFILE="/home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_flood.sh"
+
 				cat "$BASEDIR/includes/config/plex_autoscan/plex_autoscan_start.sh" > $PLEXCANFILE
+				cat "$BASEDIR/includes/config/plex_autoscan/plex_autoscan_start.sh" > $PLEXCANFLOODFILE
 				chmod 755 $PLEXCANFILE
+				chmod 755 $PLEXCANFLOODFILE
+
 				for line in $(cat $INSTALLEDFILE);
 				do
 					NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
@@ -972,9 +978,23 @@ do
 				sed -i -e "s/%SERIES%/${SERIES}/g" $PLEXCANFILE
 				sed -i -e "s/%MUSIC%/${MUSIC}/g" $PLEXCANFILE
 				sed -i -e "s/%PORT%/${PORT}/g" $PLEXCANFILE
+
+				sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" $PLEXCANFLOODFILE
+				sed -i -e "s/%ANIMES%/${ANIMES}/g" $PLEXCANFLOODFILE
+				sed -i -e "s/%FILMS%/${FILMS}/g" $PLEXCANFLOODFILE
+				sed -i -e "s/%SERIES%/${SERIES}/g" $PLEXCANFLOODFILE
+				sed -i -e "s/%MUSIC%/${MUSIC}/g" $PLEXCANFLOODFILE
+				sed -i -e "s/%PORT%/${PORT}/g" $PLEXCANFLOODFILE
+				sed -i -e "s/data/app/g" $PLEXCANFLOODFILE
+
 				grep -R "rtorrent" "$INSTALLEDFILE" > /dev/null 2>&1
 				if [[ "$?" == "0" ]]; then
-					docker exec -t rtorrent-$SEEDUSER sed -i 's/\<unsorted=y\>/& "exec=\/scripts\/plex_autoscan\/plex_autoscan_start.sh"/' /usr/local/bin/postdl
+					docker exec -t rtorrent-$SEEDUSER sed -i 's/\<unsorted=y\>/& "exec=\/scripts\/plex_autoscan\/plex_autoscan_rutorrent.sh"/' /usr/local/bin/postdl
+				fi
+				
+				POSTDL="/home/$SEEDUSER/docker/flood/filebot/postdl"
+				if [[ -e "$POSTDL" ]]; then
+				docker exec -t flood-$SEEDUSER sed -i 's/\<unsorted=y\>/& "exec=\/scripts\/plex_autoscan\/plex_autoscan_flood.sh"/' /usr/local/bin/postdl
 				fi
 			fi
 		fi
@@ -1008,7 +1028,7 @@ do
 			checking_errors $?
 			grep -R "plex" "$INSTALLEDFILE" > /dev/null 2>&1
 			if [[ "$?" == "0" ]]; then
-				docker exec -t rtorrent-$SEEDUSER sed -i 's/\<unsorted=y\>/& "exec=\/scripts\/plex_autoscan\/plex_autoscan_start.sh"/' /usr/local/bin/postdl
+				docker exec -t rtorrent-$SEEDUSER sed -i 's/\<unsorted=y\>/& "exec=\/scripts\/plex_autoscan\/plex_autoscan_rutorrent.sh"/' /usr/local/bin/postdl
 			fi
 			echo ""
 		fi
@@ -1027,8 +1047,6 @@ do
 
 			cat "$BASEDIR/includes/config/flood/postrm" > $POSTRM
 			cat "$BASEDIR/includes/config/flood/postdl" > $POSTDL
-
-			#docker exec -i flood-$SEEDUSER chown -R abc:abc /data /filebot
 
 			echo 'system.method.set_key=event.download.finished,filebot,"execute={/usr/local/bin/postdl,$d.get_base_path=,$d.get_name=,$d.get_custom1=}"' >> /home/$SEEDUSER/docker/flood/config/rtorrent/rtorrent.rc
 			echo 'system.method.set_key=event.download.erased,filebot_cleaner,"execute=/usr/local/bin/postrm"' >> /home/$SEEDUSER/docker/flood/config/rtorrent/rtorrent.rc
@@ -1052,12 +1070,15 @@ do
 			sed -i -e "s/TV/${SERIES}/g" /home/$SEEDUSER/docker/flood/filebot/postdl
 			sed -i -e "s/Music/${MUSIC}/g" /home/$SEEDUSER/docker/flood/filebot/postdl
 			sed -i -e "s/Animes/${ANIMES}/g" /home/$SEEDUSER/docker/flood/filebot/postdl
+
+			docker exec -i flood-$SEEDUSER chown -R abc:abc filebot
 			
-			PLEXSCAN="/home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_start.sh"
-			#if [[ -e "$PLEXSCAN" ]]; then
-			#docker cp $PLEXSCAN flood-$SEEDUSER:/filebot
-			#sed -i 's/\<unsorted=y\>/& "exec=\/filebot\/plex_autoscan_start.sh"/' /home/$SEEDUSER/docker/flood/filebot/postdl
-			#fi
+			grep -R "plex" "$INSTALLEDFILE" > /dev/null 2>&1
+			if [[ "$?" == "0" ]]; then
+				docker exec -t flood-$SEEDUSER sed -i 's/\<unsorted=y\>/& "exec=\/scripts\/plex_autoscan\/plex_autoscan_flood.sh"/' /usr/local/bin/postdl
+			fi
+			echo ""
+
 			checking_errors $?
 			echo ""
 		fi
