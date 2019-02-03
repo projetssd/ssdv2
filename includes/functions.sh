@@ -1017,6 +1017,12 @@ do
 			replace_media_compose
 			echo -e "${BLUE}### CONFIG POST COMPOSE FILEBOT RUTORRENT ###${NC}"
 			echo -e " ${BWHITE}* Mise à jour filebot rutorrent...${NC}"
+			
+			## cron pour effacer les dossiers movies, tv, music si docker restart rtorrent
+			cp "$BASEDIR/includes/config/flood/delfolder.sh" "/home/$SEEDUSER/docker/rtorrent/config/delfolder-$SEEDUSER.sh" > /dev/null 2>&1
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /home/$SEEDUSER/docker/rtorrent/config/delfolder-$SEEDUSER.sh
+			(crontab -l | grep . ; echo "*/1 * * * * /home/$SEEDUSER/docker/rtorrent/config/delfolder-$SEEDUSER.sh") | crontab -
+			
 			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/Movies/${FILMS}/g" /usr/local/bin/postdl
 			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/TV/${SERIES}/g" /usr/local/bin/postdl
 			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/Music/${MUSIC}/g" /usr/local/bin/postdl
