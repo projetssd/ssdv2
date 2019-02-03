@@ -5,6 +5,6 @@ TV=/home/%SEEDUSER%/Medias/TV
 MUSIC=/home/%SEEDUSER%/Medias/Music
 
 if [[ -e "$MOVIES" ]] || [[ -e "$TV" ]] || [[ -e "$MUSIC" ]]; then
-cd /home/%SEEDUSER%/local
+cd /home/%SEEDUSER%/Medias
 rm -rf $MOVIES $TV $MUSIC
 fi
