@@ -1039,7 +1039,7 @@ do
 			echo ""
 		fi
 
-		if [[ "$line" == "flood" ]]; then
+		if [[ "$line" == "developpement" ]]; then
 			replace_media_compose
 			echo -e "${BLUE}### CONFIG POST COMPOSE FILEBOT FLOOD ###${NC}"
 			var="Mise à jour filebot flood, patientez..."
