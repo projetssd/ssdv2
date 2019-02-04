@@ -1017,20 +1017,13 @@ do
 			replace_media_compose
 			echo -e "${BLUE}### CONFIG POST COMPOSE FILEBOT RUTORRENT ###${NC}"
 			echo -e " ${BWHITE}* Mise à jour filebot rutorrent...${NC}"
-			
-			## cron pour effacer les dossiers movies, tv, music si docker restart rtorrent
-			cp "$BASEDIR/includes/config/flood/delfolder.sh" "/home/$SEEDUSER/docker/rtorrent/config/delfolder-$SEEDUSER.sh" > /dev/null 2>&1
-			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /home/$SEEDUSER/docker/rtorrent/config/delfolder-$SEEDUSER.sh
-			(crontab -l | grep . ; echo "*/1 * * * * /home/$SEEDUSER/docker/rtorrent/config/delfolder-$SEEDUSER.sh") | crontab -
-			
+						
 			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/Movies/${FILMS}/g" /usr/local/bin/postdl
 			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/TV/${SERIES}/g" /usr/local/bin/postdl
 			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/Music/${MUSIC}/g" /usr/local/bin/postdl
 			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/Anime/${ANIMES}/g" /usr/local/bin/postdl
+			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/data/mnt/g" /usr/local/bin/postdl
 			docker exec -t rtorrent-$SEEDUSER sed -i '/*)/,/;;/d' /usr/local/bin/postdl
-			docker exec -ti rtorrent-$SEEDUSER rm -rf /data/Media/Movies > /dev/null 2>&1
-			docker exec -ti rtorrent-$SEEDUSER rm -rf /data/Media/TV > /dev/null 2>&1
-			docker exec -ti rtorrent-$SEEDUSER rm -rf /data/Media/Music > /dev/null 2>&1
 			checking_errors $?
 			grep -R "plex" "$INSTALLEDFILE" > /dev/null 2>&1
 			if [[ "$?" == "0" ]]; then
@@ -1039,7 +1032,7 @@ do
 			echo ""
 		fi
 
-		if [[ "$line" == "developpement" ]]; then
+		if [[ "$line" == "flood" ]]; then
 			replace_media_compose
 			echo -e "${BLUE}### CONFIG POST COMPOSE FILEBOT FLOOD ###${NC}"
 			var="Mise à jour filebot flood, patientez..."
