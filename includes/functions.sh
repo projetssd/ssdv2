@@ -995,6 +995,7 @@ do
 
 				sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" $PLEXCANFILE
 				sed -i -e "s/%ANIMES%/${ANIMES}/g" $PLEXCANFILE
+				sed -i -e "s/data/mnt/g" $PLEXCANFILE
 				sed -i -e "s/%FILMS%/${FILMS}/g" $PLEXCANFILE
 				sed -i -e "s/%SERIES%/${SERIES}/g" $PLEXCANFILE
 				sed -i -e "s/%MUSIC%/${MUSIC}/g" $PLEXCANFILE
@@ -1071,11 +1072,11 @@ do
 			echo 'system.method.set_key=event.download.finished,filebot,"execute={/usr/local/bin/postdl,$d.get_base_path=,$d.get_name=,$d.get_custom1=}"' >> /home/$SEEDUSER/docker/flood/config/rtorrent/rtorrent.rc
 			echo 'system.method.set_key=event.download.erased,filebot_cleaner,"execute=/usr/local/bin/postrm"' >> /home/$SEEDUSER/docker/flood/config/rtorrent/rtorrent.rc
 
-			FILEBOT_RENAME_METHOD=$(grep FILEBOT_RENAME_METHOD /home/$SEEDUSER/docker-compose.yml | cut -d '=' -f2)
-			FILEBOT_RENAME_MOVIES=$(grep FILEBOT_RENAME_MOVIES /home/$SEEDUSER/docker-compose.yml | cut -d '=' -f2)
-			FILEBOT_RENAME_MUSICS=$(grep FILEBOT_RENAME_MUSICS /home/$SEEDUSER/docker-compose.yml | cut -d '=' -f2)
-			FILEBOT_RENAME_SERIES=$(grep FILEBOT_RENAME_SERIES /home/$SEEDUSER/docker-compose.yml | cut -d '=' -f2)
-			FILEBOT_RENAME_ANIMES=$(grep FILEBOT_RENAME_ANIMES /home/$SEEDUSER/docker-compose.yml | cut -d '=' -f2)
+			FILEBOT_RENAME_METHOD=$(grep FILEBOT_RENAME_METHOD /home/$SEEDUSER/docker-compose.yml | cut -d '=' -f2 | head -n 1)
+			FILEBOT_RENAME_MOVIES=$(grep FILEBOT_RENAME_MOVIES /home/$SEEDUSER/docker-compose.yml | cut -d '=' -f2 | head -n 1)
+			FILEBOT_RENAME_MUSICS=$(grep FILEBOT_RENAME_MUSICS /home/$SEEDUSER/docker-compose.yml | cut -d '=' -f2 | head -n 1)
+			FILEBOT_RENAME_SERIES=$(grep FILEBOT_RENAME_SERIES /home/$SEEDUSER/docker-compose.yml | cut -d '=' -f2 | head -n 1)
+			FILEBOT_RENAME_ANIMES=$(grep FILEBOT_RENAME_ANIMES /home/$SEEDUSER/docker-compose.yml | cut -d '=' -f2 | head -n 1)
 
     			sed -e 's#<FILEBOT_RENAME_MOVIES>#'"$FILEBOT_RENAME_MOVIES"'#' \
         		    -e 's#<FILEBOT_RENAME_METHOD>#'"$FILEBOT_RENAME_METHOD"'#' \

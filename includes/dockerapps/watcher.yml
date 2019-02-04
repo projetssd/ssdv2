@@ -13,6 +13,8 @@
     volumes:
       - /home/%USER%/docker/watcher/conf:/watcher3/userdata:rw
       - /home/%USER%/docker/watcher/plugins:/watcher3/plugins:rw
+      - /home/%USER%/docker/flood/downloads:/downloads
+      - /home/%USER%/docker/rtorrent/torrents:/downloads
       - /home/%USER%/Medias/%FILMS%:/movie
     environment:
       - PUID=%UID%

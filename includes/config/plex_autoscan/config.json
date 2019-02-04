@@ -78,22 +78,22 @@
   "SERVER_PATH_MAPPINGS": {
       "/data/%FILMS%/": [
           "/movies/",
-          "/data/Media/%FILMS%/",
+          "/mnt/Media/%FILMS%/",
           "/app/Media/%FILMS%/"
       ],
       "/data/%SERIES%/": [
           "/tv/%SERIES%/",
-          "/data/Media/%SERIES%/",
+          "/mnt/Media/%SERIES%/",
           "/app/Media/%SERIES%/"
       ],
       "/data/%MUSIC%/": [
           "/music/",
-          "/data/Media/%MUSIC%/",
+          "/mnt/Media/%MUSIC%/",
           "/app/Media/%MUSIC%/"
       ],
       "/data/%ANIMES%/": [
           "/tv/%ANIMES%/",
-          "/data/Media/%ANIMES%/",
+          "/mnt/Media/%ANIMES%/",
           "/app/Media/%ANIMES%/"
       ]
   },
