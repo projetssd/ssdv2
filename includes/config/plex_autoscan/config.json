@@ -79,22 +79,22 @@
       "/data/%FILMS%/": [
           "/movies/",
           "/mnt/Media/%FILMS%/",
-          "/app/Media/%FILMS%/"
+          "/data/Media/%FILMS%/"
       ],
       "/data/%SERIES%/": [
           "/tv/%SERIES%/",
           "/mnt/Media/%SERIES%/",
-          "/app/Media/%SERIES%/"
+          "/data/Media/%SERIES%/"
       ],
       "/data/%MUSIC%/": [
           "/music/",
           "/mnt/Media/%MUSIC%/",
-          "/app/Media/%MUSIC%/"
+          "/data/Media/%MUSIC%/"
       ],
       "/data/%ANIMES%/": [
           "/tv/%ANIMES%/",
           "/mnt/Media/%ANIMES%/",
-          "/app/Media/%ANIMES%/"
+          "/data/Media/%ANIMES%/"
       ]
   },
   "SERVER_PORT": %PORT%,

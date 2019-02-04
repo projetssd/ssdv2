@@ -1007,7 +1007,6 @@ do
 				sed -i -e "s/%SERIES%/${SERIES}/g" $PLEXCANFLOODFILE
 				sed -i -e "s/%MUSIC%/${MUSIC}/g" $PLEXCANFLOODFILE
 				sed -i -e "s/%PORT%/${PORT}/g" $PLEXCANFLOODFILE
-				sed -i -e "s/data/app/g" $PLEXCANFLOODFILE
 
 				grep -R "rtorrent" "$INSTALLEDFILE" > /dev/null 2>&1
 				if [[ "$?" == "0" ]]; then
