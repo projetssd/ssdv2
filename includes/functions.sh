@@ -418,9 +418,9 @@ function install_rclone() {
 
 		cp "$BASEDIR/includes/config/systemd/rclone.service" "/etc/systemd/system/rclone-$SEEDUSER.service" > /dev/null 2>&1
 		sed -i "s|%REMOTEPLEX%|$REMOTEPLEX:|g" /etc/systemd/system/rclone-$SEEDUSER.service
-		sed -i "s|%SEEDUSER%|$SEEDUSER:|g" /etc/systemd/system/rclone-$SEEDUSER.service
-		sed -i "s|%USERID%|$USERID:|g" /etc/systemd/system/rclone-$SEEDUSER.service
-		sed -i "s|%GRPID%|$GRPID:|g" /etc/systemd/system/rclone-$SEEDUSER.service
+		sed -i "s|%SEEDUSER%|$SEEDUSER|g" /etc/systemd/system/rclone-$SEEDUSER.service
+		sed -i "s|%USERID%|$USERID|g" /etc/systemd/system/rclone-$SEEDUSER.service
+		sed -i "s|%GRPID%|$GRPID|g" /etc/systemd/system/rclone-$SEEDUSER.service
 
 		systemctl daemon-reload > /dev/null 2>&1
 		systemctl enable rclone-$SEEDUSER.service > /dev/null 2>&1
@@ -448,9 +448,9 @@ function rclone_service() {
 
 		cp "$BASEDIR/includes/config/systemd/rclone.service" "/etc/systemd/system/rclone-$SEEDUSER.service" > /dev/null 2>&1
 		sed -i "s|%REMOTEPLEX%|$REMOTEPLEX:|g" /etc/systemd/system/rclone-$SEEDUSER.service
-		sed -i "s|%SEEDUSER%|$SEEDUSER:|g" /etc/systemd/system/rclone-$SEEDUSER.service
-		sed -i "s|%USERID%|$USERID:|g" /etc/systemd/system/rclone-$SEEDUSER.service
-		sed -i "s|%GRPID%|$GRPID:|g" /etc/systemd/system/rclone-$SEEDUSER.service
+		sed -i "s|%SEEDUSER%|$SEEDUSER|g" /etc/systemd/system/rclone-$SEEDUSER.service
+		sed -i "s|%USERID%|$USERID|g" /etc/systemd/system/rclone-$SEEDUSER.service
+		sed -i "s|%GRPID%|$GRPID|g" /etc/systemd/system/rclone-$SEEDUSER.service
 
 		systemctl daemon-reload > /dev/null 2>&1
 		systemctl enable rclone-$SEEDUSER.service > /dev/null 2>&1
