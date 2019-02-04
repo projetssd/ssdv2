@@ -382,6 +382,9 @@ function install_rclone() {
 	echo -e "${BLUE}### RCLONE ###${NC}"
 	mkdir /mnt/rclone > /dev/null 2>&1
 	RCLONECONF="/root/.config/rclone/rclone.conf"
+	USERID=$(id -u $SEEDUSER)
+	GRPID=$(id -g $SEEDUSER)
+
 	if [[ ! -f "$RCLONECONF" ]]; then
 		echo -e " ${BWHITE}* Installation rclone${NC}"
 		clear
@@ -410,15 +413,26 @@ function install_rclone() {
 		echo -e " ${BWHITE}* Remote chiffré plexdrive${NC} --> ${YELLOW}$REMOTEPLEX:${NC}"
 		checking_errors $?
 		echo ""
-		cp "$BASEDIR/includes/config/systemd/rclone.service" "/etc/systemd/system/rclone.service" > /dev/null 2>&1
-		sed -i "s|%REMOTEPLEX%|$REMOTEPLEX:|g" /etc/systemd/system/rclone.service
+
+		mkdir -p /mnt/rclone/$SEEDUSER
+
+		cp "$BASEDIR/includes/config/systemd/rclone.service" "/etc/systemd/system/rclone-$SEEDUSER.service" > /dev/null 2>&1
+		sed -i "s|%REMOTEPLEX%|$REMOTEPLEX:|g" /etc/systemd/system/rclone-$SEEDUSER.service
+		sed -i "s|%SEEDUSER%|$SEEDUSER:|g" /etc/systemd/system/rclone-$SEEDUSER.service
+		sed -i "s|%USERID%|$USERID:|g" /etc/systemd/system/rclone-$SEEDUSER.service
+		sed -i "s|%GRPID%|$GRPID:|g" /etc/systemd/system/rclone-$SEEDUSER.service
+
 		systemctl daemon-reload > /dev/null 2>&1
-		systemctl enable rclone.service > /dev/null 2>&1
-		service rclone start
+		systemctl enable rclone-$SEEDUSER.service > /dev/null 2>&1
+		service rclone-$SEEDUSER start
 		var="Montage rclone en cours, merci de patienter..."
 		decompte 15
 		checking_errors $?
-	else
+	fi
+	echo ""
+}
+
+function rclone_service() {
 		REMOTE=$(grep -iC 2 "token" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
 		REMOTEPLEX=$(grep -iC 2 "/mnt/plexdrive" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
 		REMOTECRYPT=$(grep -v -e $REMOTEPLEX -e $REMOTE /root/.config/rclone/rclone.conf | grep "\[" | sed "s/\[//g" | sed "s/\]//g")
@@ -429,16 +443,22 @@ function install_rclone() {
 		echo -e " ${BWHITE}* Remote chiffré plexdrive${NC} --> ${YELLOW}$REMOTEPLEX:${NC}"
 		checking_errors $?
 		echo ""
-		cp "$BASEDIR/includes/config/systemd/rclone.service" "/etc/systemd/system/rclone.service" > /dev/null 2>&1
-		sed -i "s|%REMOTEPLEX%|$REMOTEPLEX:|g" /etc/systemd/system/rclone.service
+
+		mkdir -p /mnt/rclone/$SEEDUSER
+
+		cp "$BASEDIR/includes/config/systemd/rclone.service" "/etc/systemd/system/rclone-$SEEDUSER.service" > /dev/null 2>&1
+		sed -i "s|%REMOTEPLEX%|$REMOTEPLEX:|g" /etc/systemd/system/rclone-$SEEDUSER.service
+		sed -i "s|%SEEDUSER%|$SEEDUSER:|g" /etc/systemd/system/rclone-$SEEDUSER.service
+		sed -i "s|%USERID%|$USERID:|g" /etc/systemd/system/rclone-$SEEDUSER.service
+		sed -i "s|%GRPID%|$GRPID:|g" /etc/systemd/system/rclone-$SEEDUSER.service
+
 		systemctl daemon-reload > /dev/null 2>&1
-		systemctl enable rclone.service > /dev/null 2>&1
-		service rclone start
+		systemctl enable rclone-$SEEDUSER.service > /dev/null 2>&1
+		service rclone-$SEEDUSER start
 		var="Montage rclone en cours, merci de patienter..."
 		decompte 15
 		checking_errors $?
-	fi
-	echo ""
+		echo ""
 }
 
 function unionfs_fuse() {
@@ -760,7 +780,9 @@ function choose_media_folder_plexdrive() {
 	echo -e "${BLUE}### DOSSIERS MEDIAS ###${NC}"
 	FOLDER="/mnt/rclone/$SEEDUSER"
 	MEDIASPERUSER="$MEDIASUSER$SEEDUSER"
-	if [[ -d "$FOLDER" ]]; then
+	
+	# si le dossier /mnt/rclone/user n'est pas vide
+	if [ "$(ls -A /mnt/rclone/$SEEDUSER)" ]; then
 		cd /mnt/rclone/$SEEDUSER
 		ls -Ad */ | sed 's,/$,,g' > $MEDIASPERUSER
 		mkdir -p /home/$SEEDUSER/Medias
@@ -773,7 +795,6 @@ function choose_media_folder_plexdrive() {
 		chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/local
 		chmod -R 755 /home/$SEEDUSER/local
 	else
-		mkdir -p /mnt/rclone/$SEEDUSER
 		mkdir -p /home/$SEEDUSER/Medias
 		echo -e " ${BWHITE}--> Création des dossiers Medias ${NC}"
 		echo ""
@@ -1262,6 +1283,7 @@ function manage_users() {
 			define_parameters
 			add_ftp > /dev/null 2>&1
 			if [[ -e "$PLEXDRIVE" ]]; then
+				rclone_service
 				choose_media_folder_plexdrive
 				unionfs_fuse
 				pause
@@ -1320,6 +1342,9 @@ function manage_users() {
 					systemctl disable plex_autoscan-$SEEDUSER.service > /dev/null 2>&1
 					rm /etc/systemd/system/plex_autoscan-$SEEDUSER.service
 				fi
+				systemctl stop rclone-$SEEDUSER.service
+				systemctl disable rclone-$SEEDUSER.service > /dev/null 2>&1
+				rm /etc/systemd/system/rclone-$SEEDUSER.service
 				systemctl stop cloudplow-$SEEDUSER.service
 				systemctl disable cloudplow-$SEEDUSER.service > /dev/null 2>&1
 				rm /etc/systemd/system/cloudplow-$SEEDUSER.service
@@ -1503,6 +1528,9 @@ function uninstall_seedbox() {
 					systemctl disable plex_autoscan-$seeduser.service > /dev/null 2>&1
 					rm /etc/systemd/system/plex_autoscan-$seeduser.service
 				fi
+			systemctl stop rclone-$SEEDUSER.service
+			systemctl disable rclone-$SEEDUSER.service > /dev/null 2>&1
+			rm /etc/systemd/system/rclone-$SEEDUSER.service
 			systemctl stop cloudplow-$seeduser.service
 			systemctl disable cloudplow-$seeduser.service > /dev/null 2>&1
 			rm /etc/systemd/system/cloudplow-$seeduser.service
