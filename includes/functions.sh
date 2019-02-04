@@ -831,15 +831,20 @@ function choose_media_folder_plexdrive() {
 function replace_media_compose() {
 	MEDIASPERUSER="$MEDIASUSER$SEEDUSER"
 	if [[ -e "$MEDIASPERUSER" ]]; then
-		FILMS=$(grep -E 'films|film|Films|FILMS|MOVIES|Movies|movies|movie|VIDEOS|VIDEO|Video|Videos' $MEDIASPERUSER)
-		SERIES=$(grep -E 'series|TV|tv|Series|SERIES|SERIES TV|Series TV|series tv|serie tv|serie TV|series TV|Shows' $MEDIASPERUSER)
-		ANIMES=$(grep -E 'ANIMES|ANIME|Animes|Anime|Animation|ANIMATION|animes|anime' $MEDIASPERUSER)
-		MUSIC=$(grep -E 'MUSIC|Music|music|Musiques|Musique|MUSIQUE|MUSIQUES|musiques|musique' $MEDIASPERUSER)
+		FILMS=$(grep -E 'Films' $MEDIASPERUSER)
+		SERIES=$(grep -E 'Series' $MEDIASPERUSER)
+		ANIMES=$(grep -E 'Animes' $MEDIASPERUSER)
+		MUSIC=$(grep -E 'Musiques' $MEDIASPERUSER)
+		EMISSIONS=$(grep -E 'Emissions' $MEDIASPERUSER)
+		DOCUMENTAIRES=$(grep -E 'Documentaires' $MEDIASPERUSER)
 	else
-		FILMS=$(grep -E 'films|film|Films|FILMS|MOVIES|Movies|movies|movie|VIDEOS|VIDEO|Video|Videos' /tmp/menumedia.txt)
-		SERIES=$(grep -E 'series|TV|tv|Series|SERIES|SERIES TV|Series TV|series tv|serie tv|serie TV|series TV|Shows' /tmp/menumedia.txt)
-		ANIMES=$(grep -E 'ANIMES|ANIME|Animes|Anime|Animation|ANIMATION|animes|anime' /tmp/menumedia.txt)
-		MUSIC=$(grep -E 'MUSIC|Music|music|Musiques|Musique|MUSIQUE|MUSIQUES|musiques|musique' /tmp/menumedia.txt)
+		FILMS=$(grep -E 'Films' /tmp/menumedia.txt)
+		SERIES=$(grep -E 'Series' /tmp/menumedia.txt)
+		ANIMES=$(grep -E 'Animes' /tmp/menumedia.txt)
+		MUSIC=$(grep -E 'Musiques' /tmp/menumedia.txt)
+		EMISSIONS=$(grep -E 'Emissions' /tmp/menumedia.txt)
+		DOCUMENTAIRES=$(grep -E 'Documentaires' /tmp/menumedia.txt)
+
 	fi
 }
 
