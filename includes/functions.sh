@@ -232,7 +232,7 @@ function install_fail2ban() {
 			echo -e " ${BWHITE}* Installation de Fail2ban !${NC}"
 			apt install fail2ban -y > /dev/null 2>&1
 			SSH=$(echo ${SSH_CLIENT##* })
-			IP_DOM=$(grep 'Accepted' /var/log/auth.log | cut -d ' ' -f11 | head -1)
+			IP_DOM=$(grep 'Accepted' /var/log/auth.log | cut -d ' ' -f12 | head -1)
 			cp "$BASEDIR/includes/config/fail2ban/custom.conf" "/etc/fail2ban/jail.d/custom.conf" > /dev/null 2>&1
 			cp "$BASEDIR/includes/config/fail2ban/traefik.conf" "/etc/fail2ban/jail.d/traefik.conf" > /dev/null 2>&1
 			cp "$BASEDIR/includes/config/fail2ban/traefik-auth.conf" "/etc/fail2ban/filter.d/traefik-auth.conf" > /dev/null 2>&1
@@ -243,7 +243,7 @@ function install_fail2ban() {
 			sed -i "s|%IP_DOM%|$IP_DOM|g" /etc/fail2ban/jail.d/traefik.conf
 			cd $CONFDIR/docker/traefik
 			docker-compose restart traefik > /dev/null 2>&1
-			systemctl restart fail2ban > /dev/null 2>&1
+			systemctl restart fail2ban.service > /dev/null 2>&1
 			checking_errors $?
 		else
 			echo -e " ${BWHITE}* Fail2ban non installé !${NC}"	
@@ -767,11 +767,11 @@ function choose_media_folder_classique() {
 		echo -e "	${GREEN}* $(echo $MEDDOCKER | tr -d '"')${NC}"
 		echo $(echo ${MEDDOCKER} | tr -d '"') >> $MEDIASPERUSER
 	done
-	#for line in $(cat $MEDIASPERUSER);
-	#do
-	#line=$(echo $line | sed 's/\(.\)/\U\1/')
-	#mkdir -p /home/$SEEDUSER/Medias/$line
-	#done
+	for line in $(cat $MEDIASPERUSER);
+	do
+	line=$(echo $line | sed 's/\(.\)/\U\1/')
+	mkdir -p /home/$SEEDUSER/Medias/$line
+	done
 	rm /tmp/menumedia.txt
 	echo ""
 }
@@ -844,7 +844,6 @@ function replace_media_compose() {
 		MUSIC=$(grep -E 'Musiques' /tmp/menumedia.txt)
 		EMISSIONS=$(grep -E 'Emissions' /tmp/menumedia.txt)
 		DOCUMENTAIRES=$(grep -E 'Documentaires' /tmp/menumedia.txt)
-
 	fi
 }
 
@@ -1138,6 +1137,10 @@ function plex_sections() {
 				elif [[ "$x" == "$SERIES" ]]; then
 					docker exec plex-$SEEDUSER /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section $x --type 2 --location /data/$x --lang fr
 					echo -e "	${BWHITE}* $x ${NC}"
+
+				elif [[ "$x" == "$EMISSIONS" ]]; then
+					docker exec plex-$SEEDUSER /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section $x --type 2 --location /data/$x --lang fr
+					echo -e "	${BWHITE}* $x ${NC}"
 				
 				elif [[ "$x" == "$MUSIC" ]]; then
 					docker exec plex-$SEEDUSER /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section $x --type 8 --location /data/$x --lang fr
@@ -1183,10 +1186,10 @@ function plex_sections() {
 			PLEXCANFILE="/home/$SEEDUSER/scripts/plex_autoscan/config/config.json"
 			cat "$BASEDIR/includes/config/plex_autoscan/config.json" > $PLEXCANFILE
 
-			ID_FILMS=$(grep -E 'films|film|Films|FILMS|MOVIES|Movies|movies|movie|VIDEOS|VIDEO|Video|Videos' categories.log | cut -d: -f1 | cut -d ' ' -f1)
-			ID_SERIES=$(grep -E 'series|TV|tv|Series|SERIES|SERIES TV|Series TV|series tv|serie tv|serie TV|series TV|Shows' categories.log | cut -d: -f1 | cut -d ' ' -f1)
-			ID_ANIMES=$(grep -E 'ANIMES|ANIME|Animes|Anime|Animation|ANIMATION|animes|anime' categories.log | cut -d: -f1 | cut -d ' ' -f1)
-			ID_MUSIC=$(grep -E 'MUSIC|Music|music|Musiques|Musique|MUSIQUE|MUSIQUES|musiques|musique' categories.log | cut -d: -f1 | cut -d ' ' -f1)
+			ID_FILMS=$(grep -E 'Films' categories.log | cut -d: -f1 | cut -d ' ' -f1)
+			ID_SERIES=$(grep -E 'Series' categories.log | cut -d: -f1 | cut -d ' ' -f1)
+			ID_ANIMES=$(grep -E 'Animes' categories.log | cut -d: -f1 | cut -d ' ' -f1)
+			ID_MUSIC=$(grep -E 'Musiques' categories.log | cut -d: -f1 | cut -d ' ' -f1)
 
 			if [[ -f "$SCANPORTPATH" ]]; then
 				declare -i PORT=$(cat $SCANPORTPATH | tail -1)
