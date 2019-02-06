@@ -1,0 +1,21 @@
+
+#STARTorganizr#
+  organizr-%USER%:
+    image: tronyx/docker-organizr-v2
+    container_name: organizr-%USER%
+    restart: unless-stopped
+    labels:
+      - traefik.enable=true
+      - traefik.frontend.rule=%TRAEFIKURL%
+      - traefik.frontend.auth.basic=%VAR%
+      - traefik.port=80
+      - traefik.docker.network=traefik_proxy
+    environment:
+      - PUID=%UID%
+      - PGID=%GID%
+      - TZ=%TIMEZONE%
+    volumes:
+      - /home/%USER%/docker/organizr/config:/config
+    networks:
+      - proxy
+#ENDorganizr#
