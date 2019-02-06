@@ -1101,8 +1101,6 @@ do
 			if [[ "$?" == "0" ]]; then
 				docker exec -t flood-$SEEDUSER sed -i 's/\<unsorted=y\>/& "exec=\/scripts\/plex_autoscan\/plex_autoscan_flood.sh"/' /usr/local/bin/postdl
 			fi
-			echo ""
-
 			checking_errors $?
 			echo ""
 		fi
