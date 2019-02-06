@@ -1,6 +1,6 @@
 
 [![](https://img.shields.io/github/repo-size/laster13/patxav.svg?style=flat)](https://github.com/laster13/patxav)
-[![Discord](https://img.shields.io/discord/381077432285003776.svg?colorB=177DC1&label=Discord)](https://discord.gg/WTPvAfJ)
+
 --- 
 # Introduction
 
