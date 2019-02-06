@@ -771,6 +771,7 @@ function choose_media_folder_classique() {
 	do
 	line=$(echo $line | sed 's/\(.\)/\U\1/')
 	mkdir -p /home/$SEEDUSER/Medias/$line
+	chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/Medias
 	done
 	rm /tmp/menumedia.txt
 	echo ""
