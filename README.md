@@ -10,31 +10,39 @@ Les images utilisées pour ce projet sont:
 * [xataz/medusa](https://hub.docker.com/r/xataz/medusa/)  
 * [Emby](https://hub.docker.com/r/emby/embyserver/)  
 
+# Pré-requis
+
+1. Un serveur Ubuntu ou Debian
+2. Un nom de domaine
+3. Connaissances en Linux
+4. Connaissances en Docker
+5. Un compte Google Drive si la seedbox est orienté PlexDrive
+
 # Installation (en root)
 
-Mise à jour des paquets :
+1. Mise à jour des paquets :
 ```
 apt update && apt upgrade -y
 ```
 
-Installation de Git :
+2. Installation de Git :
 ```
 apt install git
 ```
 
-Clonage du script : 
+3. Clonage du script : 
 
 ```
 git clone https://github.com/laster13/patxav.git /opt/seedbox-compose
 ```
 
-Pour rentrer là ou le script est installé :
+4. Pour rentrer là ou le script est installé :
 
 ```
 cd /opt/seedbox-compose 
 ```
 
-Lancer le script : 
+5. Lancer le script : 
 
 ```
 ./seedbox.sh
