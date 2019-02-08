@@ -4,7 +4,7 @@
 --- 
 # Introduction
 
-Ce script est basé sur CloudBox [(Lien du GitHub)](https://github.com/Cloudbox/Cloudbox) , il est a été modifier par laster13 permettant d'avoir une installation beaucoup plus libre de ce que propose Cloudbox.
+Ce script est basé sur CloudBox [(Lien du GitHub)](https://github.com/Cloudbox/Cloudbox) , il a été modifier par laster13 permettant d'avoir une installation beaucoup plus libre de ce que propose Cloudbox.
 
 Les images utilisées pour ce projet sont:
 * [Traefik](https://traefik.io/) pour gérer les I/O web
