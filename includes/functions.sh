@@ -614,7 +614,7 @@ function define_parameters() {
 		TIMEZONE=$TIMEZONEDEF
 	fi
 	DOMAIN=$(whiptail --title "Votre nom de Domaine" --inputbox \
-	"Merci de taper votre nom de Domaine :" 7 50 3>&1 1>&2 2>&3)
+	"Merci de taper votre nom de Domaine (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3)
 	echo ""
 }
 
