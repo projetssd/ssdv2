@@ -1048,6 +1048,7 @@ do
 			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/TV/${SERIES}/g" /usr/local/bin/postdl
 			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/Music/${MUSIC}/g" /usr/local/bin/postdl
 			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/Anime/${ANIMES}/g" /usr/local/bin/postdl
+			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/amc.excludes/\/filebot\/amc.excludes/g" /usr/local/bin/postdl			
 			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/data/mnt/g" /usr/local/bin/postdl
 			docker exec -t rtorrent-$SEEDUSER sed -i '/*)/,/;;/d' /usr/local/bin/postdl
 			checking_errors $?
