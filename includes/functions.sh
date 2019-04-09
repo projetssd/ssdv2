@@ -1514,15 +1514,10 @@ function uninstall_seedbox() {
 	PLEXDRIVE="/usr/bin/plexdrive"
 	if [[ -e "$PLEXDRIVE" ]]; then
 		echo -e " ${BWHITE}* Suppression Plexdrive/rclone...${NC}"
-		service rclone stop
 		service plexdrive stop
-		rm /etc/systemd/system/rclone.service
 		rm /etc/systemd/system/plexdrive.service
-		rm /usr/bin/rclone
 		rm -rf /mnt/plexdrive
-		rm -rf /mnt/rclone
 		rm -rf /root/.plexdrive
-		rm -rf /root/.config/rclone
 		checking_errors $?
 	fi
 	for seeduser in $(cat $USERSFILE)
@@ -1536,14 +1531,17 @@ function uninstall_seedbox() {
 					systemctl disable plex_autoscan-$seeduser.service > /dev/null 2>&1
 					rm /etc/systemd/system/plex_autoscan-$seeduser.service
 				fi
-			systemctl stop rclone-$SEEDUSER.service
-			systemctl disable rclone-$SEEDUSER.service > /dev/null 2>&1
-			rm /etc/systemd/system/rclone-$SEEDUSER.service
+			systemctl stop rclone-$seeduser.service
+			systemctl disable rclone-$seeduser.service > /dev/null 2>&1
+			rm /etc/systemd/system/rclone-$seeduser.service
+			rm /usr/bin/rclone
+			rm -rf /mnt/rclone
+			rm -rf /root/.config/rclone
 			systemctl stop cloudplow-$seeduser.service
 			systemctl disable cloudplow-$seeduser.service > /dev/null 2>&1
 			rm /etc/systemd/system/cloudplow-$seeduser.service
 			service unionfs-$seeduser stop
-			systemctl disable unionfs-$SEEDUSER.service > /dev/null 2>&1
+			systemctl disable unionfs-$seeduser.service > /dev/null 2>&1
 			rm /etc/systemd/system/unionfs-$seeduser.service
 		fi
 		userdel -rf $seeduser > /dev/null 2>&1
