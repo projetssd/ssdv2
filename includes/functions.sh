@@ -1163,7 +1163,7 @@ function plex_sections() {
 			checking_errors $?
 			echo""
 			install_plex_autoscan
-			mv /home/$SEEDUSER/scripts/plex_autoscan/config/default.config /home/$SEEDUSER/scripts/plex_autoscan/config/config.json
+			mv /home/$SEEDUSER/scripts/plex_autoscan/config/config.json.sample /home/$SEEDUSER/scripts/plex_autoscan/config/config.json
 			sed -i 's/\/var\/lib\/plexmediaserver/\/config/g' /home/$SEEDUSER/scripts/plex_autoscan/config/config.json
 			sed -i 's/"DOCKER_NAME": ""/"DOCKER_NAME": "plex-'$SEEDUSER'"/g' /home/$SEEDUSER/scripts/plex_autoscan/config/config.json
 			sed -i 's/"USE_DOCKER": false/"USE_DOCKER": true/g' /home/$SEEDUSER/scripts/plex_autoscan/config/config.json
