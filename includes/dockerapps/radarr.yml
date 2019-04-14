@@ -18,6 +18,7 @@
       - /home/%USER%/docker/radarr/config:/config
       - /home/%USER%/docker/rtorrent/torrents:/data/torrents
       - /home/%USER%/docker/flood/downloads:/downloads
+      - /home/%USER%/docker/sabnzbd/config/Downloads/complete:/config/Downloads/complete   
       - /home/%USER%/Medias/%FILMS%:/movies
     networks:
       - proxy

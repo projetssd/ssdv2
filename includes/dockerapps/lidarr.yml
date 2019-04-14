@@ -14,6 +14,7 @@
       - /home/%USER%/Medias/%MUSIC%:/music:rw
       - /home/%USER%/docker/lidarr/config:/config
       - /home/%USER%/docker/rtorrent/torrents:/data/torrents
+      - /home/%USER%/docker/sabnzbd/config/Downloads/complete:/config/Downloads/complete
       - /home/%USER%/docker/flood/downloads:/downloads
     environment:
       - PUID=%UID%

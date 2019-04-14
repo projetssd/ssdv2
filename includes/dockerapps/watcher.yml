@@ -15,6 +15,7 @@
       - /home/%USER%/docker/watcher/plugins:/watcher3/plugins:rw
       - /home/%USER%/docker/flood/downloads:/downloads
       - /home/%USER%/docker/rtorrent/torrents:/downloads
+      - /home/%USER%/docker/sabnzbd/config/Downloads/complete:/config/Downloads/complete
       - /home/%USER%/Medias/%FILMS%:/movie
     environment:
       - PUID=%UID%

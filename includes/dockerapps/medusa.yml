@@ -15,6 +15,7 @@
       - /home/%USER%/Medias:/tv
       - /home/%USER%/docker/rtorrent/torrents:/downloads
       - /home/%USER%/docker/flood/downloads:/downloads
+      - /home/%USER%/docker/sabnzbd/config/Downloads/complete:/config/Downloads/complete
       - /home/%USER%/docker/medusa/config:/config
     environment:
       - TZ=%TIMEZONE%
