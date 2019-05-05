@@ -12,7 +12,7 @@
 - name: 'Copying Scripts & Plugins'
   copy:
     src: /opt/seedbox-compose/includes/config/rutorrent/{{pgrole}}
-    dest: /opt/seedbox/docker/%SEEDUSER%/{{pgrole}}
+    dest: /opt/seedbox/docker/%SEEDUSER%
     directory_mode: yes
     force: yes
     owner: '1001'
