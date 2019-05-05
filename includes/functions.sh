@@ -1061,22 +1061,17 @@ do
 		if [[ "$line" == "rtorrent" ]]; then
 			replace_media_compose
 			echo -e "${BLUE}### CONFIG POST COMPOSE FILEBOT RUTORRENT ###${NC}"
-			echo -e " ${BWHITE}* Mise à jour filebot rutorrent...${NC}"
-						
-			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/Movies/${FILMS}/g" /usr/local/bin/postdl
-			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/TV/${SERIES}/g" /usr/local/bin/postdl
-			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/Music/${MUSIC}/g" /usr/local/bin/postdl
-			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/Anime/${ANIMES}/g" /usr/local/bin/postdl
-			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/amc.excludes/\/filebot\/amc.excludes/g" /usr/local/bin/postdl			
-			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/data/mnt/g" /usr/local/bin/postdl
-			docker exec -t rtorrent-$SEEDUSER sed -i '/*)/,/;;/d' /usr/local/bin/postdl
-			checking_errors $?
-			grep -R "plex" "$INSTALLEDFILE" > /dev/null 2>&1
-			if [[ "$?" == "0" ]]; then
-				docker exec -t rtorrent-$SEEDUSER sed -i 's/\<unsorted=y\>/& "exec=\/scripts\/plex_autoscan\/plex_autoscan_rutorrent.sh"/' /usr/local/bin/postdl
-			fi
-			echo ""
+
+			cp "$BASEDIR/includes/config/rutorrent/rutorrent.yml" "/tmp/rutorrent.yml" > /dev/null 2>&1
+			cp "$BASEDIR/includes/config/rutorrent/_plugins.yml" "/tmp/_plugins.yml" > /dev/null 2>&1
+
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /tmp/rutorrent.yml
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /tmp/_plugins.yml
+			cd /tmp
+			ansible-playbook rutorrent.yml
 		fi
+		echo ""
+
 
 		if [[ "$line" == "flood" ]]; then
 			replace_media_compose
