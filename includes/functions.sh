@@ -1468,7 +1468,7 @@ function manage_apps() {
 			docker-compose rm -fs "$APPSELECTED"-"$SEEDUSER"
 			sed -i "/#START"$APPSELECTED"#/,/#END"$APPSELECTED"#/d" /home/$SEEDUSER/docker-compose.yml
 			sed -i "/$APPSELECTED/d" /home/$SEEDUSER/resume
-			rm -rf /home/$SEEDUSER/docker/$APPSELECTED
+			rm -rf /opt/seedbox/docker/$SEEDUSER/$APPSELECTED
 			checking_errors $?
 			echo""
 			echo -e "${BLUE}### $APPSELECTED a été supprimé ###${NC}"
