@@ -172,6 +172,7 @@ function install_base_packages() {
 function checking_system() {
 	echo -e "${BLUE}### VERIFICATION SYSTEME ###${NC}"
 	echo -e " ${BWHITE}* Vérification du système OS${NC}"
+	apt install gawk -y > /dev/null 2>&1
 	TMPSYSTEM=$(gawk -F= '/^NAME/{print $2}' /etc/os-release)
 	TMPCODENAME=$(lsb_release -sc)
 	TMPRELEASE=$(cat /etc/debian_version)
@@ -209,18 +210,18 @@ function checking_system() {
 	echo ""
 
 	## installation ansible
-	if [[ $TMPSYSTEM = ubuntu ]];then
+	if [[ "$TMPSYSTEM" = "ubuntu" ]]; then
 	echo -e "${BLUE}### INSTALLATION ANSIBLE ###${NC}"
 	apt-get install software-properties-common > /dev/null 2>&1
 	apt-add-repository --yes --update ppa:ansible/ansible > /dev/null 2>&1
-	apt-get install ansible > /dev/null 2>&1
+	apt-get install ansible -y > /dev/null 2>&1
 	else
 	echo -e "${BLUE}### INSTALLATION ANSIBLE ###${NC}"
 	echo "deb http://ppa.launchpad.net/ansible/ansible/ubuntu trusty main" >> /etc/apt/sources.list > /dev/null 2>&1
 	apt update > /dev/null 2>&1
 	apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 93C4A3FD7BB9C367 > /dev/null 2>&1
 	apt-get update > /dev/null 2>&1
-	apt-get install ansible > /dev/null 2>&1
+	apt-get install ansible -y > /dev/null 2>&1
 	fi
 
 	# Configuration ansible
@@ -234,7 +235,6 @@ function checking_system() {
   	echo "callback_whitelist = profile_tasks" >> /etc/ansible/ansible.cfg
   	echo "inventory = /etc/ansible/inventories/local" >> /etc/ansible/ansible.cfg
 	checking_errors $?
-	echo ""
 }
 
 function checking_errors() {

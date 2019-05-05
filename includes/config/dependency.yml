@@ -15,6 +15,7 @@
       with_items:
         - { package: "fuse" }
         - { package: "fail2ban" }
+        - { package: "default-jre" }
         - { package: "software-properties-common" }
         - { package: "unrar" }
         - { package: "unzip" }
