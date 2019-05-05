@@ -209,7 +209,7 @@ function checking_system() {
 	echo ""
 
 	## installation ansible
-	if [[ $TMPSYSTEM = ubuntu ]];then
+	if [[ "$TMPSYSTEM" = "ubuntu" ]]; then
 	echo -e "${BLUE}### INSTALLATION ANSIBLE ###${NC}"
 	apt-get install software-properties-common > /dev/null 2>&1
 	apt-add-repository --yes --update ppa:ansible/ansible > /dev/null 2>&1
