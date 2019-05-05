@@ -164,15 +164,7 @@ function install_base_packages() {
 	echo -e "${BLUE}### INSTALLATION DES PACKAGES ###${NC}"
 	whiptail --title "Base Package" --msgbox "Seedbox-Compose va maintenant installer les Pré-Requis et vérifier la mise à jour du système" 10 60
 	echo -e " ${BWHITE}* Installation apache2-utils, unzip, git, curl ...${NC}"
-	{
-	NUMPACKAGES=$(cat $PACKAGESFILE | wc -l)
-	for package in $(cat $PACKAGESFILE);
-	do
-		apt-get install -y $package
-		echo $NUMPACKAGES
-		NUMPACKAGES=$(($NUMPACKAGES+(100/$NUMPACKAGES)))
-	done
-	} | whiptail --gauge "Merci de patienter pendant l'installation des packages !" 6 70 0
+	ansible-playbook /opt/seedbox-compose/includes/config/dependency.yml
 	checking_errors $?
 	echo ""
 }
@@ -214,6 +206,22 @@ function checking_system() {
 	echo -e " ${BWHITE}* Updating & upgrading system${NC}"
 	apt-get update > /dev/null 2>&1
 	apt-get upgrade -y > /dev/null 2>&1
+	echo ""
+
+	## installation ansible
+	if [[ $TMPSYSTEM = ubuntu ]];then
+	echo -e "${BLUE}### INSTALLATION ANSIBLE ###${NC}"
+	apt-get install software-properties-common > /dev/null 2>&1
+	apt-add-repository --yes --update ppa:ansible/ansible > /dev/null 2>&1
+	apt-get install ansible > /dev/null 2>&1
+	else
+	echo -e "${BLUE}### INSTALLATION ANSIBLE ###${NC}"
+	echo "deb http://ppa.launchpad.net/ansible/ansible/ubuntu trusty main" >> /etc/apt/sources.list > /dev/null 2>&1
+	apt update > /dev/null 2>&1
+	apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 93C4A3FD7BB9C367 > /dev/null 2>&1
+	apt-get update > /dev/null 2>&1
+	apt-get install ansible > /dev/null 2>&1
+	fi
 	checking_errors $?
 	echo ""
 }
