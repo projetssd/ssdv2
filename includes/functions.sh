@@ -162,7 +162,7 @@ function conf_dir() {
 function install_base_packages() {
 	echo ""
 	echo -e "${BLUE}### INSTALLATION DES PACKAGES ###${NC}"
-	whiptail --title "Base Package" --msgbox "Seedbox-Compose va maintenant installer les Pré-Requis et vérifier la mise à jour du système" 10 60
+	echo ""
 	echo -e " ${BWHITE}* Installation apache2-utils, unzip, git, curl ...${NC}"
 	ansible-playbook /opt/seedbox-compose/includes/config/dependency.yml
 	checking_errors $?
@@ -222,6 +222,17 @@ function checking_system() {
 	apt-get update > /dev/null 2>&1
 	apt-get install ansible > /dev/null 2>&1
 	fi
+
+	# Configuration ansible
+ 	mkdir -p /etc/ansible/inventories/ 1>/dev/null 2>&1
+  	echo "[local]" > /etc/ansible/inventories/local
+  	echo "127.0.0.1 ansible_connection=local" >> /etc/ansible/inventories/local
+
+  	### Reference: https://docs.ansible.com/ansible/2.4/intro_configuration.html
+  	echo "[defaults]" > /etc/ansible/ansible.cfg
+  	echo "command_warnings = False" >> /etc/ansible/ansible.cfg
+  	echo "callback_whitelist = profile_tasks" >> /etc/ansible/ansible.cfg
+  	echo "inventory = /etc/ansible/inventories/local" >> /etc/ansible/ansible.cfg
 	checking_errors $?
 	echo ""
 }
@@ -492,8 +503,8 @@ function install_docker() {
 	dpkg-query -l docker > /dev/null 2>&1
   	if [ $? != 0 ]; then
 		echo " * Installation Docker"
-		curl -fsSL https://get.docker.com -o get-docker.sh
-		sh get-docker.sh
+		curl -fsSL https://get.docker.com -o get-docker.sh > /dev/null 2>&1
+		sh get-docker.sh > /dev/null 2>&1
 		if [[ "$?" == "0" ]]; then
 			echo -e "	${GREEN}* Installation Docker réussie${NC}"
 		else
@@ -501,8 +512,8 @@ function install_docker() {
 		fi
 		service docker start > /dev/null 2>&1
 		echo " * Installing Docker-compose"
-		curl -L "https://github.com/docker/compose/releases/download/1.23.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-		chmod +x /usr/local/bin/docker-compose
+		curl -L "https://github.com/docker/compose/releases/download/1.23.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose > /dev/null 2>&1
+		chmod +x /usr/local/bin/docker-compose > /dev/null 2>&1
 		if [[ "$?" == "0" ]]; then
 			echo -e "	${GREEN}* Installation Docker-Compose réussie${NC}"
 		else

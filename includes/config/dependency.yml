@@ -24,7 +24,6 @@
         - { package: "python-passlib" }
         - { package: "git" }
         - { package: "curl" }
-        - { package: "man-db" }
         - { package: "htop" }
         - { package: "openssh-server" }
         - { package: "dirmngr" }
