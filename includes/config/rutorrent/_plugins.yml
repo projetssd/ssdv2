@@ -1,0 +1,21 @@
+- name: Creating scripts and plugins paths
+  file: 'path={{item}} state=directory mode=0775 owner=1001 group=1001'
+  with_items:
+    - '/opt/seedbox/docker/%SEEDUSER%/{{pgrole}}/scripts'
+    - '/opt/seedbox/docker/%SEEDUSER%/{{pgrole}}/plugins'
+
+- name: 'Check if Templates Exist for {{pgrole}}'
+  stat:
+    path: '/opt/seedbox-compose/includes/config/rutorrent/{{pgrole}}'
+  register: copycheck
+
+- name: 'Copying Scripts & Plugins'
+  copy:
+    src: /opt/seedbox-compose/includes/config/rutorrent/{{pgrole}}
+    dest: /opt/seedbox/docker/%SEEDUSER%/{{pgrole}}
+    directory_mode: yes
+    force: yes
+    owner: '1001'
+    group: '1001'
+    mode: 0775
+  when: copycheck.stat.exists
