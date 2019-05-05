@@ -1060,8 +1060,8 @@ do
 
 		if [[ "$line" == "rtorrent" ]]; then
 			replace_media_compose
-			echo -e "${BLUE}### CONFIG POST COMPOSE FILEBOT RUTORRENT ###${NC}"
-
+			echo -e "${BLUE}### CONFIG POST COMPOSE RUTORRENT ###${NC}"
+			docker exec rtorrent-corinne sh -c "git clone https://github.com/Phlooo/ruTorrent-MaterialDesign.git /app/rutorrent/plugins/theme/themes/materialdesign" > /dev/null 2>&1
 			cp "$BASEDIR/includes/config/rutorrent/rutorrent.yml" "/tmp/rutorrent.yml" > /dev/null 2>&1
 			cp "$BASEDIR/includes/config/rutorrent/_plugins.yml" "/tmp/_plugins.yml" > /dev/null 2>&1
 
@@ -1069,6 +1069,7 @@ do
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /tmp/_plugins.yml
 			cd /tmp
 			ansible-playbook rutorrent.yml
+			docker restart rtorrent-$SEEDUSER > /dev/null 2>&1
 		fi
 		echo ""
 
