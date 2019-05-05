@@ -1061,7 +1061,12 @@ do
 		if [[ "$line" == "rtorrent" ]]; then
 			replace_media_compose
 			echo -e "${BLUE}### CONFIG POST COMPOSE RUTORRENT ###${NC}"
-			docker exec rtorrent-corinne sh -c "git clone https://github.com/Phlooo/ruTorrent-MaterialDesign.git /app/rutorrent/plugins/theme/themes/materialdesign" > /dev/null 2>&1
+
+			# installation du theme de Xataz et suppression du plugin clouflare
+			docker exec rtorrent-$SEEDUSER sh -c "git clone https://github.com/Phlooo/ruTorrent-MaterialDesign.git /app/rutorrent/plugins/theme/themes/materialdesign" > /dev/null 2>&1
+			docker exec rtorrent-$SEEDUSER sh -c "rm -rf /app/rutorrent/plugins/_cloudflare" > /dev/null 2>&1
+			
+			#configuration rutorrent avec ansible
 			cp "$BASEDIR/includes/config/rutorrent/rutorrent.yml" "/tmp/rutorrent.yml" > /dev/null 2>&1
 			cp "$BASEDIR/includes/config/rutorrent/_plugins.yml" "/tmp/_plugins.yml" > /dev/null 2>&1
 
