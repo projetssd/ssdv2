@@ -245,6 +245,20 @@ function checking_errors() {
 	fi
 }
 
+function install_filebot() {
+		echo -e "${BLUE}### FAIL2BAN ###${NC}"
+		cd /tmp
+		wget http://downloads.sourceforge.net/project/filebot/filebot/FileBot_4.7.9/FileBot_4.7.9-portable.tar.xz > /dev/null 2>&1
+		mkdir filebot > /dev/null 2>&1
+		tar xvf FileBot_4.7.9-portable.tar.xz -C filebot > /dev/null 2>&1
+		cp -R filebot /opt/seedbox/docker/$SEEDUSER/.filebot > /dev/null 2>&1
+		chmod a+x /opt/seedbox/docker/$SEEDUSER/.filebot/filebot.sh > /dev/null 2>&1
+		chmod a+x /opt/seedbox/docker/$SEEDUSER/.filebot/update-filebot.sh > /dev/null 2>&1
+		checking_errors $?
+		echo ""
+}
+
+
 function install_fail2ban() {
 		echo -e "${BLUE}### FAIL2BAN ###${NC}"
 		if (whiptail --title "Docker fail2ban" --yesno "Voulez vous installer fail2ban" 7 50) then
