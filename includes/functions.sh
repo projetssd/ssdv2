@@ -808,8 +808,8 @@ function choose_media_folder_classique() {
 	for line in $(cat $MEDIASPERUSER);
 	do
 	line=$(echo $line | sed 's/\(.\)/\U\1/')
-	mkdir -p /home/$SEEDUSER/Medias/$line
-	chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/Medias
+	mkdir -p /home/$SEEDUSER/local/$line
+	chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/local
 	done
 	rm /tmp/menumedia.txt
 	echo ""
