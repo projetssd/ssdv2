@@ -1345,6 +1345,7 @@ function manage_users() {
 				choose_services
 				install_services
 				docker_compose
+				install_filebot
 				resume_seedbox
 				pause
 				script_classique
