@@ -259,6 +259,11 @@ function install_filebot() {
 		cp "$BASEDIR/includes/config/filebot/filebot-process.sh" "/opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh" > /dev/null 2>&1
 		sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh
 
+		## mise en place d'un cron pour le lancement de filebot
+		(crontab -l | grep . ; echo "*/1 * * * * /opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh >> /home/$SEEDUSER/scripts/filebot.log") | crontab -
+		service cron restart
+
+
 		checking_errors $?
 		echo ""
 }
@@ -915,11 +920,25 @@ function install_services() {
 	INSTALLEDFILE="/home/$SEEDUSER/resume"
 	touch $INSTALLEDFILE > /dev/null 2>&1
 
-	## port rtorrent
+	## port rutorrent 1
 	if [[ -f "$FILEPORTPATH" ]]; then
 		declare -i PORT=$(cat $FILEPORTPATH | tail -1)
 	else
 		declare -i PORT=$FIRSTPORT
+	fi
+
+	## port rutorrent 2
+	if [[ -f "$FILEPORTPATH1" ]]; then
+		declare -i PORT1=$(cat $FILEPORTPATH1 | tail -1)
+	else
+		declare -i PORT1=$FIRSTPORT1
+	fi
+
+	## port rutorrent 3
+	if [[ -f "$FILEPORTPATH2" ]]; then
+		declare -i PORT2=$(cat $FILEPORTPATH2 | tail -1)
+	else
+		declare -i PORT2=$FIRSTPORT2
 	fi
 
 	## port plex
@@ -943,6 +962,8 @@ function install_services() {
 		sed -i "s|%UID%|$USERID|g" $DOCKERCOMPOSEFILE
 		sed -i "s|%GID%|$GRPID|g" $DOCKERCOMPOSEFILE
 		sed -i "s|%PORT%|$PORT|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%PORT1%|$PORT1|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%PORT2%|$PORT2|g" $DOCKERCOMPOSEFILE
 		sed -i "s|%PORTPLEX%|$PORTPLEX|g" $DOCKERCOMPOSEFILE
 		sed -i "s|%VAR%|$VAR|g" $DOCKERCOMPOSEFILE
 		sed -i "s|%DOMAIN%|$DOMAIN|g" $DOCKERCOMPOSEFILE
@@ -970,11 +991,15 @@ function install_services() {
 		URI="/"
 	
 		PORT=$PORT+1
+		PORT1=$PORT1+1
+		PORT2=$PORT2+1
 		PORTPLEX=$PORTPLEX+1
 		FQDN=""
 		FQDNTMP=""
 	done
 	echo $PORT >> $FILEPORTPATH
+	echo $PORT1 >> $FILEPORTPATH1
+	echo $PORT2 >> $FILEPORTPATH2
 	echo $PORTPLEX >> $PLEXPORTPATH
 	echo ""
 }
@@ -1275,7 +1300,8 @@ function plex_sections() {
 
 			## mise en place d'un cron pour le lancement de plexdupefinder
 			(crontab -l | grep . ; echo "*/1 * * * * python3 /home/$SEEDUSER/scripts/plex_dupefinder/plexdupes.py >> /home/$SEEDUSER/scripts/plex_dupefinder/activity.log") | crontab -
-			
+			service cron restart
+
 			## lancement plex_autoscan
 			# chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/scripts/plex_autoscan
 			systemctl start plex_autoscan-$SEEDUSER.service > /dev/null 2>&1

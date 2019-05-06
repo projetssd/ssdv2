@@ -14,9 +14,9 @@
       - PUID=%UID%
       - PGID=%GID%
     ports:
-      - 5000:5000
+      - %PORT1%:%PORT1%
       - %PORT%:%PORT%
-      - 6881:6881/udp
+      - %PORT2%:%PORT2%/udp
     volumes:
       - /opt/seedbox/docker/%USER%/rutorrent:/config
       - /home/%USER%:/home/%USER%
