@@ -246,7 +246,7 @@ function checking_errors() {
 }
 
 function install_filebot() {
-		echo -e "${BLUE}### FAIL2BAN ###${NC}"
+		echo -e "${BLUE}### FILEBOT ###${NC}"
 		cd /tmp
 		wget http://downloads.sourceforge.net/project/filebot/filebot/FileBot_4.7.9/FileBot_4.7.9-portable.tar.xz > /dev/null 2>&1
 		mkdir filebot > /dev/null 2>&1
@@ -1399,6 +1399,7 @@ function manage_users() {
 			fi
 		        echo -e "${BLUE}### SUPPRESSION USER ###${NC}"
 			rm -rf /home/$SEEDUSER > /dev/null 2>&1
+			rm -rf /opt/seedbox/docker/$SEEDUSER > /dev/null 2>&1
 			userdel -rf $SEEDUSER > /dev/null 2>&1
 			sed -i "/$SEEDUSER/d" $CONFDIR/users
 			rm $CONFDIR/passwd/.htpasswd-$SEEDUSER
