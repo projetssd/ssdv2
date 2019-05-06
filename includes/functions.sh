@@ -254,6 +254,11 @@ function install_filebot() {
 		cp -R filebot /opt/seedbox/docker/$SEEDUSER/.filebot > /dev/null 2>&1
 		chmod a+x /opt/seedbox/docker/$SEEDUSER/.filebot/filebot.sh > /dev/null 2>&1
 		chmod a+x /opt/seedbox/docker/$SEEDUSER/.filebot/update-filebot.sh > /dev/null 2>&1
+
+		#configuration filebot
+		cp "$BASEDIR/includes/config/filebot/filebot-process.sh" "/opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh" > /dev/null 2>&1
+		sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh
+
 		checking_errors $?
 		echo ""
 }
@@ -1400,6 +1405,7 @@ function manage_users() {
 		        echo -e "${BLUE}### SUPPRESSION USER ###${NC}"
 			rm -rf /home/$SEEDUSER > /dev/null 2>&1
 			rm -rf /opt/seedbox/docker/$SEEDUSER > /dev/null 2>&1
+			rm /opt/seedbox/media-$SEEDUSER
 			userdel -rf $SEEDUSER > /dev/null 2>&1
 			sed -i "/$SEEDUSER/d" $CONFDIR/users
 			rm $CONFDIR/passwd/.htpasswd-$SEEDUSER
