@@ -1140,56 +1140,7 @@ do
 			sed -i "s|port_range = 51413-51413|port_range = $PORT-$PORT|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/rtorrent/rtorrent.rc
 			docker restart rtorrent-$SEEDUSER > /dev/null 2>&1
 		fi
-		echo ""
-
-
-		if [[ "$line" == "flood" ]]; then
-			replace_media_compose
-			echo -e "${BLUE}### CONFIG POST COMPOSE FILEBOT FLOOD ###${NC}"
-			var="Mise à jour filebot flood, patientez..."
-			decompte 15
-
-			touch /home/$SEEDUSER/docker/flood/filebot/postrm
-			touch /home/$SEEDUSER/docker/flood/filebot/postdl
-
-			POSTRM="/home/$SEEDUSER/docker/flood/filebot/postrm"
-			POSTDL="/home/$SEEDUSER/docker/flood/filebot/postdl"
-
-			cat "$BASEDIR/includes/config/flood/postrm" > $POSTRM
-			cat "$BASEDIR/includes/config/flood/postdl" > $POSTDL
-
-			echo 'system.method.set_key=event.download.finished,filebot,"execute={/usr/local/bin/postdl,$d.get_base_path=,$d.get_name=,$d.get_custom1=}"' >> /home/$SEEDUSER/docker/flood/config/rtorrent/rtorrent.rc
-			echo 'system.method.set_key=event.download.erased,filebot_cleaner,"execute=/usr/local/bin/postrm"' >> /home/$SEEDUSER/docker/flood/config/rtorrent/rtorrent.rc
-
-			FILEBOT_RENAME_METHOD=$(grep FILEBOT_RENAME_METHOD /home/$SEEDUSER/docker-compose.yml | cut -d '=' -f2 | head -n 1)
-			FILEBOT_RENAME_MOVIES=$(grep FILEBOT_RENAME_MOVIES /home/$SEEDUSER/docker-compose.yml | cut -d '=' -f2 | head -n 1)
-			FILEBOT_RENAME_MUSICS=$(grep FILEBOT_RENAME_MUSICS /home/$SEEDUSER/docker-compose.yml | cut -d '=' -f2 | head -n 1)
-			FILEBOT_RENAME_SERIES=$(grep FILEBOT_RENAME_SERIES /home/$SEEDUSER/docker-compose.yml | cut -d '=' -f2 | head -n 1)
-			FILEBOT_RENAME_ANIMES=$(grep FILEBOT_RENAME_ANIMES /home/$SEEDUSER/docker-compose.yml | cut -d '=' -f2 | head -n 1)
-
-    			sed -e 's#<FILEBOT_RENAME_MOVIES>#'"$FILEBOT_RENAME_MOVIES"'#' \
-        		    -e 's#<FILEBOT_RENAME_METHOD>#'"$FILEBOT_RENAME_METHOD"'#' \
-        		    -e 's#<FILEBOT_RENAME_MUSICS>#'"$FILEBOT_RENAME_MUSICS"'#' \
-        		    -e 's#<FILEBOT_RENAME_SERIES>#'"$FILEBOT_RENAME_SERIES"'#' \
-        		    -e 's#<FILEBOT_RENAME_ANIMES>#'"$FILEBOT_RENAME_ANIMES"'#' -i /home/$SEEDUSER/docker/flood/filebot/postdl
-
-			chmod +x /home/$SEEDUSER/docker/flood/filebot/postdl
-			chmod +x /home/$SEEDUSER/docker/flood/filebot/postrm
-
-			sed -i -e "s/Movies/${FILMS}/g" /home/$SEEDUSER/docker/flood/filebot/postdl
-			sed -i -e "s/TV/${SERIES}/g" /home/$SEEDUSER/docker/flood/filebot/postdl
-			sed -i -e "s/Music/${MUSIC}/g" /home/$SEEDUSER/docker/flood/filebot/postdl
-			sed -i -e "s/Animes/${ANIMES}/g" /home/$SEEDUSER/docker/flood/filebot/postdl
-
-			docker exec -i flood-$SEEDUSER chown -R abc:abc filebot
-			
-			grep -R "plex" "$INSTALLEDFILE" > /dev/null 2>&1
-			if [[ "$?" == "0" ]]; then
-				docker exec -t flood-$SEEDUSER sed -i 's/\<unsorted=y\>/& "exec=\/scripts\/plex_autoscan\/plex_autoscan_flood.sh"/' /usr/local/bin/postdl
-			fi
-			checking_errors $?
-			echo ""
-		fi
+echo ""
 done
 }
 
