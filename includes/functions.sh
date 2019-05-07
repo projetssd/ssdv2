@@ -1111,6 +1111,14 @@ do
 			USERID=$(id -u $SEEDUSER)
 			GRPID=$(id -g $SEEDUSER)
 
+			# Port à utiliser
+			if [[ -f "$FILEPORTPATH" ]]; then
+				declare -i PORT=$(cat $FILEPORTPATH | tail -1)
+				PORT=$PORT-1
+			else	
+				declare -i PORT=$FIRSTPORT
+			fi
+
 			# installation du theme de Xataz et suppression du plugin clouflare
 			docker exec rtorrent-$SEEDUSER sh -c "git clone https://github.com/Phlooo/ruTorrent-MaterialDesign.git /app/rutorrent/plugins/theme/themes/MaterialDesign" > /dev/null 2>&1
 			docker exec rtorrent-$SEEDUSER sh -c "rm -rf /app/rutorrent/plugins/_cloudflare" > /dev/null 2>&1
@@ -1128,6 +1136,7 @@ do
 			sed -i "s|%GRPID%|$GRPID|g" /tmp/_plugins.yml
 			cd /tmp
 			ansible-playbook rutorrent.yml
+			sed -i "s|port_range = 51413-51413|port_range = $PORT-$PORT|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/rtorrent/rtorrent.rc
 			docker restart rtorrent-$SEEDUSER > /dev/null 2>&1
 		fi
 		echo ""
