@@ -865,6 +865,7 @@ function choose_media_folder_plexdrive() {
 		do
 		line=$(echo $line | sed 's/\(.\)/\U\1/')
 		mkdir -p /home/$SEEDUSER/local/$line
+		mkdir -p /home/$SEEDUSER/local/rutorrent/filebot
 		mkdir -p /mnt/rclone/$SEEDUSER/$line 
 		done
 		chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/local

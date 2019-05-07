@@ -16,10 +16,10 @@
       - GID=%GID%
       - TZ=%TIMEZONE%
     volumes:
-      - /home/%USER%/docker/nextcloud/data:/data
-      - /home/%USER%/docker/nextcloud/config:/config
-      - /home/%USER%/docker/nextcloud/apps:/apps2
-      - /home/%USER%/docker/nextcloud/themes:/nextcloud/themes
+      - /opt/seedbox/docker/%USER%/nextcloud/data:/data
+      - /opt/seedbox/docker/%USER%/nextcloud/config:/config
+      - /opt/seedbox/docker/%USER%/nextcloud/apps:/apps2
+      - /opt/seedbox/docker/%USER%/nextcloud/themes:/nextcloud/themes
     networks:
       - proxy
 #ENDnextcloud#

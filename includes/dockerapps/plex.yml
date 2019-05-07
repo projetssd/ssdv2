@@ -21,8 +21,8 @@
     healthcheck:
       disable: true
     volumes:
-      - /home/%USER%/Medias:/data
-      - /home/%USER%/docker/plex/config:/config
+      - /home/%USER%:/home/%USER%
+      - /opt/seedbox/docker/%USER%/plex/config:/config
       - /dev/shm:/transcode
     networks:
       - proxy

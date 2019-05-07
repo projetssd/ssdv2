@@ -14,10 +14,10 @@
       - APP_GID=%GID%
       - TZ=%TIMEZONE%
     volumes:
-      - /home/%USER%/docker/subsonic/log:/subsonic
-      - /home/%USER%/docker/subsonic/music:/music
-      - /home/%USER%/docker/subsonic/podcast:/podcast
-      - /home/%USER%/docker/subsonic/playlists:/playlists
+      - /opt/seedbox/docker/%USER%/subsonic/log:/subsonic
+      - /opt/seedbox/docker/%USER%/subsonic/music:/music
+      - /opt/seedbox/docker/%USER%/subsonic/podcast:/podcast
+      - /opt/seedbox/docker/%USER%/subsonic/playlists:/playlists
     networks:
       - proxy
 #ENDsubsonic#

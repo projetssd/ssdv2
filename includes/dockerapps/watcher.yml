@@ -11,12 +11,9 @@
       - traefik.port=9090
       - traefik.docker.network=traefik_proxy
     volumes:
-      - /home/%USER%/docker/watcher/conf:/watcher3/userdata:rw
-      - /home/%USER%/docker/watcher/plugins:/watcher3/plugins:rw
-      - /home/%USER%/docker/flood/downloads:/downloads
-      - /home/%USER%/docker/rtorrent/torrents:/downloads
-      - /home/%USER%/docker/sabnzbd/config/Downloads/complete:/config/Downloads/complete
-      - /home/%USER%/Medias/%FILMS%:/movie
+      - /opt/seedbox/docker/%USER%/watcher/conf:/watcher3/userdata:rw
+      - /opt/seedbox/docker/%USER%/watcher/plugins:/watcher3/plugins:rw
+      - /home/%USER%:/home/%USER%
     environment:
       - PUID=%UID%
       - PGID=%GID%

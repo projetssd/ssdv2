@@ -15,8 +15,8 @@
       - PGID=%GID%
       - TZ=%TIMEZONE%
     volumes:
-      - /home/%USER%/docker/hydra/config:/config
-      - /home/%USER%/docker/hydra/nzb:/downloads
+      - /opt/seedbox/docker/%USER%/hydra/config:/config
+      - /opt/seedbox/docker/%USER%/hydra/nzb:/downloads
     networks:
       - proxy
 #ENDnzbhydra#
