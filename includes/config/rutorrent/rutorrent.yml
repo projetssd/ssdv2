@@ -33,7 +33,7 @@
 
     # This is needed for rutorrent b/c it's weird.
     - name: 'Setting ownership on appdata recursivley (this can take a while!)'
-      shell: 'chown -R 1001:1001 /opt/seedbox/docker/%SEEDUSER%/{{pgrole}}'
+      shell: 'chown -R %USERID%:%GRPID% /opt/seedbox/docker/%SEEDUSER%/{{pgrole}}'
 
     - name: 'Setting permissions on appdata recursivley (this can take a while!)'
       shell: 'chmod -R 775 /opt/seedbox/docker/%SEEDUSER%/{{pgrole}}'

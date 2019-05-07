@@ -814,6 +814,7 @@ function choose_media_folder_classique() {
 	do
 	line=$(echo $line | sed 's/\(.\)/\U\1/')
 	mkdir -p /home/$SEEDUSER/local/$line
+	mkdir -p /home/$SEEDUSER/local/rutorrent/filebot
 	chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/local
 	done
 	rm /tmp/menumedia.txt
@@ -834,6 +835,7 @@ function choose_media_folder_plexdrive() {
 		for line in $(cat $MEDIASPERUSER);
 		do
 		mkdir -p /home/$SEEDUSER/local/$line
+		mkdir -p /home/$SEEDUSER/local/rutorrent/filebot
 		echo -e "	${GREEN}--> Le dossier ${NC}${YELLOW}$line${NC}${GREEN} a été ajouté avec succès !${NC}"
 		done
 		chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/local
@@ -1106,8 +1108,11 @@ do
 			replace_media_compose
 			echo -e "${BLUE}### CONFIG POST COMPOSE RUTORRENT ###${NC}"
 
+			USERID=$(id -u $SEEDUSER)
+			GRPID=$(id -g $SEEDUSER)
+
 			# installation du theme de Xataz et suppression du plugin clouflare
-			docker exec rtorrent-$SEEDUSER sh -c "git clone https://github.com/Phlooo/ruTorrent-MaterialDesign.git /app/rutorrent/plugins/theme/themes/materialdesign" > /dev/null 2>&1
+			docker exec rtorrent-$SEEDUSER sh -c "git clone https://github.com/Phlooo/ruTorrent-MaterialDesign.git /app/rutorrent/plugins/theme/themes/MaterialDesign" > /dev/null 2>&1
 			docker exec rtorrent-$SEEDUSER sh -c "rm -rf /app/rutorrent/plugins/_cloudflare" > /dev/null 2>&1
 			
 			#configuration rutorrent avec ansible
@@ -1115,7 +1120,12 @@ do
 			cp "$BASEDIR/includes/config/rutorrent/_plugins.yml" "/tmp/_plugins.yml" > /dev/null 2>&1
 
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /tmp/rutorrent.yml
+			sed -i "s|%USERID%|$USERID|g" /tmp/rutorrent.yml
+			sed -i "s|%GRPID%|$GRPID|g" /tmp/rutorrent.yml
+
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /tmp/_plugins.yml
+			sed -i "s|%USERID%|$USERID|g" /tmp/_plugins.yml
+			sed -i "s|%GRPID%|$GRPID|g" /tmp/_plugins.yml
 			cd /tmp
 			ansible-playbook rutorrent.yml
 			docker restart rtorrent-$SEEDUSER > /dev/null 2>&1

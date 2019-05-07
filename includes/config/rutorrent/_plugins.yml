@@ -1,5 +1,5 @@
 - name: Creating scripts and plugins paths
-  file: 'path={{item}} state=directory mode=0775 owner=1001 group=1001'
+  file: 'path={{item}} state=directory mode=0775 owner=%USERID% group=%GRPID%'
   with_items:
     - '/opt/seedbox/docker/%SEEDUSER%/{{pgrole}}/scripts'
     - '/opt/seedbox/docker/%SEEDUSER%/{{pgrole}}/plugins'
@@ -15,7 +15,7 @@
     dest: /opt/seedbox/docker/%SEEDUSER%
     directory_mode: yes
     force: yes
-    owner: '1001'
-    group: '1001'
+    owner: '%USERID%'
+    group: '%GRPID%'
     mode: 0775
   when: copycheck.stat.exists
