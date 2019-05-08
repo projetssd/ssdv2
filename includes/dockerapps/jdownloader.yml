@@ -1,22 +1,23 @@
 
-#STARTsonarr#
-  sonarr-%USER%:
-    image: linuxserver/sonarr
-    container_name: sonarr-%USER%
+#STARTjd2#
+  jd2-%USER%:
+    container_name: jd2-%USER%
+    build: .
+    image: jlesage/jdownloader-2
     restart: unless-stopped
     labels:
       - traefik.enable=true
       - traefik.frontend.rule=%TRAEFIKURL%
       - traefik.frontend.auth.basic=%VAR%
-      - traefik.port=8989
+      - traefik.port=5800
       - traefik.docker.network=traefik_proxy
     environment:
-      - PUID=%UID%
-      - PGID=%GID%
       - TZ=%TIMEZONE%
+      - UID=%UID%
+      - GID=%GID%
     volumes:
-      - /opt/seedbox/docker/%USER%/sonarr/config:/config
+      - /opt/seedbox/docker/%USER%/jdownloader-2/config:/config:rw
       - /home/%USER%:/home/%USER%
     networks:
       - proxy
-#ENDsonarr#
+#ENDjd2#

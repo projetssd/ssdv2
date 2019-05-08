@@ -23,7 +23,7 @@
         - '/opt/seedbox/docker/%SEEDUSER%/{{pgrole}}/plugins/theme/themes/FlatUI_Dark'
 
     - name: 'Including plugins'
-      include_tasks: '/tmp/_plugins.yml'
+      include_tasks: '/opt/seedbox/docker/%SEEDUSER%/rutorrent/_plugins.yml'
 
     - name: Checking for existing app data
       stat:

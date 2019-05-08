@@ -210,7 +210,7 @@ function checking_system() {
 	echo ""
 
 	## installation ansible
-	if [[ "$TMPSYSTEM" = "ubuntu" ]]; then
+	if [[ "$SYSTEMOS" = "Ubuntu" ]]; then
 	echo -e "${BLUE}### INSTALLATION ANSIBLE ###${NC}"
 	apt-get install software-properties-common > /dev/null 2>&1
 	apt-add-repository --yes --update ppa:ansible/ansible > /dev/null 2>&1
@@ -1063,31 +1063,23 @@ do
 						ACCESSDOMAIN=$(grep plex $INSTALLEDFILE | cut -d\- -f3-4)
 					fi
 				done
-
+				
+				## config plex_autoscan filebot rutorrent
 				sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" $PLEXCANFILE
 				sed -i -e "s/%ANIMES%/${ANIMES}/g" $PLEXCANFILE
-				sed -i -e "s/data/mnt/g" $PLEXCANFILE
 				sed -i -e "s/%FILMS%/${FILMS}/g" $PLEXCANFILE
 				sed -i -e "s/%SERIES%/${SERIES}/g" $PLEXCANFILE
 				sed -i -e "s/%MUSIC%/${MUSIC}/g" $PLEXCANFILE
 				sed -i -e "s/%PORT%/${PORT}/g" $PLEXCANFILE
+				sed -i -e "s/%SEEDUSER%/${SEEDUSER}/g" $PLEXCANFILE
 
+				## config plex_autoscan filebot flood ( à travailler)
 				sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" $PLEXCANFLOODFILE
 				sed -i -e "s/%ANIMES%/${ANIMES}/g" $PLEXCANFLOODFILE
 				sed -i -e "s/%FILMS%/${FILMS}/g" $PLEXCANFLOODFILE
 				sed -i -e "s/%SERIES%/${SERIES}/g" $PLEXCANFLOODFILE
 				sed -i -e "s/%MUSIC%/${MUSIC}/g" $PLEXCANFLOODFILE
 				sed -i -e "s/%PORT%/${PORT}/g" $PLEXCANFLOODFILE
-
-				grep -R "rtorrent" "$INSTALLEDFILE" > /dev/null 2>&1
-				if [[ "$?" == "0" ]]; then
-					docker exec -t rtorrent-$SEEDUSER sed -i 's/\<unsorted=y\>/& "exec=\/scripts\/plex_autoscan\/plex_autoscan_rutorrent.sh"/' /usr/local/bin/postdl
-				fi
-				
-				POSTDL="/home/$SEEDUSER/docker/flood/filebot/postdl"
-				if [[ -e "$POSTDL" ]]; then
-				docker exec -t flood-$SEEDUSER sed -i 's/\<unsorted=y\>/& "exec=\/scripts\/plex_autoscan\/plex_autoscan_flood.sh"/' /usr/local/bin/postdl
-				fi
 			fi
 		fi
 
@@ -1125,17 +1117,18 @@ do
 			docker exec rtorrent-$SEEDUSER sh -c "rm -rf /app/rutorrent/plugins/_cloudflare" > /dev/null 2>&1
 			
 			#configuration rutorrent avec ansible
-			cp "$BASEDIR/includes/config/rutorrent/rutorrent.yml" "/tmp/rutorrent.yml" > /dev/null 2>&1
-			cp "$BASEDIR/includes/config/rutorrent/_plugins.yml" "/tmp/_plugins.yml" > /dev/null 2>&1
+			cp "$BASEDIR/includes/config/rutorrent/rutorrent.yml" "/opt/seedbox/docker/$SEEDUSER/rutorrent/rutorrent.yml" > /dev/null 2>&1
+			cp "$BASEDIR/includes/config/rutorrent/_plugins.yml" "/opt/seedbox/docker/$SEEDUSER/rutorrent/_plugins.yml" > /dev/null 2>&1
 
-			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /tmp/rutorrent.yml
-			sed -i "s|%USERID%|$USERID|g" /tmp/rutorrent.yml
-			sed -i "s|%GRPID%|$GRPID|g" /tmp/rutorrent.yml
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/rutorrent.yml
+			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/rutorrent.yml
+			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/rutorrent.yml
 
-			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /tmp/_plugins.yml
-			sed -i "s|%USERID%|$USERID|g" /tmp/_plugins.yml
-			sed -i "s|%GRPID%|$GRPID|g" /tmp/_plugins.yml
-			cd /tmp
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/_plugins.yml
+			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/_plugins.yml
+			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/_plugins.yml
+
+			cd /opt/seedbox/docker/$SEEDUSER/rutorrent
 			ansible-playbook rutorrent.yml
 			sed -i "s|port_range = 51413-51413|port_range = $PORT-$PORT|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/rtorrent/rtorrent.rc
 			docker restart rtorrent-$SEEDUSER > /dev/null 2>&1
