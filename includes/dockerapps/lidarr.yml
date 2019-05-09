@@ -12,6 +12,7 @@
       - traefik.docker.network=traefik_proxy
     volumes:
       - /home/%USER%:/home/%USER%
+      - /home/%USER%/Medias/%MUSIQUES%:/music
       - /opt/seedbox/docker/%USER%/lidarr/config:/config
     environment:
       - PUID=%UID%

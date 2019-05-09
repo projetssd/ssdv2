@@ -15,7 +15,8 @@
       - TZ=%TIMEZONE%
     volumes:
       - /opt/seedbox/docker/%USER%/subsonic/log:/subsonic
-      - /opt/seedbox/docker/%USER%/subsonic/music:/music
+      - /home/%USER%:/home/%USER%
+      - /home/%USER%/Medias/%MUSIQUES%:/music
       - /opt/seedbox/docker/%USER%/subsonic/podcast:/podcast
       - /opt/seedbox/docker/%USER%/subsonic/playlists:/playlists
     networks:

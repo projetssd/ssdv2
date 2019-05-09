@@ -14,6 +14,8 @@
     volumes:
       - /home/%USER%:/home/%USER%
       - /opt/seedbox/docker/%USER%/medusa/config:/config
+      - /home/%USER%/Medias/%SERIES%:/tv/Series
+      - /home/%USER%/Medias/%ANIMES%:/tv/Animes
     environment:
       - TZ=%TIMEZONE%
       - UID=%UID%

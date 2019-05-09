@@ -17,6 +17,7 @@
     volumes:
       - /opt/seedbox/docker/%USER%/radarr/config:/config
       - /home/%USER%:/home/%USER%
+      - /home/%USER%/Medias/%FILMS%:/movies
     networks:
       - proxy
 #ENDradarr#

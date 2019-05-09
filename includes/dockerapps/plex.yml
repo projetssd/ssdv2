@@ -22,6 +22,7 @@
       disable: true
     volumes:
       - /home/%USER%:/home/%USER%
+      - /home/%USER%/Medias:/data
       - /opt/seedbox/docker/%USER%/plex/config:/config
       - /dev/shm:/transcode
     networks:

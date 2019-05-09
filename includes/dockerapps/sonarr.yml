@@ -17,6 +17,8 @@
     volumes:
       - /opt/seedbox/docker/%USER%/sonarr/config:/config
       - /home/%USER%:/home/%USER%
+      - /home/%USER%/Medias/%SERIES%:/tv/Series
+      - /home/%USER%/Medias/%ANIMES%:/tv/Animes
     networks:
       - proxy
 #ENDsonarr#
