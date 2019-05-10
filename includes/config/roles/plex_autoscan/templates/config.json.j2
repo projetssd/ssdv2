@@ -29,18 +29,18 @@
    "PLEX_LOCAL_URL":"https://lastharo.pw",
    "PLEX_SCANNER":"/usr/lib/plexmediaserver/Plex\\ Media\\ Scanner",
    "PLEX_SECTION_PATH_MAPPINGS":{
-      "1":[
-         "/%FILMS%/"
-      ],
-      "2":[
-         "/%SERIES%/"
-      ],
-      "4":[
-         "/%ANIMES%/"
-      ],
-      "3":[
-         "/%MUSIC%/"
-      ]
+    "%ID_FILMS%": [
+      "/%FILMS%/"
+    ],
+    "%ID_SERIES%": [
+      "/%SERIES%/"
+    ],
+    "%ID_ANIMES%": [
+      "/%ANIMES%/"
+    ],
+    "%ID_MUSIC%": [
+      "/%MUSIC%/"
+    ]
    },
    "PLEX_SUPPORT_DIR":"/config/Library/Application\\ Support",
    "PLEX_TOKEN":"%TOKEN%",
@@ -84,19 +84,19 @@
    "SERVER_PATH_MAPPINGS":{
       "/data/%FILMS%/": [
           "/movies/",
-          "/data/Media/%FILMS%/"
+          "/home/%SEEDUSER%/Medias/%FILMS%/"
       ],
       "/data/%SERIES%/": [
           "/tv/%SERIES%/",
-          "/data/Media/%SERIES%/"
+          "/home/%SEEDUSER%/Medias/%SERIES%/"
       ],
       "/data/%MUSIC%/": [
           "/music/",
-          "/data/Media/%MUSIC%/"
+          "/home/%SEEDUSER%/Medias/MUSIC%/"
       ],
       "/data/%ANIMES%/": [
           "/tv/%ANIMES%/",
-          "/data/Media/%ANIMES%/"
+          "/home/%SEEDUSER%/Medias/%ANIMES%/"
       ]
    },
    "SERVER_PORT":3468,

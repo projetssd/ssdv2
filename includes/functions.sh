@@ -71,11 +71,32 @@ function plex_autoscan() {
 			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/plex_autoscan.service.j2
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/plex_autoscan.service.j2
 
-			
 			cd /opt/seedbox/docker/$SEEDUSER/plex_autoscan/tasks
 			ansible-playbook main.yml
-			rm -rf /opt/seedbox/docker/$SEEDUSER/plex_autoscan
+			/home/$SEEDUSER/scripts/plex_autoscan/scan.py sections > /dev/null 2>&1
+			/home/$SEEDUSER/scripts/plex_autoscan/scan.py sections > /home/$SEEDUSER/scripts/plex_autoscan/plex.log
+			sleep 5
+			for i in `seq 1 50`;
+			do
+   				var=$(grep "$i: " /home/$SEEDUSER/scripts/plex_autoscan/plex.log | cut -d: -f2 | cut -d ' ' -f2-3)
+   				if [ -n "$var" ]
+   				then
+     				echo "$i" "$var"
+   				fi 
+			done > /home/$SEEDUSER/scripts/plex_autoscan/categories.log
+			cd /home/$SEEDUSER/scripts/plex_autoscan
+			ID_FILMS=$(grep -E 'Films' categories.log | cut -d: -f1 | cut -d ' ' -f1)
+			ID_SERIES=$(grep -E 'Series' categories.log | cut -d: -f1 | cut -d ' ' -f1)
+			ID_ANIMES=$(grep -E 'Animes' categories.log | cut -d: -f1 | cut -d ' ' -f1)
+			ID_MUSIC=$(grep -E 'Musiques' categories.log | cut -d: -f1 | cut -d ' ' -f1)
 
+			if [[ -f "$SCANPORTPATH" ]]; then
+				declare -i PORT=$(cat $SCANPORTPATH | tail -1)
+			else
+				declare -i PORT=3470
+			fi
+			
+			## le port ne fonctionne pas a verifier
 			PLEXCANFILE="/home/$SEEDUSER/scripts/plex_autoscan/config/config.json"
 			sed -i "s|%PORT%|$PORT|g" $PLEXCANFILE
 			sed -i "s|%FILMS%|$FILMS|g" $PLEXCANFILE
@@ -86,7 +107,8 @@ function plex_autoscan() {
 			sed -i "s|%ID_SERIES%|$ID_SERIES|g" $PLEXCANFILE
 			sed -i "s|%ID_ANIMES%|$ID_ANIMES|g" $PLEXCANFILE
 			sed -i "s|%ID_MUSIC%|$ID_MUSIC|g" $PLEXCANFILE
-			systemctl restart plex_autoscan.service
+			#systemctl restart plex_autoscan.service
+			rm -rf /opt/seedbox/docker/$SEEDUSER/plex_autoscan
 			checking_errors $?
 }
 
