@@ -37,7 +37,7 @@
       when: plex_autoscan_service.stat.exists
 
     - name: Create plex_autoscan directories
-      file: "path={{ item }} state=directory mode=0775 owner=%SEEDUSER% group=%GRPID% recurse=yes"
+      file: "path={{ item }} state=directory mode=0775 owner=%USERID% group=%GRPID% recurse=yes"
       with_items:
         - /home/%SEEDUSER%/scripts/plex_autoscan
 
@@ -63,9 +63,13 @@
     - name: Do following tasks when config does not exist
       block:
 
+      - name: "Generate 32 character SERVER_PASS"
+        shell: "pwgen 32 1"
+        register: plex_autoscan_pass
+
       - name: Import default config
         template:
-          src: /opt/seedbox/docker/toto/plex_autoscan/templates/config.json.j2
+          src: /opt/seedbox/docker/%SEEDUSER%/plex_autoscan/templates/config.json.j2
           dest: /home/%SEEDUSER%/scripts/plex_autoscan/config/config.json
           owner: "%USERID%"
           group: "%GRPID%"

@@ -34,8 +34,9 @@ function check_domain() {
 }
 
 function plex_dupefinder() {
-			echo -e "${CCYAN}### PLEX_DUPEFINDER ###${NC}"
 			#configuration plex_dupefinder avec ansible
+			echo -e "${BLUE}### PLEX_DUPEFINDER ###${NC}"
+			echo -e " ${BWHITE}* Installation plex_dupefinder${NC}"
 			cp -r "$BASEDIR/includes/config/roles/plex_dupefinder" "/opt/seedbox/docker/$SEEDUSER/plex_dupefinder"
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/tasks/main.yml
 			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/tasks/main.yml
@@ -48,11 +49,13 @@ function plex_dupefinder() {
 			cd /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/tasks
 			ansible-playbook main.yml
 			rm -rf /opt/seedbox/docker/$SEEDUSER/plex_dupefinder
+			checking_errors $?
 }
 
 function plex_autoscan() {
 			#configuration plex_autoscan avec ansible
-			echo -e "${CCYAN}### PLEX_AUTOSCAN ###${NC}"
+			echo -e "${BLUE}### PLEX_AUTOSCAN ###${NC}"
+			echo -e " ${BWHITE}* Installation plex_autoscan${NC}"
 			echo ""
 			. /home/$SEEDUSER/scripts/plex_token.sh
 			cp -r "$BASEDIR/includes/config/roles/plex_autoscan" "/opt/seedbox/docker/$SEEDUSER/plex_autoscan"
@@ -71,8 +74,55 @@ function plex_autoscan() {
 			
 			cd /opt/seedbox/docker/$SEEDUSER/plex_autoscan/tasks
 			ansible-playbook main.yml
-			# rm -rf /opt/seedbox/docker/$SEEDUSER/plex_autoscan
+			rm -rf /opt/seedbox/docker/$SEEDUSER/plex_autoscan
+
+			PLEXCANFILE="/home/$SEEDUSER/scripts/plex_autoscan/config/config.json"
+			sed -i "s|%PORT%|$PORT|g" $PLEXCANFILE
+			sed -i "s|%FILMS%|$FILMS|g" $PLEXCANFILE
+			sed -i "s|%SERIES%|$SERIES|g" $PLEXCANFILE
+			sed -i "s|%MUSIC%|$MUSIC|g" $PLEXCANFILE
+			sed -i "s|%ANIMES%|$ANIMES|g" $PLEXCANFILE
+			sed -i "s|%ID_FILMS%|$ID_FILMS|g" $PLEXCANFILE
+			sed -i "s|%ID_SERIES%|$ID_SERIES|g" $PLEXCANFILE
+			sed -i "s|%ID_ANIMES%|$ID_ANIMES|g" $PLEXCANFILE
+			sed -i "s|%ID_MUSIC%|$ID_MUSIC|g" $PLEXCANFILE
+			systemctl restart plex_autoscan.service
+			checking_errors $?
 }
+
+function cloudplow() {
+			#configuration plex_autoscan avec ansible
+			echo -e "${BLUE}### CLOUDPLOW ###${NC}"
+			echo -e " ${BWHITE}* Installation cloudplow${NC}"
+
+			## Récupération des variables
+			SEEDGROUP=$(cat $GROUPFILE)
+			REMOTE=$(grep -iC 2 "token" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
+			REMOTEPLEX=$(grep -iC 2 "/mnt/plexdrive" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
+			REMOTECRYPT=$(grep -v -e $REMOTEPLEX -e $REMOTE /root/.config/rclone/rclone.conf | grep "\[" | sed "s/\[//g" | sed "s/\]//g")
+			echo ""
+			cp -r "$BASEDIR/includes/config/roles/cloudplow" "/opt/seedbox/docker/$SEEDUSER/cloudplow"
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/tasks/main.yml
+			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/tasks/main.yml
+			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/tasks/main.yml
+
+			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/config.json.j2
+			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/config.json.j2
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/config.json.j2
+			sed -i "s|%REMOTECRYPT%|$REMOTECRYPT|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/config.json.j2
+			sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/config.json.j2
+			sed -i "s|%TOKEN%|$X_PLEX_TOKEN|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/config.json.j2
+
+			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/cloudplow.service.j2
+			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/cloudplow.service.j2
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/cloudplow.service.j2
+			
+			cd /opt/seedbox/docker/$SEEDUSER/cloudplow/tasks
+			ansible-playbook main.yml
+			rm -rf /opt/seedbox/docker/$SEEDUSER/cloudplow
+			checking_errors $?
+}
+
 
 
 
@@ -254,19 +304,10 @@ function checking_system() {
 	echo ""
 
 	## installation ansible
-	if [[ "$SYSTEMOS" = "Ubuntu" ]]; then
 	echo -e "${BLUE}### INSTALLATION ANSIBLE ###${NC}"
 	apt-get install software-properties-common > /dev/null 2>&1
 	apt-add-repository --yes --update ppa:ansible/ansible > /dev/null 2>&1
 	apt-get install ansible -y > /dev/null 2>&1
-	else
-	echo -e "${BLUE}### INSTALLATION ANSIBLE ###${NC}"
-	echo "deb http://ppa.launchpad.net/ansible/ansible/ubuntu trusty main" >> /etc/apt/sources.list > /dev/null 2>&1
-	apt update > /dev/null 2>&1
-	apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 93C4A3FD7BB9C367 > /dev/null 2>&1
-	apt-get update > /dev/null 2>&1
-	apt-get install ansible -y > /dev/null 2>&1
-	fi
 
 	# Configuration ansible
  	mkdir -p /etc/ansible/inventories/ 1>/dev/null 2>&1
@@ -594,97 +635,6 @@ function install_docker() {
 	fi
 }
 
-function install_cloudplow() {
-	echo -e "${BLUE}### CLOUDPLOW ###${NC}"
-	echo -e " ${BWHITE}* Installation cloudplow${NC}"
-	CLOUDPLOWFOLDER="/home/$SEEDUSER/scripts"
-	if [[ ! -d $CLOUDPLOWFOLDER ]]; then
-	mkdir -p $CLOUDPLOWFOLDER
-	fi
-	cd $CLOUDPLOWFOLDER
-	git clone https://github.com/l3uddz/cloudplow > /dev/null 2>&1
-	cd $CLOUDPLOWFOLDER/cloudplow
-	python3 -m pip install -r requirements.txt > /dev/null 2>&1
-
-	CLOUDPLOWFILE="$CLOUDPLOWFOLDER/cloudplow/config.json.sample"
-	if [[ -e "$CLOUDPLOWFILE" ]]; then
-	mv $CLOUDPLOWFILE $CLOUDPLOWFOLDER/cloudplow/config.json
-	fi
-
-	## récupération des variables
-	SEEDGROUP=$(cat $GROUPFILE)
-	grep -R "plex" "$INSTALLEDFILE" > /dev/null 2>&1
-	if [[ "$?" == "0" ]]; then
-	docker exec -ti plex-$SEEDUSER grep -E -o "PlexOnlineToken=.{0,22}" /config/Library/Application\ Support/Plex\ Media\ Server/Preferences.xml > /home/$SEEDUSER/token.txt
-	TOKEN=$(grep PlexOnlineToken /home/$SEEDUSER/token.txt | cut -d '=' -f2 | cut -c2-21)
-	fi
-
-	REMOTE=$(grep -iC 2 "token" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
-	REMOTEPLEX=$(grep -iC 2 "/mnt/plexdrive" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
-	REMOTECRYPT=$(grep -v -e $REMOTEPLEX -e $REMOTE /root/.config/rclone/rclone.conf | grep "\[" | sed "s/\[//g" | sed "s/\]//g")
-
-	## intégration des variables dans config.json
-	CLOUDPLOW="/home/$SEEDUSER/scripts/cloudplow/config.json"
-	cat "$BASEDIR/includes/config/cloudplow/config.json" > $CLOUDPLOW
-	sed -i "s|%SEEDUSER%|$SEEDUSER|g" $CLOUDPLOW
-	sed -i "s|%SEEDGROUP%|$SEEDGROUP|g" $CLOUDPLOW
-	grep -R "plex" "$INSTALLEDFILE" > /dev/null 2>&1
-	if [[ "$?" == "0" ]]; then
-		sed -i "s|%TOKEN%|$TOKEN|g" $CLOUDPLOW
-	fi
-	sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" $CLOUDPLOW
-	sed -i "s|%REMOTECRYPT%|$REMOTECRYPT|g" $CLOUDPLOW
-
-	## configuration cloudplow.service
-	cp "$BASEDIR/includes/config/systemd/cloudplow.service" "/etc/systemd/system/cloudplow-$SEEDUSER.service" > /dev/null 2>&1
-	sed -i "s|%SEEDUSER%|$SEEDUSER|g" /etc/systemd/system/cloudplow-$SEEDUSER.service
-	sed -i "s|%SEEDGROUP%|$SEEDGROUP|g" /etc/systemd/system/cloudplow-$SEEDUSER.service
-	systemctl daemon-reload > /dev/null 2>&1
-	systemctl enable cloudplow-$SEEDUSER.service > /dev/null 2>&1
-	systemctl start cloudplow-$SEEDUSER.service > /dev/null 2>&1
-	checking_errors $?
-	grep -R "plex" "$INSTALLEDFILE" > /dev/null 2>&1
-	if [[ "$?" == "0" ]]; then
-	rm /home/$SEEDUSER/token.txt
-	fi
-	echo ""
-}
-
-function install_plex_autoscan() {
-	echo -e "${BLUE}### PLEX_AUTOSCAN ###${NC}"
-	echo -e " ${BWHITE}* Installation plex_autoscan${NC}"
-
-	## install plex_autoscan
-	SEEDGROUP=$(cat $GROUPFILE)
-	git clone https://github.com/l3uddz/plex_autoscan /home/$SEEDUSER/scripts/plex_autoscan > /dev/null 2>&1
-	chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/scripts/plex_autoscan
-	cd /home/$SEEDUSER/scripts/plex_autoscan
-	python -m pip install -r requirements.txt > /dev/null 2>&1
-
-	## configuration plex_autoscan.service
-	cp "$BASEDIR/includes/config/systemd/plex_autoscan.service" "/etc/systemd/system/plex_autoscan-$SEEDUSER.service" > /dev/null 2>&1
-	sed -i "s|%SEEDUSER%|$SEEDUSER|g" /etc/systemd/system/plex_autoscan-$SEEDUSER.service
-	sed -i "s|%SEEDGROUP%|$SEEDGROUP|g" /etc/systemd/system/plex_autoscan-$SEEDUSER.service
-	systemctl daemon-reload > /dev/null 2>&1
-	systemctl enable plex_autoscan-$SEEDUSER.service > /dev/null 2>&1
-	checking_errors $?
-	echo ""
-}
-
-function install_plex_dupefinder() {
-	echo -e "${BLUE}### PLEX_DUPEFINDER ###${NC}"
-	echo -e " ${BWHITE}* Installation plex_dupefinder${NC}"
-
-	## install plex_dupefinder
-	SEEDGROUP=$(cat $GROUPFILE)
-	git clone https://github.com/l3uddz/plex_dupefinder /home/$SEEDUSER/scripts/plex_dupefinder > /dev/null 2>&1
-	chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/scripts/plex_dupefinder
-	cd /home/$SEEDUSER/scripts/plex_dupefinder
-	python3 -m pip install -r requirements.txt > /dev/null 2>&1
-	python3 plexdupes.py > /dev/null 2>&1
-}
-
-
 function define_parameters() {
 	echo -e "${BLUE}### INFORMATIONS UTILISATEURS ###${NC}"
 	USEDOMAIN="y"
@@ -926,15 +876,11 @@ function replace_media_compose() {
 		SERIES=$(grep -E 'Series' $MEDIASPERUSER)
 		ANIMES=$(grep -E 'Animes' $MEDIASPERUSER)
 		MUSIC=$(grep -E 'Musiques' $MEDIASPERUSER)
-		EMISSIONS=$(grep -E 'Emissions' $MEDIASPERUSER)
-		DOCUMENTAIRES=$(grep -E 'Documentaires' $MEDIASPERUSER)
 	else
 		FILMS=$(grep -E 'Films' /tmp/menumedia.txt)
 		SERIES=$(grep -E 'Series' /tmp/menumedia.txt)
 		ANIMES=$(grep -E 'Animes' /tmp/menumedia.txt)
 		MUSIC=$(grep -E 'Musiques' /tmp/menumedia.txt)
-		EMISSIONS=$(grep -E 'Emissions' /tmp/menumedia.txt)
-		DOCUMENTAIRES=$(grep -E 'Documentaires' /tmp/menumedia.txt)
 	fi
 }
 
@@ -1211,10 +1157,6 @@ function plex_sections() {
 					docker exec plex-$SEEDUSER /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section $x --type 2 --location /data/$x --lang fr
 					echo -e "	${BWHITE}* $x ${NC}"
 
-				elif [[ "$x" == "$EMISSIONS" ]]; then
-					docker exec plex-$SEEDUSER /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section $x --type 2 --location /data/$x --lang fr
-					echo -e "	${BWHITE}* $x ${NC}"
-				
 				elif [[ "$x" == "$MUSIC" ]]; then
 					docker exec plex-$SEEDUSER /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section $x --type 8 --location /data/$x --lang fr
 					echo -e "	${BWHITE}* $x ${NC}"
@@ -1258,8 +1200,11 @@ function plex_sections() {
 			echo ""
 
 			## installation plex_dupefinder
-			plex_dupefinder
+			#plex_dupefinder
+			echo ""
 
+			## installation cloudplow
+			#cloudplow
 }
 
 function valid_htpasswd() {
@@ -1313,7 +1258,7 @@ function manage_users() {
 				docker_compose
 				CLOUDPLOWFOLDER="/home/$SEEDUSER/scripts/cloudplow"
 				if [[ ! -d "$CLOUDPLOWFOLDER" ]]; then
-				install_cloudplow
+				cloudplow
 				sed -i "s/\"enabled\"\: true/\"enabled\"\: false/g" /home/$SEEDUSER/scripts/cloudplow/config.json
 				fi
 				resume_seedbox
