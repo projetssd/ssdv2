@@ -33,6 +33,50 @@ function check_domain() {
 		checking_errors $?
 }
 
+function plex_dupefinder() {
+			echo -e "${CCYAN}### PLEX_DUPEFINDER ###${NC}"
+			#configuration plex_dupefinder avec ansible
+			cp -r "$BASEDIR/includes/config/roles/plex_dupefinder" "/opt/seedbox/docker/$SEEDUSER/plex_dupefinder"
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/tasks/main.yml
+			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/tasks/main.yml
+			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/tasks/main.yml
+			sed -i "s|%TOKEN%|$X_PLEX_TOKEN|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/templates/config.json.j2
+			sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/templates/config.json.j2
+			sed -i "s|%FILMS%|$FILMS|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/templates/config.json.j2
+			sed -i "s|%SERIES%|$SERIES|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/templates/config.json.j2
+
+			cd /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/tasks
+			ansible-playbook main.yml
+			rm -rf /opt/seedbox/docker/$SEEDUSER/plex_dupefinder
+}
+
+function plex_autoscan() {
+			#configuration plex_autoscan avec ansible
+			echo -e "${CCYAN}### PLEX_AUTOSCAN ###${NC}"
+			echo ""
+			. /home/$SEEDUSER/scripts/plex_token.sh
+			cp -r "$BASEDIR/includes/config/roles/plex_autoscan" "/opt/seedbox/docker/$SEEDUSER/plex_autoscan"
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/tasks/main.yml
+			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/tasks/main.yml
+			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/tasks/main.yml
+
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/config.json.j2
+			sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/config.json.j2
+			sed -i "s|%TOKEN%|$X_PLEX_TOKEN|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/config.json.j2
+
+			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/plex_autoscan.service.j2
+			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/plex_autoscan.service.j2
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/plex_autoscan.service.j2
+
+			
+			cd /opt/seedbox/docker/$SEEDUSER/plex_autoscan/tasks
+			ansible-playbook main.yml
+			# rm -rf /opt/seedbox/docker/$SEEDUSER/plex_autoscan
+}
+
+
+
+
 function rclone_aide() {
 echo ""
 echo -e "${CCYAN}### MODELE RCLONE.CONF ###${NC}"
@@ -1039,6 +1083,7 @@ do
 			then
 				sed -i "s|%CLAIM%|$CLAIM|g" /home/$SEEDUSER/docker-compose.yml
 			fi
+			plex_sections
 			checking_errors $?
 			echo ""
 			if [[ -e "$PLEXDRIVE" ]]; then
@@ -1190,56 +1235,12 @@ function plex_sections() {
 			decompte 15
 			checking_errors $?
 			echo""
-			install_plex_autoscan
-			mv /home/$SEEDUSER/scripts/plex_autoscan/config/config.json.sample /home/$SEEDUSER/scripts/plex_autoscan/config/config.json
-			sed -i 's/\/var\/lib\/plexmediaserver/\/config/g' /home/$SEEDUSER/scripts/plex_autoscan/config/config.json
-			sed -i 's/"DOCKER_NAME": ""/"DOCKER_NAME": "plex-'$SEEDUSER'"/g' /home/$SEEDUSER/scripts/plex_autoscan/config/config.json
-			sed -i 's/"USE_DOCKER": false/"USE_DOCKER": true/g' /home/$SEEDUSER/scripts/plex_autoscan/config/config.json
-			/home/$SEEDUSER/scripts/plex_autoscan/scan.py sections > /dev/null 2>&1
-			/home/$SEEDUSER/scripts/plex_autoscan/scan.py sections > plex.log
-
-			## Récupération du token de plex
-			echo -e " ${BWHITE}* Récupération du token Plex${NC}"
-			docker exec -ti plex-$SEEDUSER grep -E -o "PlexOnlineToken=.{0,22}" /config/Library/Application\ Support/Plex\ Media\ Server/Preferences.xml > /home/$SEEDUSER/token.txt
-			TOKEN=$(grep PlexOnlineToken /home/$SEEDUSER/token.txt | cut -d '=' -f2 | cut -c2-21)
-			checking_errors $?
-			for i in `seq 1 50`;
-			do
-   				var=$(grep "$i: " plex.log | cut -d: -f2 | cut -d ' ' -f2-3)
-   				if [ -n "$var" ]
-   				then
-     				echo "$i" "$var"
-   				fi 
-			done > categories.log
-			PLEXCANFILE="/home/$SEEDUSER/scripts/plex_autoscan/config/config.json"
-			cat "$BASEDIR/includes/config/plex_autoscan/config.json" > $PLEXCANFILE
-
-			ID_FILMS=$(grep -E 'Films' categories.log | cut -d: -f1 | cut -d ' ' -f1)
-			ID_SERIES=$(grep -E 'Series' categories.log | cut -d: -f1 | cut -d ' ' -f1)
-			ID_ANIMES=$(grep -E 'Animes' categories.log | cut -d: -f1 | cut -d ' ' -f1)
-			ID_MUSIC=$(grep -E 'Musiques' categories.log | cut -d: -f1 | cut -d ' ' -f1)
 
 			if [[ -f "$SCANPORTPATH" ]]; then
 				declare -i PORT=$(cat $SCANPORTPATH | tail -1)
 			else
 				declare -i PORT=3470
 			fi
-
-			sed -i "s|%TOKEN%|$TOKEN|g" $PLEXCANFILE
-			sed -i "s|%PORT%|$PORT|g" $PLEXCANFILE
-			sed -i "s|%FILMS%|$FILMS|g" $PLEXCANFILE
-			sed -i "s|%SERIES%|$SERIES|g" $PLEXCANFILE
-			sed -i "s|%MUSIC%|$MUSIC|g" $PLEXCANFILE
-			sed -i "s|%ANIMES%|$ANIMES|g" $PLEXCANFILE
-			sed -i "s|%ID_FILMS%|$ID_FILMS|g" $PLEXCANFILE
-			sed -i "s|%ID_SERIES%|$ID_SERIES|g" $PLEXCANFILE
-			sed -i "s|%ID_ANIMES%|$ID_ANIMES|g" $PLEXCANFILE
-			sed -i "s|%ID_MUSIC%|$ID_MUSIC|g" $PLEXCANFILE
-			sed -i "s|%SEEDUSER%|$SEEDUSER|g" $PLEXCANFILE
-			echo ""
-
-			## installation plex_dupefinder
-			install_plex_dupefinder
 
 			## récupération nom de domaine
 			for line in $(cat $INSTALLEDFILE);
@@ -1251,31 +1252,14 @@ function plex_sections() {
 					ACCESSDOMAIN=$(grep plex $INSTALLEDFILE | cut -d\- -f3-4)
 				fi
 			done
-			
-			## intégration des variables
-			PLEXDUPEFILE="/home/$SEEDUSER/scripts/plex_dupefinder/config.json"
-			cat "$BASEDIR/includes/config/plex_dupefinder/config.json" > $PLEXDUPEFILE
-			sed -i "s|%ID_FILMS%|$ID_FILMS|g" $PLEXDUPEFILE
-			sed -i "s|%ID_SERIES%|$ID_SERIES|g" $PLEXDUPEFILE
-			sed -i "s|%FILMS%|$FILMS|g" $PLEXDUPEFILE
-			sed -i "s|%SERIES%|$SERIES|g" $PLEXDUPEFILE
-			sed -i "s|%TOKEN%|$TOKEN|g" $PLEXDUPEFILE
-			sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" $PLEXDUPEFILE
 
-			## mise en place d'un cron pour le lancement de plexdupefinder
-			(crontab -l | grep . ; echo "*/1 * * * * python3 /home/$SEEDUSER/scripts/plex_dupefinder/plexdupes.py >> /home/$SEEDUSER/scripts/plex_dupefinder/activity.log") | crontab -
-			service cron restart
-
-			## lancement plex_autoscan
-			# chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/scripts/plex_autoscan
-			systemctl start plex_autoscan-$SEEDUSER.service > /dev/null 2>&1
-			checking_errors $?
-			PORT=$PORT+1
-			echo $PORT >> $SCANPORTPATH
-			chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/scripts
-			rm /home/$SEEDUSER/token.txt
+			## installation plex_dupefinder
+			plex_autoscan
 			echo ""
-			install_cloudplow
+
+			## installation plex_dupefinder
+			plex_dupefinder
+
 }
 
 function valid_htpasswd() {

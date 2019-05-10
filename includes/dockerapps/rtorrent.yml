@@ -14,6 +14,7 @@
       - PUID=%UID%
       - PGID=%GID%
     ports:
+      - 80:80
       - %PORT1%:%PORT1%
       - %PORT%:%PORT%
       - %PORT2%:%PORT2%/udp
