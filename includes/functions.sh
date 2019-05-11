@@ -1064,6 +1064,7 @@ do
 				touch /home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_rutorrent.sh
 				touch /home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_flood.sh
 				PORT=$(grep SERVER_PORT /home/$SEEDUSER/scripts/plex_autoscan/config/config.json | cut -d ':' -f2 | sed 's/, //' | sed 's/ //')
+				IP_DOM=$(grep 'Accepted' /var/log/auth.log | cut -d ' ' -f11 | head -1)
 				PASS=$(grep PASS /home/$SEEDUSER/scripts/plex_autoscan/config/config.json | cut -d ':' -f2 | cut -d '"' -f2)
 				PLEXCANFILE="/home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_rutorrent.sh"
 				PLEXCANFLOODFILE="/home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_flood.sh"
@@ -1093,6 +1094,8 @@ do
 				sed -i -e "s/%PORT%/${PORT}/g" $PLEXCANFILE
 				sed -i -e "s/%SEEDUSER%/${SEEDUSER}/g" $PLEXCANFILE
 				sed -i -e "s/%PASS%/${PASS}/g" $PLEXCANFILE
+				sed -i -e "s/%IP_DOM%/${IP_DOM}/g" $PLEXCANFILE
+
 
 				## config plex_autoscan filebot flood ( à travailler)
 				sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" $PLEXCANFLOODFILE
@@ -1336,7 +1339,7 @@ function manage_users() {
 			echo ""
 			if [[ -e "$PLEXDRIVE" ]]; then
 				echo -e "${BLUE}### SUPPRESSION USER RCLONE/PLEXDRIVE ###${NC}"
-				PLEXAUTOSCAN="/etc/systemd/system/plex_autoscan-$SEEDUSER.service"
+				PLEXAUTOSCAN="/etc/systemd/system/plex_autoscan.service"
 				if [[ -e "$PLEXAUTOSCAN" ]]; then
 					systemctl stop plex_autoscan.service
 					systemctl disable plex_autoscan.service > /dev/null 2>&1
