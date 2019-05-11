@@ -1128,14 +1128,6 @@ do
 			USERID=$(id -u $SEEDUSER)
 			GRPID=$(id -g $SEEDUSER)
 
-			# Port à utiliser
-			if [[ -f "$FILEPORTPATH" ]]; then
-				declare -i PORT=$(cat $FILEPORTPATH | tail -1)
-				PORT=$PORT-1
-			else	
-				declare -i PORT=$FIRSTPORT
-			fi
-
 			# installation du theme de Xataz et suppression du plugin clouflare
 			docker exec rutorrent-$SEEDUSER sh -c "git clone https://github.com/Phlooo/ruTorrent-MaterialDesign.git /app/rutorrent/plugins/theme/themes/MaterialDesign" > /dev/null 2>&1
 			docker exec rutorrent-$SEEDUSER sh -c "rm -rf /app/rutorrent/plugins/_cloudflare" > /dev/null 2>&1
@@ -1520,7 +1512,7 @@ function uninstall_seedbox() {
 	for seeduser in $(cat $USERSFILE)
 	do
 		USERHOMEDIR="/home/$seeduser"
-		PLEXAUTOSCAN="/etc/systemd/system/plex_autoscan-$seeduser.service"
+		PLEXAUTOSCAN="/etc/systemd/system/plex_autoscan.service"
 		echo -e " ${BWHITE}* Suppression users $seeduser...${NC}"
 		if [[ -e "$PLEXDRIVE" ]]; then
 				if [[ -e "$PLEXAUTOSCAN" ]]; then
