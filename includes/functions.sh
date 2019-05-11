@@ -1017,6 +1017,7 @@ function install_services() {
 		PORTPLEX=$PORTPLEX+1
 		FQDN=""
 		FQDNTMP=""
+		set PORT
 	done
 	echo $PORT >> $FILEPORTPATH
 	echo $PORT1 >> $FILEPORTPATH1

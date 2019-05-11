@@ -2,7 +2,6 @@
 #STARTjd2#
   jd2-%USER%:
     container_name: jd2-%USER%
-    build: .
     image: jlesage/jdownloader-2
     restart: unless-stopped
     labels:
