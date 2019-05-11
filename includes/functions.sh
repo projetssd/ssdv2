@@ -9,7 +9,7 @@ nocolor='\033[0m'      # no color
 companyname='\033[1;34mMondedie.fr\033[0m'
 divisionname='\033[1;32mlaster13\033[0m'
 descriptif='\033[1;31mHeimdall - Syncthing - sonerezh - Portainer - Nextcloud - Lidarr\033[0m'
-appli='\033[0;36mPlex - Sonarr - Medusa - Rtorrent - Radarr - Jackett - Pyload - Traefik\033[0m'
+appli='\033[0;36mPlex - Sonarr - Medusa - Rutorrent - Radarr - Jackett - Pyload - Traefik\033[0m'
 
 
 
@@ -57,7 +57,7 @@ function plex_autoscan() {
 			echo -e "${BLUE}### PLEX_AUTOSCAN ###${NC}"
 			echo -e " ${BWHITE}* Installation plex_autoscan${NC}"
 			echo ""
-			. /home/$SEEDUSER/scripts/plex_token.sh
+			. /opt/seedbox-compose/includes/config/roles/plex_autoscan/plex_token.sh
 			cp -r "$BASEDIR/includes/config/roles/plex_autoscan" "/opt/seedbox/docker/$SEEDUSER/plex_autoscan"
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/tasks/main.yml
 			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/tasks/main.yml
@@ -141,7 +141,6 @@ function cloudplow() {
 			cd /opt/seedbox/docker/$SEEDUSER/cloudplow/tasks
 			ansible-playbook main.yml
 			rm -rf /opt/seedbox/docker/$SEEDUSER/cloudplow
-			checking_errors $?
 }
 
 function filebot() {
@@ -1132,8 +1131,8 @@ do
 			fi
 
 			# installation du theme de Xataz et suppression du plugin clouflare
-			docker exec rtorrent-$SEEDUSER sh -c "git clone https://github.com/Phlooo/ruTorrent-MaterialDesign.git /app/rutorrent/plugins/theme/themes/MaterialDesign" > /dev/null 2>&1
-			docker exec rtorrent-$SEEDUSER sh -c "rm -rf /app/rutorrent/plugins/_cloudflare" > /dev/null 2>&1
+			docker exec rutorrent-$SEEDUSER sh -c "git clone https://github.com/Phlooo/ruTorrent-MaterialDesign.git /app/rutorrent/plugins/theme/themes/MaterialDesign" > /dev/null 2>&1
+			docker exec rutorrent-$SEEDUSER sh -c "rm -rf /app/rutorrent/plugins/_cloudflare" > /dev/null 2>&1
 			
 			#configuration rutorrent avec ansible
 			cp "$BASEDIR/includes/config/rutorrent/rutorrent.yml" "/opt/seedbox/docker/$SEEDUSER/rutorrent/rutorrent.yml" > /dev/null 2>&1
@@ -1150,7 +1149,7 @@ do
 			cd /opt/seedbox/docker/$SEEDUSER/rutorrent
 			ansible-playbook rutorrent.yml
 			sed -i "s|port_range = 51413-51413|port_range = $PORT-$PORT|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/rtorrent/rtorrent.rc
-			docker restart rtorrent-$SEEDUSER > /dev/null 2>&1
+			docker restart rutorrent-$SEEDUSER > /dev/null 2>&1
 			unset PORT
 		fi
 echo ""
@@ -1169,6 +1168,7 @@ decompte() {
 }
 
 function plex_sections() {
+			echo ""
 			echo -e "${BLUE}### CREATION DES BIBLIOTHEQUES PLEX ###${NC}"
 			replace_media_compose
 			##compteur
