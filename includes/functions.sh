@@ -1063,12 +1063,12 @@ do
 			if [[ -e "$PLEXDRIVE" ]]; then
 				touch /home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_rutorrent.sh
 				touch /home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_flood.sh
-				PORT=$(grep SERVER_PORT /home/$SEEDUSER/scripts/plex_autoscan/config/config.json | cut -d ':' -f2 | sed 's/, //' | sed 's/ //')
+				##PORT=$(grep SERVER_PORT /home/$SEEDUSER/scripts/plex_autoscan/config/config.json | cut -d ':' -f2 | sed 's/, //' | sed 's/ //')
 				IP_DOM=$(grep 'Accepted' /var/log/auth.log | cut -d ' ' -f11 | head -1)
 				PASS=$(grep PASS /home/$SEEDUSER/scripts/plex_autoscan/config/config.json | cut -d ':' -f2 | cut -d '"' -f2)
 				PLEXCANFILE="/home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_rutorrent.sh"
 				PLEXCANFLOODFILE="/home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_flood.sh"
-
+				IPADDRESS=$(hostname -I | cut -d\  -f1)
 				cat "$BASEDIR/includes/config/roles/plex_autoscan/plex_autoscan_start.sh" > $PLEXCANFILE
 				cat "$BASEDIR/includes/config/roles/plex_autoscan/plex_autoscan_start.sh" > $PLEXCANFLOODFILE
 
@@ -1091,10 +1091,10 @@ do
 				sed -i -e "s/%FILMS%/${FILMS}/g" $PLEXCANFILE
 				sed -i -e "s/%SERIES%/${SERIES}/g" $PLEXCANFILE
 				sed -i -e "s/%MUSIC%/${MUSIC}/g" $PLEXCANFILE
-				sed -i -e "s/%PORT%/${PORT}/g" $PLEXCANFILE
+				#sed -i -e "s/%PORT%/${PORT}/g" $PLEXCANFILE
 				sed -i -e "s/%SEEDUSER%/${SEEDUSER}/g" $PLEXCANFILE
 				sed -i -e "s/%PASS%/${PASS}/g" $PLEXCANFILE
-				sed -i -e "s/%IP_DOM%/${IP_DOM}/g" $PLEXCANFILE
+				sed -i -e "s/%IPADDRESS%/${IPADDRESS}/g" $PLEXCANFILE
 
 
 				## config plex_autoscan filebot flood ( à travailler)
@@ -1103,7 +1103,7 @@ do
 				sed -i -e "s/%FILMS%/${FILMS}/g" $PLEXCANFLOODFILE
 				sed -i -e "s/%SERIES%/${SERIES}/g" $PLEXCANFLOODFILE
 				sed -i -e "s/%MUSIC%/${MUSIC}/g" $PLEXCANFLOODFILE
-				sed -i -e "s/%PORT%/${PORT}/g" $PLEXCANFLOODFILE
+				#sed -i -e "s/%PORT%/${PORT}/g" $PLEXCANFLOODFILE
 			fi
 		fi
 
