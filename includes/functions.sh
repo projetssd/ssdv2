@@ -333,8 +333,9 @@ function checking_system() {
 	echo ""
 
 	## installation ansible
-	echo -e "${BLUE}### INSTALLATION ANSIBLE ###${NC}"
-	apt-get install software-properties-common > /dev/null 2>&1
+	echo -e "${BLUE}### ANSIBLE ###${NC}"
+	echo -e " ${BWHITE}* Installation de Ansible ${NC}"
+	apt-get install software-properties-common -y > /dev/null 2>&1
 	apt-add-repository --yes --update ppa:ansible/ansible > /dev/null 2>&1
 	apt-get install ansible -y > /dev/null 2>&1
 
@@ -361,6 +362,7 @@ function checking_errors() {
 
 function install_filebot() {
 		echo -e "${BLUE}### FILEBOT ###${NC}"
+		echo -e " ${BWHITE}* Installation de filebot !${NC}"
 		cd /tmp
 		wget http://downloads.sourceforge.net/project/filebot/filebot/FileBot_4.7.9/FileBot_4.7.9-portable.tar.xz > /dev/null 2>&1
 		mkdir filebot > /dev/null 2>&1

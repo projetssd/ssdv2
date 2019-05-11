@@ -10,7 +10,7 @@
   gather_facts: True
   tasks:
 
-    - name: Installation des Packages (Environ 2mn)
+    - name: Installation des Packages (Environ 5mn d'attente)
       apt: "name={{item.package}} state=present"
       with_items:
         - { package: "fuse" }
