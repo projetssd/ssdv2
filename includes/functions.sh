@@ -1060,15 +1060,15 @@ do
 			checking_errors $?
 			echo ""
 			if [[ -e "$PLEXDRIVE" ]]; then
-				plex_sections
 				touch /home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_rutorrent.sh
 				touch /home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_flood.sh
 				PORT=$(grep SERVER_PORT /home/$SEEDUSER/scripts/plex_autoscan/config/config.json | cut -d ':' -f2 | sed 's/, //' | sed 's/ //')
 				PLEXCANFILE="/home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_rutorrent.sh"
 				PLEXCANFLOODFILE="/home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_flood.sh"
 
-				cat "$BASEDIR/includes/config/plex_autoscan/plex_autoscan_start.sh" > $PLEXCANFILE
-				cat "$BASEDIR/includes/config/plex_autoscan/plex_autoscan_start.sh" > $PLEXCANFLOODFILE
+				cat "$BASEDIR/includes/config/roles/plex_autoscan/plex_autoscan_start.sh" > $PLEXCANFILE
+				cat "$BASEDIR/includes/config/roles/plex_autoscan/plex_autoscan_start.sh" > $PLEXCANFLOODFILE
+
 				chmod 755 $PLEXCANFILE
 				chmod 755 $PLEXCANFLOODFILE
 
@@ -1335,16 +1335,16 @@ function manage_users() {
 				echo -e "${BLUE}### SUPPRESSION USER RCLONE/PLEXDRIVE ###${NC}"
 				PLEXAUTOSCAN="/etc/systemd/system/plex_autoscan-$SEEDUSER.service"
 				if [[ -e "$PLEXAUTOSCAN" ]]; then
-					systemctl stop plex_autoscan-$SEEDUSER.service
-					systemctl disable plex_autoscan-$SEEDUSER.service > /dev/null 2>&1
-					rm /etc/systemd/system/plex_autoscan-$SEEDUSER.service
+					systemctl stop plex_autoscan.service
+					systemctl disable plex_autoscan.service > /dev/null 2>&1
+					rm /etc/systemd/system/plex_autoscan.service
 				fi
 				systemctl stop rclone-$SEEDUSER.service
 				systemctl disable rclone-$SEEDUSER.service > /dev/null 2>&1
 				rm /etc/systemd/system/rclone-$SEEDUSER.service
-				systemctl stop cloudplow-$SEEDUSER.service
-				systemctl disable cloudplow-$SEEDUSER.service > /dev/null 2>&1
-				rm /etc/systemd/system/cloudplow-$SEEDUSER.service
+				systemctl stop cloudplow.service
+				systemctl disable cloudplow.service > /dev/null 2>&1
+				rm /etc/systemd/system/cloudplow.service
 				systemctl stop unionfs-$SEEDUSER.service
 				systemctl disable unionfs-$SEEDUSER.service > /dev/null 2>&1
 				rm /etc/systemd/system/unionfs-$SEEDUSER.service
@@ -1518,9 +1518,9 @@ function uninstall_seedbox() {
 		echo -e " ${BWHITE}* Suppression users $seeduser...${NC}"
 		if [[ -e "$PLEXDRIVE" ]]; then
 				if [[ -e "$PLEXAUTOSCAN" ]]; then
-					systemctl stop plex_autoscan-$seeduser.service
-					systemctl disable plex_autoscan-$seeduser.service > /dev/null 2>&1
-					rm /etc/systemd/system/plex_autoscan-$seeduser.service
+					systemctl stop plex_autoscan.service
+					systemctl disable plex_autoscan.service > /dev/null 2>&1
+					rm /etc/systemd/system/plex_autoscan.service
 				fi
 			systemctl stop rclone-$seeduser.service
 			systemctl disable rclone-$seeduser.service > /dev/null 2>&1
@@ -1528,9 +1528,9 @@ function uninstall_seedbox() {
 			rm /usr/bin/rclone
 			rm -rf /mnt/rclone
 			rm -rf /root/.config/rclone
-			systemctl stop cloudplow-$seeduser.service
-			systemctl disable cloudplow-$seeduser.service > /dev/null 2>&1
-			rm /etc/systemd/system/cloudplow-$seeduser.service
+			systemctl stop cloudplow.service
+			systemctl disable cloudplow.service > /dev/null 2>&1
+			rm /etc/systemd/system/cloudplow.service
 			service unionfs-$seeduser stop
 			systemctl disable unionfs-$seeduser.service > /dev/null 2>&1
 			rm /etc/systemd/system/unionfs-$seeduser.service

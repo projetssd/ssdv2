@@ -39,7 +39,7 @@ if [ -z "$X_PLEX_TOKEN" ]; then
     cat /tmp/plex_sign_in
     rm -f /tmp/plex_sign_in
     >&2 echo 'Failed to retrieve the X-Plex-Token.'
-    exit 1
+    exit 0
 fi
 rm -f /tmp/plex_sign_in
 
