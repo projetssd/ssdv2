@@ -57,6 +57,7 @@ function plex_autoscan() {
 			echo -e "${BLUE}### PLEX_AUTOSCAN ###${NC}"
 			echo -e " ${BWHITE}* Installation plex_autoscan${NC}"
 			echo ""
+			echo -e " ${GREEN}ATTENTION IMPORTANT - NE PAS FAIRE D'ERREUR - SINON DESINSTALLER ET REINSTALLER${NC}"
 			. /opt/seedbox-compose/includes/config/roles/plex_autoscan/plex_token.sh
 			cp -r "$BASEDIR/includes/config/roles/plex_autoscan" "/opt/seedbox/docker/$SEEDUSER/plex_autoscan"
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/tasks/main.yml
@@ -107,7 +108,7 @@ function plex_autoscan() {
 			sed -i "s|%ID_SERIES%|$ID_SERIES|g" $PLEXCANFILE
 			sed -i "s|%ID_ANIMES%|$ID_ANIMES|g" $PLEXCANFILE
 			sed -i "s|%ID_MUSIC%|$ID_MUSIC|g" $PLEXCANFILE
-			rm -rf /opt/seedbox/docker/$SEEDUSER/plex_autoscan
+			#rm -rf /opt/seedbox/docker/$SEEDUSER/plex_autoscan
 			checking_errors $?
 }
 
@@ -1063,6 +1064,7 @@ do
 				touch /home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_rutorrent.sh
 				touch /home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_flood.sh
 				PORT=$(grep SERVER_PORT /home/$SEEDUSER/scripts/plex_autoscan/config/config.json | cut -d ':' -f2 | sed 's/, //' | sed 's/ //')
+				PASS=$(grep PASS /home/$SEEDUSER/scripts/plex_autoscan/config/config.json | cut -d ':' -f2 | cut -d '"' -f2)
 				PLEXCANFILE="/home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_rutorrent.sh"
 				PLEXCANFLOODFILE="/home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_flood.sh"
 
@@ -1090,6 +1092,7 @@ do
 				sed -i -e "s/%MUSIC%/${MUSIC}/g" $PLEXCANFILE
 				sed -i -e "s/%PORT%/${PORT}/g" $PLEXCANFILE
 				sed -i -e "s/%SEEDUSER%/${SEEDUSER}/g" $PLEXCANFILE
+				sed -i -e "s/%PASS%/${PASS}/g" $PLEXCANFILE
 
 				## config plex_autoscan filebot flood ( à travailler)
 				sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" $PLEXCANFLOODFILE

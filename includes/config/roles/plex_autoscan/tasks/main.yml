@@ -96,7 +96,7 @@
 
     - name: Import plex_autoscan service
       template:
-        src: /opt/seedbox-compose/includes/config/roles/plex_autoscan/templates/plex_autoscan.service.j2
+        src: /opt/seedbox/docker/%SEEDUSER%/plex_autoscan/templates/plex_autoscan.service.j2
         dest: /etc/systemd/system/plex_autoscan.service
         force: yes
       when: not plex_autoscan_service.stat.exists
