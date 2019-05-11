@@ -1128,6 +1128,7 @@ do
 
 			USERID=$(id -u $SEEDUSER)
 			GRPID=$(id -g $SEEDUSER)
+			PORTORRENT=$(grep -B1 udp /home/$SEEDUSER/docker-compose.yml | cut -d ':' -f2 | head -n 1 | tail -n 1)
 
 			# installation du theme de Xataz et suppression du plugin clouflare
 			docker exec rutorrent-$SEEDUSER sh -c "git clone https://github.com/Phlooo/ruTorrent-MaterialDesign.git /app/rutorrent/plugins/theme/themes/MaterialDesign" > /dev/null 2>&1
@@ -1147,7 +1148,7 @@ do
 
 			cd /opt/seedbox/docker/$SEEDUSER/rutorrent
 			ansible-playbook rutorrent.yml
-			sed -i "s|port_range = 51413-51413|port_range = $PORT-$PORT|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/rtorrent/rtorrent.rc
+			sed -i "s|port_range = 51413-51413|port_range = $PORTORRENT-$PORTORRENT|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/rtorrent/rtorrent.rc
 			docker restart rutorrent-$SEEDUSER > /dev/null 2>&1
 			unset PORT
 		fi
