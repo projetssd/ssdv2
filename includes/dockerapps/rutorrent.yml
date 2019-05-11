@@ -1,8 +1,8 @@
 
-#STARTrtorrent#
-  rtorrent-%USER%:
+#STARTrutorrent#
+  rutorrent-%USER%:
     image: linuxserver/rutorrent
-    container_name: rtorrent-%USER%
+    container_name: rutorrent-%USER%
     restart: unless-stopped
     labels:
       - traefik.enable=true
@@ -14,7 +14,6 @@
       - PUID=%UID%
       - PGID=%GID%
     ports:
-      - 80:80
       - %PORT1%:%PORT1%
       - %PORT%:%PORT%
       - %PORT2%:%PORT2%/udp
@@ -25,4 +24,4 @@
       - /home/%USER%:/home/%USER%
     networks:
       - proxy
-#ENDrtorrent#
+#ENDrutorrent#

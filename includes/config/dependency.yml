@@ -10,12 +10,13 @@
   gather_facts: True
   tasks:
 
-    - name: Install Common Packages (Takes Awhile)
+    - name: Installation des Packages (Environ 2mn)
       apt: "name={{item.package}} state=present"
       with_items:
         - { package: "fuse" }
         - { package: "members" }
         - { package: "unionfs-fuse" }
+        - { package: "default-jre" }
         - { package: "update-notifier-common" }
         - { package: "software-properties-common" }
         - { package: "unrar" }
@@ -32,6 +33,7 @@
         - { package: "dirmngr" }
         - { package: "npm" }
         - { package: "zip" }
+        - { package: "libchromaprint-tools" }
         - { package: "apt-transport-https" }
         - { package: "ca-certificates" }
         - { package: "tree" }
@@ -44,6 +46,7 @@
         - { package: "apache2-utils" }
         - { package: "lsof" }
         - { package: "bc" }
+        - { package: "mediainfo" }
         - { package: "pwgen" }
         - { package: "gawk" }
         - { package: "python-lxml" }

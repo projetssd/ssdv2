@@ -4,7 +4,7 @@ Radarr-MoviesAutomation-ForkSonarr
 Watcher-MoviesAutomation
 Sonarr-TVShowsAutomation
 Medusa-TVShowsAutomation
-Rtorrent-TorrentClient
+Rutorrent-TorrentClient
 Flood-TorrentClient
 Jackett-TorrentProviders
 Pyload-DownloadManager

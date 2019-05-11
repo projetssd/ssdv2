@@ -107,7 +107,6 @@ function plex_autoscan() {
 			sed -i "s|%ID_SERIES%|$ID_SERIES|g" $PLEXCANFILE
 			sed -i "s|%ID_ANIMES%|$ID_ANIMES|g" $PLEXCANFILE
 			sed -i "s|%ID_MUSIC%|$ID_MUSIC|g" $PLEXCANFILE
-			#systemctl restart plex_autoscan.service
 			rm -rf /opt/seedbox/docker/$SEEDUSER/plex_autoscan
 			checking_errors $?
 }
@@ -145,9 +144,17 @@ function cloudplow() {
 			checking_errors $?
 }
 
-
-
-
+function filebot() {
+			#configuration filebot avec ansible
+			echo -e "${BLUE}### FILEBOT ###${NC}"
+			echo -e " ${BWHITE}* Installation filebot${NC}"
+			cp -r "$BASEDIR/includes/config/roles/filebot" "/opt/seedbox/docker/$SEEDUSER/test"
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/test/tasks/main.yml
+			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/test/tasks/main.yml
+			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/test/tasks/main.yml
+			cd /opt/seedbox/docker/$SEEDUSER/test/tasks
+			ansible-playbook main.yml
+}
 
 function rclone_aide() {
 echo ""
@@ -375,14 +382,13 @@ function install_filebot() {
 		echo ""
 }
 
-
 function install_fail2ban() {
 		echo -e "${BLUE}### FAIL2BAN ###${NC}"
 		if (whiptail --title "Docker fail2ban" --yesno "Voulez vous installer fail2ban" 7 50) then
 			echo -e " ${BWHITE}* Installation de Fail2ban !${NC}"
 			apt install fail2ban -y > /dev/null 2>&1
 			SSH=$(echo ${SSH_CLIENT##* })
-			IP_DOM=$(grep 'Accepted' /var/log/auth.log | cut -d ' ' -f12 | head -1)
+			IP_DOM=$(grep 'Accepted' /var/log/auth.log | cut -d ' ' -f11 | head -1)
 			cp "$BASEDIR/includes/config/fail2ban/custom.conf" "/etc/fail2ban/jail.d/custom.conf" > /dev/null 2>&1
 			cp "$BASEDIR/includes/config/fail2ban/traefik.conf" "/etc/fail2ban/jail.d/traefik.conf" > /dev/null 2>&1
 			cp "$BASEDIR/includes/config/fail2ban/traefik-auth.conf" "/etc/fail2ban/filter.d/traefik-auth.conf" > /dev/null 2>&1
@@ -1110,7 +1116,7 @@ do
 		echo ""
 		fi
 
-		if [[ "$line" == "rtorrent" ]]; then
+		if [[ "$line" == "rutorrent" ]]; then
 			replace_media_compose
 			echo -e "${BLUE}### CONFIG POST COMPOSE RUTORRENT ###${NC}"
 
@@ -1145,6 +1151,7 @@ do
 			ansible-playbook rutorrent.yml
 			sed -i "s|port_range = 51413-51413|port_range = $PORT-$PORT|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/rtorrent/rtorrent.rc
 			docker restart rtorrent-$SEEDUSER > /dev/null 2>&1
+			unset PORT
 		fi
 echo ""
 done
@@ -1222,11 +1229,11 @@ function plex_sections() {
 			echo ""
 
 			## installation plex_dupefinder
-			#plex_dupefinder
+			plex_dupefinder
 			echo ""
 
 			## installation cloudplow
-			#cloudplow
+			cloudplow
 }
 
 function valid_htpasswd() {
@@ -1283,6 +1290,7 @@ function manage_users() {
 				cloudplow
 				sed -i "s/\"enabled\"\: true/\"enabled\"\: false/g" /home/$SEEDUSER/scripts/cloudplow/config.json
 				fi
+				install_filebot
 				resume_seedbox
 				pause
 				script_plexdrive
