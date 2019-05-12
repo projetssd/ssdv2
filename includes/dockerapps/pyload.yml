@@ -15,8 +15,8 @@
       - UID=%UID%
       - GID=%GID%
     volumes:
-      - /home/%USER%/docker/pyload/download:/opt/pyload/Downloads:rw
-      - /home/%USER%/docker/pyload/config:/opt/pyload/pyload-config:rw
+      - /opt/seedbox/docker/%USER%/pyload/download:/opt/pyload/Downloads:rw
+      - /opt/seedbox/docker/%USER%/pyload/config:/opt/pyload/pyload-config:rw
     networks:
       - proxy
 #ENDpyload#

@@ -1,0 +1,17 @@
+# /etc/systemd/system/plex_autoscan.service
+
+[Unit]
+Description=Plex Autoscan
+After=network-online.target
+
+[Service]
+User=%USERID%
+Group=%GRPID%
+Type=simple
+WorkingDirectory=/home/%SEEDUSER%/scripts/plex_autoscan/
+ExecStart=/home/%SEEDUSER%/scripts/plex_autoscan/scan.py server --loglevel=INFO
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=default.target

@@ -10,11 +10,14 @@
   gather_facts: True
   tasks:
 
-    - name: Installation des Packages, cela peut prendre du temps patientez
+    - name: Installation des Packages (Environ 5mn d'attente)
       apt: "name={{item.package}} state=present"
       with_items:
         - { package: "fuse" }
-        - { package: "fail2ban" }
+        - { package: "members" }
+        - { package: "unionfs-fuse" }
+        - { package: "default-jre" }
+        - { package: "update-notifier-common" }
         - { package: "software-properties-common" }
         - { package: "unrar" }
         - { package: "unzip" }
@@ -22,13 +25,15 @@
         - { package: "glances" }
         - { package: "python3-pip" }
         - { package: "python-passlib" }
-        - { package: "git" }
+        - { package: "zip" }
         - { package: "curl" }
         - { package: "man-db" }
         - { package: "htop" }
         - { package: "openssh-server" }
         - { package: "dirmngr" }
+        - { package: "npm" }
         - { package: "zip" }
+        - { package: "libchromaprint-tools" }
         - { package: "apt-transport-https" }
         - { package: "ca-certificates" }
         - { package: "tree" }
@@ -41,11 +46,51 @@
         - { package: "apache2-utils" }
         - { package: "lsof" }
         - { package: "bc" }
+        - { package: "mediainfo" }
         - { package: "pwgen" }
         - { package: "gawk" }
         - { package: "python-lxml" }
-        - { package: "python3-setuptools" }
-        - { package: "unionfs-fuse" }
+        - { package: "acl" }
+
+      # apt:
+      #   name:
+      #     - fuse
+      #     - nano
+      #     - fail2ban
+      #     - wget
+      #     - lsb-release
+      #     - figlet
+      #     - update-notifier-common
+      #     - software-properties-common
+      #     - unrar
+      #     - unzip
+      #     - glances
+      #     - python-pip
+      #     - python3-pip
+      #     - python-passlib
+      #     - zip
+      #     - curl
+      #     - man-db
+      #     - htop
+      #     - openssh-server
+      #     - dirmngr
+      #     - npm
+      #     - zip
+      #     - apt-transport-https
+      #     - ca-certificates
+      #     - tree
+      #     - ncdu
+      #     - ctop
+      #     - dialog
+      #     - dnsutils
+      #     - mc
+      #     - apache2-utils
+      #     - lsof
+      #     - pwgen
+      #     - gawk
+      #     - python-lxml
+      #     - acl
+      #     - bc
 
     - name: Update pip packages for python3
       pip:

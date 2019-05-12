@@ -1,0 +1,27 @@
+
+#STARTrutorrent#
+  rutorrent-%USER%:
+    image: linuxserver/rutorrent
+    container_name: rutorrent-%USER%
+    restart: unless-stopped
+    labels:
+      - traefik.enable=true
+      - traefik.frontend.rule=%TRAEFIKURL%
+      - traefik.frontend.auth.basic=%VAR%
+      - traefik.port=80
+      - traefik.docker.network=traefik_proxy
+    environment:
+      - PUID=%UID%
+      - PGID=%GID%
+    ports:
+      - %PORT1%:%PORT1%
+      - %PORT%:%PORT%
+      - %PORT2%:%PORT2%/udp
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /opt/seedbox/docker/%USER%/rutorrent/sock:/run/php
+      - /opt/seedbox/docker/%USER%/rutorrent:/config
+      - /home/%USER%:/home/%USER%
+    networks:
+      - proxy
+#ENDrutorrent#

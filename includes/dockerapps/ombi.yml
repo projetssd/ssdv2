@@ -11,7 +11,7 @@
       - traefik.port=3579
       - traefik.docker.network=traefik_proxy
     volumes:
-      - /home/%USER%/docker/ombi/conf:/config:rw
+      - /opt/seedbox/docker/%USER%/ombi/conf:/config:rw
       - /etc/localtime:/etc/localtime:ro
     environment:
       - PUID=%UID%

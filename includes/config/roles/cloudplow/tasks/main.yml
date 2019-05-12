@@ -1,0 +1,95 @@
+#########################################################################
+# Title:         Cloudbox: Cloudplow Role                               #
+# Author(s):     l3uddz, desimaniac                                     #
+# URL:           https://github.com/cloudbox/cloudbox                   #
+# --                                                                    #
+#         Part of the Cloudbox project: https://cloudbox.works          #
+#########################################################################
+#                   GNU General Public License v3.0                     #
+#########################################################################
+---
+
+- hosts: localhost
+  gather_facts: false
+  tasks:
+
+    - name: Check unionfs_service service exists
+      stat:
+        path: "/etc/systemd/system/unionfs_cleaner.service"
+      register: unionfs_cleaner_service
+
+    - name: Check cloudplow service exists
+      stat:
+        path: "/etc/systemd/system/cloudplow.service"
+      register: cloudplow_service
+
+    - name: Stop and disable existing unionfs_cleaner service
+      systemd: state=stopped enabled=no name=unionfs_cleaner
+      when: unionfs_cleaner_service.stat.exists
+
+    - name: Remove unionfs_cleaner.service
+      file: "path=/etc/systemd/system/unionfs_cleaner.service state=absent force=yes"
+      when: unionfs_cleaner_service.stat.exists
+
+    - name: Stop existing cloudplow service
+      systemd: state=stopped name=cloudplow
+      when: cloudplow_service.stat.exists
+
+    - name: Create cloudplow directories
+      file: "path={{ item }} state=directory mode=0775 owner=%USERID% group=%GRPID% recurse=yes"
+      with_items:
+        - /home/%SEEDUSER%/scripts/cloudplow
+
+    - name: Clone cloudplow
+      git:
+        repo: https://github.com/l3uddz/cloudplow/
+        dest: /home/%SEEDUSER%/scripts/cloudplow
+        version: HEAD
+        force: yes
+      become: yes
+      become_user: "%SEEDUSER%"
+
+    - name: Install pip requirements
+      pip:
+        requirements: /home/%SEEDUSER%/scripts/cloudplow/requirements.txt
+        executable: pip3
+
+    - name: Check config exists
+      stat:
+        path: "/home/%SEEDUSER%/scripts/cloudplow/config.json"
+      register: cloudplow_config
+
+    - name: Import default config
+      template:
+        src: /opt/seedbox/docker/%SEEDUSER%/cloudplow/templates/config.json.j2
+        dest: /home/%SEEDUSER%/scripts/cloudplow/config.json
+        owner: "%USERID%"
+        group: "%GRPID%"
+        mode: 0775
+        force: yes
+      when: not cloudplow_config.stat.exists
+
+    - name: Set cloudplow.py as executable
+      file:
+        path: /home/%SEEDUSER%/scripts/cloudplow/cloudplow.py
+        owner: "%USERID%"
+        group: "%GRPID%"
+        mode: a+x
+
+    - name: Set directory permissions
+      file: "path=/home/%SEEDUSER%/scripts/cloudplow state=directory owner=%USERID% group=%GRPID% recurse=yes"
+
+    - name: "Create /usr/local/bin symlink"
+      file:
+        src: "/home/%SEEDUSER%/scripts/cloudplow/cloudplow.py"
+        dest: "/usr/local/bin/cloudplow"
+        state: link
+
+    - name: Import cloudplow service
+      template:
+        src: /opt/seedbox/docker/%SEEDUSER%/cloudplow/templates/cloudplow.service.j2
+        dest: /etc/systemd/system/cloudplow.service
+        force: yes
+
+    - name: Start cloudplow service
+      systemd: state=started name=cloudplow daemon_reload=yes enabled=yes

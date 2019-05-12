@@ -11,11 +11,9 @@
       - traefik.port=8686
       - traefik.docker.network=traefik_proxy
     volumes:
-      - /home/%USER%/Medias/%MUSIC%:/music:rw
-      - /home/%USER%/docker/lidarr/config:/config
-      - /home/%USER%/docker/rtorrent/torrents:/data/torrents
-      - /home/%USER%/docker/sabnzbd/config/Downloads/complete:/config/Downloads/complete
-      - /home/%USER%/docker/flood/downloads:/downloads
+      - /home/%USER%:/home/%USER%
+      - /home/%USER%/Medias/%MUSIQUES%:/music
+      - /opt/seedbox/docker/%USER%/lidarr/config:/config
     environment:
       - PUID=%UID%
       - PGID=%GID%

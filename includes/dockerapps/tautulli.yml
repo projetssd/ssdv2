@@ -15,8 +15,8 @@
       - PGID=%GID%
       - TZ=%TIMEZONE%
     volumes:
-      - /home/%USER%/docker/tautulli/config:/config
-      - /home/%USER%/docker/plex/config/Library/Application Support/Plex Media Server/Logs:/logs:ro
+      - /opt/seedbox/docker/%USER%/tautulli/config:/config
+      - /opt/seedbox/docker/%USER%/plex/config/Library/Application Support/Plex Media Server/Logs:/logs:ro
     networks:
       - proxy
 #ENDtautulli#

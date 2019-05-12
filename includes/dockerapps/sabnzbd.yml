@@ -15,8 +15,8 @@
       - PGID=%GID%
       - TZ=%TIMEZONE%
     volumes:
-      - /home/%USER%/docker/sabnzbd/config:/config
-      - /home/%USER%/docker/sabnzbd/config/Downloads/complete:/config/Downloads/complete
+      - /opt/seedbox/docker/%USER%/sabnzbd/config:/config
+      - /opt/seedbox/docker/%USER%/sabnzbd/config/Downloads/complete:/config/Downloads/complete
     networks:
       - proxy
 #ENDSabnzbd#

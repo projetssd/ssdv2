@@ -16,7 +16,7 @@
       - PGID=%GID%
       - TZ=%TIMEZONE%
     volumes:
-      - /home/%USER%/docker/heimdall/config:/config
+      - /opt/seedbox/docker/%USER%/heimdall/config:/config
     networks:
       - proxy
 #ENDheimdall#

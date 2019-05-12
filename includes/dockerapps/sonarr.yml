@@ -15,11 +15,10 @@
       - PGID=%GID%
       - TZ=%TIMEZONE%
     volumes:
-      - /home/%USER%/docker/sonarr/config:/config
-      - /home/%USER%/docker/rtorrent/torrents:/data/torrents
-      - /home/%USER%/docker/flood/downloads:/downloads
-      - /home/%USER%/docker/sabnzbd/config/Downloads/complete:/config/Downloads/complete
-      - /home/%USER%/Medias:/tv
+      - /opt/seedbox/docker/%USER%/sonarr/config:/config
+      - /home/%USER%:/home/%USER%
+      - /home/%USER%/Medias/%SERIES%:/tv/Series
+      - /home/%USER%/Medias/%ANIMES%:/tv/Animes
     networks:
       - proxy
 #ENDsonarr#

@@ -15,7 +15,7 @@
       - PGID=%GID%
       - TZ=%TIMEZONE%
     volumes:
-      - /home/%USER%/docker/organizr/config:/config
+      - /opt/seedbox/docker/%USER%/organizr/config:/config
     networks:
       - proxy
 #ENDorganizr#

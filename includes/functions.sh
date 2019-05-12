@@ -9,7 +9,7 @@ nocolor='\033[0m'      # no color
 companyname='\033[1;34mMondedie.fr\033[0m'
 divisionname='\033[1;32mlaster13\033[0m'
 descriptif='\033[1;31mHeimdall - Syncthing - sonerezh - Portainer - Nextcloud - Lidarr\033[0m'
-appli='\033[0;36mPlex - Sonarr - Medusa - Rtorrent - Radarr - Jackett - Pyload - Traefik\033[0m'
+appli='\033[0;36mPlex - Sonarr - Medusa - Rutorrent - Radarr - Jackett - Pyload - Traefik\033[0m'
 
 
 
@@ -31,6 +31,130 @@ function check_domain() {
 		echo -e " ${BWHITE}* Checking domain - ping $TESTDOMAIN...${NC}"
 		ping -c 1 $TESTDOMAIN | grep "$IPADDRESS" > /dev/null
 		checking_errors $?
+}
+
+function plex_dupefinder() {
+			#configuration plex_dupefinder avec ansible
+			echo -e "${BLUE}### PLEX_DUPEFINDER ###${NC}"
+			echo -e " ${BWHITE}* Installation plex_dupefinder${NC}"
+			cp -r "$BASEDIR/includes/config/roles/plex_dupefinder" "/opt/seedbox/docker/$SEEDUSER/plex_dupefinder"
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/tasks/main.yml
+			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/tasks/main.yml
+			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/tasks/main.yml
+			sed -i "s|%TOKEN%|$X_PLEX_TOKEN|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/templates/config.json.j2
+			sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/templates/config.json.j2
+			sed -i "s|%FILMS%|$FILMS|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/templates/config.json.j2
+			sed -i "s|%SERIES%|$SERIES|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/templates/config.json.j2
+
+			cd /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/tasks
+			ansible-playbook main.yml
+			rm -rf /opt/seedbox/docker/$SEEDUSER/plex_dupefinder
+			checking_errors $?
+}
+
+function plex_autoscan() {
+			#configuration plex_autoscan avec ansible
+			echo -e "${BLUE}### PLEX_AUTOSCAN ###${NC}"
+			echo -e " ${BWHITE}* Installation plex_autoscan${NC}"
+			echo ""
+			echo -e " ${GREEN}ATTENTION IMPORTANT - NE PAS FAIRE D'ERREUR - SINON DESINSTALLER ET REINSTALLER${NC}"
+			. /opt/seedbox-compose/includes/config/roles/plex_autoscan/plex_token.sh
+			cp -r "$BASEDIR/includes/config/roles/plex_autoscan" "/opt/seedbox/docker/$SEEDUSER/plex_autoscan"
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/tasks/main.yml
+			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/tasks/main.yml
+			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/tasks/main.yml
+
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/config.json.j2
+			sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/config.json.j2
+			sed -i "s|%TOKEN%|$X_PLEX_TOKEN|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/config.json.j2
+			sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/config.json.j2
+
+			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/plex_autoscan.service.j2
+			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/plex_autoscan.service.j2
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/plex_autoscan.service.j2
+
+			cd /opt/seedbox/docker/$SEEDUSER/plex_autoscan/tasks
+			ansible-playbook main.yml
+			/home/$SEEDUSER/scripts/plex_autoscan/scan.py sections > /dev/null 2>&1
+			/home/$SEEDUSER/scripts/plex_autoscan/scan.py sections > /home/$SEEDUSER/scripts/plex_autoscan/plex.log
+			sleep 5
+			for i in `seq 1 50`;
+			do
+   				var=$(grep "$i: " /home/$SEEDUSER/scripts/plex_autoscan/plex.log | cut -d: -f2 | cut -d ' ' -f2-3)
+   				if [ -n "$var" ]
+   				then
+     				echo "$i" "$var"
+   				fi 
+			done > /home/$SEEDUSER/scripts/plex_autoscan/categories.log
+			cd /home/$SEEDUSER/scripts/plex_autoscan
+			ID_FILMS=$(grep -E 'Films' categories.log | cut -d: -f1 | cut -d ' ' -f1)
+			ID_SERIES=$(grep -E 'Series' categories.log | cut -d: -f1 | cut -d ' ' -f1)
+			ID_ANIMES=$(grep -E 'Animes' categories.log | cut -d: -f1 | cut -d ' ' -f1)
+			ID_MUSIC=$(grep -E 'Musiques' categories.log | cut -d: -f1 | cut -d ' ' -f1)
+
+			if [[ -f "$SCANPORTPATH" ]]; then
+				declare -i PORT=$(cat $SCANPORTPATH | tail -1)
+			else
+				declare -i PORT=3470
+			fi
+			
+			## le port ne fonctionne pas a verifier
+			PLEXCANFILE="/home/$SEEDUSER/scripts/plex_autoscan/config/config.json"
+			sed -i "s|%PORT%|$PORT|g" $PLEXCANFILE
+			sed -i "s|%FILMS%|$FILMS|g" $PLEXCANFILE
+			sed -i "s|%SERIES%|$SERIES|g" $PLEXCANFILE
+			sed -i "s|%MUSIC%|$MUSIC|g" $PLEXCANFILE
+			sed -i "s|%ANIMES%|$ANIMES|g" $PLEXCANFILE
+			sed -i "s|%ID_FILMS%|$ID_FILMS|g" $PLEXCANFILE
+			sed -i "s|%ID_SERIES%|$ID_SERIES|g" $PLEXCANFILE
+			sed -i "s|%ID_ANIMES%|$ID_ANIMES|g" $PLEXCANFILE
+			sed -i "s|%ID_MUSIC%|$ID_MUSIC|g" $PLEXCANFILE
+			#rm -rf /opt/seedbox/docker/$SEEDUSER/plex_autoscan
+			checking_errors $?
+}
+
+function cloudplow() {
+			#configuration plex_autoscan avec ansible
+			echo -e "${BLUE}### CLOUDPLOW ###${NC}"
+			echo -e " ${BWHITE}* Installation cloudplow${NC}"
+
+			## Récupération des variables
+			SEEDGROUP=$(cat $GROUPFILE)
+			REMOTE=$(grep -iC 2 "token" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
+			REMOTEPLEX=$(grep -iC 2 "/mnt/plexdrive" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
+			REMOTECRYPT=$(grep -v -e $REMOTEPLEX -e $REMOTE /root/.config/rclone/rclone.conf | grep "\[" | sed "s/\[//g" | sed "s/\]//g")
+			echo ""
+			cp -r "$BASEDIR/includes/config/roles/cloudplow" "/opt/seedbox/docker/$SEEDUSER/cloudplow"
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/tasks/main.yml
+			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/tasks/main.yml
+			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/tasks/main.yml
+
+			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/config.json.j2
+			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/config.json.j2
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/config.json.j2
+			sed -i "s|%REMOTECRYPT%|$REMOTECRYPT|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/config.json.j2
+			sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/config.json.j2
+			sed -i "s|%TOKEN%|$X_PLEX_TOKEN|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/config.json.j2
+
+			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/cloudplow.service.j2
+			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/cloudplow.service.j2
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/cloudplow.service.j2
+			
+			cd /opt/seedbox/docker/$SEEDUSER/cloudplow/tasks
+			ansible-playbook main.yml
+			rm -rf /opt/seedbox/docker/$SEEDUSER/cloudplow
+}
+
+function filebot() {
+			#configuration filebot avec ansible
+			echo -e "${BLUE}### FILEBOT ###${NC}"
+			echo -e " ${BWHITE}* Installation filebot${NC}"
+			cp -r "$BASEDIR/includes/config/roles/filebot" "/opt/seedbox/docker/$SEEDUSER/test"
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/test/tasks/main.yml
+			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/test/tasks/main.yml
+			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/test/tasks/main.yml
+			cd /opt/seedbox/docker/$SEEDUSER/test/tasks
+			ansible-playbook main.yml
 }
 
 function rclone_aide() {
@@ -162,7 +286,7 @@ function conf_dir() {
 function install_base_packages() {
 	echo ""
 	echo -e "${BLUE}### INSTALLATION DES PACKAGES ###${NC}"
-	whiptail --title "Base Package" --msgbox "Seedbox-Compose va maintenant installer les Pré-Requis et vérifier la mise à jour du système" 10 60
+	echo ""
 	echo -e " ${BWHITE}* Installation apache2-utils, unzip, git, curl ...${NC}"
 	ansible-playbook /opt/seedbox-compose/includes/config/dependency.yml
 	checking_errors $?
@@ -172,6 +296,7 @@ function install_base_packages() {
 function checking_system() {
 	echo -e "${BLUE}### VERIFICATION SYSTEME ###${NC}"
 	echo -e " ${BWHITE}* Vérification du système OS${NC}"
+	apt install gawk -y > /dev/null 2>&1
 	TMPSYSTEM=$(gawk -F= '/^NAME/{print $2}' /etc/os-release)
 	TMPCODENAME=$(lsb_release -sc)
 	TMPRELEASE=$(cat /etc/debian_version)
@@ -209,21 +334,29 @@ function checking_system() {
 	echo ""
 
 	## installation ansible
+<<<<<<< HEAD
 	if [[ "$TMPSYSTEM" = "ubuntu" ]]; then
 	echo -e "${BLUE}### INSTALLATION ANSIBLE ###${NC}"
 	apt-get install software-properties-common > /dev/null 2>&1
+=======
+	echo -e "${BLUE}### ANSIBLE ###${NC}"
+	echo -e " ${BWHITE}* Installation de Ansible ${NC}"
+	apt-get install software-properties-common -y > /dev/null 2>&1
+>>>>>>> dev
 	apt-add-repository --yes --update ppa:ansible/ansible > /dev/null 2>&1
-	apt-get install ansible > /dev/null 2>&1
-	else
-	echo -e "${BLUE}### INSTALLATION ANSIBLE ###${NC}"
-	echo "deb http://ppa.launchpad.net/ansible/ansible/ubuntu trusty main" >> /etc/apt/sources.list > /dev/null 2>&1
-	apt update > /dev/null 2>&1
-	apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 93C4A3FD7BB9C367 > /dev/null 2>&1
-	apt-get update > /dev/null 2>&1
-	apt-get install ansible > /dev/null 2>&1
-	fi
+	apt-get install ansible -y > /dev/null 2>&1
+
+	# Configuration ansible
+ 	mkdir -p /etc/ansible/inventories/ 1>/dev/null 2>&1
+  	echo "[local]" > /etc/ansible/inventories/local
+  	echo "127.0.0.1 ansible_connection=local" >> /etc/ansible/inventories/local
+
+  	### Reference: https://docs.ansible.com/ansible/2.4/intro_configuration.html
+  	echo "[defaults]" > /etc/ansible/ansible.cfg
+  	echo "command_warnings = False" >> /etc/ansible/ansible.cfg
+  	echo "callback_whitelist = profile_tasks" >> /etc/ansible/ansible.cfg
+  	echo "inventory = /etc/ansible/inventories/local" >> /etc/ansible/ansible.cfg
 	checking_errors $?
-	echo ""
 }
 
 function checking_errors() {
@@ -234,13 +367,37 @@ function checking_errors() {
 	fi
 }
 
+function install_filebot() {
+		echo -e "${BLUE}### FILEBOT ###${NC}"
+		echo -e " ${BWHITE}* Installation de filebot !${NC}"
+		cd /tmp
+		wget http://downloads.sourceforge.net/project/filebot/filebot/FileBot_4.7.9/FileBot_4.7.9-portable.tar.xz > /dev/null 2>&1
+		mkdir filebot > /dev/null 2>&1
+		tar xvf FileBot_4.7.9-portable.tar.xz -C filebot > /dev/null 2>&1
+		cp -R filebot /opt/seedbox/docker/$SEEDUSER/.filebot > /dev/null 2>&1
+		chmod a+x /opt/seedbox/docker/$SEEDUSER/.filebot/filebot.sh > /dev/null 2>&1
+		chmod a+x /opt/seedbox/docker/$SEEDUSER/.filebot/update-filebot.sh > /dev/null 2>&1
+
+		#configuration filebot
+		cp "$BASEDIR/includes/config/filebot/filebot-process.sh" "/opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh" > /dev/null 2>&1
+		sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh
+
+		## mise en place d'un cron pour le lancement de filebot
+		(crontab -l | grep . ; echo "*/1 * * * * /opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh >> /home/$SEEDUSER/scripts/filebot.log") | crontab -
+		service cron restart
+
+
+		checking_errors $?
+		echo ""
+}
+
 function install_fail2ban() {
 		echo -e "${BLUE}### FAIL2BAN ###${NC}"
 		if (whiptail --title "Docker fail2ban" --yesno "Voulez vous installer fail2ban" 7 50) then
 			echo -e " ${BWHITE}* Installation de Fail2ban !${NC}"
 			apt install fail2ban -y > /dev/null 2>&1
 			SSH=$(echo ${SSH_CLIENT##* })
-			IP_DOM=$(grep 'Accepted' /var/log/auth.log | cut -d ' ' -f12 | head -1)
+			IP_DOM=$(grep 'Accepted' /var/log/auth.log | cut -d ' ' -f11 | head -1)
 			cp "$BASEDIR/includes/config/fail2ban/custom.conf" "/etc/fail2ban/jail.d/custom.conf" > /dev/null 2>&1
 			cp "$BASEDIR/includes/config/fail2ban/traefik.conf" "/etc/fail2ban/jail.d/traefik.conf" > /dev/null 2>&1
 			cp "$BASEDIR/includes/config/fail2ban/traefik-auth.conf" "/etc/fail2ban/filter.d/traefik-auth.conf" > /dev/null 2>&1
@@ -492,8 +649,8 @@ function install_docker() {
 	dpkg-query -l docker > /dev/null 2>&1
   	if [ $? != 0 ]; then
 		echo " * Installation Docker"
-		curl -fsSL https://get.docker.com -o get-docker.sh
-		sh get-docker.sh
+		curl -fsSL https://get.docker.com -o get-docker.sh > /dev/null 2>&1
+		sh get-docker.sh > /dev/null 2>&1
 		if [[ "$?" == "0" ]]; then
 			echo -e "	${GREEN}* Installation Docker réussie${NC}"
 		else
@@ -501,8 +658,8 @@ function install_docker() {
 		fi
 		service docker start > /dev/null 2>&1
 		echo " * Installing Docker-compose"
-		curl -L "https://github.com/docker/compose/releases/download/1.23.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-		chmod +x /usr/local/bin/docker-compose
+		curl -L "https://github.com/docker/compose/releases/download/1.23.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose > /dev/null 2>&1
+		chmod +x /usr/local/bin/docker-compose > /dev/null 2>&1
 		if [[ "$?" == "0" ]]; then
 			echo -e "	${GREEN}* Installation Docker-Compose réussie${NC}"
 		else
@@ -514,97 +671,6 @@ function install_docker() {
 		echo ""
 	fi
 }
-
-function install_cloudplow() {
-	echo -e "${BLUE}### CLOUDPLOW ###${NC}"
-	echo -e " ${BWHITE}* Installation cloudplow${NC}"
-	CLOUDPLOWFOLDER="/home/$SEEDUSER/scripts"
-	if [[ ! -d $CLOUDPLOWFOLDER ]]; then
-	mkdir -p $CLOUDPLOWFOLDER
-	fi
-	cd $CLOUDPLOWFOLDER
-	git clone https://github.com/l3uddz/cloudplow > /dev/null 2>&1
-	cd $CLOUDPLOWFOLDER/cloudplow
-	python3 -m pip install -r requirements.txt > /dev/null 2>&1
-
-	CLOUDPLOWFILE="$CLOUDPLOWFOLDER/cloudplow/config.json.sample"
-	if [[ -e "$CLOUDPLOWFILE" ]]; then
-	mv $CLOUDPLOWFILE $CLOUDPLOWFOLDER/cloudplow/config.json
-	fi
-
-	## récupération des variables
-	SEEDGROUP=$(cat $GROUPFILE)
-	grep -R "plex" "$INSTALLEDFILE" > /dev/null 2>&1
-	if [[ "$?" == "0" ]]; then
-	docker exec -ti plex-$SEEDUSER grep -E -o "PlexOnlineToken=.{0,22}" /config/Library/Application\ Support/Plex\ Media\ Server/Preferences.xml > /home/$SEEDUSER/token.txt
-	TOKEN=$(grep PlexOnlineToken /home/$SEEDUSER/token.txt | cut -d '=' -f2 | cut -c2-21)
-	fi
-
-	REMOTE=$(grep -iC 2 "token" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
-	REMOTEPLEX=$(grep -iC 2 "/mnt/plexdrive" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
-	REMOTECRYPT=$(grep -v -e $REMOTEPLEX -e $REMOTE /root/.config/rclone/rclone.conf | grep "\[" | sed "s/\[//g" | sed "s/\]//g")
-
-	## intégration des variables dans config.json
-	CLOUDPLOW="/home/$SEEDUSER/scripts/cloudplow/config.json"
-	cat "$BASEDIR/includes/config/cloudplow/config.json" > $CLOUDPLOW
-	sed -i "s|%SEEDUSER%|$SEEDUSER|g" $CLOUDPLOW
-	sed -i "s|%SEEDGROUP%|$SEEDGROUP|g" $CLOUDPLOW
-	grep -R "plex" "$INSTALLEDFILE" > /dev/null 2>&1
-	if [[ "$?" == "0" ]]; then
-		sed -i "s|%TOKEN%|$TOKEN|g" $CLOUDPLOW
-	fi
-	sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" $CLOUDPLOW
-	sed -i "s|%REMOTECRYPT%|$REMOTECRYPT|g" $CLOUDPLOW
-
-	## configuration cloudplow.service
-	cp "$BASEDIR/includes/config/systemd/cloudplow.service" "/etc/systemd/system/cloudplow-$SEEDUSER.service" > /dev/null 2>&1
-	sed -i "s|%SEEDUSER%|$SEEDUSER|g" /etc/systemd/system/cloudplow-$SEEDUSER.service
-	sed -i "s|%SEEDGROUP%|$SEEDGROUP|g" /etc/systemd/system/cloudplow-$SEEDUSER.service
-	systemctl daemon-reload > /dev/null 2>&1
-	systemctl enable cloudplow-$SEEDUSER.service > /dev/null 2>&1
-	systemctl start cloudplow-$SEEDUSER.service > /dev/null 2>&1
-	checking_errors $?
-	grep -R "plex" "$INSTALLEDFILE" > /dev/null 2>&1
-	if [[ "$?" == "0" ]]; then
-	rm /home/$SEEDUSER/token.txt
-	fi
-	echo ""
-}
-
-function install_plex_autoscan() {
-	echo -e "${BLUE}### PLEX_AUTOSCAN ###${NC}"
-	echo -e " ${BWHITE}* Installation plex_autoscan${NC}"
-
-	## install plex_autoscan
-	SEEDGROUP=$(cat $GROUPFILE)
-	git clone https://github.com/l3uddz/plex_autoscan /home/$SEEDUSER/scripts/plex_autoscan > /dev/null 2>&1
-	chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/scripts/plex_autoscan
-	cd /home/$SEEDUSER/scripts/plex_autoscan
-	python -m pip install -r requirements.txt > /dev/null 2>&1
-
-	## configuration plex_autoscan.service
-	cp "$BASEDIR/includes/config/systemd/plex_autoscan.service" "/etc/systemd/system/plex_autoscan-$SEEDUSER.service" > /dev/null 2>&1
-	sed -i "s|%SEEDUSER%|$SEEDUSER|g" /etc/systemd/system/plex_autoscan-$SEEDUSER.service
-	sed -i "s|%SEEDGROUP%|$SEEDGROUP|g" /etc/systemd/system/plex_autoscan-$SEEDUSER.service
-	systemctl daemon-reload > /dev/null 2>&1
-	systemctl enable plex_autoscan-$SEEDUSER.service > /dev/null 2>&1
-	checking_errors $?
-	echo ""
-}
-
-function install_plex_dupefinder() {
-	echo -e "${BLUE}### PLEX_DUPEFINDER ###${NC}"
-	echo -e " ${BWHITE}* Installation plex_dupefinder${NC}"
-
-	## install plex_dupefinder
-	SEEDGROUP=$(cat $GROUPFILE)
-	git clone https://github.com/l3uddz/plex_dupefinder /home/$SEEDUSER/scripts/plex_dupefinder > /dev/null 2>&1
-	chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/scripts/plex_dupefinder
-	cd /home/$SEEDUSER/scripts/plex_dupefinder
-	python3 -m pip install -r requirements.txt > /dev/null 2>&1
-	python3 plexdupes.py > /dev/null 2>&1
-}
-
 
 function define_parameters() {
 	echo -e "${BLUE}### INFORMATIONS UTILISATEURS ###${NC}"
@@ -653,6 +719,7 @@ function create_user() {
 			echo -e " ${YELLOW}* L'utilisateur existe déjà !${NC}"
 			USERID=$(id -u $SEEDUSER)
 			GRPID=$(id -g $SEEDUSER)
+			usermod -a -G docker $SEEDUSER > /dev/null 2>&1
 			echo -e " ${BWHITE}* Ajout de $SEEDUSER in $SEEDGROUP"
 			usermod -a -G $SEEDGROUP $SEEDUSER
 			checking_errors $?
@@ -660,6 +727,7 @@ function create_user() {
 			PASS=$(perl -e 'print crypt($ARGV[0], "password")' $PASSWORD)
 			echo -e " ${BWHITE}* Ajout de $SEEDUSER au système"
 			useradd -M -g $SEEDGROUP -p $PASS -s /bin/bash $SEEDUSER > /dev/null 2>&1
+			usermod -a -G docker $SEEDUSER > /dev/null 2>&1
 			mkdir -p /home/$SEEDUSER
 			chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER
 			chmod 755 /home/$SEEDUSER
@@ -700,11 +768,13 @@ function create_user() {
 		GRPID=$(id -g $SEEDUSER)
 		echo -e " ${BWHITE}* Ajout de $SEEDUSER in $SEEDGROUP"
 		usermod -a -G $SEEDGROUP $SEEDUSER
+		usermod -a -G docker $SEEDUSER > /dev/null 2>&1
 		checking_errors $?
 	else
 		PASS=$(perl -e 'print crypt($ARGV[0], "password")' $PASSWORD)
 		echo -e " ${BWHITE}* Ajout de $SEEDUSER au système"
 		useradd -M -g $SEEDGROUP -p $PASS -s /bin/bash $SEEDUSER > /dev/null 2>&1
+		usermod -a -G docker $SEEDUSER > /dev/null 2>&1
 		mkdir -p /home/$SEEDUSER
 		chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER
 		chmod 755 /home/$SEEDUSER
@@ -778,8 +848,10 @@ function choose_media_folder_classique() {
 	for line in $(cat $MEDIASPERUSER);
 	do
 	line=$(echo $line | sed 's/\(.\)/\U\1/')
-	mkdir -p /home/$SEEDUSER/Medias/$line
-	chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/Medias
+	mkdir -p /home/$SEEDUSER/local/$line
+	mkdir -p /home/$SEEDUSER/filebot
+	chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/filebot
+	chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/local
 	done
 	rm /tmp/menumedia.txt
 	echo ""
@@ -799,6 +871,8 @@ function choose_media_folder_plexdrive() {
 		for line in $(cat $MEDIASPERUSER);
 		do
 		mkdir -p /home/$SEEDUSER/local/$line
+		mkdir -p /home/$SEEDUSER/filebot
+		chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/filebot
 		echo -e "	${GREEN}--> Le dossier ${NC}${YELLOW}$line${NC}${GREEN} a été ajouté avec succès !${NC}"
 		done
 		chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/local
@@ -828,6 +902,8 @@ function choose_media_folder_plexdrive() {
 		do
 		line=$(echo $line | sed 's/\(.\)/\U\1/')
 		mkdir -p /home/$SEEDUSER/local/$line
+		mkdir -p /home/$SEEDUSER/filebot
+		chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/filebot
 		mkdir -p /mnt/rclone/$SEEDUSER/$line 
 		done
 		chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/local
@@ -844,15 +920,11 @@ function replace_media_compose() {
 		SERIES=$(grep -E 'Series' $MEDIASPERUSER)
 		ANIMES=$(grep -E 'Animes' $MEDIASPERUSER)
 		MUSIC=$(grep -E 'Musiques' $MEDIASPERUSER)
-		EMISSIONS=$(grep -E 'Emissions' $MEDIASPERUSER)
-		DOCUMENTAIRES=$(grep -E 'Documentaires' $MEDIASPERUSER)
 	else
 		FILMS=$(grep -E 'Films' /tmp/menumedia.txt)
 		SERIES=$(grep -E 'Series' /tmp/menumedia.txt)
 		ANIMES=$(grep -E 'Animes' /tmp/menumedia.txt)
 		MUSIC=$(grep -E 'Musiques' /tmp/menumedia.txt)
-		EMISSIONS=$(grep -E 'Emissions' /tmp/menumedia.txt)
-		DOCUMENTAIRES=$(grep -E 'Documentaires' /tmp/menumedia.txt)
 	fi
 }
 
@@ -885,11 +957,25 @@ function install_services() {
 	INSTALLEDFILE="/home/$SEEDUSER/resume"
 	touch $INSTALLEDFILE > /dev/null 2>&1
 
-	## port rtorrent
+	## port rutorrent 1
 	if [[ -f "$FILEPORTPATH" ]]; then
 		declare -i PORT=$(cat $FILEPORTPATH | tail -1)
 	else
 		declare -i PORT=$FIRSTPORT
+	fi
+
+	## port rutorrent 2
+	if [[ -f "$FILEPORTPATH1" ]]; then
+		declare -i PORT1=$(cat $FILEPORTPATH1 | tail -1)
+	else
+		declare -i PORT1=$FIRSTPORT1
+	fi
+
+	## port rutorrent 3
+	if [[ -f "$FILEPORTPATH2" ]]; then
+		declare -i PORT2=$(cat $FILEPORTPATH2 | tail -1)
+	else
+		declare -i PORT2=$FIRSTPORT2
 	fi
 
 	## port plex
@@ -913,6 +999,8 @@ function install_services() {
 		sed -i "s|%UID%|$USERID|g" $DOCKERCOMPOSEFILE
 		sed -i "s|%GID%|$GRPID|g" $DOCKERCOMPOSEFILE
 		sed -i "s|%PORT%|$PORT|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%PORT1%|$PORT1|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%PORT2%|$PORT2|g" $DOCKERCOMPOSEFILE
 		sed -i "s|%PORTPLEX%|$PORTPLEX|g" $DOCKERCOMPOSEFILE
 		sed -i "s|%VAR%|$VAR|g" $DOCKERCOMPOSEFILE
 		sed -i "s|%DOMAIN%|$DOMAIN|g" $DOCKERCOMPOSEFILE
@@ -940,11 +1028,16 @@ function install_services() {
 		URI="/"
 	
 		PORT=$PORT+1
+		PORT1=$PORT1+1
+		PORT2=$PORT2+1
 		PORTPLEX=$PORTPLEX+1
 		FQDN=""
 		FQDNTMP=""
+		set PORT
 	done
 	echo $PORT >> $FILEPORTPATH
+	echo $PORT1 >> $FILEPORTPATH1
+	echo $PORT2 >> $FILEPORTPATH2
 	echo $PORTPLEX >> $PLEXPORTPATH
 	echo ""
 }
@@ -981,18 +1074,21 @@ do
 			then
 				sed -i "s|%CLAIM%|$CLAIM|g" /home/$SEEDUSER/docker-compose.yml
 			fi
+			plex_sections
 			checking_errors $?
 			echo ""
 			if [[ -e "$PLEXDRIVE" ]]; then
-				plex_sections
 				touch /home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_rutorrent.sh
 				touch /home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_flood.sh
-				PORT=$(grep SERVER_PORT /home/$SEEDUSER/scripts/plex_autoscan/config/config.json | cut -d ':' -f2 | sed 's/, //' | sed 's/ //')
+				##PORT=$(grep SERVER_PORT /home/$SEEDUSER/scripts/plex_autoscan/config/config.json | cut -d ':' -f2 | sed 's/, //' | sed 's/ //')
+				IP_DOM=$(grep 'Accepted' /var/log/auth.log | cut -d ' ' -f11 | head -1)
+				PASS=$(grep PASS /home/$SEEDUSER/scripts/plex_autoscan/config/config.json | cut -d ':' -f2 | cut -d '"' -f2)
 				PLEXCANFILE="/home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_rutorrent.sh"
 				PLEXCANFLOODFILE="/home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_flood.sh"
+				IPADDRESS=$(hostname -I | cut -d\  -f1)
+				cat "$BASEDIR/includes/config/roles/plex_autoscan/plex_autoscan_start.sh" > $PLEXCANFILE
+				cat "$BASEDIR/includes/config/roles/plex_autoscan/plex_autoscan_start.sh" > $PLEXCANFLOODFILE
 
-				cat "$BASEDIR/includes/config/plex_autoscan/plex_autoscan_start.sh" > $PLEXCANFILE
-				cat "$BASEDIR/includes/config/plex_autoscan/plex_autoscan_start.sh" > $PLEXCANFLOODFILE
 				chmod 755 $PLEXCANFILE
 				chmod 755 $PLEXCANFLOODFILE
 
@@ -1005,31 +1101,26 @@ do
 						ACCESSDOMAIN=$(grep plex $INSTALLEDFILE | cut -d\- -f3-4)
 					fi
 				done
-
+				
+				## config plex_autoscan filebot rutorrent
 				sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" $PLEXCANFILE
 				sed -i -e "s/%ANIMES%/${ANIMES}/g" $PLEXCANFILE
-				sed -i -e "s/data/mnt/g" $PLEXCANFILE
 				sed -i -e "s/%FILMS%/${FILMS}/g" $PLEXCANFILE
 				sed -i -e "s/%SERIES%/${SERIES}/g" $PLEXCANFILE
 				sed -i -e "s/%MUSIC%/${MUSIC}/g" $PLEXCANFILE
-				sed -i -e "s/%PORT%/${PORT}/g" $PLEXCANFILE
+				#sed -i -e "s/%PORT%/${PORT}/g" $PLEXCANFILE
+				sed -i -e "s/%SEEDUSER%/${SEEDUSER}/g" $PLEXCANFILE
+				sed -i -e "s/%PASS%/${PASS}/g" $PLEXCANFILE
+				sed -i -e "s/%IPADDRESS%/${IPADDRESS}/g" $PLEXCANFILE
 
+
+				## config plex_autoscan filebot flood ( à travailler)
 				sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" $PLEXCANFLOODFILE
 				sed -i -e "s/%ANIMES%/${ANIMES}/g" $PLEXCANFLOODFILE
 				sed -i -e "s/%FILMS%/${FILMS}/g" $PLEXCANFLOODFILE
 				sed -i -e "s/%SERIES%/${SERIES}/g" $PLEXCANFLOODFILE
 				sed -i -e "s/%MUSIC%/${MUSIC}/g" $PLEXCANFLOODFILE
-				sed -i -e "s/%PORT%/${PORT}/g" $PLEXCANFLOODFILE
-
-				grep -R "rtorrent" "$INSTALLEDFILE" > /dev/null 2>&1
-				if [[ "$?" == "0" ]]; then
-					docker exec -t rtorrent-$SEEDUSER sed -i 's/\<unsorted=y\>/& "exec=\/scripts\/plex_autoscan\/plex_autoscan_rutorrent.sh"/' /usr/local/bin/postdl
-				fi
-				
-				POSTDL="/home/$SEEDUSER/docker/flood/filebot/postdl"
-				if [[ -e "$POSTDL" ]]; then
-				docker exec -t flood-$SEEDUSER sed -i 's/\<unsorted=y\>/& "exec=\/scripts\/plex_autoscan\/plex_autoscan_flood.sh"/' /usr/local/bin/postdl
-				fi
+				#sed -i -e "s/%PORT%/${PORT}/g" $PLEXCANFLOODFILE
 			fi
 		fi
 
@@ -1047,73 +1138,37 @@ do
 		echo ""
 		fi
 
-		if [[ "$line" == "rtorrent" ]]; then
+		if [[ "$line" == "rutorrent" ]]; then
 			replace_media_compose
-			echo -e "${BLUE}### CONFIG POST COMPOSE FILEBOT RUTORRENT ###${NC}"
-			echo -e " ${BWHITE}* Mise à jour filebot rutorrent...${NC}"
-						
-			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/Movies/${FILMS}/g" /usr/local/bin/postdl
-			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/TV/${SERIES}/g" /usr/local/bin/postdl
-			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/Music/${MUSIC}/g" /usr/local/bin/postdl
-			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/Anime/${ANIMES}/g" /usr/local/bin/postdl
-			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/amc.excludes/\/filebot\/amc.excludes/g" /usr/local/bin/postdl			
-			docker exec -t rtorrent-$SEEDUSER sed -i -e "s/data/mnt/g" /usr/local/bin/postdl
-			docker exec -t rtorrent-$SEEDUSER sed -i '/*)/,/;;/d' /usr/local/bin/postdl
-			checking_errors $?
-			grep -R "plex" "$INSTALLEDFILE" > /dev/null 2>&1
-			if [[ "$?" == "0" ]]; then
-				docker exec -t rtorrent-$SEEDUSER sed -i 's/\<unsorted=y\>/& "exec=\/scripts\/plex_autoscan\/plex_autoscan_rutorrent.sh"/' /usr/local/bin/postdl
-			fi
-			echo ""
-		fi
+			echo -e "${BLUE}### CONFIG POST COMPOSE RUTORRENT ###${NC}"
 
-		if [[ "$line" == "flood" ]]; then
-			replace_media_compose
-			echo -e "${BLUE}### CONFIG POST COMPOSE FILEBOT FLOOD ###${NC}"
-			var="Mise à jour filebot flood, patientez..."
-			decompte 15
+			USERID=$(id -u $SEEDUSER)
+			GRPID=$(id -g $SEEDUSER)
+			PORTORRENT=$(grep -B1 udp /home/$SEEDUSER/docker-compose.yml | cut -d ':' -f2 | head -n 1 | tail -n 1)
 
-			touch /home/$SEEDUSER/docker/flood/filebot/postrm
-			touch /home/$SEEDUSER/docker/flood/filebot/postdl
-
-			POSTRM="/home/$SEEDUSER/docker/flood/filebot/postrm"
-			POSTDL="/home/$SEEDUSER/docker/flood/filebot/postdl"
-
-			cat "$BASEDIR/includes/config/flood/postrm" > $POSTRM
-			cat "$BASEDIR/includes/config/flood/postdl" > $POSTDL
-
-			echo 'system.method.set_key=event.download.finished,filebot,"execute={/usr/local/bin/postdl,$d.get_base_path=,$d.get_name=,$d.get_custom1=}"' >> /home/$SEEDUSER/docker/flood/config/rtorrent/rtorrent.rc
-			echo 'system.method.set_key=event.download.erased,filebot_cleaner,"execute=/usr/local/bin/postrm"' >> /home/$SEEDUSER/docker/flood/config/rtorrent/rtorrent.rc
-
-			FILEBOT_RENAME_METHOD=$(grep FILEBOT_RENAME_METHOD /home/$SEEDUSER/docker-compose.yml | cut -d '=' -f2 | head -n 1)
-			FILEBOT_RENAME_MOVIES=$(grep FILEBOT_RENAME_MOVIES /home/$SEEDUSER/docker-compose.yml | cut -d '=' -f2 | head -n 1)
-			FILEBOT_RENAME_MUSICS=$(grep FILEBOT_RENAME_MUSICS /home/$SEEDUSER/docker-compose.yml | cut -d '=' -f2 | head -n 1)
-			FILEBOT_RENAME_SERIES=$(grep FILEBOT_RENAME_SERIES /home/$SEEDUSER/docker-compose.yml | cut -d '=' -f2 | head -n 1)
-			FILEBOT_RENAME_ANIMES=$(grep FILEBOT_RENAME_ANIMES /home/$SEEDUSER/docker-compose.yml | cut -d '=' -f2 | head -n 1)
-
-    			sed -e 's#<FILEBOT_RENAME_MOVIES>#'"$FILEBOT_RENAME_MOVIES"'#' \
-        		    -e 's#<FILEBOT_RENAME_METHOD>#'"$FILEBOT_RENAME_METHOD"'#' \
-        		    -e 's#<FILEBOT_RENAME_MUSICS>#'"$FILEBOT_RENAME_MUSICS"'#' \
-        		    -e 's#<FILEBOT_RENAME_SERIES>#'"$FILEBOT_RENAME_SERIES"'#' \
-        		    -e 's#<FILEBOT_RENAME_ANIMES>#'"$FILEBOT_RENAME_ANIMES"'#' -i /home/$SEEDUSER/docker/flood/filebot/postdl
-
-			chmod +x /home/$SEEDUSER/docker/flood/filebot/postdl
-			chmod +x /home/$SEEDUSER/docker/flood/filebot/postrm
-
-			sed -i -e "s/Movies/${FILMS}/g" /home/$SEEDUSER/docker/flood/filebot/postdl
-			sed -i -e "s/TV/${SERIES}/g" /home/$SEEDUSER/docker/flood/filebot/postdl
-			sed -i -e "s/Music/${MUSIC}/g" /home/$SEEDUSER/docker/flood/filebot/postdl
-			sed -i -e "s/Animes/${ANIMES}/g" /home/$SEEDUSER/docker/flood/filebot/postdl
-
-			docker exec -i flood-$SEEDUSER chown -R abc:abc filebot
+			# installation du theme de Xataz et suppression du plugin clouflare
+			docker exec rutorrent-$SEEDUSER sh -c "git clone https://github.com/Phlooo/ruTorrent-MaterialDesign.git /app/rutorrent/plugins/theme/themes/MaterialDesign" > /dev/null 2>&1
+			docker exec rutorrent-$SEEDUSER sh -c "rm -rf /app/rutorrent/plugins/_cloudflare" > /dev/null 2>&1
 			
-			grep -R "plex" "$INSTALLEDFILE" > /dev/null 2>&1
-			if [[ "$?" == "0" ]]; then
-				docker exec -t flood-$SEEDUSER sed -i 's/\<unsorted=y\>/& "exec=\/scripts\/plex_autoscan\/plex_autoscan_flood.sh"/' /usr/local/bin/postdl
-			fi
-			checking_errors $?
-			echo ""
+			#configuration rutorrent avec ansible
+			cp "$BASEDIR/includes/config/rutorrent/rutorrent.yml" "/opt/seedbox/docker/$SEEDUSER/rutorrent/rutorrent.yml" > /dev/null 2>&1
+			cp "$BASEDIR/includes/config/rutorrent/_plugins.yml" "/opt/seedbox/docker/$SEEDUSER/rutorrent/_plugins.yml" > /dev/null 2>&1
+
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/rutorrent.yml
+			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/rutorrent.yml
+			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/rutorrent.yml
+
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/_plugins.yml
+			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/_plugins.yml
+			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/_plugins.yml
+
+			cd /opt/seedbox/docker/$SEEDUSER/rutorrent
+			ansible-playbook rutorrent.yml
+			sed -i "s|port_range = 51413-51413|port_range = $PORTORRENT-$PORTORRENT|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/rtorrent/rtorrent.rc
+			docker restart rutorrent-$SEEDUSER > /dev/null 2>&1
+			unset PORT
 		fi
+echo ""
 done
 }
 
@@ -1129,6 +1184,7 @@ decompte() {
 }
 
 function plex_sections() {
+			echo ""
 			echo -e "${BLUE}### CREATION DES BIBLIOTHEQUES PLEX ###${NC}"
 			replace_media_compose
 			##compteur
@@ -1146,10 +1202,6 @@ function plex_sections() {
 					docker exec plex-$SEEDUSER /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section $x --type 2 --location /data/$x --lang fr
 					echo -e "	${BWHITE}* $x ${NC}"
 
-				elif [[ "$x" == "$EMISSIONS" ]]; then
-					docker exec plex-$SEEDUSER /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section $x --type 2 --location /data/$x --lang fr
-					echo -e "	${BWHITE}* $x ${NC}"
-				
 				elif [[ "$x" == "$MUSIC" ]]; then
 					docker exec plex-$SEEDUSER /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section $x --type 8 --location /data/$x --lang fr
 					echo -e "	${BWHITE}* $x ${NC}"
@@ -1170,56 +1222,12 @@ function plex_sections() {
 			decompte 15
 			checking_errors $?
 			echo""
-			install_plex_autoscan
-			mv /home/$SEEDUSER/scripts/plex_autoscan/config/config.json.sample /home/$SEEDUSER/scripts/plex_autoscan/config/config.json
-			sed -i 's/\/var\/lib\/plexmediaserver/\/config/g' /home/$SEEDUSER/scripts/plex_autoscan/config/config.json
-			sed -i 's/"DOCKER_NAME": ""/"DOCKER_NAME": "plex-'$SEEDUSER'"/g' /home/$SEEDUSER/scripts/plex_autoscan/config/config.json
-			sed -i 's/"USE_DOCKER": false/"USE_DOCKER": true/g' /home/$SEEDUSER/scripts/plex_autoscan/config/config.json
-			/home/$SEEDUSER/scripts/plex_autoscan/scan.py sections > /dev/null 2>&1
-			/home/$SEEDUSER/scripts/plex_autoscan/scan.py sections > plex.log
-
-			## Récupération du token de plex
-			echo -e " ${BWHITE}* Récupération du token Plex${NC}"
-			docker exec -ti plex-$SEEDUSER grep -E -o "PlexOnlineToken=.{0,22}" /config/Library/Application\ Support/Plex\ Media\ Server/Preferences.xml > /home/$SEEDUSER/token.txt
-			TOKEN=$(grep PlexOnlineToken /home/$SEEDUSER/token.txt | cut -d '=' -f2 | cut -c2-21)
-			checking_errors $?
-			for i in `seq 1 50`;
-			do
-   				var=$(grep "$i: " plex.log | cut -d: -f2 | cut -d ' ' -f2-3)
-   				if [ -n "$var" ]
-   				then
-     				echo "$i" "$var"
-   				fi 
-			done > categories.log
-			PLEXCANFILE="/home/$SEEDUSER/scripts/plex_autoscan/config/config.json"
-			cat "$BASEDIR/includes/config/plex_autoscan/config.json" > $PLEXCANFILE
-
-			ID_FILMS=$(grep -E 'Films' categories.log | cut -d: -f1 | cut -d ' ' -f1)
-			ID_SERIES=$(grep -E 'Series' categories.log | cut -d: -f1 | cut -d ' ' -f1)
-			ID_ANIMES=$(grep -E 'Animes' categories.log | cut -d: -f1 | cut -d ' ' -f1)
-			ID_MUSIC=$(grep -E 'Musiques' categories.log | cut -d: -f1 | cut -d ' ' -f1)
 
 			if [[ -f "$SCANPORTPATH" ]]; then
 				declare -i PORT=$(cat $SCANPORTPATH | tail -1)
 			else
 				declare -i PORT=3470
 			fi
-
-			sed -i "s|%TOKEN%|$TOKEN|g" $PLEXCANFILE
-			sed -i "s|%PORT%|$PORT|g" $PLEXCANFILE
-			sed -i "s|%FILMS%|$FILMS|g" $PLEXCANFILE
-			sed -i "s|%SERIES%|$SERIES|g" $PLEXCANFILE
-			sed -i "s|%MUSIC%|$MUSIC|g" $PLEXCANFILE
-			sed -i "s|%ANIMES%|$ANIMES|g" $PLEXCANFILE
-			sed -i "s|%ID_FILMS%|$ID_FILMS|g" $PLEXCANFILE
-			sed -i "s|%ID_SERIES%|$ID_SERIES|g" $PLEXCANFILE
-			sed -i "s|%ID_ANIMES%|$ID_ANIMES|g" $PLEXCANFILE
-			sed -i "s|%ID_MUSIC%|$ID_MUSIC|g" $PLEXCANFILE
-			sed -i "s|%SEEDUSER%|$SEEDUSER|g" $PLEXCANFILE
-			echo ""
-
-			## installation plex_dupefinder
-			install_plex_dupefinder
 
 			## récupération nom de domaine
 			for line in $(cat $INSTALLEDFILE);
@@ -1231,30 +1239,17 @@ function plex_sections() {
 					ACCESSDOMAIN=$(grep plex $INSTALLEDFILE | cut -d\- -f3-4)
 				fi
 			done
-			
-			## intégration des variables
-			PLEXDUPEFILE="/home/$SEEDUSER/scripts/plex_dupefinder/config.json"
-			cat "$BASEDIR/includes/config/plex_dupefinder/config.json" > $PLEXDUPEFILE
-			sed -i "s|%ID_FILMS%|$ID_FILMS|g" $PLEXDUPEFILE
-			sed -i "s|%ID_SERIES%|$ID_SERIES|g" $PLEXDUPEFILE
-			sed -i "s|%FILMS%|$FILMS|g" $PLEXDUPEFILE
-			sed -i "s|%SERIES%|$SERIES|g" $PLEXDUPEFILE
-			sed -i "s|%TOKEN%|$TOKEN|g" $PLEXDUPEFILE
-			sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" $PLEXDUPEFILE
 
-			## mise en place d'un cron pour le lancement de plexdupefinder
-			(crontab -l | grep . ; echo "*/1 * * * * python3 /home/$SEEDUSER/scripts/plex_dupefinder/plexdupes.py >> /home/$SEEDUSER/scripts/plex_dupefinder/activity.log") | crontab -
-			
-			## lancement plex_autoscan
-			# chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/scripts/plex_autoscan
-			systemctl start plex_autoscan-$SEEDUSER.service > /dev/null 2>&1
-			checking_errors $?
-			PORT=$PORT+1
-			echo $PORT >> $SCANPORTPATH
-			chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/scripts
-			rm /home/$SEEDUSER/token.txt
+			## installation plex_dupefinder
+			plex_autoscan
 			echo ""
-			install_cloudplow
+
+			## installation plex_dupefinder
+			plex_dupefinder
+			echo ""
+
+			## installation cloudplow
+			cloudplow
 }
 
 function valid_htpasswd() {
@@ -1308,9 +1303,10 @@ function manage_users() {
 				docker_compose
 				CLOUDPLOWFOLDER="/home/$SEEDUSER/scripts/cloudplow"
 				if [[ ! -d "$CLOUDPLOWFOLDER" ]]; then
-				install_cloudplow
+				cloudplow
 				sed -i "s/\"enabled\"\: true/\"enabled\"\: false/g" /home/$SEEDUSER/scripts/cloudplow/config.json
 				fi
+				install_filebot
 				resume_seedbox
 				pause
 				script_plexdrive
@@ -1319,6 +1315,7 @@ function manage_users() {
 				choose_services
 				install_services
 				docker_compose
+				install_filebot
 				resume_seedbox
 				pause
 				script_classique
@@ -1352,18 +1349,18 @@ function manage_users() {
 			echo ""
 			if [[ -e "$PLEXDRIVE" ]]; then
 				echo -e "${BLUE}### SUPPRESSION USER RCLONE/PLEXDRIVE ###${NC}"
-				PLEXAUTOSCAN="/etc/systemd/system/plex_autoscan-$SEEDUSER.service"
+				PLEXAUTOSCAN="/etc/systemd/system/plex_autoscan.service"
 				if [[ -e "$PLEXAUTOSCAN" ]]; then
-					systemctl stop plex_autoscan-$SEEDUSER.service
-					systemctl disable plex_autoscan-$SEEDUSER.service > /dev/null 2>&1
-					rm /etc/systemd/system/plex_autoscan-$SEEDUSER.service
+					systemctl stop plex_autoscan.service
+					systemctl disable plex_autoscan.service > /dev/null 2>&1
+					rm /etc/systemd/system/plex_autoscan.service
 				fi
 				systemctl stop rclone-$SEEDUSER.service
 				systemctl disable rclone-$SEEDUSER.service > /dev/null 2>&1
 				rm /etc/systemd/system/rclone-$SEEDUSER.service
-				systemctl stop cloudplow-$SEEDUSER.service
-				systemctl disable cloudplow-$SEEDUSER.service > /dev/null 2>&1
-				rm /etc/systemd/system/cloudplow-$SEEDUSER.service
+				systemctl stop cloudplow.service
+				systemctl disable cloudplow.service > /dev/null 2>&1
+				rm /etc/systemd/system/cloudplow.service
 				systemctl stop unionfs-$SEEDUSER.service
 				systemctl disable unionfs-$SEEDUSER.service > /dev/null 2>&1
 				rm /etc/systemd/system/unionfs-$SEEDUSER.service
@@ -1372,6 +1369,8 @@ function manage_users() {
 			fi
 		        echo -e "${BLUE}### SUPPRESSION USER ###${NC}"
 			rm -rf /home/$SEEDUSER > /dev/null 2>&1
+			rm -rf /opt/seedbox/docker/$SEEDUSER > /dev/null 2>&1
+			rm /opt/seedbox/media-$SEEDUSER
 			userdel -rf $SEEDUSER > /dev/null 2>&1
 			sed -i "/$SEEDUSER/d" $CONFDIR/users
 			rm $CONFDIR/passwd/.htpasswd-$SEEDUSER
@@ -1462,7 +1461,7 @@ function manage_apps() {
 			docker-compose rm -fs "$APPSELECTED"-"$SEEDUSER"
 			sed -i "/#START"$APPSELECTED"#/,/#END"$APPSELECTED"#/d" /home/$SEEDUSER/docker-compose.yml
 			sed -i "/$APPSELECTED/d" /home/$SEEDUSER/resume
-			rm -rf /home/$SEEDUSER/docker/$APPSELECTED
+			rm -rf /opt/seedbox/docker/$SEEDUSER/$APPSELECTED
 			checking_errors $?
 			echo""
 			echo -e "${BLUE}### $APPSELECTED a été supprimé ###${NC}"
@@ -1531,13 +1530,13 @@ function uninstall_seedbox() {
 	for seeduser in $(cat $USERSFILE)
 	do
 		USERHOMEDIR="/home/$seeduser"
-		PLEXAUTOSCAN="/etc/systemd/system/plex_autoscan-$seeduser.service"
+		PLEXAUTOSCAN="/etc/systemd/system/plex_autoscan.service"
 		echo -e " ${BWHITE}* Suppression users $seeduser...${NC}"
 		if [[ -e "$PLEXDRIVE" ]]; then
 				if [[ -e "$PLEXAUTOSCAN" ]]; then
-					systemctl stop plex_autoscan-$seeduser.service
-					systemctl disable plex_autoscan-$seeduser.service > /dev/null 2>&1
-					rm /etc/systemd/system/plex_autoscan-$seeduser.service
+					systemctl stop plex_autoscan.service
+					systemctl disable plex_autoscan.service > /dev/null 2>&1
+					rm /etc/systemd/system/plex_autoscan.service
 				fi
 			systemctl stop rclone-$seeduser.service
 			systemctl disable rclone-$seeduser.service > /dev/null 2>&1
@@ -1545,9 +1544,9 @@ function uninstall_seedbox() {
 			rm /usr/bin/rclone
 			rm -rf /mnt/rclone
 			rm -rf /root/.config/rclone
-			systemctl stop cloudplow-$seeduser.service
-			systemctl disable cloudplow-$seeduser.service > /dev/null 2>&1
-			rm /etc/systemd/system/cloudplow-$seeduser.service
+			systemctl stop cloudplow.service
+			systemctl disable cloudplow.service > /dev/null 2>&1
+			rm /etc/systemd/system/cloudplow.service
 			service unionfs-$seeduser stop
 			systemctl disable unionfs-$seeduser.service > /dev/null 2>&1
 			rm /etc/systemd/system/unionfs-$seeduser.service

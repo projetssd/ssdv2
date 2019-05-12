@@ -12,20 +12,12 @@
       - traefik.port=3000
       - traefik.docker.network=traefik_proxy
     volumes:
-      - /home/%USER%/Medias:/data/Media
-      - /home/%USER%/docker/flood/config:/config
-      - /home/%USER%/docker/flood/filebot:/usr/local/bin
-      - /home/%USER%/docker/flood/downloads:/downloads/incomplete
-      - /home/%USER%/scripts:/scripts
+      - /home/%USER%:/home/%USER%
+      - /opt/seedbox/docker/%USER%/flood/config:/config
       - /etc/localtime:/etc/localtime
     environment:
       - PUID=%UID%
       - PGID=%GID%
-      - FILEBOT_RENAME_METHOD=copy
-      - FILEBOT_RENAME_MOVIES={n} ({y})/{n} ({y})
-      - FILEBOT_RENAME_SERIES={n}/Saison {s}/{n} - {s00e00} - {t}
-      - FILEBOT_RENAME_ANIMES={n}/{e.pad(3)} - {t}
-      - FILEBOT_RENAME_MUSICS={n}/{fn}
     networks:
       - proxy
 #ENDflood#

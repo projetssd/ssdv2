@@ -13,7 +13,7 @@ echo -e "${CGREEN}   1) Installation Seedbox Classique ${CEND}"
 echo -e "${CGREEN}   2) Installation Seedbox Plexdrive${CEND}"
 echo -e ""
 read -p "Votre choix [1-2]: " -e -i 1 CHOICE
-
+echo ""
 case $CHOICE in
 	1) ## Installation de la seedbox classique
 
@@ -35,6 +35,7 @@ case $CHOICE in
 			choose_services
 			install_services
 			docker_compose
+			install_filebot
 			resume_seedbox
 			pause
 			script_classique
@@ -73,6 +74,7 @@ case $CHOICE in
 				install_cloudplow
 				sed -i "s/\"enabled\"\: true/\"enabled\"\: false/g" /home/$SEEDUSER/scripts/cloudplow/config.json
 			fi
+			install_filebot
 			resume_seedbox
 			pause
 			script_plexdrive
