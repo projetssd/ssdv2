@@ -21,12 +21,12 @@
    "PLEX_DATABASE_PATH":"/opt/seedbox/docker/%SEEDUSER%/plex/config/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db",
    "PLEX_EMPTY_TRASH":true,
    "PLEX_EMPTY_TRASH_CONTROL_FILES":[
-      "/mnt/unionfs/mounted.bin"
+      "/home/corinne/local/mounted.bin"
    ],
    "PLEX_EMPTY_TRASH_MAX_FILES":100,
    "PLEX_EMPTY_TRASH_ZERO_DELETED":false,
    "PLEX_LD_LIBRARY_PATH":"/usr/lib/plexmediaserver/lib",
-   "PLEX_LOCAL_URL":"https://lastharo.pw",
+   "PLEX_LOCAL_URL":"https://%ACCESSDOMAIN%",
    "PLEX_SCANNER":"/usr/lib/plexmediaserver/Plex\\ Media\\ Scanner",
    "PLEX_SECTION_PATH_MAPPINGS":{
     "%ID_FILMS%": [
@@ -57,7 +57,7 @@
    },
    "RUN_COMMAND_BEFORE_SCAN":"",
    "RUN_COMMAND_AFTER_SCAN": "",
-   "SERVER_ALLOW_MANUAL_SCAN":false,
+   "SERVER_ALLOW_MANUAL_SCAN":true,
    "SERVER_FILE_CHECK_DELAY":60,
    "SERVER_MAX_FILE_CHECKS":10,
    "SERVER_FILE_EXIST_PATH_MAPPINGS":{
@@ -104,7 +104,7 @@
       ]
    },
    "SERVER_PORT":3468,
-   "SERVER_SCAN_DELAY":180,
+   "SERVER_SCAN_DELAY":1,
    "SERVER_SCAN_FOLDER_ON_FILE_EXISTS_EXHAUSTION":true,
    "SERVER_SCAN_PRIORITIES":{
     "0": [
@@ -122,5 +122,5 @@
    },
    "SERVER_USE_SQLITE":true,
    "USE_DOCKER":true,
-   "USE_SUDO":true
+   "USE_SUDO":false
 }

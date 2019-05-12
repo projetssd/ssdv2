@@ -1,9 +1,4 @@
 #!/bin/bash
-
-if pidof -o %PPID -x "$0"; then
-echo "$(date "+%d.%m.%Y %T") Already running, exiting."
-exit 1
-fi
 	
 var=$(ls -a /home/%SEEDUSER%/local/%FILMS% | sed -e "/\.$/d" | wc -l)
 var1=$(ls -a /home/%SEEDUSER%/local/%SERIES% | sed -e "/\.$/d" | wc -l)

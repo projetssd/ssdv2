@@ -67,6 +67,7 @@ function plex_autoscan() {
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/config.json.j2
 			sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/config.json.j2
 			sed -i "s|%TOKEN%|$X_PLEX_TOKEN|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/config.json.j2
+			sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/config.json.j2
 
 			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/plex_autoscan.service.j2
 			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/plex_autoscan.service.j2
@@ -712,6 +713,7 @@ function create_user() {
 			echo -e " ${YELLOW}* L'utilisateur existe déjà !${NC}"
 			USERID=$(id -u $SEEDUSER)
 			GRPID=$(id -g $SEEDUSER)
+			usermod -a -G docker $SEEDUSER > /dev/null 2>&1
 			echo -e " ${BWHITE}* Ajout de $SEEDUSER in $SEEDGROUP"
 			usermod -a -G $SEEDGROUP $SEEDUSER
 			checking_errors $?
@@ -719,6 +721,7 @@ function create_user() {
 			PASS=$(perl -e 'print crypt($ARGV[0], "password")' $PASSWORD)
 			echo -e " ${BWHITE}* Ajout de $SEEDUSER au système"
 			useradd -M -g $SEEDGROUP -p $PASS -s /bin/bash $SEEDUSER > /dev/null 2>&1
+			usermod -a -G docker $SEEDUSER > /dev/null 2>&1
 			mkdir -p /home/$SEEDUSER
 			chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER
 			chmod 755 /home/$SEEDUSER
@@ -759,11 +762,13 @@ function create_user() {
 		GRPID=$(id -g $SEEDUSER)
 		echo -e " ${BWHITE}* Ajout de $SEEDUSER in $SEEDGROUP"
 		usermod -a -G $SEEDGROUP $SEEDUSER
+		usermod -a -G docker $SEEDUSER > /dev/null 2>&1
 		checking_errors $?
 	else
 		PASS=$(perl -e 'print crypt($ARGV[0], "password")' $PASSWORD)
 		echo -e " ${BWHITE}* Ajout de $SEEDUSER au système"
 		useradd -M -g $SEEDGROUP -p $PASS -s /bin/bash $SEEDUSER > /dev/null 2>&1
+		usermod -a -G docker $SEEDUSER > /dev/null 2>&1
 		mkdir -p /home/$SEEDUSER
 		chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER
 		chmod 755 /home/$SEEDUSER
