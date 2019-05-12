@@ -334,6 +334,11 @@ function checking_system() {
 	echo ""
 
 	## installation ansible
+	echo -e "${BLUE}### ANSIBLE ###${NC}"
+	echo -e " ${BWHITE}* Installation de Ansible ${NC}"
+	apt-get install software-properties-common -y > /dev/null 2>&1
+	apt-add-repository --yes --update ppa:ansible/ansible > /dev/null 2>&1
+	apt-get install ansible -y > /dev/null 2>&1
 
 	# Configuration ansible
  	mkdir -p /etc/ansible/inventories/ 1>/dev/null 2>&1
