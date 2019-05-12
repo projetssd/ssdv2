@@ -1,3 +1,5 @@
+#!/bin/bash
+
 if pidof -o %PPID -x "$0"; then
 echo "$(date "+%d.%m.%Y %T") Already running, exiting."
 exit 1
