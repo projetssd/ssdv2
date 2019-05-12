@@ -838,7 +838,8 @@ function choose_media_folder_classique() {
 	do
 	line=$(echo $line | sed 's/\(.\)/\U\1/')
 	mkdir -p /home/$SEEDUSER/local/$line
-	mkdir -p /home/$SEEDUSER/local/rutorrent/filebot
+	mkdir -p /home/$SEEDUSER/filebot
+	chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/filebot
 	chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/local
 	done
 	rm /tmp/menumedia.txt
@@ -859,7 +860,8 @@ function choose_media_folder_plexdrive() {
 		for line in $(cat $MEDIASPERUSER);
 		do
 		mkdir -p /home/$SEEDUSER/local/$line
-		mkdir -p /home/$SEEDUSER/local/rutorrent/filebot
+		mkdir -p /home/$SEEDUSER/filebot
+		chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/filebot
 		echo -e "	${GREEN}--> Le dossier ${NC}${YELLOW}$line${NC}${GREEN} a été ajouté avec succès !${NC}"
 		done
 		chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/local
@@ -889,7 +891,8 @@ function choose_media_folder_plexdrive() {
 		do
 		line=$(echo $line | sed 's/\(.\)/\U\1/')
 		mkdir -p /home/$SEEDUSER/local/$line
-		mkdir -p /home/$SEEDUSER/local/rutorrent/filebot
+		mkdir -p /home/$SEEDUSER/filebot
+		chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/filebot
 		mkdir -p /mnt/rclone/$SEEDUSER/$line 
 		done
 		chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/local

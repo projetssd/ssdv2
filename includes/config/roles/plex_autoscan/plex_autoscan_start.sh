@@ -16,7 +16,7 @@ FILES=/home/%SEEDUSER%/local/*/*/*
 for f in $FILES
 do
 echo "$f"
-curl -d "eventType=Manual&filepath=$f" http://%IPADDRESS%:3468/%PASS%
+curl -d "eventType=Manual&filepath=$f" http://0.0.0.0:3468/%PASS%
 done
 					
 # restore $IFS
