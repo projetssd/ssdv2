@@ -21,7 +21,7 @@
    "PLEX_DATABASE_PATH":"/opt/seedbox/docker/%SEEDUSER%/plex/config/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db",
    "PLEX_EMPTY_TRASH":true,
    "PLEX_EMPTY_TRASH_CONTROL_FILES":[
-      "/home/corinne/local/mounted.bin"
+      "/home/%SEEDUSER%/local/mounted.bin"
    ],
    "PLEX_EMPTY_TRASH_MAX_FILES":100,
    "PLEX_EMPTY_TRASH_ZERO_DELETED":false,
@@ -94,8 +94,8 @@
       ],
       "/data/%MUSIC%/": [
           "/music/",
-          "/home/%SEEDUSER%/Medias/MUSIC%/",
-          "/home/%SEEDUSER%/local/MUSIC%/"
+          "/home/%SEEDUSER%/Medias/%MUSIC%/",
+          "/home/%SEEDUSER%/local/%MUSIC%/"
       ],
       "/data/%ANIMES%/": [
           "/tv/%ANIMES%/",
