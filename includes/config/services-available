@@ -3,6 +3,7 @@ Emby-EmbyMediaServer
 Radarr-MoviesAutomation-ForkSonarr
 Watcher-MoviesAutomation
 Sonarr-TVShowsAutomation
+Sonarr3-TVShowsAutomation
 Medusa-TVShowsAutomation
 Rutorrent-TorrentClient
 Flood-TorrentClient
