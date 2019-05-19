@@ -96,6 +96,33 @@ function traktarr() {
 			checking_errors $?
 }
 
+function webtools() {
+			##configuration Webtools avec ansible
+			echo -e "${BLUE}### WEBTOOLS ###${NC}"
+			echo -e " ${BWHITE}* Installation Webtoots${NC}"
+			TMPGROUP=$(cat $GROUPFILE)
+			TABUSERS=()
+			for USERSEED in $(members $TMPGROUP)
+			do
+	        	IDSEEDUSER=$(id -u $USERSEED)
+	        	TABUSERS+=( ${USERSEED//\"} ${IDSEEDUSER//\"} )
+			done
+			## CHOISIR USER
+			SEEDUSER=$(whiptail --title "App Manager" --menu \
+	                		"Merci de sélectionner l'Utilisateur" 12 50 3 \
+	                		"${TABUSERS[@]}"  3>&1 1>&2 2>&3)
+			USERID=$(id -u $SEEDUSER)
+			GRPID=$(id -g $SEEDUSER)
+
+			cp -r "$BASEDIR/includes/config/roles/webtools" "/opt/seedbox/docker/$SEEDUSER/webtools"
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/webtools/tasks/main.yml
+			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/webtools/tasks/main.yml
+			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/webtools/tasks/main.yml
+
+			cd /opt/seedbox/docker/$SEEDUSER/webtools/tasks
+			ansible-playbook main.yml
+}
+
 function processor() {
 			/opt/seedbox-compose/includes/config/processor/processor.sh
 }
@@ -330,8 +357,9 @@ function script_plexdrive() {
 			echo -e "${CCYAN}OUTILS${CEND}"
 			echo -e "${CGREEN}${CEND}"
 			echo -e "${CGREEN}   1) Traktarr${CEND}"
-			echo -e "${CGREEN}   2) Réglage du processeur${CEND}"
-			echo -e "${CGREEN}   3) Retour menu principal${CEND}"
+			echo -e "${CGREEN}   2) Webtools${CEND}"
+			echo -e "${CGREEN}   3) Réglage du processeur${CEND}"
+			echo -e "${CGREEN}   4) Retour menu principal${CEND}"
 			echo -e ""
 			read -p "Votre choix [1-3]: " -e -i 1 OUTILS
 
@@ -343,10 +371,17 @@ function script_plexdrive() {
 			pause
 			script_plexdrive
 			;;
-			2)
-			processor
+			2) ## Installation de traktarr
+			clear
+			echo ""
+			webtools
+			pause
+			script_plexdrive
 			;;
 			3)
+			processor
+			;;
+			4)
 			script_plexdrive
 			;;
 			esac

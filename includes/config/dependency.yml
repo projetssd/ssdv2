@@ -14,6 +14,7 @@
       apt: "name={{item.package}} state=present"
       with_items:
         - { package: "fuse" }
+        - { package: "jq" }
         - { package: "members" }
         - { package: "unionfs-fuse" }
         - { package: "default-jre" }
@@ -101,6 +102,7 @@
           - requests
           - netaddr
           - lxml
+          - docker
         state: latest
         executable: pip3
 
@@ -113,5 +115,6 @@
           - requests
           - netaddr
           - lxml
+          - docker
         state: latest
         executable: pip2
