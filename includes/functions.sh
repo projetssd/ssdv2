@@ -96,6 +96,10 @@ function traktarr() {
 			checking_errors $?
 }
 
+function processor() {
+			/opt/seedbox-compose/includes/config/processor/processor.sh
+}
+
 
 function plex_autoscan() {
 			#configuration plex_autoscan avec ansible
@@ -326,9 +330,10 @@ function script_plexdrive() {
 			echo -e "${CCYAN}OUTILS${CEND}"
 			echo -e "${CGREEN}${CEND}"
 			echo -e "${CGREEN}   1) Traktarr${CEND}"
-			echo -e "${CGREEN}   2) Retour menu principal${CEND}"
+			echo -e "${CGREEN}   2) Réglage du processeur${CEND}"
+			echo -e "${CGREEN}   3) Retour menu principal${CEND}"
 			echo -e ""
-			read -p "Votre choix [1-2]: " -e -i 1 OUTILS
+			read -p "Votre choix [1-3]: " -e -i 1 OUTILS
 
 			case $OUTILS in
 			1) ## Installation de traktarr
@@ -339,6 +344,9 @@ function script_plexdrive() {
 			script_plexdrive
 			;;
 			2)
+			processor
+			;;
+			3)
 			script_plexdrive
 			;;
 			esac
