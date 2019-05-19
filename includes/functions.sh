@@ -52,6 +52,51 @@ function plex_dupefinder() {
 			checking_errors $?
 }
 
+function traktarr() {
+			##configuration traktarr avec ansible
+			echo -e "${BLUE}### TRAKTARR ###${NC}"
+			echo -e " ${BWHITE}* Installation traktarr${NC}"
+			TMPGROUP=$(cat $GROUPFILE)
+			TABUSERS=()
+			for USERSEED in $(members $TMPGROUP)
+			do
+	        	IDSEEDUSER=$(id -u $USERSEED)
+	        	TABUSERS+=( ${USERSEED//\"} ${IDSEEDUSER//\"} )
+			done
+			## CHOISIR USER
+			SEEDUSER=$(whiptail --title "App Manager" --menu \
+	                		"Merci de sélectionner l'Utilisateur" 12 50 3 \
+	                		"${TABUSERS[@]}"  3>&1 1>&2 2>&3)
+			USERID=$(id -u $SEEDUSER)
+			GRPID=$(id -g $SEEDUSER)
+
+			## récupération nom de domaine
+			ACCESSDOMAIN=$(whiptail --title "Votre nom de Domaine" --inputbox \
+			"Merci de taper votre nom de Domaine (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3)
+
+			cp -r "$BASEDIR/includes/config/roles/traktarr" "/opt/seedbox/docker/$SEEDUSER/traktarr"
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/traktarr/tasks/main.yml
+			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/traktarr/tasks/main.yml
+			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/traktarr/tasks/main.yml
+
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/traktarr/templates/config.json.j2
+			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/traktarr/templates/config.json.j2
+			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/traktarr/templates/config.json.j2
+			sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" /opt/seedbox/docker/$SEEDUSER/traktarr/templates/config.json.j2
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/traktarr/templates/config.json.j2
+
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/traktarr/templates/traktarr.service.j2
+			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/traktarr/templates/traktarr.service.j2
+			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/traktarr/templates/traktarr.service.j2
+
+			cd /opt/seedbox/docker/$SEEDUSER/traktarr/tasks
+			ansible-playbook main.yml
+			# rm -rf /opt/seedbox/docker/$SEEDUSER/traktarr
+			service traktarr restart
+			checking_errors $?
+}
+
+
 function plex_autoscan() {
 			#configuration plex_autoscan avec ansible
 			echo -e "${BLUE}### PLEX_AUTOSCAN ###${NC}"
@@ -242,9 +287,10 @@ function script_plexdrive() {
 	echo -e "${CGREEN}   1) Désinstaller la seedbox ${CEND}"
 	echo -e "${CGREEN}   2) Ajout/Supression d'utilisateurs${CEND}"
 	echo -e "${CGREEN}   3) Ajout/Supression d'Applis${CEND}"
+	echo -e "${CGREEN}   4) Outils${CEND}"
 
 	echo -e ""
-	read -p "Votre choix [1-3]: " -e -i 1 PORT_CHOICE
+	read -p "Votre choix [1-4]: " -e -i 1 PORT_CHOICE
 
 	case $PORT_CHOICE in
 		1) ## Installation de la seedbox
@@ -272,6 +318,30 @@ function script_plexdrive() {
 		echo""
 		clear
 			manage_apps
+		;;
+		4)
+			clear
+			logo
+			echo ""
+			echo -e "${CCYAN}OUTILS${CEND}"
+			echo -e "${CGREEN}${CEND}"
+			echo -e "${CGREEN}   1) Traktarr${CEND}"
+			echo -e "${CGREEN}   2) Retour menu principal${CEND}"
+			echo -e ""
+			read -p "Votre choix [1-2]: " -e -i 1 OUTILS
+
+			case $OUTILS in
+			1) ## Installation de traktarr
+			clear
+			echo ""
+			traktarr
+			pause
+			script_plexdrive
+			;;
+			2)
+			script_plexdrive
+			;;
+			esac
 		;;
 	esac
 	fi
@@ -349,6 +419,7 @@ function checking_system() {
   	echo "[defaults]" > /etc/ansible/ansible.cfg
   	echo "command_warnings = False" >> /etc/ansible/ansible.cfg
   	echo "callback_whitelist = profile_tasks" >> /etc/ansible/ansible.cfg
+	echo "deprecation_warnings=False" >> /etc/ansible/ansible.cfg
   	echo "inventory = /etc/ansible/inventories/local" >> /etc/ansible/ansible.cfg
 	checking_errors $?
 }

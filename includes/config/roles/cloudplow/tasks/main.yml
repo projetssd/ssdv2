@@ -77,7 +77,7 @@
         mode: a+x
 
     - name: Set directory permissions
-      file: "path=/home/%SEEDUSER%/scripts/cloudplow state=directory owner=%USERID% group=%GRPID% recurse=yes"
+      file: "path=/home/%SEEDUSER%/scripts/cloudplow state=directory owner=0 group=0 recurse=yes"
 
     - name: "Create /usr/local/bin symlink"
       file:

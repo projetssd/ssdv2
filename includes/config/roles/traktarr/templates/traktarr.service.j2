@@ -1,0 +1,18 @@
+# /etc/systemd/system/traktarr.service
+
+[Unit]
+Description=traktarr
+After=network-online.target docker.service
+
+[Service]
+User=0
+Group=0
+Type=simple
+WorkingDirectory=/home/%SEEDUSER%/scripts/traktarr/
+TimeoutStartSec=900
+ExecStart=/usr/bin/python3 /home/%SEEDUSER%/scripts/traktarr/traktarr.py run
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=default.target
