@@ -957,10 +957,12 @@ function choose_media_folder_classique() {
 	do
 	line=$(echo $line | sed 's/\(.\)/\U\1/')
 	mkdir -p /home/$SEEDUSER/local/$line
+	done
 	mkdir -p /home/$SEEDUSER/filebot
 	chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/filebot
 	chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/local
-	done
+	chmod -R 755 /home/$SEEDUSER/local
+	chmod -R 755 /home/$SEEDUSER/filebot
 	rm /tmp/menumedia.txt
 	echo ""
 }
@@ -979,12 +981,13 @@ function choose_media_folder_plexdrive() {
 		for line in $(cat $MEDIASPERUSER);
 		do
 		mkdir -p /home/$SEEDUSER/local/$line
-		mkdir -p /home/$SEEDUSER/filebot
-		chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/filebot
 		echo -e "	${GREEN}--> Le dossier ${NC}${YELLOW}$line${NC}${GREEN} a été ajouté avec succès !${NC}"
 		done
+		mkdir -p /home/$SEEDUSER/filebot
+		chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/filebot
 		chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/local
 		chmod -R 755 /home/$SEEDUSER/local
+		chmod -R 755 /home/$SEEDUSER/filebot
 	else
 		mkdir -p /home/$SEEDUSER/Medias
 		echo -e " ${BWHITE}--> Création des dossiers Medias ${NC}"
@@ -1010,12 +1013,13 @@ function choose_media_folder_plexdrive() {
 		do
 		line=$(echo $line | sed 's/\(.\)/\U\1/')
 		mkdir -p /home/$SEEDUSER/local/$line
-		mkdir -p /home/$SEEDUSER/filebot
-		chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/filebot
 		mkdir -p /mnt/rclone/$SEEDUSER/$line 
 		done
+		mkdir -p /home/$SEEDUSER/filebot
+		chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/filebot
 		chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/local
 		chmod -R 755 /home/$SEEDUSER/local
+		chmod -R 755 /home/$SEEDUSER/filebot
 		rm /tmp/menumedia.txt
 	fi
 	echo ""
