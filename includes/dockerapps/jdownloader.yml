@@ -1,7 +1,7 @@
 
-#STARTjd2#
-  jd2-%USER%:
-    container_name: jd2-%USER%
+#STARTjdownloader#
+  jdownloader-%USER%:
+    container_name: jdownloader-%USER%
     image: jlesage/jdownloader-2
     restart: unless-stopped
     labels:
@@ -19,4 +19,4 @@
       - /home/%USER%/filebot:/output:rw
     networks:
       - proxy
-#ENDjd2#
+#ENDjdownloader#
