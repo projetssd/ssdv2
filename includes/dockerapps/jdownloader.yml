@@ -12,8 +12,8 @@
       - traefik.docker.network=traefik_proxy
     environment:
       - TZ=%TIMEZONE%
-      - UID=%UID%
-      - GID=%GID%
+      - USER_ID=%UID%
+      - GROUP_ID=%GID%
     volumes:
       - /opt/seedbox/docker/%USER%/jdownloader-2/config:/config:rw
       - /home/%USER%/filebot:/output:rw
