@@ -15,7 +15,7 @@
       - USER_ID=%UID%
       - GROUP_ID=%GID%
     volumes:
-      - /opt/seedbox/docker/%USER%/jdownloader-2/config:/config:rw
+      - /opt/seedbox/docker/%USER%/jdownloader/config:/config:rw
       - /home/%USER%/filebot:/output:rw
     networks:
       - proxy
