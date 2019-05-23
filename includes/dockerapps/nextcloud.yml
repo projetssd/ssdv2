@@ -4,17 +4,16 @@
     container_name: nextcloud-%USER%
     image: wonderfall/nextcloud
     labels:
-      - traefik.backend=nextcloud
       - traefik.port=8888
       - traefik.frontend.rule=%TRAEFIKURL%
       - traefik.enable=true
       - traefik.docker.network=traefik_proxy
-      - traefik.frontend.auth.basic=%VAR%
     environment:
       - DOMAIN=%ACCESSURL%
       - UID=%UID%
       - GID=%GID%
       - TZ=%TIMEZONE%
+      - DB_TYPE=sqlite
     volumes:
       - /opt/seedbox/docker/%USER%/nextcloud/data:/data
       - /opt/seedbox/docker/%USER%/nextcloud/config:/config

@@ -121,6 +121,8 @@ function webtools() {
 
 			cd /opt/seedbox/docker/$SEEDUSER/webtools/tasks
 			ansible-playbook main.yml
+			docker restart plex-$SEEDUSER
+			checking_errors $?
 }
 
 function processor() {

@@ -46,11 +46,6 @@
     - name: Install Webtools
       block:
 
-      - name: Stop container to install WebTools
-        docker_container:
-          name: plex-%SEEDUSER%
-          state: stopped
-
       - name: Remove outdated WebTools
         file:
           path: "/opt/seedbox/docker/%SEEDUSER%/plex/config/Library/Application Support/Plex Media Server/Plug-ins/WebTools.bundle"
@@ -83,11 +78,6 @@
         debug:
           msg: "WebTools version {{ webtools_newly_installed_version.stdout }} installed."
         ignore_errors: yes
-
-      - name: Start container to apply changes
-        docker_container:
-          name: plex-%SEEDUSER%
-          state: started
 
       when: (not webtools_bundle.stat.exists) or ((webtools_bundle.stat.exists) and (webtools_outdated)) or ('reinstall-webtools' in ansible_run_tags)
 
