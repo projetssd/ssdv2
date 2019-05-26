@@ -11,8 +11,9 @@ echo -e "${CCYAN}INSTALLATION SEEDBOX DOCKER${CEND}"
 echo -e "${CGREEN}${CEND}"
 echo -e "${CGREEN}   1) Installation Seedbox Classique ${CEND}"
 echo -e "${CGREEN}   2) Installation Seedbox Plexdrive${CEND}"
+echo -e "${CGREEN}   3) Restauration Seedbox${CEND}"
 echo -e ""
-read -p "Votre choix [1-2]: " -e -i 1 CHOICE
+read -p "Votre choix [1-3]: " -e -i 1 CHOICE
 echo ""
 case $CHOICE in
 	1) ## Installation de la seedbox classique
@@ -76,6 +77,41 @@ case $CHOICE in
 			fi
 			install_filebot
 			resume_seedbox
+			pause
+			script_plexdrive
+		else
+		script_plexdrive
+		fi
+	fi
+	;;
+
+	3) ## restauration de la seedbox
+
+	if [ $USER = "root" ] ; then
+	check_dir $PWD
+		if [[ ! -d "$CONFDIR" ]]; then
+	    		clear
+			conf_dir
+			checking_system
+			install_base_packages
+			install_docker
+			create_user
+			install_plexdrive
+			install_rclone
+			install_fail2ban
+			restore
+			choose_media_folder_plexdrive
+			unionfs_fuse
+			sauve
+			cd /opt/seedbox/docker/traefik
+			docker-compose up -d > /dev/null 2>&1
+			install_portainer
+			install_watchtower
+			cd /home/$SEEDUSER
+			echo -e "${BLUE}### DOCKERCOMPOSE ###${NC}"
+			echo -e " ${BWHITE}* Docker-composing, Merci de patienter...${NC}"
+			docker-compose up -d > /dev/null 2>&1
+			checking_errors $?
 			pause
 			script_plexdrive
 		else

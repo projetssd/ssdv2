@@ -33,6 +33,16 @@ function check_domain() {
 		checking_errors $?
 }
 
+function sauve() {
+			#configuration Sauvegarde
+			echo -e "${BLUE}### BACKUP ###${NC}"
+			echo -e " ${BWHITE}* Mise en place Sauvegarde${NC}"
+			cp -r $BASEDIR/includes/config/backup/* /usr/bin
+			sed -i '$a\@weekly bash /usr/bin/backup.sh\' /var/spool/cron/crontabs/root
+			checking_errors $?
+			echo ""
+}
+
 function plex_dupefinder() {
 			#configuration plex_dupefinder avec ansible
 			echo -e "${BLUE}### PLEX_DUPEFINDER ###${NC}"
@@ -703,6 +713,8 @@ function install_rclone() {
 		var="Montage rclone en cours, merci de patienter..."
 		decompte 15
 		checking_errors $?
+	else
+		echo -e " ${YELLOW}* rclone est déjà installé !${NC}"
 	fi
 	echo ""
 }
