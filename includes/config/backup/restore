@@ -48,12 +48,12 @@ backupList() {
 remoteRestoration() {
 
 path=/tmp/seedbox.txt
-backups=$(rclone lsf clair:BACKUPS| sed 's:/.*::' | cat -n | sed 's/\([1-9].*\)/\1/')
+backups=$(rclone lsf %REMOTECRYPT%:/%SEEDUSER%/BACKUPS| sed 's:/.*::' | cat -n | sed 's/\([1-9].*\)/\1/')
 
 echo -e "\n${CCYAN}Liste des archives disponibles :${CEND}"
 echo -e "${CGREEN}$backups${CEND}"
 
-rclone lsf clair:BACKUPS | sed 's:/.*::' > $path
+rclone lsf %REMOTECRYPT%:/%SEEDUSER%/BACKUPS | sed 's:/.*::' > $path
 
 echo ""
 
@@ -91,7 +91,7 @@ GdriveRestoration() {
     read -r
 
     echo "> Récupération de l'archive locale"
-    rclone copy clair:BACKUPS/$BACKUPFOLDER/$ARCHIVE .
+    rclone copy %REMOTECRYPT%:/%SEEDUSER%/BACKUPS/$BACKUPFOLDER/$ARCHIVE .
 }
 
 fin() {

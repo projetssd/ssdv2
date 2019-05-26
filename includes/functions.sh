@@ -37,8 +37,25 @@ function sauve() {
 			#configuration Sauvegarde
 			echo -e "${BLUE}### BACKUP ###${NC}"
 			echo -e " ${BWHITE}* Mise en place Sauvegarde${NC}"
+
+			## remote crypté
+			REMOTE=$(grep -iC 4 "token" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
+			REMOTEPLEX=$(grep -iC 2 "/mnt/plexdrive" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
+			REMOTECRYPT=$(grep -v -e $REMOTEPLEX -e $REMOTE /root/.config/rclone/rclone.conf | grep "\[" | sed "s/\[//g" | sed "s/\]//g")
+			
+			## utilisateur
+			SEEDUSER=$(whiptail --title "App Manager" --menu \
+	                		"Merci de sélectionner l'Utilisateur" 12 50 3 \
+	                		"${TABUSERS[@]}"  3>&1 1>&2 2>&3)
+
+
 			cp -r $BASEDIR/includes/config/backup/* /usr/bin
 			sed -i '$a\@weekly bash /usr/bin/backup.sh\' /var/spool/cron/crontabs/root
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /usr/bin/backup
+			sed -i "s|%REMOTECRYPT%|$REMOTECRYPT|g" /usr/bin/backup
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /usr/bin/restore
+			sed -i "s|%REMOTECRYPT%|$REMOTECRYPT|g" /usr/bin/restore
+
 			checking_errors $?
 			echo ""
 }

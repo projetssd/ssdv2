@@ -90,7 +90,11 @@ case $CHOICE in
 	if [ $USER = "root" ] ; then
 	check_dir $PWD
 		if [[ ! -d "$CONFDIR" ]]; then
-	    		clear
+			clear
+    			echo ""
+    			echo -e "${CRED}---------------------------------------------------------------${CEND}"
+    			echo -e "${CRED} /!\ ATTENTION : PREPARATION DE LA RESTAURATION DU SERVEUR /!\ ${CEND}"
+    			echo -e "${CRED}---------------------------------------------------------------${CEND}"
 			conf_dir
 			checking_system
 			install_base_packages
@@ -111,6 +115,12 @@ case $CHOICE in
 			echo -e "${BLUE}### DOCKERCOMPOSE ###${NC}"
 			echo -e " ${BWHITE}* Docker-composing, Merci de patienter...${NC}"
 			docker-compose up -d > /dev/null 2>&1
+			CLOUDPLOWSERVICE=/etc/systemd/system/cloudplow.service
+			if [[ -e "$CLOUDPLOWFILE" ]]; then
+			systemctl start clouplow.service
+			PLEXSCANSERVICE=/etc/systemd/system/plex_autoscan.service
+			if [[ -e "$PLEXSCANSERVICE" ]]; then
+			systemctl start plex_autoscan.service
 			checking_errors $?
 			pause
 			script_plexdrive
