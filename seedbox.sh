@@ -103,6 +103,7 @@ case $CHOICE in
 			install_plexdrive
 			install_rclone
 			install_fail2ban
+			sauve
 			restore
 			choose_media_folder_plexdrive
 			unionfs_fuse
@@ -118,9 +119,11 @@ case $CHOICE in
 			CLOUDPLOWSERVICE=/etc/systemd/system/cloudplow.service
 			if [[ -e "$CLOUDPLOWFILE" ]]; then
 			systemctl start clouplow.service
+			fi
 			PLEXSCANSERVICE=/etc/systemd/system/plex_autoscan.service
 			if [[ -e "$PLEXSCANSERVICE" ]]; then
 			systemctl start plex_autoscan.service
+			fi
 			checking_errors $?
 			pause
 			script_plexdrive
