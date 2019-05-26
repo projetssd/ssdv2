@@ -596,11 +596,11 @@ function install_portainer() {
 	PORTAINERCOMPOSEFILE="$PORTAINER/docker-compose.yml"
 
 	if [[ ! -d "$PORTAINER" ]]; then
-		mkdir -p $PORTAINER
-		touch $PORTAINERCOMPOSEFILE
 
 		if (whiptail --title "Docker Portainer" --yesno "Voulez vous installer portainer" 7 50) then
 			echo -e " ${BWHITE}* Installation de portainer !${NC}"
+			mkdir -p $PORTAINER
+			touch $PORTAINERCOMPOSEFILE
 			cat /opt/seedbox-compose/includes/dockerapps/head.docker > $PORTAINERCOMPOSEFILE
 			cat "/opt/seedbox-compose/includes/dockerapps/portainer.yml" >> $PORTAINERCOMPOSEFILE
 			cat /opt/seedbox-compose/includes/dockerapps/foot.docker >> $PORTAINERCOMPOSEFILE
@@ -629,11 +629,11 @@ function install_watchtower() {
 	WATCHTOWERCOMPOSEFILE="$WATCHTOWER/docker-compose.yml"
 
 	if [[ ! -d "$WATCHTOWER" ]]; then
-		mkdir -p $WATCHTOWER
-		touch $WATCHTOWERCOMPOSEFILE
 
 		if (whiptail --title "Docker watchtower" --yesno "Voulez vous installer watchtower" 7 50) then
 			echo -e " ${BWHITE}* Installation de watchtower !${NC}"
+			mkdir -p $WATCHTOWER
+			touch $WATCHTOWERCOMPOSEFILE
 			cat /opt/seedbox-compose/includes/dockerapps/head.docker > $WATCHTOWERCOMPOSEFILE
 			cat "/opt/seedbox-compose/includes/dockerapps/watchtower.yml" >> $WATCHTOWERCOMPOSEFILE
 			cat /opt/seedbox-compose/includes/dockerapps/foot.docker >> $WATCHTOWERCOMPOSEFILE

@@ -95,6 +95,7 @@ case $CHOICE in
     			echo -e "${CRED}---------------------------------------------------------------${CEND}"
     			echo -e "${CRED} /!\ ATTENTION : PREPARATION DE LA RESTAURATION DU SERVEUR /!\ ${CEND}"
     			echo -e "${CRED}---------------------------------------------------------------${CEND}"
+			echo ""
 			conf_dir
 			checking_system
 			install_base_packages
@@ -107,7 +108,6 @@ case $CHOICE in
 			restore
 			choose_media_folder_plexdrive
 			unionfs_fuse
-			sauve
 			cd /opt/seedbox/docker/traefik
 			docker-compose up -d > /dev/null 2>&1
 			install_portainer
