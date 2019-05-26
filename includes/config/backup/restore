@@ -1,0 +1,165 @@
+#!/bin/bash
+
+ERROR_FILE=./errors.log
+EXIT=0
+ARCHIVE=""
+
+# Définition des variables de couleurs
+CSI="\033["
+CEND="${CSI}0m"
+CRED="${CSI}1;31m"
+CGREEN="${CSI}1;32m"
+CYELLOW="${CSI}1;33m"
+CCYAN="${CSI}0;36m"   
+
+backupList() {
+
+    local backups=(/var/backup/local/backup-*)
+    local i=0
+    local n=""
+
+    if [[ ! -d /var/backup/local ]]; then
+	echo ""
+        echo -e "\n${CRED}/!\ ERREUR: Aucune sauvegarde locale existante.${CEND}\n" 1>&2
+        exit 1
+    fi
+
+    echo -e "\n Liste des archives disponibles :"
+
+    for backup in ${backups[*]}; do
+        let "i += 1"
+        BACKUPPATH[$i]=$(stat -c "%n" "$backup")
+        echo -e "${CGREEN}   $i. ${BACKUPPATH[$i]##*/}${CEND}"
+    done
+
+    echo ""
+    read -rp $'\e[32mSaisir le numéro de l’archive à restaurer\e[0m :' n
+
+    if [[ $n -lt 1 ]] || [[ $n -gt $i ]]; then
+        echo -e "\n${CRED}/!\ ERREUR: Numéro d'archive invalide !${CEND}"
+        echo ""
+        exit 1
+    fi
+
+    ARCHIVEPATH=${BACKUPPATH[$n]##*/} # backup-JJMMAAAA-HHMM
+    ARCHIVE="$ARCHIVEPATH.tar.gz"
+}
+
+remoteRestoration() {
+
+path=/tmp/seedbox.txt
+backups=$(rclone lsf clair:BACKUPS| sed 's:/.*::' | cat -n | sed 's/\([1-9].*\)/\1/')
+
+echo -e "\n${CCYAN}Liste des archives disponibles :${CEND}"
+echo -e "${CGREEN}$backups${CEND}"
+
+rclone lsf clair:BACKUPS | sed 's:/.*::' > $path
+
+echo ""
+
+read -rp $'\e[32mSaisir le numéro de l’archive à restaurer\e[0m :' ligne
+
+BACKUPFOLDER=$(sed -n "$ligne"p $path)
+ARCHIVE="$BACKUPFOLDER.tar.gz"
+
+rm $path
+}
+
+localRestoration() {
+
+    echo ""
+    echo -e "${CRED}-------------------------------------------------------${CEND}"
+    echo -e "${CRED} /!\ ATTENTION : RESTAURATION DU SERVEUR IMMINENTE /!\ ${CEND}"
+    echo -e "${CRED}-------------------------------------------------------${CEND}"
+
+    echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour démarrer la restauration ou CTRL+C pour quitter..."
+    read -r
+
+    echo "> Récupération de l'archive locale"
+    cp /var/backup/local/"$ARCHIVEPATH"/*.tar.gz* .
+
+}
+
+GdriveRestoration() {
+
+    echo ""
+    echo -e "${CRED}-------------------------------------------------------${CEND}"
+    echo -e "${CRED} /!\ ATTENTION : RESTAURATION DU SERVEUR IMMINENTE /!\ ${CEND}"
+    echo -e "${CRED}-------------------------------------------------------${CEND}"
+
+    echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour démarrer la restauration ou CTRL+C pour quitter..."
+    read -r
+
+    echo "> Récupération de l'archive locale"
+    rclone copy clair:BACKUPS/$BACKUPFOLDER/$ARCHIVE .
+}
+
+fin() {
+
+    echo ""
+    echo -e "${CRED}-------------------------------------------------------${CEND}"
+    echo -e "${CRED}        RESTAURATION DU SERVEUR TERMINEE               ${CEND}"
+    echo -e "${CRED}-------------------------------------------------------${CEND}"
+
+    echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour quitter..."
+    read -r
+}
+
+if [[ $EUID -ne 0 ]]; then
+    echo ""
+    echo -e "${CRED}/!\ ERREUR: Vous devez être connecté en tant que root pour pouvoir exécuter ce script.${CEND}" 1>&2
+    echo ""
+    exit 1
+fi
+
+clear
+
+echo ""
+echo -e "${CCYAN}#########################################################${CEND}"
+echo ""
+echo -e "${CCYAN}          DEMARRAGE DU SCRIPT DE RESTAURATION            ${CEND}"
+echo ""
+echo -e "${CCYAN}#########################################################${CEND}"
+echo ""
+
+echo "Choisir le type de restauration :"
+echo "  1. Gdrive"
+echo "  2. Locale"
+echo ""
+
+while [[ $EXIT -eq 0 ]]; do
+
+    read -rp "Votre choix (1-2) : " RTYPE
+
+    case "$RTYPE" in
+    "1")
+        echo -e "Type de restauration sélectionnée : ${CGREEN}Gdrive${CEND}"
+        remoteRestoration
+	GdriveRestoration
+        EXIT=1
+        ;;
+    "2")
+        echo -e "Type de restauration sélectionnée : ${CGREEN}Locale${CEND}"
+        backupList
+        localRestoration
+        EXIT=1
+        ;;
+    *)
+        echo -e "${CRED}Action inconnue${CEND}"
+        ;;
+    esac
+
+done
+
+echo "> Décompression de l'archive à la racine du système"
+sleep 3
+tar xvf "$ARCHIVE" --absolute-names -C / 2> $ERROR_FILE
+
+if [[ -s $ERROR_FILE ]]; then
+    echo -e "\n${CRED}/!\ ERREUR: Echec de la décompression de l'archive.${CEND}"
+    echo -e ""
+    exit 1
+fi
+cd /root
+rm -rf "$ARCHIVE"
+fin

@@ -1,0 +1,53 @@
+# !/bin/bash
+
+# Automatic Backup and sync to Google Cloud Drive
+
+# Variables
+remote=clair
+remote_backups=BACKUPS
+NB_MAX_BACKUP=3
+CDAY=$(date +%d%m%Y-%H%M)
+BACKUP_PARTITION=/var/backup/local
+BACKUP_FOLDER=$BACKUP_PARTITION/backup-$CDAY
+ARCHIVE=$BACKUP_FOLDER/backup-$CDAY.tar.gz
+
+
+# Stop Plex
+service docker stop
+sleep 5
+
+# Backup Plex database
+mkdir -p $BACKUP_FOLDER
+
+tar cf - "/opt" "/home" -P --exclude=Medias --exclude=local --exclude=filebot | pigz > "$ARCHIVE"
+sleep 2s
+
+# Si une erreur survient lors de la compression
+if [[ -s "$ERROR_FILE" ]]; then
+    echo -e "\n${CRED}/!\ ERREUR: Echec de la compression des fichiers système.${CEND}" | tee -a $LOG_FILE
+    echo -e "" | tee -a $LOG_FILE
+    exit 1
+fi
+
+# Restart Plex
+service docker start
+sleep 5
+
+# Envoie Archive vers Google Drive
+rclone --config "/root/.config/rclone/rclone.conf" copy "$BACKUP_FOLDER" "$remote:$remote_backups/backup-$CDAY" -v --log-file=/var/log/backup.log
+
+# Nombre de sauvegardes effectuées
+nbBackup=$(find $BACKUP_PARTITION -type d -name 'backup-*' | wc -l)
+
+if [[ "$nbBackup" -gt $NB_MAX_BACKUP ]]; then
+
+    # Archive la plus ancienne
+    oldestBackupPath=$(find $BACKUP_PARTITION -type d -name 'backup-*' -printf '%T+ %p\n' | sort | head -n 1 | awk '{print $2}')
+    oldestBackupFile=$(find $BACKUP_PARTITION -type d -name 'backup-*' -printf '%T+ %p\n' | sort | head -n 1 | awk '{split($0,a,/\//); print a[5]}')
+
+    # Suppression du répertoire du backup
+    rm -rf "$oldestBackupPath"
+
+# Suppression Archive Google Drive
+rclone --config "/root/.config/rclone/rclone.conf" purge "$remote:$remote_backups/$oldestBackupFile" -v --log-file=/var/log/backup.log
+fi
