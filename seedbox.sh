@@ -76,6 +76,7 @@ case $CHOICE in
 				sed -i "s/\"enabled\"\: true/\"enabled\"\: false/g" /home/$SEEDUSER/scripts/cloudplow/config.json
 			fi
 			install_filebot
+			sauve
 			resume_seedbox
 			pause
 			script_plexdrive
