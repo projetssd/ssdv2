@@ -44,7 +44,7 @@ function sauve() {
 			REMOTECRYPT=$(grep -v -e $REMOTEPLEX -e $REMOTE /root/.config/rclone/rclone.conf | grep "\[" | sed "s/\[//g" | sed "s/\]//g")
 			
 			cp -r $BASEDIR/includes/config/backup/* /usr/bin
-			sed -i '$a\@weekly bash /usr/bin/backup.sh\' /var/spool/cron/crontabs/root
+			sed -i '$a\@weekly bash /usr/bin/backup\' /var/spool/cron/crontabs/root
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /usr/bin/backup
 			sed -i "s|%REMOTECRYPT%|$REMOTECRYPT|g" /usr/bin/backup
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /usr/bin/restore
@@ -380,11 +380,11 @@ function script_plexdrive() {
 			echo -e "${CCYAN}OUTILS${CEND}"
 			echo -e "${CGREEN}${CEND}"
 			echo -e "${CGREEN}   1) Traktarr${CEND}"
-			echo -e "${CGREEN}   2) Webtools${CEND}"
+			echo -e "${CGREEN}   2) Installation de la sauvegarde${CEND}"
 			echo -e "${CGREEN}   3) Réglage du processeur${CEND}"
 			echo -e "${CGREEN}   4) Retour menu principal${CEND}"
 			echo -e ""
-			read -p "Votre choix [1-3]: " -e -i 1 OUTILS
+			read -p "Votre choix [1-4]: " -e -i 1 OUTILS
 
 			case $OUTILS in
 			1) ## Installation de traktarr
@@ -394,18 +394,34 @@ function script_plexdrive() {
 			pause
 			script_plexdrive
 			;;
-			2) ## Installation de traktarr
+
+			2) ## Installation de la sauvegarde
 			clear
 			echo ""
-			webtools
+			TMPGROUP=$(cat $GROUPFILE)
+			TABUSERS=()
+			for USERSEED in $(members $TMPGROUP)
+			do
+	        	IDSEEDUSER=$(id -u $USERSEED)
+	        	TABUSERS+=( ${USERSEED//\"} ${IDSEEDUSER//\"} )
+			done
+			## CHOISIR USER
+			SEEDUSER=$(whiptail --title "App Manager" --menu \
+	                		"Merci de sélectionner l'Utilisateur" 12 50 3 \
+	                		"${TABUSERS[@]}"  3>&1 1>&2 2>&3)
+			sauve
+
 			pause
 			script_plexdrive
+
 			;;
 			3)
 			processor
+
 			;;
 			4)
 			script_plexdrive
+
 			;;
 			esac
 		;;
