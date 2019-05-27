@@ -119,7 +119,7 @@ case $CHOICE in
 			docker-compose up -d > /dev/null 2>&1
 			CLOUDPLOWSERVICE=/etc/systemd/system/cloudplow.service
 			if [[ -e "$CLOUDPLOWFILE" ]]; then
-			systemctl start clouplow.service
+			systemctl start cloudplow.service
 			fi
 			PLEXSCANSERVICE=/etc/systemd/system/plex_autoscan.service
 			if [[ -e "$PLEXSCANSERVICE" ]]; then
