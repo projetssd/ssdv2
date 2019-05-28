@@ -379,23 +379,17 @@ function script_plexdrive() {
 			echo ""
 			echo -e "${CCYAN}OUTILS${CEND}"
 			echo -e "${CGREEN}${CEND}"
-			echo -e "${CGREEN}   1) Traktarr${CEND}"
-			echo -e "${CGREEN}   2) Installation de la sauvegarde${CEND}"
-			echo -e "${CGREEN}   3) Réglage du processeur${CEND}"
-			echo -e "${CGREEN}   4) Retour menu principal${CEND}"
+			echo -e "${CGREEN}   1) Installation de la sauvegarde${CEND}"
+			echo -e "${CGREEN}   2) Traktarr${CEND}"
+			echo -e "${CGREEN}   3) Webtools${CEND}"
+			echo -e "${CGREEN}   4) Réglage du processeur${CEND}"
+			echo -e "${CGREEN}   5) Retour menu principal${CEND}"
 			echo -e ""
 			read -p "Votre choix [1-4]: " -e -i 1 OUTILS
 
 			case $OUTILS in
-			1) ## Installation de traktarr
-			clear
-			echo ""
-			traktarr
-			pause
-			script_plexdrive
-			;;
 
-			2) ## Installation de la sauvegarde
+			1) ## Installation de la sauvegarde
 			clear
 			echo ""
 			TMPGROUP=$(cat $GROUPFILE)
@@ -410,19 +404,34 @@ function script_plexdrive() {
 	                		"Merci de sélectionner l'Utilisateur" 12 50 3 \
 	                		"${TABUSERS[@]}"  3>&1 1>&2 2>&3)
 			sauve
-
 			pause
 			script_plexdrive
-
 			;;
-			3)
-			processor
 
-			;;
-			4)
+			2) ## Installation de traktarr
+			clear
+			echo ""
+			traktarr
+			pause
 			script_plexdrive
-
 			;;
+
+			3) ## Installation de Webtools
+			clear
+			echo ""
+			webtools
+			pause
+			script_plexdrive
+			;;
+
+			4)
+			processor
+			;;
+
+			5)
+			script_plexdrive
+			;;
+
 			esac
 		;;
 	esac
