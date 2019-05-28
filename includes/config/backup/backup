@@ -17,11 +17,23 @@ BACKUP_PARTITION=/var/backup/local
 BACKUP_FOLDER=$BACKUP_PARTITION/backup-$CDAY
 ARCHIVE=$BACKUP_FOLDER/backup-$CDAY.tar.gz
 
+echo ""
+echo -e "${CRED}-------------------------------------------------------${CEND}"
+echo -e "${CRED} /!\ ATTENTION : SAUVEGARDE DU SERVEUR IMMINENTE /!\ ${CEND}"
+echo -e "${CRED}-------------------------------------------------------${CEND}"
 
 # Stop Plex
 echo -e "${CCYAN}> Arrêt de docker${CEND}"
 service docker stop
 sleep 5
+
+echo ""
+echo -e "${CCYAN}#########################################################${CEND}"
+echo ""
+echo -e "${CCYAN}          DEMARRAGE DU SCRIPT DE SAUVEGARDE              ${CEND}"
+echo ""
+echo -e "${CCYAN}#########################################################${CEND}"
+echo ""
 
 # Backup Plex database
 mkdir -p $BACKUP_FOLDER
@@ -63,3 +75,7 @@ if [[ "$nbBackup" -gt $NB_MAX_BACKUP ]]; then
 echo -e "${CCYAN}> Suppression de l'archive la plus ancienne${CEND}"
 rclone --config "/root/.config/rclone/rclone.conf" purge "$remote:/%SEEDUSER%/$remote_backups/$oldestBackupFile" -v --log-file=/var/log/backup.log
 fi
+echo ""
+echo -e "${CRED}-------------------------------------------------------${CEND}"
+echo -e "${CRED}        SAUVEGARDE DU SERVEUR TERMINEE                 ${CEND}"
+echo -e "${CRED}-------------------------------------------------------${CEND}"
