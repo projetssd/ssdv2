@@ -33,6 +33,15 @@ function check_domain() {
 		checking_errors $?
 }
 
+function openvpn() {
+			#configuration openvpn
+			echo -e "${BLUE}### OPENVPN Angristan ###${NC}"
+			echo -e " ${BWHITE}* Mise en place Openvpn${NC}"
+			curl -O https://raw.githubusercontent.com/Angristan/openvpn-install/master/openvpn-install.sh
+			chmod +x openvpn-install.sh
+			env AUTO_INSTALL=y ./openvpn-install.sh
+}
+
 function sauve() {
 			#configuration Sauvegarde
 			echo -e "${BLUE}### BACKUP ###${NC}"
@@ -384,10 +393,11 @@ function script_plexdrive() {
 			echo -e "${CGREEN}   1) Installation de la sauvegarde${CEND}"
 			echo -e "${CGREEN}   2) Traktarr${CEND}"
 			echo -e "${CGREEN}   3) Webtools${CEND}"
-			echo -e "${CGREEN}   4) Réglage du processeur${CEND}"
-			echo -e "${CGREEN}   5) Retour menu principal${CEND}"
+			echo -e "${CGREEN}   4) Openvpn${CEND}"
+			echo -e "${CGREEN}   5) Réglage du processeur${CEND}"
+			echo -e "${CGREEN}   6) Retour menu principal${CEND}"
 			echo -e ""
-			read -p "Votre choix [1-4]: " -e -i 1 OUTILS
+			read -p "Votre choix [1-6]: " -e -i 1 OUTILS
 
 			case $OUTILS in
 
@@ -427,10 +437,14 @@ function script_plexdrive() {
 			;;
 
 			4)
-			processor
+			openvpn
 			;;
 
 			5)
+			processor
+			;;
+
+			6)
 			script_plexdrive
 			;;
 
