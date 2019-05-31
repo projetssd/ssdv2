@@ -457,7 +457,12 @@ function install_base_packages() {
 function checking_system() {
 	echo -e "${BLUE}### VERIFICATION SYSTEME ###${NC}"
 	echo -e " ${BWHITE}* Vérification du système OS${NC}"
-	apt install gawk -y > /dev/null 2>&1
+
+	dpkg -s gawk &> /dev/null
+	if [ $? -ne 0 ]; then
+    		apt install gawk -y > /dev/null 2>&1
+	fi
+	
 	TMPSYSTEM=$(gawk -F= '/^NAME/{print $2}' /etc/os-release)
 	TMPCODENAME=$(lsb_release -sc)
 	TMPRELEASE=$(cat /etc/debian_version)
@@ -481,6 +486,9 @@ function checking_system() {
 		elif [[ $(echo $TMPCODENAME | grep "zesty") != "" ]]; then
 			SYSTEMRELEASE="17.14"
 			SYSTEMCODENAME="zesty"
+		elif [[ $(echo $TMPCODENAME | grep "bionic") != "" ]]; then
+			SYSTEMRELEASE="18.04"
+			SYSTEMCODENAME="bionic"
 		elif [[ $(echo $TMPCODENAME | grep "cosmic") != "" ]]; then
 			SYSTEMRELEASE="18.10"
 			SYSTEMCODENAME="cosmic"
