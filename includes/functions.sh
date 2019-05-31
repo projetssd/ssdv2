@@ -40,6 +40,7 @@ function openvpn() {
 			curl -O https://raw.githubusercontent.com/Angristan/openvpn-install/master/openvpn-install.sh
 			chmod +x openvpn-install.sh
 			env AUTO_INSTALL=y ./openvpn-install.sh
+			checking_errors $?
 }
 
 function sauve() {
@@ -438,6 +439,8 @@ function script_plexdrive() {
 
 			4)
 			openvpn
+			pause
+			script_plexdrive
 			;;
 
 			5)
