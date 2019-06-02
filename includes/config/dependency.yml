@@ -18,6 +18,7 @@
         - { package: "members" }
         - { package: "cpufrequtils" }
         - { package: "unionfs-fuse" }
+        - { package: "pigz" }
         - { package: "default-jre" }
         - { package: "update-notifier-common" }
         - { package: "software-properties-common" }
