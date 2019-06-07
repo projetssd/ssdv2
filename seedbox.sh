@@ -72,7 +72,7 @@ case $CHOICE in
 			docker_compose
 			CLOUDPLOWFILE="/home/$SEEDUSER/scripts/cloudplow/config.json"
 			if [[ ! -e "$CLOUDPLOWFILE" ]]; then
-				install_cloudplow
+				cloudplow
 				sed -i "s/\"enabled\"\: true/\"enabled\"\: false/g" /home/$SEEDUSER/scripts/cloudplow/config.json
 			fi
 			install_filebot
