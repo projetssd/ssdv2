@@ -897,6 +897,7 @@ function create_user() {
 		fi
 		SEEDUSER=$(whiptail --title "Administrateur" --inputbox \
 			"Nom d'Administrateur de la Seedbox :" 7 50 3>&1 1>&2 2>&3)
+		[[ "$?" = 1 ]] && script_plexdrive;
 		PASSWORD=$(whiptail --title "Password" --passwordbox \
 			"Mot de passe :" 7 50 3>&1 1>&2 2>&3)
 		egrep "^$SEEDUSER" /etc/passwd >/dev/null
@@ -944,6 +945,7 @@ function create_user() {
 	fi
 	SEEDUSER=$(whiptail --title "Utilisateur" --inputbox \
 		"Nom d'utilisateur :" 7 50 3>&1 1>&2 2>&3)
+	[[ "$?" = 1 ]] && script_plexdrive;
 	PASSWORD=$(whiptail --title "Password" --passwordbox \
 		"Mot de passe :" 7 50 3>&1 1>&2 2>&3)
 	egrep "^$SEEDUSER" /etc/passwd >/dev/null
@@ -996,6 +998,7 @@ function choose_services() {
 	SERVICESTOINSTALL=$(whiptail --title "Gestion des Applications" --checklist \
 	"Applis à ajouter pour $SEEDUSER (Barre espace pour la sélection)" 28 60 17 \
 	$(cat /tmp/menuservices.txt) 3>&1 1>&2 2>&3)
+	[[ "$?" = 1 ]] && script_plexdrive;
 	SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 	touch $SERVICESPERUSER
 	for APPDOCKER in $SERVICESTOINSTALL
@@ -1003,6 +1006,7 @@ function choose_services() {
 		echo -e "	${GREEN}* $(echo $APPDOCKER | tr -d '"')${NC}"
 		echo $(echo ${APPDOCKER,,} | tr -d '"') >> $SERVICESPERUSER
 	done
+
 	if [[ "$DOMAIN" == "" ]]; then
 		DOMAIN=$(whiptail --title "Votre nom de Domaine" --inputbox \
 		"Merci de taper votre nom de Domaine :" 7 50 3>&1 1>&2 2>&3)
@@ -1609,13 +1613,14 @@ function manage_apps() {
 	                "Selectionner une action :" 12 50 3 \
 	                "1" "Ajout Docker Applis"  \
 	                "2" "Supprimer une Appli" 3>&1 1>&2 2>&3)
-			[[ "$?" != 0 ]] && script_plexdrive;
+	[[ "$?" = 1 ]] && script_plexdrive;
 	case $ACTIONONAPP in
 		"1" ) ## Ajout APP
 			CURRTIMEZONE=$(cat /etc/timezone)
 			TIMEZONEDEF=$(whiptail --title "Timezone" --inputbox \
 			"Merci de vérifier votre timezone" 7 66 "$CURRTIMEZONE" \
 			3>&1 1>&2 2>&3)
+
 			if [[ $TIMEZONEDEF == "" ]]; then
 				TIMEZONE=$CURRTIMEZONE
 			else
@@ -1645,8 +1650,8 @@ function manage_apps() {
 			APPSELECTED=$(whiptail --title "App Manager" --menu \
 			              "Sélectionner l'Appli à supprimer" 19 45 11 \
 			              "${TABSERVICES[@]}"  3>&1 1>&2 2>&3)
-			echo -e " ${GREEN}   * $APPSELECTED${NC}"
 			[[ "$?" = 1 ]] && script_plexdrive;
+			echo -e " ${GREEN}   * $APPSELECTED${NC}"
 			cd /home/$SEEDUSER
 			docker-compose rm -fs "$APPSELECTED"-"$SEEDUSER"
 			sed -i "/#START"$APPSELECTED"#/,/#END"$APPSELECTED"#/d" /home/$SEEDUSER/docker-compose.yml
