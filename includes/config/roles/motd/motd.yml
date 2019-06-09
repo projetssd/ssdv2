@@ -1,0 +1,43 @@
+#!/bin/bash
+#
+# Title:      PGBlitz (Reference Title File)
+# Author(s):  Admin9705 - Deiteq - Sub7Seven
+# URL:        https://pgblitz.com - http://github.pgblitz.com
+# GNU:        General Public License v3.0
+################################################################################
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Disable existing MOTD
+      shell: chmod -x /etc/update-motd.d/*
+
+    - name: Enable update messages
+      shell: chmod +x /etc/update-motd.d/9*
+
+    - name: Deploy Dynamic MOTD
+      file:
+        path: /etc/update-motd.d
+        state: directory
+        mode: 0775
+
+    - name: Import MOTD Files
+      copy: 'src={{item}} dest=/etc/update-motd.d/{{item}} force=yes mode=0775'
+      with_items:
+        - 10-hostname-color
+        - 20-sysinfo
+        - 30-diskinfo
+
+    - name: Install lolcat pip module
+      pip:
+        name: lolcat
+        state: latest
+      ignore_errors: yes
+
+    - cron:
+        name: 'Update MOTD'
+        user: 'root'
+        minute: '10'
+        job: 'update-motd'
+        state: absent
+      become_user: root

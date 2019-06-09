@@ -33,6 +33,15 @@ function check_domain() {
 		checking_errors $?
 }
 
+function motd() {
+			#configuration d'un motd avec ansible
+			echo -e "${BLUE}### MOTD ###${NC}"
+			echo -e " ${BWHITE}* Installation MOTD${NC}"
+			cd /opt/seedbox-compose/includes/config/roles/motd
+			ansible-playbook motd.yml
+			checking_errors $?
+}
+
 function openvpn() {
 			#configuration openvpn
 			echo -e "${BLUE}### OPENVPN Angristan ###${NC}"
@@ -122,7 +131,7 @@ function traktarr() {
 
 			cd /opt/seedbox/docker/$SEEDUSER/traktarr/tasks
 			ansible-playbook main.yml
-			# rm -rf /opt/seedbox/docker/$SEEDUSER/traktarr
+			rm -rf /opt/seedbox/docker/$SEEDUSER/traktarr
 			service traktarr restart
 			checking_errors $?
 }
@@ -153,6 +162,7 @@ function webtools() {
 			cd /opt/seedbox/docker/$SEEDUSER/webtools/tasks
 			ansible-playbook main.yml
 			docker restart plex-$SEEDUSER
+			rm -rf /opt/seedbox/docker/$SEEDUSER/webtools
 			checking_errors $?
 }
 
@@ -218,7 +228,7 @@ function plex_autoscan() {
 			sed -i "s|%ID_SERIES%|$ID_SERIES|g" $PLEXCANFILE
 			sed -i "s|%ID_ANIMES%|$ID_ANIMES|g" $PLEXCANFILE
 			sed -i "s|%ID_MUSIC%|$ID_MUSIC|g" $PLEXCANFILE
-			#rm -rf /opt/seedbox/docker/$SEEDUSER/plex_autoscan
+			rm -rf /opt/seedbox/docker/$SEEDUSER/plex_autoscan
 			checking_errors $?
 }
 
@@ -392,13 +402,14 @@ function script_plexdrive() {
 			echo -e "${CCYAN}OUTILS${CEND}"
 			echo -e "${CGREEN}${CEND}"
 			echo -e "${CGREEN}   1) Installation de la sauvegarde${CEND}"
-			echo -e "${CGREEN}   2) Traktarr${CEND}"
-			echo -e "${CGREEN}   3) Webtools${CEND}"
-			echo -e "${CGREEN}   4) Openvpn${CEND}"
-			echo -e "${CGREEN}   5) Réglage du processeur${CEND}"
-			echo -e "${CGREEN}   6) Retour menu principal${CEND}"
+			echo -e "${CGREEN}   2) Installation du motd${CEND}"
+			echo -e "${CGREEN}   3) Traktarr${CEND}"
+			echo -e "${CGREEN}   4) Webtools${CEND}"
+			echo -e "${CGREEN}   5) Openvpn${CEND}"
+			echo -e "${CGREEN}   6) Réglage du processeur${CEND}"
+			echo -e "${CGREEN}   7) Retour menu principal${CEND}"
 			echo -e ""
-			read -p "Votre choix [1-6]: " -e -i 1 OUTILS
+			read -p "Votre choix [1-7]: " -e -i 1 OUTILS
 
 			case $OUTILS in
 
@@ -421,7 +432,15 @@ function script_plexdrive() {
 			script_plexdrive
 			;;
 
-			2) ## Installation de traktarr
+			2) ## Installation du motd
+			clear
+			echo ""
+			motd
+			pause
+			script_plexdrive
+			;;
+
+			3) ## Installation de traktarr
 			clear
 			echo ""
 			traktarr
@@ -429,7 +448,7 @@ function script_plexdrive() {
 			script_plexdrive
 			;;
 
-			3) ## Installation de Webtools
+			4) ## Installation de Webtools
 			clear
 			echo ""
 			webtools
@@ -437,17 +456,17 @@ function script_plexdrive() {
 			script_plexdrive
 			;;
 
-			4)
+			5)
 			openvpn
 			pause
 			script_plexdrive
 			;;
 
-			5)
+			6)
 			processor
 			;;
 
-			6)
+			7)
 			script_plexdrive
 			;;
 
