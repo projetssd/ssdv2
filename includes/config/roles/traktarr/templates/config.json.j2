@@ -97,13 +97,13 @@
   "radarr": {
     "api_key": "{{ radarr_api_key | default('',true) }}",
     "profile": "HD-1080p",
-    "url": "https://radarr.%ACCESSDOMAIN%",
+    "url": "http://localhost:7878/",
     "root_folder": "/home/%SEEDUSER%/Medias/Films/"
   },
   "sonarr": {
     "api_key": "{{ sonarr_api_key | default('',true) }}",
     "profile": "HD-1080p",
-    "url": "https://sonarr.%ACCESSDOMAIN%",
+    "url": "http://localhost:8989/",
     "root_folder": "/home/%SEEDUSER%/Medias/Series/",
     "tags": {}
   },

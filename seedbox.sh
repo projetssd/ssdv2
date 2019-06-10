@@ -109,14 +109,15 @@ case $CHOICE in
 			restore
 			choose_media_folder_plexdrive
 			unionfs_fuse
+			docker network create traefik_proxy
 			cd /opt/seedbox/docker/traefik
-			docker-compose up -d > /dev/null 2>&1
+			docker-compose up -d
 			install_portainer
 			install_watchtower
 			cd /home/$SEEDUSER
 			echo -e "${BLUE}### DOCKERCOMPOSE ###${NC}"
 			echo -e " ${BWHITE}* Docker-composing, Merci de patienter...${NC}"
-			docker-compose up -d > /dev/null 2>&1
+			docker-compose up -d
 			CLOUDPLOWSERVICE=/etc/systemd/system/cloudplow.service
 			if [[ -e "$CLOUDPLOWFILE" ]]; then
 			systemctl start cloudplow.service
