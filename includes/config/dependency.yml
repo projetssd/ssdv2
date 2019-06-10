@@ -35,12 +35,12 @@
         - { package: "openssh-server" }
         - { package: "dirmngr" }
         - { package: "npm" }
-        - { package: "zip" }
+        - { package: "lolcat" }
         - { package: "libchromaprint-tools" }
         - { package: "apt-transport-https" }
         - { package: "ca-certificates" }
         - { package: "tree" }
-        - { package: "zip" }
+        - { package: "figlet" }
         - { package: "ncdu" }
         - { package: "ctop" }
         - { package: "dialog" }

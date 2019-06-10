@@ -68,7 +68,6 @@ function sauve() {
 			sed -i "s|%REMOTECRYPT%|$REMOTECRYPT|g" /usr/bin/backup
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /usr/bin/restore
 			sed -i "s|%REMOTECRYPT%|$REMOTECRYPT|g" /usr/bin/restore
-
 			checking_errors $?
 			echo ""
 }
