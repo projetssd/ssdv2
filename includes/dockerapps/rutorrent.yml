@@ -19,7 +19,7 @@
       - %PORT2%:%PORT2%/udp
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /opt/seedbox/docker/%USER%/rutorrent/sock:/run/php
+      - /run/php:/run/php
       - /opt/seedbox/docker/%USER%/rutorrent:/config
       - /home/%USER%:/home/%USER%
     networks:

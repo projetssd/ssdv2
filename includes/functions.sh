@@ -33,6 +33,29 @@ function check_domain() {
 		checking_errors $?
 }
 
+function rtorrent-cleaner() {
+			#configuration de rtorrent-cleaner avec ansible
+			echo -e "${BLUE}### RTORRENT-CLEANER ###${NC}"
+			echo -e " ${BWHITE}* Installation RTORRENT-CLEANER${NC}"
+
+			## choix de l'utilisateur
+			TMPGROUP=$(cat $GROUPFILE)
+			TABUSERS=()
+			for USERSEED in $(members $TMPGROUP)
+			do
+	        	IDSEEDUSER=$(id -u $USERSEED)
+	        	TABUSERS+=( ${USERSEED//\"} ${IDSEEDUSER//\"} )
+			done
+			## CHOISIR USER
+			SEEDUSER=$(whiptail --title "App Manager" --menu \
+	                		"Merci de sélectionner l'Utilisateur" 12 50 3 \
+	                		"${TABUSERS[@]}"  3>&1 1>&2 2>&3)
+
+			cp -r $BASEDIR/includes/config/rutorrent/rtorrent-cleaner /usr/local/bin
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /usr/local/bin/rtorrent-cleaner
+			checking_errors $?
+}
+
 function motd() {
 			#configuration d'un motd avec ansible
 			echo -e "${BLUE}### MOTD ###${NC}"
@@ -404,11 +427,12 @@ function script_plexdrive() {
 			echo -e "${CGREEN}   2) Installation du motd${CEND}"
 			echo -e "${CGREEN}   3) Traktarr${CEND}"
 			echo -e "${CGREEN}   4) Webtools${CEND}"
-			echo -e "${CGREEN}   5) Openvpn${CEND}"
-			echo -e "${CGREEN}   6) Réglage du processeur${CEND}"
-			echo -e "${CGREEN}   7) Retour menu principal${CEND}"
+			echo -e "${CGREEN}   5) rtorrent-cleaner de ${CCYAN}@Magicalex-Mondedie.fr${CEND}${NC}"
+			echo -e "${CGREEN}   6) Openvpn${CEND}"
+			echo -e "${CGREEN}   7) Réglage du processeur${CEND}"
+			echo -e "${CGREEN}   8) Retour menu principal${CEND}"
 			echo -e ""
-			read -p "Votre choix [1-7]: " -e -i 1 OUTILS
+			read -p "Votre choix [1-8]: " -e -i 1 OUTILS
 
 			case $OUTILS in
 
@@ -455,17 +479,26 @@ function script_plexdrive() {
 			script_plexdrive
 			;;
 
-			5)
-			openvpn
+			5) ## Installation de rtorrent-cleaner
+			clear
+			echo ""
+			rtorrent-cleaner
+			docker run -it --rm -v /home/$SEEDUSER/local/rutorrent:/home/$SEEDUSER/local/rutorrent -v /run/php:/run/php magicalex/docker-rtorrent-cleaner
 			pause
 			script_plexdrive
 			;;
 
 			6)
-			processor
+			openvpn
+			pause
+			script_plexdrive
 			;;
 
 			7)
+			processor
+			;;
+
+			8)
 			script_plexdrive
 			;;
 
