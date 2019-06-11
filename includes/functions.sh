@@ -86,11 +86,14 @@ function sauve() {
 			REMOTECRYPT=$(grep -v -e $REMOTEPLEX -e $REMOTE /root/.config/rclone/rclone.conf | grep "\[" | sed "s/\[//g" | sed "s/\]//g" | head -n 1)
 			
 			cp -r $BASEDIR/includes/config/backup/* /usr/bin
-			sed -i '$a\@weekly bash /usr/bin/backup\' /var/spool/cron/crontabs/root
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /usr/bin/backup
 			sed -i "s|%REMOTECRYPT%|$REMOTECRYPT|g" /usr/bin/backup
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /usr/bin/restore
 			sed -i "s|%REMOTECRYPT%|$REMOTECRYPT|g" /usr/bin/restore
+
+			## cron
+			(crontab -l | grep . ; echo "0 3 * * 6 /usr/bin/backup >> /home/$SEEDUSER/scripts/backup.log") | crontab -
+
 			checking_errors $?
 			echo ""
 }

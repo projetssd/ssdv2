@@ -118,14 +118,36 @@ case $CHOICE in
 			echo -e "${BLUE}### DOCKERCOMPOSE ###${NC}"
 			echo -e " ${BWHITE}* Docker-composing, Merci de patienter...${NC}"
 			docker-compose up -d
+
+			## restauration plex_dupefinder
+			PLEXDUPE=/home/$SEEDUSER/scripts/plex_dupefinder/plexdupes.py
+			if [[ -e "$PLEXDUPE" ]]; then
+			cd /home/$SEEDUSER/scripts/plex_dupefinder
+			python3 -m pip install -r requirements.txt
+			ln -s /home/$SEEDUSER/scripts/plex_dupefinder/plexdupes.py /usr/local/bin/plexdupes
+			fi
+
+			## restauration cloudplow
 			CLOUDPLOWSERVICE=/etc/systemd/system/cloudplow.service
 			if [[ -e "$CLOUDPLOWFILE" ]]; then
+			cd /home/$SEEDUSER/scripts/cloudplow
+			python3 -m pip install -r requirements.txt
+			ln -s /home/$SEEDUSER/scripts/cloudplow/cloudplow.py /usr/local/bin/cloudplow
 			systemctl start cloudplow.service
 			fi
+
+			## restauration plex_autoscan
 			PLEXSCANSERVICE=/etc/systemd/system/plex_autoscan.service
 			if [[ -e "$PLEXSCANSERVICE" ]]; then
+			cd /home/$SEEDUSER/scripts/plex_autoscan
+			python -m pip install -r requirements.txt
 			systemctl start plex_autoscan.service
 			fi
+
+			## restauration des crons
+			(crontab -l | grep . ; echo "*/1 * * * * /opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh >> /home/$SEEDUSER/scripts/filebot.log") | crontab -
+			(crontab -l | grep . ; echo "0 3 * * 6 /usr/bin/backup >> /home/$SEEDUSER/scripts/backup.log") | crontab -
+
 			checking_errors $?
 			pause
 			script_plexdrive
