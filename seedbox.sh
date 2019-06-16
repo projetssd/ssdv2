@@ -35,7 +35,6 @@ case $CHOICE in
 			choose_media_folder_classique
 			choose_services
 			install_services
-			docker_compose
 			install_filebot
 			resume_seedbox
 			pause
@@ -69,7 +68,6 @@ case $CHOICE in
 			pause
 			choose_services
 			install_services
-			docker_compose
 			CLOUDPLOWFILE="/home/$SEEDUSER/scripts/cloudplow/config.json"
 			if [[ ! -e "$CLOUDPLOWFILE" ]]; then
 				cloudplow

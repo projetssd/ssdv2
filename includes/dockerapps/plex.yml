@@ -1,30 +1,110 @@
+#!/bin/bash
+#
+# Title:      PGBlitz (Reference Title File)
+# Author(s):  Admin9705
+# URL:        https://pgblitz.com - http://github.pgblitz.com
+# GNU:        General Public License v3.0
+################################################################################
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    # FACTS #######################################################################
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'plex'
+        intport: '32400'
+        extport: '32400'
 
-#STARTplex#
-  plex-%USER%:
-    image: plexinc/pms-docker
-    container_name: plex-%USER%
-    hostname: plex-%USER%
-    restart: unless-stopped
-    labels:
-      - traefik.enable=true
-      - traefik.frontend.rule=%TRAEFIKURL%
-      - traefik.port=32400
-      - traefik.docker.network=traefik_proxy
-    environment:
-      - PLEX_CLAIM=%CLAIM%
-      - PLEX_UID=%UID%
-      - PLEX_GID=%GID%
-      - TZ=%TIMEZONE%
-      - LD_LIBRARY_PATH=/usr/lib/plexmediaserver
-    ports:
-      - %PORTPLEX%:32400
-    healthcheck:
-      disable: true
-    volumes:
-      - /home/%USER%:/home/%USER%
-      - /home/%USER%/Medias:/data
-      - /opt/seedbox/docker/%USER%/plex/config:/config
-      - /dev/shm:/transcode
-    networks:
-      - proxy
-#ENDplex#
+    ######################################### FOR BOTH
+    - name: 'Set Default Labels'
+      set_fact:
+        default_labels:
+          traefik.enable: 'true'
+          traefik.port: '{{intport}}'
+          traefik.frontend.rule: 'Host:{{pgrole}}.%DOMAIN%'
+
+    - name: 'Set Default Volume - {{extension.stdout}}'
+      set_fact:
+        default_volumes:
+          - '/home/%USER%:/home/%USER%'
+          - '/home/%USER%/Medias:/data'
+          - '/opt/seedbox/docker/%USER%/plex/config:/config'
+          - '/dev/shm:/transcode'
+
+    - name: 'Establish Key Variables'
+      set_fact:
+        default_env:
+          UID: '%UID%'
+          GID: '%GID%'
+
+    - name: Check Preferences.xml exists
+      stat:
+        path: '/opt/seedbox/docker/%USER%/plex/database/Library/Application Support/Plex Media Server/Preferences.xml'
+      register: plex_prefs
+
+    ############### This is needed because on a fresh installaions the value is missing and is defaulted to 1 Security perfered
+    - name: secureConnections is missing
+      xml:
+        path: '/opt/seedbox/docker/%SEEDUSER%/plex/database/Library/Application Support/Plex Media Server/Preferences.xml'
+        xpath: /Preferences/@secureConnections
+        count: yes
+      register: secure_hits
+      when:
+        - plex_prefs.stat.exists
+
+      ############### This is needed because on a fresh installaions the value is missing and is defaulted to 1 Security perfered
+    - name: Add secureConnections if missing
+      xml:
+        path: '/opt/seedbox/docker/%SEEDUSER%/plex/database/Library/Application Support/Plex Media Server/Preferences.xml'
+        xpath: /Preferences
+        attribute: secureConnections
+        value: '1'
+      when:
+        - plex_prefs.stat.exists
+        - secure_hits.count == 0
+
+    - name: Read Preferences.xml
+      xml:
+        path: '/opt/seedbox/docker/%SEEDUSER%/plex/database/Library/Application Support/Plex Media Server/Preferences.xml'
+        xpath: /Preferences
+        content: attribute
+      register: plex_pref_content
+      when: plex_prefs.stat.exists
+
+    - name: Add https to default_label if secureConnection != 2
+      set_fact:
+        default_labels: "{{default_labels | combine( {'traefik.protocol': 'https'} )}}"
+      when:
+        - plex_prefs.stat.exists
+        - plex_pref_content.matches[0]['Preferences']['secureConnections']
+
+    - name: Read customConnections
+      set_fact:
+        customConnections: "{{plex_pref_content.matches[0]['Preferences']['customConnections']}}"
+      when:
+        - plex_prefs.stat.exists
+        - plex_pref_content.matches[0]['Preferences']['customConnections'] is defined
+
+    ######################################### DEPLOY PLEX REMOTE (ANSWER 2)
+    - name: Deploy Plex Container (Remote Edition)
+      docker_container:
+        name: plex-%USER%
+        image: 'plexinc/pms-docker'
+        pull: yes
+        published_ports:
+          - '{{extport}}:{{intport}}'
+        env:
+          PLEX_UID: '%UID%'
+          PLEX_GID: '%GID%'
+          PLEX_CLAIM: '%CLAIM%'
+        purge_networks: yes
+        networks:
+          - name: traefik_proxy
+        volumes: '{{default_volumes}}'
+        etc_hosts:
+          { 'analytics.plex.tv': '127.0.0.1', 'metrics.plex.tv': '127.0.0.1' }
+        restart_policy: unless-stopped
+        state: started
+        labels: '{{default_labels}}'
+
