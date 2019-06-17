@@ -1547,6 +1547,7 @@ function manage_users() {
 			        line=$(echo $SERVICEACTIVATED | cut -d\- -f1)
 				docker rm -f $line-$SEEDUSER > /dev/null 2>&1
 			done
+			echo ""
 			checking_errors $?
 
 			if [[ -e "$PLEXDRIVE" ]]; then
