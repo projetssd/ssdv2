@@ -1,22 +1,73 @@
-  
-#STARTombi#
-  ombi-%USER%:
-    image: linuxserver/ombi
-    container_name: ombi-%USER%
-    restart: unless-stopped
-    labels:
-      - traefik.enable=true
-      - traefik.frontend.rule=%TRAEFIKURL%
-      - traefik.frontend.auth.basic=%VAR%
-      - traefik.port=3579
-      - traefik.docker.network=traefik_proxy
-    volumes:
-      - /opt/seedbox/docker/%USER%/ombi/conf:/config:rw
-      - /etc/localtime:/etc/localtime:ro
-    environment:
-      - PUID=%UID%
-      - PGID=%GID%
-      - TZ=%TIMEZONE%
-    networks:
-      - proxy
-#ENDombi#
+#!/bin/bash
+#
+# Title:      PGBlitz (Reference Title File)
+# Author(s):  Admin9705
+# URL:        https://pgblitz.com - http://github.pgblitz.com
+# GNU:        General Public License v3.0
+################################################################################
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    # FACTS #######################################################################
+
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'ombi'
+        intport: '3579'
+        extport: '3579'
+        image: 'linuxserver/ombi'
+
+    # PRETASKS ####################################################################
+    - name: Check JSON exists
+      stat:
+        path: '/opt/seedbox/docker/%USER%/{{pgrole}}/appsettings.json'
+      register: jsonfile
+
+    - name: 'Download {{pgrole}} appsettings.json config file'
+      get_url:
+        url: https://raw.githubusercontent.com/tidusjar/Ombi/master/src/Ombi/appsettings.json
+        dest: /opt/seedbox/docker/%USER%/{{pgrole}}/appsettings.json
+        owner: '%UID%'
+        group: '%GID%'
+        force: no
+      ignore_errors: True
+      when: jsonfile.stat.exists == False
+
+    # LABELS ######################################################################
+    - name: 'Adding Traefik'
+      set_fact:
+        pg_labels:
+          traefik.enable: 'true'
+          traefik.port: '{{intport}}'
+          traefik.frontend.rule: 'Host:{{pgrole}}.%DOMAIN%'
+
+    - name: 'Setting PG Volumes'
+      set_fact:
+        pg_volumes:
+          - '/opt/seedbox/docker/%USER%/{{pgrole}}:/config'
+          - '/etc/localtime:/etc/localtime:ro'
+          - '/opt/seedbox/docker/%USER%/{{pgrole}}/appsettings.json:/opt/{{pgrole}}/appsettings.json'
+
+    - name: 'Setting PG ENV'
+      set_fact:
+        pg_env:
+          PUID: '%UID%'
+          PGID: '%GID%'
+
+    # MAIN DEPLOYMENT #############################################################
+
+    - name: 'Deploying {{pgrole}}'
+      docker_container:
+        name: '{{pgrole}}-%USER%'
+        image: '{{image}}'
+        pull: yes
+        published_ports:
+          - '{{ports.stdout}}{{extport}}:{{intport}}'
+        volumes: '{{pg_volumes}}'
+        env: '{{pg_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+        state: started
+        labels: '{{pg_labels}}'
