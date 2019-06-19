@@ -30,7 +30,7 @@
         pg_volumes:
           - '/opt/appdata/{{pgrole}}:/config'
           - '/etc/localtime:/etc/localtime:ro'
-          - '/home/%USER%':/home/%USER%'
+          - '/home/%USER%:/home/%USER%'
 
     - name: 'Setting PG ENV'
       set_fact:
