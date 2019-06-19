@@ -1,22 +1,93 @@
-  
-#STARTemby#
-  emby-%USER%:
-    image: emby/embyserver
-    container_name: emby-%USER%
-    restart: unless-stopped
-    labels:
-      - traefik.enable=true
-      - traefik.frontend.rule=%TRAEFIKURL%
-      - traefik.frontend.auth.basic=%VAR%
-      - traefik.port=8096
-      - traefik.docker.network=traefik_proxy
-    volumes:
-      - /opt/seedbox/docker/%USER%/emby/conf:/config:rw
-      - /home/%USER%:/home/%USER%
-    environment:
-      - UID=%UID%
-      - GID=%GID%
-      - TZ=%TIMEZONE%
-    networks:
-      - proxy
-#ENDemby#
+#!/bin/bash
+#
+# Title:      PGBlitz (Reference Title File)
+# Author(s):  Admin9705
+# URL:        https://pgblitz.com - http://github.pgblitz.com
+# GNU:        General Public License v3.0
+################################################################################
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    # FACTS #######################################################################
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'emby'
+        intport: '8096'
+        extport: '8096'
+        image: 'emby/embyserver'
+
+    # CORE (MANDATORY) ############################################################
+    - name: 'XML Check'
+      stat:
+        path: /opt/seedbox/docker/%USER%/{{pgrole}}/config/system.xml
+      register: xmlcheck
+      
+    # LABELS ######################################################################
+    - name: 'Adding Traefik'
+      set_fact:
+        pg_labels:
+          traefik.enable: 'true'
+          traefik.port: '{{intport}}'
+          traefik.frontend.rule: 'Host:{{pgrole}}.%DOMAIN%'
+
+    - name: 'Setting PG Volumes'
+      set_fact:
+        pg_volumes:
+          - /etc/localtime:/etc/localtime:ro
+          - /opt/seedbox/docker/%USER%/{{pgrole}}:/config
+          - '/home/%USER%:/home/%USER%'
+
+    - name: 'Setting PG ENV'
+      set_fact:
+        pg_env:
+          UID: '%UID%'
+          GID: '%GID%'
+          GIDLIST: '%GID%'
+
+    # MAIN DEPLOYMENT #############################################################
+    - name: 'Deploying {{pgrole}}'
+      docker_container:
+        name: '{{pgrole}}-%USER%'
+        image: '{{image}}'
+        pull: yes
+        published_ports:
+          - '{{extport}}:{{intport}}'
+        volumes: '{{pg_volumes}}'
+        env: '{{pg_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+        expose: '8096'
+        state: started
+        labels: '{{pg_labels}}'
+
+    # FIRST TIME CONFIGURATION ###########################################################
+    - name: 'Configuring {{pgrole}} for first time use'
+      block:
+
+      - name: 'Pending XML Generation'
+        wait_for:
+          path: '/opt/seedbox/docker/%USER%/{{pgrole}}/config/system.xml'
+          state: present
+
+      - name: 'Wait 5 Seconds'
+        wait_for:
+          timeout: 5
+
+      - name: 'Stop {{pgrole}}'
+        docker_container:
+          name: '{{pgrole}}-%USER%'
+          state: stopped
+
+      - name: 'Turn Off Reporting'
+        xml:
+          path: '//opt/seedbox/docker/%USER%/{{pgrole}}/config/system.xml'
+          xpath: /ServerConfiguration/EnableAnonymousUsageReporting
+          value: 'false'
+
+      - name: 'Restart {{pgrole}}'
+        docker_container:
+          name: '{{pgrole}}-%USER%'
+          state: started
+      when: not xmlcheck.stat.exists
