@@ -909,6 +909,7 @@ function define_parameters() {
 	USEDOMAIN="y"
 	create_user
 	CONTACTEMAIL=$(whiptail --title "Adresse Email" --inputbox \
+	"Merci de taper votre adresse Email :" 7 50 3>&1 1>&2 2>&3)
 	DOMAIN=$(whiptail --title "Votre nom de Domaine" --inputbox \
 	"Merci de taper votre nom de Domaine (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3)
 	echo ""
