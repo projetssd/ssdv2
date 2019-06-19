@@ -907,18 +907,8 @@ function install_docker() {
 function define_parameters() {
 	echo -e "${BLUE}### INFORMATIONS UTILISATEURS ###${NC}"
 	USEDOMAIN="y"
-	CURRTIMEZONE=$(cat /etc/timezone)
 	create_user
 	CONTACTEMAIL=$(whiptail --title "Adresse Email" --inputbox \
-	"Merci de taper votre adresse Email :" 7 50 3>&1 1>&2 2>&3)
-	TIMEZONEDEF=$(whiptail --title "Timezone" --inputbox \
-	"Merci de vérifier votre timezone" 7 66 "$CURRTIMEZONE" \
-	3>&1 1>&2 2>&3)
-	if [[ $TIMEZONEDEF == "" ]]; then
-		TIMEZONE=$CURRTIMEZONE
-	else
-		TIMEZONE=$TIMEZONEDEF
-	fi
 	DOMAIN=$(whiptail --title "Votre nom de Domaine" --inputbox \
 	"Merci de taper votre nom de Domaine (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3)
 	echo ""
