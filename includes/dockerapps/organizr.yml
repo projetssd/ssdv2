@@ -1,21 +1,64 @@
+#!/bin/bash
+#
+# Title:      PGBlitz (Reference Title File)
+# Author(s):  Admin9705
+# URL:        https://pgblitz.com - http://github.pgblitz.com
+# GNU:        General Public License v3.0
+################################################################################
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    # FACTS #######################################################################
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'organizr'
+        intport: '80'
+        extport: '8040'
+        image: 'organizrtools/organizr-v2'
 
-#STARTorganizr#
-  organizr-%USER%:
-    image: tronyx/docker-organizr-v2
-    container_name: organizr-%USER%
-    restart: unless-stopped
-    labels:
-      - traefik.enable=true
-      - traefik.frontend.rule=%TRAEFIKURL%
-      - traefik.frontend.auth.basic=%VAR%
-      - traefik.port=80
-      - traefik.docker.network=traefik_proxy
-    environment:
-      - PUID=%UID%
-      - PGID=%GID%
-      - TZ=%TIMEZONE%
-    volumes:
-      - /opt/seedbox/docker/%USER%/organizr/config:/config
-    networks:
-      - proxy
-#ENDorganizr#
+    # LABELS ######################################################################
+    - name: 'Adding Traefik'
+      set_fact:
+        pg_labels:
+          traefik.enable: 'true'
+          traefik.port: '{{intport}}'
+          traefik.frontend.rule: 'Host:{{pgrole}}.%DOMAIN%'
+          traefik.frontend.headers.SSLHost: '%DOMAIN%'
+          traefik.frontend.headers.SSLRedirect: 'true'
+          traefik.frontend.headers.STSIncludeSubdomains: 'true'
+          traefik.frontend.headers.STSPreload: 'true'
+          traefik.frontend.headers.STSSeconds: '315360000'
+          traefik.frontend.headers.browserXSSFilter: 'true'
+          traefik.frontend.headers.contentTypeNosniff: 'true'
+          traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+          traefik.frontend.headers.forceSTSHeader: 'true'
+          traefik.frontend.headers.frameDeny: 'true'
+
+    - name: 'Setting PG Volumes'
+      set_fact:
+        pg_volumes:
+          - '//opt/seedbox/docker/%USER%/{{pgrole}}:/config'
+          - '/etc/localtime:/etc/localtime:ro'
+
+    - name: 'Setting PG ENV'
+      set_fact:
+        pg_env:
+          PUID: '%UID%'
+          PGID: '%GID%'
+
+    # MAIN DEPLOYMENT #############################################################
+    - name: 'Deploying {{pgrole}}'
+      docker_container:
+        name: '{{pgrole}}-%USER%'
+        image: '{{image}}'
+        pull: yes
+        published_ports:
+          - '{{extport}}:{{intport}}'
+        volumes: '{{pg_volumes}}'
+        env: '{{pg_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+        state: started
+        labels: '{{pg_labels}}'
