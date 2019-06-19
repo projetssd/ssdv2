@@ -1292,7 +1292,7 @@ function install_services() {
 	echo $PORT1 >> $FILEPORTPATH1
 	echo $PORT2 >> $FILEPORTPATH2
 	echo $PORTPLEX >> $PLEXPORTPATH
-	#config_post_compose
+	config_post_compose
 }
 
 function config_post_compose() {
@@ -1314,34 +1314,8 @@ do
 		fi
 
 		if [[ "$line" == "rutorrent" ]]; then
-			replace_media_compose
-			echo -e "${BLUE}### CONFIG POST COMPOSE RUTORRENT ###${NC}"
-
-			USERID=$(id -u $SEEDUSER)
-			GRPID=$(id -g $SEEDUSER)
-			PORTORRENT=$(grep -B1 udp /home/$SEEDUSER/docker-compose.yml | cut -d ':' -f2 | head -n 1 | tail -n 1)
-
-			# installation du theme de Xataz et suppression du plugin clouflare
+			# installation du theme MaterialDesign
 			docker exec rutorrent-$SEEDUSER sh -c "git clone https://github.com/Phlooo/ruTorrent-MaterialDesign.git /app/rutorrent/plugins/theme/themes/MaterialDesign" > /dev/null 2>&1
-			docker exec rutorrent-$SEEDUSER sh -c "rm -rf /app/rutorrent/plugins/_cloudflare" > /dev/null 2>&1
-			
-			#configuration rutorrent avec ansible
-			cp "$BASEDIR/includes/config/rutorrent/rutorrent.yml" "/opt/seedbox/docker/$SEEDUSER/rutorrent/rutorrent.yml" > /dev/null 2>&1
-			cp "$BASEDIR/includes/config/rutorrent/_plugins.yml" "/opt/seedbox/docker/$SEEDUSER/rutorrent/_plugins.yml" > /dev/null 2>&1
-
-			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/rutorrent.yml
-			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/rutorrent.yml
-			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/rutorrent.yml
-
-			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/_plugins.yml
-			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/_plugins.yml
-			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/_plugins.yml
-
-			cd /opt/seedbox/docker/$SEEDUSER/rutorrent
-			ansible-playbook rutorrent.yml
-			sed -i "s|port_range = 51413-51413|port_range = $PORTORRENT-$PORTORRENT|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/rtorrent/rtorrent.rc
-			docker restart rutorrent-$SEEDUSER > /dev/null 2>&1
-			unset PORT
 		fi
 echo ""
 done
