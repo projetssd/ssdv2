@@ -49,6 +49,6 @@
         env: '{{pg_env}}'
         restart_policy: unless-stopped
         networks:
-          - name: plexguide
+          - name: traefik_proxy
         state: started
         labels: '{{pg_labels}}'
