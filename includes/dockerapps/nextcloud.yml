@@ -31,8 +31,8 @@
       set_fact:
         pg_volumes:
           - '/etc/localtime:/etc/localtime:ro'
-          - '/opt/appdata/nextcloud/data:/data'
-          - '/opt/appdata/{{pgrole}}/conf:/config'
+          - '/opt/seedbox/docker/%USER%/nextcloud/data:/data'
+          - '/opt/seedbox/docker/%USER%/{{pgrole}}/conf:/config'
           - '/home/%USER%:/home/%USER%'
 
     - name: 'Setting PG ENV'
