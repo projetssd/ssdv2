@@ -1,0 +1,94 @@
+#!/bin/bash
+#
+# Title:      PGBlitz (Reference Title File)
+# Author(s):  Admin9705
+# URL:        https://pgblitz.com - http://github.pgblitz.com
+# GNU:        General Public License v3.0
+################################################################################
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    # FACTS #######################################################################
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'jellyfin'
+        intport: '8096'
+        extport: '9096'
+        image: 'jellyfin/jellyfin:latest'
+
+    - name: 'XML Check'
+      stat:
+        path: /opt/appdata/{{pgrole}}/config/system.xml
+      register: xmlcheck
+
+    # LABELS ######################################################################
+    - name: 'Adding Traefik'
+      set_fact:
+        pg_labels:
+          traefik.enable: 'true'
+          traefik.port: '{{intport}}'
+          traefik.frontend.rule: 'Host:{{pgrole}}.%DOMAIN%'
+
+    - name: 'Setting PG Volumes'
+      set_fact:
+        pg_volumes:
+          - '/etc/localtime:/etc/localtime:ro'
+          - '/opt/seedbox/docker/%USER%/{{pgrole}}:/config'
+          - '/home/%USER%/Medias:/home/%USER%/Medias'
+          - '/var/run/docker.sock:/var/run/docker.sock'
+
+    - name: 'Setting PG ENV'
+      set_fact:
+        pg_env:
+          GIDLIST: '%GID%'
+          PUID: '%UID%'
+          PGID: '%GID%'
+
+    # MAIN DEPLOYMENT #############################################################
+
+    - name: 'Deploying {{pgrole}}'
+      docker_container:
+        name: '{{pgrole}}-%USER%'
+        image: '{{image}}'
+        pull: yes
+        user: %UID%:%GID%
+        published_ports:
+        volumes: '{{pg_volumes}}'
+        env: '{{pg_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+        expose: '8096'
+        state: started
+        labels: '{{pg_labels}}'
+
+    # FIRST TIME CONFIGURATION ###########################################################
+    - name: 'Configuring {{pgrole}} for first time use'
+      block:
+
+      - name: 'Pending XML Generation'
+        wait_for:
+          path: '/opt/seedbox/docker/%USER%/{{pgrole}}/config/system.xml'
+          state: present
+
+      - name: 'Wait 5 Seconds'
+        wait_for:
+          timeout: 5
+
+      - name: 'Stop {{pgrole}}'
+        docker_container:
+          name: '{{pgrole}}-%USER%'
+          state: stopped
+
+      - name: 'Turn Off Reporting'
+        xml:
+          path: '/opt/seedbox/docker/%USER%/{{pgrole}}/config/system.xml'
+          xpath: /ServerConfiguration/EnableAnonymousUsageReporting
+          value: 'false'
+
+      - name: 'Restart {{pgrole}}'
+        docker_container:
+          name: '{{pgrole}}-%USER%'
+          state: started
+      when: not xmlcheck.stat.exists
