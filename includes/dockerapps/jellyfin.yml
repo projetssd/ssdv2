@@ -19,7 +19,7 @@
 
     - name: 'XML Check'
       stat:
-        path: /opt/appdata/{{pgrole}}/config/system.xml
+        path: /opt/seedbox/docker/%USER%/{{pgrole}}/config/system.xml
       register: xmlcheck
 
     # LABELS ######################################################################
@@ -53,7 +53,6 @@
         image: '{{image}}'
         pull: yes
         user: %UID%:%GID%
-        published_ports:
         volumes: '{{pg_volumes}}'
         env: '{{pg_env}}'
         restart_policy: unless-stopped

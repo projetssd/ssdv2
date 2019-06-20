@@ -19,6 +19,11 @@
         image: 'linuxserver/ombi'
 
     # PRETASKS ####################################################################
+    - name: Creating scripts and plugins paths
+      file: 'path={{item}} state=directory mode=0775 owner=%UID% group=%GID%'
+      with_items:
+        - '/opt/seedbox/docker/%USER%/{{pgrole}}'
+
     - name: Check JSON exists
       stat:
         path: '/opt/seedbox/docker/%USER%/{{pgrole}}/appsettings.json'
@@ -63,7 +68,7 @@
         image: '{{image}}'
         pull: yes
         published_ports:
-          - '{{ports.stdout}}{{extport}}:{{intport}}'
+          - '{{extport}}:{{intport}}'
         volumes: '{{pg_volumes}}'
         env: '{{pg_env}}'
         restart_policy: unless-stopped
