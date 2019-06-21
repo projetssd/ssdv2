@@ -113,13 +113,14 @@ case $CHOICE in
 			install_watchtower
 			SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 			while read line; do echo $line | cut -d'-' -f1; done < /home/$SEEDUSER/resume > $SERVICESUSER$SEEDUSER
+			mv /home/$SEEDUSER/resume /tmp
 			install_services
 
 			## restauration plex_dupefinder
 			PLEXDUPE=/home/$SEEDUSER/scripts/plex_dupefinder/plexdupes.py
 			if [[ -e "$PLEXDUPE" ]]; then
 			cd /home/$SEEDUSER/scripts/plex_dupefinder
-			python3 -m pip install -r requirements.txt
+			python3 -m pip install -r requirements.txt > /dev/null 2>&1
 			ln -s /home/$SEEDUSER/scripts/plex_dupefinder/plexdupes.py /usr/local/bin/plexdupes
 			fi
 
@@ -127,7 +128,7 @@ case $CHOICE in
 			CLOUDPLOWSERVICE=/etc/systemd/system/cloudplow.service
 			if [[ -e "$CLOUDPLOWFILE" ]]; then
 			cd /home/$SEEDUSER/scripts/cloudplow
-			python3 -m pip install -r requirements.txt
+			python3 -m pip install -r requirements.txt > /dev/null 2>&1
 			ln -s /home/$SEEDUSER/scripts/cloudplow/cloudplow.py /usr/local/bin/cloudplow
 			systemctl start cloudplow.service
 			fi
@@ -136,7 +137,7 @@ case $CHOICE in
 			PLEXSCANSERVICE=/etc/systemd/system/plex_autoscan.service
 			if [[ -e "$PLEXSCANSERVICE" ]]; then
 			cd /home/$SEEDUSER/scripts/plex_autoscan
-			python -m pip install -r requirements.txt
+			python -m pip install -r requirements.txt > /dev/null 2>&1
 			systemctl start plex_autoscan.service
 			fi
 
@@ -144,6 +145,7 @@ case $CHOICE in
 			(crontab -l | grep . ; echo "*/1 * * * * /opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh >> /home/$SEEDUSER/scripts/filebot.log") | crontab -
 			(crontab -l | grep . ; echo "0 3 * * 6 /usr/bin/backup >> /home/$SEEDUSER/scripts/backup.log") | crontab -
 
+			mv /tmp/resume /home/$SEEDUSER/
 			checking_errors $?
 			pause
 			script_plexdrive
