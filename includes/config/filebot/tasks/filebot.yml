@@ -1,0 +1,36 @@
+#!/bin/bash
+#
+# Title:      PGBlitz (Reference Title File)
+# Author(s):  Admin9705
+# URL:        https://pgblitz.com - http://github.pgblitz.com
+# GNU:        General Public License v3.0
+################################################################################
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+ 
+    ###################### filebot
+    - name: Check filebot
+      stat:
+        path: '/opt/seedbox/docker/%USER%/.filebot'
+      register: filebot
+
+    - name: Create Basic Directories
+      file: 'path={{item}} state=directory mode=0775 owner=%UID% group=%GID%'
+      with_items:
+        - '/opt/seedbox/docker/%USER%/.filebot'
+      when:
+        - filebot.stat.exists == False
+
+    - name: Installing filebot
+      unarchive:
+        src: http://downloads.sourceforge.net/project/filebot/filebot/FileBot_4.7.9/FileBot_4.7.9-portable.tar.xz
+        dest: /opt/seedbox/docker/%USER%/.filebot
+        keep_newer: no
+        owner: '%UID%'
+        group: '%GID%'
+        mode: 0775
+        copy: no
+      when:
+        - filebot.stat.exists == False

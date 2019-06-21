@@ -35,7 +35,7 @@ case $CHOICE in
 			choose_media_folder_classique
 			choose_services
 			install_services
-			install_filebot
+			filebot
 			resume_seedbox
 			pause
 			script_classique
@@ -73,7 +73,7 @@ case $CHOICE in
 				cloudplow
 				sed -i "s/\"enabled\"\: true/\"enabled\"\: false/g" /home/$SEEDUSER/scripts/cloudplow/config.json
 			fi
-			install_filebot
+			filebot
 			sauve
 			resume_seedbox
 			pause

@@ -291,14 +291,31 @@ function cloudplow() {
 
 function filebot() {
 			#configuration filebot avec ansible
+			echo ""
 			echo -e "${BLUE}### FILEBOT ###${NC}"
 			echo -e " ${BWHITE}* Installation filebot${NC}"
-			cp -r "$BASEDIR/includes/config/roles/filebot" "/opt/seedbox/docker/$SEEDUSER/test"
-			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/test/tasks/main.yml
-			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/test/tasks/main.yml
-			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/test/tasks/main.yml
-			cd /opt/seedbox/docker/$SEEDUSER/test/tasks
-			ansible-playbook main.yml
+			cp -r "$BASEDIR/includes/config/filebot" "/tmp"
+			sed -i "s|%USER%|$SEEDUSER|g" /tmp/filebot/tasks/filebot.yml
+			sed -i "s|%UID%|$USERID|g" /tmp/filebot/tasks/filebot.yml
+			sed -i "s|%GID%|$GRPID|g" /tmp/filebot/tasks/filebot.yml
+			cd /tmp/filebot/tasks
+			ansible-playbook filebot.yml
+
+			chmod a+x /opt/seedbox/docker/$SEEDUSER/.filebot/filebot.sh > /dev/null 2>&1
+			chmod a+x /opt/seedbox/docker/$SEEDUSER/.filebot/update-filebot.sh > /dev/null 2>&1
+
+			#configuration filebot
+			cp "$BASEDIR/includes/config/filebot/filebot-process.sh" "/opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh" > /dev/null 2>&1
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh
+			chown $USERID:$GRPID /opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh
+
+			## mise en place d'un cron pour le lancement de filebot
+			(crontab -l | grep . ; echo "*/1 * * * * /opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh >> /home/$SEEDUSER/scripts/filebot.log") | crontab -
+			service cron restart
+			checking_errors $?
+			rm -rf /tmp/filebot
+			echo ""
+
 }
 
 function rclone_aide() {
@@ -601,51 +618,22 @@ function checking_errors() {
 	fi
 }
 
-function install_filebot() {
-		echo -e "${BLUE}### FILEBOT ###${NC}"
-		echo -e " ${BWHITE}* Installation de filebot !${NC}"
-		cd /tmp
-		wget http://downloads.sourceforge.net/project/filebot/filebot/FileBot_4.7.9/FileBot_4.7.9-portable.tar.xz > /dev/null 2>&1
-		mkdir filebot > /dev/null 2>&1
-		tar xvf FileBot_4.7.9-portable.tar.xz -C filebot > /dev/null 2>&1
-		cp -R filebot /opt/seedbox/docker/$SEEDUSER/.filebot > /dev/null 2>&1
-		chmod a+x /opt/seedbox/docker/$SEEDUSER/.filebot/filebot.sh > /dev/null 2>&1
-		chmod a+x /opt/seedbox/docker/$SEEDUSER/.filebot/update-filebot.sh > /dev/null 2>&1
-
-		#configuration filebot
-		cp "$BASEDIR/includes/config/filebot/filebot-process.sh" "/opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh" > /dev/null 2>&1
-		sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh
-
-		## mise en place d'un cron pour le lancement de filebot
-		(crontab -l | grep . ; echo "*/1 * * * * /opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh >> /home/$SEEDUSER/scripts/filebot.log") | crontab -
-		service cron restart
-		checking_errors $?
-		echo ""
-}
-
 function install_fail2ban() {
-		echo -e "${BLUE}### FAIL2BAN ###${NC}"
-		if (whiptail --title "Docker fail2ban" --yesno "Voulez vous installer fail2ban" 7 50) then
-			echo -e " ${BWHITE}* Installation de Fail2ban !${NC}"
-			apt install fail2ban -y > /dev/null 2>&1
-			SSH=$(echo ${SSH_CLIENT##* })
-			IP_DOM=$(grep 'Accepted' /var/log/auth.log | cut -d ' ' -f11 | head -1)
-			cp "$BASEDIR/includes/config/fail2ban/custom.conf" "/etc/fail2ban/jail.d/custom.conf" > /dev/null 2>&1
-			cp "$BASEDIR/includes/config/fail2ban/traefik.conf" "/etc/fail2ban/jail.d/traefik.conf" > /dev/null 2>&1
-			cp "$BASEDIR/includes/config/fail2ban/traefik-auth.conf" "/etc/fail2ban/filter.d/traefik-auth.conf" > /dev/null 2>&1
-			cp "$BASEDIR/includes/config/fail2ban/traefik-botsearch.conf" "/etc/fail2ban/filter.d/traefik-botsearch.conf" > /dev/null 2>&1
-			cp "$BASEDIR/includes/config/fail2ban/docker-action.conf" "/etc/fail2ban/action.d/docker-action.conf" > /dev/null 2>&1
-			sed -i "s|%SSH%|$SSH|g" /etc/fail2ban/jail.d/custom.conf
-			sed -i "s|%IP_DOM%|$IP_DOM|g" /etc/fail2ban/jail.d/custom.conf
-			sed -i "s|%IP_DOM%|$IP_DOM|g" /etc/fail2ban/jail.d/traefik.conf
-			cd $CONFDIR/docker/traefik
-			docker-compose restart traefik > /dev/null 2>&1
-			systemctl restart fail2ban.service > /dev/null 2>&1
-			checking_errors $?
-		else
-			echo -e " ${BWHITE}* Fail2ban non installé !${NC}"	
-		fi
-		echo ""
+	echo -e "${BLUE}### FAIL2BAN ###${NC}"
+	SSH=$(echo ${SSH_CLIENT##* })
+	IP_DOM=$(grep 'Accepted' /var/log/auth.log | cut -d ' ' -f11 | head -1)
+	cp "$BASEDIR/includes/config/fail2ban/custom.conf" "/etc/fail2ban/jail.d/custom.conf" > /dev/null 2>&1
+	cp "$BASEDIR/includes/config/fail2ban/traefik.conf" "/etc/fail2ban/jail.d/traefik.conf" > /dev/null 2>&1
+	cp "$BASEDIR/includes/config/fail2ban/traefik-auth.conf" "/etc/fail2ban/filter.d/traefik-auth.conf" > /dev/null 2>&1
+	cp "$BASEDIR/includes/config/fail2ban/traefik-botsearch.conf" "/etc/fail2ban/filter.d/traefik-botsearch.conf" > /dev/null 2>&1
+	cp "$BASEDIR/includes/config/fail2ban/docker-action.conf" "/etc/fail2ban/action.d/docker-action.conf" > /dev/null 2>&1
+	sed -i "s|%SSH%|$SSH|g" /etc/fail2ban/jail.d/custom.conf
+	sed -i "s|%IP_DOM%|$IP_DOM|g" /etc/fail2ban/jail.d/custom.conf
+	sed -i "s|%IP_DOM%|$IP_DOM|g" /etc/fail2ban/jail.d/traefik.conf
+	docker restart traefik > /dev/null 2>&1
+	systemctl restart fail2ban.service > /dev/null 2>&1
+	checking_errors $?
+	echo ""
 }	
 
 function install_traefik() {
@@ -685,22 +673,16 @@ function install_portainer() {
 	if [[ ! -f "$INSTALLEDFILE" ]]; then
 	touch $INSTALLEDFILE> /dev/null 2>&1
 	fi
-	PORTAINER="$CONFDIR/docker/portainer/"
-	PORTAINERCOMPOSEFILE="$PORTAINER/docker-compose.yml"
 
 	if [[ ! -d "$PORTAINER" ]]; then
-
 		if (whiptail --title "Docker Portainer" --yesno "Voulez vous installer portainer" 7 50) then
-			echo -e " ${BWHITE}* Installation de portainer !${NC}"
-			mkdir -p $PORTAINER
-			touch $PORTAINERCOMPOSEFILE
-			cat /opt/seedbox-compose/includes/dockerapps/head.docker > $PORTAINERCOMPOSEFILE
-			cat "/opt/seedbox-compose/includes/dockerapps/portainer.yml" >> $PORTAINERCOMPOSEFILE
-			cat /opt/seedbox-compose/includes/dockerapps/foot.docker >> $PORTAINERCOMPOSEFILE
-			sed -i "s|%DOMAIN%|$DOMAIN|g" $PORTAINERCOMPOSEFILE
-			sed -i "s|%PORTAINER%|$PORTAINER|g" $PORTAINERCOMPOSEFILE
-			cd $PORTAINER
-			docker-compose up -d > /dev/null 2>&1
+			echo -e " ${BWHITE}* Installation Portainer${NC}"
+			mkdir -p $TRAEFIK
+			cp "$BASEDIR/includes/dockerapps/portainer.yml" "/tmp/"
+			sed -i "s|%DOMAIN%|$DOMAIN|g" /tmp/portainer.yml
+			cd /tmp
+			ansible-playbook portainer.yml
+			rm portainer.yml
 			echo "portainer-port-portainer.$DOMAIN" >> $INSTALLEDFILE
 			checking_errors $?
 		else
@@ -714,33 +696,10 @@ function install_portainer() {
 
 function install_watchtower() {
 	echo -e "${BLUE}### WATCHTOWER ###${NC}"
-	INSTALLEDFILE="$CONFDIR/resume"
-	if [[ ! -f "$INSTALLEDFILE" ]]; then
-	touch $INSTALLEDFILE> /dev/null 2>&1
-	fi
-	WATCHTOWER="$CONFDIR/docker/watchtower/"
-	WATCHTOWERCOMPOSEFILE="$WATCHTOWER/docker-compose.yml"
-
-	if [[ ! -d "$WATCHTOWER" ]]; then
-
-		if (whiptail --title "Docker watchtower" --yesno "Voulez vous installer watchtower" 7 50) then
-			echo -e " ${BWHITE}* Installation de watchtower !${NC}"
-			mkdir -p $WATCHTOWER
-			touch $WATCHTOWERCOMPOSEFILE
-			cat /opt/seedbox-compose/includes/dockerapps/head.docker > $WATCHTOWERCOMPOSEFILE
-			cat "/opt/seedbox-compose/includes/dockerapps/watchtower.yml" >> $WATCHTOWERCOMPOSEFILE
-			cat /opt/seedbox-compose/includes/dockerapps/foot.docker >> $WATCHTOWERCOMPOSEFILE
-			sed -i "s|%DOMAIN%|$DOMAIN|g" $WATCHTOWERCOMPOSEFILE
-			sed -i "s|%PORTAINER%|$PORTAINER|g" $WATCHTOWERCOMPOSEFILE
-			cd $WATCHTOWER
-			docker-compose up -d > /dev/null 2>&1
-			checking_errors $?
-		else
-			echo -e " ${BWHITE}--> watchtower n'est pas installé !${NC}"
-		fi
-	else
-		echo -e " ${BWHITE}--> watchtower est déjà installé !${NC}"
-	fi
+	echo -e " ${BWHITE}* Installation Watchtower${NC}"
+	cd /opt/seedbox-compose/includes/dockerapps
+	ansible-playbook watchtower.yml
+	checking_errors $?
 	echo ""
 }
 
@@ -1470,7 +1429,7 @@ function manage_users() {
 				cloudplow
 				sed -i "s/\"enabled\"\: true/\"enabled\"\: false/g" /home/$SEEDUSER/scripts/cloudplow/config.json
 				fi
-				install_filebot
+				filebot
 				sauve
 				resume_seedbox
 				pause
@@ -1479,7 +1438,7 @@ function manage_users() {
 				choose_media_folder_classique
 				choose_services
 				install_services
-				install_filebot
+				filebot
 				resume_seedbox
 				pause
 				script_classique
@@ -1591,7 +1550,6 @@ function manage_apps() {
 			choose_services
 			add_app_htpasswd
 			install_services
-			#docker_compose
 			resume_seedbox
 			pause
 			if [[ -e "$PLEXDRIVE" ]]; then

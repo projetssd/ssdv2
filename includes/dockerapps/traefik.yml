@@ -58,12 +58,14 @@
         published_ports:
           - "443:443"
           - "80:80"
+        command: ["--web", "--accessLog.filePath=/var/log/access.log", "--accessLog.filters.statusCodes=400-499"]
         env: '{{pg_env}}'
         volumes:
           - /var/run/docker.sock:/var/run/docker.sock:ro
           - /etc/localtime:/etc/localtime:ro
           - /opt/seedbox/docker/traefik/traefik.toml:/etc/traefik/traefik.toml:ro
           - /opt/seedbox/docker/traefik/acme:/etc/traefik/acme
+          - /var/log/traefik:/var/log
         restart_policy: unless-stopped
         state: started
         labels: '{{pg_labels}}'
