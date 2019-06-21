@@ -112,7 +112,7 @@ case $CHOICE in
 			install_portainer
 			install_watchtower
 			SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
-			while read line; do echo $line | cut -d'-' -f1; done < resume > $SERVICESUSER$SEEDUSER
+			while read line; do echo $line | cut -d'-' -f1; done < /home/$SEEDUSER/resume > $SERVICESUSER$SEEDUSER
 			install_services
 
 			## restauration plex_dupefinder
