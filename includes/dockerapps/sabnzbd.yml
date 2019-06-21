@@ -15,7 +15,6 @@
       set_fact:
         pgrole: 'sabnzbd'
         intport: '8080'
-        extport: '8080'
         image: 'linuxserver/sabnzbd'
 
     - name: 'Checking for existing app data'
@@ -52,8 +51,6 @@
         name: '{{pgrole}}-%USER%'
         image: '{{image}}'
         pull: yes
-        published_ports:
-          - '{{extport}}:{{intport}}'
         volumes: '{{pg_volumes}}'
         env: '{{pg_env}}'
         restart_policy: unless-stopped

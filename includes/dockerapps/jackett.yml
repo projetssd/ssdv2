@@ -14,7 +14,6 @@
       set_fact:
         pgrole: 'jackett'
         intport: '9117'
-        extport: '9117'
         image: 'linuxserver/jackett'
 
     # MIGRATIONS (MANDATORY) ############################################################
@@ -64,8 +63,6 @@
         name: '{{pgrole}}-%USER%'
         image: '{{image}}'
         pull: yes
-        published_ports:
-          - '{{extport}}:{{intport}}'
         volumes: '{{pg_volumes}}'
         env: '{{pg_env}}'
         restart_policy: unless-stopped

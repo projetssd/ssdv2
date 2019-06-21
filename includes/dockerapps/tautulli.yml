@@ -14,7 +14,6 @@
       set_fact:
         pgrole: 'tautulli'
         intport: '8181'
-        extport: '8181'
         image: 'linuxserver/tautulli'
 
     # CORE (MANDATORY) ############################################################      
@@ -75,8 +74,6 @@
         name: '{{pgrole}}-%USER%'
         image: '{{image}}'
         pull: yes
-        published_ports:
-          - '{{extport}}:{{intport}}'
         volumes: '{{pg_volumes}}'
         env: '{{pg_env}}'
         restart_policy: unless-stopped

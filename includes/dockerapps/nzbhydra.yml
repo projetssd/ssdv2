@@ -14,7 +14,6 @@
       set_fact:
         pgrole: 'nzbhydra'
         intport: '5076'
-        extport: '5076'
         image: 'linuxserver/hydra2'
 
     # LABELS ######################################################################
@@ -44,8 +43,6 @@
         name: '{{pgrole}}-%USER%'
         image: '{{image}}'
         pull: yes
-        published_ports:
-          - '{{extport}}:{{intport}}'
         volumes: '{{pg_volumes}}'
         env: '{{pg_env}}'
         restart_policy: unless-stopped

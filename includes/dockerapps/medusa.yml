@@ -15,7 +15,6 @@
       set_fact:
         pgrole: "medusa"
         intport: "8081"
-        extport: "8081"
         image: "linuxserver/medusa"
 
 # LABELS #### KEEPS BOTTOM CLEAN ###########################################

@@ -14,7 +14,6 @@
       set_fact:
         pgrole: 'portainer'
         intport: '9000'
-        extport: '9000'
         image: 'portainer/portainer'
 
     # LABELS ######################################################################
@@ -44,8 +43,6 @@
         name: '{{pgrole}}'
         image: '{{image}}'
         pull: yes
-        published_ports:
-          - '{{extport}}:{{intport}}'
         volumes: '{{pg_volumes}}'
         env: '{{pg_env}}'
         restart_policy: unless-stopped
