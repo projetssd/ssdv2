@@ -108,14 +108,12 @@ case $CHOICE in
 			choose_media_folder_plexdrive
 			unionfs_fuse
 			docker network create traefik_proxy
-			cd /opt/seedbox/docker/traefik
-			docker-compose up -d
+			install_traefik
 			install_portainer
 			install_watchtower
-			cd /home/$SEEDUSER
-			echo -e "${BLUE}### DOCKERCOMPOSE ###${NC}"
-			echo -e " ${BWHITE}* Docker-composing, Merci de patienter...${NC}"
-			docker-compose up -d
+			SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
+			while read line; do echo $line | cut -d'-' -f1; done < resume > $SERVICESUSER$SEEDUSER
+			install_services
 
 			## restauration plex_dupefinder
 			PLEXDUPE=/home/$SEEDUSER/scripts/plex_dupefinder/plexdupes.py

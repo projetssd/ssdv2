@@ -646,7 +646,9 @@ function install_traefik() {
 	touch $INSTALLEDFILE> /dev/null 2>&1
 	fi
 
-	if [[ ! -d "$TRAEFIK" ]]; then
+	if docker ps | grep -q traefik; then
+		echo -e " ${YELLOW}* Traefik est déjà installé !${NC}"
+	else
 		echo -e " ${BWHITE}* Installation Traefik${NC}"
 		mkdir -p $TRAEFIK
 		cp "$BASEDIR/includes/dockerapps/traefik.toml" "$CONFDIR/docker/traefik/"
@@ -660,9 +662,7 @@ function install_traefik() {
 		ansible-playbook traefik.yml
 		rm traefik.yml acme.json
 		echo "traefik-port-traefik.$DOMAIN" >> $INSTALLEDFILE
-		checking_errors $?
-	else
-		echo -e " ${YELLOW}* Traefik est déjà installé !${NC}"
+		checking_errors $?		
 	fi
 	echo ""
 }
@@ -674,7 +674,9 @@ function install_portainer() {
 	touch $INSTALLEDFILE> /dev/null 2>&1
 	fi
 
-	if [[ ! -d "$PORTAINER" ]]; then
+	if docker ps | grep -q portainer; then
+		echo -e " ${BWHITE}--> portainer est déjà installé !${NC}"
+		else
 		if (whiptail --title "Docker Portainer" --yesno "Voulez vous installer portainer" 7 50) then
 			echo -e " ${BWHITE}* Installation Portainer${NC}"
 			mkdir -p $TRAEFIK
@@ -688,8 +690,6 @@ function install_portainer() {
 		else
 			echo -e " ${BWHITE}--> portainer n'est pas installé !${NC}"
 		fi
-	else
-		echo -e " ${BWHITE}--> portainer est déjà installé !${NC}"
 	fi
 	echo ""
 }
