@@ -9,8 +9,8 @@ Ce script est basé sur CloudBox [(Lien du GitHub)](https://github.com/Cloudbox/
 Les images utilisées pour ce projet sont:
 * [Traefik](https://traefik.io/) pour gérer les I/O web
 * [xataz/rtorrent-rutorrent](https://hub.docker.com/r/xataz/rtorrent-rutorrent/)  
-* [xataz/medusa](https://hub.docker.com/r/xataz/medusa/)  
 * [Emby](https://hub.docker.com/r/emby/embyserver/)  
+* ...
 
 # Pré-requis
 
