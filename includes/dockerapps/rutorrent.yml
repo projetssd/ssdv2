@@ -62,6 +62,7 @@
           traefik.enable: 'true'
           traefik.port: '{{intport}}'
           traefik.frontend.rule: 'Host:{{pgrole}}.%DOMAIN%'
+          traefik.frontend.auth.basic: '%VAR%'
 
     - name: 'Setting PG Volumes'
       set_fact:

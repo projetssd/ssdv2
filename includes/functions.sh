@@ -1383,7 +1383,7 @@ function valid_htpasswd() {
 		HTTEMPFOLDER="/tmp/"
 		HTFILE=".htpasswd-$SEEDUSER"
 		cat "$HTTEMPFOLDER$HTFILE" >> "$HTFOLDER$HTFILE"
-		VAR=$(sed -e 's/\$/\$$/g' "$HTFOLDER$HTFILE")
+		VAR=$(sed -e 's/\$/\$/g' "$HTFOLDER$HTFILE")
 		cd $HTFOLDER
 		touch login
 		echo "$HTUSER $HTPASSWORD" >> "$HTFOLDER/login"
@@ -1395,7 +1395,7 @@ function add_app_htpasswd() {
 	if [[ -d "$CONFDIR" ]]; then
 		HTFOLDER="$CONFDIR/passwd/"
 		HTFILE=".htpasswd-$SEEDUSER"
-		VAR=$(sed -e 's/\$/\$$/g' "$HTFOLDER$HTFILE")
+		VAR=$(sed -e 's/\$/\$/g' "$HTFOLDER$HTFILE")
 	fi
 }
 

@@ -10,6 +10,7 @@
       set_fact:
         pgrole: 'sonarr'
         intport: '8989'
+        extport: '8989'
         image: 'linuxserver/sonarr'
 
     # LABELS ######################################################################
@@ -19,6 +20,7 @@
           traefik.enable: 'true'
           traefik.port: '{{intport}}'
           traefik.frontend.rule: 'Host:{{pgrole}}.%DOMAIN%'
+          traefik.frontend.auth.basic: '%VAR%'
 
     - name: 'Setting PG Volumes'
       set_fact:
@@ -42,6 +44,8 @@
         name: '{{pgrole}}-%USER%'
         image: '{{image}}'
         pull: yes
+        published_ports:
+          - '{{extport}}:{{intport}}'
         volumes: '{{pg_volumes}}'
         env: '{{pg_env}}'
         restart_policy: unless-stopped
