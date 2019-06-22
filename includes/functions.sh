@@ -107,7 +107,7 @@ function plex_dupefinder() {
 			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/tasks/main.yml
 			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/tasks/main.yml
 			sed -i "s|%TOKEN%|$X_PLEX_TOKEN|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/templates/config.json.j2
-			sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/templates/config.json.j2
+			sed -i "s|%DOMAIN%|$DOMAIN|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/templates/config.json.j2
 			sed -i "s|%FILMS%|$FILMS|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/templates/config.json.j2
 			sed -i "s|%SERIES%|$SERIES|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/templates/config.json.j2
 
@@ -147,7 +147,7 @@ function traktarr() {
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/traktarr/templates/config.json.j2
 			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/traktarr/templates/config.json.j2
 			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/traktarr/templates/config.json.j2
-			sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" /opt/seedbox/docker/$SEEDUSER/traktarr/templates/config.json.j2
+			sed -i "s|%DOMAIN%|$DOMAIN|g" /opt/seedbox/docker/$SEEDUSER/traktarr/templates/config.json.j2
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/traktarr/templates/config.json.j2
 
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/traktarr/templates/traktarr.service.j2
@@ -209,9 +209,8 @@ function plex_autoscan() {
 			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/tasks/main.yml
 
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/config.json.j2
-			sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/config.json.j2
+			sed -i "s|%DOMAIN%|$DOMAIN|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/config.json.j2
 			sed -i "s|%TOKEN%|$X_PLEX_TOKEN|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/config.json.j2
-			sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/config.json.j2
 
 			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/plex_autoscan.service.j2
 			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/plex_autoscan.service.j2
@@ -277,7 +276,7 @@ function cloudplow() {
 			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/config.json.j2
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/config.json.j2
 			sed -i "s|%REMOTECRYPT%|$REMOTECRYPT|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/config.json.j2
-			sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/config.json.j2
+			sed -i "s|%DOMAIN%|$DOMAIN|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/config.json.j2
 			sed -i "s|%TOKEN%|$X_PLEX_TOKEN|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/config.json.j2
 
 			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/cloudplow.service.j2
@@ -1317,26 +1316,10 @@ function plex_sections() {
 				declare -i PORT=3470
 			fi
 
-			## récupération nom de domaine
-			for line in $(cat $INSTALLEDFILE);
-			do
-				NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
-				if [ $NOMBRE -le 1 ] ; then
-					ACCESSDOMAIN=$(grep plex $INSTALLEDFILE | cut -d\- -f3)
-				else
-					ACCESSDOMAIN=$(grep plex $INSTALLEDFILE | cut -d\- -f3-4)
-				fi
-			done
-
-
-			## installation plex_dupefinder
-			plex_dupefinder
-			echo ""
-
 			PLEXDRIVE="/usr/bin/plexdrive"
 			if [[ -e "$PLEXDRIVE" ]]; then
 
-				## installation plex_dupefinder
+				## installation plex_autoscan
 				plex_autoscan
 				echo ""
 
@@ -1364,7 +1347,7 @@ function plex_sections() {
 				done
 				
 				## config plex_autoscan filebot rutorrent
-				sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" $PLEXCANFILE
+				sed -i "s|%DOMAIN%|$DOMAIN|g" $PLEXCANFILE
 				sed -i -e "s/%ANIMES%/${ANIMES}/g" $PLEXCANFILE
 				sed -i -e "s/%FILMS%/${FILMS}/g" $PLEXCANFILE
 				sed -i -e "s/%SERIES%/${SERIES}/g" $PLEXCANFILE
@@ -1374,6 +1357,11 @@ function plex_sections() {
 				sed -i -e "s/%PASS%/${PASS}/g" $PLEXCANFILE
 				sed -i -e "s/%IPADDRESS%/${IPADDRESS}/g" $PLEXCANFILE
 			fi
+
+			## installation plex_dupefinder
+			echo ""
+			plex_dupefinder
+			echo ""
 }
 
 function valid_htpasswd() {
