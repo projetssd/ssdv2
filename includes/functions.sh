@@ -51,7 +51,7 @@ function rtorrent-cleaner() {
 	                		"Merci de sélectionner l'Utilisateur" 12 50 3 \
 	                		"${TABUSERS[@]}"  3>&1 1>&2 2>&3)
 
-			cp -r $BASEDIR/includes/config/rutorrent/rtorrent-cleaner /usr/local/bin
+			cp -r $BASEDIR/includes/config/rtorrent-cleaner/rtorrent-cleaner /usr/local/bin
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /usr/local/bin/rtorrent-cleaner
 			checking_errors $?
 }

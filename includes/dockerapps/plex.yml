@@ -17,6 +17,11 @@
         extport: '32400'
 
     ######################################### FOR BOTH
+    - name: Creating scripts and plugins paths
+      file: 'path={{item}} state=directory mode=0775 owner=%UID% group=%GID%'
+      with_items:
+        - '/opt/seedbox/docker/%USER%/{{pgrole}}'
+
     - name: 'Set Default Labels'
       set_fact:
         default_labels:
