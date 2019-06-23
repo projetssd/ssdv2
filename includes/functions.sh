@@ -1332,7 +1332,7 @@ function plex_sections() {
 				PASS=$(grep PASS /home/$SEEDUSER/scripts/plex_autoscan/config/config.json | cut -d ':' -f2 | cut -d '"' -f2)
 				PLEXCANFILE="/home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan.sh"
 				IPADDRESS=$(hostname -I | cut -d\  -f1)
-				cat "$BASEDIR/includes/config/roles/plex_autoscan/plex_autoscan_start.sh" > $PLEXCANFILE
+				cat "$BASEDIR/includes/config/roles/plex_autoscan/plex_autoscan.sh" > $PLEXCANFILE
 
 				chmod 755 $PLEXCANFILE
 
