@@ -1220,12 +1220,12 @@ function install_services() {
 		sed -i "s|%ACCESSURL%|$ACCESSURL|g" $DOCKERCOMPOSEFILE
 		cd /tmp
 		ansible-playbook $line.yml
+		rm $line.yml
 
 		if [[ "$line" == "plex" ]]; then
 		plex_sections
 		fi
 
-		rm $line.yml
 		echo "$line-$PORT-$FQDNTMP" >> $INSTALLEDFILE
 		URI="/"
 	
