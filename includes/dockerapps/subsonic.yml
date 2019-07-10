@@ -1,24 +1,53 @@
+#!/bin/bash
+#
+# Title:      PGBlitz (danisla/subsonic)
+# Author(s):  MrDoob
+# URL:        https://pgblitz.com - http://github.pgblitz.com
+# GNU:        General Public License v3.0 
+################################################################################
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    # FACTS #######################################################################
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'subsonic'
+        intport: '4040'
+        image: 'danisla/subsonic'
 
-#STARTsubsonic#
-  subsonic-%USER%:
-    container_name: subsonic-%USER%
-    image: hurricane/subsonic
-    restart: unless-stopped
-    labels:
-      - traefik.enable=true
-      - traefik.frontend.rule=%TRAEFIKURL%
-      - traefik.port=4040
-      - traefik.docker.network=traefik_proxy
-    environment:
-      - APP_UID=%UID%
-      - APP_GID=%GID%
-      - TZ=%TIMEZONE%
-    volumes:
-      - /opt/seedbox/docker/%USER%/subsonic/log:/subsonic
-      - /home/%USER%:/home/%USER%
-      - /home/%USER%/Medias/%MUSIQUES%:/music
-      - /opt/seedbox/docker/%USER%/subsonic/podcast:/podcast
-      - /opt/seedbox/docker/%USER%/subsonic/playlists:/playlists
-    networks:
-      - proxy
-#ENDsubsonic#
+    # LABELS ######################################################################
+    - name: 'Adding Traefik'
+      set_fact:
+        pg_labels:
+          traefik.enable: 'true'
+          traefik.port: '{{intport}}'
+          traefik.frontend.rule: 'Host:{{pgrole}}.%DOMAIN%'
+
+    - name: 'Setting PG Volumes'
+      set_fact:
+        pg_volumes:
+          - '/opt/seedbox/docker/%USER%/{{pgrole}}/state:/opt/app/state:rw'
+          - '/home/%USER%/Medias/Musiques:/mnt/music:ro'
+          - '/etc/localtime:/etc/localtime:ro'
+
+    - name: 'Setting PG ENV'
+      set_fact:
+        pg_env:
+          PUID: '%UID%'
+          PGID: '%GID%'
+          TZ: 'Europe/Paris'
+
+    # MAIN DEPLOYMENT #############################################################
+    - name: 'Deploying {{pgrole}}'
+      docker_container:
+        name: '{{pgrole}}-%USER%'
+        image: '{{image}}'
+        pull: yes
+        volumes: '{{pg_volumes}}'
+        env: '{{pg_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+        state: started
+        labels: '{{pg_labels}}'

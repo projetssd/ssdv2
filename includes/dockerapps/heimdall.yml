@@ -1,22 +1,55 @@
+#!/bin/bash
+#
+# Title:      PGBlitz (Reference Title File)
+# Author(s):  Admin9705
+# URL:        https://pgblitz.com - http://github.pgblitz.com
+# GNU:        General Public License v3.0
+################################################################################
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    # FACTS #######################################################################
 
-#STARTheimdall#
-  heimdall-%USER%:
-    container_name: heimdall-%USER%
-    image: linuxserver/heimdall
-    restart: unless-stopped
-    labels:
-      - traefik.enable=true
-      - traefik.frontend.rule=%TRAEFIKURL%
-      - traefik.frontend.auth.basic=%VAR%
-      - traefik.port=443
-      - traefik.docker.network=traefik_proxy
-      - traefik.protocol=https
-    environment:
-      - PUID=%UID%
-      - PGID=%GID%
-      - TZ=%TIMEZONE%
-    volumes:
-      - /opt/seedbox/docker/%USER%/heimdall/config:/config
-    networks:
-      - proxy
-#ENDheimdall#
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'heimdall'
+        intport: '443'
+        extport: '1111'
+        image: 'linuxserver/heimdall'
+
+    # LABELS ######################################################################
+    - name: 'Adding Traefik'
+      set_fact:
+        pg_labels:
+          traefik.protocol: 'https'
+          traefik.enable: 'true'
+          traefik.https.port: '443'
+          traefik.https.frontend.entryPoints: 'https'
+          traefik.https.frontend.rule: 'Host:{{pgrole}}.%DOMAIN%'
+
+    - name: 'Setting PG Volumes'
+      set_fact:
+        pg_volumes:
+          - '/opt/seedbox/docker/%USER%/heimdall:/config'
+          - '/etc/localtime:/etc/localtime:ro'
+
+    - name: 'Setting PG ENV'
+      set_fact:
+        pg_env:
+          PUID: '%UID%'
+          PGID: '%GID%'
+
+    # MAIN DEPLOYMENT #############################################################
+    - name: 'Deploying {{pgrole}}'
+      docker_container:
+        name: '{{pgrole}}-%USER%'
+        image: '{{image}}'
+        pull: yes
+        volumes: '{{pg_volumes}}'
+        env: '{{pg_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+        state: started
+        labels: '{{pg_labels}}'

@@ -90,7 +90,7 @@ GdriveRestoration() {
     echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour démarrer la restauration ou CTRL+C pour quitter..."
     read -r
 
-    echo "> Récupération de l'archive locale"
+    echo "> Récupération de l'archive distante"
     rclone copy %REMOTECRYPT%:/%SEEDUSER%/BACKUPS/$BACKUPFOLDER/$ARCHIVE .
 }
 
@@ -101,7 +101,7 @@ fin() {
     echo -e "${CRED}        RESTAURATION DU SERVEUR TERMINEE               ${CEND}"
     echo -e "${CRED}-------------------------------------------------------${CEND}"
 
-    echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour quitter..."
+    echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
     read -r
 }
 

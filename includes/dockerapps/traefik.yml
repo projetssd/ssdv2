@@ -1,49 +1,73 @@
-version: '3'
+#!/bin/bash
+#
+# Title:      PGBlitz (Reference Title File)
+# Author(s):  Admin9705
+# URL:        https://pgblitz.com - http://github.pgblitz.com
+# GNU:        General Public License v3.0
+################################################################################
+---
+- hosts: localhost
+  gather_facts: True
 
-services:
-###########
-# Traefik #
-###########
-  traefik:
-    image: traefik
-    container_name: proxy_traefik
-    restart: unless-stopped
-    hostname: traefik
-    labels:
-      - traefik.enable=true
-      - traefik.frontend.rule=Host:traefik.%DOMAIN%
-      - traefik.frontend.auth.basic=%VAR%
-      - traefik.port=8080
-      - traefik.docker.network=traefik_proxy
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - %TRAEFIK%traefik.toml:/traefik.toml:ro
-      - %TRAEFIK%letsencrypt/certs:/etc/traefik/acme:rw
-      - /var/log/traefik:/var/log
-    ports:
-      - "80:80"
-      - "443:443"
-    command:
-      - --web
-      - --accessLog.filePath=/var/log/access.log
-      - --accessLog.filters.statusCodes=400-499
-    networks:
-      - proxy
+  tasks:
+    - name: Remove Traefik
+      docker_container:
+        name: traefik
+        state: absent
 
-  ftp:
-    image: stilliard/pure-ftpd:hardened
-    container_name: "ftp"
-    restart: unless-stopped
-    volumes:
-      - %TRAEFIK%pure-ftp:/etc/pure-ftpd/passwd
-      - /home:/home/ftpusers
-    ports:
-      - "21:21"
-      - "30000-30009:30000-30009"
-    networks:
-      - proxy
+    - name: Create Basic Directories
+      file: "path={{item}} state=directory mode=0775 owner=0 group=0"
+      with_items:
+        - /opt/seedbox/docker/traefik
+        - /opt/seedbox/docker/traefik/acme
 
-networks:
-  proxy:
-    external:
-      name: traefik_proxy
+    - name: Check acme.json exists
+      stat:
+        path: "/opt/seedbox/docker/traefik/acme/acme.json"
+      register: acme_json
+
+    - name: 'Setting PG ENV'
+      set_fact:
+        pg_env:
+          PUID: '0'
+          PGID: '0'
+
+    - name: Installing ACME
+      template:
+        src: acme.json
+        dest: /opt/seedbox/docker/traefik/acme/acme.json
+        force: yes
+        mode: 0600
+        owner: '0'
+        group: '0'
+      when: acme_json.stat.exists == False
+
+    - name: 'Ajout label traefik'
+      set_fact:
+        pg_labels:
+          traefik.enable: 'true'
+          traefik.port: '8080'
+          traefik.frontend.rule: 'Host:traefik.%DOMAIN%'
+
+    # MAIN #####################################################################
+    - name: Deploy Traefik
+      docker_container:
+        name: traefik
+        image: traefik:1.7
+        pull: yes
+        published_ports:
+          - "443:443"
+          - "80:80"
+        command: ["--web", "--accessLog.filePath=/var/log/access.log", "--accessLog.filters.statusCodes=400-499"]
+        env: '{{pg_env}}'
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock:ro
+          - /etc/localtime:/etc/localtime:ro
+          - /opt/seedbox/docker/traefik/traefik.toml:/etc/traefik/traefik.toml:ro
+          - /opt/seedbox/docker/traefik/acme:/etc/traefik/acme
+          - /var/log/traefik:/var/log
+        restart_policy: unless-stopped
+        state: started
+        labels: '{{pg_labels}}'
+        networks:
+          - name: traefik_proxy

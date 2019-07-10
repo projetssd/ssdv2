@@ -1,21 +1,53 @@
 
-#STARTduplicati#
-  duplicati:
-    image: linuxserver/duplicati
-    container_name: duplicati
-    restart: unless-stopped
-    labels:
-      - traefik.enable=true
-      - traefik.frontend.rule=%TRAEFIKURL%
-      - traefik.frontend.auth.basic=%VAR%
-      - traefik.port=8200
-      - traefik.docker.network=traefik_proxy
-    environment:
-      - PUID=%UID%
-      - PGID=%GID%
-      - TZ=%TIMEZONE%
-    volumes:
-      - /opt/seedbox/docker/%USER%/duplicati/config:/config
-      - /mnt/backup:/backups
-      - /home/%USER%:/source
-#ENDduplicati#
+#!/bin/bash
+#
+# Title:      PGBlitz (Reference Title File)
+# Author(s):  Admin9705
+# URL:        https://pgblitz.com - http://github.pgblitz.com
+# GNU:        General Public License v3.0
+################################################################################
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    # FACTS #######################################################################
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'duplicati'
+        intport: '8200'
+        image: 'linuxserver/duplicati'
+
+    # LABELS ######################################################################
+    - name: 'Adding Traefik'
+      set_fact:
+        pg_labels:
+          traefik.enable: 'true'
+          traefik.port: '{{intport}}'
+          traefik.frontend.rule: 'Host:{{pgrole}}.%DOMAIN%'
+
+    - name: 'Setting PG Volumes'
+      set_fact:
+        pg_volumes:
+          - /opt/seedbox/docker/%USER%/{{pgrole}}/config
+          - /:/source
+          - '/mnt/backups:/backups'
+
+    - name: 'Setting PG ENV'
+      set_fact:
+        pg_env:
+          PUID: '%UID%'
+          PGID: '%GID%'
+
+    # MAIN DEPLOYMENT #############################################################
+    - name: 'Deploying {{pgrole}}'
+      docker_container:
+        name: '{{pgrole}}-%USER%'
+        image: '{{image}}'
+        pull: yes
+        volumes: '{{pg_volumes}}'
+        env: '{{pg_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+        state: started
+        labels: '{{pg_labels}}'

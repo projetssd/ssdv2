@@ -1,13 +1,34 @@
+#!/bin/bash
+#
+# Version:  Ansible-1
+# GitHub:   https://github.com/PGBlitz/PGBlitz.com
+# Author:   Admin9705 & Deiteq
+# URL:      https://pgblitz.com
+#
+# PGBlitz Copyright (C) 2018 PGBlitz.com
+# Licensed under GNU General Public License v3.0 GPL-3 (in short)
+#
+#   You may copy, distribute and modify the software as long as you track
+#   changes/dates in source files. Any modifications to our software
+#   including (via compiler) GPL-licensed code must also be made available
+#   under the GPL along with build & install instructions.
+#
+############################################################# (KEY START)
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
 
-#STARTwatchtower#
-  watchtower:
-    image: v2tec/watchtower
-    container_name: watchtower
-    hostname: watchtower
-    restart: unless-stopped
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    command: --schedule "0 0 4 * * *" --cleanup
-    networks:
-      - proxy
-#ENDwatchtower#
+    - name: Deploy watchtower
+      docker_container:
+        name: 'watchtower'
+        image: 'containrrr/watchtower'
+        pull: yes
+        command: '--cleanup --interval 600'
+        state: started
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
+          - /etc/localtime:/etc/localtime:ro
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy

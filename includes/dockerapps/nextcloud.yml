@@ -1,22 +1,59 @@
-  
-#STARTnextcloud#
-  nextcloud-%USER%:
-    container_name: nextcloud-%USER%
-    image: linuxserver/nextcloud
-    labels:
-      - traefik.port=443
-      - traefik.frontend.rule=%TRAEFIKURL%
-      - traefik.enable=true
-      - traefik.docker.network=traefik_proxy
-      - traefik.protocol=https
-    environment:
-      - PUID=%UID%
-      - PGID=%GID%
-      - TZ=%TIMEZONE%
-    volumes:
-      - /opt/seedbox/docker/%USER%/nextcloud/data:/data
-      - /opt/seedbox/docker/%USER%/nextcloud/config:/config
-      - /home/%USER%:/home/%USER%
-    networks:
-      - proxy
-#ENDnextcloud#
+#!/bin/bash
+#
+# Title:      PGBlitz (Reference Title File)
+# Author(s):  Admin9705
+# URL:        https://pgblitz.com - http://github.pgblitz.com
+# GNU:        General Public License v3.0
+################################################################################
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    # FACTS #######################################################################
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'nextcloud'
+        intport: '443'
+        extport: '4645'
+        image: 'linuxserver/nextcloud'
+
+    # LABELS ######################################################################
+    - name: 'Adding Traefik'
+      set_fact:
+        pg_labels:
+          traefik.protocol: 'https'
+          traefik.enable: 'true'
+          traefik.https.port: '443'
+          traefik.https.frontend.entryPoints: 'https'
+          traefik.https.frontend.rule: 'Host:{{pgrole}}.%DOMAIN%'
+
+    - name: 'Setting PG Volumes'
+      set_fact:
+        pg_volumes:
+          - '/etc/localtime:/etc/localtime:ro'
+          - '/opt/seedbox/docker/%USER%/nextcloud/data:/data'
+          - '/opt/seedbox/docker/%USER%/{{pgrole}}/conf:/config'
+          - '/home/%USER%:/home/%USER%'
+
+    - name: 'Setting PG ENV'
+      set_fact:
+        pg_env:
+          PUID: '%UID%'
+          PGID: '%GID%'
+
+    - name: Create and start nextcloud container
+      docker_container:
+        name: nextcloud-%USER%
+        image: 'linuxserver/nextcloud'
+        pull: yes
+        published_ports:
+          - '127.0.0.1:4645:443'
+        env:
+          PUID: '%UID%'
+          PGID: '%GID%'
+        volumes: '{{pg_volumes}}'
+        networks:
+          - name: traefik_proxy
+        restart_policy: unless-stopped
+        state: started
+        labels: '{{pg_labels}}'

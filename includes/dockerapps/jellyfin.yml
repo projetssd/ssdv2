@@ -12,17 +12,16 @@
     # FACTS #######################################################################
     - name: 'Set Known Facts'
       set_fact:
-        pgrole: 'emby'
+        pgrole: 'jellyfin'
         intport: '8096'
-        extport: '8096'
-        image: 'emby/embyserver'
+        extport: '9096'
+        image: 'jellyfin/jellyfin:latest'
 
-    # CORE (MANDATORY) ############################################################
     - name: 'XML Check'
       stat:
         path: /opt/seedbox/docker/%USER%/{{pgrole}}/config/system.xml
       register: xmlcheck
-      
+
     # LABELS ######################################################################
     - name: 'Adding Traefik'
       set_fact:
@@ -34,25 +33,26 @@
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
-          - /etc/localtime:/etc/localtime:ro
-          - /opt/seedbox/docker/%USER%/{{pgrole}}:/config
-          - '/home/%USER%:/home/%USER%'
+          - '/etc/localtime:/etc/localtime:ro'
+          - '/opt/seedbox/docker/%USER%/{{pgrole}}:/config'
+          - '/home/%USER%/Medias:/home/%USER%/Medias'
+          - '/var/run/docker.sock:/var/run/docker.sock'
 
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
-          UID: '%UID%'
-          GID: '%GID%'
           GIDLIST: '%GID%'
+          PUID: '%UID%'
+          PGID: '%GID%'
 
     # MAIN DEPLOYMENT #############################################################
+
     - name: 'Deploying {{pgrole}}'
       docker_container:
         name: '{{pgrole}}-%USER%'
         image: '{{image}}'
         pull: yes
-        published_ports:
-          - '{{extport}}:{{intport}}'
+        user: %UID%:%GID%
         volumes: '{{pg_volumes}}'
         env: '{{pg_env}}'
         restart_policy: unless-stopped
@@ -82,7 +82,7 @@
 
       - name: 'Turn Off Reporting'
         xml:
-          path: '//opt/seedbox/docker/%USER%/{{pgrole}}/config/system.xml'
+          path: '/opt/seedbox/docker/%USER%/{{pgrole}}/config/system.xml'
           xpath: /ServerConfiguration/EnableAnonymousUsageReporting
           value: 'false'
 

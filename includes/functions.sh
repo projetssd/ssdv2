@@ -51,7 +51,7 @@ function rtorrent-cleaner() {
 	                		"Merci de sélectionner l'Utilisateur" 12 50 3 \
 	                		"${TABUSERS[@]}"  3>&1 1>&2 2>&3)
 
-			cp -r $BASEDIR/includes/config/rutorrent/rtorrent-cleaner /usr/local/bin
+			cp -r $BASEDIR/includes/config/rtorrent-cleaner/rtorrent-cleaner /usr/local/bin
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /usr/local/bin/rtorrent-cleaner
 			checking_errors $?
 }
@@ -107,7 +107,7 @@ function plex_dupefinder() {
 			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/tasks/main.yml
 			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/tasks/main.yml
 			sed -i "s|%TOKEN%|$X_PLEX_TOKEN|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/templates/config.json.j2
-			sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/templates/config.json.j2
+			sed -i "s|%DOMAIN%|$DOMAIN|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/templates/config.json.j2
 			sed -i "s|%FILMS%|$FILMS|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/templates/config.json.j2
 			sed -i "s|%SERIES%|$SERIES|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/templates/config.json.j2
 
@@ -147,7 +147,7 @@ function traktarr() {
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/traktarr/templates/config.json.j2
 			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/traktarr/templates/config.json.j2
 			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/traktarr/templates/config.json.j2
-			sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" /opt/seedbox/docker/$SEEDUSER/traktarr/templates/config.json.j2
+			sed -i "s|%DOMAIN%|$DOMAIN|g" /opt/seedbox/docker/$SEEDUSER/traktarr/templates/config.json.j2
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/traktarr/templates/config.json.j2
 
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/traktarr/templates/traktarr.service.j2
@@ -209,9 +209,8 @@ function plex_autoscan() {
 			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/tasks/main.yml
 
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/config.json.j2
-			sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/config.json.j2
+			sed -i "s|%DOMAIN%|$DOMAIN|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/config.json.j2
 			sed -i "s|%TOKEN%|$X_PLEX_TOKEN|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/config.json.j2
-			sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/config.json.j2
 
 			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/plex_autoscan.service.j2
 			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/templates/plex_autoscan.service.j2
@@ -277,7 +276,7 @@ function cloudplow() {
 			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/config.json.j2
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/config.json.j2
 			sed -i "s|%REMOTECRYPT%|$REMOTECRYPT|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/config.json.j2
-			sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/config.json.j2
+			sed -i "s|%DOMAIN%|$DOMAIN|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/config.json.j2
 			sed -i "s|%TOKEN%|$X_PLEX_TOKEN|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/config.json.j2
 
 			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/cloudplow/templates/cloudplow.service.j2
@@ -291,14 +290,31 @@ function cloudplow() {
 
 function filebot() {
 			#configuration filebot avec ansible
+			echo ""
 			echo -e "${BLUE}### FILEBOT ###${NC}"
 			echo -e " ${BWHITE}* Installation filebot${NC}"
-			cp -r "$BASEDIR/includes/config/roles/filebot" "/opt/seedbox/docker/$SEEDUSER/test"
-			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/test/tasks/main.yml
-			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/test/tasks/main.yml
-			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/test/tasks/main.yml
-			cd /opt/seedbox/docker/$SEEDUSER/test/tasks
-			ansible-playbook main.yml
+			cp -r "$BASEDIR/includes/config/filebot" "/tmp"
+			sed -i "s|%USER%|$SEEDUSER|g" /tmp/filebot/tasks/filebot.yml
+			sed -i "s|%UID%|$USERID|g" /tmp/filebot/tasks/filebot.yml
+			sed -i "s|%GID%|$GRPID|g" /tmp/filebot/tasks/filebot.yml
+			cd /tmp/filebot/tasks
+			ansible-playbook filebot.yml
+
+			chmod a+x /opt/seedbox/docker/$SEEDUSER/.filebot/filebot.sh > /dev/null 2>&1
+			chmod a+x /opt/seedbox/docker/$SEEDUSER/.filebot/update-filebot.sh > /dev/null 2>&1
+
+			#configuration filebot
+			cp "$BASEDIR/includes/config/filebot/filebot-process.sh" "/opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh" > /dev/null 2>&1
+			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh
+			chown $USERID:$GRPID /opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh
+
+			## mise en place d'un cron pour le lancement de filebot
+			(crontab -l | grep . ; echo "*/1 * * * * /opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh >> /home/$SEEDUSER/scripts/filebot.log") | crontab -
+			service cron restart
+			checking_errors $?
+			rm -rf /tmp/filebot
+			echo ""
+
 }
 
 function rclone_aide() {
@@ -570,9 +586,6 @@ function checking_system() {
 	echo -e "	${YELLOW}--> System OS : $SYSTEMOS${NC}"
 	echo -e "	${YELLOW}--> Release : $SYSTEMRELEASE${NC}"
 	echo -e "	${YELLOW}--> Codename : $SYSTEMCODENAME${NC}"
-	echo -e " ${BWHITE}* Updating & upgrading system${NC}"
-	apt-get update > /dev/null 2>&1
-	apt-get upgrade -y > /dev/null 2>&1
 	echo ""
 
 	## installation ansible
@@ -604,84 +617,51 @@ function checking_errors() {
 	fi
 }
 
-function install_filebot() {
-		echo -e "${BLUE}### FILEBOT ###${NC}"
-		echo -e " ${BWHITE}* Installation de filebot !${NC}"
-		cd /tmp
-		wget http://downloads.sourceforge.net/project/filebot/filebot/FileBot_4.7.9/FileBot_4.7.9-portable.tar.xz > /dev/null 2>&1
-		mkdir filebot > /dev/null 2>&1
-		tar xvf FileBot_4.7.9-portable.tar.xz -C filebot > /dev/null 2>&1
-		cp -R filebot /opt/seedbox/docker/$SEEDUSER/.filebot > /dev/null 2>&1
-		chmod a+x /opt/seedbox/docker/$SEEDUSER/.filebot/filebot.sh > /dev/null 2>&1
-		chmod a+x /opt/seedbox/docker/$SEEDUSER/.filebot/update-filebot.sh > /dev/null 2>&1
-
-		#configuration filebot
-		cp "$BASEDIR/includes/config/filebot/filebot-process.sh" "/opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh" > /dev/null 2>&1
-		sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh
-
-		## mise en place d'un cron pour le lancement de filebot
-		(crontab -l | grep . ; echo "*/1 * * * * /opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh >> /home/$SEEDUSER/scripts/filebot.log") | crontab -
-		service cron restart
-
-
-		checking_errors $?
-		echo ""
-}
-
 function install_fail2ban() {
-		echo -e "${BLUE}### FAIL2BAN ###${NC}"
-		if (whiptail --title "Docker fail2ban" --yesno "Voulez vous installer fail2ban" 7 50) then
-			echo -e " ${BWHITE}* Installation de Fail2ban !${NC}"
-			apt install fail2ban -y > /dev/null 2>&1
-			SSH=$(echo ${SSH_CLIENT##* })
-			IP_DOM=$(grep 'Accepted' /var/log/auth.log | cut -d ' ' -f11 | head -1)
-			cp "$BASEDIR/includes/config/fail2ban/custom.conf" "/etc/fail2ban/jail.d/custom.conf" > /dev/null 2>&1
-			cp "$BASEDIR/includes/config/fail2ban/traefik.conf" "/etc/fail2ban/jail.d/traefik.conf" > /dev/null 2>&1
-			cp "$BASEDIR/includes/config/fail2ban/traefik-auth.conf" "/etc/fail2ban/filter.d/traefik-auth.conf" > /dev/null 2>&1
-			cp "$BASEDIR/includes/config/fail2ban/traefik-botsearch.conf" "/etc/fail2ban/filter.d/traefik-botsearch.conf" > /dev/null 2>&1
-			cp "$BASEDIR/includes/config/fail2ban/docker-action.conf" "/etc/fail2ban/action.d/docker-action.conf" > /dev/null 2>&1
-			sed -i "s|%SSH%|$SSH|g" /etc/fail2ban/jail.d/custom.conf
-			sed -i "s|%IP_DOM%|$IP_DOM|g" /etc/fail2ban/jail.d/custom.conf
-			sed -i "s|%IP_DOM%|$IP_DOM|g" /etc/fail2ban/jail.d/traefik.conf
-			cd $CONFDIR/docker/traefik
-			docker-compose restart traefik > /dev/null 2>&1
-			systemctl restart fail2ban.service > /dev/null 2>&1
-			checking_errors $?
-		else
-			echo -e " ${BWHITE}* Fail2ban non installé !${NC}"	
-		fi
-		echo ""
+	echo -e "${BLUE}### FAIL2BAN ###${NC}"
+	SSH=$(echo ${SSH_CLIENT##* })
+	IP_DOM=$(grep 'Accepted' /var/log/auth.log | cut -d ' ' -f11 | head -1)
+	cp "$BASEDIR/includes/config/fail2ban/custom.conf" "/etc/fail2ban/jail.d/custom.conf" > /dev/null 2>&1
+	cp "$BASEDIR/includes/config/fail2ban/traefik.conf" "/etc/fail2ban/jail.d/traefik.conf" > /dev/null 2>&1
+	cp "$BASEDIR/includes/config/fail2ban/traefik-auth.conf" "/etc/fail2ban/filter.d/traefik-auth.conf" > /dev/null 2>&1
+	cp "$BASEDIR/includes/config/fail2ban/traefik-botsearch.conf" "/etc/fail2ban/filter.d/traefik-botsearch.conf" > /dev/null 2>&1
+	cp "$BASEDIR/includes/config/fail2ban/docker-action.conf" "/etc/fail2ban/action.d/docker-action.conf" > /dev/null 2>&1
+	sed -i "s|%SSH%|$SSH|g" /etc/fail2ban/jail.d/custom.conf
+	sed -i "s|%IP_DOM%|$IP_DOM|g" /etc/fail2ban/jail.d/custom.conf
+	sed -i "s|%IP_DOM%|$IP_DOM|g" /etc/fail2ban/jail.d/traefik.conf
+	docker restart traefik > /dev/null 2>&1
+	systemctl restart fail2ban.service > /dev/null 2>&1
+	checking_errors $?
+	echo ""
 }	
 
 function install_traefik() {
 	echo -e "${BLUE}### TRAEFIK ###${NC}"
-	TRAEFIK="$CONFDIR/docker/traefik/"
-	TRAEFIKCOMPOSEFILE="$TRAEFIK/docker-compose.yml"
-	TRAEFIKTOML="$TRAEFIK/traefik.toml"
+
+	TRAEFIK="$CONFDIR/docker/traefik"
 	INSTALLEDFILE="$CONFDIR/resume"
+
 	if [[ ! -f "$INSTALLEDFILE" ]]; then
 	touch $INSTALLEDFILE> /dev/null 2>&1
 	fi
 
-	if [[ ! -d "$TRAEFIK" ]]; then
+	if docker ps | grep -q traefik; then
+		echo -e " ${YELLOW}* Traefik est déjà installé !${NC}"
+	else
 		echo -e " ${BWHITE}* Installation Traefik${NC}"
 		mkdir -p $TRAEFIK
-		touch $TRAEFIKCOMPOSEFILE
-		touch $TRAEFIKTOML
-		cat "/opt/seedbox-compose/includes/dockerapps/traefik.yml" >> $TRAEFIKCOMPOSEFILE
-		cat "/opt/seedbox-compose/includes/dockerapps/traefik.toml" >> $TRAEFIKTOML
-		sed -i "s|%DOMAIN%|$DOMAIN|g" $TRAEFIKCOMPOSEFILE
-		sed -i "s|%TRAEFIK%|$TRAEFIK|g" $TRAEFIKCOMPOSEFILE
-		sed -i "s|%EMAIL%|$CONTACTEMAIL|g" $TRAEFIKTOML
-		sed -i "s|%DOMAIN%|$DOMAIN|g" $TRAEFIKTOML
-		sed -i "s|%VAR%|$VAR|g" $TRAEFIKCOMPOSEFILE
-		cd $TRAEFIK
+		cp "$BASEDIR/includes/dockerapps/traefik.toml" "$CONFDIR/docker/traefik/"
+		cp "$BASEDIR/includes/dockerapps/traefik.yml" "/tmp/"
+		cp "$BASEDIR/includes/dockerapps/acme.json" "/tmp/"
+		sed -i "s|%EMAIL%|$CONTACTEMAIL|g" $CONFDIR/docker/traefik/traefik.toml
+		sed -i "s|%DOMAIN%|$DOMAIN|g" $CONFDIR/docker/traefik/traefik.toml
+		sed -i "s|%DOMAIN%|$DOMAIN|g" /tmp/traefik.yml
+		cd /tmp
 		docker network create traefik_proxy > /dev/null 2>&1
-		docker-compose up -d > /dev/null 2>&1
+		ansible-playbook traefik.yml
+		rm traefik.yml acme.json
 		echo "traefik-port-traefik.$DOMAIN" >> $INSTALLEDFILE
-		checking_errors $?
-	else
-		echo -e " ${YELLOW}* Traefik est déjà installé !${NC}"
+		checking_errors $?		
 	fi
 	echo ""
 }
@@ -692,62 +672,33 @@ function install_portainer() {
 	if [[ ! -f "$INSTALLEDFILE" ]]; then
 	touch $INSTALLEDFILE> /dev/null 2>&1
 	fi
-	PORTAINER="$CONFDIR/docker/portainer/"
-	PORTAINERCOMPOSEFILE="$PORTAINER/docker-compose.yml"
 
-	if [[ ! -d "$PORTAINER" ]]; then
-
+	if docker ps | grep -q portainer; then
+		echo -e " ${BWHITE}--> portainer est déjà installé !${NC}"
+		else
 		if (whiptail --title "Docker Portainer" --yesno "Voulez vous installer portainer" 7 50) then
-			echo -e " ${BWHITE}* Installation de portainer !${NC}"
-			mkdir -p $PORTAINER
-			touch $PORTAINERCOMPOSEFILE
-			cat /opt/seedbox-compose/includes/dockerapps/head.docker > $PORTAINERCOMPOSEFILE
-			cat "/opt/seedbox-compose/includes/dockerapps/portainer.yml" >> $PORTAINERCOMPOSEFILE
-			cat /opt/seedbox-compose/includes/dockerapps/foot.docker >> $PORTAINERCOMPOSEFILE
-			sed -i "s|%DOMAIN%|$DOMAIN|g" $PORTAINERCOMPOSEFILE
-			sed -i "s|%PORTAINER%|$PORTAINER|g" $PORTAINERCOMPOSEFILE
-			cd $PORTAINER
-			docker-compose up -d > /dev/null 2>&1
+			echo -e " ${BWHITE}* Installation Portainer${NC}"
+			mkdir -p $TRAEFIK
+			cp "$BASEDIR/includes/dockerapps/portainer.yml" "/tmp/"
+			sed -i "s|%DOMAIN%|$DOMAIN|g" /tmp/portainer.yml
+			cd /tmp
+			ansible-playbook portainer.yml
+			rm portainer.yml
 			echo "portainer-port-portainer.$DOMAIN" >> $INSTALLEDFILE
 			checking_errors $?
 		else
 			echo -e " ${BWHITE}--> portainer n'est pas installé !${NC}"
 		fi
-	else
-		echo -e " ${BWHITE}--> portainer est déjà installé !${NC}"
 	fi
 	echo ""
 }
 
 function install_watchtower() {
 	echo -e "${BLUE}### WATCHTOWER ###${NC}"
-	INSTALLEDFILE="$CONFDIR/resume"
-	if [[ ! -f "$INSTALLEDFILE" ]]; then
-	touch $INSTALLEDFILE> /dev/null 2>&1
-	fi
-	WATCHTOWER="$CONFDIR/docker/watchtower/"
-	WATCHTOWERCOMPOSEFILE="$WATCHTOWER/docker-compose.yml"
-
-	if [[ ! -d "$WATCHTOWER" ]]; then
-
-		if (whiptail --title "Docker watchtower" --yesno "Voulez vous installer watchtower" 7 50) then
-			echo -e " ${BWHITE}* Installation de watchtower !${NC}"
-			mkdir -p $WATCHTOWER
-			touch $WATCHTOWERCOMPOSEFILE
-			cat /opt/seedbox-compose/includes/dockerapps/head.docker > $WATCHTOWERCOMPOSEFILE
-			cat "/opt/seedbox-compose/includes/dockerapps/watchtower.yml" >> $WATCHTOWERCOMPOSEFILE
-			cat /opt/seedbox-compose/includes/dockerapps/foot.docker >> $WATCHTOWERCOMPOSEFILE
-			sed -i "s|%DOMAIN%|$DOMAIN|g" $WATCHTOWERCOMPOSEFILE
-			sed -i "s|%PORTAINER%|$PORTAINER|g" $WATCHTOWERCOMPOSEFILE
-			cd $WATCHTOWER
-			docker-compose up -d > /dev/null 2>&1
-			checking_errors $?
-		else
-			echo -e " ${BWHITE}--> watchtower n'est pas installé !${NC}"
-		fi
-	else
-		echo -e " ${BWHITE}--> watchtower est déjà installé !${NC}"
-	fi
+	echo -e " ${BWHITE}* Installation Watchtower${NC}"
+	cd /opt/seedbox-compose/includes/dockerapps
+	ansible-playbook watchtower.yml
+	checking_errors $?
 	echo ""
 }
 
@@ -914,18 +865,9 @@ function install_docker() {
 function define_parameters() {
 	echo -e "${BLUE}### INFORMATIONS UTILISATEURS ###${NC}"
 	USEDOMAIN="y"
-	CURRTIMEZONE=$(cat /etc/timezone)
 	create_user
 	CONTACTEMAIL=$(whiptail --title "Adresse Email" --inputbox \
 	"Merci de taper votre adresse Email :" 7 50 3>&1 1>&2 2>&3)
-	TIMEZONEDEF=$(whiptail --title "Timezone" --inputbox \
-	"Merci de vérifier votre timezone" 7 66 "$CURRTIMEZONE" \
-	3>&1 1>&2 2>&3)
-	if [[ $TIMEZONEDEF == "" ]]; then
-		TIMEZONE=$CURRTIMEZONE
-	else
-		TIMEZONE=$TIMEZONEDEF
-	fi
 	DOMAIN=$(whiptail --title "Votre nom de Domaine" --inputbox \
 	"Merci de taper votre nom de Domaine (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3)
 	echo ""
@@ -1233,15 +1175,10 @@ function install_services() {
 	fi
 
 	## préparation du docker-compose
-	DOCKERCOMPOSEFILE="/home/$SEEDUSER/docker-compose.yml"
-	if [[ ! -f "$DOCKERCOMPOSEFILE" ]]; then
-	cat /opt/seedbox-compose/includes/dockerapps/head.docker > $DOCKERCOMPOSEFILE
-	cat /opt/seedbox-compose/includes/dockerapps/foot.docker >> $DOCKERCOMPOSEFILE
-	fi
 	for line in $(cat $SERVICESPERUSER);
 	do
-		sed -i -n -e :a -e '1,5!{P;N;D;};N;ba' $DOCKERCOMPOSEFILE
-		cat "/opt/seedbox-compose/includes/dockerapps/$line.yml" >> $DOCKERCOMPOSEFILE
+		cp -R /opt/seedbox-compose/includes/dockerapps/$line.yml /tmp/$line.yml
+		DOCKERCOMPOSEFILE="/tmp/$line.yml"
 		sed -i "s|%TIMEZONE%|$TIMEZONE|g" $DOCKERCOMPOSEFILE
 		sed -i "s|%UID%|$USERID|g" $DOCKERCOMPOSEFILE
 		sed -i "s|%GID%|$GRPID|g" $DOCKERCOMPOSEFILE
@@ -1257,21 +1194,39 @@ function install_services() {
 		sed -i "s|%SERIES%|$SERIES|g" $DOCKERCOMPOSEFILE
 		sed -i "s|%ANIMES%|$ANIMES|g" $DOCKERCOMPOSEFILE
 		sed -i "s|%MUSIC%|$MUSIC|g" $DOCKERCOMPOSEFILE
-		cat /opt/seedbox-compose/includes/dockerapps/foot.docker >> $DOCKERCOMPOSEFILE
+
+		if [[ "$line" == "plex" ]]; then
+			echo -e "${BLUE}### CONFIG POST COMPOSE PLEX ###${NC}"
+			echo -e " ${BWHITE}* Processing plex config file...${NC}"
+			# CLAIM pour Plex
+			echo ""
+			echo -e " ${BWHITE}* Un token est nécessaire pour AUTHENTIFIER le serveur Plex ${NC}"
+			echo -e " ${BWHITE}* Pour obtenir un identifiant CLAIM, allez à cette adresse et copier le dans le terminal ${NC}"
+			echo -e " ${CRED}* https://www.plex.tv/claim/ ${CEND}"
+			echo ""
+			read -rp "CLAIM = " CLAIM
+		fi
+		sed -i "s|%CLAIM%|$CLAIM|g" $DOCKERCOMPOSEFILE
+
 		NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
 		if [ $NOMBRE -le 1 ] ; then
 			FQDNTMP="$line.$DOMAIN"
 		else
 			FQDNTMP="$line-$SEEDUSER.$DOMAIN"
 		fi
-		FQDN=$(whiptail --title "SSL Subdomain" --inputbox \
-		"Souhaitez vous utiliser un autre Sous Domaine pour $line ? default :" 7 75 "$FQDNTMP" 3>&1 1>&2 2>&3)
-		ACCESSURL=$FQDN
+		ACCESSURL=$FQDNTMP
 		TRAEFIKURL=(Host:$ACCESSURL)
-		sed -i "s|%TRAEFIKURL%|$TRAEFIKURL|g" /home/$SEEDUSER/docker-compose.yml
+		sed -i "s|%TRAEFIKURL%|$TRAEFIKURL|g" $DOCKERCOMPOSEFILE
 		sed -i "s|%ACCESSURL%|$ACCESSURL|g" $DOCKERCOMPOSEFILE
-		check_domain $ACCESSURL
-		echo "$line-$PORT-$FQDN" >> $INSTALLEDFILE
+		cd /tmp
+		ansible-playbook $line.yml
+		rm $line.yml
+
+		if [[ "$line" == "plex" ]]; then
+		plex_sections
+		fi
+
+		echo "$line-$PORT-$FQDNTMP" >> $INSTALLEDFILE
 		URI="/"
 	
 		PORT=$PORT+1
@@ -1286,90 +1241,12 @@ function install_services() {
 	echo $PORT1 >> $FILEPORTPATH1
 	echo $PORT2 >> $FILEPORTPATH2
 	echo $PORTPLEX >> $PLEXPORTPATH
-	echo ""
-}
-
-function docker_compose() {
-	echo -e "${BLUE}### DOCKERCOMPOSE ###${NC}"
-	ACTDIR="$PWD"
-	cd /home/$SEEDUSER/
-	echo -e " ${BWHITE}* Docker-composing, Merci de patienter...${NC}"
-	export COMPOSE_HTTP_TIMEOUT=600
-	docker-compose up -d > /dev/null 2>&1
-	checking_errors $?
-	echo ""
-	cd $ACTDIR
 	config_post_compose
 }
 
 function config_post_compose() {
 for line in $(cat $SERVICESPERUSER);
 do
-		if [[ "$line" == "plex" ]]; then
-			echo -e "${BLUE}### CONFIG POST COMPOSE PLEX ###${NC}"
-			echo -e " ${BWHITE}* Processing plex config file...${NC}"
-			PLEXDRIVE="/usr/bin/plexdrive"
-			cd /home/$SEEDUSER
-			# CLAIM pour Plex
-			echo ""
-			echo -e " ${BWHITE}* Un token est nécéssaire pour AUTHENTIFIER le serveur Plex ${NC}"
-			echo -e " ${BWHITE}* Pour obtenir un identifiant CLAIM, allez à cette adresse et copier le dans le terminal ${NC}"
-			echo -e " ${CRED}* https://www.plex.tv/claim/ ${CEND}"
-			echo ""
-			read -rp "CLAIM = " CLAIM
-			if [ -n "$CLAIM" ]
-			then
-				sed -i "s|%CLAIM%|$CLAIM|g" /home/$SEEDUSER/docker-compose.yml
-			fi
-			plex_sections
-			checking_errors $?
-			echo ""
-			if [[ -e "$PLEXDRIVE" ]]; then
-				touch /home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_rutorrent.sh
-				touch /home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_flood.sh
-				##PORT=$(grep SERVER_PORT /home/$SEEDUSER/scripts/plex_autoscan/config/config.json | cut -d ':' -f2 | sed 's/, //' | sed 's/ //')
-				IP_DOM=$(grep 'Accepted' /var/log/auth.log | cut -d ' ' -f11 | head -1)
-				PASS=$(grep PASS /home/$SEEDUSER/scripts/plex_autoscan/config/config.json | cut -d ':' -f2 | cut -d '"' -f2)
-				PLEXCANFILE="/home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_rutorrent.sh"
-				PLEXCANFLOODFILE="/home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan_flood.sh"
-				IPADDRESS=$(hostname -I | cut -d\  -f1)
-				cat "$BASEDIR/includes/config/roles/plex_autoscan/plex_autoscan_start.sh" > $PLEXCANFILE
-				cat "$BASEDIR/includes/config/roles/plex_autoscan/plex_autoscan_start.sh" > $PLEXCANFLOODFILE
-
-				chmod 755 $PLEXCANFILE
-				chmod 755 $PLEXCANFLOODFILE
-
-				for line in $(cat $INSTALLEDFILE);
-				do
-					NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
-					if [ $NOMBRE -le 1 ] ; then
-						ACCESSDOMAIN=$(grep plex $INSTALLEDFILE | cut -d\- -f3)
-					else
-						ACCESSDOMAIN=$(grep plex $INSTALLEDFILE | cut -d\- -f3-4)
-					fi
-				done
-				
-				## config plex_autoscan filebot rutorrent
-				sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" $PLEXCANFILE
-				sed -i -e "s/%ANIMES%/${ANIMES}/g" $PLEXCANFILE
-				sed -i -e "s/%FILMS%/${FILMS}/g" $PLEXCANFILE
-				sed -i -e "s/%SERIES%/${SERIES}/g" $PLEXCANFILE
-				sed -i -e "s/%MUSIC%/${MUSIC}/g" $PLEXCANFILE
-				#sed -i -e "s/%PORT%/${PORT}/g" $PLEXCANFILE
-				sed -i -e "s/%SEEDUSER%/${SEEDUSER}/g" $PLEXCANFILE
-				sed -i -e "s/%PASS%/${PASS}/g" $PLEXCANFILE
-				sed -i -e "s/%IPADDRESS%/${IPADDRESS}/g" $PLEXCANFILE
-
-
-				## config plex_autoscan filebot flood ( à travailler)
-				sed -i "s|%ACCESSDOMAIN%|$ACCESSDOMAIN|g" $PLEXCANFLOODFILE
-				sed -i -e "s/%ANIMES%/${ANIMES}/g" $PLEXCANFLOODFILE
-				sed -i -e "s/%FILMS%/${FILMS}/g" $PLEXCANFLOODFILE
-				sed -i -e "s/%SERIES%/${SERIES}/g" $PLEXCANFLOODFILE
-				sed -i -e "s/%MUSIC%/${MUSIC}/g" $PLEXCANFLOODFILE
-				#sed -i -e "s/%PORT%/${PORT}/g" $PLEXCANFLOODFILE
-			fi
-		fi
 
 		if [[ "$line" == "subsonic" ]]; then
 		echo -e "${BLUE}### CONFIG POST COMPOSE SUBSONIC ###${NC}"
@@ -1383,37 +1260,6 @@ do
 		echo -e "${BWHITE}	--> foo@bar.com${NC}"
 		echo -e "${BWHITE}	--> f3ada405ce890b6f8204094deb12d8a8${NC}"
 		echo ""
-		fi
-
-		if [[ "$line" == "rutorrent" ]]; then
-			replace_media_compose
-			echo -e "${BLUE}### CONFIG POST COMPOSE RUTORRENT ###${NC}"
-
-			USERID=$(id -u $SEEDUSER)
-			GRPID=$(id -g $SEEDUSER)
-			PORTORRENT=$(grep -B1 udp /home/$SEEDUSER/docker-compose.yml | cut -d ':' -f2 | head -n 1 | tail -n 1)
-
-			# installation du theme de Xataz et suppression du plugin clouflare
-			docker exec rutorrent-$SEEDUSER sh -c "git clone https://github.com/Phlooo/ruTorrent-MaterialDesign.git /app/rutorrent/plugins/theme/themes/MaterialDesign" > /dev/null 2>&1
-			docker exec rutorrent-$SEEDUSER sh -c "rm -rf /app/rutorrent/plugins/_cloudflare" > /dev/null 2>&1
-			
-			#configuration rutorrent avec ansible
-			cp "$BASEDIR/includes/config/rutorrent/rutorrent.yml" "/opt/seedbox/docker/$SEEDUSER/rutorrent/rutorrent.yml" > /dev/null 2>&1
-			cp "$BASEDIR/includes/config/rutorrent/_plugins.yml" "/opt/seedbox/docker/$SEEDUSER/rutorrent/_plugins.yml" > /dev/null 2>&1
-
-			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/rutorrent.yml
-			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/rutorrent.yml
-			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/rutorrent.yml
-
-			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/_plugins.yml
-			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/_plugins.yml
-			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/_plugins.yml
-
-			cd /opt/seedbox/docker/$SEEDUSER/rutorrent
-			ansible-playbook rutorrent.yml
-			sed -i "s|port_range = 51413-51413|port_range = $PORTORRENT-$PORTORRENT|g" /opt/seedbox/docker/$SEEDUSER/rutorrent/rtorrent/rtorrent.rc
-			docker restart rutorrent-$SEEDUSER > /dev/null 2>&1
-			unset PORT
 		fi
 echo ""
 done
@@ -1458,45 +1304,59 @@ function plex_sections() {
 				fi
 			done
 
-			## configuration plex_autoscan
-			cd /home/$SEEDUSER
-			sed -i '/PATH/d' docker-compose.yml
-			docker-compose rm -fs plex-$SEEDUSER > /dev/null 2>&1 && docker-compose up -d plex-$SEEDUSER > /dev/null 2>&1
-			checking_errors $?
-			echo""
-			##compteur
-			var="Plex est en cours de configuration, patientez..."
-			decompte 15
-			checking_errors $?
-			echo""
-
+			## A travailler
 			if [[ -f "$SCANPORTPATH" ]]; then
 				declare -i PORT=$(cat $SCANPORTPATH | tail -1)
 			else
 				declare -i PORT=3470
 			fi
 
-			## récupération nom de domaine
-			for line in $(cat $INSTALLEDFILE);
-			do
-				NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
-				if [ $NOMBRE -le 1 ] ; then
-					ACCESSDOMAIN=$(grep plex $INSTALLEDFILE | cut -d\- -f3)
-				else
-					ACCESSDOMAIN=$(grep plex $INSTALLEDFILE | cut -d\- -f3-4)
-				fi
-			done
+			PLEXDRIVE="/usr/bin/plexdrive"
+			if [[ -e "$PLEXDRIVE" ]]; then
+
+				## installation plex_autoscan
+				plex_autoscan
+				echo ""
+
+				## installation cloudplow
+				cloudplow
+
+				touch /home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan.sh
+				##PORT=$(grep SERVER_PORT /home/$SEEDUSER/scripts/plex_autoscan/config/config.json | cut -d ':' -f2 | sed 's/, //' | sed 's/ //')
+				IP_DOM=$(grep 'Accepted' /var/log/auth.log | cut -d ' ' -f11 | head -1)
+				PASS=$(grep PASS /home/$SEEDUSER/scripts/plex_autoscan/config/config.json | cut -d ':' -f2 | cut -d '"' -f2)
+				PLEXCANFILE="/home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan.sh"
+				IPADDRESS=$(hostname -I | cut -d\  -f1)
+				cat "$BASEDIR/includes/config/roles/plex_autoscan/plex_autoscan.sh" > $PLEXCANFILE
+
+				chmod 755 $PLEXCANFILE
+
+				for line in $(cat $INSTALLEDFILE);
+				do
+					NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
+					if [ $NOMBRE -le 1 ] ; then
+						ACCESSDOMAIN=$(grep plex $INSTALLEDFILE | cut -d\- -f3)
+					else
+						ACCESSDOMAIN=$(grep plex $INSTALLEDFILE | cut -d\- -f3-4)
+					fi
+				done
+				
+				## config plex_autoscan filebot rutorrent
+				sed -i "s|%DOMAIN%|$DOMAIN|g" $PLEXCANFILE
+				sed -i -e "s/%ANIMES%/${ANIMES}/g" $PLEXCANFILE
+				sed -i -e "s/%FILMS%/${FILMS}/g" $PLEXCANFILE
+				sed -i -e "s/%SERIES%/${SERIES}/g" $PLEXCANFILE
+				sed -i -e "s/%MUSIC%/${MUSIC}/g" $PLEXCANFILE
+				#sed -i -e "s/%PORT%/${PORT}/g" $PLEXCANFILE
+				sed -i -e "s/%SEEDUSER%/${SEEDUSER}/g" $PLEXCANFILE
+				sed -i -e "s/%PASS%/${PASS}/g" $PLEXCANFILE
+				sed -i -e "s/%IPADDRESS%/${IPADDRESS}/g" $PLEXCANFILE
+			fi
 
 			## installation plex_dupefinder
-			plex_autoscan
 			echo ""
-
-			## installation plex_dupefinder
 			plex_dupefinder
 			echo ""
-
-			## installation cloudplow
-			cloudplow
 }
 
 function valid_htpasswd() {
@@ -1506,7 +1366,7 @@ function valid_htpasswd() {
 		HTTEMPFOLDER="/tmp/"
 		HTFILE=".htpasswd-$SEEDUSER"
 		cat "$HTTEMPFOLDER$HTFILE" >> "$HTFOLDER$HTFILE"
-		VAR=$(sed -e 's/\$/\$$/g' "$HTFOLDER$HTFILE")
+		VAR=$(sed -e 's/\$/\$/g' "$HTFOLDER$HTFILE")
 		cd $HTFOLDER
 		touch login
 		echo "$HTUSER $HTPASSWORD" >> "$HTFOLDER/login"
@@ -1518,7 +1378,7 @@ function add_app_htpasswd() {
 	if [[ -d "$CONFDIR" ]]; then
 		HTFOLDER="$CONFDIR/passwd/"
 		HTFILE=".htpasswd-$SEEDUSER"
-		VAR=$(sed -e 's/\$/\$$/g' "$HTFOLDER$HTFILE")
+		VAR=$(sed -e 's/\$/\$/g' "$HTFOLDER$HTFILE")
 	fi
 }
 
@@ -1547,13 +1407,12 @@ function manage_users() {
 				pause
 				choose_services
 				install_services
-				docker_compose
 				CLOUDPLOWFOLDER="/home/$SEEDUSER/scripts/cloudplow"
 				if [[ ! -d "$CLOUDPLOWFOLDER" ]]; then
 				cloudplow
 				sed -i "s/\"enabled\"\: true/\"enabled\"\: false/g" /home/$SEEDUSER/scripts/cloudplow/config.json
 				fi
-				install_filebot
+				filebot
 				sauve
 				resume_seedbox
 				pause
@@ -1562,8 +1421,7 @@ function manage_users() {
 				choose_media_folder_classique
 				choose_services
 				install_services
-				docker_compose
-				install_filebot
+				filebot
 				resume_seedbox
 				pause
 				script_classique
@@ -1587,14 +1445,18 @@ function manage_users() {
 	                		"Merci de sélectionner l'Utilisateur" 12 50 3 \
 	                		"${TABUSERS[@]}"  3>&1 1>&2 2>&3)
 			[[ "$?" = 1 ]] && script_plexdrive;
+
 			## RESUME USER INFORMATIONS
-			USERDOCKERCOMPOSEFILE="/home/$SEEDUSER/docker-compose.yml"
 			USERRESUMEFILE="/home/$SEEDUSER/resume"
-			cd /home/$SEEDUSER
 			echo -e "${BLUE}### SUPPRESSION CONTAINERS ###${NC}"
-			checking_errors $?
-			docker-compose rm -fs > /dev/null 2>&1
+			for SERVICEACTIVATED in $(cat $USERRESUMEFILE)
+			do
+			        line=$(echo $SERVICEACTIVATED | cut -d\- -f1)
+				docker rm -f $line-$SEEDUSER > /dev/null 2>&1
+			done
 			echo ""
+			checking_errors $?
+
 			if [[ -e "$PLEXDRIVE" ]]; then
 				echo -e "${BLUE}### SUPPRESSION USER RCLONE/PLEXDRIVE ###${NC}"
 				PLEXAUTOSCAN="/etc/systemd/system/plex_autoscan.service"
@@ -1655,11 +1517,9 @@ function manage_apps() {
 			[[ "$?" = 1 ]] && script_plexdrive;
 	
 	## INFORMATIONS UTILISATEUR
-	USERDOCKERCOMPOSEFILE="/home/$SEEDUSER/docker-compose.yml"
 	USERRESUMEFILE="/home/$SEEDUSER/resume"
 	echo ""
 	echo -e "${GREEN}### Gestion des Applis pour: $SEEDUSER ###${NC}"
-	echo -e " ${BWHITE}* Docker-Compose file: $USERDOCKERCOMPOSEFILE${NC}"
 	echo -e " ${BWHITE}* Resume file: $USERRESUMEFILE${NC}"
 	echo ""
 	## CHOOSE AN ACTION FOR APPS
@@ -1670,20 +1530,9 @@ function manage_apps() {
 	[[ "$?" = 1 ]] && script_plexdrive;
 	case $ACTIONONAPP in
 		"1" ) ## Ajout APP
-			CURRTIMEZONE=$(cat /etc/timezone)
-			TIMEZONEDEF=$(whiptail --title "Timezone" --inputbox \
-			"Merci de vérifier votre timezone" 7 66 "$CURRTIMEZONE" \
-			3>&1 1>&2 2>&3)
-
-			if [[ $TIMEZONEDEF == "" ]]; then
-				TIMEZONE=$CURRTIMEZONE
-			else
-				TIMEZONE=$TIMEZONEDEF
-			fi
 			choose_services
 			add_app_htpasswd
 			install_services
-			docker_compose
 			resume_seedbox
 			pause
 			if [[ -e "$PLEXDRIVE" ]]; then
@@ -1706,9 +1555,7 @@ function manage_apps() {
 			              "${TABSERVICES[@]}"  3>&1 1>&2 2>&3)
 			[[ "$?" = 1 ]] && script_plexdrive;
 			echo -e " ${GREEN}   * $APPSELECTED${NC}"
-			cd /home/$SEEDUSER
-			docker-compose rm -fs "$APPSELECTED"-"$SEEDUSER"
-			sed -i "/#START"$APPSELECTED"#/,/#END"$APPSELECTED"#/d" /home/$SEEDUSER/docker-compose.yml
+			docker rm -f "$APPSELECTED"-"$SEEDUSER"
 			sed -i "/$APPSELECTED/d" /home/$SEEDUSER/resume
 			rm -rf /opt/seedbox/docker/$SEEDUSER/$APPSELECTED
 			checking_errors $?

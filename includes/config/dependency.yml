@@ -26,6 +26,7 @@
         - { package: "unzip" }
         - { package: "python-pip" }
         - { package: "glances" }
+        - { package: "fail2ban" }
         - { package: "python3-pip" }
         - { package: "python-passlib" }
         - { package: "zip" }

@@ -39,7 +39,7 @@ echo ""
 mkdir -p $BACKUP_FOLDER
 
 echo -e "${CCYAN}> Création de l'archive${CEND}"
-tar cf - "/opt" "/home/%SEEDUSER%/scripts" "/home/%SEEDUSER%/docker-compose.yml" "/home/%SEEDUSER%/resume" "/etc/systemd" -P --warning=none | pigz > "$ARCHIVE"
+tar cf - "/opt" "/home/%SEEDUSER%/scripts" "/home/%SEEDUSER%/resume" "/etc/systemd" -P --warning=none | pigz > "$ARCHIVE"
 sleep 2s
 
 # Si une erreur survient lors de la compression
