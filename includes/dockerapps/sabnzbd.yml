@@ -17,6 +17,11 @@
         intport: '8080'
         image: 'linuxserver/sabnzbd'
 
+    - name: 'Creating sabnzbd folder paths'
+      file: 'path={{item}} state=directory mode=0775 owner=%UID% group=%GID%'
+      with_items:
+        - '/home/%USER%/local/{{pgrole}}'
+
     - name: 'Checking for existing app data'
       stat:
         path: /opt/appdata/sabnzbd/sabnzbd.ini

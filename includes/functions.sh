@@ -1261,11 +1261,6 @@ do
 		echo -e "${BWHITE}	--> f3ada405ce890b6f8204094deb12d8a8${NC}"
 		echo ""
 		fi
-
-		if [[ "$line" == "rutorrent" ]]; then
-			# installation du theme MaterialDesign
-			docker exec rutorrent-$SEEDUSER sh -c "git clone https://github.com/Phlooo/ruTorrent-MaterialDesign.git /app/rutorrent/plugins/theme/themes/MaterialDesign" > /dev/null 2>&1
-		fi
 echo ""
 done
 }

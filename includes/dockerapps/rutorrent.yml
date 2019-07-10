@@ -34,6 +34,11 @@
         - '/opt/seedbox/docker/%USER%/{{pgrole}}/plugins'
         - '/opt/seedbox/docker/%USER%/{{pgrole}}/plugins/theme'
 
+    - name: 'Creating rutorrent folder paths'
+      file: 'path={{item}} state=directory mode=0775 owner=%UID% group=%GID%'
+      with_items:
+        - '/home/%USER%/local/{{pgrole}}'
+
     - name: 'Check if Templates Exist for {{pgrole}}'
       stat:
         path: '/opt/seedbox-compose/includes/dockerapps/templates/{{pgrole}}'
@@ -103,6 +108,9 @@
         path: '/opt/seedbox/docker/%USER%/{{pgrole}}/rtorrent/rtorrent.rc'
         state: present
         msg: rtorrent.rc creation failed
+
+    - name: 'Update theme MaterialDesign'
+      shell: "docker exec rutorrent-%USER% sh -c 'git clone https://github.com/Phlooo/ruTorrent-MaterialDesign.git /app/rutorrent/plugins/theme/themes/MaterialDesign'"
 
     - name: 'Stopping {{pgrole}}'
       docker_container:
