@@ -42,7 +42,7 @@
         pg_volumes:
           - '/etc/localtime:/etc/localtime:ro'
           - '/opt/seedbox/docker/%USER%/{{pgrole}}:/config'
-          - '/home/%USER%/filebot:/downloads'
+          - '/home/%USER%:/home/%USER%'
 
     - name: 'Setting PG ENV'
       set_fact:
