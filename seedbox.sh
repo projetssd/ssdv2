@@ -108,6 +108,7 @@ case $CHOICE in
 			choose_media_folder_plexdrive
 			unionfs_fuse
 			docker network create traefik_proxy
+			define_parameters
 			install_traefik
 			install_portainer
 			install_watchtower
@@ -121,7 +122,6 @@ case $CHOICE in
 			if [[ -e "$PLEXDUPE" ]]; then
 			cd /home/$SEEDUSER/scripts/plex_dupefinder
 			python3 -m pip install -r requirements.txt > /dev/null 2>&1
-			ln -s /home/$SEEDUSER/scripts/plex_dupefinder/plexdupes.py /usr/local/bin/plexdupes
 			fi
 
 			## restauration cloudplow
@@ -142,11 +142,16 @@ case $CHOICE in
 			fi
 
 			## restauration des crons
-			(crontab -l | grep . ; echo "*/1 * * * * /opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh >> /home/$SEEDUSER/scripts/filebot.log") | crontab -
-			(crontab -l | grep . ; echo "0 3 * * 6 /usr/bin/backup >> /home/$SEEDUSER/scripts/backup.log") | crontab -
+			(crontab -l | grep . ; echo "*/1 * * * * /opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh") | crontab -
 
 			mv /tmp/resume /home/$SEEDUSER/
+			rm $SERVICESUSER$SEEDUSER
 			checking_errors $?
+    			echo ""
+    			echo -e "${CRED}---------------------------------------------------------------${CEND}"
+    			echo -e "${CRED}     /!\ RESTAURATION DU SERVEUR EFFECTUEE AVEC SUCCES /!\     ${CEND}"
+    			echo -e "${CRED}---------------------------------------------------------------${CEND}"
+			echo ""
 			pause
 			script_plexdrive
 		else
