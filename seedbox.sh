@@ -98,8 +98,8 @@ case $CHOICE in
 			conf_dir
 			checking_system
 			install_base_packages
+			define_parameters
 			install_docker
-			create_user
 			install_plexdrive
 			install_rclone
 			install_fail2ban
@@ -108,7 +108,6 @@ case $CHOICE in
 			choose_media_folder_plexdrive
 			unionfs_fuse
 			docker network create traefik_proxy
-			define_parameters
 			install_traefik
 			install_portainer
 			install_watchtower
