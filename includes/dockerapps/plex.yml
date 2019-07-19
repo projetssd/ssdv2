@@ -51,7 +51,7 @@
     ############### This is needed because on a fresh installaions the value is missing and is defaulted to 1 Security perfered
     - name: secureConnections is missing
       xml:
-        path: '/opt/seedbox/docker/%SEEDUSER%/plex/database/Library/Application Support/Plex Media Server/Preferences.xml'
+        path: '/opt/seedbox/docker/%USER%/plex/database/Library/Application Support/Plex Media Server/Preferences.xml'
         xpath: /Preferences/@secureConnections
         count: yes
       register: secure_hits
@@ -61,7 +61,7 @@
       ############### This is needed because on a fresh installaions the value is missing and is defaulted to 1 Security perfered
     - name: Add secureConnections if missing
       xml:
-        path: '/opt/seedbox/docker/%SEEDUSER%/plex/database/Library/Application Support/Plex Media Server/Preferences.xml'
+        path: '/opt/seedbox/docker/%USER%/plex/database/Library/Application Support/Plex Media Server/Preferences.xml'
         xpath: /Preferences
         attribute: secureConnections
         value: '1'
@@ -71,7 +71,7 @@
 
     - name: Read Preferences.xml
       xml:
-        path: '/opt/seedbox/docker/%SEEDUSER%/plex/database/Library/Application Support/Plex Media Server/Preferences.xml'
+        path: '/opt/seedbox/docker/%USER%/plex/database/Library/Application Support/Plex Media Server/Preferences.xml'
         xpath: /Preferences
         content: attribute
       register: plex_pref_content
