@@ -1146,6 +1146,10 @@ function install_services() {
 	INSTALLEDFILE="/home/$SEEDUSER/resume"
 	touch $INSTALLEDFILE > /dev/null 2>&1
 
+	if [[ ! -d "$CONFDIR/conf" ]]; then
+	mkdir -p $CONFDIR/conf > /dev/null 2>&1
+	fi
+
 	## port rutorrent 1
 	if [[ -f "$FILEPORTPATH" ]]; then
 		declare -i PORT=$(cat $FILEPORTPATH | tail -1)
@@ -1177,8 +1181,8 @@ function install_services() {
 	## préparation du docker-compose
 	for line in $(cat $SERVICESPERUSER);
 	do
-		cp -R /opt/seedbox-compose/includes/dockerapps/$line.yml /tmp/$line.yml
-		DOCKERCOMPOSEFILE="/tmp/$line.yml"
+		cp -R /opt/seedbox-compose/includes/dockerapps/$line.yml $CONFDIR/conf/$line.yml
+		DOCKERCOMPOSEFILE="$CONFDIR/conf/$line.yml"
 		sed -i "s|%TIMEZONE%|$TIMEZONE|g" $DOCKERCOMPOSEFILE
 		sed -i "s|%UID%|$USERID|g" $DOCKERCOMPOSEFILE
 		sed -i "s|%GID%|$GRPID|g" $DOCKERCOMPOSEFILE
@@ -1218,9 +1222,9 @@ function install_services() {
 		TRAEFIKURL=(Host:$ACCESSURL)
 		sed -i "s|%TRAEFIKURL%|$TRAEFIKURL|g" $DOCKERCOMPOSEFILE
 		sed -i "s|%ACCESSURL%|$ACCESSURL|g" $DOCKERCOMPOSEFILE
-		cd /tmp
+
+		cd $CONFDIR/conf
 		ansible-playbook $line.yml
-		rm $line.yml
 
 		if [[ "$line" == "plex" ]]; then
 		plex_sections
