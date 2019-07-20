@@ -28,9 +28,9 @@
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
-          - '//opt/seedbox/docker/%USER%/{{pgrole}}:/config'
+          - '/opt/seedbox/docker/%USER%/{{pgrole}}:/config'
           - '/etc/localtime:/etc/localtime:ro'
-          - '/home/%USER%/local/rutorrent:/home/%USER%/local/rutorrent'
+          - '/home/%USER%:/home/%USER%'
 
     - name: 'Setting PG ENV'
       set_fact:

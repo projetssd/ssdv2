@@ -407,7 +407,7 @@ function script_plexdrive() {
 	echo -e "${CGREEN}   4) Outils${CEND}"
 
 	echo -e ""
-	read -p "Votre choix [1-4]: " -e -i 1 PORT_CHOICE
+	read -p "Votre choix [1-4]: " PORT_CHOICE
 
 	case $PORT_CHOICE in
 		1) ## Installation de la seedbox
@@ -451,7 +451,7 @@ function script_plexdrive() {
 			echo -e "${CGREEN}   7) Réglage du processeur${CEND}"
 			echo -e "${CGREEN}   8) Retour menu principal${CEND}"
 			echo -e ""
-			read -p "Votre choix [1-8]: " -e -i 1 OUTILS
+			read -p "Votre choix [1-8]: " OUTILS
 
 			case $OUTILS in
 

@@ -13,7 +13,7 @@
 
     - name: 'Set Known Facts'
       set_fact:
-        pgrole: 'jdownloader2'
+        pgrole: 'jdownloader'
         intport: '5800'
         image: 'jlesage/jdownloader-2'
 

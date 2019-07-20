@@ -13,7 +13,7 @@ echo -e "${CGREEN}   1) Installation Seedbox Classique ${CEND}"
 echo -e "${CGREEN}   2) Installation Seedbox Plexdrive${CEND}"
 echo -e "${CGREEN}   3) Restauration Seedbox${CEND}"
 echo -e ""
-read -p "Votre choix [1-3]: " -e -i 1 CHOICE
+read -p "Votre choix [1-3]: " CHOICE
 echo ""
 case $CHOICE in
 	1) ## Installation de la seedbox classique
