@@ -26,8 +26,8 @@
         pg_volumes:
           - '/opt/seedbox/docker/%USER%/{{pgrole}}/config:/config'
           - '/home/%USER%:/home/%USER%'
-          - /home/%USER%/Medias/%SERIES%:/tv/Series
-          - /home/%USER%/Medias/%ANIMES%:/tv/Animes
+          - '/home/%USER%/Medias/%SERIES%:/tv/Series'
+          - '/home/%USER%/Medias/%ANIMES%:/tv/Animes'
           - '/etc/localtime:/etc/localtime:ro'
 
     - name: 'Setting PG ENV'
