@@ -17,6 +17,11 @@
         extport: '8096'
         image: 'emby/embyserver'
 
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775 owner=%UID% group=%GID%'
+      with_items:
+        - '/opt/seedbox/docker/%USER%/{{pgrole}}'
+
     # CORE (MANDATORY) ############################################################
     - name: 'XML Check'
       stat:

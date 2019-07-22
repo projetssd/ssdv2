@@ -16,6 +16,11 @@
         intport: '9117'
         image: 'linuxserver/jackett'
 
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775 owner=%UID% group=%GID%'
+      with_items:
+        - '/opt/seedbox/docker/%USER%/{{pgrole}}'
+
     # MIGRATIONS (MANDATORY) ############################################################
     - name: Checking for old app data
       stat:

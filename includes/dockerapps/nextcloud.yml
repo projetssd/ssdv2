@@ -17,6 +17,11 @@
         extport: '4645'
         image: 'linuxserver/nextcloud'
 
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775 owner=%UID% group=%GID%'
+      with_items:
+        - '/opt/seedbox/docker/%USER%/{{pgrole}}'
+
     # LABELS ######################################################################
     - name: 'Adding Traefik'
       set_fact:
