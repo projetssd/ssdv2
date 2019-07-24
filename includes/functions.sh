@@ -1537,7 +1537,6 @@ function manage_apps() {
 		"1" ) ## Ajout APP
 			choose_services
 			add_app_htpasswd
-			reinstall_services
 			install_services
 			resume_seedbox
 			pause
@@ -1596,6 +1595,7 @@ function manage_apps() {
 			docker rm -f "$line"-"$SEEDUSER" > /dev/null 2>&1
 			sed -i "/$line/d" /home/$SEEDUSER/resume
 			echo $line >> $SERVICESPERUSER
+			add_app_htpasswd
 			install_services
 			checking_errors $?
 			echo""
