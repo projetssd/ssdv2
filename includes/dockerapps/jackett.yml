@@ -28,7 +28,7 @@
       register: olddatacheck
 
     - name: Migrating appdata
-      shell: 'mv /opt/seedbox/docker/%USER%/{{pgrole}}/Jackett/* //opt/seedbox/docker/%USER%/{{pgrole}}'
+      shell: 'mv /opt/seedbox/docker/%USER%/{{pgrole}}/Jackett/* /opt/seedbox/docker/%USER%/{{pgrole}}'
       ignore_errors: yes
       when: olddatacheck.stat.exists
 
@@ -50,6 +50,17 @@
           traefik.port: '{{intport}}'
           traefik.frontend.rule: 'Host:{{pgrole}}.%DOMAIN%'
           traefik.frontend.auth.basic: '%VAR%'
+          traefik.frontend.headers.SSLHost: '%DOMAIN%'
+          traefik.frontend.headers.SSLRedirect: 'true'
+          traefik.frontend.headers.STSIncludeSubdomains: 'true'
+          traefik.frontend.headers.STSPreload: 'true'
+          traefik.frontend.headers.STSSeconds: '315360000'
+          traefik.frontend.headers.browserXSSFilter: 'true'
+          traefik.frontend.headers.contentTypeNosniff: 'true'
+          traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+          traefik.frontend.headers.forceSTSHeader: 'true'
+          traefik.frontend.headers.frameDeny: 'true'
+          traefik.frontend.headers.contentSecurityPolicy: '20'
 
     - name: 'Setting PG Volumes'
       set_fact:

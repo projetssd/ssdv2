@@ -1,11 +1,5 @@
 #!/bin/bash
-#
-# Title:      PGBlitz (Reference Title File)
-# Author(s):  Admin9705
-# URL:        https://pgblitz.com - http://github.pgblitz.com
-# GNU:        General Public License v3.0
-################################################################################
----
+
 - hosts: localhost
   gather_facts: false
   tasks:
@@ -13,25 +7,23 @@
 
     - name: 'Set Known Facts'
       set_fact:
-        pgrole: 'heimdall'
-        intport: '443'
-        extport: '1111'
-        image: 'linuxserver/heimdall'
+        pgrole: 'sensorr'
+        intport: '5070'
+        image: 'thcolin/sensorr'
 
     - name: Creating paths
-      file: 'path={{item}} state=directory mode=0775 owner=%UID% group=%GID%'
+      file: 'path={{item}} state=directory mode=0775 owner=%UID% group=%GID% recurse=yes'
       with_items:
         - '/opt/seedbox/docker/%USER%/{{pgrole}}'
+        - '/opt/seedbox/docker/%USER%/{{pgrole}}/config'
 
     # LABELS ######################################################################
-    - name: 'Adding Traefik'
+    - name: 'Ajout label traefik'
       set_fact:
         pg_labels:
-          traefik.protocol: 'https'
           traefik.enable: 'true'
-          traefik.https.port: '443'
-          traefik.https.frontend.entryPoints: 'https'
-          traefik.https.frontend.rule: 'Host:{{pgrole}}.%DOMAIN%'
+          traefik.port: '{{intport}}'
+          traefik.frontend.rule: 'Host:{{pgrole}}.%DOMAIN%'
           traefik.frontend.headers.SSLHost: '%DOMAIN%'
           traefik.frontend.headers.SSLRedirect: 'true'
           traefik.frontend.headers.STSIncludeSubdomains: 'true'
@@ -47,16 +39,18 @@
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
-          - '/opt/seedbox/docker/%USER%/heimdall:/config'
-          - '/etc/localtime:/etc/localtime:ro'
+          - '/opt/seedbox/docker/%USER%/{{pgrole}}/config:/app/sensorr/config'
+          - '/home/%USER%:/home/%USER%'
 
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
           PUID: '%UID%'
           PGID: '%GID%'
+          TZ: 'Europe/Paris'
 
     # MAIN DEPLOYMENT #############################################################
+
     - name: 'Deploying {{pgrole}}'
       docker_container:
         name: '{{pgrole}}-%USER%'
@@ -69,3 +63,12 @@
           - name: traefik_proxy
         state: started
         labels: '{{pg_labels}}'
+
+    # CONFIGURATION #################################################################
+
+    - name: execute command in docker
+      shell: |
+        docker exec sensorr-%USER% sh -l -c "mv /app/sensorr/config.default.json /app/sensorr/config/config.json"
+      register: result
+
+    - debug: msg="{{ result.stdout }}"

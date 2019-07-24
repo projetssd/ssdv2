@@ -1530,12 +1530,14 @@ function manage_apps() {
 	ACTIONONAPP=$(whiptail --title "App Manager" --menu \
 	                "Selectionner une action :" 12 50 3 \
 	                "1" "Ajout Docker Applis"  \
-	                "2" "Supprimer une Appli" 3>&1 1>&2 2>&3)
+	                "2" "Supprimer une Appli"  \
+			"3" "Réinitialisation Container" 3>&1 1>&2 2>&3)
 	[[ "$?" = 1 ]] && script_plexdrive;
 	case $ACTIONONAPP in
 		"1" ) ## Ajout APP
 			choose_services
 			add_app_htpasswd
+			reinstall_services
 			install_services
 			resume_seedbox
 			pause
@@ -1572,7 +1574,41 @@ function manage_apps() {
 			else
 				script_classique
 			fi
-			;;	
+			;;
+		"3" ) 	## Réinitialisation container
+			SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
+			touch $SERVICESPERUSER
+			DOMAIN=$(whiptail --title "Votre nom de Domaine" --inputbox \
+			"Merci de taper votre nom de Domaine (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3)
+			echo -e " ${BWHITE}* Les fichiers de configuration ne seront pas effacés${NC}"
+			TABSERVICES=()
+			for SERVICEACTIVATED in $(cat $USERRESUMEFILE)
+			do
+			        SERVICE=$(echo $SERVICEACTIVATED | cut -d\- -f1)
+			        PORT=$(echo $SERVICEACTIVATED | cut -d\- -f2)
+			        TABSERVICES+=( ${SERVICE//\"} ${PORT//\"} )
+			done
+			line=$(whiptail --title "App Manager" --menu \
+			              "Sélectionner le container à réinitialiser" 19 45 11 \
+			              "${TABSERVICES[@]}"  3>&1 1>&2 2>&3)
+			[[ "$?" = 1 ]] && script_plexdrive;
+			echo -e " ${GREEN}   * $line${NC}"
+			docker rm -f "$line"-"$SEEDUSER" > /dev/null 2>&1
+			sed -i "/$line/d" /home/$SEEDUSER/resume
+			echo $line >> $SERVICESPERUSER
+			install_services
+			checking_errors $?
+			echo""
+			echo -e "${BLUE}### Le Container $line a été Réinitialisé ###${NC}"
+			echo ""
+			resume_seedbox
+			pause
+			if [[ -e "$PLEXDRIVE" ]]; then
+				script_plexdrive
+			else
+				script_classique
+			fi
+			;;
 	esac
 }
 
