@@ -18,7 +18,7 @@
 
     # CORE (MANDATORY) ############################################################      
     - name: Creating scripts and plugins paths
-      file: 'path={{item}} state=directory mode=0775 owner=1000 group=1000'
+      file: 'path={{item}} state=directory mode=0775 owner=%UID% group=%GID%'
       with_items:
         - '/opt/seedbox/docker/%USER%/{{pgrole}}/scripts'
         - '/opt/seedbox/docker/%USER%/{{pgrole}}/plugins'
