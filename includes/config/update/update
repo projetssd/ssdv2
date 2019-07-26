@@ -32,20 +32,15 @@ source includes/variables.sh
 
 	echo -e " ${BWHITE}* Nettoyage en profondeur docker${NC}"
 	docker volume rm $(docker volume ls -qf "dangling=true") > /dev/null 2>&1
-	echo ""
 	echo -e " ${BWHITE}* Mise à jour du git${NC}"
 	cd /opt
 	rm -rf seedbox-compose
 	git clone https://github.com/laster13/patxav.git /opt/seedbox-compose > /dev/null 2>&1
-	checking_errors $?
-
 	echo -e " ${BWHITE}* Supression traefik${NC}"
 	rm -rf /opt/seedbox/docker/traefik > /dev/null 2>&1
-	checking_errors $?
-	
+	echo ""
 	## installation traefik
 	install_traefik
-	checking_errors $?
 	
 	echo -e " ${BWHITE}* Mise à jour des containers${NC}"
 	SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
