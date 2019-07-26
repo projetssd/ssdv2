@@ -22,6 +22,7 @@ source includes/variables.sh
 
 	## Mise à jour
 	checking_system
+	install_base_packages
 	echo ""
 	echo -e "${BLUE}### NETTOYAGE DOCKER ###${NC}"
 	echo -e " ${BWHITE}* Supression images docker${NC}"
