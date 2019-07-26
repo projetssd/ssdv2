@@ -452,7 +452,7 @@ function script_plexdrive() {
 			echo -e "${CGREEN}   8) Mise à jour - Nouvelle version du script${CEND}"
 			echo -e "${CGREEN}   9) Retour menu principal${CEND}"
 			echo -e ""
-			read -p "Votre choix [1-8]: " OUTILS
+			read -p "Votre choix [1-9]: " OUTILS
 
 			case $OUTILS in
 
