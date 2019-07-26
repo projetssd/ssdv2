@@ -11,8 +11,8 @@ source includes/variables.sh
 	echo ""
 
 	## Préparation des variables
-	add_app_htpasswd
 	SEEDUSER=$(cat /opt/seedbox/users)
+	add_app_htpasswd
 
 	CONTACTEMAIL=$(whiptail --title "Adresse Email" --inputbox \
 	"Merci de taper votre adresse Email :" 7 50 3>&1 1>&2 2>&3)
@@ -21,9 +21,9 @@ source includes/variables.sh
 	"Merci de taper votre nom de Domaine (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3)
 
 	## Mise à jour
-	echo -e " ${BWHITE}* Mise à jour Ansible${NC}"
 	checking_system
-
+	echo ""
+	echo -e "${BLUE}### NETTOYAGE DOCKER ###${NC}"
 	echo -e " ${BWHITE}* Supression images docker${NC}"
 	docker rmi -f $(docker images -q) > /dev/null 2>&1
 
@@ -32,7 +32,7 @@ source includes/variables.sh
 
 	echo -e " ${BWHITE}* Nettoyage en profondeur docker${NC}"
 	docker volume rm $(docker volume ls -qf "dangling=true") > /dev/null 2>&1
-
+	echo ""
 	echo -e " ${BWHITE}* Mise à jour du git${NC}"
 	cd /opt
 	rm -rf seedbox-compose
@@ -43,7 +43,7 @@ source includes/variables.sh
 	rm -rf /opt/seedbox/docker/traefik > /dev/null 2>&1
 	checking_errors $?
 	
-	echo -e " ${BWHITE}* Installation traefik${NC}"
+	## installation traefik
 	install_traefik
 	checking_errors $?
 	
@@ -54,9 +54,7 @@ source includes/variables.sh
 	restore_services
 	mv /tmp/resume /home/$SEEDUSER/
 	rm $SERVICESUSER$SEEDUSER
-	checking_errors $?
 
-    	echo ""
     	echo -e "${CRED}---------------------------------------------------------------${CEND}"
     	echo -e "${CRED}     /!\ MISE A JOUR DU SERVEUR EFFECTUEE AVEC SUCCES /!\     ${CEND}"
     	echo -e "${CRED}---------------------------------------------------------------${CEND}"
