@@ -114,7 +114,7 @@ case $CHOICE in
 			SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 			while read line; do echo $line | cut -d'-' -f1; done < /home/$SEEDUSER/resume > $SERVICESUSER$SEEDUSER
 			mv /home/$SEEDUSER/resume /tmp
-			install_services
+			restore_services
 
 			## restauration plex_dupefinder
 			PLEXDUPE=/home/$SEEDUSER/scripts/plex_dupefinder/plexdupes.py

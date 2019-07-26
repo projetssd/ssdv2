@@ -449,7 +449,8 @@ function script_plexdrive() {
 			echo -e "${CGREEN}   5) rtorrent-cleaner de ${CCYAN}@Magicalex-Mondedie.fr${CEND}${NC}"
 			echo -e "${CGREEN}   6) Openvpn${CEND}"
 			echo -e "${CGREEN}   7) Réglage du processeur${CEND}"
-			echo -e "${CGREEN}   8) Retour menu principal${CEND}"
+			echo -e "${CGREEN}   8) Mise à jour - Nouvelle version du script${CEND}"
+			echo -e "${CGREEN}   9) Retour menu principal${CEND}"
 			echo -e ""
 			read -p "Votre choix [1-8]: " OUTILS
 
@@ -518,6 +519,11 @@ function script_plexdrive() {
 			;;
 
 			8)
+			cp -r $BASEDIR/includes/config/update/* /usr/local/bin
+			update
+			;;
+
+			9)
 			script_plexdrive
 			;;
 
@@ -1248,6 +1254,111 @@ function install_services() {
 	config_post_compose
 }
 
+function restore_services() {
+	replace_media_compose
+	USERID=$(id -u $SEEDUSER)
+	GRPID=$(id -g $SEEDUSER)
+	INSTALLEDFILE="/home/$SEEDUSER/resume"
+	touch $INSTALLEDFILE > /dev/null 2>&1
+
+	if [[ ! -d "$CONFDIR/conf" ]]; then
+	mkdir -p $CONFDIR/conf > /dev/null 2>&1
+	fi
+
+	## port rutorrent 1
+	if [[ -f "$FILEPORTPATH" ]]; then
+		declare -i PORT=$(cat $FILEPORTPATH | tail -1)
+	else
+		declare -i PORT=$FIRSTPORT
+	fi
+
+	## port rutorrent 2
+	if [[ -f "$FILEPORTPATH1" ]]; then
+		declare -i PORT1=$(cat $FILEPORTPATH1 | tail -1)
+	else
+		declare -i PORT1=$FIRSTPORT1
+	fi
+
+	## port rutorrent 3
+	if [[ -f "$FILEPORTPATH2" ]]; then
+		declare -i PORT2=$(cat $FILEPORTPATH2 | tail -1)
+	else
+		declare -i PORT2=$FIRSTPORT2
+	fi
+
+	## port plex
+	if [[ -f "$PLEXPORTPATH" ]]; then
+		declare -i PORTPLEX=$(cat $PLEXPORTPATH | tail -1)
+	else
+		declare -i PORTPLEX=32400
+	fi
+
+	## préparation du docker-compose
+	for line in $(cat $SERVICESPERUSER);
+	do
+		cp -R /opt/seedbox-compose/includes/dockerapps/$line.yml $CONFDIR/conf/$line.yml
+		DOCKERCOMPOSEFILE="$CONFDIR/conf/$line.yml"
+		sed -i "s|%TIMEZONE%|$TIMEZONE|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%UID%|$USERID|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%GID%|$GRPID|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%PORT%|$PORT|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%PORT1%|$PORT1|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%PORT2%|$PORT2|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%PORTPLEX%|$PORTPLEX|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%VAR%|$VAR|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%DOMAIN%|$DOMAIN|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%USER%|$SEEDUSER|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%EMAIL%|$CONTACTEMAIL|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%FILMS%|$FILMS|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%SERIES%|$SERIES|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%ANIMES%|$ANIMES|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%MUSIC%|$MUSIC|g" $DOCKERCOMPOSEFILE
+
+		if [[ "$line" == "plex" ]]; then
+			echo -e "${BLUE}### CONFIG POST COMPOSE PLEX ###${NC}"
+			echo -e " ${BWHITE}* Processing plex config file...${NC}"
+			# CLAIM pour Plex
+			echo ""
+			echo -e " ${BWHITE}* Un token est nécessaire pour AUTHENTIFIER le serveur Plex ${NC}"
+			echo -e " ${BWHITE}* Pour obtenir un identifiant CLAIM, allez à cette adresse et copier le dans le terminal ${NC}"
+			echo -e " ${CRED}* https://www.plex.tv/claim/ ${CEND}"
+			echo ""
+			read -rp "CLAIM = " CLAIM
+		fi
+		sed -i "s|%CLAIM%|$CLAIM|g" $DOCKERCOMPOSEFILE
+
+		NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
+		if [ $NOMBRE -le 1 ] ; then
+			FQDNTMP="$line.$DOMAIN"
+		else
+			FQDNTMP="$line-$SEEDUSER.$DOMAIN"
+		fi
+		ACCESSURL=$FQDNTMP
+		TRAEFIKURL=(Host:$ACCESSURL)
+		sed -i "s|%TRAEFIKURL%|$TRAEFIKURL|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%ACCESSURL%|$ACCESSURL|g" $DOCKERCOMPOSEFILE
+
+		cd $CONFDIR/conf
+		ansible-playbook $line.yml
+
+		echo "$line-$PORT-$FQDNTMP" >> $INSTALLEDFILE
+		URI="/"
+	
+		PORT=$PORT+1
+		PORT1=$PORT1+1
+		PORT2=$PORT2+1
+		PORTPLEX=$PORTPLEX+1
+		FQDN=""
+		FQDNTMP=""
+		set PORT
+	done
+	echo $PORT >> $FILEPORTPATH
+	echo $PORT1 >> $FILEPORTPATH1
+	echo $PORT2 >> $FILEPORTPATH2
+	echo $PORTPLEX >> $PLEXPORTPATH
+	config_post_compose
+}
+
 function config_post_compose() {
 for line in $(cat $SERVICESPERUSER);
 do
@@ -1596,7 +1707,7 @@ function manage_apps() {
 			sed -i "/$line/d" /home/$SEEDUSER/resume
 			echo $line >> $SERVICESPERUSER
 			add_app_htpasswd
-			install_services
+			restore_services
 			checking_errors $?
 			echo""
 			echo -e "${BLUE}### Le Container $line a été Réinitialisé ###${NC}"

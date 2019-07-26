@@ -1,0 +1,66 @@
+#!/bin/bash
+
+source includes/functions.sh
+source includes/variables.sh
+
+	clear
+    	echo ""
+    	echo -e "${CRED}---------------------------------------------------------------${CEND}"
+    	echo -e "${CRED} /!\ ATTENTION : PREPARATION DE LA MISE A JOUR DU SERVEUR /!\  ${CEND}"
+    	echo -e "${CRED}---------------------------------------------------------------${CEND}"
+	echo ""
+
+	## Préparation des variables
+	add_app_htpasswd
+	SEEDUSER=$(cat /opt/seedbox/users)
+
+	CONTACTEMAIL=$(whiptail --title "Adresse Email" --inputbox \
+	"Merci de taper votre adresse Email :" 7 50 3>&1 1>&2 2>&3)
+
+	DOMAIN=$(whiptail --title "Votre nom de Domaine" --inputbox \
+	"Merci de taper votre nom de Domaine (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3)
+
+	## Mise à jour
+	echo -e " ${BWHITE}* Mise à jour Ansible${NC}"
+	checking_system
+
+	echo -e " ${BWHITE}* Supression images docker${NC}"
+	docker rmi -f $(docker images -q) > /dev/null 2>&1
+
+	echo -e " ${BWHITE}* Supression Containers docker${NC}"
+	docker rm -f $(docker ps -aq) > /dev/null 2>&1
+
+	echo -e " ${BWHITE}* Nettoyage en profondeur docker${NC}"
+	docker volume rm $(docker volume ls -qf "dangling=true") > /dev/null 2>&1
+
+	echo -e " ${BWHITE}* Mise à jour du git${NC}"
+	cd /opt
+	rm -rf seedbox-compose
+	git clone https://github.com/laster13/patxav.git /opt/seedbox-compose > /dev/null 2>&1
+	checking_errors $?
+
+	echo -e " ${BWHITE}* Supression traefik${NC}"
+	rm -rf /opt/seedbox/docker/traefik > /dev/null 2>&1
+	checking_errors $?
+	
+	echo -e " ${BWHITE}* Installation traefik${NC}"
+	install_traefik
+	checking_errors $?
+	
+	echo -e " ${BWHITE}* Mise à jour des containers${NC}"
+	SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
+	while read line; do echo $line | cut -d'-' -f1; done < /home/$SEEDUSER/resume > $SERVICESUSER$SEEDUSER
+	mv /home/$SEEDUSER/resume /tmp
+	restore_services
+	mv /tmp/resume /home/$SEEDUSER/
+	rm $SERVICESUSER$SEEDUSER
+	checking_errors $?
+
+    	echo ""
+    	echo -e "${CRED}---------------------------------------------------------------${CEND}"
+    	echo -e "${CRED}     /!\ MISE A JOUR DU SERVEUR EFFECTUEE AVEC SUCCES /!\     ${CEND}"
+    	echo -e "${CRED}---------------------------------------------------------------${CEND}"
+	echo ""
+	pause
+	script_plexdrive
+
