@@ -1446,7 +1446,7 @@ function plex_sections() {
 
 				chmod 755 $PLEXCANFILE
 
-				for line in $(cat $INSTALLEDFILE);
+				for toto in $(cat $INSTALLEDFILE);
 				do
 					NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
 					if [ $NOMBRE -le 1 ] ; then
