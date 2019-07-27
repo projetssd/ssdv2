@@ -195,6 +195,11 @@ function processor() {
 			/opt/seedbox-compose/includes/config/processor/processor.sh
 }
 
+function network() {
+			/opt/seedbox-compose/includes/config/tweak/tweak.sh
+}
+
+
 
 function plex_autoscan() {
 			#configuration plex_autoscan avec ansible
@@ -448,7 +453,7 @@ function script_plexdrive() {
 			echo -e "${CGREEN}   4) Webtools${CEND}"
 			echo -e "${CGREEN}   5) rtorrent-cleaner de ${CCYAN}@Magicalex-Mondedie.fr${CEND}${NC}"
 			echo -e "${CGREEN}   6) Openvpn${CEND}"
-			echo -e "${CGREEN}   7) Réglage du processeur${CEND}"
+			echo -e "${CGREEN}   7) Réglage du processeur | Tweak Carte Reseau | Docker swappiness${CEND}"
 			echo -e "${CGREEN}   8) Mise à jour - Nouvelle version du script${CEND}"
 			echo -e "${CGREEN}   9) Retour menu principal${CEND}"
 			echo -e ""
@@ -515,7 +520,32 @@ function script_plexdrive() {
 			;;
 
 			7)
-			processor
+				clear
+				logo
+				echo ""
+				echo -e "${CCYAN}TWEAK${CEND}"
+				echo -e "${CGREEN}${CEND}"
+				echo -e "${CGREEN}   1) Réglage du processeur${CEND}"
+				echo -e "${CGREEN}   2) Tweak Carte Reseau | Docker swappiness${CEND}"
+				echo -e "${CGREEN}   3) Menu Principal${CEND}"
+				echo -e ""
+				read -p "Votre choix [1-3]: " TWEAK
+
+				case $TWEAK in
+				
+					1)
+					processor
+					;;
+				
+					2)
+					network
+					;;
+
+					3)
+					script_plexdrive
+					;;
+
+				esac
 			;;
 
 			8)
