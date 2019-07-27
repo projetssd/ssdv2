@@ -59,8 +59,8 @@
     # MAIN DEPLOYMENT #############################################################
     - name: 'Deploying {{pgrole}}'
       docker_container:
-        name: '{{pgrole}}'
-        image: '{{image}}-%USER%'
+        name: '{{pgrole}}-%USER%'
+        image: '{{image}}'
         pull: yes
         published_ports:
           - '{{extport}}:{{intport}}'
