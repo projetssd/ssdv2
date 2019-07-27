@@ -42,6 +42,8 @@ source includes/variables.sh
 	echo ""
 	## installation traefik
 	install_traefik
+	install_portainer
+	install_watchtower
 	
 	echo -e " ${BWHITE}* Mise à jour des containers${NC}"
 	SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
