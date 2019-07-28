@@ -1733,7 +1733,9 @@ function manage_apps() {
 			              "${TABSERVICES[@]}"  3>&1 1>&2 2>&3)
 			[[ "$?" = 1 ]] && script_plexdrive;
 			echo -e " ${GREEN}   * $line${NC}"
+			image=$(docker images | grep "jackett" | awk '{print $3}')
 			docker rm -f "$line"-"$SEEDUSER" > /dev/null 2>&1
+			docker rmi $image
 			sed -i "/$line/d" /home/$SEEDUSER/resume
 			echo $line >> $SERVICESPERUSER
 			add_app_htpasswd
