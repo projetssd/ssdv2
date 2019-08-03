@@ -8,11 +8,11 @@
 
     - name: 'Set Known Facts'
       set_fact:
-        pgrole: 'php7'
-        image: 'bitnami/php-fpm:latest'
+        pgrole: 'php5'
+        image: 'bitnami/php-fpm:5.6-debian-9'
 
     - name: "Substitute Variable php"
-      shell: "sed 's|remplace|php7-%USER%|g' -i /opt/seedbox/docker/%USER%/nginx/config/app.conf"
+      shell: "sed 's|remplace|php5-%USER%|g' -i /opt/seedbox/docker/%USER%/nginx/config/app.conf"
 
     - name: 'Setting Volumes'
       set_fact:

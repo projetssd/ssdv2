@@ -49,9 +49,6 @@
     - name: "Substitute  Variable Domain"
       shell: "sed 's|your_ip|%DOMAIN%|g' -i /opt/seedbox/docker/%USER%/{{pgrole}}/config/app.conf"
 
-    - name: "Substitute Variable php"
-      shell: "sed 's|remplace|php7-%USER%|g' -i /opt/seedbox/docker/%USER%/{{pgrole}}/config/app.conf"
-
     - name: 'Setting Volumes'
       set_fact:
         pg_volumes:
