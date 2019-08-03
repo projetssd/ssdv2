@@ -1843,7 +1843,6 @@ function manage_apps() {
 			if [[ -e "$var" ]]; then
 				rm $var
 			fi
-
 			webserver
 			install_webserver
 			echo ""
