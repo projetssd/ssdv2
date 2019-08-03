@@ -1838,6 +1838,12 @@ function manage_apps() {
 			fi
 			;;
 		"4" ) 	## Installation webserver
+			var="/tmp/menuservices.txt"
+
+			if [[ -e "$var" ]]; then
+				rm $var
+			fi
+
 			webserver
 			install_webserver
 			echo ""
