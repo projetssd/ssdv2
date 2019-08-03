@@ -1047,6 +1047,35 @@ function choose_services() {
 	rm /tmp/menuservices.txt
 }
 
+function webserver() {
+	echo -e "${BLUE}### SERVICES ###${NC}"
+	echo -e " ${BWHITE}--> Services en cours d'installation : ${NC}"
+	for app in $(cat $WEBSERVERAVAILABLE);
+	do
+		service=$(echo $app | cut -d\- -f1)
+		desc=$(echo $app | cut -d\- -f2)
+		echo "$service $desc off" >> /tmp/menuservices.txt
+	done
+	SERVICESTOINSTALL=$(whiptail --title "Gestion Webserver" --checklist \
+	"Applis à ajouter pour $SEEDUSER (Barre espace pour la sélection)" 28 60 17 \
+	$(cat /tmp/menuservices.txt) 3>&1 1>&2 2>&3)
+	[[ "$?" = 1 ]] && script_plexdrive;
+	SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
+	touch $SERVICESPERUSER
+	for APPDOCKER in $SERVICESTOINSTALL
+	do
+		echo -e "	${GREEN}* $(echo $APPDOCKER | tr -d '"')${NC}"
+		echo $(echo ${APPDOCKER,,} | tr -d '"') >> $SERVICESPERUSER
+	done
+
+	if [[ "$DOMAIN" == "" ]]; then
+		DOMAIN=$(whiptail --title "Votre nom de Domaine" --inputbox \
+		"Merci de taper votre nom de Domaine :" 7 50 3>&1 1>&2 2>&3)
+	fi
+
+	rm /tmp/menuservices.txt
+}
+
 function choose_media_folder_classique() {
 	echo -e "${BLUE}### DOSSIERS MEDIAS ###${NC}"
 	echo -e " ${BWHITE}--> Création des dossiers Medias : ${NC}"
@@ -1389,6 +1418,61 @@ function restore_services() {
 	config_post_compose
 }
 
+function install_webserver() {
+	USERID=$(id -u $SEEDUSER)
+	GRPID=$(id -g $SEEDUSER)
+	INSTALLEDFILE="/home/$SEEDUSER/resume"
+	touch $INSTALLEDFILE > /dev/null 2>&1
+
+	if [[ ! -d "$CONFDIR/conf" ]]; then
+	mkdir -p $CONFDIR/conf > /dev/null 2>&1
+	fi
+
+	## port rutorrent 1
+	if [[ -f "$FILEPORTPATH" ]]; then
+		declare -i PORT=$(cat $FILEPORTPATH | tail -1)
+	else
+		declare -i PORT=$FIRSTPORT
+	fi
+
+	## préparation du docker-compose
+	for line in $(cat $SERVICESPERUSER);
+	do
+		cp -R /opt/seedbox-compose/includes/webserver/$line.yml $CONFDIR/conf/$line.yml
+		DOCKERCOMPOSEFILE="$CONFDIR/conf/$line.yml"
+		sed -i "s|%UID%|$USERID|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%GID%|$GRPID|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%VAR%|$VAR|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%DOMAIN%|$DOMAIN|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%USER%|$SEEDUSER|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%EMAIL%|$CONTACTEMAIL|g" $DOCKERCOMPOSEFILE
+
+		NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
+		if [ $NOMBRE -le 1 ] ; then
+			FQDNTMP="$line.$DOMAIN"
+		else
+			FQDNTMP="$line-$SEEDUSER.$DOMAIN"
+		fi
+		ACCESSURL=$FQDNTMP
+		TRAEFIKURL=(Host:$ACCESSURL)
+		sed -i "s|%TRAEFIKURL%|$TRAEFIKURL|g" $DOCKERCOMPOSEFILE
+		sed -i "s|%ACCESSURL%|$ACCESSURL|g" $DOCKERCOMPOSEFILE
+
+		cd $CONFDIR/conf
+		ansible-playbook $line.yml
+
+		echo "$line-$PORT-$FQDNTMP" >> $INSTALLEDFILE
+		URI="/"
+	
+		PORT=$PORT+1
+		FQDN=""
+		FQDNTMP=""
+		set PORT
+	done
+	echo $PORT >> $FILEPORTPATH
+	rm -Rf $SERVICESPERUSER > /dev/null 2>&1
+}
+
 function config_post_compose() {
 for line in $(cat $SERVICESPERUSER);
 do
@@ -1669,10 +1753,11 @@ function manage_apps() {
 	echo ""
 	## CHOOSE AN ACTION FOR APPS
 	ACTIONONAPP=$(whiptail --title "App Manager" --menu \
-	                "Selectionner une action :" 12 50 3 \
+	                "Selectionner une action :" 12 50 4 \
 	                "1" "Ajout Docker Applis"  \
 	                "2" "Supprimer une Appli"  \
-			"3" "Réinitialisation Container" 3>&1 1>&2 2>&3)
+			"3" "Réinitialisation Container" \
+ 			"4" "Installation Serveur Web" 3>&1 1>&2 2>&3)
 	[[ "$?" = 1 ]] && script_plexdrive;
 	case $ACTIONONAPP in
 		"1" ) ## Ajout APP
@@ -1745,6 +1830,31 @@ function manage_apps() {
 			echo -e "${BLUE}### Le Container $line a été Réinitialisé ###${NC}"
 			echo ""
 			resume_seedbox
+			pause
+			if [[ -e "$PLEXDRIVE" ]]; then
+				script_plexdrive
+			else
+				script_classique
+			fi
+			;;
+		"4" ) 	## Installation webserver
+			webserver
+			install_webserver
+			echo ""
+			echo -e "${CCYAN}################################################################################################################################################${CEND}"
+			echo ""
+			echo -e "${CCYAN}        SERVEUR WEB INSTALLE AVEC SUCCES                                                                                                        ${CEND}"
+			echo ""
+			echo -e "${CCYAN}################################################################################################################################################${CEND}"
+			echo ""
+			echo -e "${CCYAN}        PENSEZ A CHANGER LE MOT DE PASSE MYSQL                                                                                                  ${CEND}"
+			echo ""
+			echo -e "${CCYAN}################################################################################################################################################${CEND}"
+			echo ""
+			echo -e "${GREEN}        PAR DEFAUT root:mysql    DOSSIER POUR LES SITES /var/www                                                                                $CEND}"
+			echo ""
+			echo -e "${CCYAN}################################################################################################################################################${CEND}"
+			echo ""
 			pause
 			if [[ -e "$PLEXDRIVE" ]]; then
 				script_plexdrive

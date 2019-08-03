@@ -1,0 +1,74 @@
+#!/bin/bash
+
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+
+    - name: Create network
+      docker_network:
+        name: traefik_proxy
+        ipam_options:
+          subnet: '172.16.98.0/24'
+
+    # FACTS #######################################################################
+
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'nginx'
+        intport: '80'
+        image: 'nginx'
+
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775 owner=%UID% group=%GID%'
+      with_items:
+        - '/opt/seedbox/docker/%USER%/{{pgrole}}'
+        - '/opt/seedbox/docker/%USER%/{{pgrole}}/config'
+
+    # LABELS ######################################################################
+    - name: 'Ajout label traefik'
+      set_fact:
+        pg_labels:
+          traefik.enable: 'true'
+          traefik.port: '{{intport}}'
+          traefik.frontend.rule: 'Host:%DOMAIN%'
+          traefik.frontend.headers.SSLHost: '%DOMAIN%'
+          traefik.frontend.headers.SSLRedirect: 'true'
+          traefik.frontend.headers.STSIncludeSubdomains: 'true'
+          traefik.frontend.headers.STSPreload: 'true'
+          traefik.frontend.headers.STSSeconds: '315360000'
+          traefik.frontend.headers.browserXSSFilter: 'true'
+          traefik.frontend.headers.contentTypeNosniff: 'true'
+          traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+          traefik.frontend.headers.forceSTSHeader: 'true'
+          traefik.frontend.headers.customFrameOptionsValue: 'SAMEORIGIN'
+
+    - name: "Copy app.conf file"
+      copy: src=/opt/seedbox-compose/includes/webserver/app.conf dest=/opt/seedbox/docker/%USER%/{{pgrole}}/config/app.conf
+
+    - name: "Substitute  Variable Domain"
+      shell: "sed 's|your_ip|%DOMAIN%|g' -i /opt/seedbox/docker/%USER%/{{pgrole}}/config/app.conf"
+
+    - name: "Substitute Variable php"
+      shell: "sed 's|remplace|php7-%USER%|g' -i /opt/seedbox/docker/%USER%/{{pgrole}}/config/app.conf"
+
+    - name: 'Setting Volumes'
+      set_fact:
+        pg_volumes:
+          - '/var/www:/var/www/app'
+          - '/opt/seedbox/docker/%USER%/{{pgrole}}/config/app.conf:/etc/nginx/conf.d/app.conf'
+
+    # MAIN DEPLOYMENT #############################################################
+
+    - name: 'Deploying {{pgrole}}'
+      docker_container:
+        name: '{{pgrole}}-%USER%'
+        image: '{{image}}'
+        pull: yes
+        volumes: '{{pg_volumes}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+        state: started
+        labels: '{{pg_labels}}'
+

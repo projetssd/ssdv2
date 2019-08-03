@@ -1,0 +1,50 @@
+#!/bin/bash
+
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    # FACTS #######################################################################
+
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'mariadb'
+        image: 'mariadb:10.2'
+
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775 owner=%UID% group=%GID%'
+      with_items:
+        - '/opt/seedbox/docker/%USER%/{{pgrole}}'
+
+    - name: 'Setting Volumes'
+      set_fact:
+        pg_volumes:
+          - '/opt/seedbox/docker/%USER%/{{pgrole}}:/var/lib/mysql'
+          - '/etc/localtime:/etc/localtime:ro'
+
+    - name: 'Setting ENV'
+      set_fact:
+        pg_env:
+          MYSQL_ROOT_PASSWORD: 'mysql'
+
+    # MAIN DEPLOYMENT #############################################################
+
+    - name: 'Deploying {{pgrole}}'
+      docker_container:
+        name: '{{pgrole}}-%USER%'
+        recreate: true
+        image: '{{image}}'
+        pull: yes
+        volumes: '{{pg_volumes}}'
+        env: '{{pg_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+        state: started
+
+    # POST DEPLOYMENT ##############################################################
+
+    - name: 'Post Deployment Notes'
+      debug:
+        msg: |-
+          * Login Information * root:mysql * Le mot de passe doit être changé *

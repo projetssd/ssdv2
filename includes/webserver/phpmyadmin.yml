@@ -1,0 +1,50 @@
+#!/bin/bash
+
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    # FACTS #######################################################################
+
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'phpmyadmin'
+        intport: '80'
+        image: 'phpmyadmin/phpmyadmin'
+
+    # LABELS ######################################################################
+    - name: 'Ajout label traefik'
+      set_fact:
+        pg_labels:
+          traefik.enable: 'true'
+          traefik.port: '{{intport}}'
+          traefik.frontend.rule: 'Host:{{pgrole}}.%DOMAIN%'
+          traefik.frontend.headers.SSLHost: '%DOMAIN%'
+          traefik.frontend.headers.SSLRedirect: 'true'
+          traefik.frontend.headers.STSIncludeSubdomains: 'true'
+          traefik.frontend.headers.STSPreload: 'true'
+          traefik.frontend.headers.STSSeconds: '315360000'
+          traefik.frontend.headers.browserXSSFilter: 'true'
+          traefik.frontend.headers.contentTypeNosniff: 'true'
+          traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+          traefik.frontend.headers.forceSTSHeader: 'true'
+          traefik.frontend.headers.frameDeny: 'true'
+
+    - name: 'Setting PG ENV'
+      set_fact:
+        pg_env:
+          PMA_ARBITRARY: '1'
+
+    # MAIN DEPLOYMENT #############################################################
+
+    - name: 'Deploying {{pgrole}}'
+      docker_container:
+        name: '{{pgrole}}-%USER%'
+        image: '{{image}}'
+        pull: yes
+        env: '{{pg_env}}'
+        restart_policy: always
+        networks:
+          - name: traefik_proxy
+        state: started
+        labels: '{{pg_labels}}'
