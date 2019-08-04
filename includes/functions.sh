@@ -1355,7 +1355,13 @@ function restore_services() {
 	## préparation du docker-compose
 	for line in $(cat $SERVICESPERUSER);
 	do
+
+	if [ $line = "nginx" ] || [ $line = "php5" ] || [ $line = "php7" ] || [ $line = "mariadb" ] || [ $line = "phpmyadmin" ]; then
+		cp -R /opt/seedbox-compose/includes/webserver/$line.yml $CONFDIR/conf/$line.yml
+		else
 		cp -R /opt/seedbox-compose/includes/dockerapps/$line.yml $CONFDIR/conf/$line.yml
+	fi
+
 		DOCKERCOMPOSEFILE="$CONFDIR/conf/$line.yml"
 		sed -i "s|%TIMEZONE%|$TIMEZONE|g" $DOCKERCOMPOSEFILE
 		sed -i "s|%UID%|$USERID|g" $DOCKERCOMPOSEFILE
@@ -1818,7 +1824,13 @@ function manage_apps() {
 			              "${TABSERVICES[@]}"  3>&1 1>&2 2>&3)
 			[[ "$?" = 1 ]] && script_plexdrive;
 			echo -e " ${GREEN}   * $line${NC}"
-			image=$(docker images | grep "$line" | awk '{print $3}')
+
+			if [ $line = "php5" ] || [ $line = "php7" ]; then
+				image=$(docker images | grep "php" | awk '{print $3}')
+			else
+				image=$(docker images | grep "$line" | awk '{print $3}')
+			fi
+
 			docker rm -f "$line"-"$SEEDUSER" > /dev/null 2>&1
 			docker rmi $image
 			sed -i "/$line/d" /home/$SEEDUSER/resume
