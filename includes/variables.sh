@@ -36,6 +36,9 @@ PLEXPORTPATH="/opt/seedbox/plex.pt"
 PACKAGESFILE="$BASEDIR/includes/config/packages"
 USERSFILE="/opt/seedbox/users"
 GROUPFILE="/opt/seedbox/group"
+MAILFILE="/opt/seedbox/mail"
+DOMAINFILE="/opt/seedbox/domain"
+
 
 export NEWT_COLORS='
   window=,white

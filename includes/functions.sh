@@ -904,8 +904,11 @@ function define_parameters() {
 	create_user
 	CONTACTEMAIL=$(whiptail --title "Adresse Email" --inputbox \
 	"Merci de taper votre adresse Email :" 7 50 3>&1 1>&2 2>&3)
+	echo $CONTACTEMAIL > $MAILFILE
+
 	DOMAIN=$(whiptail --title "Votre nom de Domaine" --inputbox \
 	"Merci de taper votre nom de Domaine (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3)
+	echo $DOMAINFILE > $DOMAINFILE
 	echo ""
 }
 
@@ -1003,19 +1006,6 @@ function create_user() {
 	fi
 	add_user_htpasswd $SEEDUSER $PASSWORD
 	echo $SEEDUSER >> $USERSFILE
-}
-
-
-function add_ftp () {
-	docker exec -i ftp /bin/bash << EOX
-	( echo ${PASSWORD} ; echo ${PASSWORD} )|pure-pw useradd ${SEEDUSER} -f /etc/pure-ftpd/passwd/pureftpd.passwd -m -u ftpuser -d /home/ftpusers/${SEEDUSER}
-EOX
-}
-
-function del_ftp () {
-	docker exec -i ftp /bin/bash << EOC
-    pure-pw userdel ${SEEDUSER} -f /etc/pure-ftpd/passwd/pureftpd.passwd
-EOC
 }
 
 function choose_services() {
