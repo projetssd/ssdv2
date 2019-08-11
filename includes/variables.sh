@@ -34,11 +34,10 @@ FILEPORTPATH2="/opt/seedbox/ports2.pt"
 SCANPORTPATH="/opt/seedbox/scan.pt"
 PLEXPORTPATH="/opt/seedbox/plex.pt"
 PACKAGESFILE="$BASEDIR/includes/config/packages"
-USERSFILE="/opt/seedbox/users"
-GROUPFILE="/opt/seedbox/group"
-MAILFILE="/opt/seedbox/mail"
-DOMAINFILE="/opt/seedbox/domain"
-
+USERSFILE="$CONFDIR/variables/users"
+GROUPFILE="$CONFDIR/variables/group"
+MAILFILE="$CONFDIR/variables/mail"
+DOMAINFILE="$CONFDIR/variables/domain"
 
 export NEWT_COLORS='
   window=,white

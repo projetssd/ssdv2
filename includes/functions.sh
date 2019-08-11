@@ -121,42 +121,8 @@ function traktarr() {
 			##configuration traktarr avec ansible
 			echo -e "${BLUE}### TRAKTARR ###${NC}"
 			echo -e " ${BWHITE}* Installation traktarr${NC}"
-			TMPGROUP=$(cat $GROUPFILE)
-			TABUSERS=()
-			for USERSEED in $(members $TMPGROUP)
-			do
-	        	IDSEEDUSER=$(id -u $USERSEED)
-	        	TABUSERS+=( ${USERSEED//\"} ${IDSEEDUSER//\"} )
-			done
-			## CHOISIR USER
-			SEEDUSER=$(whiptail --title "App Manager" --menu \
-	                		"Merci de sélectionner l'Utilisateur" 12 50 3 \
-	                		"${TABUSERS[@]}"  3>&1 1>&2 2>&3)
-			USERID=$(id -u $SEEDUSER)
-			GRPID=$(id -g $SEEDUSER)
-
-			## récupération nom de domaine
-			ACCESSDOMAIN=$(whiptail --title "Votre nom de Domaine" --inputbox \
-			"Merci de taper votre nom de Domaine (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3)
-
-			cp -r "$BASEDIR/includes/config/roles/traktarr" "/opt/seedbox/docker/$SEEDUSER/traktarr"
-			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/traktarr/tasks/main.yml
-			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/traktarr/tasks/main.yml
-			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/traktarr/tasks/main.yml
-
-			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/traktarr/templates/config.json.j2
-			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/traktarr/templates/config.json.j2
-			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/traktarr/templates/config.json.j2
-			sed -i "s|%DOMAIN%|$DOMAIN|g" /opt/seedbox/docker/$SEEDUSER/traktarr/templates/config.json.j2
-			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/traktarr/templates/config.json.j2
-
-			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/traktarr/templates/traktarr.service.j2
-			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/traktarr/templates/traktarr.service.j2
-			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/traktarr/templates/traktarr.service.j2
-
-			cd /opt/seedbox/docker/$SEEDUSER/traktarr/tasks
+			cd /opt/seedbox-compose/includes/config/roles/traktarr/tasks
 			ansible-playbook main.yml
-			rm -rf /opt/seedbox/docker/$SEEDUSER/traktarr
 			service traktarr restart
 			checking_errors $?
 }
@@ -900,7 +866,7 @@ function install_docker() {
 
 function define_parameters() {
 	echo -e "${BLUE}### INFORMATIONS UTILISATEURS ###${NC}"
-	USEDOMAIN="y"
+	mkdir -p $CONFDIR/variables
 	create_user
 	CONTACTEMAIL=$(whiptail --title "Adresse Email" --inputbox \
 	"Merci de taper votre adresse Email :" 7 50 3>&1 1>&2 2>&3)
@@ -908,7 +874,7 @@ function define_parameters() {
 
 	DOMAIN=$(whiptail --title "Votre nom de Domaine" --inputbox \
 	"Merci de taper votre nom de Domaine (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3)
-	echo $DOMAINFILE > $DOMAINFILE
+	echo $DOMAIN > $DOMAINFILE
 	echo ""
 }
 
@@ -940,6 +906,9 @@ function create_user() {
 			echo -e " ${YELLOW}* L'utilisateur existe déjà !${NC}"
 			USERID=$(id -u $SEEDUSER)
 			GRPID=$(id -g $SEEDUSER)
+			echo $USERID >> $CONFDIR/variables/userid
+			echo $GRPID >> $CONFDIR/variables/groupid
+
 			usermod -a -G docker $SEEDUSER > /dev/null 2>&1
 			echo -e " ${BWHITE}* Ajout de $SEEDUSER in $SEEDGROUP"
 			usermod -a -G $SEEDGROUP $SEEDUSER
@@ -955,6 +924,9 @@ function create_user() {
 			checking_errors $?
 			USERID=$(id -u $SEEDUSER)
 			GRPID=$(id -g $SEEDUSER)
+			echo $USERID >> $CONFDIR/variables/userid
+			echo $GRPID >> $CONFDIR/variables/groupid
+
 		fi
 		add_user_htpasswd $SEEDUSER $PASSWORD
 		echo $SEEDUSER >> $USERSFILE
@@ -966,46 +938,6 @@ function create_user() {
         		"Création d'un groupe pour la Seedbox" 7 50 3>&1 1>&2 2>&3)
         	fi
 	fi
-    	egrep "^$SEEDGROUP" /etc/group >/dev/null
-	if [[ "$?" != "0" ]]; then
-		echo -e " ${BWHITE}* Création du groupe $SEEDGROUP"
-	    groupadd $SEEDGROUP
-	    checking_errors $?
-	else
-		SEEDGROUP=$TMPGROUP
-	    echo -e " ${YELLOW}* Le groupe $SEEDGROUP existe déjà.${NC}"
-	fi
-	if [[ ! -f "$USERSFILE" ]]; then
-		touch $USERSFILE
-	fi
-	SEEDUSER=$(whiptail --title "Utilisateur" --inputbox \
-		"Nom d'utilisateur :" 7 50 3>&1 1>&2 2>&3)
-	[[ "$?" = 1 ]] && script_plexdrive;
-	PASSWORD=$(whiptail --title "Password" --passwordbox \
-		"Mot de passe :" 7 50 3>&1 1>&2 2>&3)
-	egrep "^$SEEDUSER" /etc/passwd >/dev/null
-	if [ $? -eq 0 ]; then
-		echo -e " ${YELLOW}* L'utilisateur existe déjà !${NC}"
-		USERID=$(id -u $SEEDUSER)
-		GRPID=$(id -g $SEEDUSER)
-		echo -e " ${BWHITE}* Ajout de $SEEDUSER in $SEEDGROUP"
-		usermod -a -G $SEEDGROUP $SEEDUSER
-		usermod -a -G docker $SEEDUSER > /dev/null 2>&1
-		checking_errors $?
-	else
-		PASS=$(perl -e 'print crypt($ARGV[0], "password")' $PASSWORD)
-		echo -e " ${BWHITE}* Ajout de $SEEDUSER au système"
-		useradd -M -g $SEEDGROUP -p $PASS -s /bin/bash $SEEDUSER > /dev/null 2>&1
-		usermod -a -G docker $SEEDUSER > /dev/null 2>&1
-		mkdir -p /home/$SEEDUSER
-		chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER
-		chmod 755 /home/$SEEDUSER
-		checking_errors $?
-		USERID=$(id -u $SEEDUSER)
-		GRPID=$(id -g $SEEDUSER)
-	fi
-	add_user_htpasswd $SEEDUSER $PASSWORD
-	echo $SEEDUSER >> $USERSFILE
 }
 
 function choose_services() {

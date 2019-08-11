@@ -12,6 +12,10 @@
   gather_facts: false
   tasks:
 
+    # CORE (MANDATORY) ############################################################
+    - name: 'Including variables'
+      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+
     - name: Check if traktarr service exists
       stat:
         path: "/etc/systemd/system/traktarr.service"
@@ -22,32 +26,32 @@
       when: traktarr_service.stat.exists
 
     - name: Create traktarr directories
-      file: "path={{ item }} state=directory mode=0775 owner=%USERID% group=%GRPID% recurse=yes"
+      file: "path={{ item }} state=directory mode=0775 owner={{userid.stdout}} group={{userid.stdout}} recurse=yes"
       with_items:
-        - /home/%SEEDUSER%/scripts/traktarr
+        - /home/{{user.stdout}}/scripts/traktarr
 
     - name: Clone traktarr
       git:
         repo: https://github.com/l3uddz/traktarr/
-        dest: /home/%SEEDUSER%/scripts/traktarr
+        dest: /home/{{user.stdout}}/scripts/traktarr
         version: HEAD
         force: yes
       become: yes
-      become_user: "%SEEDUSER%"
+      become_user: "{{user.stdout}}"
 
     - name: Install pip requirements
       pip:
-        requirements: /home/%SEEDUSER%/scripts/traktarr/requirements.txt
+        requirements: /home/{{user.stdout}}/scripts/traktarr/requirements.txt
         executable: pip3
 
     - name: Check if traktarr config exists
       stat:
-        path: "/home/%SEEDUSER%/scripts/traktarr/config.json"
+        path: "/home/{{user.stdout}}/scripts/traktarr/config.json"
       register: traktarr_config
 
     - name: "Check if sonarr exists"
       stat:
-        path: "/opt/seedbox/docker/%SEEDUSER%/sonarr/config/config.xml"
+        path: "/opt/seedbox/docker/{{user.stdout}}/sonarr/config/config.xml"
       register: sonarr_config
       when: not traktarr_config.stat.exists
 
@@ -56,7 +60,7 @@
 
       - name: Pull sonarr api key
         xml:
-          path: "/opt/seedbox/docker/%SEEDUSER%/sonarr/config/config.xml"
+          path: "/opt/seedbox/docker/{{user.stdout}}/sonarr/config/config.xml"
           xpath: /Config/ApiKey
           content: text
         register: xmlresp
@@ -69,7 +73,7 @@
 
     - name: "Check if radarr exists"
       stat:
-        path: "/opt/seedbox/docker/%SEEDUSER%/radarr/config/config.xml"
+        path: "/opt/seedbox/docker/{{user.stdout}}/radarr/config/config.xml"
       register: radarr_config
       when: not traktarr_config.stat.exists
 
@@ -78,7 +82,7 @@
 
       - name: Pull radarr api key
         xml:
-          path: "/opt/seedbox/docker/%SEEDUSER%/radarr/config/config.xml"
+          path: "/opt/seedbox/docker/{{user.stdout}}/radarr/config/config.xml"
           xpath: /Config/ApiKey
           content: text
         register: xmlresp
@@ -91,33 +95,33 @@
 
     - name: Import default config
       template:
-        src: /opt/seedbox/docker/%SEEDUSER%/traktarr/templates/config.json.j2
-        dest: /home/%SEEDUSER%/scripts/traktarr/config.json
-        owner: "%USERID%"
-        group: "%GRPID%"
+        src: /opt/seedbox-compose/includes/config/roles/traktarr/templates/config.json.j2
+        dest: /home/{{user.stdout}}/scripts/traktarr/config.json
+        owner: "{{userid.stdout}}"
+        group: "{{groupid.stdout}}"
         mode: 0775
         force: yes
       when: not traktarr_config.stat.exists
 
     - name: Set traktarr.py as executable
       file:
-        path: /home/%SEEDUSER%/scripts/traktarr/traktarr.py
-        owner: "%USERID%"
-        group: "%GRPID%"
+        path: /home/{{user.stdout}}/scripts/traktarr/traktarr.py
+        owner: "{{userid.stdout}}"
+        group: "{{groupid.stdout}}"
         mode: a+x
 
     - name: Set directory permissions
-      file: "path=/home/%SEEDUSER%/scripts/traktarr state=directory owner=0 group=0 recurse=yes"
+      file: "path=/home/{{user.stdout}}/scripts/traktarr state=directory owner=0 group=0 recurse=yes"
 
     - name: "Create /usr/local/bin symlink"
       file:
-        src: "/home/%SEEDUSER%/scripts/traktarr/traktarr.py"
+        src: "/home/{{user.stdout}}/scripts/traktarr/traktarr.py"
         dest: "/usr/local/bin/traktarr"
         state: link
 
     - name: Import traktarr service
       template:
-        src: /opt/seedbox/docker/%SEEDUSER%/traktarr/templates/traktarr.service.j2
+        src: /opt/seedbox-compose/includes/config/roles/traktarr/templates/traktarr.service.j2
         dest: /etc/systemd/system/traktarr.service
         force: yes
       when: not traktarr_service.stat.exists

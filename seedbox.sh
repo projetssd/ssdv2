@@ -52,29 +52,29 @@ case $CHOICE in
 		if [[ ! -d "$CONFDIR" ]]; then
 	    		clear
 			conf_dir
-			checking_system
-			install_base_packages
-			install_docker
+			#checking_system
+			#install_base_packages
+			#install_docker
 			define_parameters
-			install_traefik
-			install_plexdrive
-			install_rclone
-			install_portainer
-			install_watchtower
-			install_fail2ban
-			choose_media_folder_plexdrive
-			unionfs_fuse
-			pause
-			choose_services
-			install_services
-			CLOUDPLOWFILE="/home/$SEEDUSER/scripts/cloudplow/config.json"
-			if [[ ! -e "$CLOUDPLOWFILE" ]]; then
-				cloudplow
-				sed -i "s/\"enabled\"\: true/\"enabled\"\: false/g" /home/$SEEDUSER/scripts/cloudplow/config.json
-			fi
-			filebot
-			sauve
-			resume_seedbox
+			#install_traefik
+			#install_plexdrive
+			#install_rclone
+		#	install_portainer
+			#install_watchtower
+			#install_fail2ban
+			#choose_media_folder_plexdrive
+			#unionfs_fuse
+			#pause
+			#choose_services
+			##install_services
+			#CLOUDPLOWFILE="/home/$SEEDUSER/scripts/cloudplow/config.json"
+			#if [[ ! -e "$CLOUDPLOWFILE" ]]; then
+			#	cloudplow
+		#		sed -i "s/\"enabled\"\: true/\"enabled\"\: false/g" /home/$SEEDUSER/scripts/cloudplow/config.json
+			#fi
+			#filebot
+			#sauve
+			#resume_seedbox
 			pause
 			script_plexdrive
 		else

@@ -1,0 +1,31 @@
+#!/bin/bash
+
+---
+# VARIABLES #########################################################
+
+- name: 'Register Domaine'
+  shell: 'cat /opt/seedbox/variables/domain'
+  register: domain
+  ignore_errors: True
+
+- name: 'Register email'
+  shell: 'cat /opt/seedbox/variables/mail'
+  register: mail
+  ignore_errors: True
+
+- name: 'Register user'
+  shell: 'cat /opt/seedbox/variables/users'
+  register: user
+  ignore_errors: True
+
+- name: 'Register userid'
+  shell: 'cat /opt/seedbox/variables/userid'
+  register: userid
+  ignore_errors: True
+
+- name: 'Register groupid'
+  shell: 'cat /opt/seedbox/variables/groupid'
+  register: groupid
+  ignore_errors: True
+
+
