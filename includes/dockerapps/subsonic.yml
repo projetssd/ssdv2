@@ -10,6 +10,11 @@
   gather_facts: false
   tasks:
     # FACTS #######################################################################
+
+    - name: Pull Stored Data
+      shell: 'cat /opt/seedbox/users'
+      register: users
+
     - name: 'Set Known Facts'
       set_fact:
         pgrole: 'subsonic'
@@ -19,7 +24,7 @@
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775 owner=%UID% group=%GID%'
       with_items:
-        - '/opt/seedbox/docker/%USER%/{{pgrole}}'
+        - '/opt/seedbox/docker/{{users.stdout}}/{{pgrole}}'
 
     # LABELS ######################################################################
     - name: 'Adding Traefik'
@@ -42,8 +47,8 @@
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
-          - '/opt/seedbox/docker/%USER%/{{pgrole}}/state:/opt/app/state:rw'
-          - '/home/%USER%/Medias/Musiques:/mnt/music:ro'
+          - '/opt/seedbox/docker/{{users.stdout}}/{{pgrole}}/state:/opt/app/state:rw'
+          - '/home/{{users.stdout}}/Medias/Musiques:/mnt/music:ro'
           - '/etc/localtime:/etc/localtime:ro'
 
     - name: 'Setting PG ENV'
@@ -56,7 +61,7 @@
     # MAIN DEPLOYMENT #############################################################
     - name: 'Deploying {{pgrole}}'
       docker_container:
-        name: '{{pgrole}}-%USER%'
+        name: '{{pgrole}}-{{users.stdout}}'
         image: '{{image}}'
         pull: yes
         volumes: '{{pg_volumes}}'
