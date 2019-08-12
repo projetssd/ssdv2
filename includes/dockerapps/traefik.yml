@@ -10,6 +10,11 @@
   gather_facts: True
 
   tasks:
+  
+      # VARIABLES ############################################################
+    - name: 'Including variables'
+      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+      
     - name: Remove Traefik
       docker_container:
         name: traefik
