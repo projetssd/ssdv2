@@ -11,7 +11,7 @@
 
   tasks:
   
-      # VARIABLES ############################################################
+    # VARIABLES ############################################################
     - name: 'Including variables'
       include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
       
@@ -46,6 +46,14 @@
         owner: '0'
         group: '0'
       when: acme_json.stat.exists == False
+
+    - name: Installing Traefik.Toml
+      template:
+        src: traefik.toml
+        dest: /opt/seedbox/docker/traefik/traefik.toml
+        force: yes
+        owner: '0'
+        group: '0'
 
     - name: 'Ajout label traefik'
       set_fact:

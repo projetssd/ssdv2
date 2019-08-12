@@ -639,29 +639,14 @@ function install_fail2ban() {
 
 function install_traefik() {
 	echo -e "${BLUE}### TRAEFIK ###${NC}"
-
-	TRAEFIK="$CONFDIR/docker/traefik"
-	INSTALLEDFILE="$CONFDIR/resume"
-
-	if [[ ! -f "$INSTALLEDFILE" ]]; then
-	touch $INSTALLEDFILE> /dev/null 2>&1
-	fi
-
+	INSTALLEDFILE="/home/$SEEDUSER/resume"
 	if docker ps | grep -q traefik; then
 		echo -e " ${YELLOW}* Traefik est déjà installé !${NC}"
 	else
 		echo -e " ${BWHITE}* Installation Traefik${NC}"
-		mkdir -p $TRAEFIK
-		cp "$BASEDIR/includes/dockerapps/traefik.toml" "$CONFDIR/docker/traefik/"
-		cp "$BASEDIR/includes/dockerapps/traefik.yml" "/tmp/"
-		cp "$BASEDIR/includes/dockerapps/acme.json" "/tmp/"
-		sed -i "s|%EMAIL%|$CONTACTEMAIL|g" $CONFDIR/docker/traefik/traefik.toml
-		sed -i "s|%DOMAIN%|$DOMAIN|g" $CONFDIR/docker/traefik/traefik.toml
-		sed -i "s|%DOMAIN%|$DOMAIN|g" /tmp/traefik.yml
-		cd /tmp
+		cd /opt/seedbox-compose/includes/dockerapps
 		docker network create traefik_proxy > /dev/null 2>&1
 		ansible-playbook traefik.yml
-		rm traefik.yml acme.json
 		echo "traefik-port-traefik.$DOMAIN" >> $INSTALLEDFILE
 		checking_errors $?		
 	fi
@@ -670,22 +655,14 @@ function install_traefik() {
 
 function install_portainer() {
 	echo -e "${BLUE}### PORTAINER ###${NC}"
-	INSTALLEDFILE="$CONFDIR/resume"
-	if [[ ! -f "$INSTALLEDFILE" ]]; then
-	touch $INSTALLEDFILE> /dev/null 2>&1
-	fi
-
+	INSTALLEDFILE="/home/$SEEDUSER/resume"
 	if docker ps | grep -q portainer; then
 		echo -e " ${BWHITE}--> portainer est déjà installé !${NC}"
 		else
 		if (whiptail --title "Docker Portainer" --yesno "Voulez vous installer portainer" 7 50) then
 			echo -e " ${BWHITE}* Installation Portainer${NC}"
-			mkdir -p $TRAEFIK
-			cp "$BASEDIR/includes/dockerapps/portainer.yml" "/tmp/"
-			sed -i "s|%DOMAIN%|$DOMAIN|g" /tmp/portainer.yml
-			cd /tmp
+			cd /opt/seedbox-compose/includes/dockerapps
 			ansible-playbook portainer.yml
-			rm portainer.yml
 			echo "portainer-port-portainer.$DOMAIN" >> $INSTALLEDFILE
 			checking_errors $?
 		else
@@ -1556,7 +1533,6 @@ function manage_users() {
 			echo -e "${GREEN}---------------------------------${NC}"
 			echo ""
 			define_parameters
-			add_ftp > /dev/null 2>&1
 			if [[ -e "$PLEXDRIVE" ]]; then
 				rclone_service
 				choose_media_folder_plexdrive
