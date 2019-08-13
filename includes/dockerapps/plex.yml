@@ -9,6 +9,11 @@
 - hosts: localhost
   gather_facts: false
   tasks:
+  
+    # VARIABLES ############################################################
+    - name: 'Including variables'
+      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+
     # FACTS #######################################################################
     - name: 'Set Known Facts'
       set_fact:
@@ -18,17 +23,17 @@
 
     ######################################### FOR BOTH
     - name: Creating scripts and plugins paths
-      file: 'path={{item}} state=directory mode=0775 owner=%UID% group=%GID%'
+      file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
       with_items:
-        - '/opt/seedbox/docker/%USER%/{{pgrole}}'
+        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}'
 
     - name: 'Set Default Labels'
       set_fact:
         default_labels:
           traefik.enable: 'true'
           traefik.port: '{{intport}}'
-          traefik.frontend.rule: 'Host:{{pgrole}}.%DOMAIN%'
-          traefik.frontend.headers.SSLHost: '%DOMAIN%'
+          traefik.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
+          traefik.frontend.headers.SSLHost: '{{domain.stdout}}'
           traefik.frontend.headers.SSLRedirect: 'true'
           traefik.frontend.headers.STSIncludeSubdomains: 'true'
           traefik.frontend.headers.STSPreload: 'true'
@@ -39,29 +44,29 @@
           traefik.frontend.headers.forceSTSHeader: 'true'
           traefik.frontend.headers.frameDeny: 'true'
 
-    - name: 'Set Default Volume - {{extension.stdout}}'
+    - name: 'Set Default Volume'
       set_fact:
         default_volumes:
-          - '/home/%USER%:/home/%USER%'
-          - '/home/%USER%/Medias:/data'
-          - '/opt/seedbox/docker/%USER%/plex/config:/config'
+          - '/home/{{user.stdout}}:/home/{{user.stdout}}'
+          - '/home/{{user.stdout}}/Medias:/data'
+          - '/opt/seedbox/docker/{{user.stdout}}/plex/config:/config'
           - '/dev/shm:/transcode'
 
     - name: 'Establish Key Variables'
       set_fact:
         default_env:
-          UID: '%UID%'
-          GID: '%GID%'
+          UID: '{{userid.stdout}}'
+          GID: '{{groupid.stdout}}'
 
     - name: Check Preferences.xml exists
       stat:
-        path: '/opt/seedbox/docker/%USER%/plex/database/Library/Application Support/Plex Media Server/Preferences.xml'
+        path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/database/Library/Application Support/Plex Media Server/Preferences.xml'
       register: plex_prefs
 
     ############### This is needed because on a fresh installaions the value is missing and is defaulted to 1 Security perfered
     - name: secureConnections is missing
       xml:
-        path: '/opt/seedbox/docker/%USER%/plex/database/Library/Application Support/Plex Media Server/Preferences.xml'
+        path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/database/Library/Application Support/Plex Media Server/Preferences.xml'
         xpath: /Preferences/@secureConnections
         count: yes
       register: secure_hits
@@ -71,7 +76,7 @@
       ############### This is needed because on a fresh installaions the value is missing and is defaulted to 1 Security perfered
     - name: Add secureConnections if missing
       xml:
-        path: '/opt/seedbox/docker/%USER%/plex/database/Library/Application Support/Plex Media Server/Preferences.xml'
+        path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/database/Library/Application Support/Plex Media Server/Preferences.xml'
         xpath: /Preferences
         attribute: secureConnections
         value: '1'
@@ -81,7 +86,7 @@
 
     - name: Read Preferences.xml
       xml:
-        path: '/opt/seedbox/docker/%USER%/plex/database/Library/Application Support/Plex Media Server/Preferences.xml'
+        path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/database/Library/Application Support/Plex Media Server/Preferences.xml'
         xpath: /Preferences
         content: attribute
       register: plex_pref_content
@@ -104,15 +109,15 @@
     ######################################### DEPLOY PLEX REMOTE (ANSWER 2)
     - name: Deploy Plex Container (Remote Edition)
       docker_container:
-        name: plex-%USER%
+        name: {{pgrole}}
         image: 'plexinc/pms-docker'
         pull: yes
         published_ports:
           - '{{extport}}:{{intport}}'
         env:
-          PLEX_UID: '%UID%'
-          PLEX_GID: '%GID%'
-          PLEX_CLAIM: '%CLAIM%'
+          PLEX_UID: '{{userid.stdout}}'
+          PLEX_GID: '{{groupid.stdout}}'
+          PLEX_CLAIM: '{{claim.stdout}}'
         purge_networks: yes
         networks:
           - name: traefik_proxy
