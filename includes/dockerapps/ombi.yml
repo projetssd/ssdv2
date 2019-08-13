@@ -9,8 +9,12 @@
 - hosts: localhost
   gather_facts: false
   tasks:
+  
+    # VARIABLES ############################################################
+    - name: 'Including variables'
+      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+      
     # FACTS #######################################################################
-
     - name: 'Set Known Facts'
       set_fact:
         pgrole: 'ombi'
@@ -19,21 +23,21 @@
 
     # PRETASKS ####################################################################
     - name: Creating scripts and plugins paths
-      file: 'path={{item}} state=directory mode=0775 owner=%UID% group=%GID%'
+      file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
       with_items:
-        - '/opt/seedbox/docker/%USER%/{{pgrole}}'
+        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}'
 
     - name: Check JSON exists
       stat:
-        path: '/opt/seedbox/docker/%USER%/{{pgrole}}/appsettings.json'
+        path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/appsettings.json'
       register: jsonfile
 
     - name: 'Download {{pgrole}} appsettings.json config file'
       get_url:
         url: https://raw.githubusercontent.com/tidusjar/Ombi/master/src/Ombi/appsettings.json
-        dest: /opt/seedbox/docker/%USER%/{{pgrole}}/appsettings.json
-        owner: '%UID%'
-        group: '%GID%'
+        dest: /opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/appsettings.json
+        owner: '{{userid.stdout}}'
+        group: '{{groupid.stdout}}'
         force: no
       ignore_errors: True
       when: jsonfile.stat.exists == False
@@ -44,8 +48,8 @@
         pg_labels:
           traefik.enable: 'true'
           traefik.port: '{{intport}}'
-          traefik.frontend.rule: 'Host:{{pgrole}}.%DOMAIN%'
-          traefik.frontend.headers.SSLHost: '%DOMAIN%'
+          traefik.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
+          traefik.frontend.headers.SSLHost: '{{domain.stdout}}'
           traefik.frontend.headers.SSLRedirect: 'true'
           traefik.frontend.headers.STSIncludeSubdomains: 'true'
           traefik.frontend.headers.STSPreload: 'true'
@@ -59,21 +63,21 @@
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
-          - '/opt/seedbox/docker/%USER%/{{pgrole}}:/config'
+          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}:/config'
           - '/etc/localtime:/etc/localtime:ro'
-          - '/opt/seedbox/docker/%USER%/{{pgrole}}/appsettings.json:/opt/{{pgrole}}/appsettings.json'
+          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/appsettings.json:/opt/{{pgrole}}/appsettings.json'
 
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
-          PUID: '%UID%'
-          PGID: '%GID%'
+          PUID: '{{userid.stdout}}'
+          PGID: '{{groupid.stdout}}'
 
     # MAIN DEPLOYMENT #############################################################
 
     - name: 'Deploying {{pgrole}}'
       docker_container:
-        name: '{{pgrole}}-%USER%'
+        name: '{{pgrole}}'
         image: '{{image}}'
         pull: yes
         volumes: '{{pg_volumes}}'
