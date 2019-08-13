@@ -173,7 +173,7 @@ function plex_autoscan() {
 			echo -e " ${BWHITE}* Installation plex_autoscan${NC}"
 			echo ""
 			echo -e " ${GREEN}ATTENTION IMPORTANT - NE PAS FAIRE D'ERREUR - SINON DESINSTALLER ET REINSTALLER${NC}"
-			. /opt/seedbox-compose/includes/config/roles/plex_autoscan/plex_token.sh
+			. /opt/seedbox-compose/includes/config/roles/plex_autoscan/plex_token.sh >> "/opt/seedbox/variables/token"
 			cp -r "$BASEDIR/includes/config/roles/plex_autoscan" "/opt/seedbox/docker/$SEEDUSER/plex_autoscan"
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/tasks/main.yml
 			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/plex_autoscan/tasks/main.yml
