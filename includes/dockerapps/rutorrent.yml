@@ -9,15 +9,21 @@
 - hosts: localhost
   gather_facts: false
   tasks:
+  
+    # VARIABLES ############################################################
+    - name: 'Including variables'
+      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+      
     # FACTS #######################################################################
     - name: 'Set Known Facts'
       set_fact:
         pgrole: 'rutorrent'
         intport: '80'
-        intport2: '%PORT%'
-        extport2: '%PORT%'
-        intport3: '%PORT2%'
-        extport3: '%PORT2%'
+        extport: '8999'
+        intport2: '5000'
+        extport2: '5000'
+        intport3: '51413'
+        extport3: '51413'
         image: 'linuxserver/rutorrent'
 
     # PLUGINS ####################################################
@@ -100,8 +106,9 @@
         image: '{{image}}'
         pull: yes
         published_ports:
+          - '{{extport}}:{{intport}}'      
           - '{{extport2}}:{{intport2}}'
-          - '{{extport3}}:{{intport3}}/udp'
+          - '{{extport3}}:{{intport3}}'
         volumes: '{{pg_volumes}}'
         env: '{{pg_env}}'
         restart_policy: unless-stopped
