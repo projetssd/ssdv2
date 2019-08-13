@@ -57,3 +57,8 @@
   shell: 'cat /opt/seedbox/variables/musiques'
   register: musiques
   ignore_errors: True
+  
+- name: 'Register token'
+  shell: 'cat /opt/seedbox/variables/token'
+  register: token
+  ignore_errors: True
