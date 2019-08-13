@@ -9,6 +9,11 @@
 - hosts: localhost
   gather_facts: false
   tasks:
+  
+    # VARIABLES ############################################################
+    - name: 'Including variables'
+      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+      
     # FACTS #######################################################################
     - name: 'Set Known Facts'
       set_fact:
