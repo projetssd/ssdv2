@@ -28,4 +28,10 @@
   register: groupid
   ignore_errors: True
 
+- name: 'Register passwd'
+  shell: 'cat /opt/seedbox/passwd/.htpasswd*'
+  register: passwd
+  ignore_errors: True
+
+
 
