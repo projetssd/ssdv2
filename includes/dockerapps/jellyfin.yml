@@ -9,6 +9,11 @@
 - hosts: localhost
   gather_facts: false
   tasks:
+  
+    # VARIABLES ############################################################
+    - name: 'Including variables'
+      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+      
     # FACTS #######################################################################
     - name: 'Set Known Facts'
       set_fact:
@@ -18,13 +23,13 @@
         image: 'jellyfin/jellyfin:latest'
 
     - name: Creating paths
-      file: 'path={{item}} state=directory mode=0775 owner=%UID% group=%GID%'
+      file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
       with_items:
-        - '/opt/seedbox/docker/%USER%/{{pgrole}}'
+        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}'
 
     - name: 'XML Check'
       stat:
-        path: /opt/seedbox/docker/%USER%/{{pgrole}}/config/system.xml
+        path: /opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/config/system.xml
       register: xmlcheck
 
     # LABELS ######################################################################
@@ -33,8 +38,8 @@
         pg_labels:
           traefik.enable: 'true'
           traefik.port: '{{intport}}'
-          traefik.frontend.rule: 'Host:{{pgrole}}.%DOMAIN%'
-          traefik.frontend.headers.SSLHost: '%DOMAIN%'
+          traefik.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
+          traefik.frontend.headers.SSLHost: '{{domain.stdout}}'
           traefik.frontend.headers.SSLRedirect: 'true'
           traefik.frontend.headers.STSIncludeSubdomains: 'true'
           traefik.frontend.headers.STSPreload: 'true'
@@ -49,25 +54,25 @@
       set_fact:
         pg_volumes:
           - '/etc/localtime:/etc/localtime:ro'
-          - '/opt/seedbox/docker/%USER%/{{pgrole}}:/config'
-          - '/home/%USER%/Medias:/home/%USER%/Medias'
+          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}:/config'
+          - '/home/{{user.stdout}}/Medias:/home/{{user.stdout}}/Medias'
           - '/var/run/docker.sock:/var/run/docker.sock'
 
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
-          GIDLIST: '%GID%'
-          PUID: '%UID%'
-          PGID: '%GID%'
+          GIDLIST: '{{groupid.stdout}}'
+          PUID: '{{userid.stdout}}'
+          PGID: '{{groupid.stdout}}'
 
     # MAIN DEPLOYMENT #############################################################
 
     - name: 'Deploying {{pgrole}}'
       docker_container:
-        name: '{{pgrole}}-%USER%'
+        name: '{{pgrole}}'
         image: '{{image}}'
         pull: yes
-        user: %UID%:%GID%
+        user: {{userid.stdout}}:{{groupid.stdout}}
         volumes: '{{pg_volumes}}'
         env: '{{pg_env}}'
         restart_policy: unless-stopped
@@ -83,7 +88,7 @@
 
       - name: 'Pending XML Generation'
         wait_for:
-          path: '/opt/seedbox/docker/%USER%/{{pgrole}}/config/system.xml'
+          path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/config/system.xml'
           state: present
 
       - name: 'Wait 5 Seconds'
@@ -92,17 +97,17 @@
 
       - name: 'Stop {{pgrole}}'
         docker_container:
-          name: '{{pgrole}}-%USER%'
+          name: '{{pgrole}}'
           state: stopped
 
       - name: 'Turn Off Reporting'
         xml:
-          path: '/opt/seedbox/docker/%USER%/{{pgrole}}/config/system.xml'
+          path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/config/system.xml'
           xpath: /ServerConfiguration/EnableAnonymousUsageReporting
           value: 'false'
 
       - name: 'Restart {{pgrole}}'
         docker_container:
-          name: '{{pgrole}}-%USER%'
+          name: '{{pgrole}}'
           state: started
       when: not xmlcheck.stat.exists
