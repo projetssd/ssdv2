@@ -102,18 +102,8 @@ function plex_dupefinder() {
 			#configuration plex_dupefinder avec ansible
 			echo -e "${BLUE}### PLEX_DUPEFINDER ###${NC}"
 			echo -e " ${BWHITE}* Installation plex_dupefinder${NC}"
-			cp -r "$BASEDIR/includes/config/roles/plex_dupefinder" "/opt/seedbox/docker/$SEEDUSER/plex_dupefinder"
-			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/tasks/main.yml
-			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/tasks/main.yml
-			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/tasks/main.yml
-			sed -i "s|%TOKEN%|$X_PLEX_TOKEN|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/templates/config.json.j2
-			sed -i "s|%DOMAIN%|$DOMAIN|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/templates/config.json.j2
-			sed -i "s|%FILMS%|$FILMS|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/templates/config.json.j2
-			sed -i "s|%SERIES%|$SERIES|g" /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/templates/config.json.j2
-
 			cd /opt/seedbox/docker/$SEEDUSER/plex_dupefinder/tasks
-			ansible-playbook main.yml
-			rm -rf /opt/seedbox/docker/$SEEDUSER/plex_dupefinder
+			ansible-playbook /opt/seedbox-compose/includes/config/roles/plex_dupefinder/tasks/main.yml
 			checking_errors $?
 }
 
@@ -121,8 +111,7 @@ function traktarr() {
 			##configuration traktarr avec ansible
 			echo -e "${BLUE}### TRAKTARR ###${NC}"
 			echo -e " ${BWHITE}* Installation traktarr${NC}"
-			cd /opt/seedbox-compose/includes/config/roles/traktarr/tasks
-			ansible-playbook main.yml
+			ansible-playbook /opt/seedbox-compose/includes/config/roles/traktarr/tasks/main.yml
 			service traktarr restart
 			checking_errors $?
 }
