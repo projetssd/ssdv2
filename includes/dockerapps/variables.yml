@@ -32,6 +32,3 @@
   shell: 'cat /opt/seedbox/passwd/.htpasswd*'
   register: passwd
   ignore_errors: True
-
-
-
