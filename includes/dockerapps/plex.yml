@@ -109,7 +109,7 @@
     ######################################### DEPLOY PLEX REMOTE (ANSWER 2)
     - name: Deploy Plex Container (Remote Edition)
       docker_container:
-        name: {{pgrole}}
+        name: '{{pgrole}}'
         image: 'plexinc/pms-docker'
         pull: yes
         published_ports:

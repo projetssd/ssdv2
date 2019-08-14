@@ -926,12 +926,6 @@ function choose_services() {
 		echo -e "	${GREEN}* $(echo $APPDOCKER | tr -d '"')${NC}"
 		echo $(echo ${APPDOCKER,,} | tr -d '"') >> $SERVICESPERUSER
 	done
-
-	if [[ "$DOMAIN" == "" ]]; then
-		DOMAIN=$(whiptail --title "Votre nom de Domaine" --inputbox \
-		"Merci de taper votre nom de Domaine :" 7 50 3>&1 1>&2 2>&3)
-	fi
-
 	rm /tmp/menuservices.txt
 }
 
@@ -955,12 +949,6 @@ function webserver() {
 		echo -e "	${GREEN}* $(echo $APPDOCKER | tr -d '"')${NC}"
 		echo $(echo ${APPDOCKER,,} | tr -d '"') >> $SERVICESPERUSER
 	done
-
-	if [[ "$DOMAIN" == "" ]]; then
-		DOMAIN=$(whiptail --title "Votre nom de Domaine" --inputbox \
-		"Merci de taper votre nom de Domaine :" 7 50 3>&1 1>&2 2>&3)
-	fi
-
 	rm /tmp/menuservices.txt
 }
 
@@ -1055,21 +1043,6 @@ function choose_media_folder_plexdrive() {
 	echo ""
 }
 
-function replace_media_compose() {
-	MEDIASPERUSER="$MEDIASUSER$SEEDUSER"
-	if [[ -e "$MEDIASPERUSER" ]]; then
-		FILMS=$(grep -E 'Films' $MEDIASPERUSER)
-		SERIES=$(grep -E 'Series' $MEDIASPERUSER)
-		ANIMES=$(grep -E 'Animes' $MEDIASPERUSER)
-		MUSIC=$(grep -E 'Musiques' $MEDIASPERUSER)
-	else
-		FILMS=$(grep -E 'Films' /tmp/menumedia.txt)
-		SERIES=$(grep -E 'Series' /tmp/menumedia.txt)
-		ANIMES=$(grep -E 'Animes' /tmp/menumedia.txt)
-		MUSIC=$(grep -E 'Musiques' /tmp/menumedia.txt)
-	fi
-}
-
 function add_user_htpasswd() {
 	HTFOLDER="$CONFDIR/passwd/"
 	mkdir -p $CONFDIR/passwd
@@ -1093,65 +1066,17 @@ function add_user_htpasswd() {
 }
 
 function install_services() {
-	replace_media_compose
-	USERID=$(id -u $SEEDUSER)
-	GRPID=$(id -g $SEEDUSER)
+	DOMAIN=$(cat /opt/seedbox/variables/domain)
 	INSTALLEDFILE="/home/$SEEDUSER/resume"
 	touch $INSTALLEDFILE > /dev/null 2>&1
 
 	if [[ ! -d "$CONFDIR/conf" ]]; then
-	mkdir -p $CONFDIR/conf > /dev/null 2>&1
+		mkdir -p $CONFDIR/conf > /dev/null 2>&1
 	fi
 
-	## port rutorrent 1
-	if [[ -f "$FILEPORTPATH" ]]; then
-		declare -i PORT=$(cat $FILEPORTPATH | tail -1)
-	else
-		declare -i PORT=$FIRSTPORT
-	fi
-
-	## port rutorrent 2
-	if [[ -f "$FILEPORTPATH1" ]]; then
-		declare -i PORT1=$(cat $FILEPORTPATH1 | tail -1)
-	else
-		declare -i PORT1=$FIRSTPORT1
-	fi
-
-	## port rutorrent 3
-	if [[ -f "$FILEPORTPATH2" ]]; then
-		declare -i PORT2=$(cat $FILEPORTPATH2 | tail -1)
-	else
-		declare -i PORT2=$FIRSTPORT2
-	fi
-
-	## port plex
-	if [[ -f "$PLEXPORTPATH" ]]; then
-		declare -i PORTPLEX=$(cat $PLEXPORTPATH | tail -1)
-	else
-		declare -i PORTPLEX=32400
-	fi
-
-	## préparation du docker-compose
+	## préparation installation
 	for line in $(cat $SERVICESPERUSER);
 	do
-		cp -R /opt/seedbox-compose/includes/dockerapps/$line.yml $CONFDIR/conf/$line.yml
-		DOCKERCOMPOSEFILE="$CONFDIR/conf/$line.yml"
-		sed -i "s|%TIMEZONE%|$TIMEZONE|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%UID%|$USERID|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%GID%|$GRPID|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%PORT%|$PORT|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%PORT1%|$PORT1|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%PORT2%|$PORT2|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%PORTPLEX%|$PORTPLEX|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%VAR%|$VAR|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%DOMAIN%|$DOMAIN|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%USER%|$SEEDUSER|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%EMAIL%|$CONTACTEMAIL|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%FILMS%|$FILMS|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%SERIES%|$SERIES|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%ANIMES%|$ANIMES|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%MUSIC%|$MUSIC|g" $DOCKERCOMPOSEFILE
-
 		if [[ "$line" == "plex" ]]; then
 			echo -e "${BLUE}### CONFIG POST COMPOSE PLEX ###${NC}"
 			echo -e " ${BWHITE}* Processing plex config file...${NC}"
@@ -1161,210 +1086,27 @@ function install_services() {
 			echo -e " ${BWHITE}* Pour obtenir un identifiant CLAIM, allez à cette adresse et copier le dans le terminal ${NC}"
 			echo -e " ${CRED}* https://www.plex.tv/claim/ ${CEND}"
 			echo ""
-			read -rp "CLAIM = " CLAIM
+			read -rp "CLAIM = " CLAIM 
+			echo $CLAIM > $CONFDIR/variables/claim
 		fi
-		sed -i "s|%CLAIM%|$CLAIM|g" $DOCKERCOMPOSEFILE
+		FQDNTMP="$line.$DOMAIN"
 
-		NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
-		if [ $NOMBRE -le 1 ] ; then
-			FQDNTMP="$line.$DOMAIN"
+		if [ $line = "nginx" ] || [ $line = "php5" ] || [ $line = "php7" ] || [ $line = "mariadb" ] || [ $line = "phpmyadmin" ]; then
+			cd /opt/seedbox-compose/includes/webserver
 		else
-			FQDNTMP="$line-$SEEDUSER.$DOMAIN"
+			cd /opt/seedbox-compose/includes/dockerapps
 		fi
-		ACCESSURL=$FQDNTMP
-		TRAEFIKURL=(Host:$ACCESSURL)
-		sed -i "s|%TRAEFIKURL%|$TRAEFIKURL|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%ACCESSURL%|$ACCESSURL|g" $DOCKERCOMPOSEFILE
 
-		cd $CONFDIR/conf
 		ansible-playbook $line.yml
 
 		if [[ "$line" == "plex" ]]; then
 		plex_sections
 		fi
 
-		echo "$line-$PORT-$FQDNTMP" >> $INSTALLEDFILE
-		URI="/"
-	
-		PORT=$PORT+1
-		PORT1=$PORT1+1
-		PORT2=$PORT2+1
-		PORTPLEX=$PORTPLEX+1
-		FQDN=""
+		echo "$FQDNTMP" >> $INSTALLEDFILE
 		FQDNTMP=""
-		set PORT
 	done
-	echo $PORT >> $FILEPORTPATH
-	echo $PORT1 >> $FILEPORTPATH1
-	echo $PORT2 >> $FILEPORTPATH2
-	echo $PORTPLEX >> $PLEXPORTPATH
 	config_post_compose
-}
-
-function restore_services() {
-	replace_media_compose
-	USERID=$(id -u $SEEDUSER)
-	GRPID=$(id -g $SEEDUSER)
-	INSTALLEDFILE="/home/$SEEDUSER/resume"
-	touch $INSTALLEDFILE > /dev/null 2>&1
-
-	if [[ ! -d "$CONFDIR/conf" ]]; then
-	mkdir -p $CONFDIR/conf > /dev/null 2>&1
-	fi
-
-	## port rutorrent 1
-	if [[ -f "$FILEPORTPATH" ]]; then
-		declare -i PORT=$(cat $FILEPORTPATH | tail -1)
-	else
-		declare -i PORT=$FIRSTPORT
-	fi
-
-	## port rutorrent 2
-	if [[ -f "$FILEPORTPATH1" ]]; then
-		declare -i PORT1=$(cat $FILEPORTPATH1 | tail -1)
-	else
-		declare -i PORT1=$FIRSTPORT1
-	fi
-
-	## port rutorrent 3
-	if [[ -f "$FILEPORTPATH2" ]]; then
-		declare -i PORT2=$(cat $FILEPORTPATH2 | tail -1)
-	else
-		declare -i PORT2=$FIRSTPORT2
-	fi
-
-	## port plex
-	if [[ -f "$PLEXPORTPATH" ]]; then
-		declare -i PORTPLEX=$(cat $PLEXPORTPATH | tail -1)
-	else
-		declare -i PORTPLEX=32400
-	fi
-
-	## préparation du docker-compose
-	for line in $(cat $SERVICESPERUSER);
-	do
-
-	if [ $line = "nginx" ] || [ $line = "php5" ] || [ $line = "php7" ] || [ $line = "mariadb" ] || [ $line = "phpmyadmin" ]; then
-		cp -R /opt/seedbox-compose/includes/webserver/$line.yml $CONFDIR/conf/$line.yml
-		else
-		cp -R /opt/seedbox-compose/includes/dockerapps/$line.yml $CONFDIR/conf/$line.yml
-	fi
-
-		DOCKERCOMPOSEFILE="$CONFDIR/conf/$line.yml"
-		sed -i "s|%TIMEZONE%|$TIMEZONE|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%UID%|$USERID|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%GID%|$GRPID|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%PORT%|$PORT|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%PORT1%|$PORT1|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%PORT2%|$PORT2|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%PORTPLEX%|$PORTPLEX|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%VAR%|$VAR|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%DOMAIN%|$DOMAIN|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%USER%|$SEEDUSER|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%EMAIL%|$CONTACTEMAIL|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%FILMS%|$FILMS|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%SERIES%|$SERIES|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%ANIMES%|$ANIMES|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%MUSIC%|$MUSIC|g" $DOCKERCOMPOSEFILE
-
-		if [[ "$line" == "plex" ]]; then
-			echo -e "${BLUE}### CONFIG POST COMPOSE PLEX ###${NC}"
-			echo -e " ${BWHITE}* Processing plex config file...${NC}"
-			# CLAIM pour Plex
-			echo ""
-			echo -e " ${BWHITE}* Un token est nécessaire pour AUTHENTIFIER le serveur Plex ${NC}"
-			echo -e " ${BWHITE}* Pour obtenir un identifiant CLAIM, allez à cette adresse et copier le dans le terminal ${NC}"
-			echo -e " ${CRED}* https://www.plex.tv/claim/ ${CEND}"
-			echo ""
-			read -rp "CLAIM = " CLAIM
-		fi
-		sed -i "s|%CLAIM%|$CLAIM|g" $DOCKERCOMPOSEFILE
-
-		NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
-		if [ $NOMBRE -le 1 ] ; then
-			FQDNTMP="$line.$DOMAIN"
-		else
-			FQDNTMP="$line-$SEEDUSER.$DOMAIN"
-		fi
-		ACCESSURL=$FQDNTMP
-		TRAEFIKURL=(Host:$ACCESSURL)
-		sed -i "s|%TRAEFIKURL%|$TRAEFIKURL|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%ACCESSURL%|$ACCESSURL|g" $DOCKERCOMPOSEFILE
-
-		cd $CONFDIR/conf
-		ansible-playbook $line.yml
-
-		echo "$line-$PORT-$FQDNTMP" >> $INSTALLEDFILE
-		URI="/"
-	
-		PORT=$PORT+1
-		PORT1=$PORT1+1
-		PORT2=$PORT2+1
-		PORTPLEX=$PORTPLEX+1
-		FQDN=""
-		FQDNTMP=""
-		set PORT
-	done
-	echo $PORT >> $FILEPORTPATH
-	echo $PORT1 >> $FILEPORTPATH1
-	echo $PORT2 >> $FILEPORTPATH2
-	echo $PORTPLEX >> $PLEXPORTPATH
-	config_post_compose
-}
-
-function install_webserver() {
-	USERID=$(id -u $SEEDUSER)
-	GRPID=$(id -g $SEEDUSER)
-	INSTALLEDFILE="/home/$SEEDUSER/resume"
-	touch $INSTALLEDFILE > /dev/null 2>&1
-
-	if [[ ! -d "$CONFDIR/conf" ]]; then
-	mkdir -p $CONFDIR/conf > /dev/null 2>&1
-	fi
-
-	## port rutorrent 1
-	if [[ -f "$FILEPORTPATH" ]]; then
-		declare -i PORT=$(cat $FILEPORTPATH | tail -1)
-	else
-		declare -i PORT=$FIRSTPORT
-	fi
-
-	## préparation du docker-compose
-	for line in $(cat $SERVICESPERUSER);
-	do
-		cp -R /opt/seedbox-compose/includes/webserver/$line.yml $CONFDIR/conf/$line.yml
-		DOCKERCOMPOSEFILE="$CONFDIR/conf/$line.yml"
-		sed -i "s|%UID%|$USERID|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%GID%|$GRPID|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%VAR%|$VAR|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%DOMAIN%|$DOMAIN|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%USER%|$SEEDUSER|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%EMAIL%|$CONTACTEMAIL|g" $DOCKERCOMPOSEFILE
-
-		NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
-		if [ $NOMBRE -le 1 ] ; then
-			FQDNTMP="$line.$DOMAIN"
-		else
-			FQDNTMP="$line-$SEEDUSER.$DOMAIN"
-		fi
-		ACCESSURL=$FQDNTMP
-		TRAEFIKURL=(Host:$ACCESSURL)
-		sed -i "s|%TRAEFIKURL%|$TRAEFIKURL|g" $DOCKERCOMPOSEFILE
-		sed -i "s|%ACCESSURL%|$ACCESSURL|g" $DOCKERCOMPOSEFILE
-
-		cd $CONFDIR/conf
-		ansible-playbook $line.yml
-
-		echo "$line-$PORT-$FQDNTMP" >> $INSTALLEDFILE
-		URI="/"
-	
-		PORT=$PORT+1
-		FQDN=""
-		FQDNTMP=""
-		set PORT
-	done
-	echo $PORT >> $FILEPORTPATH
-	rm -Rf $SERVICESPERUSER > /dev/null 2>&1
 }
 
 function config_post_compose() {
@@ -1497,14 +1239,6 @@ function valid_htpasswd() {
 	fi
 }
 
-function add_app_htpasswd() {
-	if [[ -d "$CONFDIR" ]]; then
-		HTFOLDER="$CONFDIR/passwd/"
-		HTFILE=".htpasswd-$SEEDUSER"
-		VAR=$(sed -e 's/\$/\$/g' "$HTFOLDER$HTFILE")
-	fi
-}
-
 function manage_users() {
 	echo -e "${BLUE}##########################################${NC}"
 	echo -e "${BLUE}###      Gestions des Utilisateurs     ###${NC}"
@@ -1573,8 +1307,8 @@ function manage_users() {
 			echo -e "${BLUE}### SUPPRESSION CONTAINERS ###${NC}"
 			for SERVICEACTIVATED in $(cat $USERRESUMEFILE)
 			do
-			        line=$(echo $SERVICEACTIVATED | cut -d\- -f1)
-				docker rm -f $line-$SEEDUSER > /dev/null 2>&1
+			        line=$(echo $SERVICEACTIVATED | cut -d\. -f1)
+				docker rm -f $line > /dev/null 2>&1
 			done
 			echo ""
 			checking_errors $?
@@ -1587,15 +1321,15 @@ function manage_users() {
 					systemctl disable plex_autoscan.service > /dev/null 2>&1
 					rm /etc/systemd/system/plex_autoscan.service
 				fi
-				systemctl stop rclone-$SEEDUSER.service
-				systemctl disable rclone-$SEEDUSER.service > /dev/null 2>&1
-				rm /etc/systemd/system/rclone-$SEEDUSER.service
+				systemctl stop rclone.service
+				systemctl disable rclone.service > /dev/null 2>&1
+				rm /etc/systemd/system/rclone.service
 				systemctl stop cloudplow.service
 				systemctl disable cloudplow.service > /dev/null 2>&1
 				rm /etc/systemd/system/cloudplow.service
-				systemctl stop unionfs-$SEEDUSER.service
-				systemctl disable unionfs-$SEEDUSER.service > /dev/null 2>&1
-				rm /etc/systemd/system/unionfs-$SEEDUSER.service
+				systemctl stop unionfs.service
+				systemctl disable unionfs.service > /dev/null 2>&1
+				rm /etc/systemd/system/unionfs.service
 				checking_errors $?
 				echo""
 			fi
@@ -1604,7 +1338,7 @@ function manage_users() {
 			rm -rf /opt/seedbox/docker/$SEEDUSER > /dev/null 2>&1
 			rm /opt/seedbox/media-$SEEDUSER
 			userdel -rf $SEEDUSER > /dev/null 2>&1
-			sed -i "/$SEEDUSER/d" $CONFDIR/users
+			sed -i "/$SEEDUSER/d" $CONFDIR/variables/users
 			rm $CONFDIR/passwd/.htpasswd-$SEEDUSER
 			sed -n -i "/$SEEDUSER/!p" $CONFDIR/passwd/login
 			checking_errors $?
@@ -1625,20 +1359,8 @@ function manage_apps() {
 	echo -e "${BLUE}##########################################${NC}"
 	echo -e "${BLUE}###          GESTION DES APPLIS        ###${NC}"
 	echo -e "${BLUE}##########################################${NC}"
-	TMPGROUP=$(cat $GROUPFILE)
-	TABUSERS=()
-	for USERSEED in $(members $TMPGROUP)
-	do
-	        IDSEEDUSER=$(id -u $USERSEED)
-	        TABUSERS+=( ${USERSEED//\"} ${IDSEEDUSER//\"} )
-	done
-	## CHOISIR USER
-	SEEDUSER=$(whiptail --title "App Manager" --menu \
-	                "Merci de sélectionner l'Utilisateur" 12 50 3 \
-	                "${TABUSERS[@]}"  3>&1 1>&2 2>&3)
-			[[ "$?" = 1 ]] && script_plexdrive;
-	
-	## INFORMATIONS UTILISATEUR
+	DOMAIN=$(cat /opt/seedbox/variables/domain)
+	SEEDUSER=$(cat /opt/seedbox/variables/users)
 	USERRESUMEFILE="/home/$SEEDUSER/resume"
 	echo ""
 	echo -e "${GREEN}### Gestion des Applis pour: $SEEDUSER ###${NC}"
@@ -1655,7 +1377,6 @@ function manage_apps() {
 	case $ACTIONONAPP in
 		"1" ) ## Ajout APP
 			choose_services
-			add_app_htpasswd
 			install_services
 			resume_seedbox
 			pause
@@ -1670,16 +1391,15 @@ function manage_apps() {
 			TABSERVICES=()
 			for SERVICEACTIVATED in $(cat $USERRESUMEFILE)
 			do
-			        SERVICE=$(echo $SERVICEACTIVATED | cut -d\- -f1)
-			        PORT=$(echo $SERVICEACTIVATED | cut -d\- -f2)
-			        TABSERVICES+=( ${SERVICE//\"} ${PORT//\"} )
+			        SERVICE=$(echo $SERVICEACTIVATED | cut -d\. -f1)
+			        TABSERVICES+=( ${SERVICE//\"} " " )
 			done
 			APPSELECTED=$(whiptail --title "App Manager" --menu \
 			              "Sélectionner l'Appli à supprimer" 19 45 11 \
 			              "${TABSERVICES[@]}"  3>&1 1>&2 2>&3)
 			[[ "$?" = 1 ]] && script_plexdrive;
 			echo -e " ${GREEN}   * $APPSELECTED${NC}"
-			docker rm -f "$APPSELECTED"-"$SEEDUSER"
+			docker rm -f "$APPSELECTED"
 			sed -i "/$APPSELECTED/d" /home/$SEEDUSER/resume
 			rm -rf /opt/seedbox/docker/$SEEDUSER/$APPSELECTED
 			checking_errors $?
@@ -1696,15 +1416,12 @@ function manage_apps() {
 		"3" ) 	## Réinitialisation container
 			SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 			touch $SERVICESPERUSER
-			DOMAIN=$(whiptail --title "Votre nom de Domaine" --inputbox \
-			"Merci de taper votre nom de Domaine (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3)
 			echo -e " ${BWHITE}* Les fichiers de configuration ne seront pas effacés${NC}"
 			TABSERVICES=()
 			for SERVICEACTIVATED in $(cat $USERRESUMEFILE)
 			do
-			        SERVICE=$(echo $SERVICEACTIVATED | cut -d\- -f1)
-			        PORT=$(echo $SERVICEACTIVATED | cut -d\- -f2)
-			        TABSERVICES+=( ${SERVICE//\"} ${PORT//\"} )
+			        SERVICE=$(echo $SERVICEACTIVATED | cut -d\. -f1)
+			        TABSERVICES+=( ${SERVICE//\"} " " )
 			done
 			line=$(whiptail --title "App Manager" --menu \
 			              "Sélectionner le container à réinitialiser" 19 45 11 \
@@ -1714,16 +1431,18 @@ function manage_apps() {
 
 			if [ $line = "php5" ] || [ $line = "php7" ]; then
 				image=$(docker images | grep "php" | awk '{print $3}')
+			elif [ $line = "sonarr3" ]; then
+				image=$(docker images | grep "sonarr" | awk '{print $3}')
 			else
 				image=$(docker images | grep "$line" | awk '{print $3}')
 			fi
 
-			docker rm -f "$line"-"$SEEDUSER" > /dev/null 2>&1
+			docker rm -f "$line" > /dev/null 2>&1
 			docker rmi $image
 			sed -i "/$line/d" /home/$SEEDUSER/resume
 			echo $line >> $SERVICESPERUSER
-			add_app_htpasswd
-			restore_services
+
+			install_services
 			checking_errors $?
 			echo""
 			echo -e "${BLUE}### Le Container $line a été Réinitialisé ###${NC}"
@@ -1743,7 +1462,7 @@ function manage_apps() {
 				rm $var
 			fi
 			webserver
-			install_webserver
+			install_services
 			echo ""
 			echo -e "${CCYAN}################################################################################################################################################${CEND}"
 			echo ""
@@ -1776,16 +1495,9 @@ function resume_seedbox() {
 	echo -e " ${BWHITE}* Accès Applis à partir de URL :${NC}"
 	for line in $(cat $INSTALLEDFILE);
 	do
-		NOMBRE=$(sed -n "/$SEEDUSER/=" $CONFDIR/users)
-		if [ $NOMBRE -le 1 ] ; then
-			ACCESSDOMAIN=$(echo $line | cut -d\- -f3)
-			DOCKERAPP=$(echo $line | cut -d\- -f1)
-			echo -e "	--> ${BWHITE}$DOCKERAPP${NC} --> ${YELLOW}$ACCESSDOMAIN${NC}"
-		else
-			ACCESSDOMAIN=$(echo $line | cut -d\- -f3-4)
-			DOCKERAPP=$(echo $line | cut -d\- -f1)
-			echo -e "	--> ${BWHITE}$DOCKERAPP${NC} --> ${YELLOW}$ACCESSDOMAIN${NC}"
-		fi
+		ACCESSDOMAIN=$(echo $line)
+		DOCKERAPP=$(echo $line | cut -d\. -f1)
+		echo -e "	--> ${BWHITE}$DOCKERAPP${NC} --> ${YELLOW}$ACCESSDOMAIN${NC}"
 	done
 	IDENT="$CONFDIR/passwd/.htpasswd-$SEEDUSER"	
 	if [[ ! -d $IDENT ]]; then
@@ -1810,6 +1522,8 @@ function uninstall_seedbox() {
 	echo -e "${BLUE}##########################################${NC}"
 	echo -e "${BLUE}###       DESINSTALLATION SEEDBOX      ###${NC}"
 	echo -e "${BLUE}##########################################${NC}"
+	SEEDUSER=$(cat /opt/seedbox/variables/users)
+	USERHOMEDIR="/home/$SEEDUSER"
 	SEEDGROUP=$(cat $GROUPFILE)
 	PLEXDRIVE="/usr/bin/plexdrive"
 	if [[ -e "$PLEXDRIVE" ]]; then
@@ -1820,20 +1534,18 @@ function uninstall_seedbox() {
 		rm -rf /root/.plexdrive
 		checking_errors $?
 	fi
-	for seeduser in $(cat $USERSFILE)
-	do
-		USERHOMEDIR="/home/$seeduser"
+		USERHOMEDIR="/home/$SEEDUSER"
 		PLEXAUTOSCAN="/etc/systemd/system/plex_autoscan.service"
-		echo -e " ${BWHITE}* Suppression users $seeduser...${NC}"
+		echo -e " ${BWHITE}* Suppression users $SEEDUSER...${NC}"
 		if [[ -e "$PLEXDRIVE" ]]; then
 				if [[ -e "$PLEXAUTOSCAN" ]]; then
 					systemctl stop plex_autoscan.service
 					systemctl disable plex_autoscan.service > /dev/null 2>&1
 					rm /etc/systemd/system/plex_autoscan.service
 				fi
-			systemctl stop rclone-$seeduser.service
-			systemctl disable rclone-$seeduser.service > /dev/null 2>&1
-			rm /etc/systemd/system/rclone-$seeduser.service
+			systemctl stop rclone.service
+			systemctl disable rclone.service > /dev/null 2>&1
+			rm /etc/systemd/system/rclone.service
 			rm /usr/bin/rclone
 			rm -rf /mnt/rclone
 			rm -rf /root/.config/rclone
@@ -1841,16 +1553,16 @@ function uninstall_seedbox() {
 			systemctl disable cloudplow.service > /dev/null 2>&1
 			rm /etc/systemd/system/cloudplow.service
 			service unionfs-$seeduser stop
-			systemctl disable unionfs-$seeduser.service > /dev/null 2>&1
-			rm /etc/systemd/system/unionfs-$seeduser.service
+			systemctl disable unionfs.service > /dev/null 2>&1
+			rm /etc/systemd/system/unionfs.service
 		fi
-		userdel -rf $seeduser > /dev/null 2>&1
+		userdel -rf $SEEDUSER > /dev/null 2>&1
 		checking_errors $?
-		echo -e " ${BWHITE}* Suppression home $seeduser...${NC}"
+		echo -e " ${BWHITE}* Suppression home $SEEDUSER...${NC}"
 		rm -Rf $USERHOMEDIR
 		checking_errors $?
 		echo ""
-	done
+
 	rm /usr/bin/plexdrive > /dev/null 2>&1
 	echo -e " ${BWHITE}* Suppression Containers...${NC}"
 	docker rm -f $(docker ps -aq) > /dev/null 2>&1
@@ -1858,10 +1570,9 @@ function uninstall_seedbox() {
 	echo -e " ${BWHITE}* Suppression group...${NC}"
 	groupdel $SEEDGROUP > /dev/null 2>&1
 	checking_errors $?
-	echo -e " ${BWHITE}* Removing Seedbox-compose directory...${NC}"
+	echo -e " ${BWHITE}* Supression du dossier /opt/seedbox...${NC}"
 	rm -Rf $CONFDIR
 	checking_errors $?
-	cd /opt && rm -Rf seedbox-compose
 	pause
 }
 

@@ -12,7 +12,7 @@
     # FACTS #######################################################################
     - name: 'Set Known Facts'
       set_fact:
-        pgrole: 'sonarr'
+        pgrole: 'sonarr3'
         intport: '8989'
         image: 'linuxserver/sonarr:preview'
 
