@@ -39,18 +39,7 @@ function rtorrent-cleaner() {
 			echo -e " ${BWHITE}* Installation RTORRENT-CLEANER${NC}"
 
 			## choix de l'utilisateur
-			TMPGROUP=$(cat $GROUPFILE)
-			TABUSERS=()
-			for USERSEED in $(members $TMPGROUP)
-			do
-	        	IDSEEDUSER=$(id -u $USERSEED)
-	        	TABUSERS+=( ${USERSEED//\"} ${IDSEEDUSER//\"} )
-			done
-			## CHOISIR USER
-			SEEDUSER=$(whiptail --title "App Manager" --menu \
-	                		"Merci de sélectionner l'Utilisateur" 12 50 3 \
-	                		"${TABUSERS[@]}"  3>&1 1>&2 2>&3)
-
+			SEEDUSER=$(cat /opt/seedbox/variables/users)
 			cp -r $BASEDIR/includes/config/rtorrent-cleaner/rtorrent-cleaner /usr/local/bin
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /usr/local/bin/rtorrent-cleaner
 			checking_errors $?
@@ -636,7 +625,7 @@ function install_traefik() {
 		cd /opt/seedbox-compose/includes/dockerapps
 		docker network create traefik_proxy > /dev/null 2>&1
 		ansible-playbook traefik.yml
-		echo "traefik-port-traefik.$DOMAIN" >> $INSTALLEDFILE
+		echo "traefik.$DOMAIN" >> $INSTALLEDFILE
 		checking_errors $?		
 	fi
 	echo ""
@@ -652,7 +641,7 @@ function install_portainer() {
 			echo -e " ${BWHITE}* Installation Portainer${NC}"
 			cd /opt/seedbox-compose/includes/dockerapps
 			ansible-playbook portainer.yml
-			echo "portainer-port-portainer.$DOMAIN" >> $INSTALLEDFILE
+			echo "portainer.$DOMAIN" >> $INSTALLEDFILE
 			checking_errors $?
 		else
 			echo -e " ${BWHITE}--> portainer n'est pas installé !${NC}"
