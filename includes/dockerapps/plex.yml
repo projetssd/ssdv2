@@ -14,6 +14,16 @@
     - name: 'Including variables'
       include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
 
+    - name: 'Register claim'
+      shell: 'cat /opt/seedbox/variables/claim'
+      register: claim
+      ignore_errors: True
+
+    - name: 'Register token'
+      shell: 'cat /opt/seedbox/variables/token'
+      register: token
+      ignore_errors: True
+
     # FACTS #######################################################################
     - name: 'Set Known Facts'
       set_fact:

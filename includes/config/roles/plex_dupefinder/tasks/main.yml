@@ -15,6 +15,11 @@
     # VARIABLES ############################################################
     - name: 'Including variables'
       include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+
+    - name: 'Register token'
+      shell: 'cat /opt/seedbox/variables/token'
+      register: token
+      ignore_errors: True
       
     - name: Create plex_dupefinder directories
       file: "path={{ item }} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}} recurse=yes"
@@ -40,7 +45,7 @@
 
     - name: Import default config
       template:
-        src: /opt/seedbox/docker/{{user.stdout}}/plex_dupefinder/templates/config.json.j2
+        src: /opt/seedbox-compose/includes/config/roles/plex_dupefinder/templates/config.json.j2
         dest: /home/{{user.stdout}}/scripts/plex_dupefinder/config.json
         owner: "{{userid.stdout}}"
         group: "{{groupid.stdout}}"
@@ -50,7 +55,7 @@
 
     - name: Set plexdupes.py as executable
       file:
-        path: /home/%SEEDUSER%/scripts/plex_dupefinder/plexdupes.py
+        path: /home/{{user.stdout}}/scripts/plex_dupefinder/plexdupes.py
         owner: "{{userid.stdout}}"
         group: "{{groupid.stdout}}"
         mode: a+x

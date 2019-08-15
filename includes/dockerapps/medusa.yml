@@ -50,8 +50,6 @@
           - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}:/config'
           - '/etc/localtime:/etc/localtime:ro'
           - '/home/{{user.stdout}}:/home/{{user.stdout}}'
-          - '/home/{{user.stdout}}/Medias/{{series.stdout}}:/tv/Series'
-          - '/home/{{user.stdout}}/Medias/{{animes.stdout}}:/tv/Animes'
 
     - name: 'Setting PG ENV'
       set_fact:

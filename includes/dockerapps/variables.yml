@@ -32,33 +32,3 @@
   shell: 'cat /opt/seedbox/passwd/.htpasswd*'
   register: passwd
   ignore_errors: True
-
-- name: 'Register claim'
-  shell: 'cat /opt/seedbox/variables/claim'
-  register: claim
-  ignore_errors: True
-
-- name: 'Register films'
-  shell: 'cat /opt/seedbox/variables/films'
-  register: films
-  ignore_errors: True
-  
-- name: 'Register series'
-  shell: 'cat /opt/seedbox/variables/series'
-  register: series
-  ignore_errors: True
-  
-- name: 'Register animes'
-  shell: 'cat /opt/seedbox/variables/animes'
-  register: animes
-  ignore_errors: True
-  
-- name: 'Register musiques'
-  shell: 'cat /opt/seedbox/variables/musiques'
-  register: musiques
-  ignore_errors: True
-  
-- name: 'Register token'
-  shell: 'cat /opt/seedbox/variables/token'
-  register: token
-  ignore_errors: True

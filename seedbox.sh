@@ -24,18 +24,17 @@ case $CHOICE in
 	    		clear
 			conf_dir
 			checking_system
-			install_base_packages
+			#install_base_packages
 			install_docker
 			define_parameters
 			install_traefik
-			add_ftp > /dev/null 2>&1
 			install_portainer
 			install_watchtower
 			install_fail2ban
 			choose_media_folder_classique
 			choose_services
 			install_services
-			filebot
+			#filebot
 			resume_seedbox
 			pause
 			script_classique

@@ -36,8 +36,8 @@
     - name: Creating scripts and plugins paths
       file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
       with_items:
-        - '/opt/seedbox/docker/{{user.stdout}}{{user.stdout}}{{user.stdout}}/{{pgrole}}/scripts'
-        - '/opt/seedbox/docker/{{user.stdout}}{{user.stdout}}/{{pgrole}}/plugins'
+        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/scripts'
+        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/plugins'
         - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/plugins/theme'
 
     - name: 'Creating rutorrent folder paths'
