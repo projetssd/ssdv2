@@ -738,30 +738,33 @@ function unionfs_fuse() {
 
 function install_docker() {
 	echo -e "${BLUE}### DOCKER ###${NC}"
-	dpkg-query -l docker > /dev/null 2>&1
-  	if [ $? != 0 ]; then
-		echo " * Installation Docker"
-		curl -fsSL https://get.docker.com -o get-docker.sh > /dev/null 2>&1
-		sh get-docker.sh > /dev/null 2>&1
-		if [[ "$?" == "0" ]]; then
-			echo -e "	${GREEN}* Installation Docker réussie${NC}"
-		else
-			echo -e "	${RED}* Echec de l'installation Docker !${NC}"
-		fi
-		service docker start > /dev/null 2>&1
-		echo " * Installing Docker-compose"
-		curl -L "https://github.com/docker/compose/releases/download/1.23.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose > /dev/null 2>&1
-		chmod +x /usr/local/bin/docker-compose > /dev/null 2>&1
-		if [[ "$?" == "0" ]]; then
-			echo -e "	${GREEN}* Installation Docker-Compose réussie${NC}"
-		else
-			echo -e "	${RED}* Echec de l'installation Docker-Compose !${NC}"
-		fi
-		echo ""
-	else
-		echo -e " ${YELLOW}* Docker est déjà installé !${NC}"
-		echo ""
-	fi
+	echo " * Installation Docker"
+	ansible-playbook /opt/seedbox-compose/includes/config/roles/docker/tasks/main.yml
+    	# Si echec Installation, procédure d'urgence
+    	file="/usr/bin/docker"
+    	if [ ! -e "$file" ]; then
+        	clear
+        	echo "Installation de Docker"
+       		sleep 2
+        	clear
+        	curl -fsSL get.docker.com -o get-docker.sh
+        	sh get-docker.sh
+        	echo ""
+        	echo "Starting Docker (Please Be Patient)"
+        	sleep 2
+        	systemctl start docker
+        	sleep 2
+    	fi
+
+    	##### Nouvelle vérification, en cas d'echec sortie install
+    	file="/usr/bin/docker"
+    	if [ -e "$file" ]
+      		then
+      		sleep 5
+    	else
+      		echo "INFO - ECHEC: Echec de l'installation de docker! Abandon!"
+        	exit
+    	fi
 }
 
 function define_parameters() {
@@ -1077,7 +1080,7 @@ function plex_sections() {
 				## installation plex_autoscan
 				plex_autoscan
 				cd /home/$SEEDUSER/scripts/plex_autoscan
-				python scan.py update_sections
+				python scan.py update_sections > /dev/null 2>&1
 				echo ""
 				## installation cloudplow
 				cloudplow	

@@ -23,11 +23,12 @@ case $CHOICE in
 		if [[ ! -d "$CONFDIR" ]]; then
 	    		clear
 			conf_dir
-			checking_system
+			#checking_system
 			#install_base_packages
 			install_docker
+			pause
 			define_parameters
-			install_traefik
+			#install_traefik
 			install_portainer
 			install_watchtower
 			install_fail2ban
@@ -51,9 +52,9 @@ case $CHOICE in
 		if [[ ! -d "$CONFDIR" ]]; then
 	    		clear
 			conf_dir
-			#checking_system
+			checking_system
 			#install_base_packages
-			install_docker
+			#install_docker
 			define_parameters
 			install_traefik
 			#install_plexdrive
