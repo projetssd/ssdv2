@@ -120,36 +120,11 @@ function network() {
 			/opt/seedbox-compose/includes/config/tweak/tweak.sh
 }
 
-
-
 function plex_autoscan() {
 			#configuration plex_autoscan avec ansible
 			echo -e "${BLUE}### PLEX_AUTOSCAN ###${NC}"
 			echo -e " ${BWHITE}* Installation plex_autoscan${NC}"
 			ansible-playbook /opt/seedbox-compose/includes/config/roles/plex_autoscan/tasks/main.yml
-
-			/home/$SEEDUSER/scripts/plex_autoscan/scan.py sections > /dev/null 2>&1
-			/home/$SEEDUSER/scripts/plex_autoscan/scan.py sections > /home/$SEEDUSER/scripts/plex_autoscan/plex.log
-			sleep 5
-			for i in `seq 1 50`;
-			do
-   				var=$(grep "$i: " /home/$SEEDUSER/scripts/plex_autoscan/plex.log | cut -d: -f2 | cut -d ' ' -f2-3)
-   				if [ -n "$var" ]
-   				then
-     				echo "$i" "$var"
-   				fi 
-			done > /home/$SEEDUSER/scripts/plex_autoscan/categories.log
-
-			## récupération des numéros id des categories plex
-			cd /home/$SEEDUSER/scripts/plex_autoscan
-			idfilms=$(grep -E 'Films' categories.log | cut -d: -f1 | cut -d ' ' -f1)
-			idseries=$(grep -E 'Series' categories.log | cut -d: -f1 | cut -d ' ' -f1)
-			idanimes=$(grep -E 'Animes' categories.log | cut -d: -f1 | cut -d ' ' -f1)
-			idmusiques=$(grep -E 'Musiques' categories.log | cut -d: -f1 | cut -d ' ' -f1)
-			echo $idfilms > /opt/seedbox/variables/idfilms
-			echo $idseries > /opt/seedbox/variables/idfilms
-			echo $idanimes > /opt/seedbox/variables/idfilms
-			echo $idmusiques > /opt/seedbox/variables/idfilms
 			checking_errors $?
 }
 
@@ -967,13 +942,25 @@ function install_services() {
 		fi
 		FQDNTMP="$line.$DOMAIN"
 
-		if [ $line = "nginx" ] || [ $line = "php5" ] || [ $line = "php7" ] || [ $line = "mariadb" ] || [ $line = "phpmyadmin" ]; then
-			cd /opt/seedbox-compose/includes/webserver
-		else
-			cd /opt/seedbox-compose/includes/dockerapps
-		fi
+		
+		if [ $line = "nginx" ] || [ $line = "php5" ] || [ $line = "php7" ] || [ $line = "mariadb" ] || [ $line = "phpmyadmin" ] && [ -e "$CONFDIR/conf/$line.yml" ]; then
+			ansible-playbook "$CONFDIR/conf/$line.yml"
+				php=$(docker ps -a | awk '{print $NF}' | grep php)
+				if [ "docker ps | grep php" ] && [ "$line" != "$php" ]; then
+					ansible-playbook "$CONFDIR/conf/$php.yml"
+				fi
 
-		ansible-playbook $line.yml
+		elif [ $line = "nginx" ] || [ $line = "php5" ] || [ $line = "php7" ] || [ $line = "mariadb" ] || [ $line = "phpmyadmin" ]; then
+			ansible-playbook "$BASEDIR/includes/webserver/$line.yml"
+			cp "$BASEDIR/includes/webserver/$line.yml" "$CONFDIR/conf/$line.yml" > /dev/null 2>&1
+
+		elif [ -e "$CONFDIR/conf/$line.yml" ]; then
+			ansible-playbook "$CONFDIR/conf/$line.yml"
+
+		else
+			ansible-playbook "$BASEDIR/includes/dockerapps/$line.yml"
+			cp "$BASEDIR/includes/dockerapps/$line.yml" "$CONFDIR/conf/$line.yml" > /dev/null 2>&1
+		fi
 
 		if [[ "$line" == "plex" ]]; then
 		plex_sections
@@ -1039,8 +1026,6 @@ function plex_sections() {
 			if [[ -e "$PLEXDRIVE" ]]; then
 				## installation plex_autoscan
 				plex_autoscan
-				cd /home/$SEEDUSER/scripts/plex_autoscan
-				python scan.py update_sections > /dev/null 2>&1
 				echo ""
 				## installation cloudplow
 				cloudplow	
@@ -1229,6 +1214,7 @@ function manage_apps() {
 			docker rm -f "$APPSELECTED"
 			sed -i "/$APPSELECTED/d" /home/$SEEDUSER/resume
 			rm -rf /opt/seedbox/docker/$SEEDUSER/$APPSELECTED
+			rm $CONFDIR/conf/$APPSELECTED.yml
 			checking_errors $?
 			echo""
 			echo -e "${BLUE}### $APPSELECTED a été supprimé ###${NC}"
@@ -1293,11 +1279,11 @@ function manage_apps() {
 			echo ""
 			echo -e "${CCYAN}################################################################################################################################################${CEND}"
 			echo ""
-			echo -e "${CCYAN}        SERVEUR WEB INSTALLE AVEC SUCCES                                                                                                        ${CEND}"
+			echo -e "${GREEN}        SERVEUR WEB INSTALLE AVEC SUCCES                                                                                                        ${CEND}"
 			echo ""
 			echo -e "${CCYAN}################################################################################################################################################${CEND}"
 			echo ""
-			echo -e "${CCYAN}        PENSEZ A CHANGER LE MOT DE PASSE MYSQL                                                                                                  ${CEND}"
+			echo -e "${GREEN}        PENSEZ A CHANGER LE MOT DE PASSE MYSQL                                                                                                  ${CEND}"
 			echo ""
 			echo -e "${CCYAN}################################################################################################################################################${CEND}"
 			echo ""
@@ -1305,6 +1291,7 @@ function manage_apps() {
 			echo ""
 			echo -e "${CCYAN}################################################################################################################################################${CEND}"
 			echo ""
+			rm -Rf $SERVICESPERUSER > /dev/null 2>&1
 			pause
 			if [[ -e "$PLEXDRIVE" ]]; then
 				script_plexdrive
