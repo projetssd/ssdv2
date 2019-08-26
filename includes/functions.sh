@@ -107,29 +107,8 @@ function webtools() {
 			##configuration Webtools avec ansible
 			echo -e "${BLUE}### WEBTOOLS ###${NC}"
 			echo -e " ${BWHITE}* Installation Webtoots${NC}"
-			TMPGROUP=$(cat $GROUPFILE)
-			TABUSERS=()
-			for USERSEED in $(members $TMPGROUP)
-			do
-	        	IDSEEDUSER=$(id -u $USERSEED)
-	        	TABUSERS+=( ${USERSEED//\"} ${IDSEEDUSER//\"} )
-			done
-			## CHOISIR USER
-			SEEDUSER=$(whiptail --title "App Manager" --menu \
-	                		"Merci de sélectionner l'Utilisateur" 12 50 3 \
-	                		"${TABUSERS[@]}"  3>&1 1>&2 2>&3)
-			USERID=$(id -u $SEEDUSER)
-			GRPID=$(id -g $SEEDUSER)
-
-			cp -r "$BASEDIR/includes/config/roles/webtools" "/opt/seedbox/docker/$SEEDUSER/webtools"
-			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/webtools/tasks/main.yml
-			sed -i "s|%USERID%|$USERID|g" /opt/seedbox/docker/$SEEDUSER/webtools/tasks/main.yml
-			sed -i "s|%GRPID%|$GRPID|g" /opt/seedbox/docker/$SEEDUSER/webtools/tasks/main.yml
-
-			cd /opt/seedbox/docker/$SEEDUSER/webtools/tasks
-			ansible-playbook main.yml
-			docker restart plex-$SEEDUSER
-			rm -rf /opt/seedbox/docker/$SEEDUSER/webtools
+			ansible-playbook /opt/seedbox/docker/$SEEDUSER/webtools/tasks/main.yml
+			docker restart plex
 			checking_errors $?
 }
 

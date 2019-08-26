@@ -4,15 +4,19 @@
 - hosts: localhost
   gather_facts: false
   tasks:
-    # FACTS #######################################################################
 
+    # VARIABLES ###################################################################
+    - name: 'Including variables'
+      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+
+    # FACTS #######################################################################
     - name: 'Set Known Facts'
       set_fact:
         pgrole: 'php5'
         image: 'bitnami/php-fpm:5.6-debian-9'
 
     - name: "Substitute Variable php"
-      shell: "sed 's|remplace|php5-%USER%|g' -i /opt/seedbox/docker/%USER%/nginx/config/app.conf"
+      shell: "sed 's|remplace|{{pgrole}}|g' -i /opt/seedbox/docker/{{user.stdout}}/nginx/config/app.conf"
 
     - name: 'Setting Volumes'
       set_fact:
@@ -23,12 +27,12 @@
 
     - name: 'Stopping Nginx'
       docker_container:
-        name: 'nginx-%USER%'
+        name: 'nginx'
         state: stopped
 
     - name: 'Deploying {{pgrole}}'
       docker_container:
-        name: '{{pgrole}}-%USER%'
+        name: '{{pgrole}}'
         recreate: true
         image: '{{image}}'
         pull: yes
@@ -40,5 +44,5 @@
 
     - name: Restart Docker Container Nginx
       docker_container:
-        name: 'nginx-%USER%'
+        name: 'nginx'
         state: started

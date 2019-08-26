@@ -11,8 +11,11 @@
         ipam_options:
           subnet: '172.16.98.0/24'
 
-    # FACTS #######################################################################
+    # VARIABLES ###################################################################
+    - name: 'Including variables'
+      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
 
+    # FACTS #######################################################################
     - name: 'Set Known Facts'
       set_fact:
         pgrole: 'nginx'
@@ -20,10 +23,10 @@
         image: 'nginx'
 
     - name: Creating paths
-      file: 'path={{item}} state=directory mode=0775 owner=%UID% group=%GID%'
+      file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
       with_items:
-        - '/opt/seedbox/docker/%USER%/{{pgrole}}'
-        - '/opt/seedbox/docker/%USER%/{{pgrole}}/config'
+        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}'
+        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/config'
 
     # LABELS ######################################################################
     - name: 'Ajout label traefik'
@@ -31,8 +34,8 @@
         pg_labels:
           traefik.enable: 'true'
           traefik.port: '{{intport}}'
-          traefik.frontend.rule: 'Host:%DOMAIN%'
-          traefik.frontend.headers.SSLHost: '%DOMAIN%'
+          traefik.frontend.rule: 'Host:{{domain.stdout}}'
+          traefik.frontend.headers.SSLHost: '{{domain.stdout}}'
           traefik.frontend.headers.SSLRedirect: 'true'
           traefik.frontend.headers.STSIncludeSubdomains: 'true'
           traefik.frontend.headers.STSPreload: 'true'
@@ -43,23 +46,23 @@
           traefik.frontend.headers.forceSTSHeader: 'true'
           traefik.frontend.headers.customFrameOptionsValue: 'SAMEORIGIN'
 
-    - name: "Copy app.conf file"
-      copy: src=/opt/seedbox-compose/includes/webserver/app.conf dest=/opt/seedbox/docker/%USER%/{{pgrole}}/config/app.conf
-
-    - name: "Substitute  Variable Domain"
-      shell: "sed 's|your_ip|%DOMAIN%|g' -i /opt/seedbox/docker/%USER%/{{pgrole}}/config/app.conf"
+    - name: Import default config
+      template:
+        src: /opt/seedbox-compose/includes/webserver/app.conf.j2
+        dest: /opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/config/app.conf
+        force: yes
 
     - name: 'Setting Volumes'
       set_fact:
         pg_volumes:
           - '/var/www:/var/www/app'
-          - '/opt/seedbox/docker/%USER%/{{pgrole}}/config/app.conf:/etc/nginx/conf.d/app.conf'
+          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/config/app.conf:/etc/nginx/conf.d/app.conf'
 
     # MAIN DEPLOYMENT #############################################################
 
     - name: 'Deploying {{pgrole}}'
       docker_container:
-        name: '{{pgrole}}-%USER%'
+        name: '{{pgrole}}'
         image: '{{image}}'
         pull: yes
         volumes: '{{pg_volumes}}'
