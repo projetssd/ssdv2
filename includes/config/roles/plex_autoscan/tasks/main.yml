@@ -72,18 +72,18 @@
     - name: Do following tasks when config does not exist
       block:
 
-      - name: "Generate 32 character SERVER_PASS"
-        set_fact:
-          plex_autoscan_server_pass: "{{ lookup('password', '/dev/null chars=ascii_letters,digits length=32') }}"
+    - name: "Generate 32 character SERVER_PASS"
+      set_fact:
+        plex_autoscan_server_pass: "{{ lookup('password', '/dev/null chars=ascii_letters,digits length=32') }}"
 
-      - name: Import default config
-        template:
-          src: /opt/seedbox-compose/includes/config/roles/plex_autoscan/templates/config.json.j2
-          dest: /home/{{user.stdout}}/scripts/plex_autoscan/config/config.json
-          owner: "{{userid.stdout}}"
-          group: "{{groupid.stdout}}"
-          mode: 0775
-          force: yes
+    - name: Import default config
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/plex_autoscan/templates/config.json.j2
+        dest: /home/{{user.stdout}}/scripts/plex_autoscan/config/config.json
+        owner: "{{userid.stdout}}"
+        group: "{{groupid.stdout}}"
+        mode: 0775
+        force: yes
 
       when: not plex_autoscan_config.stat.exists
 

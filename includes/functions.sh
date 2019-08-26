@@ -166,28 +166,9 @@ function filebot() {
 			echo ""
 			echo -e "${BLUE}### FILEBOT ###${NC}"
 			echo -e " ${BWHITE}* Installation filebot${NC}"
-			cp -r "$BASEDIR/includes/config/filebot" "/tmp"
-			sed -i "s|%USER%|$SEEDUSER|g" /tmp/filebot/tasks/filebot.yml
-			sed -i "s|%UID%|$USERID|g" /tmp/filebot/tasks/filebot.yml
-			sed -i "s|%GID%|$GRPID|g" /tmp/filebot/tasks/filebot.yml
-			cd /tmp/filebot/tasks
-			ansible-playbook filebot.yml
-
-			chmod a+x /opt/seedbox/docker/$SEEDUSER/.filebot/filebot.sh > /dev/null 2>&1
-			chmod a+x /opt/seedbox/docker/$SEEDUSER/.filebot/update-filebot.sh > /dev/null 2>&1
-
-			#configuration filebot
-			cp "$BASEDIR/includes/config/filebot/filebot-process.sh" "/opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh" > /dev/null 2>&1
-			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh
-			chown $USERID:$GRPID /opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh
-
-			## mise en place d'un cron pour le lancement de filebot
-			(crontab -l | grep . ; echo "*/1 * * * * /opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh >> /home/$SEEDUSER/scripts/filebot.log") | crontab -
-			service cron restart
+			ansible-playbook /opt/seedbox-compose/includes/config/roles/filebot/tasks/main.yml
 			checking_errors $?
-			rm -rf /tmp/filebot
 			echo ""
-
 }
 
 function rclone_aide() {
