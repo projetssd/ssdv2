@@ -26,7 +26,6 @@ case $CHOICE in
 			checking_system
 			install_base_packages
 			install_docker
-			pause
 			define_parameters
 			install_traefik
 			install_portainer

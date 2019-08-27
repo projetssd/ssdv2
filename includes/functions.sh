@@ -68,21 +68,7 @@ function sauve() {
 			#configuration Sauvegarde
 			echo -e "${BLUE}### BACKUP ###${NC}"
 			echo -e " ${BWHITE}* Mise en place Sauvegarde${NC}"
-
-			## remote crypté
-			REMOTE=$(grep -iC 4 "token" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
-			REMOTEPLEX=$(grep -iC 2 "/mnt/plexdrive" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
-			REMOTECRYPT=$(grep -v -e $REMOTEPLEX -e $REMOTE /root/.config/rclone/rclone.conf | grep "\[" | sed "s/\[//g" | sed "s/\]//g" | head -n 1)
-			
-			cp -r $BASEDIR/includes/config/backup/* /usr/bin
-			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /usr/bin/backup
-			sed -i "s|%REMOTECRYPT%|$REMOTECRYPT|g" /usr/bin/backup
-			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /usr/bin/restore
-			sed -i "s|%REMOTECRYPT%|$REMOTECRYPT|g" /usr/bin/restore
-
-			## cron
-			(crontab -l | grep . ; echo "0 3 * * 6 /usr/bin/backup >> /home/$SEEDUSER/scripts/backup.log") | crontab -
-
+			ansible-playbook /opt/seedbox-compose/includes/config/roles/backup/tasks/main.yml
 			checking_errors $?
 			echo ""
 }
@@ -144,32 +130,6 @@ function filebot() {
 			ansible-playbook /opt/seedbox-compose/includes/config/roles/filebot/tasks/main.yml
 			checking_errors $?
 			echo ""
-}
-
-function rclone_aide() {
-echo ""
-echo -e "${CCYAN}### MODELE RCLONE.CONF ###${NC}"
-echo ""
-echo -e "${YELLOW}[remote non chiffré]${NC}"
-echo -e "${BWHITE}type = drive${NC}"
-echo -e "${BWHITE}client_id = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX${NC}"
-echo -e "${BWHITE}client_secret = XXXXXXXXXXXXXXXXXXXXXXXXXXXXX${NC}"
-echo -e "${BWHITE}token = {"access_token":"xxxxxxxxxxxxxxxxxx"}${NC}"
-echo ""
-echo -e "${YELLOW}[remote_chiffré_plexdrive]${NC}"
-echo -e "${BWHITE}type = crypt${NC}"
-echo -e "${BWHITE}remote = ${NC}${YELLOW}/mnt/plexdrive/Medias${NC}"
-echo -e "${BWHITE}filename_encryption = standard${NC}"
-echo -e "${BWHITE}password = -xxxxxxxxxxxxxxxxxx${NC}"
-echo -e "${BWHITE}password2 = xxxxxxxxxxxxxxxxxx${NC}"
-echo ""
-echo -e "${YELLOW}[remote_chiffré_rclone]${NC}"
-echo -e "${BWHITE}type = crypt${NC}"
-echo -e "${BWHITE}remote = ${NC}${YELLOW}<remote non chiffré>:Medias${NC}"
-echo -e "${BWHITE}filename_encryption = standard${NC}"
-echo -e "${BWHITE}password = xxxxxxxxxxxxxxxxxx${NC}"
-echo -e "${BWHITE}password2 = xxxxxxxxxxxxxxxxxx${NC}"
-echo ""
 }
 
 function check_dir() {
@@ -672,6 +632,7 @@ function install_plexdrive() {
 function install_rclone() {
 	echo -e "${BLUE}### RCLONE ###${NC}"
 	mkdir /mnt/rclone > /dev/null 2>&1
+	mkdir -p /mnt/rclone/$SEEDUSER > /dev/null 2>&1
 	RCLONECONF="/root/.config/rclone/rclone.conf"
 	USERID=$(id -u $SEEDUSER)
 	GRPID=$(id -g $SEEDUSER)
@@ -693,9 +654,14 @@ function install_rclone() {
         	echo "$EXCLUDEPATH" >> /root/.config/rclone/rclone.conf
     		done
 		echo ""
+
+		## Mise en variables des remotes
 		REMOTE=$(grep -iC 4 "token" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
 		REMOTEPLEX=$(grep -iC 2 "/mnt/plexdrive" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
 		REMOTECRYPT=$(grep -v -e $REMOTEPLEX -e $REMOTE /root/.config/rclone/rclone.conf | grep "\[" | sed "s/\[//g" | sed "s/\]//g" | head -n 1)
+		echo $REMOTEPLEX > $REMOTEPLEXMEDIA
+		echo $REMOTECRYPT > $REMOTECHIFFRE
+
 		clear
 		echo -e " ${BWHITE}* Remote chiffré rclone${NC} --> ${YELLOW}$REMOTECRYPT:${NC}"
 		checking_errors $?
@@ -703,14 +669,6 @@ function install_rclone() {
 		echo -e " ${BWHITE}* Remote chiffré plexdrive${NC} --> ${YELLOW}$REMOTEPLEX:${NC}"
 		checking_errors $?
 		echo ""
-
-		mkdir -p /mnt/rclone/$SEEDUSER
-
-		cp "$BASEDIR/includes/config/systemd/rclone.service" "/etc/systemd/system/rclone.service" > /dev/null 2>&1
-		sed -i "s|%REMOTEPLEX%|$REMOTEPLEX:|g" /etc/systemd/system/rclone.service
-		sed -i "s|%SEEDUSER%|$SEEDUSER|g" /etc/systemd/system/rclone.service
-		sed -i "s|%USERID%|$USERID|g" /etc/systemd/system/rclone.service
-		sed -i "s|%GRPID%|$GRPID|g" /etc/systemd/system/rclone.service
 
 		systemctl daemon-reload > /dev/null 2>&1
 		systemctl enable rclone.service > /dev/null 2>&1
@@ -726,18 +684,18 @@ function install_rclone() {
 
 function unionfs_fuse() {
 	echo -e "${BLUE}### Unionfs-Fuse ###${NC}"
-	UNIONFS="/etc/systemd/system/unionfs-$SEEDUSER.service"
+	UNIONFS="/etc/systemd/system/unionfs.service"
 	if [[ ! -e "$UNIONFS" ]]; then
 		echo -e " ${BWHITE}* Installation Unionfs${NC}"
-		cp "$BASEDIR/includes/config/systemd/unionfs.service" "/etc/systemd/system/unionfs-$SEEDUSER.service" > /dev/null 2>&1
-		sed -i "s|%SEEDUSER%|$SEEDUSER|g" /etc/systemd/system/unionfs-$SEEDUSER.service
+		cp "$BASEDIR/includes/config/systemd/unionfs.service" "/etc/systemd/system/unionfs.service" > /dev/null 2>&1
+		sed -i "s|%SEEDUSER%|$SEEDUSER|g" /etc/systemd/system/unionfs.service
 		systemctl daemon-reload > /dev/null 2>&1
-		systemctl enable unionfs-$SEEDUSER.service > /dev/null 2>&1
-		systemctl start unionfs-$SEEDUSER.service > /dev/null 2>&1
+		systemctl enable unionfs.service > /dev/null 2>&1
+		systemctl start unionfs.service > /dev/null 2>&1
 		checking_errors $?
 	else
 		echo -e " ${YELLOW}* Unionfs est déjà installé pour l'utilisateur $SEEDUSER !${NC}"
-		systemctl restart unionfs-$SEEDUSER.service
+		systemctl restart unionfs.service
 	fi
 	echo ""
 }
