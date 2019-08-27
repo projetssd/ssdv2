@@ -45,7 +45,30 @@
     - name: Install Binary Tasks
       import_tasks: "install_binary.yml"
 
-    - name: Import systemd config
+    - name: Check if rclone.service exists
+      stat:
+        path: "/etc/systemd/system/rclone.service"
+      register: rclone_service
+
+    - name: Service Tasks
+      block:
+
+      - name: Populate Service Facts
+        service_facts:
+
+      - name: Get rclone service state
+        set_fact:
+          rclone_service_running: "{{ (services['rclone.service'] is defined) and (services['rclone.service']['state'] == 'running') }}"
+
+      - name: Stop rclone service
+        systemd:
+          name: rclone
+          state: stopped
+        when: rclone_service_running
+
+      when: rclone_service.stat.exists
+
+    - name: Import systemd rclone.service
       template:
         src: /opt/seedbox-compose/includes/config/roles/rclone/templates/rclone.service.j2
         dest: /etc/systemd/system/rclone.service
@@ -53,4 +76,44 @@
         group: "root"
         mode: 0775
         force: yes
+
+    - name: Check if unionfs.service exists
+      stat:
+        path: "/etc/systemd/system/unionfs.service"
+      register: unionfs_service
+
+    - name: Service Tasks
+      block:
+
+      - name: Populate Service Facts
+        service_facts:
+
+      - name: Get unionfs service state
+        set_fact:
+          unionfs_service_running: "{{ (services['unionfs.service'] is defined) and (services['unionfs.service']['state'] == 'running') }}"
+
+      - name: Stop unionfs service
+        systemd:
+          name: unionfs
+          state: stopped
+        when: unionfs_service_running
+
+      when: unionfs_service.stat.exists
+
+    - name: Import systemd unionfs.service
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/rclone/templates/unionfs.service.j2
+        dest: /etc/systemd/system/unionfs.service
+        owner: "root"
+        group: "root"
+        mode: 0775
+        force: yes
+      when: unionfs_service.stat.exists == false
+
+    - name: Start unionfs (Please Wait)
+      systemd:
+        state: started
+        name: unionfs
+        enabled: yes
+      ignore_errors: True
 

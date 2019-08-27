@@ -687,8 +687,6 @@ function unionfs_fuse() {
 	UNIONFS="/etc/systemd/system/unionfs.service"
 	if [[ ! -e "$UNIONFS" ]]; then
 		echo -e " ${BWHITE}* Installation Unionfs${NC}"
-		cp "$BASEDIR/includes/config/systemd/unionfs.service" "/etc/systemd/system/unionfs.service" > /dev/null 2>&1
-		sed -i "s|%SEEDUSER%|$SEEDUSER|g" /etc/systemd/system/unionfs.service
 		systemctl daemon-reload > /dev/null 2>&1
 		systemctl enable unionfs.service > /dev/null 2>&1
 		systemctl start unionfs.service > /dev/null 2>&1
