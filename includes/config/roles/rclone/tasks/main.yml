@@ -1,0 +1,56 @@
+#########################################################################
+# Title:         Cloudbox: Rclone Role                                  #
+# Author(s):     l3uddz, desimaniac                                     #
+# URL:           https://github.com/cloudbox/cloudbox                   #
+# --                                                                    #
+#         Part of the Cloudbox project: https://cloudbox.works          #
+#########################################################################
+#                   GNU General Public License v3.0                     #
+#########################################################################
+---
+
+- hosts: localhost
+  gather_facts: false
+  tasks:
+
+    # VARIABLES ############################################################
+    - name: 'Register remote'
+      shell: 'cat /opt/seedbox/variables/remote'
+      register: remote
+      ignore_errors: True
+
+    - name: 'Register remoteplex'
+      shell: 'cat /opt/seedbox/variables/remoteplex'
+      register: remoteplex
+      ignore_errors: True
+
+    - name: 'Register user'
+      shell: 'cat /opt/seedbox/variables/users'
+      register: user
+      ignore_errors: True
+
+    - name: 'Register userid'
+      shell: 'cat /opt/seedbox/variables/userid'
+      register: userid
+      ignore_errors: True
+
+    - name: 'Register groupid'
+      shell: 'cat /opt/seedbox/variables/groupid'
+      register: groupid
+      ignore_errors: True
+
+    - name: Build URL Tasks
+      import_tasks: "build_url.yml"
+
+    - name: Install Binary Tasks
+      import_tasks: "install_binary.yml"
+
+    - name: Import systemd config
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/rclone/templates/rclone.service.j2
+        dest: /etc/systemd/system/rclone.service
+        owner: "root"
+        group: "root"
+        mode: 0775
+        force: yes
+

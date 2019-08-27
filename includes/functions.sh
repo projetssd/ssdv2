@@ -681,8 +681,7 @@ function install_rclone() {
 		clear
 		rclone_aide
 		pause
-		curl https://rclone.org/install.sh | bash > /dev/null 2>&1
-		mkdir -p /root/.config/rclone
+		ansible-playbook /opt/seedbox-compose/includes/config/roles/rclone/tasks/main.yml
 		echo ""
     		echo -e "${YELLOW}\nColler le contenu de rclone.conf avec le clic droit, appuyer ensuite sur la touche Entrée et Taper ${CPURPLE}STOP${CEND}${YELLOW} pour poursuivre le script.\n${NC}"   				
 		while :
@@ -707,15 +706,15 @@ function install_rclone() {
 
 		mkdir -p /mnt/rclone/$SEEDUSER
 
-		cp "$BASEDIR/includes/config/systemd/rclone.service" "/etc/systemd/system/rclone-$SEEDUSER.service" > /dev/null 2>&1
-		sed -i "s|%REMOTEPLEX%|$REMOTEPLEX:|g" /etc/systemd/system/rclone-$SEEDUSER.service
-		sed -i "s|%SEEDUSER%|$SEEDUSER|g" /etc/systemd/system/rclone-$SEEDUSER.service
-		sed -i "s|%USERID%|$USERID|g" /etc/systemd/system/rclone-$SEEDUSER.service
-		sed -i "s|%GRPID%|$GRPID|g" /etc/systemd/system/rclone-$SEEDUSER.service
+		cp "$BASEDIR/includes/config/systemd/rclone.service" "/etc/systemd/system/rclone.service" > /dev/null 2>&1
+		sed -i "s|%REMOTEPLEX%|$REMOTEPLEX:|g" /etc/systemd/system/rclone.service
+		sed -i "s|%SEEDUSER%|$SEEDUSER|g" /etc/systemd/system/rclone.service
+		sed -i "s|%USERID%|$USERID|g" /etc/systemd/system/rclone.service
+		sed -i "s|%GRPID%|$GRPID|g" /etc/systemd/system/rclone.service
 
 		systemctl daemon-reload > /dev/null 2>&1
-		systemctl enable rclone-$SEEDUSER.service > /dev/null 2>&1
-		service rclone-$SEEDUSER start
+		systemctl enable rclone.service > /dev/null 2>&1
+		service rclone start
 		var="Montage rclone en cours, merci de patienter..."
 		decompte 15
 		checking_errors $?
@@ -723,35 +722,6 @@ function install_rclone() {
 		echo -e " ${YELLOW}* rclone est déjà installé !${NC}"
 	fi
 	echo ""
-}
-
-function rclone_service() {
-		REMOTE=$(grep -iC 4 "token" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
-		REMOTEPLEX=$(grep -iC 2 "/mnt/plexdrive" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
-		REMOTECRYPT=$(grep -v -e $REMOTEPLEX -e $REMOTE /root/.config/rclone/rclone.conf | grep "\[" | sed "s/\[//g" | sed "s/\]//g" | head -n 1)
-		clear
-		echo -e " ${BWHITE}* Remote chiffré rclone${NC} --> ${YELLOW}$REMOTECRYPT:${NC}"
-		checking_errors $?
-		echo ""
-		echo -e " ${BWHITE}* Remote chiffré plexdrive${NC} --> ${YELLOW}$REMOTEPLEX:${NC}"
-		checking_errors $?
-		echo ""
-
-		mkdir -p /mnt/rclone/$SEEDUSER
-
-		cp "$BASEDIR/includes/config/systemd/rclone.service" "/etc/systemd/system/rclone-$SEEDUSER.service" > /dev/null 2>&1
-		sed -i "s|%REMOTEPLEX%|$REMOTEPLEX:|g" /etc/systemd/system/rclone-$SEEDUSER.service
-		sed -i "s|%SEEDUSER%|$SEEDUSER|g" /etc/systemd/system/rclone-$SEEDUSER.service
-		sed -i "s|%USERID%|$USERID|g" /etc/systemd/system/rclone-$SEEDUSER.service
-		sed -i "s|%GRPID%|$GRPID|g" /etc/systemd/system/rclone-$SEEDUSER.service
-
-		systemctl daemon-reload > /dev/null 2>&1
-		systemctl enable rclone-$SEEDUSER.service > /dev/null 2>&1
-		service rclone-$SEEDUSER start
-		var="Montage rclone en cours, merci de patienter..."
-		decompte 15
-		checking_errors $?
-		echo ""
 }
 
 function unionfs_fuse() {
