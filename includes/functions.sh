@@ -106,8 +106,8 @@ function traktarr() {
 function webtools() {
 			##configuration Webtools avec ansible
 			echo -e "${BLUE}### WEBTOOLS ###${NC}"
-			echo -e " ${BWHITE}* Installation Webtoots${NC}"
-			ansible-playbook /opt/seedbox/docker/$SEEDUSER/webtools/tasks/main.yml
+			echo -e " ${BWHITE}* Installation Webtools${NC}"
+			ansible-playbook /opt/seedbox-compose/includes/config/roles/webtools/tasks/main.yml
 			docker restart plex
 			checking_errors $?
 }
@@ -186,8 +186,8 @@ function script_classique() {
 	echo -e "${CCYAN}SEEDBOX CLASSIQUE${CEND}"
 	echo -e "${CGREEN}${CEND}"
 	echo -e "${CGREEN}   1) Desinstaller la seedbox ${CEND}"
-	echo -e "${CGREEN}   2) Ajout/Supression d'utilisateurs${CEND}"
-	echo -e "${CGREEN}   3) Ajout/Supression d'Applis${CEND}"
+	echo -e "${CGREEN}   2) Ajout/Supression d'Applis${CEND}"
+	echo -e "${CGREEN}   3) Outils${CEND}"
 
 	echo -e ""
 	read -p "Votre choix [1-3]: " PORT_CHOICE
@@ -206,18 +206,128 @@ function script_classique() {
 		2)
 		clear
 		logo
-		## Ajout d'Utilisateurs
-		## Defines parameters for dockers : password, domains and replace it in docker-compose file
-		clear
-			manage_users
- 		;;
-		3)
-		clear
-		logo
 		## Ajout d'Applications
 		echo""
 		clear
 			manage_apps
+		;;
+		3)
+			clear
+			logo
+			echo ""
+			echo -e "${CCYAN}OUTILS${CEND}"
+			echo -e "${CGREEN}${CEND}"
+			echo -e "${CGREEN}   1) Installation de la sauvegarde${CEND}"
+			echo -e "${CGREEN}   2) Installation du motd${CEND}"
+			echo -e "${CGREEN}   3) Traktarr${CEND}"
+			echo -e "${CGREEN}   4) Webtools${CEND}"
+			echo -e "${CGREEN}   5) rtorrent-cleaner de ${CCYAN}@Magicalex-Mondedie.fr${CEND}${NC}"
+			echo -e "${CGREEN}   6) Openvpn${CEND}"
+			echo -e "${CGREEN}   7) Réglage du processeur | Tweak Carte Reseau | Docker swappiness${CEND}"
+			echo -e "${CGREEN}   8) Mise à jour - Nouvelle version du script${CEND}"
+			echo -e "${CGREEN}   9) Retour menu principal${CEND}"
+			echo -e ""
+			read -p "Votre choix [1-9]: " OUTILS
+
+			case $OUTILS in
+
+			1) ## Installation de la sauvegarde
+			clear
+			echo ""
+			TMPGROUP=$(cat $GROUPFILE)
+			TABUSERS=()
+			for USERSEED in $(members $TMPGROUP)
+			do
+	        	IDSEEDUSER=$(id -u $USERSEED)
+	        	TABUSERS+=( ${USERSEED//\"} ${IDSEEDUSER//\"} )
+			done
+			## CHOISIR USER
+			SEEDUSER=$(whiptail --title "App Manager" --menu \
+	                		"Merci de sélectionner l'Utilisateur" 12 50 3 \
+	                		"${TABUSERS[@]}"  3>&1 1>&2 2>&3)
+			sauve
+			pause
+			script_plexdrive
+			;;
+
+			2) ## Installation du motd
+			clear
+			echo ""
+			motd
+			pause
+			script_plexdrive
+			;;
+
+			3) ## Installation de traktarr
+			clear
+			echo ""
+			traktarr
+			pause
+			script_plexdrive
+			;;
+
+			4) ## Installation de Webtools
+			clear
+			echo ""
+			webtools
+			pause
+			script_plexdrive
+			;;
+
+			5) ## Installation de rtorrent-cleaner
+			clear
+			echo ""
+			rtorrent-cleaner
+			docker run -it --rm -v /home/$SEEDUSER/local/rutorrent:/home/$SEEDUSER/local/rutorrent -v /run/php:/run/php magicalex/docker-rtorrent-cleaner
+			pause
+			script_plexdrive
+			;;
+
+			6)
+			openvpn
+			pause
+			script_plexdrive
+			;;
+
+			7)
+				clear
+				logo
+				echo ""
+				echo -e "${CCYAN}TWEAK${CEND}"
+				echo -e "${CGREEN}${CEND}"
+				echo -e "${CGREEN}   1) Réglage du processeur${CEND}"
+				echo -e "${CGREEN}   2) Tweak Carte Reseau | Docker swappiness${CEND}"
+				echo -e "${CGREEN}   3) Menu Principal${CEND}"
+				echo -e ""
+				read -p "Votre choix [1-3]: " TWEAK
+
+				case $TWEAK in
+				
+					1)
+					processor
+					;;
+				
+					2)
+					network
+					;;
+
+					3)
+					script_plexdrive
+					;;
+
+				esac
+			;;
+
+			8)
+			cp -r $BASEDIR/includes/config/update/* /usr/local/bin
+			update
+			;;
+
+			9)
+			script_plexdrive
+			;;
+
+			esac
 		;;
 	esac
 	fi
@@ -231,12 +341,11 @@ function script_plexdrive() {
 	echo -e "${CCYAN}SEEDBOX RCLONE/PLEXDRIVE${CEND}"
 	echo -e "${CGREEN}${CEND}"
 	echo -e "${CGREEN}   1) Désinstaller la seedbox ${CEND}"
-	echo -e "${CGREEN}   2) Ajout/Supression d'utilisateurs${CEND}"
-	echo -e "${CGREEN}   3) Ajout/Supression d'Applis${CEND}"
-	echo -e "${CGREEN}   4) Outils${CEND}"
+	echo -e "${CGREEN}   2) Ajout/Supression d'Applis${CEND}"
+	echo -e "${CGREEN}   3) Outils${CEND}"
 
 	echo -e ""
-	read -p "Votre choix [1-4]: " PORT_CHOICE
+	read -p "Votre choix [1-3]: " PORT_CHOICE
 
 	case $PORT_CHOICE in
 		1) ## Installation de la seedbox
@@ -252,20 +361,12 @@ function script_plexdrive() {
 		2)
 		clear
 		logo
-		## Ajout d'Utilisateurs
-		## Defines parameters for dockers : password, domains and replace it in docker-compose file
-		clear
-			manage_users
- 		;;
-		3)
-		clear
-		logo
 		## Ajout d'Applications
 		echo""
 		clear
 			manage_apps
 		;;
-		4)
+		3)
 			clear
 			logo
 			echo ""
@@ -744,8 +845,8 @@ function create_user() {
 			echo -e " ${YELLOW}* L'utilisateur existe déjà !${NC}"
 			USERID=$(id -u $SEEDUSER)
 			GRPID=$(id -g $SEEDUSER)
-			echo $USERID >> $CONFDIR/variables/userid
-			echo $GRPID >> $CONFDIR/variables/groupid
+			echo $USERID > $CONFDIR/variables/userid
+			echo $GRPID > $CONFDIR/variables/groupid
 
 			usermod -a -G docker $SEEDUSER > /dev/null 2>&1
 			echo -e " ${BWHITE}* Ajout de $SEEDUSER in $SEEDGROUP"
@@ -762,8 +863,8 @@ function create_user() {
 			checking_errors $?
 			USERID=$(id -u $SEEDUSER)
 			GRPID=$(id -g $SEEDUSER)
-			echo $USERID >> $CONFDIR/variables/userid
-			echo $GRPID >> $CONFDIR/variables/groupid
+			echo $USERID > $CONFDIR/variables/userid
+			echo $GRPID > $CONFDIR/variables/groupid
 		fi
 		add_user_htpasswd $SEEDUSER $PASSWORD
 		echo $SEEDUSER > $USERSFILE
@@ -1043,128 +1144,11 @@ function valid_htpasswd() {
 		HTTEMPFOLDER="/tmp/"
 		HTFILE=".htpasswd-$SEEDUSER"
 		cat "$HTTEMPFOLDER$HTFILE" >> "$HTFOLDER$HTFILE"
-		VAR=$(sed -e 's/\$/\$/g' "$HTFOLDER$HTFILE")
 		cd $HTFOLDER
 		touch login
 		echo "$HTUSER $HTPASSWORD" >> "$HTFOLDER/login"
 		rm "$HTTEMPFOLDER$HTFILE"
 	fi
-}
-
-function manage_users() {
-	echo -e "${BLUE}##########################################${NC}"
-	echo -e "${BLUE}###      Gestions des Utilisateurs     ###${NC}"
-	echo -e "${BLUE}##########################################${NC}"
-	echo ""
-	MANAGEUSER=$(whiptail --title "Management" --menu \
-	                "Choisir une action" 10 45 2 \
-	                "1" "Nouvelle Seedbox Utilisateur" \
-	                "2" "Supprimer Seedbox Utilisateur" 3>&1 1>&2 2>&3)
-			[[ "$?" = 1 ]] && script_plexdrive;
-	case $MANAGEUSER in
-		"1" )
-			PLEXDRIVE="/usr/bin/plexdrive"
-			echo -e "${GREEN}###   NOUVELLE SEEDBOX USER   ###${NC}"
-			echo -e "${GREEN}---------------------------------${NC}"
-			echo ""
-			define_parameters
-			if [[ -e "$PLEXDRIVE" ]]; then
-				rclone_service
-				choose_media_folder_plexdrive
-				unionfs_fuse
-				pause
-				choose_services
-				install_services
-				CLOUDPLOWFOLDER="/home/$SEEDUSER/scripts/cloudplow"
-				if [[ ! -d "$CLOUDPLOWFOLDER" ]]; then
-				cloudplow
-				sed -i "s/\"enabled\"\: true/\"enabled\"\: false/g" /home/$SEEDUSER/scripts/cloudplow/config.json
-				fi
-				filebot
-				sauve
-				resume_seedbox
-				pause
-				script_plexdrive
-			else
-				choose_media_folder_classique
-				choose_services
-				install_services
-				filebot
-				resume_seedbox
-				pause
-				script_classique
-			fi
-			;;
-
-		"2" )
-			echo -e "${GREEN}###   SUPRESSION SEEDBOX USER   ###${NC}"
-			echo -e "${GREEN}-----------------------------------${NC}"
-			echo ""
-			PLEXDRIVE="/usr/bin/plexdrive"
-			TMPGROUP=$(cat $GROUPFILE)
-			TABUSERS=()
-			for USERSEED in $(members $TMPGROUP)
-			do
-	        		IDSEEDUSER=$(id -u $USERSEED)
-	        		TABUSERS+=( ${USERSEED//\"} ${IDSEEDUSER//\"} )
-			done
-			## CHOOSE USER
-			SEEDUSER=$(whiptail --title "Gestion des Applis" --menu \
-	                		"Merci de sélectionner l'Utilisateur" 12 50 3 \
-	                		"${TABUSERS[@]}"  3>&1 1>&2 2>&3)
-			[[ "$?" = 1 ]] && script_plexdrive;
-
-			## RESUME USER INFORMATIONS
-			USERRESUMEFILE="/home/$SEEDUSER/resume"
-			echo -e "${BLUE}### SUPPRESSION CONTAINERS ###${NC}"
-			for SERVICEACTIVATED in $(cat $USERRESUMEFILE)
-			do
-			        line=$(echo $SERVICEACTIVATED | cut -d\. -f1)
-				docker rm -f $line > /dev/null 2>&1
-			done
-			echo ""
-			checking_errors $?
-
-			if [[ -e "$PLEXDRIVE" ]]; then
-				echo -e "${BLUE}### SUPPRESSION USER RCLONE/PLEXDRIVE ###${NC}"
-				PLEXAUTOSCAN="/etc/systemd/system/plex_autoscan.service"
-				if [[ -e "$PLEXAUTOSCAN" ]]; then
-					systemctl stop plex_autoscan.service
-					systemctl disable plex_autoscan.service > /dev/null 2>&1
-					rm /etc/systemd/system/plex_autoscan.service
-				fi
-				systemctl stop rclone.service
-				systemctl disable rclone.service > /dev/null 2>&1
-				rm /etc/systemd/system/rclone.service
-				systemctl stop cloudplow.service
-				systemctl disable cloudplow.service > /dev/null 2>&1
-				rm /etc/systemd/system/cloudplow.service
-				systemctl stop unionfs.service
-				systemctl disable unionfs.service > /dev/null 2>&1
-				rm /etc/systemd/system/unionfs.service
-				checking_errors $?
-				echo""
-			fi
-		        echo -e "${BLUE}### SUPPRESSION USER ###${NC}"
-			rm -rf /home/$SEEDUSER > /dev/null 2>&1
-			rm -rf /opt/seedbox/docker/$SEEDUSER > /dev/null 2>&1
-			rm /opt/seedbox/media-$SEEDUSER
-			userdel -rf $SEEDUSER > /dev/null 2>&1
-			sed -i "/$SEEDUSER/d" $CONFDIR/variables/users
-			rm $CONFDIR/passwd/.htpasswd-$SEEDUSER
-			sed -n -i "/$SEEDUSER/!p" $CONFDIR/passwd/login
-			checking_errors $?
-			echo""
-			echo -e "${BLUE}### $SEEDUSER a été supprimé ###${NC}"
-			echo ""
-			pause
-			if [[ -e "$PLEXDRIVE" ]]; then
-				script_plexdrive
-			else
-				script_classique
-			fi
-			;;
-	esac
 }
 
 function manage_apps() {
@@ -1277,19 +1261,19 @@ function manage_apps() {
 			webserver
 			install_services
 			echo ""
-			echo -e "${CCYAN}################################################################################################################################################${CEND}"
+			echo -e "${CCYAN}#######################################################################################${CEND}"
 			echo ""
-			echo -e "${GREEN}        SERVEUR WEB INSTALLE AVEC SUCCES                                                                                                        ${CEND}"
+			echo -e "${GREEN}        		SERVEUR WEB INSTALLE AVEC SUCCES                                ${CEND}"
 			echo ""
-			echo -e "${CCYAN}################################################################################################################################################${CEND}"
+			echo -e "${CCYAN}#######################################################################################${CEND}"
 			echo ""
-			echo -e "${GREEN}        PENSEZ A CHANGER LE MOT DE PASSE MYSQL                                                                                                  ${CEND}"
+			echo -e "${GREEN}        		PENSEZ A CHANGER LE MOT DE PASSE MYSQL                          ${CEND}"
 			echo ""
-			echo -e "${CCYAN}################################################################################################################################################${CEND}"
+			echo -e "${CCYAN}#######################################################################################${CEND}"
 			echo ""
-			echo -e "${GREEN}        PAR DEFAUT root:mysql    DOSSIER POUR LES SITES /var/www                                                                                $CEND}"
+			echo -e "${GREEN}        	PAR DEFAUT root:mysql    DOSSIER POUR LES SITES /var/www                $CEND}"
 			echo ""
-			echo -e "${CCYAN}################################################################################################################################################${CEND}"
+			echo -e "${CCYAN}#######################################################################################${CEND}"
 			echo ""
 			rm -Rf $SERVICESPERUSER > /dev/null 2>&1
 			pause
