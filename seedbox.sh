@@ -55,8 +55,8 @@ case $CHOICE in
 			#install_base_packages
 			#install_docker
 			define_parameters
-			#install_traefik
-			#install_plexdrive
+			install_traefik
+			install_plexdrive
 			install_rclone
 			pause
 			install_portainer

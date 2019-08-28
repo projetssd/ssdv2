@@ -1019,25 +1019,52 @@ decompte() {
     echo -e ""
 }
 
+function replace_media_compose() {
+	MEDIASPERUSER="$MEDIASUSER$SEEDUSER"
+	if [[ -e "$MEDIASPERUSER" ]]; then
+		FILMS=$(grep -E 'Films' $MEDIASPERUSER)
+		SERIES=$(grep -E 'Series' $MEDIASPERUSER)
+		ANIMES=$(grep -E 'Animes' $MEDIASPERUSER)
+		MUSIC=$(grep -E 'Musiques' $MEDIASPERUSER)
+	else
+		FILMS=$(grep -E 'Films' /tmp/menumedia.txt)
+		SERIES=$(grep -E 'Series' /tmp/menumedia.txt)
+		ANIMES=$(grep -E 'Animes' /tmp/menumedia.txt)
+		MUSIC=$(grep -E 'Musiques' /tmp/menumedia.txt)
+	fi
+}
+
 function plex_sections() {
 			echo ""
 			echo -e "${BLUE}### CREATION DES BIBLIOTHEQUES PLEX ###${NC}"
 			##compteur
+			replace_media_compose
 			var="Sections en cours de création, patientez..."
-			decompte 15
-			docker exec plex /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section Animes --type 2 --location /data/Animes --lang fr
-			echo -e "	${BWHITE}* Animes ${NC}"
-				
-			docker exec plex /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section Series --type 2 --location /data/Series --lang fr
-			echo -e "	${BWHITE}* Series ${NC}"
-
-			docker exec plex /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section Musiques --type 8 --location /data/Musiques --lang fr
-			echo -e "	${BWHITE}* Musiques ${NC}"
-				
-			docker exec plex /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section Films --type 1 --location /data/Films --lang fr
-			echo -e "	${BWHITE}* Films ${NC}"
-
 			PLEXDRIVE="/usr/bin/plexdrive"
+			decompte 15
+
+			## création des bibliothèques plex
+
+			for x in $(cat $MEDIASPERUSER);
+			do
+				if [[ "$x" == "$ANIMES" ]]; then
+					docker exec plex /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section $x --type 2 --location /data/$x --lang fr
+					echo -e "	${BWHITE}* $x ${NC}"
+				
+				elif [[ "$x" == "$SERIES" ]]; then
+					docker exec plex /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section $x --type 2 --location /data/$x --lang fr
+					echo -e "	${BWHITE}* $x ${NC}"
+
+				elif [[ "$x" == "$MUSIC" ]]; then
+					docker exec plex /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section $x --type 8 --location /data/$x --lang fr
+					echo -e "	${BWHITE}* $x ${NC}"
+				else
+					docker exec plex /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section $x --type 1 --location /data/$x --lang fr
+					echo -e "	${BWHITE}* $x ${NC}"
+				fi
+			done
+			echo ""
+			## Installation plex_autoscan et cloudplow si install plexdrive
 			if [[ -e "$PLEXDRIVE" ]]; then
 				## installation plex_autoscan
 				plex_autoscan
