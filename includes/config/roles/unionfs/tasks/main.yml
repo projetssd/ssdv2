@@ -32,6 +32,11 @@
           state: stopped
         when: unionfs_service_running
 
+      - name: delete unionfs service
+        shell: |
+          service unionfs stop
+          rm /etc/systemd/system/unionfs.service
+
       when: unionfs_service.stat.exists
 
     - name: Import systemd unionfs.service
@@ -42,10 +47,10 @@
         group: "root"
         mode: 0775
         force: yes
-      when: unionfs_service.stat.exists == false
 
     - name: Start unionfs (Please Wait)
       systemd:
+        daemon_reload: yes
         state: started
         name: unionfs
         enabled: yes

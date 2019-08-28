@@ -648,7 +648,7 @@ function install_rclone() {
         		if [[ "$EXCLUDEPATH" = "STOP" ]] || [[ "$EXCLUDEPATH" = "stop" ]]; then
             				break
         		fi
-        	echo "$EXCLUDEPATH" > /root/.config/rclone/rclone.conf
+        	echo "$EXCLUDEPATH" >> /root/.config/rclone/rclone.conf
     		done
 		echo ""
 
@@ -656,8 +656,8 @@ function install_rclone() {
 		REMOTE=$(grep -iC 4 "token" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
 		REMOTEPLEX=$(grep -iC 2 "/mnt/plexdrive" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
 		REMOTECRYPT=$(grep -v -e $REMOTEPLEX -e $REMOTE /root/.config/rclone/rclone.conf | grep "\[" | sed "s/\[//g" | sed "s/\]//g" | head -n 1)
-		echo $REMOTEPLEX > $REMOTEPLEXMEDIA
-		echo $REMOTECRYPT > $REMOTECHIFFRE
+		echo $REMOTEPLEX > /opt/seedbox/variables/remoteplex
+		echo $REMOTECRYPT > /opt/seedbox/variables/remote
 
 		ansible-playbook /opt/seedbox-compose/includes/config/roles/rclone/tasks/main.yml
 
@@ -669,7 +669,7 @@ function install_rclone() {
 		checking_errors $?
 		#var="Montage rclone en cours, merci de patienter..."
 		#decompte 15
-		checking_errors $?
+		#checking_errors $?
 		echo ""
 	else
 		echo -e " ${YELLOW}* rclone est déjà installé !${NC}"
