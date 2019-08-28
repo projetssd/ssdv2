@@ -535,6 +535,7 @@ function checking_errors() {
 		echo -e "	${GREEN}--> Operation success !${NC}"
 	else
 		echo -e "	${RED}--> Operation failed !${NC}"
+		exit
 	fi
 }
 
@@ -563,9 +564,7 @@ function install_traefik() {
 		echo -e " ${YELLOW}* Traefik est déjà installé !${NC}"
 	else
 		echo -e " ${BWHITE}* Installation Traefik${NC}"
-		cd /opt/seedbox-compose/includes/dockerapps
-		docker network create traefik_proxy > /dev/null 2>&1
-		ansible-playbook traefik.yml
+		ansible-playbook /opt/seedbox-compose/includes/dockerapps/traefik.yml
 		echo "traefik.$DOMAIN" >> $INSTALLEDFILE
 		checking_errors $?		
 	fi
@@ -639,10 +638,8 @@ function install_rclone() {
 
 	if [[ ! -f "$RCLONECONF" ]]; then
 		echo -e " ${BWHITE}* Installation rclone${NC}"
+		mkdir -p /root/.config/rclone/ > /dev/null 2>&1
 		clear
-		rclone_aide
-		pause
-		ansible-playbook /opt/seedbox-compose/includes/config/roles/rclone/tasks/main.yml
 		echo ""
     		echo -e "${YELLOW}\nColler le contenu de rclone.conf avec le clic droit, appuyer ensuite sur la touche Entrée et Taper ${CPURPLE}STOP${CEND}${YELLOW} pour poursuivre le script.\n${NC}"   				
 		while :
@@ -651,7 +648,7 @@ function install_rclone() {
         		if [[ "$EXCLUDEPATH" = "STOP" ]] || [[ "$EXCLUDEPATH" = "stop" ]]; then
             				break
         		fi
-        	echo "$EXCLUDEPATH" >> /root/.config/rclone/rclone.conf
+        	echo "$EXCLUDEPATH" > /root/.config/rclone/rclone.conf
     		done
 		echo ""
 
@@ -662,20 +659,18 @@ function install_rclone() {
 		echo $REMOTEPLEX > $REMOTEPLEXMEDIA
 		echo $REMOTECRYPT > $REMOTECHIFFRE
 
+		ansible-playbook /opt/seedbox-compose/includes/config/roles/rclone/tasks/main.yml
+
 		clear
 		echo -e " ${BWHITE}* Remote chiffré rclone${NC} --> ${YELLOW}$REMOTECRYPT:${NC}"
 		checking_errors $?
 		echo ""
 		echo -e " ${BWHITE}* Remote chiffré plexdrive${NC} --> ${YELLOW}$REMOTEPLEX:${NC}"
 		checking_errors $?
-		echo ""
-
-		systemctl daemon-reload > /dev/null 2>&1
-		systemctl enable rclone.service > /dev/null 2>&1
-		service rclone start
-		var="Montage rclone en cours, merci de patienter..."
-		decompte 15
+		#var="Montage rclone en cours, merci de patienter..."
+		#decompte 15
 		checking_errors $?
+		echo ""
 	else
 		echo -e " ${YELLOW}* rclone est déjà installé !${NC}"
 	fi
@@ -684,17 +679,9 @@ function install_rclone() {
 
 function unionfs_fuse() {
 	echo -e "${BLUE}### Unionfs-Fuse ###${NC}"
-	UNIONFS="/etc/systemd/system/unionfs.service"
-	if [[ ! -e "$UNIONFS" ]]; then
-		echo -e " ${BWHITE}* Installation Unionfs${NC}"
-		systemctl daemon-reload > /dev/null 2>&1
-		systemctl enable unionfs.service > /dev/null 2>&1
-		systemctl start unionfs.service > /dev/null 2>&1
-		checking_errors $?
-	else
-		echo -e " ${YELLOW}* Unionfs est déjà installé pour l'utilisateur $SEEDUSER !${NC}"
-		systemctl restart unionfs.service
-	fi
+	echo -e " ${BWHITE}* Installation Unionfs${NC}"
+	ansible-playbook /opt/seedbox-compose/includes/config/roles/unionfs/tasks/main.yml
+	checking_errors $?
 	echo ""
 }
 
@@ -727,6 +714,7 @@ function install_docker() {
       		echo "INFO - ECHEC: Echec de l'installation de docker! Abandon!"
         	exit
     	fi
+	echo ""
 }
 
 function define_parameters() {

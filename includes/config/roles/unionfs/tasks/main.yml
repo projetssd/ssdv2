@@ -1,0 +1,69 @@
+    
+---
+
+- hosts: localhost
+  gather_facts: false
+  tasks:
+
+    # VARIABLES ############################################################
+    - name: 'Register user'
+      shell: 'cat /opt/seedbox/variables/users'
+      register: user
+      ignore_errors: True
+
+    - name: Check if unionfs.service exists
+      stat:
+        path: "/etc/systemd/system/unionfs.service"
+      register: unionfs_service
+
+    - name: Service Tasks
+      block:
+
+      - name: Populate Service Facts
+        service_facts:
+
+      - name: Get unionfs service state
+        set_fact:
+          unionfs_service_running: "{{ (services['unionfs.service'] is defined) and (services['unionfs.service']['state'] == 'running') }}"
+
+      - name: Stop unionfs service
+        systemd:
+          name: unionfs
+          state: stopped
+        when: unionfs_service_running
+
+      when: unionfs_service.stat.exists
+
+    - name: Import systemd unionfs.service
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/unionfs/templates/unionfs.service.j2
+        dest: /etc/systemd/system/unionfs.service
+        owner: "root"
+        group: "root"
+        mode: 0775
+        force: yes
+      when: unionfs_service.stat.exists == false
+
+    - name: Start unionfs (Please Wait)
+      systemd:
+        state: started
+        name: unionfs
+        enabled: yes
+      ignore_errors: True
+
+    - name: Check if unionfs is running
+      shell: pgrep unionfs
+      ignore_errors: yes
+      changed_when: false
+      register: service_unionfs_status
+
+    - name: Report status of unionfs
+      fail:
+        msg: |
+          - "L'installation de unionfs a échoué, Vérifier la configuration rclone"
+      when: service_unionfs_status.rc != 0
+
+    - debug:
+        msg:
+        - "L'installation et le lancement de unionfs se sont déroulés avec succés"
+      when: service_unionfs_status.rc == 0
