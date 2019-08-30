@@ -52,17 +52,15 @@ case $CHOICE in
 	    		clear
 			conf_dir
 			checking_system
-			#install_base_packages
-			#install_docker
+			install_base_packages
+			install_docker
 			define_parameters
 			install_traefik
 			install_plexdrive
 			install_rclone
-			pause
-			install_portainer
+			#install_portainer
 			install_watchtower
 			install_fail2ban
-			pause
 			choose_media_folder_plexdrive
 			unionfs_fuse
 			pause

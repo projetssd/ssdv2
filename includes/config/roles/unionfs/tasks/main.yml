@@ -1,74 +1,71 @@
-    
+#########################################################################
+# Title:         Cloudbox: UnionFS Role                                 #
+# Author(s):     desimaniac                                             #
+# URL:           https://github.com/cloudbox/cloudbox                   #
+# --                                                                    #
+#         Part of the Cloudbox project: https://cloudbox.works          #
+#########################################################################
+#                   GNU General Public License v3.0                     #
+#########################################################################
 ---
-
 - hosts: localhost
-  gather_facts: false
+  gather_facts: true
+  vars_prompt:
+    - name: "unionfs"
+      prompt: "Choisir le type de montage souhaité: unionfs ou mergerfs"
+      default: "unionfs"
+      private: no
+  vars_files:
+    - ['settings.yml']
   tasks:
 
-    # VARIABLES ############################################################
+# Variables
+
     - name: 'Register user'
       shell: 'cat /opt/seedbox/variables/users'
       register: user
       ignore_errors: True
 
-    - name: Check if unionfs.service exists
-      stat:
-        path: "/etc/systemd/system/unionfs.service"
-      register: unionfs_service
-
-    - name: Service Tasks
-      block:
-
-      - name: Populate Service Facts
-        service_facts:
-
-      - name: Get unionfs service state
-        set_fact:
-          unionfs_service_running: "{{ (services['unionfs.service'] is defined) and (services['unionfs.service']['state'] == 'running') }}"
-
-      - name: Stop unionfs service
-        systemd:
-          name: unionfs
-          state: stopped
-        when: unionfs_service_running
-
-      - name: delete unionfs service
-        shell: |
-          service unionfs stop
-          rm /etc/systemd/system/unionfs.service
-
-      when: unionfs_service.stat.exists
-
-    - name: Import systemd unionfs.service
-      template:
-        src: /opt/seedbox-compose/includes/config/roles/unionfs/templates/unionfs.service.j2
-        dest: /etc/systemd/system/unionfs.service
-        owner: "root"
-        group: "root"
-        mode: 0775
-        force: yes
-
-    - name: Start unionfs (Please Wait)
-      systemd:
-        daemon_reload: yes
-        state: started
-        name: unionfs
-        enabled: yes
+    - name: 'Register group'
+      shell: 'cat /opt/seedbox/variables/group'
+      register: group
       ignore_errors: True
 
-    - name: Check if unionfs is running
-      shell: pgrep unionfs
-      ignore_errors: yes
-      changed_when: false
-      register: service_unionfs_status
+# Stop Containers
 
-    - name: Report status of unionfs
-      fail:
-        msg: |
-          - "L'installation de unionfs a échoué, Vérifier la configuration rclone"
-      when: service_unionfs_status.rc != 0
+    - name: Container Stop Tasks
+      import_tasks: "subtasks/containers_stop.yml"
 
-    - debug:
-        msg:
-        - "L'installation et le lancement de unionfs se sont déroulés avec succés"
-      when: service_unionfs_status.rc == 0
+# Existing Setup
+
+    - name: Service Tasks
+      include_tasks: "subtasks/services.yml"
+      loop_control:
+        loop_var: outer_item
+      loop:
+        - "unionfs.service"
+        - "mergerfs.service"
+
+    - name: Mount Tasks
+      import_tasks: "subtasks/mounts.yml"
+
+# New Setup
+
+    - name: Basic Tasks
+      import_tasks: "subtasks/basics.yml"
+
+    - name: MergerFS Tasks
+      import_tasks: "subtasks/mergerfs.yml"
+      when: (mounts.unionfs | lower == "mergerfs")
+
+    - name: UnionFS Tasks
+      import_tasks: "subtasks/unionfs.yml"
+      when: (mounts.unionfs | lower == "unionfs")
+
+    - name: Docker Tasks
+      import_tasks: "subtasks/docker.yml"
+
+# Start Containers
+
+    - name: Container Start Tasks
+      import_tasks: "subtasks/containers_start.yml"

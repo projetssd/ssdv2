@@ -1,0 +1,45 @@
+#########################################################################
+# Title:         UnionFS: Mount Tasks                                   #
+# Author(s):     desimaniac                                             #
+# URL:           https://github.com/cloudbox/cloudbox                   #
+# --                                                                    #
+#         Part of the Cloudbox project: https://cloudbox.works          #
+#########################################################################
+#                   GNU General Public License v3.0                     #
+#########################################################################
+---
+- name: "Mounts | Force unmount '/home/Medias'"
+  shell: "/bin/umount -f '/home/Medias' 2>/dev/null || :"
+  ignore_errors: yes
+
+- name: "Mounts | Check if '/home/Medias' exists"
+  stat:
+    path: "/home/Medias"
+  register: home_medias
+  ignore_errors: yes
+
+- name: "Mounts | Tasks for '/home/Medias' path"
+  block:
+
+  - name: "Mounts | Remove empty directories in '/home/Medias'"
+    shell: "find '/home/Medias' -type d -empty -delete"
+    ignore_errors: yes
+
+  - name: "Mounts | Recursively find '/home/Medias' files"
+    find:
+      paths: '/home/Medias'
+      hidden: yes
+      recurse: yes
+    register: home_medias_files
+
+  - name: "Mounts | Backup non-empty '/home/Medias' path"
+    shell: "mv /home/Medias /home/Medias_{{ '%Y-%m-%d_%H.%M.%S' | strftime(ansible_date_time['epoch']|int) }}"
+    ignore_errors: yes
+    when: (home_medias_files.matched|int > 0)
+
+  - name: "Mounts | Remove '/mnt/unionfs'"
+    file:
+      path: "/home/Medias"
+      state: absent
+
+  when: (home_medias is failed) or (home_medias.stat.exists)

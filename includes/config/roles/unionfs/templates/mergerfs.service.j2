@@ -1,7 +1,7 @@
 #########################################################################
-# Title:         Cloudbox: UnionFS Mount                                #
-# Location:      /etc/systemd/system/unionfs.service                    #
-# Author(s):     l3uddz                                                 #
+# Title:         Cloudbox: MergerFS Mount                               #
+# Location:      /etc/systemd/system/mergerfs.service                   #
+# Author(s):     EnorMOZ                                                #
 # URL:           https://github.com/cloudbox/cloudbox                   #
 # --                                                                    #
 #         Part of the Cloudbox project: https://cloudbox.works          #
@@ -10,17 +10,17 @@
 #########################################################################
 
 [Unit]
-Description=UnionFS Mount
+Description=MergerFS Mount
 After=network-online.target
 
 [Service]
 Type=forking
 GuessMainPID=no
-User={{ user.stdout }}
-Group={{ group.stdout }}
-ExecStart=/usr/bin/unionfs-fuse \
-  -o cow,allow_other,nonempty \
-  /home/{{ user.stdout }}/local=RW:/mnt/rclone/{{ user.stdout }}=RO /home/{{ user.stdout }}/Medias
+ExecStart=/usr/bin/mergerfs \
+  -o category.create=ff,async_read=false,cache.files=partial \
+  -o dropcacheonclose=true,use_ino,minfreespace=0 \
+  -o xattr=nosys,statfs_ignore=ro,allow_other,umask=002,noatime \
+  /home/{{ user.stdout }}/local=RW:/mnt/rclone/{{ user.stdout }}=NC /home/{{ user.stdout }}/Medias
 ExecStop=/bin/fusermount -u /home/{{ user.stdout }}/Medias
 
 [Install]

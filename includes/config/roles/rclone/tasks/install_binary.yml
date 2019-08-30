@@ -28,7 +28,7 @@
 
 - name: Install Binary | Display rclone version being installed
   debug:
-    msg: "Installing Rclone version: {{ rclone_version_specified }}"
+    msg: "Installing Rclone version: {{ rclone.version }}"
   when: rclone_version_is_specified
 
 - name: "Install Binary | Download and unarchive rclone"
