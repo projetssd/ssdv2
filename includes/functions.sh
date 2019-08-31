@@ -54,10 +54,18 @@ function motd() {
 			
 			#variables
 			SEEDUSER=$(cat /opt/seedbox/variables/users)
-			tautulli=$(grep "api_key" /opt/seedbox/docker/yohann/tautulli/config.ini | cut -d '=' -f2 | tr -d ' ' | head -1)
+			APPLITAUTULLI="/opt/seedbox/docker/$SEEDUSER/tautulli"
+			PLEXCAN="/home/$SEEDUSER/scripts/plex_autoscan"
+
+			if [ -d "$APPLITAUTULLI" ]; then
+			tautulli=$(grep "api_key" /opt/seedbox/docker/$SEEDUSER/tautulli/config.ini | cut -d '=' -f2 | tr -d ' ' | head -1)
 			echo $tautulli > /opt/seedbox/variables/tautulli
+			fi
+
+			if [ -d "$PLEXCAN" ]; then
 			plexautoscan=$(grep "3468" /home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan.sh | cut -d '/' -f4 | tr -d ' ')
 			echo $plexautoscan > /opt/seedbox/variables/plexautoscan
+			fi
 
 			ansible-playbook /opt/seedbox-compose/includes/config/roles/motd/tasks/start.yml
 			checking_errors $?
@@ -299,7 +307,15 @@ function insert_mod() {
 function script_plexdrive() {
 	if [[ -d "$CONFDIR" ]]; then
 	clear
+
+	# Vérification installation modt
+	confmodt="/opt/motd"
+	if [ -d "$confmodt" ]; then
 	insert_mod
+	else
+	logo
+	fi
+
 	echo ""
 	echo -e "${CCYAN}SEEDBOX RCLONE/PLEXDRIVE${CEND}"
 	echo -e "${CGREEN}${CEND}"

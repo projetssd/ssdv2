@@ -3,6 +3,14 @@
 source includes/functions.sh
 source includes/variables.sh
 
+echo ""
+echo -e "${CCYAN}#########################################################${CEND}"
+echo ""
+echo -e "${CCYAN}          DEMARRAGE DU SCRIPT DE SAUVEGARDE              ${CEND}"
+echo ""
+echo -e "${CCYAN}#########################################################${CEND}"
+echo ""
+
 echo -e "${BLUE}### Récupération des variables ###${NC}"
 echo ""
 mkdir -p /opt/seedbox/variables
@@ -22,12 +30,13 @@ GROUPE=$(cat /opt/seedbox/group)
 echo $GROUPE > "/opt/seedbox/variables/group"
 pass=$(cut -d ' ' -f2 /opt/seedbox/passwd/login)
 echo $pass > /opt/seedbox/variables/pass
-echo "Utilisateur"="$SEEDUSER"
-echo "Groupe"="$GROUPE"
-echo "Mail"="$CONTACTEMAIL"
-echo "Mot de passe"="$pass"
-echo "Domaine"="$DOMAIN"
+echo -e "${CCYAN} * Utilisateur${CEND}"="${BWHITE}$SEEDUSER${CEND}"
+echo -e "${CCYAN} * Groupe${CEND}"="${BWHITE}$GROUPE${CEND}"
+echo -e "${CCYAN} * Mail${CEND}"="${BWHITE}$CONTACTEMAIL${CEND}"
+echo -e "${CCYAN} * Mot de passe${CEND}"="${BWHITE}$pass${CEND}"
+echo -e "${CCYAN} * Domaine${CEND}"="${BWHITE}$DOMAIN${CEND}"
 checking_errors $?
+echo ""
 
 ## Mise en variables des remotes
 REMOTE=$(grep -iC 4 "token" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
@@ -37,11 +46,10 @@ echo $REMOTEPLEX > /opt/seedbox/variables/remoteplex
 echo $REMOTECRYPT > /opt/seedbox/variables/remote
 
 #modification du fichier resume
-rm /home/$SEEDUSER/resume
+rm /home/$SEEDUSER/resume > /dev/null 2>&1
 
 # rename actifs containers
 echo -e "${BLUE}### Changement de nom des Containers ###${NC}"
-echo ""
 docker ps --format '{{.Names}}' > /home/$SEEDUSER/list
 for line in $(cat /home/$SEEDUSER/list | cut -d '-' -f1)
 do
@@ -51,18 +59,18 @@ cp /opt/seedbox-compose/includes/dockerapps/$line.yml /opt/seedbox/conf/$line.ym
 docker rename $line-$SEEDUSER $line
 fi
 done
+checking_errors $?
+echo ""
 
 #Supression des variables
 rm /home/$SEEDUSER/list > /dev/null 2>&1
-#rm /opt/seedbox/group > /dev/null 2>&1
+rm /opt/seedbox/group > /dev/null 2>&1
 rm /opt/seedbox/plex.pt > /dev/null 2>&1
 rm /opt/seedbox/ports.pt > /dev/null 2>&1
 rm /opt/seedbox/ports1.pt > /dev/null 2>&1
 rm /opt/seedbox/ports2.pt > /dev/null 2>&1
 rm /opt/seedbox/resume > /dev/null 2>&1
-#rm /opt/seedbox/users > /dev/null 2>&1
-checking_errors $?
-pause
+rm /opt/seedbox/users > /dev/null 2>&1
 
 # stop rclone
 service rclone-$SEEDUSER stop > /dev/null 2>&1
@@ -83,10 +91,8 @@ echo ""
 ansible-playbook /opt/seedbox-compose/includes/config/roles/rclone/tasks/main.yml
 echo ""
 echo -e "${BLUE}### Installation du modt ###${NC}"
-checking_errors $?
 echo ""
 motd
-checking_errors $?
 echo ""
 echo -e "${CRED}-------------------------------------------------------${CEND}"
 echo -e "${CRED}        Mise à jour effectuée avec succés               ${CEND}"
