@@ -20,13 +20,14 @@ CONTACTEMAIL=$(whiptail --title "Adresse Email" --inputbox \
 echo $CONTACTEMAIL > "/opt/seedbox/variables/mail"
 GROUPE=$(cat /opt/seedbox/group)
 echo $GROUPE > "/opt/seedbox/variables/group"
-pass=$(cut -d ' ' -f2 /opt/seedbox/pass/login)
+pass=$(cut -d ' ' -f2 /opt/seedbox/passwd/login)
 echo $pass > /opt/seedbox/variables/pass
 echo "Utilisateur"="$SEEDUSER"
 echo "Groupe"="$GROUPE"
 echo "Mail"="$CONTACTEMAIL"
 echo "Mot de passe"="$pass"
 echo "Domaine"="$DOMAIN"
+checking_errors $?
 
 ## Mise en variables des remotes
 REMOTE=$(grep -iC 4 "token" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
@@ -46,31 +47,50 @@ for line in $(cat /home/$SEEDUSER/list | cut -d '-' -f1)
 do
 if [ "$line" != "traefik" ] && [ "$line" != "portainer" ] && [ "$line" != "watchtower" ]; then
 echo $line.$DOMAIN >> /home/$SEEDUSER/resume
-cp /opt/seedbox-compose/includes/dockerapps/$line /opt/seedbox/conf/$line
+cp /opt/seedbox-compose/includes/dockerapps/$line.yml /opt/seedbox/conf/$line.yml
 docker rename $line-$SEEDUSER $line
 fi
 done
+
+#Supression des variables
 rm /home/$SEEDUSER/list > /dev/null 2>&1
-rm /opt/seedbox/group > /dev/null 2>&1
+#rm /opt/seedbox/group > /dev/null 2>&1
 rm /opt/seedbox/plex.pt > /dev/null 2>&1
 rm /opt/seedbox/ports.pt > /dev/null 2>&1
 rm /opt/seedbox/ports1.pt > /dev/null 2>&1
 rm /opt/seedbox/ports2.pt > /dev/null 2>&1
 rm /opt/seedbox/resume > /dev/null 2>&1
-rm /opt/seedbox/users > /dev/null 2>&1
+#rm /opt/seedbox/users > /dev/null 2>&1
+checking_errors $?
+pause
 
+# stop rclone
 service rclone-$SEEDUSER stop > /dev/null 2>&1
 systemctl disable rclone-$SEEDUSER > /dev/null 2>&1
 
+#stop unionfs
 service unionfs-$SEEDUSER stop > /dev/null 2>&1
 systemctl disable unionfs-$SEEDUSER > /dev/null 2>&1
 
 echo -e "${BLUE}### Installation mergerfs ###${NC}"
 echo ""
 ansible-playbook /opt/seedbox-compose/includes/config/roles/unionfs/tasks/main.yml
+checking_errors $?
+echo ""
+
 echo -e "${BLUE}### Réinstallation rclone ###${NC}"
 echo ""
 ansible-playbook /opt/seedbox-compose/includes/config/roles/rclone/tasks/main.yml
+echo ""
 echo -e "${BLUE}### Installation du modt ###${NC}"
+checking_errors $?
 echo ""
 motd
+checking_errors $?
+echo ""
+echo -e "${CRED}-------------------------------------------------------${CEND}"
+echo -e "${CRED}        Mise à jour effectuée avec succés               ${CEND}"
+echo -e "${CRED}-------------------------------------------------------${CEND}"
+
+echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+read -r
