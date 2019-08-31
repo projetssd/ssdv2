@@ -977,7 +977,7 @@ function install_services() {
 			cp "$BASEDIR/includes/dockerapps/$line.yml" "$CONFDIR/conf/$line.yml" > /dev/null 2>&1
 		fi
 
-		if [[ "$line" == "plex" ]]; then
+		if [[ "$line" == "plex" ]] && [[ ! -e "$CONFDIR/conf/$line.yml" ]]; then
 		plex_sections
 		fi
 
@@ -1177,6 +1177,7 @@ function manage_apps() {
 
 			docker rm -f "$line" > /dev/null 2>&1
 			docker rmi $image
+			echo ""
 			sed -i "/$line/d" /home/$SEEDUSER/resume
 			echo $line >> $SERVICESPERUSER
 

@@ -1,6 +1,8 @@
 #!/bin/bash
 
-## récupération des variables
+source includes/functions.sh
+source includes/variables.sh
+
 
 mkdir -p /opt/seedbox/variables
 SEEDUSER=$(cat /opt/seedbox/users)
@@ -38,11 +40,20 @@ cp /opt/seedbox-compose/includes/dockerapps/$line /opt/seedbox/conf/$line
 docker rename $line-$SEEDUSER $line
 fi
 done
-rm /home/$SEEDUSER/list
-rm /opt/seedbox/group
-rm /opt/seedbox/plex.pt
-rm /opt/seedbox/ports.pt
-rm /opt/seedbox/ports1.pt
-rm /opt/seedbox/ports2.pt
-rm /opt/seedbox/resume
-rm /opt/seedbox/users
+rm /home/$SEEDUSER/list > /dev/null 2>&1
+rm /opt/seedbox/group > /dev/null 2>&1
+rm /opt/seedbox/plex.pt > /dev/null 2>&1
+rm /opt/seedbox/ports.pt > /dev/null 2>&1
+rm /opt/seedbox/ports1.pt > /dev/null 2>&1
+rm /opt/seedbox/ports2.pt > /dev/null 2>&1
+rm /opt/seedbox/resume > /dev/null 2>&1
+rm /opt/seedbox/users > /dev/null 2>&1
+
+service rclone-$SEEDUSER stop > /dev/null 2>&1
+systemctl disable rclone-$SEEDUSER > /dev/null 2>&1
+
+service unionfs-$SEEDUSER stop > /dev/null 2>&1
+systemctl disable unionfs-$SEEDUSER > /dev/null 2>&1
+ 
+ansible-playbook /opt/seedbox-compose/includes/config/roles/unionfs/tasks/main.yml
+ansible-playbook /opt/seedbox-compose/includes/config/roles/rclone/tasks/main.yml
