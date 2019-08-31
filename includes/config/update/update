@@ -3,7 +3,8 @@
 source includes/functions.sh
 source includes/variables.sh
 
-
+echo -e "${BLUE}### Récupération des variables ###${NC}"
+echo ""
 mkdir -p /opt/seedbox/variables
 SEEDUSER=$(cat /opt/seedbox/users)
 echo $SEEDUSER > "/opt/seedbox/variables/users"
@@ -19,6 +20,13 @@ CONTACTEMAIL=$(whiptail --title "Adresse Email" --inputbox \
 echo $CONTACTEMAIL > "/opt/seedbox/variables/mail"
 GROUPE=$(cat /opt/seedbox/group)
 echo $GROUPE > "/opt/seedbox/variables/group"
+pass=$(cut -d ' ' -f2 /opt/seedbox/pass/login)
+echo $pass > /opt/seedbox/variables/pass
+echo "Utilisateur"="$SEEDUSER"
+echo "Groupe"="$GROUPE"
+echo "Mail"="$CONTACTEMAIL"
+echo "Mot de passe"="$pass"
+echo "Domaine"="$DOMAIN"
 
 ## Mise en variables des remotes
 REMOTE=$(grep -iC 4 "token" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
@@ -31,6 +39,8 @@ echo $REMOTECRYPT > /opt/seedbox/variables/remote
 rm /home/$SEEDUSER/resume
 
 # rename actifs containers
+echo -e "${BLUE}### Changement de nom des Containers ###${NC}"
+echo ""
 docker ps --format '{{.Names}}' > /home/$SEEDUSER/list
 for line in $(cat /home/$SEEDUSER/list | cut -d '-' -f1)
 do
@@ -54,6 +64,13 @@ systemctl disable rclone-$SEEDUSER > /dev/null 2>&1
 
 service unionfs-$SEEDUSER stop > /dev/null 2>&1
 systemctl disable unionfs-$SEEDUSER > /dev/null 2>&1
- 
+
+echo -e "${BLUE}### Installation mergerfs ###${NC}"
+echo ""
 ansible-playbook /opt/seedbox-compose/includes/config/roles/unionfs/tasks/main.yml
+echo -e "${BLUE}### Réinstallation rclone ###${NC}"
+echo ""
 ansible-playbook /opt/seedbox-compose/includes/config/roles/rclone/tasks/main.yml
+echo -e "${BLUE}### Installation du modt ###${NC}"
+echo ""
+motd

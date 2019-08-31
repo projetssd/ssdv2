@@ -3,10 +3,10 @@
 source includes/functions.sh
 source includes/variables.sh
 clear
-logo
 echo ""
 
 if [[ ! -d "$CONFDIR" ]]; then
+logo
 echo -e "${CCYAN}INSTALLATION SEEDBOX DOCKER${CEND}"
 echo -e "${CGREEN}${CEND}"
 echo -e "${CGREEN}   1) Installation Seedbox Classique ${CEND}"
@@ -17,7 +17,6 @@ read -p "Votre choix [1-3]: " CHOICE
 echo ""
 case $CHOICE in
 	1) ## Installation de la seedbox classique
-
 	if [ $USER = "root" ] ; then
 	check_dir $PWD
 		if [[ ! -d "$CONFDIR" ]]; then
@@ -35,6 +34,7 @@ case $CHOICE in
 			choose_services
 			install_services
 			filebot
+			motd
 			resume_seedbox
 			pause
 			script_classique
@@ -45,7 +45,6 @@ case $CHOICE in
 	;;
 
 	2) ## Installation de la seedbox Plexdrive
-
 	if [ $USER = "root" ] ; then
 	check_dir $PWD
 		if [[ ! -d "$CONFDIR" ]]; then
@@ -72,6 +71,7 @@ case $CHOICE in
 				sed -i "s/\"enabled\"\: true/\"enabled\"\: false/g" /home/$SEEDUSER/scripts/cloudplow/config.json
 			fi
 			filebot
+			motd
 			sauve
 			resume_seedbox
 			pause
@@ -83,7 +83,6 @@ case $CHOICE in
 	;;
 
 	3) ## restauration de la seedbox
-
 	if [ $USER = "root" ] ; then
 	check_dir $PWD
 		if [[ ! -d "$CONFDIR" ]]; then

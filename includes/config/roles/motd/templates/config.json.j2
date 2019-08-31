@@ -1,0 +1,28 @@
+{
+  "autoscan": {
+    "api_key": "{{ plexautoscan.stdout }}",
+    "url": "http://plex.{{ domain.stdout }}:3468"
+  },
+  "motd": {
+    "banner_title": "{{ ( cloudbox_type | default('Mondedie',true) ) | capitalize }}",
+    "banner_type": "peek",
+    "show": {
+      "autoscan": true,
+      "nzbget": false,
+      "plexpy": true,
+      "rtorrent": true
+    },
+    "text_color": "LGRN",
+    "title_color": "LBLU"
+  },
+  "nzbget": {
+    "url": "https://{{ user.stdout }}:{{ pass.stdout }}@nzbget.{{ domain.stdout }}"
+  },
+  "plexpy": {
+      "url": "https://plexpy.{{ domain.stdout }}",
+      "api_key": "{{ tautulli.stdout }}"
+  },
+  "rtorrent": {
+    "url": "https://{{ user.stdout }}:{{ pass.stdout }}@rutorrent.{{ domain.stdout }}"
+  }
+}

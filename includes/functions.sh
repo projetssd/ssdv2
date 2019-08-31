@@ -23,7 +23,9 @@ printf "   ${color2}\`-\`  ${color3}\`      ${color1} ,   :${nocolor}  Seedbox d
 printf "     ${color3}\\   / ${color1},..-\`   ,${nocolor}   ${descriptif} ${nocolor}\n"
 printf "      ${color3}\`./${color1} /    ${color3}.-.${color1}\`${nocolor}    ${appli}\n"
 printf "         ${color1}\`-..-${color3}(   )${nocolor}    Uptime: `/usr/bin/uptime -p`\n"
-printf "               ${color3}\`-\`${nocolor}\n"
+printf "               ${color3}\`-\`${nocolor}\n" 
+echo ""
+
 }
 
 function check_domain() {
@@ -49,8 +51,15 @@ function motd() {
 			#configuration d'un motd avec ansible
 			echo -e "${BLUE}### MOTD ###${NC}"
 			echo -e " ${BWHITE}* Installation MOTD${NC}"
-			cd /opt/seedbox-compose/includes/config/roles/motd
-			ansible-playbook motd.yml
+			
+			#variables
+			SEEDUSER=$(cat /opt/seedbox/variables/users)
+			tautulli=$(grep "api_key" /opt/seedbox/docker/yohann/tautulli/config.ini | cut -d '=' -f2 | tr -d ' ' | head -1)
+			echo $tautulli > /opt/seedbox/variables/tautulli
+			plexautoscan=$(grep "3468" /home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan.sh | cut -d '/' -f4 | tr -d ' ')
+			echo $plexautoscan > /opt/seedbox/variables/plexautoscan
+
+			ansible-playbook /opt/seedbox-compose/includes/config/roles/motd/tasks/start.yml
 			checking_errors $?
 }
 
@@ -141,7 +150,6 @@ function check_dir() {
 function script_classique() {
 	if [[ -d "$CONFDIR" ]]; then
 	clear
-	logo
 	echo ""
 	echo -e "${CCYAN}SEEDBOX CLASSIQUE${CEND}"
 	echo -e "${CGREEN}${CEND}"
@@ -177,35 +185,23 @@ function script_classique() {
 			echo ""
 			echo -e "${CCYAN}OUTILS${CEND}"
 			echo -e "${CGREEN}${CEND}"
-			echo -e "${CGREEN}   1) Installation de la sauvegarde${CEND}"
+			echo -e "${CGREEN}   1) Mise à jour - Nouvelle version du script${CEND}"
 			echo -e "${CGREEN}   2) Installation du motd${CEND}"
 			echo -e "${CGREEN}   3) Traktarr${CEND}"
 			echo -e "${CGREEN}   4) Webtools${CEND}"
 			echo -e "${CGREEN}   5) rtorrent-cleaner de ${CCYAN}@Magicalex-Mondedie.fr${CEND}${NC}"
 			echo -e "${CGREEN}   6) Openvpn${CEND}"
 			echo -e "${CGREEN}   7) Réglage du processeur | Tweak Carte Reseau | Docker swappiness${CEND}"
-			echo -e "${CGREEN}   8) Mise à jour - Nouvelle version du script${CEND}"
-			echo -e "${CGREEN}   9) Retour menu principal${CEND}"
+			echo -e "${CGREEN}   8) Retour menu principal${CEND}"
 			echo -e ""
-			read -p "Votre choix [1-9]: " OUTILS
+			read -p "Votre choix [1-8]: " OUTILS
 
 			case $OUTILS in
 
-			1) ## Installation de la sauvegarde
+			1) ## Mise à jour - Nouvelle version du script
 			clear
 			echo ""
-			TMPGROUP=$(cat $GROUPFILE)
-			TABUSERS=()
-			for USERSEED in $(members $TMPGROUP)
-			do
-	        	IDSEEDUSER=$(id -u $USERSEED)
-	        	TABUSERS+=( ${USERSEED//\"} ${IDSEEDUSER//\"} )
-			done
-			## CHOISIR USER
-			SEEDUSER=$(whiptail --title "App Manager" --menu \
-	                		"Merci de sélectionner l'Utilisateur" 12 50 3 \
-	                		"${TABUSERS[@]}"  3>&1 1>&2 2>&3)
-			sauve
+			/opt/seedbox-compose/includes/config/update/update
 			pause
 			script_plexdrive
 			;;
@@ -293,10 +289,17 @@ function script_classique() {
 	fi
 }
 
+function insert_mod() {
+	/etc/update-motd.d/01-banner
+	/etc/update-motd.d/04-load-average
+	/etc/update-motd.d/10-plex-stats
+	/etc/update-motd.d/12-rtorrent-stats
+}
+
 function script_plexdrive() {
 	if [[ -d "$CONFDIR" ]]; then
 	clear
-	logo
+	insert_mod
 	echo ""
 	echo -e "${CCYAN}SEEDBOX RCLONE/PLEXDRIVE${CEND}"
 	echo -e "${CGREEN}${CEND}"
@@ -320,7 +323,6 @@ function script_plexdrive() {
 		;;
 		2)
 		clear
-		logo
 		## Ajout d'Applications
 		echo""
 		clear
@@ -332,36 +334,23 @@ function script_plexdrive() {
 			echo ""
 			echo -e "${CCYAN}OUTILS${CEND}"
 			echo -e "${CGREEN}${CEND}"
-			echo -e "${CGREEN}   1) Installation de la sauvegarde${CEND}"
+			echo -e "${CGREEN}   1) Mise à jour - Nouvelle version du script${CEND}"
 			echo -e "${CGREEN}   2) Installation du motd${CEND}"
 			echo -e "${CGREEN}   3) Traktarr${CEND}"
 			echo -e "${CGREEN}   4) Webtools${CEND}"
 			echo -e "${CGREEN}   5) rtorrent-cleaner de ${CCYAN}@Magicalex-Mondedie.fr${CEND}${NC}"
 			echo -e "${CGREEN}   6) Openvpn${CEND}"
 			echo -e "${CGREEN}   7) Réglage du processeur | Tweak Carte Reseau | Docker swappiness${CEND}"
-			echo -e "${CGREEN}   8) Mise à jour - Nouvelle version du script${CEND}"
-			echo -e "${CGREEN}   9) Retour menu principal${CEND}"
+			echo -e "${CGREEN}   8) Retour menu principal${CEND}"
 			echo -e ""
-			read -p "Votre choix [1-9]: " OUTILS
+			read -p "Votre choix [1-8]: " OUTILS
 
 			case $OUTILS in
 
 			1) ## Installation de la sauvegarde
 			clear
 			echo ""
-			TMPGROUP=$(cat $GROUPFILE)
-			TABUSERS=()
-			for USERSEED in $(members $TMPGROUP)
-			do
-	        	IDSEEDUSER=$(id -u $USERSEED)
-	        	TABUSERS+=( ${USERSEED//\"} ${IDSEEDUSER//\"} )
-			done
-			## CHOISIR USER
-			SEEDUSER=$(whiptail --title "App Manager" --menu \
-	                		"Merci de sélectionner l'Utilisateur" 12 50 3 \
-	                		"${TABUSERS[@]}"  3>&1 1>&2 2>&3)
-			sauve
-			pause
+			/opt/seedbox-compose/includes/config/update/update
 			script_plexdrive
 			;;
 
@@ -434,11 +423,6 @@ function script_plexdrive() {
 			;;
 
 			8)
-			cp -r $BASEDIR/includes/config/update/* /usr/local/bin
-			update
-			;;
-
-			9)
 			script_plexdrive
 			;;
 
@@ -754,6 +738,7 @@ function create_user() {
 		[[ "$?" = 1 ]] && script_plexdrive;
 		PASSWORD=$(whiptail --title "Password" --passwordbox \
 			"Mot de passe :" 7 50 3>&1 1>&2 2>&3)
+		echo $PASSWORD > $CONFDIR/variables/pass
 		egrep "^$SEEDUSER" /etc/passwd >/dev/null
 		if [ $? -eq 0 ]; then
 			echo -e " ${YELLOW}* L'utilisateur existe déjà !${NC}"
