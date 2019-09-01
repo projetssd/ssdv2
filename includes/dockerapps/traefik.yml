@@ -10,6 +10,11 @@
   gather_facts: True
 
   tasks:
+  
+    # VARIABLES ############################################################
+    - name: 'Including variables'
+      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+      
     - name: Remove Traefik
       docker_container:
         name: traefik
@@ -42,13 +47,21 @@
         group: '0'
       when: acme_json.stat.exists == False
 
+    - name: Installing Traefik.Toml
+      template:
+        src: traefik.toml
+        dest: /opt/seedbox/docker/traefik/traefik.toml
+        force: yes
+        owner: '0'
+        group: '0'
+
     - name: 'Ajout label traefik'
       set_fact:
         pg_labels:
           traefik.enable: 'true'
           traefik.port: '8080'
-          traefik.frontend.rule: 'Host:traefik.%DOMAIN%'
-          traefik.frontend.headers.SSLHost: '%DOMAIN%'
+          traefik.frontend.rule: 'Host:traefik.{{domain.stdout}}'
+          traefik.frontend.headers.SSLHost: '{{domain.stdout}}'
           traefik.frontend.headers.SSLRedirect: 'true'
           traefik.frontend.headers.STSIncludeSubdomains: 'true'
           traefik.frontend.headers.STSPreload: 'true'
@@ -57,7 +70,6 @@
           traefik.frontend.headers.contentTypeNosniff: 'true'
           traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
           traefik.frontend.headers.forceSTSHeader: 'true'
-          traefik.frontend.headers.frameDeny: 'true'
 
     # MAIN #####################################################################
     - name: Deploy Traefik

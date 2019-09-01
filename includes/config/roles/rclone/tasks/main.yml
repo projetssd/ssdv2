@@ -1,0 +1,105 @@
+#########################################################################
+# Title:         Cloudbox: Rclone Role                                  #
+# Author(s):     l3uddz, desimaniac                                     #
+# URL:           https://github.com/cloudbox/cloudbox                   #
+# --                                                                    #
+#         Part of the Cloudbox project: https://cloudbox.works          #
+#########################################################################
+#                   GNU General Public License v3.0                     #
+#########################################################################
+---
+
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+    - ['settings.yml']
+  tasks:
+
+    # VARIABLES ############################################################
+    - name: 'Register remote'
+      shell: 'cat /opt/seedbox/variables/remote'
+      register: remote
+      ignore_errors: True
+
+    - name: 'Register remoteplex'
+      shell: 'cat /opt/seedbox/variables/remoteplex'
+      register: remoteplex
+      ignore_errors: True
+
+    - name: 'Register user'
+      shell: 'cat /opt/seedbox/variables/users'
+      register: user
+      ignore_errors: True
+
+    - name: 'Register userid'
+      shell: 'cat /opt/seedbox/variables/userid'
+      register: userid
+      ignore_errors: True
+
+    - name: 'Register groupid'
+      shell: 'cat /opt/seedbox/variables/groupid'
+      register: groupid
+      ignore_errors: True
+
+    - name: Build URL Tasks
+      import_tasks: "build_url.yml"
+
+    - name: Install Binary Tasks
+      import_tasks: "install_binary.yml"
+
+    - name: Check if rclone.service exists
+      stat:
+        path: "/etc/systemd/system/rclone.service"
+      register: rclone_service
+
+    - name: Service Tasks
+      block:
+
+      - name: Populate Service Facts
+        service_facts:
+
+      - name: Get rclone service state
+        set_fact:
+          rclone_service_running: "{{ (services['rclone.service'] is defined) and (services['rclone.service']['state'] == 'running') }}"
+
+      - name: Stop rclone service
+        systemd:
+          name: rclone
+          state: stopped
+        when: rclone_service_running
+
+      when: rclone_service.stat.exists
+
+    - name: Import systemd rclone.service
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/rclone/templates/rclone.service.j2
+        dest: /etc/systemd/system/rclone.service
+        owner: "root"
+        group: "root"
+        mode: 0775
+        force: yes
+
+    - name: Start rclone (Please Wait)
+      systemd:
+        daemon_reload: yes
+        state: started
+        name: rclone
+        enabled: yes
+
+    - name: Check if rclone is running
+      shell: pgrep rclone
+      ignore_errors: yes
+      changed_when: false
+      register: service_rclone_status
+
+    - name: Report status of rclone
+      fail:
+        msg: |
+          - "L'installation de rclone a échoué, Vérifier la configuration du fichier rclone.conf"
+      when: service_rclone_status.rc != 0
+
+    - debug:
+        msg:
+        - "L'installation de rclone s'est déroulée avec succés: Version Rclone {{ rclone_version.stdout }} installée"
+        - "Le lancement de rclone s'est effectué avec succés"
+      when: service_rclone_status.rc == 0

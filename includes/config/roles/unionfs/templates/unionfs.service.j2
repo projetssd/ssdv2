@@ -1,0 +1,27 @@
+#########################################################################
+# Title:         Cloudbox: UnionFS Mount                                #
+# Location:      /etc/systemd/system/unionfs.service                    #
+# Author(s):     l3uddz                                                 #
+# URL:           https://github.com/cloudbox/cloudbox                   #
+# --                                                                    #
+#         Part of the Cloudbox project: https://cloudbox.works          #
+#########################################################################
+#                   GNU General Public License v3.0                     #
+#########################################################################
+
+[Unit]
+Description=UnionFS Mount
+After=network-online.target
+
+[Service]
+Type=forking
+GuessMainPID=no
+User={{ user.stdout }}
+Group={{ group.stdout }}
+ExecStart=/usr/bin/unionfs-fuse \
+  -o cow,allow_other,nonempty \
+  /home/{{ user.stdout }}/local=RW:/mnt/rclone/{{ user.stdout }}=RO /home/{{ user.stdout }}/Medias
+ExecStop=/bin/fusermount -u /home/{{ user.stdout }}/Medias
+
+[Install]
+WantedBy=default.target

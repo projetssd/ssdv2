@@ -1,0 +1,169 @@
+#########################################################################
+# Title:         Cloudbox: MOTD Role                                    #
+# Author(s):     l3uddz, desimaniac                                     #
+# URL:           https://github.com/cloudbox/cloudbox                   #
+# --                                                                    #
+#         Part of the Cloudbox project: https://cloudbox.works          #
+#########################################################################
+#                   GNU General Public License v3.0                     #
+#########################################################################
+---
+
+- name: 'Register Domaine'
+  shell: 'cat /opt/seedbox/variables/domain'
+  register: domain
+  ignore_errors: True
+
+- name: 'Register pass'
+  shell: 'cat /opt/seedbox/variables/pass'
+  register: pass
+  ignore_errors: True
+
+- name: 'Register user'
+  shell: 'cat /opt/seedbox/variables/users'
+  register: user
+  ignore_errors: True
+
+- name: 'Register group'
+  shell: 'cat /opt/seedbox/variables/group'
+  register: group
+  ignore_errors: True
+
+- name: 'Register tautulli'
+  shell: 'cat /opt/seedbox/variables/tautulli'
+  register: tautulli
+  ignore_errors: True
+
+- name: 'Register plexautoscan'
+  shell: 'cat /opt/seedbox/variables/plexautoscan'
+  register: plexautoscan
+  ignore_errors: True
+
+- name: Install required packages
+  apt:
+    state: present
+    name:
+      - lsb-release
+      - figlet
+      - jq
+      - toilet
+      - boxes
+
+- name: Install required packages
+  apt:
+    state: present
+    name:
+      - update-motd
+      - update-notifier-common
+  when: (ansible_distribution|lower == 'ubuntu')
+
+- name: Remove existing motd
+  file: "path={{ item }} state=absent"
+  with_items:
+    - /etc/update-motd.d
+    - /etc/motd
+    - /etc/motd.dynamic
+
+- name: Create motd directories
+  file: "path={{ item }} state=directory owner={{ user.stdout }} group={{ group.stdout }} mode=0775 recurse=yes"
+  with_items:
+    - /opt/motd
+
+- name: Check if MOTD news service
+  stat:
+    path: "/etc/default/motd-news"
+  register: motd_news
+
+- name: Disable MOTD news service
+  ini_file:
+    path: "/etc/default/motd-news"
+    section: null
+    option: "ENABLED"
+    value: "0"
+    no_extra_spaces: yes
+    state: present
+  when: (motd_news.stat.exists)
+
+- name: Create dynamic motd directory
+  file:
+    path: /etc/update-motd.d
+    state: directory
+    mode: 0775
+
+- name: Clone Cloudbox MOTD
+  git:
+    repo: https://github.com/cloudbox/motd.git
+    dest: /opt/motd
+    clone: yes
+    version: HEAD
+    force: yes
+  become: yes
+  become_user: "{{ user.stdout }}"
+
+- name: Install pip requirements
+  pip:
+    requirements: /opt/motd/requirements.txt
+    executable: pip3
+
+- name: Check if 'config.json' exists
+  stat:
+    path: "/opt/motd/config.json"
+  register: motd_config
+
+- name: Import default 'config.json'
+  template:
+    src: /opt/seedbox-compose/includes/config/roles/motd/templates/config.json.j2
+    dest: /opt/motd/config.json
+    owner: "{{ user.stdout }}"
+    group: "{{ group.stdout }}"
+    mode: 0775
+    force: no
+  when: (not motd_config.stat.exists)
+
+- name: Touch '/opt/motd/activity.log' file
+  file:
+    path: /opt/motd/activity.log
+    state: touch
+    owner: "{{ user.stdout }}"
+    group: "{{ group.stdout }}"
+    mode: 0775
+
+- name: Set 'cloudbox-motd.py' as executable
+  file:
+    path: /opt/motd/cloudbox-motd.py
+    owner: "{{ user.stdout }}"
+    group: "{{ group.stdout }}"
+    mode: a+x
+
+- name: Import dynamic motd files
+  copy: "src=/opt/motd/motd/ dest=/etc/update-motd.d/ force=yes mode=0775"
+
+- name: Create symlink to dynamic motd
+  file:
+    src: /var/run/motd
+    dest: /etc/motd
+    state: link
+    force: yes
+    follow: no
+
+- name: Check if '/etc/ssh/sshd_config' exists
+  stat:
+    path: "/etc/ssh/sshd_config"
+  register: sshd_config
+
+- name: Install 'openssh-server'
+  apt: "name=openssh-server state=present"
+  when: (not sshd_config.stat.exists)
+
+- name: Wait for '/etc/ssh/sshd_config' to be created
+  wait_for:
+    path: "/etc/ssh/sshd_config"
+    state: present
+  when: (not sshd_config.stat.exists)
+
+- name: Set 'PrintLastLog no' to '/etc/ssh/sshd_config'
+  lineinfile:
+    path: "/etc/ssh/sshd_config"
+    regexp: '^PrintLastLog\s?'
+    line: 'PrintLastLog no'
+    state: present

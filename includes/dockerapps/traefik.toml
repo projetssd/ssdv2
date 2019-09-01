@@ -26,7 +26,7 @@ dashboard = true
   address = ":8080"
 
 [acme]
-email = "%EMAIL%"
+email = "{{mail.stdout}}"
 storage = "/etc/traefik/acme/acme.json"
 entryPoint = "https"
 onHostRule = true
@@ -36,6 +36,6 @@ onDemand = false
 
 [docker]
 endpoint = "unix:///var/run/docker.sock"
-domain = "%DOMAIN%"
+domain = "{{domain.stdout}}"
 watch = true
 exposedbydefault = false

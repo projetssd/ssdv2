@@ -1,0 +1,30 @@
+#########################################################################
+# Title:         UnionFS: Basic Tasks                                   #
+# Author(s):     desimaniac                                             #
+# URL:           https://github.com/cloudbox/cloudbox                   #
+# --                                                                    #
+#         Part of the Cloudbox project: https://cloudbox.works          #
+#########################################################################
+#                   GNU General Public License v3.0                     #
+#########################################################################
+---
+
+# Variables
+
+- name: "Basics | Check to see if '/mnt/rclone' exists"
+  stat:
+    path: "/mnt/rclone"
+  register: mnt_remote
+
+- name: "Basics | Check to see if '/home/{{ user.stdout }}/Medias' exists"
+  stat:
+    path: "/home/{{ user.stdout }}/Medias"
+  register: home_medias
+
+- name: "Basics | Create '/mnt/rclone' directory"
+  file: "path=/mnt/rclone state=directory mode=0775 owner={{ user.stdout }} group={{ group.stdout }} recurse=yes"
+  when: (not mnt_remote.stat.exists)
+
+- name: "Basics | Create '/home/{{ user.stdout }}/Medias' directory"
+  file: "path=/mnt/unionfs state=directory mode=0775 owner={{ user.stdout }} group={{ group.stdout }} recurse=yes"
+  when: (not home_medias.stat.exists)

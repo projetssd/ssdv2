@@ -8,9 +8,9 @@ After=network-online.target
 User=0
 Group=0
 Type=simple
-WorkingDirectory=/home/%SEEDUSER%/scripts/cloudplow/
-ExecStart=/usr/bin/python3 /home/%SEEDUSER%/scripts/cloudplow/cloudplow.py run --loglevel=INFO
-ExecStopPost=/bin/rm -rf /home/%SEEDUSER%/scripts/cloudplow/locks
+WorkingDirectory=/home/{{user.stdout}}/scripts/cloudplow/
+ExecStart=/usr/bin/python3 /home/{{user.stdout}}/scripts/cloudplow/cloudplow.py run --loglevel=INFO
+ExecStopPost=/bin/rm -rf /home/{{user.stdout}}/scripts/cloudplow/locks
 Restart=always
 RestartSec=10
 

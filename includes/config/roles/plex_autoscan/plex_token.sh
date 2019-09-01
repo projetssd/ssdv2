@@ -43,6 +43,6 @@ if [ -z "$X_PLEX_TOKEN" ]; then
 fi
 rm -f /tmp/plex_sign_in
 
->&2 echo "Your X_PLEX_TOKEN:"
+#>&2 echo "Your X_PLEX_TOKEN:"
 
 echo $X_PLEX_TOKEN

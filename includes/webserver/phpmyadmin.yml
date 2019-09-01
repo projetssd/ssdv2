@@ -4,8 +4,12 @@
 - hosts: localhost
   gather_facts: false
   tasks:
-    # FACTS #######################################################################
 
+    # VARIABLES ###################################################################
+    - name: 'Including variables'
+      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+
+    # FACTS #######################################################################
     - name: 'Set Known Facts'
       set_fact:
         pgrole: 'phpmyadmin'
@@ -18,8 +22,8 @@
         pg_labels:
           traefik.enable: 'true'
           traefik.port: '{{intport}}'
-          traefik.frontend.rule: 'Host:{{pgrole}}.%DOMAIN%'
-          traefik.frontend.headers.SSLHost: '%DOMAIN%'
+          traefik.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
+          traefik.frontend.headers.SSLHost: '{{domain.stdout}}'
           traefik.frontend.headers.SSLRedirect: 'true'
           traefik.frontend.headers.STSIncludeSubdomains: 'true'
           traefik.frontend.headers.STSPreload: 'true'
@@ -28,7 +32,6 @@
           traefik.frontend.headers.contentTypeNosniff: 'true'
           traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
           traefik.frontend.headers.forceSTSHeader: 'true'
-          traefik.frontend.headers.frameDeny: 'true'
 
     - name: 'Setting PG ENV'
       set_fact:
@@ -39,7 +42,7 @@
 
     - name: 'Deploying {{pgrole}}'
       docker_container:
-        name: '{{pgrole}}-%USER%'
+        name: '{{pgrole}}'
         image: '{{image}}'
         pull: yes
         env: '{{pg_env}}'

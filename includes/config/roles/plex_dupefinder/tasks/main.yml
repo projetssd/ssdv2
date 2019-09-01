@@ -12,50 +12,59 @@
   gather_facts: false
   tasks:
 
+    # VARIABLES ############################################################
+    - name: 'Including variables'
+      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+
+    - name: 'Register token'
+      shell: 'cat /opt/seedbox/variables/token'
+      register: token
+      ignore_errors: True
+      
     - name: Create plex_dupefinder directories
-      file: "path={{ item }} state=directory mode=0775 owner=%SEEDUSER% group=%GRPID% recurse=yes"
+      file: "path={{ item }} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}} recurse=yes"
       with_items:
-        - /home/%SEEDUSER%/scripts/plex_dupefinder
+        - /home/{{user.stdout}}/scripts/plex_dupefinder
 
     - name: Clone plex_dupefinder
       git:
         repo: https://github.com/l3uddz/plex_dupefinder/
-        dest: /home/%SEEDUSER%/scripts/plex_dupefinder
+        dest: /home/{{user.stdout}}/scripts/plex_dupefinder
         version: HEAD
         force: yes
 
     - name: Install pip requirements
       pip:
-        requirements: /home/%SEEDUSER%/scripts/plex_dupefinder/requirements.txt
+        requirements: /home/{{user.stdout}}/scripts/plex_dupefinder/requirements.txt
         executable: pip3
 
     - name: Check config exists
       stat:
-        path: "/home/%SEEDUSER%/scripts/plex_dupefinder/config.json"
+        path: "/home/{{user.stdout}}/scripts/plex_dupefinder/config.json"
       register: plex_dupefinder_config
 
     - name: Import default config
       template:
-        src: /opt/seedbox/docker/%SEEDUSER%/plex_dupefinder/templates/config.json.j2
-        dest: /home/%SEEDUSER%/scripts/plex_dupefinder/config.json
-        owner: "%SEEDUSER%"
-        group: "%GRPID%"
+        src: /opt/seedbox-compose/includes/config/roles/plex_dupefinder/templates/config.json.j2
+        dest: /home/{{user.stdout}}/scripts/plex_dupefinder/config.json
+        owner: "{{userid.stdout}}"
+        group: "{{groupid.stdout}}"
         mode: 0775
         force: yes
       when: not plex_dupefinder_config.stat.exists
 
     - name: Set plexdupes.py as executable
       file:
-        path: /home/%SEEDUSER%/scripts/plex_dupefinder/plexdupes.py
-        owner: "%SEEDUSER%"
-        group: "%GRPID%"
+        path: /home/{{user.stdout}}/scripts/plex_dupefinder/plexdupes.py
+        owner: "{{userid.stdout}}"
+        group: "{{groupid.stdout}}"
         mode: a+x
 
     - name: Set directory permissions
-      file: "path=/home/%SEEDUSER%/scripts/plex_dupefinder state=directory owner=%SEEDUSER% group=%GRPID% recurse=yes"
+      file: "path=/home/{{user.stdout}}/scripts/plex_dupefinder state=directory owner={{userid.stdout}} group={{groupid.stdout}} recurse=yes"
 
     - name: "Create /usr/local/bin symlink"
       file:
-        src: "/home/%SEEDUSER%/scripts/plex_dupefinder/plexdupes.py"
+        src: "/home/{{user.stdout}}/scripts/plex_dupefinder/plexdupes.py"
         dest: "/usr/local/bin/plexdupes"
         state: link

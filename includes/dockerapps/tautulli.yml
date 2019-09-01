@@ -9,6 +9,11 @@
 - hosts: localhost
   gather_facts: false
   tasks:
+  
+    # VARIABLES ############################################################
+    - name: 'Including variables'
+      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+      
     # FACTS #######################################################################
     - name: 'Set Known Facts'
       set_fact:
@@ -18,10 +23,10 @@
 
     # CORE (MANDATORY) ############################################################      
     - name: Creating scripts and plugins paths
-      file: 'path={{item}} state=directory mode=0775 owner=%UID% group=%GID%'
+      file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
       with_items:
-        - '/opt/seedbox/docker/%USER%/{{pgrole}}/scripts'
-        - '/opt/seedbox/docker/%USER%/{{pgrole}}/plugins'
+        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/scripts'
+        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/plugins'
 
     - name: 'Check if Templates Exist for {{pgrole}}'
       stat:
@@ -31,17 +36,17 @@
     - name: 'Copying Scripts & Plugins'
       copy:
         src: ./templates/{{pgrole}}
-        dest: /opt/seedbox/docker/%USER%
+        dest: /opt/seedbox/docker/{{user.stdout}}
         directory_mode: yes
         force: yes
-        owner: '%UID%'
-        group: '%GID%'
+        owner: '{{userid.stdout}}'
+        group: '{{groupid.stdout}}'
         mode: 0775
       when: copycheck.stat.exists
       
     - name: 'Checking for existing app data'
       stat:
-        path: /opt/seedbox/docker/%USER%/tautulli/config.ini
+        path: /opt/seedbox/docker/{{user.stdout}}/tautulli/config.ini
       register: confcheck
 
     # LABELS ######################################################################
@@ -50,8 +55,8 @@
         pg_labels:
           traefik.enable: 'true'
           traefik.port: '{{intport}}'
-          traefik.frontend.rule: 'Host:plexpy.%DOMAIN%,{{pgrole}}.%DOMAIN%'
-          traefik.frontend.headers.SSLHost: '%DOMAIN%'
+          traefik.frontend.rule: 'Host:plexpy.{{domain.stdout}},{{pgrole}}.{{domain.stdout}}'
+          traefik.frontend.headers.SSLHost: '{{domain.stdout}}'
           traefik.frontend.headers.SSLRedirect: 'true'
           traefik.frontend.headers.STSIncludeSubdomains: 'true'
           traefik.frontend.headers.STSPreload: 'true'
@@ -60,28 +65,27 @@
           traefik.frontend.headers.contentTypeNosniff: 'true'
           traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
           traefik.frontend.headers.forceSTSHeader: 'true'
-          traefik.frontend.headers.frameDeny: 'true'
 
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
-          - '/opt/seedbox/docker/%USER%/{{pgrole}}:/config'
-          - '/opt/seedbox/docker/%USER%/plex/database/Library/Application Support/Plex Media Server/Logs:/logs'
-          - '/opt/seedbox/docker/%USER%/{{pgrole}}/scripts:/scripts'
+          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}:/config'
+          - '/opt/seedbox/docker/{{user.stdout}}/plex/database/Library/Application Support/Plex Media Server/Logs:/logs'
+          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/scripts:/scripts'
           - '/etc/localtime:/etc/localtime:ro'
 
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
-          PUID: '%UID%'
-          PGID: '%GID%'
+          PUID: '{{userid.stdout}}'
+          PGID: '{{groupid.stdout}}'
           TZ: 'Europe/Paris'
 
 
     # MAIN DEPLOYMENT #############################################################
     - name: 'Deploying {{pgrole}}'
       docker_container:
-        name: '{{pgrole}}-%USER%'
+        name: '{{pgrole}}'
         image: '{{image}}'
         pull: yes
         volumes: '{{pg_volumes}}'
@@ -97,12 +101,12 @@
       block:
         - name: 'Waiting for {{pgrole}} to start'
           wait_for:
-            path: '/opt/seedbox/docker/%USER%/tautulli/config.ini'
+            path: '/opt/seedbox/docker/{{user.stdout}}/tautulli/config.ini'
             state: present
 
         - name: Stop Container
           docker_container:
-            name: tautulli-%USER%
+            name: tautulli
             state: stopped
 
         # - name: set http_username
@@ -123,7 +127,7 @@
 
         - name: Restart {{pgrole}}
           docker_container:
-            name: '{{pgrole}}-%USER%'
+            name: '{{pgrole}}'
             state: started
 
       when: not confcheck.stat.exists

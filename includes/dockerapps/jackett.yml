@@ -9,6 +9,11 @@
 - hosts: localhost
   gather_facts: false
   tasks:
+
+    # VARIABLES ############################################################
+    - name: 'Including variables'
+      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+      
     # FACTS #######################################################################
     - name: 'Set Known Facts'
       set_fact:
@@ -17,29 +22,29 @@
         image: 'linuxserver/jackett'
 
     - name: Creating paths
-      file: 'path={{item}} state=directory mode=0775 owner=%UID% group=%GID%'
+      file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
       with_items:
-        - '/opt/seedbox/docker/%USER%/{{pgrole}}'
+        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}'
 
     # MIGRATIONS (MANDATORY) ############################################################
     - name: Checking for old app data
       stat:
-        path: '/opt/seedbox/docker/%USER%/{{pgrole}}/Jackett/ServerConfig.json'
+        path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/Jackett/ServerConfig.json'
       register: olddatacheck
 
     - name: Migrating appdata
-      shell: 'mv /opt/seedbox/docker/%USER%/{{pgrole}}/Jackett/* /opt/seedbox/docker/%USER%/{{pgrole}}'
+      shell: 'mv /opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/Jackett/* /opt/seedbox/docker/{{user.stdout}}/{{pgrole}}'
       ignore_errors: yes
       when: olddatacheck.stat.exists
 
     - name: Migrating appdata
-      shell: 'rmdir /opt/seedbox/docker/%USER%/{{pgrole}}/Jackett'
+      shell: 'rmdir /opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/Jackett'
       ignore_errors: yes
       when: olddatacheck.stat.exists
 
     - name: Checking for existing app data
       stat:
-        path: '/opt/seedbox/docker/%USER%/{{pgrole}}/ServerConfig.json'
+        path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/ServerConfig.json'
       register: datacheck
 
     # LABELS ######################################################################
@@ -48,9 +53,9 @@
         pg_labels:
           traefik.enable: 'true'
           traefik.port: '{{intport}}'
-          traefik.frontend.rule: 'Host:{{pgrole}}.%DOMAIN%'
-          traefik.frontend.auth.basic: '%VAR%'
-          traefik.frontend.headers.SSLHost: '%DOMAIN%'
+          traefik.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
+          traefik.frontend.auth.basic: '{{passwd.stdout}}'
+          traefik.frontend.headers.SSLHost: '{{domain.stdout}}'
           traefik.frontend.headers.SSLRedirect: 'true'
           traefik.frontend.headers.STSIncludeSubdomains: 'true'
           traefik.frontend.headers.STSPreload: 'true'
@@ -59,24 +64,23 @@
           traefik.frontend.headers.contentTypeNosniff: 'true'
           traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
           traefik.frontend.headers.forceSTSHeader: 'true'
-          traefik.frontend.headers.frameDeny: 'true'
 
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
-          - '/opt/seedbox/docker/%USER%/{{pgrole}}:/config/Jackett'
+          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}:/config/Jackett'
           - '/etc/localtime:/etc/localtime:ro'
 
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
-          PUID: '%UID%'
-          PGID: '%GID%'
+          PUID: '{{userid.stdout}}'
+          PGID: '{{groupid.stdout}}'
 
     # MAIN DEPLOYMENT #############################################################
     - name: 'Deploying {{pgrole}}'
       docker_container:
-        name: '{{pgrole}}-%USER%'
+        name: '{{pgrole}}'
         image: '{{image}}'
         pull: yes
         volumes: '{{pg_volumes}}'
@@ -90,16 +94,16 @@
     # CONFIGURATION ####################################################
     - name: 'Waiting for {{pgrole}} to initialize'
       wait_for:
-        path: '/opt/seedbox/docker/%USER%/{{pgrole}}/ServerConfig.json'
+        path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/ServerConfig.json'
         state: present
         msg: ServerConfig.json creation failed
 
     - name: 'Stopping {{pgrole}}'
       docker_container:
-        name: '{{pgrole}}-%USER%'
+        name: '{{pgrole}}'
         state: stopped
 
     - name: Restart {{pgrole}}
       docker_container:
-        name: '{{pgrole}}-%USER%'
+        name: '{{pgrole}}'
         state: started

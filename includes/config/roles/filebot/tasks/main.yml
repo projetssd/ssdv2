@@ -1,0 +1,75 @@
+#!/bin/bash
+#
+# Title:      PGBlitz (Reference Title File)
+# Author(s):  Admin9705
+# URL:        https://pgblitz.com - http://github.pgblitz.com
+# GNU:        General Public License v3.0
+############################################################################
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+
+    # VARIABLES ############################################################
+    - name: 'Including variables'
+      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+
+    # FILEBOT ##############################################################
+    - name: Check filebot
+      stat:
+        path: '/opt/seedbox/docker/{{user.stdout}}/.filebot'
+      register: filebot
+
+    - name: Create Basic Directories
+      file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
+      with_items:
+        - '/opt/seedbox/docker/{{user.stdout}}/.filebot'
+      when:
+        - filebot.stat.exists == False
+
+    - name: Installing filebot
+      unarchive:
+        src: http://downloads.sourceforge.net/project/filebot/filebot/FileBot_4.7.9/FileBot_4.7.9-portable.tar.xz
+        dest: /opt/seedbox/docker/{{user.stdout}}/.filebot
+        keep_newer: no
+        owner: '{{userid.stdout}}'
+        group: '{{groupid.stdout}}'
+        mode: 0775
+        copy: no
+      when:
+        - filebot.stat.exists == False
+
+    - name: Import default filebot-process.sh
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/filebot/templates/filebot-process.sh.j2
+        dest: /opt/seedbox/docker/{{user.stdout}}/.filebot/filebot-process.sh
+        owner: "{{userid.stdout}}"
+        group: "{{groupid.stdout}}"
+        mode: 0755
+        force: yes
+      when:
+        - filebot.stat.exists == False
+
+    - name: Set filebot.sh as executable
+      file:
+        path: /opt/seedbox/docker/{{user.stdout}}/.filebot/filebot.sh
+        owner: "{{user.stdout}}"
+        group: "{{groupid.stdout}}"
+        mode: a+x
+      when:
+        - filebot.stat.exists == False
+
+    - name: Set update-filebot.sh as executable
+      file:
+        path: /opt/seedbox/docker/{{user.stdout}}/.filebot/update-filebot.sh 
+        owner: "{{user.stdout}}"
+        group: "{{groupid.stdout}}"
+        mode: a+x
+      when:
+        - filebot.stat.exists == False
+
+    - name: Set cron
+      shell: |
+        (crontab -l | grep . ; echo "*/1 * * * * /opt/seedbox/docker/{{user.stdout}}/.filebot/filebot-process.sh") | crontab -
+
+

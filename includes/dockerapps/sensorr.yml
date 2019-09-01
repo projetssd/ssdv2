@@ -3,8 +3,12 @@
 - hosts: localhost
   gather_facts: false
   tasks:
+  
+    # VARIABLES ############################################################
+    - name: 'Including variables'
+      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+      
     # FACTS #######################################################################
-
     - name: 'Set Known Facts'
       set_fact:
         pgrole: 'sensorr'
@@ -12,10 +16,10 @@
         image: 'thcolin/sensorr'
 
     - name: Creating paths
-      file: 'path={{item}} state=directory mode=0775 owner=%UID% group=%GID% recurse=true'
+      file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}} recurse=true'
       with_items:
-        - '/opt/seedbox/docker/%USER%/{{pgrole}}'
-        - '/opt/seedbox/docker/%USER%/{{pgrole}}/config'
+        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}'
+        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/config'
 
     # LABELS ######################################################################
     - name: 'Ajout label traefik'
@@ -23,8 +27,8 @@
         pg_labels:
           traefik.enable: 'true'
           traefik.port: '{{intport}}'
-          traefik.frontend.rule: 'Host:{{pgrole}}.%DOMAIN%'
-          traefik.frontend.headers.SSLHost: '%DOMAIN%'
+          traefik.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
+          traefik.frontend.headers.SSLHost: '{{domain.stdout}}'
           traefik.frontend.headers.SSLRedirect: 'true'
           traefik.frontend.headers.STSIncludeSubdomains: 'true'
           traefik.frontend.headers.STSPreload: 'true'
@@ -33,26 +37,25 @@
           traefik.frontend.headers.contentTypeNosniff: 'true'
           traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
           traefik.frontend.headers.forceSTSHeader: 'true'
-          traefik.frontend.headers.customFrameOptionsValue: 'SAMEORIGIN'
 
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
-          - '/opt/seedbox/docker/%USER%/{{pgrole}}/config:/app/sensorr/config'
-          - '/home/%USER%/watch:/app/sensorr/blackhole'
+          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/config:/app/sensorr/config'
+          - '/home/{{user.stdout}}/watch:/app/sensorr/blackhole'
 
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
-          PUID: '%UID%'
-          PGID: '%GID%'
+          PUID: '{{userid.stdout}}'
+          PGID: '{{groupid.stdout}}'
           TZ: 'Europe/Paris'
 
     # MAIN DEPLOYMENT #############################################################
 
     - name: 'Deploying {{pgrole}}'
       docker_container:
-        name: '{{pgrole}}-%USER%'
+        name: '{{pgrole}}'
         image: '{{image}}'
         pull: yes
         volumes: '{{pg_volumes}}'
@@ -67,7 +70,7 @@
 
     - name: execute command in docker
       shell: |
-        docker exec sensorr-%USER% sh -l -c "mv /app/sensorr/config.default.json /app/sensorr/config/config.json"
+        docker exec sensorr sh -l -c "mv /app/sensorr/config.default.json /app/sensorr/config/config.json"
       register: result
 
     - debug: msg="{{ result.stdout }}"

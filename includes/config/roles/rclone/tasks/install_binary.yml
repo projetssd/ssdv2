@@ -1,0 +1,81 @@
+#########################################################################
+# Title:         Cloudbox: Rclone - Install Binary Tasks                #
+# Author(s):     desimaniac                                             #
+# URL:           https://github.com/cloudbox/cloudbox                   #
+# --                                                                    #
+#         Part of the Cloudbox project: https://cloudbox.works          #
+#########################################################################
+#                   GNU General Public License v3.0                     #
+#########################################################################
+---
+- name: Install Binary | Install common packages
+  apt:
+    state: present
+    name:
+      - unzip
+      - man-db
+
+- name: Install Binary | Create rclone directories
+  file: "path={{ item }} state=directory mode=0775 owner=root group=root recurse=yes"
+  with_items:
+    - "/root/.config"
+    - "/root/.config/rclone"
+
+- name: Install Binary | Cleanup rclone tmp path
+  shell: rm -rf /tmp/rclone-*-linux-amd64
+  args:
+    warn: no
+
+- name: Install Binary | Display rclone version being installed
+  debug:
+    msg: "Installing Rclone version: {{ rclone.version }}"
+  when: rclone_version_is_specified
+
+- name: "Install Binary | Download and unarchive rclone"
+  unarchive:
+    src: "{{ rclone_download_url }}"
+    dest: /tmp
+    copy: no
+    validate_certs: no
+
+- name: Install Binary | Find rclone tmp dir
+  shell: ls -d /tmp/rclone-*-linux-amd64
+  register: rclone_tmp_dir
+
+- name: Install Binary | Copy binary to /usr/bin/rclone
+  copy:
+    src: "{{ rclone_tmp_dir.stdout }}/rclone"
+    dest: "/usr/bin/rclone"
+    mode: 0775
+    owner: root
+    group: root
+    force: yes
+
+- name: Install Binary | Make dir for local manpages
+  file:
+    path: '/usr/local/share/man/man1'
+    state: directory
+    mode: 0775
+    owner: root
+    group: root
+
+- name: Install Binary | Copy manpage
+  copy:
+    src: "{{ rclone_tmp_dir.stdout }}/rclone.1"
+    dest: /usr/local/share/man/man1/rclone.1
+    mode: 0664
+    owner: root
+    group: root
+
+- name: Install Binary | Install manpage
+  shell: mandb
+  changed_when: false
+
+- name: Install Binary | Get rclone version
+  shell: rclone --version | head -n 1 | awk '{ print substr($2, 2) }'
+  register: rclone_version
+  ignore_errors: yes
+
+- name: "Install Binary | Display rclone version"
+  debug:
+    msg: "Rclone version {{ rclone_version.stdout }} installed."
