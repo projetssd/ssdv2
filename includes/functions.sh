@@ -158,6 +158,15 @@ function check_dir() {
 function script_classique() {
 	if [[ -d "$CONFDIR" ]]; then
 	clear
+
+	# Vérification installation modt
+	confmodt="/opt/motd"
+	if [ -d "$confmodt" ]; then
+	insert_mod
+	else
+	logo
+	fi
+
 	echo ""
 	echo -e "${CCYAN}SEEDBOX CLASSIQUE${CEND}"
 	echo -e "${CGREEN}${CEND}"
@@ -211,7 +220,7 @@ function script_classique() {
 			echo ""
 			/opt/seedbox-compose/includes/config/update/update
 			pause
-			script_plexdrive
+			script_classique
 			;;
 
 			2) ## Installation du motd
@@ -219,15 +228,14 @@ function script_classique() {
 			echo ""
 			motd
 			pause
-			script_plexdrive
-			;;
+			script_classique			;;
 
 			3) ## Installation de traktarr
 			clear
 			echo ""
 			traktarr
 			pause
-			script_plexdrive
+			script_classique
 			;;
 
 			4) ## Installation de Webtools
@@ -235,7 +243,7 @@ function script_classique() {
 			echo ""
 			webtools
 			pause
-			script_plexdrive
+			script_classique
 			;;
 
 			5) ## Installation de rtorrent-cleaner
@@ -244,13 +252,12 @@ function script_classique() {
 			rtorrent-cleaner
 			docker run -it --rm -v /home/$SEEDUSER/local/rutorrent:/home/$SEEDUSER/local/rutorrent -v /run/php:/run/php magicalex/docker-rtorrent-cleaner
 			pause
-			script_plexdrive
-			;;
+			script_classique			;;
 
 			6)
 			openvpn
 			pause
-			script_plexdrive
+			script_classique
 			;;
 
 			7)
@@ -276,7 +283,7 @@ function script_classique() {
 					;;
 
 					3)
-					script_plexdrive
+					script_classique
 					;;
 
 				esac
@@ -288,7 +295,7 @@ function script_classique() {
 			;;
 
 			9)
-			script_plexdrive
+			script_classique
 			;;
 
 			esac
@@ -357,7 +364,8 @@ function script_plexdrive() {
 			echo -e "${CGREEN}   5) rtorrent-cleaner de ${CCYAN}@Magicalex-Mondedie.fr${CEND}${NC}"
 			echo -e "${CGREEN}   6) Openvpn${CEND}"
 			echo -e "${CGREEN}   7) Réglage du processeur | Tweak Carte Reseau | Docker swappiness${CEND}"
-			echo -e "${CGREEN}   8) Retour menu principal${CEND}"
+			echo -e "${CGREEN}   8) Renouvellement des certificats${CEND}"
+			echo -e "${CGREEN}   9) Retour menu principal${CEND}"
 			echo -e ""
 			read -p "Votre choix [1-8]: " OUTILS
 
@@ -439,6 +447,16 @@ function script_plexdrive() {
 			;;
 
 			8)
+			# Renouvellement des certificats
+			docker rm -f traefik portainer
+			rm -rf /opt/seedbox/docker 
+			rm -rf/opt/seedbox/portainer
+			install_traefik
+			install_portainer
+			script_plexdrive
+			;;
+
+			9)
 			script_plexdrive
 			;;
 

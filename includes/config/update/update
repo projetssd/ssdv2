@@ -6,7 +6,7 @@ source includes/variables.sh
 echo ""
 echo -e "${CCYAN}#########################################################${CEND}"
 echo ""
-echo -e "${CCYAN}          DEMARRAGE DU SCRIPT DE SAUVEGARDE              ${CEND}"
+echo -e "${CCYAN}          DEMARRAGE DU SCRIPT DE MISE A JOUR              ${CEND}"
 echo ""
 echo -e "${CCYAN}#########################################################${CEND}"
 echo ""
@@ -53,9 +53,14 @@ echo -e "${BLUE}### Changement de nom des Containers ###${NC}"
 docker ps --format '{{.Names}}' > /home/$SEEDUSER/list
 for line in $(cat /home/$SEEDUSER/list | cut -d '-' -f1)
 do
+
 if [ "$line" != "traefik" ] && [ "$line" != "portainer" ] && [ "$line" != "watchtower" ]; then
 echo $line.$DOMAIN >> /home/$SEEDUSER/resume
-cp /opt/seedbox-compose/includes/dockerapps/$line.yml /opt/seedbox/conf/$line.yml
+	if [ "$line" = "nginx" ] || [ "$line" = "mariadb" ] || [ "$line" = "php5" ] || [ "$line" = "php7" ] || [ "$line" = "phpmyadmin" ]; then
+	cp /opt/seedbox-compose/includes/webserver/$line.yml /opt/seedbox/conf/$line.yml
+	else
+	cp /opt/seedbox-compose/includes/dockerapps/$line.yml /opt/seedbox/conf/$line.yml
+	fi
 docker rename $line-$SEEDUSER $line
 fi
 done
