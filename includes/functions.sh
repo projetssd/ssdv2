@@ -448,11 +448,21 @@ function script_plexdrive() {
 
 			8)
 			# Renouvellement des certificats
-			docker rm -f traefik portainer
-			rm -rf /opt/seedbox/docker 
-			rm -rf/opt/seedbox/portainer
+			echo -e "${CCYAN}   Supression TRAEFIK-PORTAINER${CEND}"
+			docker rm -f traefik portainer > /dev/null 2>&1
+			rm -rf /opt/seedbox/docker/traefik > /dev/null 2>&1
+			rm -rf /opt/seedbox/docker/portainer > /dev/null 2>&1
+			checking_errors $?
 			install_traefik
 			install_portainer
+			checking_errors $?
+			echo ""
+			echo -e "${CRED}-------------------------------------------------------${CEND}"
+			echo -e "${CRED}        Certificats renouvellés avec succés            ${CEND}"
+			echo -e "${CRED}-------------------------------------------------------${CEND}"
+
+			echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+			read -r
 			script_plexdrive
 			;;
 
