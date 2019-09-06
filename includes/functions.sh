@@ -713,10 +713,17 @@ function unionfs_fuse() {
 
 function install_docker() {
 	echo -e "${BLUE}### DOCKER ###${NC}"
-	echo " * Installation Docker"
-	ansible-playbook /opt/seedbox-compose/includes/config/roles/docker/tasks/main.yml
+	echo -e " ${BWHITE}* Installation Docker${NC}"
+	file="/usr/bin/docker"
+	
+	if [ ! -e "$file" ]; then
+		ansible-playbook /opt/seedbox-compose/includes/config/roles/docker/tasks/main.yml
+	else
+		echo -e " ${YELLOW}* docker est déjà installé !${NC}"
+	fi
+	
     	# Si echec Installation, procédure d'urgence
-    	file="/usr/bin/docker"
+
     	if [ ! -e "$file" ]; then
         	clear
         	echo "Installation de Docker"
@@ -1298,10 +1305,10 @@ function uninstall_seedbox() {
 	PLEXDRIVE="/usr/bin/plexdrive"
 	if [[ -e "$PLEXDRIVE" ]]; then
 		echo -e " ${BWHITE}* Suppression Plexdrive/rclone...${NC}"
-		service plexdrive stop
-		rm /etc/systemd/system/plexdrive.service
-		rm -rf /mnt/plexdrive
-		rm -rf /root/.plexdrive
+		service plexdrive stop > /dev/null 2>&1
+		rm /etc/systemd/system/plexdrive.service > /dev/null 2>&1
+		rm -rf /mnt/plexdrive > /dev/null 2>&1
+		rm -rf /root/.plexdrive > /dev/null 2>&1
 		checking_errors $?
 	fi
 		USERHOMEDIR="/home/$SEEDUSER"
@@ -1309,27 +1316,32 @@ function uninstall_seedbox() {
 		echo -e " ${BWHITE}* Suppression users $SEEDUSER...${NC}"
 		if [[ -e "$PLEXDRIVE" ]]; then
 				if [[ -e "$PLEXAUTOSCAN" ]]; then
-					systemctl stop plex_autoscan.service
+					systemctl stop plex_autoscan.service > /dev/null 2>&1
 					systemctl disable plex_autoscan.service > /dev/null 2>&1
-					rm /etc/systemd/system/plex_autoscan.service
+					rm /etc/systemd/system/plex_autoscan.service > /dev/null 2>&1
 				fi
-			systemctl stop rclone.service
+			systemctl stop rclone.service > /dev/null 2>&1
 			systemctl disable rclone.service > /dev/null 2>&1
-			rm /etc/systemd/system/rclone.service
-			rm /usr/bin/rclone
-			rm -rf /mnt/rclone
-			rm -rf /root/.config/rclone
-			systemctl stop cloudplow.service
+			rm /etc/systemd/system/rclone.service > /dev/null 2>&1
+			rm /usr/bin/rclone > /dev/null 2>&1
+			rm -rf /mnt/rclone > /dev/null 2>&1
+			rm -rf /root/.config/rclone > /dev/null 2>&1
+			systemctl stop cloudplow.service > /dev/null 2>&1
 			systemctl disable cloudplow.service > /dev/null 2>&1
-			rm /etc/systemd/system/cloudplow.service
-			service unionfs stop
+			rm /etc/systemd/system/cloudplow.service > /dev/null 2>&1
+			
+			service unionfs stop > /dev/null 2>&1
 			systemctl disable unionfs.service > /dev/null 2>&1
-			rm /etc/systemd/system/unionfs.service
+			rm /etc/systemd/system/unionfs.service > /dev/null 2>&1
+			
+			service unionfs stop > /dev/null 2>&1
+			systemctl disable unionfs.service > /dev/null 2>&1
+			rm /etc/systemd/system/unionfs.service > /dev/null 2>&1
 		fi
 		userdel -rf $SEEDUSER > /dev/null 2>&1
 		checking_errors $?
 		echo -e " ${BWHITE}* Suppression home $SEEDUSER...${NC}"
-		rm -Rf $USERHOMEDIR
+		rm -Rf $USERHOMEDIR > /dev/null 2>&1
 		checking_errors $?
 		echo ""
 
