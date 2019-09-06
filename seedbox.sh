@@ -100,8 +100,8 @@ case $CHOICE in
 			install_plexdrive
 			install_rclone
 			install_fail2ban
-			sauve
 			restore
+			sauve
 			choose_media_folder_plexdrive
 			unionfs_fuse
 			docker network create traefik_proxy
