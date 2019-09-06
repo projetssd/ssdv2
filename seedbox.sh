@@ -109,9 +109,9 @@ case $CHOICE in
 			install_portainer
 			install_watchtower
 			SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
-			while read line; do echo $line | cut -d'-' -f1; done < /home/$SEEDUSER/resume > $SERVICESUSER$SEEDUSER
+			while read line; do echo $line | cut -d'.' -f1; done < /home/$SEEDUSER/resume > $SERVICESUSER$SEEDUSER
 			mv /home/$SEEDUSER/resume /tmp
-			restore_services
+			install_services
 
 			## restauration plex_dupefinder
 			PLEXDUPE=/home/$SEEDUSER/scripts/plex_dupefinder/plexdupes.py

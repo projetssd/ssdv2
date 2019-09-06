@@ -593,7 +593,6 @@ function install_traefik() {
 	else
 		echo -e " ${BWHITE}* Installation Traefik${NC}"
 		ansible-playbook /opt/seedbox-compose/includes/dockerapps/traefik.yml
-		echo "traefik.$DOMAIN" >> $INSTALLEDFILE
 		checking_errors $?		
 	fi
 	echo ""
@@ -609,7 +608,6 @@ function install_portainer() {
 			echo -e " ${BWHITE}* Installation Portainer${NC}"
 			cd /opt/seedbox-compose/includes/dockerapps
 			ansible-playbook portainer.yml
-			echo "portainer.$DOMAIN" >> $INSTALLEDFILE
 			checking_errors $?
 		else
 			echo -e " ${BWHITE}--> portainer n'est pas installé !${NC}"
@@ -731,6 +729,9 @@ function install_docker() {
         	sleep 2
         	systemctl start docker
         	sleep 2
+	else
+		echo -e " ${YELLOW}* Docker est déjà installé !${NC}"
+
     	fi
 
     	##### Nouvelle vérification, en cas d'echec sortie install
