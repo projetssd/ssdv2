@@ -122,14 +122,6 @@ function webtools() {
 			checking_errors $?
 }
 
-function processor() {
-			/opt/seedbox-compose/includes/config/processor/processor.sh
-}
-
-function network() {
-			/opt/seedbox-compose/includes/config/tweak/tweak.sh
-}
-
 function plex_autoscan() {
 			#configuration plex_autoscan avec ansible
 			echo -e "${BLUE}### PLEX_AUTOSCAN ###${NC}"
@@ -215,10 +207,9 @@ function script_classique() {
 			echo -e "${CGREEN}   4) Webtools${CEND}"
 			echo -e "${CGREEN}   5) rtorrent-cleaner de ${CCYAN}@Magicalex-Mondedie.fr${CEND}${NC}"
 			echo -e "${CGREEN}   6) Openvpn${CEND}"
-			echo -e "${CGREEN}   7) Réglage du processeur | Tweak Carte Reseau | Docker swappiness${CEND}"
-			echo -e "${CGREEN}   8) Retour menu principal${CEND}"
+			echo -e "${CGREEN}   7) Retour menu principal${CEND}"
 			echo -e ""
-			read -p "Votre choix [1-8]: " OUTILS
+			read -p "Votre choix [1-7]: " OUTILS
 
 			case $OUTILS in
 
@@ -268,40 +259,6 @@ function script_classique() {
 			;;
 
 			7)
-				clear
-				logo
-				echo ""
-				echo -e "${CCYAN}TWEAK${CEND}"
-				echo -e "${CGREEN}${CEND}"
-				echo -e "${CGREEN}   1) Réglage du processeur${CEND}"
-				echo -e "${CGREEN}   2) Tweak Carte Reseau | Docker swappiness${CEND}"
-				echo -e "${CGREEN}   3) Menu Principal${CEND}"
-				echo -e ""
-				read -p "Votre choix [1-3]: " TWEAK
-
-				case $TWEAK in
-				
-					1)
-					processor
-					;;
-				
-					2)
-					network
-					;;
-
-					3)
-					script_classique
-					;;
-
-				esac
-			;;
-
-			8)
-			cp -r $BASEDIR/includes/config/update/* /usr/local/bin
-			update
-			;;
-
-			9)
 			script_classique
 			;;
 
@@ -370,11 +327,9 @@ function script_plexdrive() {
 			echo -e "${CGREEN}   4) Webtools${CEND}"
 			echo -e "${CGREEN}   5) rtorrent-cleaner de ${CCYAN}@Magicalex-Mondedie.fr${CEND}${NC}"
 			echo -e "${CGREEN}   6) Openvpn${CEND}"
-			echo -e "${CGREEN}   7) Réglage du processeur | Tweak Carte Reseau | Docker swappiness${CEND}"
-			echo -e "${CGREEN}   8) Renouvellement des certificats${CEND}"
-			echo -e "${CGREEN}   9) Retour menu principal${CEND}"
+			echo -e "${CGREEN}   7) Retour menu principal${CEND}"
 			echo -e ""
-			read -p "Votre choix [1-9]: " OUTILS
+			read -p "Votre choix [1-7]: " OUTILS
 
 			case $OUTILS in
 
@@ -425,55 +380,6 @@ function script_plexdrive() {
 			;;
 
 			7)
-				clear
-				logo
-				echo ""
-				echo -e "${CCYAN}TWEAK${CEND}"
-				echo -e "${CGREEN}${CEND}"
-				echo -e "${CGREEN}   1) Réglage du processeur${CEND}"
-				echo -e "${CGREEN}   2) Tweak Carte Reseau | Docker swappiness${CEND}"
-				echo -e "${CGREEN}   3) Menu Principal${CEND}"
-				echo -e ""
-				read -p "Votre choix [1-3]: " TWEAK
-
-				case $TWEAK in
-				
-					1)
-					processor
-					;;
-				
-					2)
-					network
-					;;
-
-					3)
-					script_plexdrive
-					;;
-
-				esac
-			;;
-
-			8)
-			# Renouvellement des certificats
-			echo -e "${CCYAN}   Supression TRAEFIK-PORTAINER${CEND}"
-			docker rm -f traefik portainer > /dev/null 2>&1
-			rm -rf /opt/seedbox/docker/traefik > /dev/null 2>&1
-			rm -rf /opt/seedbox/docker/portainer > /dev/null 2>&1
-			checking_errors $?
-			install_traefik
-			install_portainer
-			checking_errors $?
-			echo ""
-			echo -e "${CRED}-------------------------------------------------------${CEND}"
-			echo -e "${CRED}        Certificats renouvellés avec succés            ${CEND}"
-			echo -e "${CRED}-------------------------------------------------------${CEND}"
-
-			echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
-			read -r
-			script_plexdrive
-			;;
-
-			9)
 			script_plexdrive
 			;;
 
