@@ -28,6 +28,13 @@ echo ""
 
 }
 
+function update_system() {
+		#Mise à jour systeme
+			echo -e "${BLUE}### MISE A JOUR DU SYTEME ###${NC}"
+			ansible-playbook /opt/seedbox-compose/includes/config/roles/system/tasks/start.yml
+			checking_errors $?
+}
+
 function check_domain() {
 		TESTDOMAIN=$1
 		echo -e " ${BWHITE}* Checking domain - ping $TESTDOMAIN...${NC}"
@@ -563,7 +570,6 @@ function checking_errors() {
 		echo -e "	${GREEN}--> Operation success !${NC}"
 	else
 		echo -e "	${RED}--> Operation failed !${NC}"
-		exit
 	fi
 }
 

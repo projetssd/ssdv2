@@ -23,6 +23,7 @@ case $CHOICE in
 	    		clear
 			conf_dir
 			checking_system
+			update_system
 			install_base_packages
 			install_docker
 			define_parameters
@@ -51,6 +52,7 @@ case $CHOICE in
 	    		clear
 			conf_dir
 			checking_system
+			update_system
 			install_base_packages
 			install_docker
 			define_parameters
@@ -94,6 +96,7 @@ case $CHOICE in
 			echo ""
 			conf_dir
 			checking_system
+			update_system
 			install_base_packages
 			define_parameters
 			install_docker
