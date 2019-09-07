@@ -15,9 +15,8 @@
 
 - name: "Generate 'locales'"
   locale_gen:
-    name: "en_US.UTF-8"
+    name: "fr_FR.UTF-8"
     state: present
-  notify: update locales
 
 - name: "Uncomment 'LANG='"
   replace:
