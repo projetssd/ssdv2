@@ -62,7 +62,7 @@ rclone --config "/root/.config/rclone/rclone.conf" copy "$BACKUP_FOLDER" "{{remo
 # Nombre de sauvegardes effectuées
 nbBackup=$(find $BACKUP_PARTITION -type d -name 'backup-*' | wc -l)
 
-if [[ "$nbBackup" -gt $NB_MAX_BACKUP ]]; then
+if [[ "$nbBackup" -gt "$NB_MAX_BACKUP" ]]; then
 
     # Archive la plus ancienne
     oldestBackupPath=$(find $BACKUP_PARTITION -type d -name 'backup-*' -printf '%T+ %p\n' | sort | head -n 1 | awk '{print $2}')
