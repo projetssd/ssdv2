@@ -158,4 +158,7 @@
         dest: "/usr/local/bin/plextrash"
         state: link
 
+    - name: Set cron
+      shell: |
+        (crontab -l | grep . ; echo "0 3 * * 6 /usr/local/bin/plextrash >> /home/{{user.stdout}}/scripts/plextrash.log") | crontab -
 
