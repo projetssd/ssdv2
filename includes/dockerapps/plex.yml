@@ -137,3 +137,25 @@
         state: started
         labels: '{{default_labels}}'
 
+    - name: Import 'plex_trash_fixer.py'
+      get_url:
+        url:  "https://raw.githubusercontent.com/l3uddz/plex_trash_fixer/master/plex_trash_fixer.py"
+        dest: "/home/{{user.stdout}}/scripts/plex_trash_fixer.py"
+        owner: "1001"
+        group: "1001"
+        mode: a+x
+
+    - name: remplace
+      replace:
+        path: '/home/{{user.stdout}}/scripts/plex_trash_fixer.py'
+        regexp: '/opt/plex'
+        replace: '/opt/seedbox/docker/{{user.stdout}}/plex/config'
+
+
+    - name: "Create /usr/local/bin symlink"
+      file:
+        src: "/home/{{user.stdout}}/scripts/plex_trash_fixer.py"
+        dest: "/usr/local/bin/plextrash"
+        state: link
+
+

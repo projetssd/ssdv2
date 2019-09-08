@@ -219,6 +219,7 @@
             regexp: '#*throttle.max_downloads.global.set\s*=.*'
             line: 'throttle.max_downloads.global.set = 500'
             state: present
+
         - name: max_uploads
           lineinfile:
             path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rtorrent/rtorrent.rc'
