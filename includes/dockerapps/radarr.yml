@@ -11,6 +11,17 @@
       
     # FACTS #######################################################################
 
+    - name: Check config cloudflare exists
+      stat:
+        path: "/opt/seedbox/variables/cloudflare_api"
+      register: cloudflare_config
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: radarr
+      when: cloudflare_config.stat.exists
+
     - name: 'Set Known Facts'
       set_fact:
         pgrole: 'radarr'
@@ -29,7 +40,7 @@
           traefik.enable: 'true'
           traefik.port: '{{intport}}'
           traefik.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
-          traefik.frontend.auth.basic: '{{passwd.stdout}}'
+          traefik.frontend.auth.basic.users: '{{passwd.stdout}}'
           traefik.frontend.headers.SSLHost: '{{domain.stdout}}'
           traefik.frontend.headers.SSLRedirect: 'true'
           traefik.frontend.headers.STSIncludeSubdomains: 'true'

@@ -31,7 +31,7 @@ echo ""
 function update_system() {
 		#Mise à jour systeme
 			echo -e "${BLUE}### MISE A JOUR DU SYTEME ###${NC}"
-			ansible-playbook /opt/seedbox-compose/includes/config/roles/system/tasks/start.yml
+			ansible-playbook /opt/seedbox-compose/includes/config/roles/system/tasks/main.yml
 			checking_errors $?
 }
 
@@ -40,6 +40,45 @@ function check_domain() {
 		echo -e " ${BWHITE}* Checking domain - ping $TESTDOMAIN...${NC}"
 		ping -c 1 $TESTDOMAIN | grep "$IPADDRESS" > /dev/null
 		checking_errors $?
+}
+
+function cloudflare() {
+		cloudflare="/opt/seedbox/variables/cloudflare_api"
+		if [[ ! -e "$cloudflare" ]]; then
+		echo -e "${BLUE}### Gestion des DNS ###${NC}"
+		echo ""
+			echo -e "${CCYAN}------------------------------------------------------------------${CEND}"
+			echo -e "${CCYAN}   CloudFlare protège et accélère les sites internet.             ${CEND}"
+			echo -e "${CCYAN}   CloudFlare optimise automatiquement la déliverabilité          ${CEND}"
+ 			echo -e "${CCYAN}   de vos pages web afin de diminuer le temps de chargement       ${CEND}"
+			echo -e "${CCYAN}   et d’améliorer les performances. CloudFlare bloque aussi       ${CEND}"
+			echo -e "${CCYAN}   les menaces et empêche certains robots illégitimes de          ${CEND}"
+			echo -e "${CCYAN}   consommer votre bande passante et les ressources serveur.      ${CEND}"
+			echo -e "${CCYAN}------------------------------------------------------------------${CEND}"
+		echo ""
+                	#read -rp "Souhaitez vous utiliser les DNS Cloudflare ? (o/n) : " OUI
+			read -rp $'\e[33mSouhaitez vous utiliser les DNS Cloudflare ? (o/n)\e[0m :' OUI
+
+			if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
+				if [ -z "$cloud_email" ] || [ -z "$cloud_api" ]; then
+    				cloud_email=$1
+    				cloud_api=$2
+				fi
+
+				while [ -z "$cloud_email" ]; do
+    				>&2 echo -n -e "${BWHITE}Votre Email Cloudflare: ${CEND}"
+    				read cloud_email
+    				echo $cloud_email > /opt/seedbox/variables/cloudflare_email
+				done
+
+				while [ -z "$cloud_api" ]; do
+    				>&2 echo -n -e "${BWHITE}Votre API Cloudflare: ${CEND}"
+    				read cloud_api
+    				echo $cloud_api > /opt/seedbox/variables/cloudflare_api
+				done
+			fi
+		echo ""
+		fi
 }
 
 function rtorrent-cleaner() {
@@ -159,12 +198,7 @@ function script_classique() {
 	clear
 
 	# Vérification installation modt
-	confmodt="/opt/motd"
-	if [ -d "$confmodt" ]; then
-	insert_mod
-	else
 	logo
-	fi
 
 	echo ""
 	echo -e "${CCYAN}SEEDBOX CLASSIQUE${CEND}"
@@ -469,6 +503,7 @@ function checking_system() {
 	echo "deprecation_warnings=False" >> /etc/ansible/ansible.cfg
   	echo "inventory = /etc/ansible/inventories/local" >> /etc/ansible/ansible.cfg
 	checking_errors $?
+	echo ""
 }
 
 function checking_errors() {
@@ -504,6 +539,7 @@ function install_traefik() {
 		echo -e " ${YELLOW}* Traefik est déjà installé !${NC}"
 	else
 		echo -e " ${BWHITE}* Installation Traefik${NC}"
+		docker network create traefik_proxy > /dev/null 2>&1
 		ansible-playbook /opt/seedbox-compose/includes/dockerapps/traefik.yml
 		checking_errors $?		
 	fi
@@ -884,29 +920,11 @@ function install_services() {
 	if [[ ! -d "$CONFDIR/conf" ]]; then
 		mkdir -p $CONFDIR/conf > /dev/null 2>&1
 	fi
+	cloudflare
 
 	## préparation installation
 	for line in $(cat $SERVICESPERUSER);
 	do
-		if [[ "$line" == "plex" ]]; then
-			echo -e "${BLUE}### CONFIG POST COMPOSE PLEX ###${NC}"
-			echo -e " ${BWHITE}* Processing plex config file...${NC}"
-			echo ""
-			echo -e " ${GREEN}ATTENTION IMPORTANT - NE PAS FAIRE D'ERREUR - SINON DESINSTALLER ET REINSTALLER${NC}"
-			. /opt/seedbox-compose/includes/config/roles/plex_autoscan/plex_token.sh > "/opt/seedbox/variables/token"
-
-			# CLAIM pour Plex
-			echo ""
-			echo -e " ${BWHITE}* Un token est nécessaire pour AUTHENTIFIER le serveur Plex ${NC}"
-			echo -e " ${BWHITE}* Pour obtenir un identifiant CLAIM, allez à cette adresse et copier le dans le terminal ${NC}"
-			echo -e " ${CRED}* https://www.plex.tv/claim/ ${CEND}"
-			echo ""
-			read -rp "CLAIM = " CLAIM 
-			echo $CLAIM > $CONFDIR/variables/claim
-		fi
-		FQDNTMP="$line.$DOMAIN"
-
-		
 		if [ $line = "nginx" ] || [ $line = "php5" ] || [ $line = "php7" ] || [ $line = "mariadb" ] || [ $line = "phpmyadmin" ] && [ -e "$CONFDIR/conf/$line.yml" ]; then
 			ansible-playbook "$CONFDIR/conf/$line.yml"
 				php=$(docker ps -a | awk '{print $NF}' | grep php)
@@ -921,15 +939,24 @@ function install_services() {
 		elif [ -e "$CONFDIR/conf/$line.yml" ]; then
 			ansible-playbook "$CONFDIR/conf/$line.yml"
 
+		elif [[ "$line" == "plex" ]]; then
+			echo -e "${BLUE}### CONFIG POST COMPOSE PLEX ###${NC}"
+			echo -e " ${BWHITE}* Processing plex config file...${NC}"
+			echo ""
+			echo -e " ${GREEN}ATTENTION IMPORTANT - NE PAS FAIRE D'ERREUR - SINON DESINSTALLER ET REINSTALLER${NC}"
+			. /opt/seedbox-compose/includes/config/roles/plex_autoscan/plex_token.sh > "/opt/seedbox/variables/token"
+			ansible-playbook /opt/seedbox-compose/includes/config/roles/plex/tasks/main.yml
+
 		else
 			ansible-playbook "$BASEDIR/includes/dockerapps/$line.yml"
 			cp "$BASEDIR/includes/dockerapps/$line.yml" "$CONFDIR/conf/$line.yml" > /dev/null 2>&1
 		fi
 
-		if [[ "$line" == "plex" ]] && [[ ! -e "$CONFDIR/conf/$line.yml" ]]; then
+		if [[ "$line" == "plex" ]] && [[ ! -d "/home/$SEEDUSER/scripts/plex_dupefinder" ]]; then
 		plex_sections
 		fi
 
+		FQDNTMP="$line.$DOMAIN"
 		echo "$FQDNTMP" >> $INSTALLEDFILE
 		FQDNTMP=""
 	done
@@ -975,21 +1002,17 @@ function replace_media_compose() {
 		SERIES=$(grep -E 'Series' $MEDIASPERUSER)
 		ANIMES=$(grep -E 'Animes' $MEDIASPERUSER)
 		MUSIC=$(grep -E 'Musiques' $MEDIASPERUSER)
-	else
-		FILMS=$(grep -E 'Films' /tmp/menumedia.txt)
-		SERIES=$(grep -E 'Series' /tmp/menumedia.txt)
-		ANIMES=$(grep -E 'Animes' /tmp/menumedia.txt)
-		MUSIC=$(grep -E 'Musiques' /tmp/menumedia.txt)
 	fi
 }
 
 function plex_sections() {
 			echo ""
-			echo -e "${BLUE}### CREATION DES BIBLIOTHEQUES PLEX ###${NC}"
 			##compteur
 			replace_media_compose
 			var="Sections en cours de création, patientez..."
 			PLEXDRIVE="/usr/bin/plexdrive"
+			if [[ -e "$PLEXDRIVE" ]]; then
+			echo -e "${BLUE}### CREATION DES BIBLIOTHEQUES PLEX ###${NC}"
 			decompte 15
 
 			## création des bibliothèques plex
@@ -1013,14 +1036,15 @@ function plex_sections() {
 				fi
 			done
 			echo ""
+
 			## Installation plex_autoscan et cloudplow si install plexdrive
-			if [[ -e "$PLEXDRIVE" ]]; then
 				## installation plex_autoscan
 				plex_autoscan
 				echo ""
 				## installation cloudplow
 				cloudplow	
 			fi
+
 			## installation plex_dupefinder
 			echo ""
 			plex_dupefinder
@@ -1088,7 +1112,11 @@ function manage_apps() {
 			docker rm -f "$APPSELECTED"
 			sed -i "/$APPSELECTED/d" /home/$SEEDUSER/resume
 			rm -rf /opt/seedbox/docker/$SEEDUSER/$APPSELECTED
+
+			if [[ "$APPSELECTED" != "plex" ]]; then
 			rm $CONFDIR/conf/$APPSELECTED.yml
+			fi
+
 			checking_errors $?
 			echo""
 			echo -e "${BLUE}### $APPSELECTED a été supprimé ###${NC}"

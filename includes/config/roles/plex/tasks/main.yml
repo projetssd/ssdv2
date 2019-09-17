@@ -1,0 +1,151 @@
+#########################################################################
+# Title:         Cloudbox: Plex Role                                    #
+# Author(s):     l3uddz, desimaniac                                     #
+# URL:           https://github.com/cloudbox/cloudbox                   #
+# --                                                                    #
+#         Part of the Cloudbox project: https://cloudbox.works          #
+#########################################################################
+#                   GNU General Public License v3.0                     #
+#########################################################################
+---
+- hosts: localhost
+  gather_facts: true
+  vars_files:
+    - ['settings.yml']
+    - ['../defaults/main.yml']
+  tasks:
+
+    # VARIABLES ############################################################
+    - name: 'Including variables'
+      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: plex
+
+    - name: "Variables | Set 'plex_account_enabled' variable"
+      set_fact:
+        plex_account_enabled: "{{ true if not(
+            (plex is undefined)
+            or
+            (plex is none)
+            or
+            (plex | trim | length == 0)
+          )
+          else false }}"
+
+    - name: "Create Plex directories"
+      file: "path={{ item }} state=directory mode=0775 owner={{ user.stdout }} group={{ group.stdout }}"
+      with_items: "{{ plex_folders }}"
+
+    - name: "Stop and remove any existing container"
+      docker_container:
+        name: plex
+        state: absent
+
+    - name: "Pull Plex Docker image"
+      docker_image:
+        name: "{{ plex_docker_image }}"
+        source: pull
+
+    - name: "Check if 'Preferences.xml' exists"
+      stat:
+        path: "/opt/seedbox/docker/{{ user.stdout }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
+      register: preferences_xml
+
+    - name: "'Preferences.xml' Tasks"
+      block:
+
+      - name: Get 'Preferences.xml' XML data
+        xml:
+          path: "/opt/seedbox/docker/{{ user.stdout }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
+          xpath: /Preferences
+          content: attribute
+        register: preferences_xml_resp
+        ignore_errors: yes
+
+      - name: "Remove 'Preferences.xml' if malformed"
+        file:
+          path: "/opt/seedbox/docker/{{ user.stdout }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
+          state: absent
+        when: (preferences_xml_resp is failed)
+
+      - name: Set 'transcoder_path_fix' variable
+        set_fact:
+          transcoder_path_fix: "{{ (preferences_xml_resp is succeeded) and
+            (preferences_xml_resp.matches[0].Preferences.TranscoderTempDirectory is defined) and
+            (preferences_xml_resp.matches[0].Preferences.TranscoderTempDirectory | trim == '/transcodes') }}"
+
+      - name: "Fix 'TranscoderTempDirectory'"
+        xml:
+          path: "/opt/seedbox/docker/{{ user.stdout }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
+          xpath: /Preferences
+          attribute: TranscoderTempDirectory
+          value: "/transcode"
+          state: present
+        ignore_errors: yes
+        when: (transcoder_path_fix)
+
+      - name: Set 'plex_server_claimed' variable
+        set_fact:
+          plex_server_claimed: "{{ (preferences_xml_resp is succeeded) and
+            (preferences_xml_resp.matches[0].Preferences.PlexOnlineToken is defined) and
+            (preferences_xml_resp.matches[0].Preferences.PlexOnlineToken | trim | length > 0) }}"
+
+      when:
+        - (preferences_xml.stat.exists)
+
+    - name: Claim Plex Server
+      import_tasks: subtasks/claim_server.yml
+      when:
+        - (not preferences_xml.stat.exists) or (preferences_xml.stat.exists and not plex_server_claimed)
+
+    - name: 'Set Default Labels'
+      set_fact:
+        default_labels:
+          traefik.enable: 'true'
+          traefik.port: '32400'
+          traefik.frontend.rule: 'Host:plex.{{domain.stdout}}'
+          traefik.frontend.headers.SSLHost: '{{domain.stdout}}'
+          traefik.frontend.headers.SSLRedirect: 'true'
+          traefik.frontend.headers.STSIncludeSubdomains: 'true'
+          traefik.frontend.headers.STSPreload: 'true'
+          traefik.frontend.headers.STSSeconds: '315360000'
+          traefik.frontend.headers.browserXSSFilter: 'true'
+          traefik.frontend.headers.contentTypeNosniff: 'true'
+          traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+          traefik.frontend.headers.forceSTSHeader: 'true'
+
+    - name: "Create and start container"
+      docker_container:
+        name: plex
+        image: "{{ plex_docker_image }}"
+        pull: yes
+        published_ports: "{{ plex_docker_ports }}"
+        env:
+          PLEX_UID: "{{ userid.stdout }}"
+          PLEX_GID: "{{ groupid.stdout }}"
+          PLEX_CLAIM: "{{ (plex_claim_code) | default(omit) }}"
+          TZ: "Europe/Paris"
+        volumes: "{{ plex_docker_volumes }}"
+        etc_hosts: "{{ plex_docker_hosts }}"
+        purge_networks: yes
+        networks:
+          - name: traefik_proxy
+        restart_policy: unless-stopped
+        state: started
+        labels: "{{ default_labels }}"
+
+    # Sometimes docker will set transcodes folder to root after a restore.
+    - name: "Ensure transcodes folder has the correct permissions"
+      file:
+        path: "{{ plex.transcodes }}"
+        owner: "{{ userid.stdout }}"
+        group: "{{ groupid.stdout }}"
+        mode: 0775
+        recurse: yes
+
+    - name: Extra Tasks
+      import_tasks: "subtasks/extra.yml"
+      ignore_errors: yes

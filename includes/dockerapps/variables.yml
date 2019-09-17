@@ -18,6 +18,11 @@
   register: user
   ignore_errors: True
 
+- name: 'Register group'
+  shell: 'cat /opt/seedbox/variables/group'
+  register: group
+  ignore_errors: True
+
 - name: 'Register userid'
   shell: 'cat /opt/seedbox/variables/userid'
   register: userid

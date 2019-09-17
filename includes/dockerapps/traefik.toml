@@ -1,9 +1,8 @@
-defaultEntryPoints = ["https","http"]
 InsecureSkipVerify = true
 
-[api]
-entryPoint = "traefik"
-dashboard = true
+logLevel = "WARN"
+
+defaultEntryPoints = ["https","http"]
 
 [entryPoints]
   [entryPoints.http]
@@ -25,17 +24,25 @@ dashboard = true
   [entryPoints.traefik]
   address = ":8080"
 
+[retry]
+
 [acme]
+acmeLogging = true
 email = "{{mail.stdout}}"
 storage = "/etc/traefik/acme/acme.json"
 entryPoint = "https"
-onHostRule = true
-onDemand = false
-  [acme.httpChallenge]
-  entryPoint = "http"
+  [acme.dnsChallenge]
+    provider = "cloudflare"
+    delayBeforeCheck = "0"
+
+[[acme.domains]]
+  main = "{{domain.stdout}}"
+[[acme.domains]]
+  main = "*.{{domain.stdout}}"
 
 [docker]
 endpoint = "unix:///var/run/docker.sock"
 domain = "{{domain.stdout}}"
 watch = true
 exposedbydefault = false
+network = "traefik_proxy"

@@ -1,9 +1,0 @@
----
-
-- hosts: localhost
-  gather_facts: true
-  tasks:
-
-    - name: lauch motd "wazaaaaa"
-      import_tasks: "main.yml"
-

@@ -36,6 +36,8 @@
         pg_env:
           PUID: '0'
           PGID: '0'
+          CF_API_EMAIL: 'laster13012@gmail.com'
+          CF_API_KEY: '75668dae83b1d8a7c4b8a65cf8757be10fce5'
 
     - name: Installing ACME
       template:

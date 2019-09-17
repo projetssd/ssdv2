@@ -59,7 +59,7 @@ case $CHOICE in
 			install_traefik
 			install_plexdrive
 			install_rclone
-			#install_portainer
+			install_portainer
 			install_watchtower
 			install_fail2ban
 			choose_media_folder_plexdrive

@@ -1,0 +1,50 @@
+#########################################################################
+# Title:         Cloudbox: Cloudflare Role                              #
+# Author(s):     l3uddz, desimaniac                                     #
+# URL:           https://github.com/cloudbox/cloudbox                   #
+# --                                                                    #
+#         Part of the Cloudbox project: https://cloudbox.works          #
+#########################################################################
+#                   GNU General Public License v3.0                     #
+#########################################################################
+---
+- name: 'Register cloudflare_email'
+  shell: 'cat /opt/seedbox/variables/cloudflare_email'
+  register: cloudflare_email
+  ignore_errors: True
+
+- name: 'Register cloudflare_api'
+  shell: 'cat /opt/seedbox/variables/cloudflare_api'
+  register: cloudflare_api
+  ignore_errors: True
+
+- name: Install 'dnsutils'
+  apt: "name=dnsutils state=present"
+
+- name: Get Public IP Address
+  shell: dig -4 TXT +short o-o.myaddr.l.google.com @ns1.google.com | awk -F'\"' '{ print $2}'
+  register: public_ip_lookup
+
+- name: Set 'public_ip' variable
+  set_fact:
+    public_ip: "{{ public_ip_lookup.stdout }}"
+
+- name: Set 'record' variable
+  set_fact:
+    record: "{{ (subdomain == domain.stdout) | ternary(domain.stdout,subdomain + '.' + domain.stdout) }}"
+
+- name: Set DNS Record
+  cloudflare_dns:
+    account_api_token: "{{ cloudflare_api.stdout }}"
+    account_email: "{{ cloudflare_email.stdout }}"
+    zone: "{{ domain.stdout }}"
+    state: present
+    solo: true
+    proxied: no
+    type: A
+    value: "{{ public_ip }}"
+    record: "{{ subdomain }}"
+
+- name: Display DNS Record
+  debug:
+    msg: "DNS Record for '{{ record }}' set to '{{ public_ip }}'."
