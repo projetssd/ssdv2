@@ -920,7 +920,6 @@ function install_services() {
 	if [[ ! -d "$CONFDIR/conf" ]]; then
 		mkdir -p $CONFDIR/conf > /dev/null 2>&1
 	fi
-	cloudflare
 
 	## préparation installation
 	for line in $(cat $SERVICESPERUSER);

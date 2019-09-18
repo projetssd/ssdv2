@@ -108,6 +108,7 @@ case $CHOICE in
 			choose_media_folder_plexdrive
 			unionfs_fuse
 			docker network create traefik_proxy
+			cloudflare
 			install_traefik
 			install_portainer
 			install_watchtower
