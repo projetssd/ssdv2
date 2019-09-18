@@ -14,6 +14,17 @@
     # VARIABLES ############################################################
     - name: 'Including variables'
       include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+
+    - name: Check config cloudflare exists
+      stat:
+        path: "/opt/seedbox/variables/cloudflare_api"
+      register: cloudflare_config
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: traefik
+      when: cloudflare_config.stat.exists
       
     - name: Remove Traefik
       docker_container:
@@ -34,8 +45,9 @@
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
-          PUID: '0'
-          PGID: '0'
+          CF_API_EMAIL: '{{cloudflare_email.stdout}}'
+          CF_API_KEY: '{{cloudflare_api.stdout}}'
+      when: cloudflare_config.stat.exists
 
     - name: Installing ACME
       template:
@@ -81,7 +93,7 @@
           - "443:443"
           - "80:80"
         command: ["--web", "--accessLog.filePath=/var/log/access.log", "--accessLog.filters.statusCodes=400-499"]
-        env: '{{pg_env}}'
+        env: "{{pg_env if cloudflare_config.stat.exists == True | default(false) else omit}}"
         volumes:
           - /var/run/docker.sock:/var/run/docker.sock:ro
           - /etc/localtime:/etc/localtime:ro
