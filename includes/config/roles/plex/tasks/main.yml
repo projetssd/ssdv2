@@ -27,7 +27,7 @@
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: radarr
+        subdomain: plex
       when: cloudflare_config.stat.exists
 
     - name: "Variables | Set 'plex_account_enabled' variable"

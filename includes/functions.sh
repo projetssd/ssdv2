@@ -115,6 +115,7 @@ function motd() {
 
 			ansible-playbook /opt/seedbox-compose/includes/config/roles/motd/tasks/start.yml
 			checking_errors $?
+			echo ""
 }
 
 function openvpn() {
@@ -1042,7 +1043,6 @@ function plex_sections() {
 			## installation plex_dupefinder
 			echo ""
 			plex_dupefinder
-			echo ""
 }
 
 function valid_htpasswd() {
