@@ -534,15 +534,10 @@ function install_fail2ban() {
 
 function install_traefik() {
 	echo -e "${BLUE}### TRAEFIK ###${NC}"
-	INSTALLEDFILE="/home/$SEEDUSER/resume"
-	if docker ps | grep -q traefik; then
-		echo -e " ${YELLOW}* Traefik est déjà installé !${NC}"
-	else
 		echo -e " ${BWHITE}* Installation Traefik${NC}"
 		docker network create traefik_proxy > /dev/null 2>&1
 		ansible-playbook /opt/seedbox-compose/includes/dockerapps/traefik.yml
 		checking_errors $?		
-	fi
 	echo ""
 }
 
