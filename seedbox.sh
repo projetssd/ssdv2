@@ -27,6 +27,7 @@ case $CHOICE in
 			install_base_packages
 			install_docker
 			define_parameters
+			cloudflare
 			install_traefik
 			install_portainer
 			install_watchtower
@@ -56,6 +57,7 @@ case $CHOICE in
 			install_base_packages
 			install_docker
 			define_parameters
+			cloudflare
 			install_traefik
 			install_plexdrive
 			install_rclone

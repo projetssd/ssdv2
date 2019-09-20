@@ -15,6 +15,18 @@
       include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
       
     # FACTS #######################################################################
+
+    - name: Check config cloudflare exists
+      stat:
+        path: "/opt/seedbox/variables/cloudflare_api"
+      register: cloudflare_config
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: emby
+      when: cloudflare_config.stat.exists
+
     - name: 'Set Known Facts'
       set_fact:
         pgrole: 'emby'
