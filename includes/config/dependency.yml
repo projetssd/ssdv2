@@ -15,7 +15,6 @@
       with_items:
         - { package: "aptitude" }
         - { package: "sqlite3" }
-        - { package: "fuse" }
         - { package: "jq" }
         - { package: "members" }
         - { package: "cpufrequtils" }
