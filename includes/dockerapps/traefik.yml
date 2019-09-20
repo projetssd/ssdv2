@@ -66,6 +66,16 @@
         force: yes
         owner: '0'
         group: '0'
+      when: cloudflare_config.stat.exists == False
+
+    - name: Installing Traefik.Toml
+      template:
+        src: /opt/seedbox-compose/includes/dockerapps/templates/cloudflare/traefik.toml
+        dest: /opt/seedbox/docker/traefik/traefik.toml
+        force: yes
+        owner: '0'
+        group: '0'
+      when: cloudflare_config.stat.exists
 
     - name: 'Ajout label traefik'
       set_fact:
