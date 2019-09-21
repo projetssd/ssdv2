@@ -107,6 +107,7 @@
           - netaddr
           - lxml
           - docker
+          - dnspython
         state: latest
         executable: pip3
 
@@ -120,5 +121,6 @@
           - netaddr
           - lxml
           - docker
+          - dnspython
         state: latest
         executable: pip2
