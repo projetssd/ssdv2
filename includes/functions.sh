@@ -1233,74 +1233,76 @@ function uninstall_seedbox() {
 	echo -e "${BLUE}##########################################${NC}"
 	echo -e "${BLUE}###       DESINSTALLATION SEEDBOX      ###${NC}"
 	echo -e "${BLUE}##########################################${NC}"
+
+	## variables
 	SEEDUSER=$(cat /opt/seedbox/variables/users)
 	USERHOMEDIR="/home/$SEEDUSER"
 	SEEDGROUP=$(cat $GROUPFILE)
 	PLEXDRIVE="/usr/bin/plexdrive"
+
 	if [[ -e "$PLEXDRIVE" ]]; then
-		echo -e " ${BWHITE}* Suppression Plexdrive...${NC}"
+		echo -e " ${BWHITE}* Suppression Plexdrive${NC}"
 		service plexdrive stop > /dev/null 2>&1
 		rm /etc/systemd/system/plexdrive.service > /dev/null 2>&1
 		rm -rf /mnt/plexdrive > /dev/null 2>&1
 		rm -rf /root/.plexdrive > /dev/null 2>&1
 		rm /usr/bin/plexdrive > /dev/null 2>&1
 		checking_errors $?
-	fi
-		USERHOMEDIR="/home/$SEEDUSER"
-		PLEXAUTOSCAN="/etc/systemd/system/plex_autoscan.service"
-		if [[ -e "$PLEXDRIVE" ]]; then
-			echo -e " ${BWHITE}* Suppression plex_autoscan${NC}"
-			if [[ -e "$PLEXAUTOSCAN" ]]; then
-				systemctl stop plex_autoscan.service > /dev/null 2>&1
-				systemctl disable plex_autoscan.service > /dev/null 2>&1
-				rm /etc/systemd/system/plex_autoscan.service > /dev/null 2>&1
-			fi
-			checking_errors $?
 
-			echo -e " ${BWHITE}* Suppression rclone${NC}"
-			systemctl stop rclone.service > /dev/null 2>&1
-			systemctl disable rclone.service > /dev/null 2>&1
-			rm /etc/systemd/system/rclone.service > /dev/null 2>&1
-			rm /usr/bin/rclone > /dev/null 2>&1
-			rm -rf /mnt/rclone > /dev/null 2>&1
-			rm -rf /root/.config/rclone > /dev/null 2>&1
-			checking_errors $?
+		echo -e " ${BWHITE}* Suppression plex_autoscan${NC}"
+		systemctl stop plex_autoscan.service > /dev/null 2>&1
+		systemctl disable plex_autoscan.service > /dev/null 2>&1
+		rm /etc/systemd/system/plex_autoscan.service > /dev/null 2>&1
+		checking_errors $?
 
-			echo -e " ${BWHITE}* Suppression cloudplow${NC}"
-			systemctl stop cloudplow.service > /dev/null 2>&1
-			systemctl disable cloudplow.service > /dev/null 2>&1
-			rm /etc/systemd/system/cloudplow.service > /dev/null 2>&1
-			checking_errors $?
+		echo -e " ${BWHITE}* Suppression rclone${NC}"
+		systemctl stop rclone.service > /dev/null 2>&1
+		systemctl disable rclone.service > /dev/null 2>&1
+		rm /etc/systemd/system/rclone.service > /dev/null 2>&1
+		rm /usr/bin/rclone > /dev/null 2>&1
+		rm -rf /mnt/rclone > /dev/null 2>&1
+		rm -rf /root/.config/rclone > /dev/null 2>&1
+		checking_errors $?
 
-			echo -e " ${BWHITE}* Suppression unionfs/mergerfs${NC}"
-			service unionfs stop > /dev/null 2>&1
-			systemctl disable unionfs.service > /dev/null 2>&1
-			rm /etc/systemd/system/unionfs.service > /dev/null 2>&1
+		echo -e " ${BWHITE}* Suppression cloudplow${NC}"
+		systemctl stop cloudplow.service > /dev/null 2>&1
+		systemctl disable cloudplow.service > /dev/null 2>&1
+		rm /etc/systemd/system/cloudplow.service > /dev/null 2>&1
+		checking_errors $?
+
+		echo -e " ${BWHITE}* Suppression unionfs/mergerfs${NC}"
+		service unionfs stop > /dev/null 2>&1
+		systemctl disable unionfs.service > /dev/null 2>&1
+		rm /etc/systemd/system/unionfs.service > /dev/null 2>&1
 			
-			service mergerfs stop > /dev/null 2>&1
-			systemctl disable mergerfs.service > /dev/null 2>&1
-			rm /etc/systemd/system/mergerfs.service > /dev/null 2>&1
-			checking_errors $?
-		fi
+		service mergerfs stop > /dev/null 2>&1
+		systemctl disable mergerfs.service > /dev/null 2>&1
+		rm /etc/systemd/system/mergerfs.service > /dev/null 2>&1
+		checking_errors $?
+	fi
 
-		echo -e " ${BWHITE}* Suppression user: $SEEDUSER...${NC}"
-		userdel -rf $SEEDUSER > /dev/null 2>&1
-		checking_errors $?
-		echo -e " ${BWHITE}* Suppression home $SEEDUSER...${NC}"
-		rm -Rf $USERHOMEDIR > /dev/null 2>&1
-		checking_errors $?
-		echo ""
+	echo -e " ${BWHITE}* Suppression user: $SEEDUSER...${NC}"
+	userdel -rf $SEEDUSER > /dev/null 2>&1
+	checking_errors $?
+
+	echo -e " ${BWHITE}* Suppression home $SEEDUSER...${NC}"
+	rm -Rf $USERHOMEDIR > /dev/null 2>&1
+	checking_errors $?
+	echo ""
 
 	echo -e " ${BWHITE}* Suppression Containers...${NC}"
 	docker rm -f $(docker ps -aq) > /dev/null 2>&1
 	docker volume rm $(docker volume ls -qf "dangling=true")
 	checking_errors $?
+
 	echo -e " ${BWHITE}* Suppression group...${NC}"
 	groupdel $SEEDGROUP > /dev/null 2>&1
 	checking_errors $?
+
 	echo -e " ${BWHITE}* Supression du dossier /opt/seedbox...${NC}"
 	rm -Rf $CONFDIR
 	checking_errors $?
+
 	pause
 }
 
