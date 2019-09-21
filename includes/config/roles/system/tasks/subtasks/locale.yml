@@ -15,7 +15,7 @@
 
 - name: "Locale | Generate 'locales'"
   locale_gen:
-    name: "en_US.UTF-8"
+    name: "fr_FR.UTF-8"
     state: present
   notify: Handers | Update 'locales'
 
@@ -31,7 +31,7 @@
     path: "/etc/default/locale"
     section: null
     option: "LANG"
-    value: "en_US.UTF-8"
+    value: "fr_FR.UTF-8"
     state: present
     create: yes
     no_extra_spaces: yes
