@@ -910,8 +910,14 @@ function add_user_htpasswd() {
 
 function install_services() {
 	DOMAIN=$(cat /opt/seedbox/variables/domain)
+	SEEDUSER=$(cat /opt/seedbox/variables/users)
+	SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 	INSTALLEDFILE="/home/$SEEDUSER/resume"
 	touch $INSTALLEDFILE > /dev/null 2>&1
+
+	if [[ -e "$SERVICESUSER$SEEDUSER" ]]; then
+	rm $SERVICESUSER$SEEDUSER
+	fi
 
 	if [[ ! -d "$CONFDIR/conf" ]]; then
 		mkdir -p $CONFDIR/conf > /dev/null 2>&1
