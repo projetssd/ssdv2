@@ -55,6 +55,11 @@
         name: "{{ plex_docker_image }}"
         source: pull
 
+    - name: "Check if '/dev/dri' exists"
+      stat:
+        path: "/dev/dri"
+      register: dev_dri
+
     - name: "Check if 'Preferences.xml' exists"
       stat:
         path: "/opt/seedbox/docker/{{ user.stdout }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
@@ -135,6 +140,7 @@
           PLEX_CLAIM: "{{ (plex_claim_code) | default(omit) }}"
           TZ: "Europe/Paris"
         volumes: "{{ plex_docker_volumes }}"
+        devices: "{{ '/dev/dri:/dev/dri' if (gpu.intel and dev_dri.stat.exists) | default(false) else omit }}"
         etc_hosts: "{{ plex_docker_hosts }}"
         purge_networks: yes
         networks:

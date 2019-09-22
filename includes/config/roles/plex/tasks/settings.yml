@@ -6,3 +6,8 @@ plex:
   force_high_output_bitrates: yes
   db_cache_size: 1000000
   transcodes: /mnt/transcodes
+gpu:
+  intel: yes
+  nvidia:
+    enabled: no
+    driver: 410.78
