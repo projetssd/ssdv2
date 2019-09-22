@@ -911,13 +911,8 @@ function add_user_htpasswd() {
 function install_services() {
 	DOMAIN=$(cat /opt/seedbox/variables/domain)
 	SEEDUSER=$(cat /opt/seedbox/variables/users)
-	SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 	INSTALLEDFILE="/home/$SEEDUSER/resume"
 	touch $INSTALLEDFILE > /dev/null 2>&1
-
-	if [[ -e "$SERVICESUSER$SEEDUSER" ]]; then
-	rm $SERVICESUSER$SEEDUSER
-	fi
 
 	if [[ ! -d "$CONFDIR/conf" ]]; then
 		mkdir -p $CONFDIR/conf > /dev/null 2>&1
@@ -1298,7 +1293,7 @@ function uninstall_seedbox() {
 
 	echo -e " ${BWHITE}* Suppression Containers...${NC}"
 	docker rm -f $(docker ps -aq) > /dev/null 2>&1
-	docker volume rm $(docker volume ls -qf "dangling=true")
+	docker volume rm $(docker volume ls -qf "dangling=true") > /dev/null 2>&1
 	checking_errors $?
 
 	echo -e " ${BWHITE}* Suppression group...${NC}"
