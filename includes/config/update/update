@@ -1,14 +1,19 @@
 #!/bin/bash
 
-source /opt/seedbox-compose/includes/functions.sh
-source /opt/seedbox-compose/includes/variables.sh
+source includes/functions.sh
+source includes/variables.sh
 
-## mise à jour du git
-#rm -rf /opt/seedbox-compose > /dev/null 2>&1
-#git clone https://github.com/laster13/patxav.git /opt/seedbox-compose
+    	echo -e "${CRED}---------------------------------------------------------------${CEND}"
+    	echo -e "${CRED}     /!\ MISE A JOUR DU SERVEUR AVEC CLOUDFLARE /!\            ${CEND}"
+    	echo -e "${CRED}---------------------------------------------------------------${CEND}"
+	echo ""
+
 
 ## Mise à jour du systeme
 update_system
+
+## INSTALLATION DES PACKAGES
+install_base_packages
 
 ## suppression traefik
 docker rm -f traefik > /dev/null 2>&1
@@ -19,6 +24,7 @@ docker rm -f portainer > /dev/null 2>&1
 rm -rf /opt/seedbox/docker/portainer
 
 ## cloudflare
+echo ""
 cloudflare
 
 ## reinstallation traefik, portainer
@@ -26,10 +32,14 @@ install_traefik
 install_portainer
 
 ## reinstallation application
-SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 SEEDUSER=$(cat /opt/seedbox/variables/users)
+SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 while read line; do echo $line | cut -d'.' -f1; done < /home/$SEEDUSER/resume > $SERVICESUSER$SEEDUSER
 mv /home/$SEEDUSER/resume /tmp
-install_service
+install_services
 mv /tmp/resume /home/$SEEDUSER/
 rm $SERVICESUSER$SEEDUSER
+    	echo -e "${CRED}---------------------------------------------------------------${CEND}"
+    	echo -e "${CRED}     /!\ MISE A JOUR DU SERVEUR EFFECTUEE AVEC SUCCES /!\     ${CEND}"
+    	echo -e "${CRED}---------------------------------------------------------------${CEND}"
+	echo ""

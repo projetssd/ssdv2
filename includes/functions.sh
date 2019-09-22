@@ -236,7 +236,7 @@ function script_classique() {
 			echo ""
 			echo -e "${CCYAN}OUTILS${CEND}"
 			echo -e "${CGREEN}${CEND}"
-			echo -e "${CGREEN}   1) Mise à jour - Nouvelle version du script${CEND}"
+			echo -e "${CGREEN}   1) Mise à jour Cloudflare${CEND}"
 			echo -e "${CGREEN}   2) Installation du motd${CEND}"
 			echo -e "${CGREEN}   3) Traktarr${CEND}"
 			echo -e "${CGREEN}   4) Webtools${CEND}"
@@ -356,7 +356,7 @@ function script_plexdrive() {
 			echo ""
 			echo -e "${CCYAN}OUTILS${CEND}"
 			echo -e "${CGREEN}${CEND}"
-			echo -e "${CGREEN}   1) Mise à jour - Nouvelle version du script${CEND}"
+			echo -e "${CGREEN}   1) Mise à jour Cloudflare${CEND}"
 			echo -e "${CGREEN}   2) Installation du motd${CEND}"
 			echo -e "${CGREEN}   3) Traktarr${CEND}"
 			echo -e "${CGREEN}   4) Webtools${CEND}"
@@ -659,41 +659,11 @@ function install_docker() {
 	echo -e "${BLUE}### DOCKER ###${NC}"
 	echo -e " ${BWHITE}* Installation Docker${NC}"
 	file="/usr/bin/docker"
-	
 	if [ ! -e "$file" ]; then
 		ansible-playbook /opt/seedbox-compose/includes/config/roles/docker/tasks/main.yml
 	else
 		echo -e " ${YELLOW}* docker est déjà installé !${NC}"
 	fi
-	
-    	# Si echec Installation, procédure d'urgence
-
-    	if [ ! -e "$file" ]; then
-        	clear
-        	echo "Installation de Docker"
-       		sleep 2
-        	clear
-        	curl -fsSL get.docker.com -o get-docker.sh
-        	sh get-docker.sh
-        	echo ""
-        	echo "Starting Docker (Please Be Patient)"
-        	sleep 2
-        	systemctl start docker
-        	sleep 2
-	else
-		echo -e " ${YELLOW}* Docker est déjà installé !${NC}"
-
-    	fi
-
-    	##### Nouvelle vérification, en cas d'echec sortie install
-    	file="/usr/bin/docker"
-    	if [ -e "$file" ]
-      		then
-      		sleep 5
-    	else
-      		echo "INFO - ECHEC: Echec de l'installation de docker! Abandon!"
-        	exit
-    	fi
 	echo ""
 }
 
