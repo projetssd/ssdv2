@@ -15,6 +15,9 @@ update_system
 ## INSTALLATION DES PACKAGES
 install_base_packages
 
+## suppression des yml dans /opt/seedbox/conf
+rm /opt/seedbox/conf/*
+
 ## suppression traefik
 docker rm -f traefik > /dev/null 2>&1
 rm -rf /opt/seedbox/docker/traefik
