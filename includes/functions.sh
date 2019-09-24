@@ -199,7 +199,12 @@ function script_classique() {
 	clear
 
 	# Vérification installation modt
+	confmodt="/opt/motd"
+	if [ -d "$confmodt" ]; then
+	insert_mod
+	else
 	logo
+	fi
 
 	echo ""
 	echo -e "${CCYAN}SEEDBOX CLASSIQUE${CEND}"
@@ -304,10 +309,13 @@ function script_classique() {
 }
 
 function insert_mod() {
-	/etc/update-motd.d/01-banner
-	/etc/update-motd.d/04-load-average
-	/etc/update-motd.d/10-plex-stats
-	/etc/update-motd.d/12-rtorrent-stats
+	sed -i 's/\/etc\/update-motd.d/\/opt\/motd\/motd/g' /opt/motd/motd/04-load-average
+	sed -i 's/\/etc\/update-motd.d/\/opt\/motd\/motd/g' /opt/motd/motd/10-plex-stats
+	sed -i 's/\/etc\/update-motd.d/\/opt\/motd\/motd/g' /opt/motd/motd/12-rtorrent-stats
+	/opt/motd/motd/01-banner
+	/opt/motd/motd/04-load-average
+	/opt/motd/motd/10-plex-stats
+	/opt/motd/motd/12-rtorrent-stats
 }
 
 function script_plexdrive() {
