@@ -46,9 +46,6 @@
         - "unionfs.service"
         - "mergerfs.service"
 
-    - name: Mount Tasks
-      import_tasks: "subtasks/mounts.yml"
-
 # New Setup
 
     - name: Basic Tasks

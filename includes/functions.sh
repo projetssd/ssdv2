@@ -443,7 +443,7 @@ function install_base_packages() {
 	echo -e "${BLUE}### INSTALLATION DES PACKAGES ###${NC}"
 	echo ""
 	echo -e " ${BWHITE}* Installation apache2-utils, unzip, git, curl ...${NC}"
-	ansible-playbook /opt/seedbox-compose/includes/config/dependency.yml
+	ansible-playbook /opt/seedbox-compose/includes/config/roles/install/tasks/main.yml
 	checking_errors $?
 	echo ""
 }
@@ -496,9 +496,20 @@ function checking_system() {
 	## installation ansible
 	echo -e "${BLUE}### ANSIBLE ###${NC}"
 	echo -e " ${BWHITE}* Installation de Ansible ${NC}"
+
+	if [[ "$SYSTEMOS" == "Ubuntu" ]]; then
 	apt-get install software-properties-common -y > /dev/null 2>&1
 	apt-add-repository --yes --update ppa:ansible/ansible > /dev/null 2>&1
 	apt-get install ansible -y > /dev/null 2>&1
+	fi
+
+	if [[ "$SYSTEMOS" == "Debian" ]]; then
+	echo "deb http://ppa.launchpad.net/ansible/ansible/ubuntu bionic main" >> /etc/apt/sources.list
+	apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 93C4A3FD7BB9C367
+	apt update
+	apt install ansible
+	fi
+
 
 	# Configuration ansible
  	mkdir -p /etc/ansible/inventories/ 1>/dev/null 2>&1
@@ -544,7 +555,6 @@ function install_fail2ban() {
 function install_traefik() {
 	echo -e "${BLUE}### TRAEFIK ###${NC}"
 		echo -e " ${BWHITE}* Installation Traefik${NC}"
-		docker network create traefik_proxy > /dev/null 2>&1
 		ansible-playbook /opt/seedbox-compose/includes/dockerapps/traefik.yml
 		checking_errors $?		
 	echo ""
@@ -668,6 +678,7 @@ function install_docker() {
 	echo -e " ${BWHITE}* Installation Docker${NC}"
 	file="/usr/bin/docker"
 	if [ ! -e "$file" ]; then
+		cp -r /usr/local/lib/python2.7/dist-packages/backports/ssl_match_hostname/ /usr/lib/python2.7/dist-packages/backports
 		ansible-playbook /opt/seedbox-compose/includes/config/roles/docker/tasks/main.yml
 	else
 		echo -e " ${YELLOW}* docker est déjà installé !${NC}"
