@@ -36,7 +36,6 @@ case $CHOICE in
 			choose_services
 			install_services
 			filebot
-			motd
 			resume_seedbox
 			pause
 			script_classique
@@ -75,7 +74,6 @@ case $CHOICE in
 				sed -i "s/\"enabled\"\: true/\"enabled\"\: false/g" /home/$SEEDUSER/scripts/cloudplow/config.json
 			fi
 			filebot
-			motd
 			sauve
 			resume_seedbox
 			pause
