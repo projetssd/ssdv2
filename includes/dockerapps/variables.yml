@@ -3,7 +3,7 @@
 ---
 # VARIABLES #########################################################
 
-- name: 'Register Domaine'
+- name: 'Register Domain'
   shell: 'cat /opt/seedbox/variables/domain'
   register: domain
   ignore_errors: True

@@ -53,9 +53,9 @@
         force: yes
       when: not plex_dupefinder_config.stat.exists
 
-    - name: Set plexdupes.py as executable
+    - name: Set plex_dupefinder.py as executable
       file:
-        path: /home/{{user.stdout}}/scripts/plex_dupefinder/plexdupes.py
+        path: /home/{{user.stdout}}/scripts/plex_dupefinder/plex_dupefinder.py
         owner: "{{userid.stdout}}"
         group: "{{groupid.stdout}}"
         mode: a+x
@@ -65,6 +65,6 @@
 
     - name: "Create /usr/local/bin symlink"
       file:
-        src: "/home/{{user.stdout}}/scripts/plex_dupefinder/plexdupes.py"
+        src: "/home/{{user.stdout}}/scripts/plex_dupefinder/plex_dupefinder.py"
         dest: "/usr/local/bin/plexdupes"
         state: link

@@ -21,9 +21,9 @@
       - linux-tools-generic
   when: ansible_distribution == 'Ubuntu'
 
-- name: CPU Frequency | Install 'linux-tools' for Debian
+- name: CPU Frequency | Install 'linux-perf' for Debian
   apt:
-    name: linux-tools
+    name: linux-perf
     state: present
   when: ansible_distribution == 'Debian'
 
@@ -32,6 +32,14 @@
   args:
     warn: false
   ignore_errors: yes
+  when: ansible_distribution == 'Ubuntu'
+
+- name: "CPU Frequency | Install 'linux-perf-{{ ansible_kernel }}'"
+  shell: "apt-get install -qq $(apt-cache search -n linux-perf-{{ ansible_kernel }} | awk '{print $1}' | tail -n 1)"
+  args:
+    warn: false
+  ignore_errors: yes
+  when: ansible_distribution == 'Debian'
 
 - name: CPU Frequency | Ensure 'cpufrequtils' is enabled
   ini_file:

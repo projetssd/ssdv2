@@ -1,2 +1,2 @@
 system:
-  timezone: auto
+  timezone: "Europe/Paris"
