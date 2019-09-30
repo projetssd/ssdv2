@@ -523,6 +523,7 @@ function checking_system() {
   	echo "callback_whitelist = profile_tasks" >> /etc/ansible/ansible.cfg
 	echo "deprecation_warnings=False" >> /etc/ansible/ansible.cfg
   	echo "inventory = /etc/ansible/inventories/local" >> /etc/ansible/ansible.cfg
+	echo "interpreter_python=/usr/bin/python" >> /etc/ansible/ansible.cfg
 	checking_errors $?
 	echo ""
 }
