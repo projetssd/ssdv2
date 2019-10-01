@@ -1,35 +1,8 @@
 #!/bin/sh
-#################################################################################
-# Title:         Cloudbox: Dependencies Installer                               #
-# Author(s):     L3uddz, Desimaniac, EnorMOZ                                    #
-# URL:           https://github.com/Cloudbox/Cloudbox                           #
-# Description:   Installs dependencies needed for Cloudbox.                     #
-# --                                                                            #
-#             Part of the Cloudbox project: https://cloudbox.works              #
-#################################################################################
-#                     GNU General Public License v3.0                           #
-#################################################################################
-# Usage:                                                                        #
-# ======                                                                        #
-# curl -s https://cloudbox.works/scripts/dep.sh | sudo sh                       #
-# wget -qO- https://cloudbox.works/scripts/dep.sh | sudo sh                     #
-#                                                                               #
-# Custom Ansible Version:                                                       #
-# curl -s https://cloudbox.works/scripts/dep.sh | sudo sh -s <version>          #
-# wget -qO- https://cloudbox.works/scripts/dep.sh | sudo sh -s <version>        #
-#################################################################################
 
 ## Constants
 readonly PIP="9.0.3"
 readonly ANSIBLE="2.5.14"
-
-## AppVeyor
-if [ "$SUDO_USER" = "appveyor" ]; then
-    rm /etc/apt/sources.list.d/*
-    rm /etc/apt/sources.list
-    curl https://cloudbox.works/scripts/apt-sources/xenial.txt | tee /etc/apt/sources.list
-    apt-get update
-fi
 
 ## Environmental Variables
 export DEBIAN_FRONTEND=noninteractive
@@ -52,14 +25,27 @@ apt-get install -y --reinstall \
 apt-get update
 
 ## Add apt repos
-add-apt-repository main
-add-apt-repository universe
-add-apt-repository restricted
-add-apt-repository multiverse
+fullrel=$(lsb_release -sd)
+osname=$(lsb_release -si)
+relno=$(lsb_release -sr)
+relno=$(printf "%.0f\n" "$relno")
+hostname=$(hostname -I | awk '{print $1}')
+
+if echo $osname "Debian" &>/dev/null; then
+	add-apt-repository main 2>&1 >> /dev/null
+	add-apt-repository non-free 2>&1 >> /dev/null
+	add-apt-repository contrib 2>&1 >> /dev/null
+elif echo $osname "Ubuntu" &>/dev/null; then
+	add-apt-repository main 2>&1 >> /dev/null
+	add-apt-repository universe 2>&1 >> /dev/null
+	add-apt-repository restricted 2>&1 >> /dev/null
+	add-apt-repository multiverse 2>&1 >> /dev/null
+fi
 apt-get update
 
 ## Install apt Dependencies
 apt-get install -y --reinstall \
+    lsb-release \
     nano \
     git \
     build-essential \
