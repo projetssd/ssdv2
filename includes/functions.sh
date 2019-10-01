@@ -16,7 +16,7 @@ appli='\033[0;36mPlex - Sonarr - Medusa - Rutorrent - Radarr - Jackett - Pyload 
 printf "               ${color1}.-.${nocolor}\n"
 printf "         ${color2}.-'\`\`${color1}(   )    ${companyname}${nocolor}\n"
 printf "      ${color3},\`\\ ${color2}\\    ${color1}\`-\`${color2}.    ${divisionname}${nocolor}\n"
-printf "     ${color3}/   \\ ${color2}'\`\`-.   \`   ${color3}`lsb_release -s -d`${nocolor}\n"
+printf "     ${color3}/   \\ ${color2}'\`\`-.   \`   ${color3}`gawk -F= '/^NAME/{print $2}' /etc/os-release`${nocolor}\n"
 printf "   ${color2}.-.  ${color3},       ${color2}\`___:  ${nocolor}`uname -srmo`${nocolor}\n"
 printf "  ${color2}(   ) ${color3}:       ${color1} ___   ${nocolor}`date +"%A, %e %B %Y, %r"`${nocolor}\n"
 printf "   ${color2}\`-\`  ${color3}\`      ${color1} ,   :${nocolor}  Seedbox docker\n"
