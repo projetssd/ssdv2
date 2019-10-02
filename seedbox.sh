@@ -33,11 +33,7 @@ apt-get install -y --reinstall \
 apt-get update
 
 ## Add apt repos
-fullrel=$(lsb_release -sd)
 osname=$(lsb_release -si)
-relno=$(lsb_release -sr)
-relno=$(printf "%.0f\n" "$relno")
-hostname=$(hostname -I | awk '{print $1}')
 
 if echo $osname "Debian" &>/dev/null; then
 	add-apt-repository main 2>&1 >> /dev/null
