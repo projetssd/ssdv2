@@ -64,7 +64,7 @@
       set_fact:
         pg_volumes:
           - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}:/config'
-          - '/home/%USER%/filebot:/output:rw'
+          - '/home/{{user.stdout}}/filebot:/output:rw'
           - '/etc/localtime:/etc/localtime:ro'
 
     - name: 'Setting PG ENV'
