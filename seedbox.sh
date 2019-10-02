@@ -100,6 +100,8 @@ cp /usr/local/bin/pip /usr/bin/pip
 cp /usr/local/bin/pip3 /usr/bin/pip3
 fi
 
+pause
+
 clear
 if [[ ! -d "$CONFDIR" ]]; then
 logo
