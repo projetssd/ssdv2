@@ -3,7 +3,21 @@
 source includes/functions.sh
 source includes/variables.sh
 clear
+echo -e "${CCYAN}
+ ___  ____  ____  ____  ____  _____  _  _ 
+/ __)( ___)(  _ \(  _ \(  _ \(  _  )( \/ )
+\__ \ )__)  )(_) ))(_) )) _ < )(_)(  )  ( 
+(___/(____)(____/(____/(____/(_____)(_/\_)
+
+${CEND}"
+
 echo ""
+echo -e "${CCYAN}---------------------------------${CEND}"
+echo -e "${CCYAN}[  INSTALLATION DES PRÉ-REQUIS  ]${CEND}"
+echo -e "${CCYAN}---------------------------------${CEND}"
+echo ""
+echo -e "\n${CGREEN}Appuyer sur ${CEND}${CCYAN}[ENTREE]${CEND}${CGREEN} pour lancer le script${CEND}"
+read -r
 
 if [[ ! -d "$CONFDIR" ]]; then
 
@@ -191,8 +205,8 @@ case $CHOICE in
 			conf_dir
 			update_system
 			install_base_packages
-			define_parameters
 			install_docker
+			define_parameters
 			install_plexdrive
 			install_rclone
 			install_fail2ban
@@ -200,7 +214,6 @@ case $CHOICE in
 			restore
 			choose_media_folder_plexdrive
 			unionfs_fuse
-			docker network create traefik_proxy
 			cloudflare
 			install_traefik
 			install_portainer
@@ -236,7 +249,7 @@ case $CHOICE in
 
 			## restauration des crons
 			(crontab -l | grep . ; echo "*/1 * * * * /opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh") | crontab -
-
+			ln -s /home/$SEEDUSER/scripts/plex_dupefinder/plex_dupefinder.py /usr/local/bin/plexdupes
 			mv /tmp/resume /home/$SEEDUSER/
 			rm $SERVICESUSER$SEEDUSER
 			checking_errors $?
