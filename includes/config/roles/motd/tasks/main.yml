@@ -65,7 +65,7 @@
     - /etc/motd.dynamic
 
 - name: Create motd directories
-  file: "path={{ item }} state=directory owner={{ user.stdout }} group={{ group.stdout }} mode=0775 recurse=yes"
+  file: "path={{ item }} state=directory owner=root group=root mode=0775 recurse=yes"
   with_items:
     - /opt/motd
 
@@ -92,7 +92,7 @@
     version: HEAD
     force: yes
   become: yes
-  become_user: "{{ user.stdout }}"
+  become_user: "root"
 
 - name: Install pip requirements
   pip:
@@ -108,8 +108,8 @@
   template:
     src: /opt/seedbox-compose/includes/config/roles/motd/templates/config.json.j2
     dest: /opt/motd/config.json
-    owner: "{{ user.stdout }}"
-    group: "{{ group.stdout }}"
+    owner: "root"
+    group: "root"
     mode: 0775
     force: no
   when: (not motd_config.stat.exists)
@@ -118,15 +118,23 @@
   file:
     path: /opt/motd/activity.log
     state: touch
-    owner: "{{ user.stdout }}"
-    group: "{{ group.stdout }}"
+    owner: "root"
+    group: "root"
     mode: 0775
 
 - name: Set 'cloudbox-motd.py' as executable
   file:
     path: /opt/motd/cloudbox-motd.py
-    owner: "{{ user.stdout }}"
-    group: "{{ group.stdout }}"
+    owner: "root"
+    group: "root"
+    mode: a+x
+
+- name: Set 'all files' as executable
+  file:
+    path: /opt/motd/motd/
+    owner: "root"
+    group: "root"
+    recurse: yes
     mode: a+x
 
 - name: Check if '/etc/ssh/sshd_config' exists

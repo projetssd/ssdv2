@@ -19,7 +19,7 @@
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: radarr
+        subdomain: nowshowing
       when: cloudflare_config.stat.exists
 
     - name: 'Set Known Facts'
@@ -58,12 +58,6 @@
           - '/home/{{user.stdout}}:/home/{{user.stdout}}'
           - '/etc/localtime:/etc/localtime:ro'
 
-    - name: 'Setting PG ENV'
-      set_fact:
-        pg_env:
-          PUID: '{{userid.stdout}}'
-          PGID: '{{groupid.stdout}}'
-
     # MAIN DEPLOYMENT #############################################################
 
     - name: 'Deploying {{pgrole}}'
@@ -72,7 +66,6 @@
         image: '{{image}}'
         pull: yes
         volumes: '{{pg_volumes}}'
-        env: '{{pg_env}}'
         restart_policy: unless-stopped
         networks:
           - name: traefik_proxy
