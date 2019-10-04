@@ -322,14 +322,7 @@ function script_plexdrive() {
 	if [[ -d "$CONFDIR" ]]; then
 	clear
 
-	# Vérification installation modt
-	confmodt="/opt/motd"
-	if [ -d "$confmodt" ]; then
-	insert_mod
-	else
 	logo
-	fi
-
 	echo ""
 	echo -e "${CCYAN}SEEDBOX RCLONE/PLEXDRIVE${CEND}"
 	echo -e "${CGREEN}${CEND}"
