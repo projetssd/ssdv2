@@ -3,6 +3,7 @@
 source includes/functions.sh
 source includes/variables.sh
 clear
+if [[ ! -d "$CONFDIR" ]]; then
 echo -e "${CCYAN}
  ___  ____  ____  ____  ____  _____  _  _ 
 / __)( ___)(  _ \(  _ \(  _ \(  _  )( \/ )
@@ -18,8 +19,6 @@ echo -e "${CCYAN}---------------------------------${CEND}"
 echo ""
 echo -e "\n${CGREEN}Appuyer sur ${CEND}${CCYAN}[ENTREE]${CEND}${CGREEN} pour lancer le script${CEND}"
 read -r
-
-if [[ ! -d "$CONFDIR" ]]; then
 
 ## Constants
 readonly PIP="9.0.3"
