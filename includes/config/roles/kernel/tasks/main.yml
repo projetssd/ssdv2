@@ -1,0 +1,25 @@
+#########################################################################
+# Title:         Cloudbox: Kernel Role                                  #
+# Author(s):     l3uddz, desimaniac                                     #
+# URL:           https://github.com/cloudbox/cloudbox                   #
+# --                                                                    #
+#         Part of the Cloudbox project: https://cloudbox.works          #
+#########################################################################
+#                   GNU General Public License v3.0                     #
+#########################################################################
+---
+- hosts: localhost
+  gather_facts: true
+  tasks:
+
+    - name: "Hetzner Tasks"
+      import_tasks: "subtasks/hetzner.yml"
+      tags: kernel-hetzner
+
+  handlers:
+    # https://github.com/debops/ansible-grub
+    - name: Reload GRUB
+      command: grub-mkconfig -o /boot/grub/grub.cfg
+      register: grub_register_update
+      failed_when: ('error' in grub_register_update.stderr)
+
