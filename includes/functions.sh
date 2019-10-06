@@ -458,16 +458,17 @@ function checking_errors() {
 
 function install_fail2ban() {
 	echo -e "${BLUE}### FAIL2BAN ###${NC}"
-	SSH=$(echo ${SSH_CLIENT##* })
+	SSH_PORT=$(echo ${SSH_CLIENT##* })
+	SSH_IP=$(echo ${SSH_CLIENT} | cut -d " " -f1)
 	IP_DOM=$(grep 'Accepted' /var/log/auth.log | cut -d ' ' -f11 | head -1)
 	cp "$BASEDIR/includes/config/fail2ban/custom.conf" "/etc/fail2ban/jail.d/custom.conf" > /dev/null 2>&1
 	cp "$BASEDIR/includes/config/fail2ban/traefik.conf" "/etc/fail2ban/jail.d/traefik.conf" > /dev/null 2>&1
 	cp "$BASEDIR/includes/config/fail2ban/traefik-auth.conf" "/etc/fail2ban/filter.d/traefik-auth.conf" > /dev/null 2>&1
 	cp "$BASEDIR/includes/config/fail2ban/traefik-botsearch.conf" "/etc/fail2ban/filter.d/traefik-botsearch.conf" > /dev/null 2>&1
 	cp "$BASEDIR/includes/config/fail2ban/docker-action.conf" "/etc/fail2ban/action.d/docker-action.conf" > /dev/null 2>&1
-	sed -i "s|%SSH%|$SSH|g" /etc/fail2ban/jail.d/custom.conf
-	sed -i "s|%IP_DOM%|$IP_DOM|g" /etc/fail2ban/jail.d/custom.conf
-	sed -i "s|%IP_DOM%|$IP_DOM|g" /etc/fail2ban/jail.d/traefik.conf
+	sed -i "s|%SSH%|$SSH_PORT|g" /etc/fail2ban/jail.d/custom.conf
+	sed -i "s|%IP_DOM%|$SSH_IP|g" /etc/fail2ban/jail.d/custom.conf
+	sed -i "s|%IP_DOM%|$SSH_IP|g" /etc/fail2ban/jail.d/traefik.conf
 	docker restart traefik > /dev/null 2>&1
 	systemctl restart fail2ban.service > /dev/null 2>&1
 	checking_errors $?
