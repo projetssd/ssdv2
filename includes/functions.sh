@@ -879,8 +879,8 @@ do
 		echo -e "${BLUE}### CONFIG POST COMPOSE SUBSONIC ###${NC}"
 		echo -e " ${BWHITE}* Mise à jour subsonic...${NC}"
 		docker exec subsonic update > /dev/null 2>&1
-		docker restart subsonic-$SEEDUSER > /dev/null 2>&1
-		docker exec subsonic-$SEEDUSER bash -c "echo '127.0.0.1 localhost.localdomain localhost subsonic.org' >> /etc/hosts"
+		docker restart subsonic > /dev/null 2>&1
+		docker exec subsonic bash -c "echo '127.0.0.1 localhost.localdomain localhost subsonic.org' >> /etc/hosts"
 		checking_errors $?
 		echo ""
 		echo -e "${BLUE}### SUBSONIC PREMIUM ###${NC}"
