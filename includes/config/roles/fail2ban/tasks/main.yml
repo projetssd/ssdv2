@@ -1,0 +1,67 @@
+---
+- hosts: localhost
+  gather_facts: true
+  tasks:
+
+    - name: Install Fail2ban
+      apt:
+        state: present
+        name:
+          - fail2ban
+      ignore_errors: yes
+
+    - name: Stop Fail2ban service
+      systemd:
+        name: fail2ban
+        state: stopped
+
+    - name: 'recuperation ip connection'
+      debug:
+        msg:
+        - "{{ ansible_env['SSH_CLIENT'].split() | first }}"
+
+    - name: 'recuperation port ssh'
+      debug:
+        msg:
+        - "{{ ansible_env['SSH_CLIENT'].split() | last }}"
+
+    - name: Import customs.conf 
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/fail2ban/templates/custom.conf.j2
+        dest: /etc/fail2ban/jail.d/custom.conf
+        force: yes
+
+    - name: Import traefik.conf
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/fail2ban/templates/traefik.conf.j2
+        dest: /etc/fail2ban/jail.d/traefik.conf
+        force: yes
+
+    - name: Import traefik-auth.conf
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/fail2ban/templates/traefik-auth.conf.j2
+        dest: /etc/fail2ban/filter.d/traefik-auth.conf
+        force: yes
+
+    - name: Import traefik-botsearch.conf
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/fail2ban/templates/traefik-botsearch.conf.j2
+        dest: /etc/fail2ban/filter.d/traefik-botsearch.conf
+        force: yes
+
+    - name: Import docker-action.conf
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/fail2ban/templates/docker-action.conf.j2
+        dest: /etc/fail2ban/action.d/docker-action.conf
+        force: yes
+
+    - name: Sart Fail2ban service
+      systemd:
+        name: fail2ban
+        state: started
+
+
+
+
+
+

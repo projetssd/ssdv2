@@ -78,7 +78,6 @@
           - "figlet"
           - "iotop"
           - "nload"
-          - "fail2ban"
           - "libchromaprint-tools"
           - "ufw"
           - "lolcat"
