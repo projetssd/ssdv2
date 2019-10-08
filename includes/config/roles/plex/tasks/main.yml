@@ -139,7 +139,7 @@
           PLEX_CLAIM: "{{ (plex_claim_code) | default(omit) }}"
           TZ: "Europe/Paris"
         volumes: "{{ plex_docker_volumes }}"
-        devices: "{{ '/dev/dri:/dev/dri' }}"
+        devices: "{{ '/dev/dri:/dev/dri' if (gpu.intel and dev_dri.stat.exists) | default(false) else omit }}"
         etc_hosts: "{{ plex_docker_hosts }}"
         purge_networks: yes
         networks:
