@@ -83,7 +83,7 @@
         name: '{{pgrole}}'
         image: '{{image}}'
         pull: yes
-        user: {{userid.stdout}}:{{groupid.stdout}}
+        user: '{{userid.stdout}}:{{groupid.stdout}}'
         volumes: '{{pg_volumes}}'
         env: '{{pg_env}}'
         restart_policy: unless-stopped
