@@ -1040,6 +1040,7 @@ function manage_apps() {
 			fi
 
 			if [[ "$APPSELECTED" = "seafile" ]]; then
+			rm -rf /opt/seedbox/docker/$SEEDUSER/mariadb
 			docker rm -f db memcached 
 			fi
 

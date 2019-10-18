@@ -34,6 +34,11 @@
         pgrole: 'seafile'
         image: 'seafileltd/seafile-mc:latest'
 
+    - name: Create seafile-net network
+      docker_network:
+        name: seafile-net
+        state: present
+
     # LABELS #######################################################################
     - name: 'Ajout label traefik'
       set_fact:

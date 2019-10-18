@@ -59,8 +59,6 @@
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
-          PUID: '{{userid.stdout}}'
-          PGID: '{{groupid.stdout}}'
           TZ: 'Europe/Paris'
 
     # MAIN DEPLOYMENT #############################################################
@@ -85,4 +83,4 @@
         docker exec sensorr sh -l -c "mv /app/sensorr/config.default.json /app/sensorr/config/config.json"
       register: result
 
-    - debug: msg="{{ result.stdout }}"
+    - debug: msg="{{ result }}"
