@@ -676,6 +676,12 @@ function create_user() {
 function choose_services() {
 	echo -e "${BLUE}### SERVICES ###${NC}"
 	echo -e " ${BWHITE}--> Services en cours d'installation : ${NC}"
+
+	menuservices="/tmp/menuservices.txt"
+	if [[ -e "$menuservices" ]]; then
+	rm /tmp/menuservices.txt
+	fi
+
 	for app in $(cat $SERVICESAVAILABLE);
 	do
 		service=$(echo $app | cut -d\- -f1)
@@ -683,9 +689,9 @@ function choose_services() {
 		echo "$service $desc off" >> /tmp/menuservices.txt
 	done
 	SERVICESTOINSTALL=$(whiptail --title "Gestion des Applications" --checklist \
-	"Applis à ajouter pour $SEEDUSER (Barre espace pour la sélection)" 28 60 17 \
+	"Appuyer sur la barre espace pour la sélection" 28 60 21 \
 	$(cat /tmp/menuservices.txt) 3>&1 1>&2 2>&3)
-	[[ "$?" = 1 ]] && script_plexdrive;
+	[[ "$?" = 1 ]] && script_plexdrive && rm /tmp/menuservices.txt;
 	SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 	touch $SERVICESPERUSER
 	for APPDOCKER in $SERVICESTOINSTALL
@@ -693,7 +699,6 @@ function choose_services() {
 		echo -e "	${GREEN}* $(echo $APPDOCKER | tr -d '"')${NC}"
 		echo $(echo ${APPDOCKER,,} | tr -d '"') >> $SERVICESPERUSER
 	done
-	rm /tmp/menuservices.txt
 }
 
 function webserver() {
@@ -876,6 +881,28 @@ do
 		echo -e "${BWHITE}	--> f3ada405ce890b6f8204094deb12d8a8${NC}"
 		echo ""
 		fi
+
+		if [[ "$line" == "seafile" ]]; then
+		echo ""
+		echo -e "${BLUE}### CONFIG POST COMPOSE SEAFILE ###${NC}"
+		echo -e " ${BWHITE}* Configuration seafile...${NC}"
+		echo ""
+			echo -e "${CCYAN}-----------------------------------------------------------------------------------${CEND}"
+			echo -e "${CGREEN}   1 ) Connexion: Votre mail et mot de passe             			    ${CEND}"
+			echo -e "${CGREEN}   2 ) Administrateur Système/Paramètres:					    ${CEND}"
+ 			echo -e "${YELLOW}       - SERVICE_URL ---> https://seafile.domain.com				    ${CEND}"
+			echo -e "${YELLOW}       - FILE_SERVER_ROOT ---> https://seafile.domaine.com/seafhttp		    ${CEND}"
+			echo -e "${CGREEN}   3 ) Définir compte Admin							    ${CEND}"
+			echo -e "${YELLOW}       - docker exec -it seafile /opt/seafile/seafile-server-latest/reset-admin.sh ${CEND}"
+			echo -e "${CGREEN}   4 ) Déconnexion Seafile							    ${CEND}"
+			echo -e "${CGREEN}   5 ) Reconnexion avec nouveau compte Admin					    ${CEND}"
+			echo -e "${CCYAN}-----------------------------------------------------------------------------------${CEND}"
+		echo ""
+		echo -e "\nNoter les ${CCYAN}informations du dessus${CEND} et appuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+		read -r
+
+		fi
+
 echo ""
 done
 }
@@ -1010,6 +1037,10 @@ function manage_apps() {
 
 			if [[ "$APPSELECTED" != "plex" ]]; then
 			rm $CONFDIR/conf/$APPSELECTED.yml
+			fi
+
+			if [[ "$APPSELECTED" = "seafile" ]]; then
+			docker rm -f db memcached 
 			fi
 
 			checking_errors $?

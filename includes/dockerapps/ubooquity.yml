@@ -5,9 +5,11 @@
   gather_facts: false
   tasks:
 
-    # VARIABLES ###################################################################
+    # VARIABLES ############################################################
     - name: 'Including variables'
       include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+      
+    # FACTS #######################################################################
 
     - name: Check config cloudflare exists
       stat:
@@ -17,23 +19,40 @@
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: radarr
+        subdomain: ubooquity
+      when: cloudflare_config.stat.exists
+
+    - name: Wait for 10 seconds before continuing
+      wait_for:
+        timeout: 10
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: ubooquityadmin
       when: cloudflare_config.stat.exists
 
     # FACTS #######################################################################
     - name: 'Set Known Facts'
       set_fact:
-        pgrole: 'phpmyadmin'
-        intport: '80'
-        image: 'phpmyadmin/phpmyadmin'
+        pgrole: 'ubooquity'
+        image: 'zerpex/ubooquity-docker'
+
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
+      with_items:
+        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}'
 
     # LABELS ######################################################################
-    - name: 'Ajout label traefik'
+    - name: 'Adding Traefik'
       set_fact:
         pg_labels:
           traefik.enable: 'true'
-          traefik.port: '{{intport}}'
-          traefik.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
+          traefik.app.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
+          traefik.app.port: '2202'
+          traefik.admin.frontend.rule: 'Host:ubooquityadmin.{{domain.stdout}}'
+          traefik.admin.port: '2502'
+          traefik.docker.network: 'traefik_proxy'
           traefik.frontend.headers.SSLHost: '{{domain.stdout}}'
           traefik.frontend.headers.SSLRedirect: 'true'
           traefik.frontend.headers.STSIncludeSubdomains: 'true'
@@ -44,20 +63,31 @@
           traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
           traefik.frontend.headers.forceSTSHeader: 'true'
 
-    - name: 'Setting PG ENV'
+    - name: 'Setting Volumes'
+      set_fact:
+        pg_volumes:
+          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}:/config'
+          - '/home/{{user.stdout}}:/home/{{user.stdout}}'
+          - '/home/{{user.stdout}}:/media'
+          - '/etc/localtime:/etc/localtime:ro'
+
+    - name: 'Setting ENV'
       set_fact:
         pg_env:
-          PMA_ARBITRARY: '1'
+          UID: '{{userid.stdout}}'
+          GID: '{{groupid.stdout}}'
+          TZ: 'Europe/Paris'
 
     # MAIN DEPLOYMENT #############################################################
-
     - name: 'Deploying {{pgrole}}'
       docker_container:
         name: '{{pgrole}}'
+        hostname: 'library'
         image: '{{image}}'
         pull: yes
+        volumes: '{{pg_volumes}}'
         env: '{{pg_env}}'
-        restart_policy: always
+        restart_policy: unless-stopped
         networks:
           - name: traefik_proxy
         state: started

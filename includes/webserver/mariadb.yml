@@ -18,7 +18,7 @@
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
       with_items:
-        - '/opt/seedbox/docker/%USER%/{{pgrole}}'
+        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}'
 
     - name: 'Setting Volumes'
       set_fact:
