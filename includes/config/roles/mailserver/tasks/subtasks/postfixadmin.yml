@@ -1,0 +1,28 @@
+---
+
+# LABELS ######################################################################
+- name: 'Ajout label traefik'
+  set_fact:
+    pg_labels:
+      traefik.enable: 'true'
+      traefik.frontend.rule: 'Host:postfixadmin.{{domain.stdout}}'
+      traefik.port: '8888'
+
+- name: 'Deploying postfixadmin'
+  docker_container:
+    name: 'postfixadmin'
+    recreate: true
+    domainname: '{{domain.stdout}}'
+    hostname: 'mail'
+    image: 'hardware/postfixadmin'
+    pull: yes
+    env:
+      DBPASS: '{{pass.stdout}}'
+    restart_policy: unless-stopped
+    networks:
+      - name: mail_network
+      - name: traefik_proxy
+    state: started
+    labels: '{{pg_labels}}'
+
+

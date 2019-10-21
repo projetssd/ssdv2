@@ -1,0 +1,26 @@
+---
+
+# LABELS ######################################################################
+- name: 'Ajout label traefik'
+  set_fact:
+    pg_labels:
+      traefik.enable: 'true'
+      traefik.frontend.rule: 'Host:webmail.{{domain.stdout}}'
+      traefik.port: '8888'
+
+- name: 'Deploying rainloop'
+  docker_container:
+    name: 'rainloop'
+    recreate: true
+    image: 'hardware/rainloop'
+    pull: yes
+    volumes:
+      - '/mnt/docker/rainloop:/rainloop/data'
+    restart_policy: unless-stopped
+    networks:
+      - name: mail_network
+      - name: traefik_proxy
+    state: started
+    labels: '{{pg_labels}}'
+
+
