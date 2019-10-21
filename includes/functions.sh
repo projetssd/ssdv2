@@ -370,13 +370,14 @@ function script_plexdrive() {
 			echo -e "${CGREEN}   4) Webtools${CEND}"
 			echo -e "${CGREEN}   5) rtorrent-cleaner de ${CCYAN}@Magicalex-Mondedie.fr${CEND}${NC}"
 			echo -e "${CGREEN}   6) Openvpn${CEND}"
-			echo -e "${CGREEN}   7) Retour menu principal${CEND}"
+			echo -e "${CGREEN}   7) Mailserver @Hardware${CEND}"
+			echo -e "${CGREEN}   8) Retour menu principal${CEND}"
 			echo -e ""
-			read -p "Votre choix [1-7]: " OUTILS
+			read -p "Votre choix [1-8]: " OUTILS
 
 			case $OUTILS in
 
-			1) ## Installation de la sauvegarde
+			1) ## Mise à jour Cloudflare
 			clear
 			echo ""
 			/opt/seedbox-compose/includes/config/update/update
@@ -422,7 +423,19 @@ function script_plexdrive() {
 			script_plexdrive
 			;;
 
-			7)
+			7) ## Installation du mailserver @Hardware
+			echo -e "${BLUE}### INSTALLATION DU MAILSERVER ###${NC}"
+			echo ""
+			echo -e " ${BWHITE}* Installation mailserver @Hardware${NC}"
+			ansible-playbook /opt/seedbox-compose/includes/config/roles/mailserver/tasks/main.yml
+
+			echo ""
+			echo -e " ${CCYAN}* https://github.com/laster13/patxav/wiki/Configuration-Mailserver-@Hardware${NC}"
+			pause
+			script_plexdrive
+			;;
+
+			8)
 			script_plexdrive
 			;;
 
