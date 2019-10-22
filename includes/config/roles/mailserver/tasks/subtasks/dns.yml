@@ -1,5 +1,11 @@
 ---
 
+- name: 'Modifiy /etc/host'
+  shell: echo "{{ public_ip }} mail.{{ domain.stdout }} mail" >> /etc/hosts
+
+- hostname:
+    name: mail
+
 - name: Set A Record mail
   cloudflare_dns:
     account_api_token: "{{ cloudflare_api.stdout }}"
