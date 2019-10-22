@@ -370,7 +370,11 @@ function script_plexdrive() {
 			echo -e "${CGREEN}   4) Webtools${CEND}"
 			echo -e "${CGREEN}   5) rtorrent-cleaner de ${CCYAN}@Magicalex-Mondedie.fr${CEND}${NC}"
 			echo -e "${CGREEN}   6) Openvpn${CEND}"
-			echo -e "${CGREEN}   7) Mailserver @Hardware${CEND}"
+			if docker ps | grep -q mailserver; then
+			echo -e "${YELLOW}   7) Desinstaller Mailserver @Hardware${CEND}"
+			else
+			echo -e "${CGREEN}   7) Installer Mailserver @Hardware${CEND}"
+			fi
 			echo -e "${CGREEN}   8) Retour menu principal${CEND}"
 			echo -e ""
 			read -p "Votre choix [1-8]: " OUTILS
@@ -424,13 +428,24 @@ function script_plexdrive() {
 			;;
 
 			7) ## Installation du mailserver @Hardware
-			echo -e "${BLUE}### INSTALLATION DU MAILSERVER ###${NC}"
-			echo ""
-			echo -e " ${BWHITE}* Installation mailserver @Hardware${NC}"
-			ansible-playbook /opt/seedbox-compose/includes/config/roles/mailserver/tasks/main.yml
-
-			echo ""
-			echo -e " ${CCYAN}* https://github.com/laster13/patxav/wiki/Configuration-Mailserver-@Hardware${NC}"
+			if docker ps | grep -q mailserver; then
+			    echo -e "${BLUE}### DESINSTALLATION DU MAILSERVER ###${NC}"
+			    echo ""
+			    echo -e " ${BWHITE}* désinstallation mailserver @Hardware${NC}"
+			    docker rm -f mailserver postfixadmin mariadb redis rainloop > /dev/null 2>&1
+			    rm -rf /mnt/docker > /dev/null 2>&1
+			    checking_errors $?
+			    echo""
+			    echo -e "${BLUE}### Mailserver a été supprimé ###${NC}"
+			    echo ""
+			else
+			    echo -e "${BLUE}### INSTALLATION DU MAILSERVER ###${NC}"
+			    echo ""
+			    echo -e " ${BWHITE}* Installation mailserver @Hardware${NC}"
+			    ansible-playbook /opt/seedbox-compose/includes/config/roles/mailserver/tasks/main.yml
+			    echo ""
+			    echo -e " ${CCYAN}* https://github.com/laster13/patxav/wiki/Configuration-Mailserver-@Hardware${NC}"
+			fi
 			pause
 			script_plexdrive
 			;;
