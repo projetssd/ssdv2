@@ -51,6 +51,6 @@
 
     - name: Set cron
       shell: |
-        (crontab -l | grep . ; echo "0 3 * * 6 bash /usr/bin/backup") | crontab -
+        (crontab -l | grep . ; echo "0 3 * * 6 bash /usr/local/bin/backup") | crontab -
 
 
