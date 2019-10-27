@@ -928,7 +928,23 @@ do
 		echo ""
 		echo -e "\nNoter les ${CCYAN}informations du dessus${CEND} et appuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
 		read -r
+		fi
 
+		if [[ "$line" == "piwigo" ]]; then
+		echo ""
+		echo -e "${BLUE}### CONFIG POST COMPOSE PIWIGO ###${NC}"
+		echo -e " ${BWHITE}* Configuration piwigo...${NC}"
+		echo ""
+			echo -e "${CCYAN}-----------------------------------------------------------------------------------${CEND}"
+			echo -e "${CGREEN}		Localhost: 'db-piwigo'						    ${CEND}"
+			echo -e "${CGREEN}		MYSQL_DATABASE: 'piwigodb'					    ${CEND}"
+ 			echo -e "${YELLOW}		MYSQL_USER: 'piwigo'						    ${CEND}"
+			echo -e "${YELLOW}		MYSQL_PASSWORD: 'piwigo'					    ${CEND}"
+			echo -e "${CGREEN}		MYSQL_ROOT_PASSWORD: 'piwigo'					    ${CEND}"
+			echo -e "${CCYAN}-----------------------------------------------------------------------------------${CEND}"
+		echo ""
+		echo -e "\nNoter les ${CCYAN}informations du dessus${CEND} et appuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+		read -r
 		fi
 
 echo ""
@@ -1068,8 +1084,11 @@ function manage_apps() {
 			fi
 
 			if [[ "$APPSELECTED" = "seafile" ]]; then
-			rm -rf /opt/seedbox/docker/$SEEDUSER/mariadb
-			docker rm -f db memcached 
+			docker rm -f db-seafile memcached 
+			fi
+
+			if [[ "$APPSELECTED" = "piwigo" ]]; then
+			docker rm -f db-piwigo
 			fi
 
 			checking_errors $?

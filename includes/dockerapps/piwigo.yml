@@ -1,20 +1,13 @@
 #!/bin/bash
 
-##Auteur - Laster13-Mondedie.fr
-
 ---
 - hosts: localhost
   gather_facts: false
   tasks:
   
-    # VARIABLES ##################################################################
+    # VARIABLES ############################################################
     - name: 'Including variables'
       include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
-
-    - name: 'Register pass'
-      shell: 'cat /opt/seedbox/variables/pass'
-      register: pass
-      ignore_errors: True
       
     # FACTS #######################################################################
 
@@ -26,31 +19,33 @@
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: seafile
+        subdomain: piwigo
       when: cloudflare_config.stat.exists
 
     - name: 'Set Known Facts'
       set_fact:
-        pgrole: 'seafile'
-        image: 'seafileltd/seafile-mc:latest'
+        pgrole: 'piwigo'
+        intport: '80'
+        image: 'linuxserver/piwigo'
 
-    - name: Create seafile-net network
+    - name: Create piwigo-net network
       docker_network:
-        name: seafile-net
+        name: piwigo-net
         state: present
 
-    # LABELS #######################################################################
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
+      with_items:
+        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}'
+
+    # LABELS ######################################################################
     - name: 'Ajout label traefik'
       set_fact:
         pg_labels:
-          traefik.docker.network: 'traefik_proxy'
           traefik.enable: 'true'
-          traefik.seafapp.backend: 'Seafile'
-          traefik.seafapp.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'          
-          traefik.seafdav.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}};PathPrefixStrip:/seafdav'
-          traefik.seafdav.port: '8080'
-          traefik.seafhttp.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}};PathPrefixStrip:/seafhttp'
-          traefik.seafhttp.port: '8082'
+          traefik.port: '{{intport}}'
+          traefik.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
+          traefik.frontend.auth.basic.users: '{{passwd.stdout}}'
           traefik.frontend.headers.SSLHost: '{{domain.stdout}}'
           traefik.frontend.headers.SSLRedirect: 'true'
           traefik.frontend.headers.STSIncludeSubdomains: 'true'
@@ -61,33 +56,25 @@
           traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
           traefik.frontend.headers.forceSTSHeader: 'true'
 
-    - name: 'Deploying memcached'
+    - name: 'Deploying db-piwigo'
       docker_container:
-        name: 'memcached'
-        image: 'memcached:1.5.6'
-        entrypoint: 'memcached -m 256'
-        pull: yes
-        networks:
-          - name: seafile-net
-
-    - name: 'Deploying db-seafile'
-      docker_container:
-        name: 'db-seafile'
+        name: 'db-piwigo'
         recreate: true
         image: 'linuxserver/mariadb'
         pull: yes
         published_ports:
-          - "127.0.0.1:3307:3306"
+          - "127.0.0.1:3308:3306"
         volumes:
-          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/db-seafile:/config'
+          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/db-piwigo:/config'
           - '/etc/localtime:/etc/localtime:ro'
         env:
-          PUID: '{{userid.stdout}}'
-          PGID: '{{groupid.stdout}}'
-          MYSQL_ROOT_PASSWORD: '{{pass.stdout}}'
+          MYSQL_DATABASE: 'piwigodb'
+          MYSQL_USER: 'piwigo'
+          MYSQL_PASSWORD: 'piwigo'
+          MYSQL_ROOT_PASSWORD: 'piwigo'
         restart_policy: unless-stopped
         networks:
-          - name: seafile-net
+          - name: piwigo-net
         state: started
 
     - name: Wait for 10 seconds before continuing
@@ -97,16 +84,16 @@
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
-          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}:/shared'
+          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/config:/config'
 
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
-          DB_HOST: 'db-seafile'
-          DB_ROOT_PASSWD: '{{pass.stdout}}'     
-          SEAFILE_ADMIN_EMAIL: '{{mail.stdout}}'      
-          SEAFILE_ADMIN_PASSWORD: '{{pass.stdout}}'
-          SEAFILE_SERVER_HOSTNAME: '{{pgrole}}.{{domain.stdout}}'
+          PUID: '{{userid.stdout}}'
+          PGID: '{{groupid.stdout}}'
+          TZ: 'Europe/Paris'
+
+    # MAIN DEPLOYMENT #############################################################
 
     - name: 'Deploying {{pgrole}}'
       docker_container:
@@ -118,6 +105,6 @@
         restart_policy: unless-stopped
         networks:
           - name: traefik_proxy
-          - name: seafile-net
+          - name: piwigo-net
         state: started
         labels: '{{pg_labels}}'

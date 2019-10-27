@@ -40,6 +40,8 @@
         image: '{{image}}'
         pull: yes
         volumes: '{{pg_volumes}}'
+        published_ports:
+          - "127.0.0.1:3308:3306"
         env: '{{pg_env}}'
         restart_policy: unless-stopped
         networks:
