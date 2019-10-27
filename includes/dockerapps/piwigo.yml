@@ -68,6 +68,8 @@
           - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/db-piwigo:/config'
           - '/etc/localtime:/etc/localtime:ro'
         env:
+          PUID: '{{userid.stdout}}'
+          PGID: '{{groupid.stdout}}'
           MYSQL_DATABASE: 'piwigodb'
           MYSQL_USER: 'piwigo'
           MYSQL_PASSWORD: 'piwigo'
