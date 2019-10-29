@@ -365,19 +365,20 @@ function script_plexdrive() {
 			echo -e "${CCYAN}OUTILS${CEND}"
 			echo -e "${CGREEN}${CEND}"
 			echo -e "${CGREEN}   1) Mise à jour Cloudflare${CEND}"
-			echo -e "${CGREEN}   2) Installation du motd${CEND}"
-			echo -e "${CGREEN}   3) Traktarr${CEND}"
-			echo -e "${CGREEN}   4) Webtools${CEND}"
-			echo -e "${CGREEN}   5) rtorrent-cleaner de ${CCYAN}@Magicalex-Mondedie.fr${CEND}${NC}"
-			echo -e "${CGREEN}   6) Openvpn${CEND}"
+			echo -e "${CGREEN}   2) Modèle Création Appli Personnalisée Docker${CEND}"
+			echo -e "${CGREEN}   3) Installation du motd${CEND}"
+			echo -e "${CGREEN}   4) Traktarr${CEND}"
+			echo -e "${CGREEN}   5) Webtools${CEND}"
+			echo -e "${CGREEN}   6) rtorrent-cleaner de ${CCYAN}@Magicalex-Mondedie.fr${CEND}${NC}"
+			echo -e "${CGREEN}   7) Openvpn${CEND}"
 			if docker ps | grep -q mailserver; then
-			echo -e "${YELLOW}   7) Desinstaller Mailserver @Hardware${CEND}"
+			echo -e "${YELLOW}   8) Desinstaller Mailserver @Hardware${CEND}"
 			else
-			echo -e "${CGREEN}   7) Installer Mailserver @Hardware${CEND}"
+			echo -e "${CGREEN}   8) Installer Mailserver @Hardware${CEND}"
 			fi
-			echo -e "${CGREEN}   8) Retour menu principal${CEND}"
+			echo -e "${CGREEN}   9) Retour menu principal${CEND}"
 			echo -e ""
-			read -p "Votre choix [1-8]: " OUTILS
+			read -p "Votre choix [1-9]: " OUTILS
 
 			case $OUTILS in
 
@@ -388,7 +389,14 @@ function script_plexdrive() {
 			script_plexdrive
 			;;
 
-			2) ## Installation du motd
+			2) ## Modèle création appli docker
+			clear
+			echo ""
+			/opt/seedbox-compose/includes/config/update/docker_create
+			script_plexdrive
+			;;
+
+			3) ## Installation du motd
 			clear
 			echo ""
 			motd
@@ -396,7 +404,7 @@ function script_plexdrive() {
 			script_plexdrive
 			;;
 
-			3) ## Installation de traktarr
+			4) ## Installation de traktarr
 			clear
 			echo ""
 			traktarr
@@ -404,7 +412,7 @@ function script_plexdrive() {
 			script_plexdrive
 			;;
 
-			4) ## Installation de Webtools
+			5) ## Installation de Webtools
 			clear
 			echo ""
 			webtools
@@ -412,7 +420,7 @@ function script_plexdrive() {
 			script_plexdrive
 			;;
 
-			5) ## Installation de rtorrent-cleaner
+			6) ## Installation de rtorrent-cleaner
 			clear
 			echo ""
 			rtorrent-cleaner
@@ -421,13 +429,13 @@ function script_plexdrive() {
 			script_plexdrive
 			;;
 
-			6)
+			7)
 			openvpn
 			pause
 			script_plexdrive
 			;;
 
-			7) ## Installation du mailserver @Hardware
+			8) ## Installation du mailserver @Hardware
 			if docker ps | grep -q mailserver; then
 			    echo -e "${BLUE}### DESINSTALLATION DU MAILSERVER ###${NC}"
 			    echo ""
@@ -450,7 +458,7 @@ function script_plexdrive() {
 			script_plexdrive
 			;;
 
-			8)
+			9)
 			script_plexdrive
 			;;
 

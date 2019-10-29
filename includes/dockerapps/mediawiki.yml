@@ -1,0 +1,96 @@
+#!/bin/bash
+
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+  
+    # VARIABLES ############################################################
+    - name: 'Including variables'
+      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+      
+    # FACTS #######################################################################
+
+    - name: Check config cloudflare exists
+      stat:
+        path: "/opt/seedbox/variables/cloudflare_api"
+      register: cloudflare_config
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: mediawiki
+      when: cloudflare_config.stat.exists
+
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'mediawiki'
+        intport: '80'
+        image: 'mediawiki'
+
+    - name: Create mediawiki-net network
+      docker_network:
+        name: mediawiki-net
+        state: present
+
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
+      with_items:
+        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}'
+
+    # LABELS ######################################################################
+    - name: 'Ajout label traefik'
+      set_fact:
+        pg_labels:
+          traefik.enable: 'true'
+          traefik.port: '{{intport}}'
+          traefik.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
+          traefik.frontend.auth.basic.users: '{{passwd.stdout}}'
+          traefik.frontend.headers.SSLHost: '{{domain.stdout}}'
+          traefik.frontend.headers.SSLRedirect: 'true'
+          traefik.frontend.headers.STSIncludeSubdomains: 'true'
+          traefik.frontend.headers.STSPreload: 'true'
+          traefik.frontend.headers.STSSeconds: '315360000'
+          traefik.frontend.headers.browserXSSFilter: 'true'
+          traefik.frontend.headers.contentTypeNosniff: 'true'
+          traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+          traefik.frontend.headers.forceSTSHeader: 'true'
+
+    - name: 'Deploying db-mediawiki'
+      docker_container:
+        name: 'db-mediawiki'
+        recreate: true
+        image: 'linuxserver/mariadb'
+        pull: yes
+        published_ports:
+          - "127.0.0.1:3309:3306"
+        volumes:
+          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/db-mediawiki:/config'
+          - '/etc/localtime:/etc/localtime:ro'
+        env:
+          MYSQL_DATABASE: 'mediawikidb'
+          MYSQL_USER: 'mediawiki'
+          MYSQL_PASSWORD: 'mediawiki'
+          MYSQL_ROOT_PASSWORD: 'mediawiki'
+        restart_policy: unless-stopped
+        networks:
+          - name: mediawiki-net
+        state: started
+
+    - name: Wait for 10 seconds before continuing
+      wait_for:
+        timeout: 10
+
+    # MAIN DEPLOYMENT #############################################################
+
+    - name: 'Deploying {{pgrole}}'
+      docker_container:
+        name: '{{pgrole}}'
+        image: '{{image}}'
+        pull: yes
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+          - name: mediawiki-net
+        state: started
+        labels: '{{pg_labels}}'
