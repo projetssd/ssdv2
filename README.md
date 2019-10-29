@@ -16,7 +16,7 @@ Les images utilisées pour ce projet sont:
 
 # Pré-requis
 
-1. Un serveur Ubuntu
+1. Un serveur Ubuntu 18.04/Debian 10
 2. Un nom de domaine
 3. Connaissances en Linux
 4. Connaissances en Docker
