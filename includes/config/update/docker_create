@@ -22,7 +22,7 @@ if [ -z "$appli" ] || [ -z "$port" ] || [ -z "$image" ]; then
 fi
 
 while [ -z "$appli" ]; do
-    >&2 echo -n -e "${BWHITE}Votre nouvelle Application: ${CEND}"
+    >&2 echo -n -e "${BWHITE}Votre nouvelle Application (en minuscule): ${CEND}"
     read appli
     echo $appli > /opt/seedbox/variables/appli
 done
@@ -52,6 +52,8 @@ echo "$FQDNTMP" >> $INSTALLEDFILE
     echo -e "${CRED}------------------------------------------------------------------${CEND}"
     echo -e "${CRED}        INSTALLATION DE L'APPLI $appli TERMINEE		      ${CEND}"
     echo -e "${CRED}------------------------------------------------------------------${CEND}"
+echo ""
+resume_seedbox
 
     echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
     read -r

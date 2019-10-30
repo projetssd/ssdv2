@@ -1095,8 +1095,8 @@ function manage_apps() {
 			docker rm -f db-seafile memcached 
 			fi
 
-			if [[ "$APPSELECTED" = "piwigo" ]]; then
-			docker rm -f db-piwigo
+			if docker ps | grep -q db-$APPSELECTED; then
+			docker rm -f db-$APPSELECTED
 			fi
 
 			checking_errors $?
