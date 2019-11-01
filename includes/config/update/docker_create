@@ -19,6 +19,7 @@ if [ -z "$appli" ] || [ -z "$port" ] || [ -z "$image" ]; then
     appli=$1
     port=$2
     image=$3
+    bd=$3
 fi
 
 while [ -z "$appli" ]; do
@@ -39,9 +40,15 @@ while [ -z "$image" ]; do
     echo $image > /opt/seedbox/variables/image
 done
 
+>&2 echo -n -e "${BWHITE}Est ce qu'une base de donnée est nécessaire ? (o/n) : ${CEND}"
+read reponse
+if [[ "$reponse" = "o" ]] || [[ "$reponse" = "O" ]]; then
+    ## Déplacement de l'appli dans le dossier conf
+    cp "/opt/seedbox-compose/includes/dockerapps/modelebd.yml" "/opt/seedbox/conf/$appli.yml"
+else
+    cp "/opt/seedbox-compose/includes/dockerapps/modele.yml" "/opt/seedbox/conf/$appli.yml"
+fi
 
-## Déplacement de l'appli dans le dossier conf
-cp "/opt/seedbox-compose/includes/dockerapps/modele.yml" "/opt/seedbox/conf/$appli.yml"
 
 ## Installation de l'appli
 ansible-playbook /opt/seedbox/conf/$appli.yml

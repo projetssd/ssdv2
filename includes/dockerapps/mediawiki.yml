@@ -62,8 +62,6 @@
         recreate: true
         image: 'linuxserver/mariadb'
         pull: yes
-        published_ports:
-          - "127.0.0.1:3309:3306"
         volumes:
           - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/db-mediawiki:/config'
           - '/etc/localtime:/etc/localtime:ro'
