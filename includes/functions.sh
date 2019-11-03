@@ -336,9 +336,10 @@ function script_plexdrive() {
 	echo -e "${CGREEN}   1) Désinstaller la seedbox ${CEND}"
 	echo -e "${CGREEN}   2) Ajout/Supression d'Applis${CEND}"
 	echo -e "${CGREEN}   3) Outils${CEND}"
+	echo -e "${CGREEN}   4) Quitter${CEND}"
 
 	echo -e ""
-	read -p "Votre choix [1-3]: " PORT_CHOICE
+	read -p "Votre choix [1-4]: " PORT_CHOICE
 
 	case $PORT_CHOICE in
 		1) ## Installation de la seedbox
@@ -346,7 +347,11 @@ function script_plexdrive() {
 		echo ""
 		echo -e "${YELLOW}### Seedbox-Compose déjà installée !###${NC}"
 		if (whiptail --title "Seedbox-Compose déjà installée" --yesno "Désinstaller complètement la Seedbox ?" 7 50) then
-			uninstall_seedbox
+			if (whiptail --title "DANGER" --yesno "Etes vous sur de vouloir désintaller la seedbox ?" 7 55) then
+			    uninstall_seedbox
+			else
+			    script_plexdrive
+			fi
 		else
 			script_plexdrive
 		fi
@@ -463,6 +468,9 @@ function script_plexdrive() {
 			;;
 
 			esac
+		;;
+		4)
+		exit
 		;;
 	esac
 	fi
