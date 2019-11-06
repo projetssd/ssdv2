@@ -347,7 +347,7 @@ function script_plexdrive() {
 		echo ""
 		echo -e "${YELLOW}### Seedbox-Compose déjà installée !###${NC}"
 		if (whiptail --title "Seedbox-Compose déjà installée" --yesno "Désinstaller complètement la Seedbox ?" 7 50) then
-			if (whiptail --title "DANGER" --yesno "Etes vous sur de vouloir désintaller la seedbox ?" 7 55) then
+			if (whiptail --title "ATTENTION" --yesno "Etes vous sur de vouloir désintaller la seedbox ?" 7 55) then
 			    uninstall_seedbox
 			else
 			    script_plexdrive
