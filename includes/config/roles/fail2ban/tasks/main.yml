@@ -3,6 +3,21 @@
   gather_facts: true
   tasks:
 
+    - name: Check config cloudflare exists
+      stat:
+        path: "/opt/seedbox/variables/cloudflare_api"
+      register: cloudflare_config
+
+    - name: 'Register cloudflare_email'
+      shell: 'cat /opt/seedbox/variables/cloudflare_email'
+      register: cloudflare_email
+      ignore_errors: True
+
+    - name: 'Register cloudflare_api'
+      shell: 'cat /opt/seedbox/variables/cloudflare_api'
+      register: cloudflare_api
+      ignore_errors: True
+
     - name: Install Fail2ban
       apt:
         state: present
@@ -31,12 +46,6 @@
         dest: /etc/fail2ban/jail.d/custom.conf
         force: yes
 
-    - name: Import traefik.conf
-      template:
-        src: /opt/seedbox-compose/includes/config/roles/fail2ban/templates/traefik.conf.j2
-        dest: /etc/fail2ban/jail.d/traefik.conf
-        force: yes
-
     - name: Import traefik-auth.conf
       template:
         src: /opt/seedbox-compose/includes/config/roles/fail2ban/templates/traefik-auth.conf.j2
@@ -49,18 +58,41 @@
         dest: /etc/fail2ban/filter.d/traefik-botsearch.conf
         force: yes
 
-    - name: Import docker-action.conf
-      template:
-        src: /opt/seedbox-compose/includes/config/roles/fail2ban/templates/docker-action.conf.j2
-        dest: /etc/fail2ban/action.d/docker-action.conf
-        force: yes
+    - name: "'files.conf when not Cloudflare exist' Tasks"
+      block:
+
+      - name: Import traefik.conf
+        template:
+          src: /opt/seedbox-compose/includes/config/roles/fail2ban/templates/traefik.conf.j2
+          dest: /etc/fail2ban/jail.d/traefik.conf
+          force: yes
+
+      - name: Import docker-action.conf
+        template:
+          src: /opt/seedbox-compose/includes/config/roles/fail2ban/templates/docker-action.conf.j2
+          dest: /etc/fail2ban/action.d/docker-action.conf
+          force: yes
+
+      when: not cloudflare_config.stat.exists
+
+    - name: "'files.conf when Cloudflare exist' Tasks"
+      block:
+
+      - name: Import cloudflare-apiv4.conf
+        template:
+          src: /opt/seedbox-compose/includes/config/roles/fail2ban/templates/cloudflare-apiv4.conf.j2
+          dest: /etc/fail2ban/action.d/cloudflare-apiv4.conf
+          force: yes
+
+      - name: Import traefik_clouflare.conf
+        template:
+          src: /opt/seedbox-compose/includes/config/roles/fail2ban/templates/traefik_clouflare.conf.j2
+          dest: /etc/fail2ban/jail.d/traefik_clouflare.conf
+          force: yes
+
+      when: cloudflare_config.stat.exists
 
     - name: Sart Fail2ban service
       systemd:
         name: fail2ban
         state: started
-
-
-
-
-
