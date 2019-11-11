@@ -95,6 +95,7 @@
           traefik.frontend.headers.contentTypeNosniff: 'true'
           traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
           traefik.frontend.headers.forceSTSHeader: 'true'
+          com.centurylinklabs.watchtower.enable: 'false'
 
     - name: 'Setting PG Volumes'
       set_fact:
