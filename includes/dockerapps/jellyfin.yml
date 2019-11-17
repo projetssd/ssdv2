@@ -78,12 +78,18 @@
 
     # MAIN DEPLOYMENT #############################################################
 
+    - name: 'Check'
+      stat:
+        path: '/dev/dri'
+      register: dev_dri
+
     - name: 'Deploying {{pgrole}}'
       docker_container:
         name: '{{pgrole}}'
         image: '{{image}}'
         pull: yes
         user: '{{userid.stdout}}:{{groupid.stdout}}'
+        devices: "{{ '/dev/dri:/dev/dri' if dev_dri.stat.exists == True | default(false) else omit }}"
         volumes: '{{pg_volumes}}'
         env: '{{pg_env}}'
         restart_policy: unless-stopped
