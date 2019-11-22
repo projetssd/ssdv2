@@ -11,9 +11,14 @@
 
   tasks:
   
-    # VARIABLES ############################################################
+    # VARIABLES ################################################################
     - name: 'Including variables'
       include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+
+    - name: Check config oauth_client exists
+      stat:
+        path: "/opt/seedbox/variables/oauth_client"
+      register: oauth_client
 
     - name: Check config cloudflare exists
       stat:
@@ -83,7 +88,8 @@
           traefik.enable: 'true'
           traefik.port: '8080'
           traefik.frontend.rule: 'Host:traefik.{{domain.stdout}}'
-          traefik.frontend.headers.SSLHost: '{{domain.stdout}}'
+          traefik.frontend.headers.SSLHost: traefik.'{{domain.stdout}}'
+          traefik.frontend.auth.basic: '{{ passwd.stdout if (not oauth_client.stat.exists) | default(false) else omit }}'
           traefik.frontend.headers.SSLRedirect: 'true'
           traefik.frontend.headers.STSIncludeSubdomains: 'true'
           traefik.frontend.headers.STSPreload: 'true'
@@ -92,8 +98,11 @@
           traefik.frontend.headers.contentTypeNosniff: 'true'
           traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
           traefik.frontend.headers.forceSTSHeader: 'true'
+          traefik.frontend.auth.forward.address: 'http://oauth:4181'
+          traefik.frontend.auth.forward.authResponseHeaders: 'X-Forwarded-User'
+          traefik.frontend.auth.forward.trustForwardHeader: 'true'
 
-    # MAIN #####################################################################
+    # MAIN #########################################################################
     - name: Deploy Traefik
       docker_container:
         name: traefik
@@ -115,3 +124,7 @@
         labels: '{{pg_labels}}'
         networks:
           - name: traefik_proxy
+
+    - name: Google OAuth2 tasks
+      include_tasks: 'templates/Google OAuth2/oauth.yml'
+      when: oauth_client.stat.exists

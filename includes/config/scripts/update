@@ -1,0 +1,5 @@
+#!/bin/bash
+
+source /opt/seedbox-compose/includes/functions.sh
+source /opt/seedbox-compose/includes/variables.sh
+install_traefik

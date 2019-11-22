@@ -21,6 +21,11 @@
         path: "/opt/seedbox/variables/cloudflare_api"
       register: cloudflare_config
 
+    - name: Check config oauth_client exists
+      stat:
+        path: "/opt/seedbox/variables/oauth_client"
+      register: oauth_client
+
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
@@ -46,7 +51,7 @@
           traefik.enable: 'true'
           traefik.port: '{{intport}}'
           traefik.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
-          traefik.frontend.auth.basic.users: '{{passwd.stdout}}'
+          traefik.frontend.auth.basic: '{{ passwd.stdout if (not oauth_client.stat.exists) | default(false) else omit }}'
           traefik.frontend.headers.SSLHost: '{{domain.stdout}}'
           traefik.frontend.headers.SSLRedirect: 'true'
           traefik.frontend.headers.STSIncludeSubdomains: 'true'
@@ -56,6 +61,9 @@
           traefik.frontend.headers.contentTypeNosniff: 'true'
           traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
           traefik.frontend.headers.forceSTSHeader: 'true'
+          traefik.frontend.auth.forward.address: 'http://oauth:4181'
+          traefik.frontend.auth.forward.authResponseHeaders: 'X-Forwarded-User'
+          traefik.frontend.auth.forward.trustForwardHeader: 'true'
 
     - name: 'Setting PG Volumes'
       set_fact:

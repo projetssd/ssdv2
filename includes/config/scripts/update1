@@ -13,6 +13,10 @@ echo ""
 
 echo -e "${BLUE}### Récupération des variables ###${NC}"
 echo ""
+
+echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+read -r
+
 mkdir -p /opt/seedbox/variables
 SEEDUSER=$(cat /opt/seedbox/users)
 echo $SEEDUSER > "/opt/seedbox/variables/users"

@@ -40,7 +40,7 @@
     zone: "{{ domain.stdout }}"
     state: present
     solo: true
-    proxied: no
+    proxied: yes
     type: A
     value: "{{ public_ip }}"
     record: "{{ subdomain }}"

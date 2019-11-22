@@ -81,6 +81,63 @@ function cloudflare() {
 		fi
 }
 
+function oauth() {
+		oauth="/opt/seedbox/variables/oauth_client"
+		if [[ ! -e "$oauth" ]]; then
+		echo -e "${BLUE}### Google OAuth2 avec Traefik – Secure SSO pour les services Docker ###${NC}"
+		echo ""
+			echo -e "${CCYAN}------------------------------------------------------------------${CEND}"
+			echo -e "${CCYAN}    Protocole d'identification via Google OAuth2		   ${CEND}"
+			echo -e "${CCYAN}    Securisation SSO pour les services Docker			   ${CEND}"
+			echo -e "${CCYAN}------------------------------------------------------------------${CEND}"
+			echo ""
+    			echo -e "${CRED}-------------------------------------------------------------------${CEND}"
+    			echo -e "${CRED}    /!\ IMPORTANT: Au préalable créer un projet et vos identifiants${CEND}"
+    			echo -e "${CRED}    https://github.com/laster13/patxav/wiki /!\ 		   ${CEND}"
+    			echo -e "${CRED}-------------------------------------------------------------------${CEND}"
+			echo ""
+			read -rp $'\e[33mSouhaitez vous sécuriser vos Applis avec Google OAuth2 ? (o/n)\e[0m :' OUI
+
+			if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
+				if [ -z "$oauth_client" ] || [ -z "$oauth_secret" ] || [ -z "$email" ]; then
+    				oauth_client=$1
+    				oauth_secret=$2
+    				email=$3
+				fi
+
+				while [ -z "$oauth_client" ]; do
+    				>&2 echo -n -e "${BWHITE}Oauth_client: ${CEND}"
+    				read oauth_client
+    				echo $oauth_client > /opt/seedbox/variables/oauth_client
+				done
+
+				while [ -z "$oauth_secret" ]; do
+    				>&2 echo -n -e "${BWHITE}Oauth_secret: ${CEND}"
+    				read oauth_secret
+    				echo $oauth_secret > /opt/seedbox/variables/oauth_secret
+				done
+
+				while [ -z "$email" ]; do
+    				>&2 echo -n -e "${BWHITE}Compte Gmail utilisé(s), séparés d'une virgule si plusieurs: ${CEND}"
+    				read email
+    				echo $email > /opt/seedbox/variables/email
+				done
+
+				openssl rand -hex 16 > /opt/seedbox/variables/openssl
+				echo ""
+    				echo -e "${CRED}---------------------------------------------------------------${CEND}"
+    				echo -e "${CCYAN}    IMPORTANT:	Avant la 1ere connexion			       ${CEND}"
+    				echo -e "${CCYAN}    		- Nettoyer l'historique de votre navigateur    ${CEND}"
+    				echo -e "${CCYAN}    		- déconnection de tout compte google	       ${CEND}"
+    				echo -e "${CRED}---------------------------------------------------------------${CEND}"
+				echo ""
+				echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+				read -r
+			fi
+		echo ""
+		fi
+}
+
 function rtorrent-cleaner() {
 			#configuration de rtorrent-cleaner avec ansible
 			echo -e "${BLUE}### RTORRENT-CLEANER ###${NC}"
@@ -369,7 +426,7 @@ function script_plexdrive() {
 			echo ""
 			echo -e "${CCYAN}OUTILS${CEND}"
 			echo -e "${CGREEN}${CEND}"
-			echo -e "${CGREEN}   1) Mise à jour Cloudflare${CEND}"
+			echo -e "${CGREEN}   1) Sécuriser Traefik avec Google OAuth2${CEND}"
 			echo -e "${CGREEN}   2) Modèle Création Appli Personnalisée Docker${CEND}"
 			echo -e "${CGREEN}   3) Installation du motd${CEND}"
 			echo -e "${CGREEN}   4) Traktarr${CEND}"
@@ -387,10 +444,10 @@ function script_plexdrive() {
 
 			case $OUTILS in
 
-			1) ## Mise à jour Cloudflare
+			1) ## Mise en place Google OAuth avec Traefik
 			clear
 			echo ""
-			/opt/seedbox-compose/includes/config/update/update
+			/opt/seedbox-compose/includes/config/update/oauth
 			script_plexdrive
 			;;
 
@@ -508,6 +565,7 @@ function install_fail2ban() {
 }	
 
 function install_traefik() {
+	oauth
 	echo -e "${BLUE}### TRAEFIK ###${NC}"
 		echo -e " ${BWHITE}* Installation Traefik${NC}"
 		ansible-playbook /opt/seedbox-compose/includes/dockerapps/traefik.yml
