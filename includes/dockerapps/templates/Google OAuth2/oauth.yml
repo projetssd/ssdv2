@@ -1,6 +1,5 @@
 ---
 
-  
 # VARIABLES ######################################################################################
 
 - name: 'Register Domain'
@@ -46,8 +45,8 @@
       PROVIDERS_GOOGLE_CLIENT_SECRET: '{{oauth_secret.stdout}}'
       SECRET: '{{openssl.stdout}}'
       COOKIE_DOMAIN: '{{domain.stdout}}'
-      INSECURE_COOKIE: 'false'
-      AUTH_HOST: oauth.'{{domain.stdout}}'
+      INSECURE_COOKIE: 'true'
+      AUTH_HOST: 'oauth.{{domain.stdout}}'
       URL_PATH: '/_oauth'
       WHITELIST: '{{email.stdout}}'
       LOG_LEVEL: 'info'
@@ -59,8 +58,7 @@
       traefik.enable: 'true'
       traefik.backend: 'oauth'
       traefik.port: '4181'
-      traefik.frontend.rule: Host:oauth.'{{domain.stdout}}'
-      traefik.frontend.headers.SSLHost: oauth.'{{domain.stdout}}'
+      traefik.frontend.rule: 'Host:oauth.{{domain.stdout}}'
       traefik.docker.network: 'traefik_proxy'
       traefik.frontend.passHostHeader: 'true'
       traefik.frontend.headers.SSLForceHost: 'true'

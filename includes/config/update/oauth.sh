@@ -46,12 +46,19 @@ openssl rand -hex 16 > /opt/seedbox/variables/openssl
 ## suppression des yml dans /opt/seedbox/conf
 rm /opt/seedbox/conf/*
 
-## suppression container traefik, portainer
-docker rm -f traefik oauth portainer > /dev/null 2>&1
+
+## suppression container
+docker rm -f $(docker ps -aq) > /dev/null 2>&1
 
 ## reinstallation traefik, portainer
+echo ""
 install_traefik
 install_portainer
+
+echo ""
+## reinstallation watchtower
+install_watchtower
+echo ""
 
 ## reinstallation application
 while read line; do echo $line | cut -d'.' -f1; done < /home/$SEEDUSER/resume > $SERVICESPERUSER

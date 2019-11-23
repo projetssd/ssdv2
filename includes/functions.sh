@@ -426,7 +426,7 @@ function script_plexdrive() {
 			echo ""
 			echo -e "${CCYAN}OUTILS${CEND}"
 			echo -e "${CGREEN}${CEND}"
-			echo -e "${CGREEN}   1) Sécuriser Traefik avec Google OAuth2${CEND}"
+			echo -e "${CGREEN}   1) Sécuriser Traefik avec Google OAuth2 / Auth Basique${CEND}"
 			echo -e "${CGREEN}   2) Modèle Création Appli Personnalisée Docker${CEND}"
 			echo -e "${CGREEN}   3) Installation du motd${CEND}"
 			echo -e "${CGREEN}   4) Traktarr${CEND}"
@@ -445,16 +445,58 @@ function script_plexdrive() {
 			case $OUTILS in
 
 			1) ## Mise en place Google OAuth avec Traefik
-			clear
-			echo ""
-			/opt/seedbox-compose/includes/config/update/oauth
-			script_plexdrive
+				clear
+				logo
+				echo ""
+				echo -e "${CCYAN}SECURISER APPLIS DOCKER${CEND}"
+				echo -e "${CGREEN}${CEND}"
+				echo -e "${CGREEN}   1) Sécuriser Traefik avec Google OAuth2${CEND}"
+				echo -e "${CGREEN}   2) Sécuriser avec Authentification Classique${CEND}"
+				echo -e "${CGREEN}   3) Ajout / Supression adresses mail autorisées pour Google OAuth2${CEND}"
+				echo -e "${CGREEN}   4) Retour menu principal${CEND}"
+				echo -e ""
+				read -p "Votre choix [1-4]: " OAUTH
+				case $OAUTH in
+
+				1)
+				clear
+				echo ""
+				/opt/seedbox-compose/includes/config/update/oauth.sh
+				script_plexdrive
+				;;
+
+				2)
+				clear
+				echo ""
+				rm /opt/seedbox/variables/oauth_client > /dev/null 2>&1
+				rm /opt/seedbox/variables/oauth_secret > /dev/null 2>&1
+				rm /opt/seedbox/variables/openssl > /dev/null 2>&1
+				/opt/seedbox-compose/includes/config/update/basique.sh
+				script_plexdrive
+				;;
+
+				3)
+				clear
+				logo
+				echo ""
+    				>&2 echo -n -e "${BWHITE}Compte(s) Gmail utilisé(s), séparés d'une virgule si plusieurs: ${CEND}"
+    				read email
+    				echo $email > /opt/seedbox/variables/email
+				ansible-playbook /opt/seedbox-compose/includes/dockerapps/traefik.yml
+				script_plexdrive
+				;;
+
+				4)
+				script_plexdrive
+				;;
+
+				esac
 			;;
 
 			2) ## Modèle création appli docker
 			clear
 			echo ""
-			/opt/seedbox-compose/includes/config/update/docker_create
+			/opt/seedbox-compose/includes/config/update/docker_create.sh
 			script_plexdrive
 			;;
 
@@ -581,8 +623,7 @@ function install_portainer() {
 		else
 		if (whiptail --title "Docker Portainer" --yesno "Voulez vous installer portainer" 7 50) then
 			echo -e " ${BWHITE}* Installation Portainer${NC}"
-			cd /opt/seedbox-compose/includes/dockerapps
-			ansible-playbook portainer.yml
+			ansible-playbook /opt/seedbox-compose/includes/dockerapps/portainer.yml
 			checking_errors $?
 		else
 			echo -e " ${BWHITE}--> portainer n'est pas installé !${NC}"

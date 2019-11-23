@@ -19,10 +19,10 @@
     "url": "https://{{ user.stdout }}:{{ pass.stdout }}@nzbget.{{ domain.stdout }}"
   },
   "plexpy": {
-      "url": "https://plexpy.{{ domain.stdout }}",
+      "url": "http://{{ public_ip_lookup.stdout }}:8181",
       "api_key": "{{ tautulli.stdout }}"
   },
   "rtorrent": {
-    "url": "https://{{ user.stdout }}:{{ pass.stdout }}@rutorrent.{{ domain.stdout }}"
+    "url": "http://{{ public_ip_lookup.stdout }}:8999"
   }
 }
