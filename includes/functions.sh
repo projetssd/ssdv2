@@ -426,7 +426,7 @@ function script_plexdrive() {
 			echo ""
 			echo -e "${CCYAN}OUTILS${CEND}"
 			echo -e "${CGREEN}${CEND}"
-			echo -e "${CGREEN}   1) Sécuriser Traefik avec Google OAuth2 / Auth Basique${CEND}"
+			echo -e "${CGREEN}   1) Sécuriser la Seddbox${CEND}"
 			echo -e "${CGREEN}   2) Modèle Création Appli Personnalisée Docker${CEND}"
 			echo -e "${CGREEN}   3) Installation du motd${CEND}"
 			echo -e "${CGREEN}   4) Traktarr${CEND}"
@@ -453,9 +453,11 @@ function script_plexdrive() {
 				echo -e "${CGREEN}   1) Sécuriser Traefik avec Google OAuth2${CEND}"
 				echo -e "${CGREEN}   2) Sécuriser avec Authentification Classique${CEND}"
 				echo -e "${CGREEN}   3) Ajout / Supression adresses mail autorisées pour Google OAuth2${CEND}"
-				echo -e "${CGREEN}   4) Retour menu principal${CEND}"
+				echo -e "${CGREEN}   4) Modification port SSH, mise à jour fail2ban, installation Iptables${CEND}"
+				echo -e "${CGREEN}   5) Retour menu principal${CEND}"
+
 				echo -e ""
-				read -p "Votre choix [1-4]: " OAUTH
+				read -p "Votre choix [1-5]: " OAUTH
 				case $OAUTH in
 
 				1)
@@ -487,6 +489,13 @@ function script_plexdrive() {
 				;;
 
 				4)
+				clear
+				echo ""
+				/opt/seedbox-compose/includes/config/update/iptables.sh
+				#script_plexdrive
+				;;
+
+				5)
 				script_plexdrive
 				;;
 

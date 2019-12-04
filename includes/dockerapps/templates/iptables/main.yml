@@ -1,0 +1,20 @@
+---
+- hosts: localhost
+  gather_facts: true
+  vars_files:
+    - defaults/main.yml
+
+  tasks:
+    - name: 'Register SSH'
+      shell: 'cat /opt/seedbox/variables/ssh'
+      register: ssh
+      ignore_errors: True
+
+    #- name: Import default config
+     # template:
+      #  src: /opt/seedbox-compose/includes/dockerapps/templates/iptables/defaults/main.yml.j2
+       # dest: /opt/seedbox/docker/geerlingguy.firewall/defaults/main.yml
+
+    - name: Run geerlingguy.firewall
+      include_role:
+        name: geerlingguy.firewall

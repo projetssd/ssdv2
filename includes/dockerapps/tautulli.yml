@@ -112,8 +112,6 @@
       docker_container:
         name: '{{pgrole}}'
         image: '{{image}}'
-        published_ports:
-          - '8181:8181'
         pull: yes
         volumes: '{{pg_volumes}}'
         env: '{{pg_env}}'

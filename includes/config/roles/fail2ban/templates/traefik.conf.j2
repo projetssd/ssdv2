@@ -2,19 +2,18 @@
 ignoreip = 127.0.0.1 {{ ansible_env['SSH_CLIENT'].split() | first }}
 findtime = 3600
 bantime = 600
-maxretry = 5
 
 [traefik-auth]
 enabled = true
 logpath = /var/log/traefik/access.log
 port = http,https
 banaction = docker-action
-maxretry = 5
+maxretry = 10
 
 [traefik-botsearch]
 enabled = true
 logpath = /var/log/traefik/access.log
-maxretry = 1
+maxretry = 10
 port = http,https
 banaction = iptables-multiport
 
@@ -22,6 +21,6 @@ banaction = iptables-multiport
 enabled = true
 filter = apache-badbots
 logpath = /var/log/traefik/access.log
-maxretry = 1
+maxretry = 10
 port = http,https
 banaction = iptables-multiport

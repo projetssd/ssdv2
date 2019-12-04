@@ -18,6 +18,11 @@
       register: cloudflare_api
       ignore_errors: True
 
+    - name: 'Register SSH'
+      shell: 'cat /opt/seedbox/variables/ssh'
+      register: ssh
+      ignore_errors: True
+
     - name: Install Fail2ban
       apt:
         state: present
@@ -38,7 +43,7 @@
     - name: 'recuperation port ssh'
       debug:
         msg:
-        - "{{ ansible_env['SSH_CLIENT'].split() | last }}"
+        - "{{ ssh.stdout }}"
 
     - name: Import customs.conf 
       template:

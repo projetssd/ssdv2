@@ -132,7 +132,7 @@
         name: plex
         image: "{{ plex_docker_image }}"
         pull: yes
-        published_ports: "{{ plex_docker_ports }}"
+        published_ports: "{{ plex_main_ports }}"
         env:
           PLEX_UID: "{{ userid.stdout }}"
           PLEX_GID: "{{ groupid.stdout }}"
