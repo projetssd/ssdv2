@@ -135,7 +135,7 @@
       tags: plex_autoscan_update_sections
 
     - name: Configure PLEX_SECTION_PATH_MAPPINGS
-      command: "/home/{{user.stdout}}/scripts/plex_autoscan/scan.py update_sections"
+      command: "/home/{{user.stdout}}/scripts/plex_autoscan/scan.py update_config"
       become: yes
       become_user: "{{user.stdout}}"
       ignore_errors: yes

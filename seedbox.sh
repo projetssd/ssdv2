@@ -212,6 +212,7 @@ case $CHOICE in
 			sauve
 			restore
 			choose_media_folder_plexdrive
+			rm /etc/systemd/system/mergerfs.service > /dev/null 2>&1
 			unionfs_fuse
 			cloudflare
 			install_traefik
@@ -223,17 +224,17 @@ case $CHOICE in
 			install_services
 
 			## restauration plex_dupefinder
-			PLEXDUPE=/home/$SEEDUSER/scripts/plex_dupefinder/plexdupes.py
+			PLEXDUPE=/home/$SEEDUSER/scripts/plex_dupefinder/plex_dupefinder.py
 			if [[ -e "$PLEXDUPE" ]]; then
 			cd /home/$SEEDUSER/scripts/plex_dupefinder
-			python3 -m pip install -r requirements.txt > /dev/null 2>&1
+			python3 -m pip install -r requirements.txt
 			fi
 
 			## restauration cloudplow
 			CLOUDPLOWSERVICE=/etc/systemd/system/cloudplow.service
-			if [[ -e "$CLOUDPLOWFILE" ]]; then
+			if [[ -e "$CLOUDPLOWSERVICE" ]]; then
 			cd /home/$SEEDUSER/scripts/cloudplow
-			python3 -m pip install -r requirements.txt > /dev/null 2>&1
+			python3 -m pip install -r requirements.txt
 			ln -s /home/$SEEDUSER/scripts/cloudplow/cloudplow.py /usr/local/bin/cloudplow
 			systemctl start cloudplow.service
 			fi
@@ -242,7 +243,7 @@ case $CHOICE in
 			PLEXSCANSERVICE=/etc/systemd/system/plex_autoscan.service
 			if [[ -e "$PLEXSCANSERVICE" ]]; then
 			cd /home/$SEEDUSER/scripts/plex_autoscan
-			python -m pip install -r requirements.txt > /dev/null 2>&1
+			python -m pip install -r requirements.txt
 			systemctl start plex_autoscan.service
 			fi
 
