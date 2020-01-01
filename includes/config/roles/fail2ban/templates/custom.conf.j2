@@ -5,7 +5,7 @@ bantime = 600
 
 [sshd]
 enabled = true
-port = {{ ssh.stdout }}
+port = {{ ssh.stdout if (ssh_config.stat.exists) else ansible_env['SSH_CLIENT'].split() | last }}
 logpath = /var/log/auth.log
 banaction = iptables-multiport
 maxretry = 5

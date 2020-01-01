@@ -8,20 +8,25 @@
         path: "/opt/seedbox/variables/cloudflare_api"
       register: cloudflare_config
 
+    - name: Check config ssh exists
+      stat:
+        path: "/opt/seedbox/variables/ssh"
+      register: ssh_config
+
     - name: 'Register cloudflare_email'
       shell: 'cat /opt/seedbox/variables/cloudflare_email'
       register: cloudflare_email
-      ignore_errors: True
+      when: cloudflare_config.stat.exists
 
     - name: 'Register cloudflare_api'
       shell: 'cat /opt/seedbox/variables/cloudflare_api'
       register: cloudflare_api
-      ignore_errors: True
+      when: cloudflare_config.stat.exists
 
     - name: 'Register SSH'
       shell: 'cat /opt/seedbox/variables/ssh'
       register: ssh
-      ignore_errors: True
+      when: ssh_config.stat.exists
 
     - name: Install Fail2ban
       apt:
@@ -43,7 +48,7 @@
     - name: 'recuperation port ssh'
       debug:
         msg:
-        - "{{ ssh.stdout }}"
+        - "{{ ssh.stdout if (ssh_config.stat.exists) else ansible_env['SSH_CLIENT'].split() | last }}"
 
     - name: Import customs.conf 
       template:
