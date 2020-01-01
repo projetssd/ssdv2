@@ -11,6 +11,7 @@ if [[ ! -d "/opt/seedbox/docker/geerlingguy.security" ]]; then
 	echo ""
 	ansible-galaxy install geerlingguy.security
 	cp "$BASEDIR/includes/dockerapps/templates/ssh/main.yml" "/opt/seedbox/docker/geerlingguy.security" > /dev/null 2>&1
+	sed -i '/UseDNS/d' /opt/seedbox/docker/geerlingguy.security/tasks/ssh.yml
 	echo ""
 	echo -e "\n${CCYAN} /!\ Par mesure de sécurité il est fortement consseillé de changer le port ssh /!\ ${CEND}"
 	echo ""
