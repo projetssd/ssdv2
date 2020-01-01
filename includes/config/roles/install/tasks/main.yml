@@ -79,6 +79,7 @@
           - "iotop"
           - "nload"
           - "libchromaprint-tools"
+          - "mediainfo"
           - "ufw"
           - "lolcat"
           - "wget"

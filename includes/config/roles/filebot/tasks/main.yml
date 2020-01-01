@@ -27,15 +27,18 @@
       when:
         - filebot.stat.exists == False
 
-    - name: Installing filebot
-      unarchive:
-        src: http://downloads.sourceforge.net/project/filebot/filebot/FileBot_4.7.9/FileBot_4.7.9-portable.tar.xz
-        dest: /opt/seedbox/docker/{{user.stdout}}/.filebot
-        keep_newer: no
-        owner: '{{userid.stdout}}'
-        group: '{{groupid.stdout}}'
-        mode: 0775
-        copy: no
+    - name: Download zsh installer
+      get_url: 
+        url: https://raw.githubusercontent.com/filebot/plugins/master/installer/tar.sh 
+        dest: /tmp/tar.sh
+        mode: 0755
+      when:
+        - filebot.stat.exists == False
+
+    - name: Execute the zsh-installer.sh
+      shell: /tmp/tar.sh
+      args:
+        chdir: /opt/seedbox/docker/yohann/.filebot
       when:
         - filebot.stat.exists == False
 
@@ -71,5 +74,3 @@
     - name: Set cron
       shell: |
         (crontab -l | grep . ; echo "*/1 * * * * /opt/seedbox/docker/{{user.stdout}}/.filebot/filebot-process.sh") | crontab -
-
-
