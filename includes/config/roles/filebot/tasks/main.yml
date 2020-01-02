@@ -38,7 +38,7 @@
     - name: Execute the zsh-installer.sh
       shell: /tmp/tar.sh
       args:
-        chdir: /opt/seedbox/docker/yohann/.filebot
+        chdir: /opt/seedbox/docker/{{user.stdout}}/.filebot
       when:
         - filebot.stat.exists == False
 
