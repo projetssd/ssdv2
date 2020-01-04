@@ -537,7 +537,7 @@ function script_plexdrive() {
 			clear
 			echo ""
 			rtorrent-cleaner
-			docker run -it --rm -v /home/$SEEDUSER/local/rutorrent:/home/$SEEDUSER/local/rutorrent -v /run/php:/run/php magicalex/docker-rtorrent-cleaner
+			docker run -it --rm -v /home/$SEEDUSER/local/rutorrent:/home/$SEEDUSER/local/rutorrent -v /run/php:/run/php magicalex/rtorrent-cleaner
 			pause
 			script_plexdrive
 			;;
