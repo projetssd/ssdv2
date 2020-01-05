@@ -71,6 +71,16 @@
       when:
         - filebot.stat.exists == False
 
+    - name: Import license
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/filebot/templates/FileBot_License.psm.j2
+        dest: /opt/seedbox/docker/{{user.stdout}}/.filebot/FileBot_License.psm
+
+    - name: activate license
+      command: filebot --license /opt/seedbox/docker/{{user.stdout}}/.filebot/FileBot_License.psm
+      when:
+        - filebot.stat.exists == False
+
     - name: Set cron
       shell: |
         (crontab -l | grep . ; echo "*/1 * * * * /opt/seedbox/docker/{{user.stdout}}/.filebot/filebot-process.sh") | crontab -
