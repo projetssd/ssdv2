@@ -1,33 +1,34 @@
 #!/bin/bash
 
 ---
-- hosts: localhost
-  gather_facts: false
-  tasks:
-
     # VARIABLES ###################################################################
     - name: 'Including variables'
       include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
 
+    - name: 'Register Sous Domaine'
+      shell: 'cat /opt/seedbox/variables/sousdomain'
+      register: sousdomain
+
+
     # FACTS #######################################################################
     - name: 'Set Known Facts'
       set_fact:
-        pgrole: 'php5'
+        pgrole: 'php5-{{sousdomain.stdout}}'
         image: 'bitnami/php-fpm:5.6-debian-9'
 
     - name: "Substitute Variable php"
-      shell: "sed 's|remplace|{{pgrole}}|g' -i /opt/seedbox/docker/{{user.stdout}}/nginx/config/app.conf"
+      shell: "sed 's|remplace|{{pgrole}}|g' -i /opt/seedbox/docker/{{user.stdout}}/webserver/{{sousdomain.stdout}}/config/app.conf"
 
     - name: 'Setting Volumes'
       set_fact:
         pg_volumes:
-          - '/var/www:/var/www/app'
+          - '/var/www/{{sousdomain.stdout}}:/var/www/{{sousdomain.stdout}}/app'
 
     # fpm-php7 DEPLOYMENT ##########################################################
 
     - name: 'Stopping Nginx'
       docker_container:
-        name: 'nginx'
+        name: '{{sousdomain.stdout}}'
         state: stopped
 
     - name: 'Deploying {{pgrole}}'
@@ -44,5 +45,5 @@
 
     - name: Restart Docker Container Nginx
       docker_container:
-        name: 'nginx'
+        name: '{{sousdomain.stdout}}'
         state: started

@@ -841,7 +841,7 @@ function choose_services() {
 		echo "$service $desc off" >> /tmp/menuservices.txt
 	done
 	SERVICESTOINSTALL=$(whiptail --title "Gestion des Applications" --checklist \
-	"Appuyer sur la barre espace pour la sélection" 28 60 21 \
+	"Appuyer sur la barre espace pour la sélection" 28 64 21 \
 	$(cat /tmp/menuservices.txt) 3>&1 1>&2 2>&3)
 	[[ "$?" = 1 ]] && script_plexdrive && rm /tmp/menuservices.txt;
 	SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
@@ -862,10 +862,22 @@ function webserver() {
 		desc=$(echo $app | cut -d\- -f2)
 		echo "$service $desc off" >> /tmp/menuservices.txt
 	done
+	grep 'mariadb' /opt/seedbox/docker/$SEEDUSER/webserver/resume > /dev/null 2>&1
+	if [[ "$?" == "0" ]]; then
+	   sed -i "/Mariadb/d" /tmp/menuservices.txt
+	fi
+
+	grep 'phpmyadmin' /opt/seedbox/docker/$SEEDUSER/webserver/resume > /dev/null 2>&1
+	if [[ "$?" == "0" ]]; then
+	   sed -i "/Phpmyadmin/d" /tmp/menuservices.txt
+	fi
+
 	SERVICESTOINSTALL=$(whiptail --title "Gestion Webserver" --checklist \
-	"Applis à ajouter pour $SEEDUSER (Barre espace pour la sélection)" 28 60 17 \
+	"Applis à ajouter pour $SEEDUSER" 17 54 10 \
 	$(cat /tmp/menuservices.txt) 3>&1 1>&2 2>&3)
 	[[ "$?" = 1 ]] && script_plexdrive;
+
+
 	SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 	touch $SERVICESPERUSER
 	for APPDOCKER in $SERVICESTOINSTALL
@@ -873,6 +885,7 @@ function webserver() {
 		echo -e "	${GREEN}* $(echo $APPDOCKER | tr -d '"')${NC}"
 		echo $(echo ${APPDOCKER,,} | tr -d '"') >> $SERVICESPERUSER
 	done
+	echo ""
 	rm /tmp/menuservices.txt
 }
 
@@ -978,18 +991,7 @@ function install_services() {
 	## préparation installation
 	for line in $(cat $SERVICESPERUSER);
 	do
-		if [ $line = "nginx" ] || [ $line = "php5" ] || [ $line = "php7" ] || [ $line = "mariadb" ] || [ $line = "phpmyadmin" ] && [ -e "$CONFDIR/conf/$line.yml" ]; then
-			ansible-playbook "$CONFDIR/conf/$line.yml"
-				php=$(docker ps -a | awk '{print $NF}' | grep php)
-				if [ "docker ps | grep php" ] && [ "$line" != "$php" ]; then
-					ansible-playbook "$CONFDIR/conf/$php.yml"
-				fi
-
-		elif [ $line = "nginx" ] || [ $line = "php5" ] || [ $line = "php7" ] || [ $line = "mariadb" ] || [ $line = "phpmyadmin" ]; then
-			ansible-playbook "$BASEDIR/includes/webserver/$line.yml"
-			cp "$BASEDIR/includes/webserver/$line.yml" "$CONFDIR/conf/$line.yml" > /dev/null 2>&1
-
-		elif [ -e "$CONFDIR/conf/$line.yml" ]; then
+		if [ -e "$CONFDIR/conf/$line.yml" ]; then
 			ansible-playbook "$CONFDIR/conf/$line.yml"
 
 		elif [[ "$line" == "plex" ]]; then
@@ -1164,18 +1166,18 @@ function manage_apps() {
 	USERRESUMEFILE="/home/$SEEDUSER/resume"
 	echo ""
 	echo -e "${GREEN}### Gestion des Applis pour: $SEEDUSER ###${NC}"
-	echo -e " ${BWHITE}* Resume file: $USERRESUMEFILE${NC}"
-	echo ""
 	## CHOOSE AN ACTION FOR APPS
 	ACTIONONAPP=$(whiptail --title "App Manager" --menu \
 	                "Selectionner une action :" 12 50 4 \
 	                "1" "Ajout Docker Applis"  \
 	                "2" "Supprimer une Appli"  \
 			"3" "Réinitialisation Container" \
- 			"4" "Installation Serveur Web" 3>&1 1>&2 2>&3)
+ 			"4" "Ajout/Supression Sites Web" 3>&1 1>&2 2>&3)
 	[[ "$?" = 1 ]] && script_plexdrive;
 	case $ACTIONONAPP in
 		"1" ) ## Ajout APP
+			echo -e " ${BWHITE}* Resume file: $USERRESUMEFILE${NC}"
+			echo ""
 			choose_services
 			install_services
 			resume_seedbox
@@ -1187,7 +1189,9 @@ function manage_apps() {
 			fi
 			;;
 		"2" ) ## Suppression APP
-			echo -e " ${BWHITE}* Edit my app${NC}"
+			echo -e " ${BWHITE}* Resume file: $USERRESUMEFILE${NC}"
+			echo ""
+			echo -e " ${BWHITE}* Application en cours de suppression${NC}"
 			TABSERVICES=()
 			for SERVICEACTIVATED in $(cat $USERRESUMEFILE)
 			do
@@ -1226,6 +1230,7 @@ function manage_apps() {
 				script_classique
 			fi
 			;;
+
 		"3" ) 	## Réinitialisation container
 			SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 			touch $SERVICESPERUSER
@@ -1270,36 +1275,104 @@ function manage_apps() {
 			fi
 			;;
 		"4" ) 	## Installation webserver
-			var="/tmp/menuservices.txt"
+			INSTALLEDFILE="/opt/seedbox/docker/$SEEDUSER/webserver/resume"
+			touch $INSTALLEDFILE > /dev/null 2>&1
+			echo -e " ${BWHITE}* Resume file: $INSTALLEDFILE ${NC}"
+			echo ""
 
-			if [[ -e "$var" ]]; then
-				rm $var
-			fi
-			webserver
-			install_services
-			echo ""
-			echo -e "${CCYAN}#######################################################################################${CEND}"
-			echo ""
-			echo -e "${GREEN}        		SERVEUR WEB INSTALLE AVEC SUCCES                                ${CEND}"
-			echo ""
-			echo -e "${CCYAN}#######################################################################################${CEND}"
-			echo ""
-			echo -e "${GREEN}        		PENSEZ A CHANGER LE MOT DE PASSE MYSQL                          ${CEND}"
-			echo ""
-			echo -e "${CCYAN}#######################################################################################${CEND}"
-			echo ""
-			echo -e "${GREEN}        	PAR DEFAUT root:mysql    DOSSIER POUR LES SITES /var/www                $CEND}"
-			echo ""
-			echo -e "${CCYAN}#######################################################################################${CEND}"
-			echo ""
-			rm -Rf $SERVICESPERUSER > /dev/null 2>&1
-			pause
-			if [[ -e "$PLEXDRIVE" ]]; then
-				script_plexdrive
-			else
-				script_classique
-			fi
-			;;
+			## CHOOSE AN ACTION FOR SITE
+			ACTIONONAPP=$(whiptail --title "Site Web - Nginx" --menu \
+	                		"Selectionner une action :" 12 50 4 \
+	                		"1" "Ajout Site Web"  \
+ 					"2" "Supression Site Web" 3>&1 1>&2 2>&3)
+			[[ "$?" = 1 ]] && script_plexdrive;
+
+			case $ACTIONONAPP in
+				"1" ) ## Ajout Site Web
+					var="/tmp/menuservices.txt"
+					if [[ -e "$var" ]]; then
+						rm $var
+					fi
+					webserver
+					for line in $(cat $SERVICESPERUSER);
+					do
+						ansible-playbook "$BASEDIR/includes/webserver/$line.yml"
+					done
+					rm -Rf $SERVICESPERUSER > /dev/null 2>&1
+
+					if [[ "$line" == "mariadb" ]]; then
+					clear
+					echo ""
+echo -e "${CCYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+					tee <<-EOF
+🚀 Mariadb                            📓 Reference: https://github.com/laster13/patxav
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💬 Création d'une base de donnée Mariadb (Exemple pour wordpress)
+
+[1] docker exec -ti mariadb bash
+[2] mysql -u root -p (mot de passe: mysql)
+[3] CREATE DATABASE wordpress;
+[4] CREATE USER 'wordpress'@'localhost' IDENTIFIED BY 'mysql';
+[5] GRANT USAGE ON *.* TO 'wordpress'@'localhost';
+[6] GRANT ALL PRIVILEGES ON wordpress.* TO 'wordpress'@'localhost';
+[7] FLUSH PRIVILEGES;
+[8] exit
+
+En suivant ce procédé vous pouvez créer autant de base de données que nécessaire
+Ou bien utiliser Phpmyadmin
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 Mariadb                            📓 Reference: https://github.com/laster13/patxav
+					EOF
+echo -e "${CCYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+					fi
+					pause
+					if [[ -e "$PLEXDRIVE" ]]; then
+						script_plexdrive
+					else
+						script_classique
+					fi
+					;;
+
+				"2" ) ## Suppression APP
+					echo -e " ${BWHITE}* Site Web en cours de suppression${NC}"
+					[ -s /opt/seedbox/docker/$SEEDUSER/webserver/resume ]
+					if [[ "$?" == "1" ]]; then
+					echo -e " ${BWHITE}* Pas de Sites à Désinstaller ${NC}"
+					pause
+					script_plexdrive
+					fi
+					TABSERVICES=()
+					for SERVICEACTIVATED in $(cat $INSTALLEDFILE)
+					do
+			        		SERVICE=$(echo $SERVICEACTIVATED)
+			        		TABSERVICES+=( ${SERVICE//\"} " " )
+					done
+					APPSELECTED=$(whiptail --title "App Manager" --menu \
+			              		"Sélectionner l'Appli à supprimer" 19 45 11 \
+			              		"${TABSERVICES[@]}"  3>&1 1>&2 2>&3)
+					[[ "$?" = 1 ]] && script_plexdrive;
+
+					docker rm -f "$APPSELECTED"
+					sed -i "/$APPSELECTED/d" $INSTALLEDFILE
+					rm -rf /opt/seedbox/docker/$SEEDUSER/webserver/$APPSELECTED
+					checking_errors $?
+ 					docker rm -f php7-$APPSELECTED > /dev/null 2>&1
+					docker rm -f php5-$APPSELECTED > /dev/null 2>&1
+
+					echo ""
+					echo -e " ${CCYAN}* $APPSELECTED à bien été désinstallé ${NC}"
+					pause
+					if [[ -e "$PLEXDRIVE" ]]; then
+						script_plexdrive
+					else
+						script_classique
+					fi
+
+					;;
+			esac
 	esac
 }
 

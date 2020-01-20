@@ -53,7 +53,6 @@
     - name: 'Ajout label traefik'
       set_fact:
         pg_labels:
-          traefik.docker.network: 'traefik_proxy'
           traefik.enable: 'true'
           traefik.seafapp.backend: 'Seafile'
           traefik.seafapp.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'          

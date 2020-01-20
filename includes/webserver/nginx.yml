@@ -2,8 +2,51 @@
 
 ---
 - hosts: localhost
-  gather_facts: false
+  gather_facts: true
+  vars_prompt:
+    - name: sousdomain
+      prompt: "Definir le Domaine ou Sous Domaine"
+      private: no
+
+    - name: php
+      prompt: "php5 ou php7 (Default)->"
+      default: "php7"
+      private: no
+
   tasks:
+
+    # VARIABLES ###################################################################
+    - name: 'Including variables'
+      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+
+    - name: Set sousdomain variable
+      shell: echo "{{ sousdomain }}" > /opt/seedbox/variables/sousdomain
+      when: sousdomain is defined
+
+    - name: 'Register Sous Domaine'
+      shell: 'cat /opt/seedbox/variables/sousdomain'
+      register: sousdomain
+      when: sousdomain is defined
+
+    - name: Set PHP variable
+      shell: echo "{{ php }}" > /opt/seedbox/variables/php
+      when: sousdomain is defined
+
+    - name: 'Register php'
+      shell: 'cat /opt/seedbox/variables/php'
+      register: php
+      when: sousdomain is defined
+
+    - name: Check config cloudflare exists
+      stat:
+        path: "/opt/seedbox/variables/cloudflare_api"
+      register: cloudflare_config
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: "{{ sousdomain.stdout }}"
+      when: cloudflare_config.stat.exists
 
     - name: Create network
       docker_network:
@@ -11,22 +54,18 @@
         ipam_options:
           subnet: '172.16.98.0/24'
 
-    # VARIABLES ###################################################################
-    - name: 'Including variables'
-      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
-
     # FACTS #######################################################################
     - name: 'Set Known Facts'
       set_fact:
-        pgrole: 'nginx'
+        pgrole: '{{ sousdomain.stdout }}'
         intport: '80'
         image: 'nginx'
 
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
       with_items:
-        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}'
-        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/config'
+        - '/opt/seedbox/docker/{{user.stdout}}/webserver/{{pgrole}}'
+        - '/opt/seedbox/docker/{{user.stdout}}/webserver/{{pgrole}}/config'
 
     # LABELS ######################################################################
     - name: 'Ajout label traefik'
@@ -34,8 +73,8 @@
         pg_labels:
           traefik.enable: 'true'
           traefik.port: '{{intport}}'
-          traefik.frontend.rule: 'Host:{{domain.stdout}}'
-          traefik.frontend.headers.SSLHost: '{{domain.stdout}}'
+          traefik.frontend.rule: 'Host:{{sousdomain.stdout}}'
+          traefik.frontend.headers.SSLHost: '{{sousdomain.stdout}}'
           traefik.frontend.headers.SSLRedirect: 'true'
           traefik.frontend.headers.STSIncludeSubdomains: 'true'
           traefik.frontend.headers.STSPreload: 'true'
@@ -48,14 +87,14 @@
     - name: Import default config
       template:
         src: /opt/seedbox-compose/includes/webserver/app.conf.j2
-        dest: /opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/config/app.conf
+        dest: /opt/seedbox/docker/{{user.stdout}}/webserver/{{pgrole}}/config/app.conf
         force: yes
 
     - name: 'Setting Volumes'
       set_fact:
         pg_volumes:
-          - '/var/www:/var/www/app'
-          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/config/app.conf:/etc/nginx/conf.d/app.conf'
+          - '/var/www/{{pgrole}}:/var/www/{{pgrole}}/app/'
+          - '/opt/seedbox/docker/{{user.stdout}}/webserver/{{pgrole}}/config/app.conf:/etc/nginx/conf.d/app.conf'
 
     # MAIN DEPLOYMENT #############################################################
 
@@ -70,4 +109,10 @@
           - name: traefik_proxy
         state: started
         labels: '{{pg_labels}}'
+
+    - name: 'Populate /home/{{user.stdout}}/resume'
+      shell: 'echo {{ sousdomain.stdout }} >> /opt/seedbox/docker/{{user.stdout}}/webserver/resume'
+
+    - name: "Install php"
+      include_tasks: "/opt/seedbox-compose/includes/webserver/{{ php.stdout }}.yml"
 

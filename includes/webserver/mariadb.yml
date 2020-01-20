@@ -40,8 +40,6 @@
         image: '{{image}}'
         pull: yes
         volumes: '{{pg_volumes}}'
-        published_ports:
-          - "127.0.0.1:3306:3306"
         env: '{{pg_env}}'
         restart_policy: unless-stopped
         networks:
@@ -50,7 +48,10 @@
 
     # POST DEPLOYMENT ##############################################################
 
+    - name: 'Populate /home/{{user.stdout}}/resume'
+      shell: 'echo {{ pgrole }} >> /opt/seedbox/docker/{{user.stdout}}/webserver/resume'
+
     - name: 'Post Deployment Notes'
       debug:
         msg: |-
-          * Login Information * root:mysql * Le mot de passe doit être changé *
+          * Login Information * root:mysql * Le mot de passe peut être changé *

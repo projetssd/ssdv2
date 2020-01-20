@@ -17,7 +17,7 @@
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: radarr
+        subdomain: phpmyadmin
       when: cloudflare_config.stat.exists
 
     # FACTS #######################################################################
@@ -62,3 +62,7 @@
           - name: traefik_proxy
         state: started
         labels: '{{pg_labels}}'
+
+    - name: 'Populate /home/{{user.stdout}}/resume'
+      shell: 'echo {{ pgrole }} >> /opt/seedbox/docker/{{user.stdout}}/webserver/resume'
+
