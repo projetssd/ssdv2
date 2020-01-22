@@ -13,7 +13,7 @@
     # VARIABLES ############################################################
     - name: 'Including variables'
       include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
-      
+
     # FACTS #######################################################################
 
     - name: Check config cloudflare exists
@@ -38,6 +38,11 @@
         intport: '443'
         extport: '4645'
         image: 'linuxserver/nextcloud'
+
+    - name: Create seafile-net network
+      docker_network:
+        name: nextcloud-net
+        state: present
 
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
@@ -71,6 +76,33 @@
           traefik.frontend.auth.forward.authResponseHeaders: 'X-Forwarded-User'
           traefik.frontend.auth.forward.trustForwardHeader: 'true'
 
+    - name: 'Deploying db-nextcloud'
+      docker_container:
+        name: 'db-nextcloud'
+        recreate: true
+        image: 'linuxserver/mariadb'
+        pull: yes
+        volumes:
+          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/db-nextcloud:/config'
+          - '/etc/localtime:/etc/localtime:ro'
+        env:
+          PUID: '{{userid.stdout}}'
+          PGID: '{{groupid.stdout}}'
+          MYSQL_ROOT_PASSWORD: 'nextcloud'
+          MYSQL_PASSWORD: 'nextcloud'
+          MYSQL_DATABASE: 'nextcloud'
+          MYSQL_USER: 'nextcloud'
+
+        restart_policy: unless-stopped
+        networks:
+          - name: nextcloud-net
+        state: started
+
+    - name: Wait for 10 seconds before continuing
+      wait_for:
+        timeout: 10
+
+
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
@@ -84,20 +116,23 @@
         pg_env:
           PUID: '{{userid.stdout}}'
           PGID: '{{groupid.stdout}}'
+          MYSQL_ROOT_PASSWORD: 'nextcloud'
+          MYSQL_PASSWORD: 'nextcloud'
+          MYSQL_DATABASE: 'nextcloud'
+          MYSQL_USER: 'nextcloud'
 
     - name: Create and start nextcloud container
       docker_container:
         name: nextcloud
         image: 'linuxserver/nextcloud'
         pull: yes
-        published_ports:
-          - '127.0.0.1:4645:443'
         env:
           PUID: '{{userid.stdout}}'
           PGID: '{{groupid.stdout}}'
         volumes: '{{pg_volumes}}'
         networks:
           - name: traefik_proxy
+          - name: nextcloud-net
         restart_policy: unless-stopped
         state: started
         labels: '{{pg_labels}}'
