@@ -35,8 +35,8 @@
     - name: 'Set Known Facts'
       set_fact:
         pgrole: 'subsonic'
-        intport: '4040'
-        image: 'danisla/subsonic'
+        intport: '8080'
+        image: 'mbirth/subsonic'
 
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
@@ -50,7 +50,6 @@
           traefik.enable: 'true'
           traefik.port: '{{intport}}'
           traefik.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
-          traefik.frontend.auth.basic: '{{ passwd.stdout if (not oauth_client.stat.exists) | default(false) else omit }}'
           traefik.frontend.headers.SSLHost: '{{pgrole}}.{{domain.stdout}}'
           traefik.docker.network: traefik_proxy
           traefik.frontend.passHostHeader: 'true'
@@ -63,16 +62,12 @@
           traefik.frontend.headers.STSIncludeSubdomains: 'true'
           traefik.frontend.headers.STSPreload: 'true'
           traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
-          traefik.frontend.headers.frameDeny: "true"
-          traefik.frontend.auth.forward.address: 'http://oauth:4181'
-          traefik.frontend.auth.forward.authResponseHeaders: 'X-Forwarded-User'
-          traefik.frontend.auth.forward.trustForwardHeader: 'true'
 
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
-          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/state:/opt/app/state:rw'
-          - '/home/{{user.stdout}}/Medias/Musiques:/mnt/music:ro'
+          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/state:/data'
+          - '/home/{{user.stdout}}/Medias/Musiques:/music:ro'
           - '/etc/localtime:/etc/localtime:ro'
 
     - name: 'Setting PG ENV'
@@ -87,6 +82,7 @@
       docker_container:
         name: '{{pgrole}}'
         image: '{{image}}'
+        detach: yes
         pull: yes
         volumes: '{{pg_volumes}}'
         env: '{{pg_env}}'

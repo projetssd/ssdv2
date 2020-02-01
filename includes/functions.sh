@@ -1025,14 +1025,12 @@ do
 		if [[ "$line" == "subsonic" ]]; then
 		echo -e "${BLUE}### CONFIG POST COMPOSE SUBSONIC ###${NC}"
 		echo -e " ${BWHITE}* Mise à jour subsonic...${NC}"
-		docker exec subsonic update > /dev/null 2>&1
-		docker restart subsonic > /dev/null 2>&1
-		docker exec subsonic bash -c "echo '127.0.0.1 localhost.localdomain localhost subsonic.org' >> /etc/hosts"
 		checking_errors $?
 		echo ""
 		echo -e "${BLUE}### SUBSONIC PREMIUM ###${NC}"
-		echo -e "${BWHITE}	--> foo@bar.com${NC}"
-		echo -e "${BWHITE}	--> f3ada405ce890b6f8204094deb12d8a8${NC}"
+		echo -e "${BWHITE}	--> laster13@hotmail.com${NC}"
+		echo -e "${BWHITE}	--> e402ff7ee47915446e7c2d8c8f83fad9${NC}"
+		pause
 		echo ""
 		fi
 
