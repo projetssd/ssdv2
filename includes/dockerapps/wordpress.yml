@@ -1,0 +1,115 @@
+#!/bin/bash
+#
+# Title:      PGBlitz (Reference Title File)
+# Author(s):  Admin9705
+# URL:        https://pgblitz.com - http://github.pgblitz.com
+# GNU:        General Public License v3.0
+################################################################################
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+  
+    # VARIABLES ############################################################
+    - name: 'Including variables'
+      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+
+    # FACTS #######################################################################
+
+    - name: Check config cloudflare exists
+      stat:
+        path: "/opt/seedbox/variables/cloudflare_api"
+      register: cloudflare_config
+
+    - name: Check config oauth_client exists
+      stat:
+        path: "/opt/seedbox/variables/oauth_client"
+      register: oauth_client
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: wordpress
+      when: cloudflare_config.stat.exists
+
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'wordpress'
+        intport: '80'
+        image: 'wordpress'
+
+    - name: Create seafile-net network
+      docker_network:
+        name: wordpress-net
+        state: present
+
+    # LABELS ######################################################################
+    - name: 'Adding Traefik'
+      set_fact:
+        pg_labels:
+          traefik.enable: 'true'
+          traefik.port: '80'
+          traefik.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
+          traefik.frontend.headers.SSLHost: '{{pgrole}}.{{domain.stdout}}'
+          traefik.docker.network: traefik_proxy
+          traefik.frontend.passHostHeader: 'true'
+          traefik.frontend.headers.SSLForceHost: 'true'
+          traefik.frontend.headers.SSLRedirect: 'true'
+          traefik.frontend.headers.browserXSSFilter: 'true'
+          traefik.frontend.headers.contentTypeNosniff: 'true'
+          traefik.frontend.headers.forceSTSHeader: 'true'
+          traefik.frontend.headers.STSSeconds: '315360000'
+          traefik.frontend.headers.STSIncludeSubdomains: 'true'
+          traefik.frontend.headers.STSPreload: 'true'
+          traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+
+    - name: 'Deploying db-wordpress'
+      docker_container:
+        name: 'db-wordpress'
+        recreate: true
+        image: 'linuxserver/mariadb'
+        pull: yes
+        volumes:
+          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/db-wordpress:/config'
+          - '/etc/localtime:/etc/localtime:ro'
+        env:
+          MYSQL_ROOT_PASSWORD: 'wordpress'
+          MYSQL_PASSWORD: 'wordpress'
+          MYSQL_DATABASE: 'wordpress'
+          MYSQL_USER: 'wordpress'
+
+        restart_policy: unless-stopped
+        networks:
+          - name: wordpress-net
+        state: started
+
+    - name: Wait for 10 seconds before continuing
+      wait_for:
+        timeout: 10
+
+    - name: 'Setting PG Volumes'
+      set_fact:
+        pg_volumes:
+          - '/etc/localtime:/etc/localtime:ro'
+          - '/opt/seedbox/docker/{{user.stdout}}/wordpress:/var/www/html'
+
+    - name: 'Setting PG ENV'
+      set_fact:
+        pg_env:
+          WORDPRESS_DB_HOST: 'db-wordpress'
+          WORDPRESS_DB_USER: 'wordpress'
+          WORDPRESS_DB_PASSWORD: 'wordpress'
+          WORDPRESS_DB_NAME: 'wordpress'
+
+    - name: Create and start wordpress container
+      docker_container:
+        name: wordpress
+        image: 'wordpress'
+        pull: yes
+        volumes: '{{pg_volumes}}'
+        networks:
+          - name: traefik_proxy
+          - name: wordpress-net
+        restart_policy: unless-stopped
+        state: started
+        labels: '{{pg_labels}}'

@@ -438,9 +438,10 @@ function script_plexdrive() {
 			else
 			echo -e "${CGREEN}   8) Installer Mailserver @Hardware${CEND}"
 			fi
-			echo -e "${CGREEN}   9) Retour menu principal${CEND}"
+			echo -e "${CGREEN}   9) Mise à jour Seedbox avec Cloudflare${CEND}"
+			echo -e "${CGREEN}   10) Retour menu principal${CEND}"
 			echo -e ""
-			read -p "Votre choix [1-9]: " OUTILS
+			read -p "Votre choix [1-10]: " OUTILS
 
 			case $OUTILS in
 
@@ -572,6 +573,11 @@ function script_plexdrive() {
 			;;
 
 			9)
+			/opt/seedbox-compose/includes/config/scripts/cloudflare.sh
+			script_plexdrive
+			;;
+
+			10)
 			script_plexdrive
 			;;
 
@@ -1030,7 +1036,8 @@ do
 		echo -e "${BLUE}### SUBSONIC PREMIUM ###${NC}"
 		echo -e "${BWHITE}	--> laster13@hotmail.com${NC}"
 		echo -e "${BWHITE}	--> e402ff7ee47915446e7c2d8c8f83fad9${NC}"
-		pause
+		echo -e "\nNoter les ${CCYAN}informations du dessus${CEND} et appuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+		read -r
 		echo ""
 		fi
 
@@ -1071,6 +1078,37 @@ do
 		read -r
 		fi
 
+		if [[ "$line" == "wordpress" ]]; then
+		echo ""
+		echo -e "${BLUE}### CONFIG POST COMPOSE WORDPRESS ###${NC}"
+		echo ""
+echo -e "${CCYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+					tee <<-EOF
+🚀 Wordpress                           📓 Reference: https://github.com/laster13/patxav
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💬 Réglages pour modifier le site complet en SSL (Section admin comprise)
+
+[1] Télécharger l'extension SSL Insecure Content Fixer
+[2] Séléctionner ' HTTP_X_FORWARDED_PROTO (ex. load balancer, reverse proxy, NginX)'
+[3] Réglages/Général modifier par https dans les url
+
+💬 Infos base de données
+
+Nom de la base de données: wordpress
+Identifiant: wordpress
+Mot de passe: wordpress
+Adresse de la base de données: db-wordpress
+Préfixe des tables: laisser par défault
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 Wordpress                           📓 Reference: https://github.com/laster13/patxav
+					EOF
+echo -e "${CCYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+		echo -e "\nNoter les ${CCYAN}informations du dessus${CEND} et appuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+		read -r
+		fi
 echo ""
 done
 }

@@ -1,5 +1,5 @@
 #!/bin/bash
-
+clear
 source includes/functions.sh
 source includes/variables.sh
 
@@ -7,7 +7,6 @@ source includes/variables.sh
     	echo -e "${CRED}     /!\ MISE A JOUR DU SERVEUR AVEC CLOUDFLARE /!\            ${CEND}"
     	echo -e "${CRED}---------------------------------------------------------------${CEND}"
 	echo ""
-
 
 ## Mise à jour du systeme
 update_system
@@ -46,3 +45,6 @@ rm $SERVICESUSER$SEEDUSER
     	echo -e "${CRED}     /!\ MISE A JOUR DU SERVEUR EFFECTUEE AVEC SUCCES /!\     ${CEND}"
     	echo -e "${CRED}---------------------------------------------------------------${CEND}"
 	echo ""
+	echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour revenir au menu principal..."
+	read -r
+
