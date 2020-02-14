@@ -48,12 +48,12 @@ backupList() {
 remoteRestoration() {
 
 path=/tmp/seedbox.txt
-backups=$(rclone --config "/root/.config/rclone/rclone.conf" lsf {{remote.stdout}}:/{{user.stdout}}/BACKUPS| sed 's:/.*::' | cat -n | sed 's/\([1-9].*\)/\1/')
+backups=$(rclone lsf {{remote.stdout}}:/{{user.stdout}}/BACKUPS| sed 's:/.*::' | cat -n | sed 's/\([1-9].*\)/\1/')
 
 echo -e "\n${CCYAN}Liste des archives disponibles :${CEND}"
 echo -e "${CGREEN}$backups${CEND}"
 
-rclone --config "/root/.config/rclone/rclone.conf" lsf {{remote.stdout}}:/{{user.stdout}}/BACKUPS | sed 's:/.*::' > $path
+rclone lsf {{remote.stdout}}:/{{user.stdout}}/BACKUPS | sed 's:/.*::' > $path
 
 echo ""
 
@@ -91,7 +91,7 @@ GdriveRestoration() {
     read -r
 
     echo "> Récupération de l'archive distante"
-    rclone copy --config "/root/.config/rclone/rclone.conf" {{remote.stdout}}:/{{user.stdout}}/BACKUPS/$BACKUPFOLDER/$ARCHIVE .
+    rclone copy {{remote.stdout}}:/{{user.stdout}}/BACKUPS/$BACKUPFOLDER/$ARCHIVE .
 }
 
 fin() {
