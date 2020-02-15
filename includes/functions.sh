@@ -439,9 +439,10 @@ function script_plexdrive() {
 			echo -e "${CGREEN}   8) Installer Mailserver @Hardware${CEND}"
 			fi
 			echo -e "${CGREEN}   9) Mise à jour Seedbox avec Cloudflare${CEND}"
-			echo -e "${CGREEN}   10) Retour menu principal${CEND}"
+			echo -e "${CGREEN}   10) Plex_Patrol${CEND}"
+			echo -e "${CGREEN}   11) Retour menu principal${CEND}"
 			echo -e ""
-			read -p "Votre choix [1-10]: " OUTILS
+			read -p "Votre choix [1-11]: " OUTILS
 
 			case $OUTILS in
 
@@ -578,6 +579,13 @@ function script_plexdrive() {
 			;;
 
 			10)
+			ansible-playbook /opt/seedbox-compose/includes/config/roles/plex_patrol/tasks/main.yml
+    			echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour revenir au menu principal..."
+    			read -r
+			script_plexdrive
+			;;
+
+			11)
 			script_plexdrive
 			;;
 

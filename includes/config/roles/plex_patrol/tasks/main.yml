@@ -1,0 +1,63 @@
+#########################################################################
+# Title:         Cloudbox: Plex Patrol Role                             #
+# Author(s):     l3uddz                                                 #
+# URL:           https://github.com/cloudbox/cloudbox                   #
+# --                                                                    #
+#         Part of the Cloudbox project: https://cloudbox.works          #
+#########################################################################
+#                   GNU General Public License v3.0                     #
+#########################################################################
+---
+
+- hosts: localhost
+  gather_facts: false
+  tasks:
+
+    # VARIABLES ############################################################
+    - name: 'Including variables'
+      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+
+    - name: 'Register token'
+      shell: 'cat /opt/seedbox/variables/token'
+      register: token
+      ignore_errors: True
+
+    - name: Stop and remove any existing container
+      docker_container:
+        name: plex_patrol
+        state: absent
+
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
+      with_items:
+        - '/opt/seedbox/docker/{{user.stdout}}/plex_patrol'
+
+    - name: Check config exists
+      stat:
+        path: "/opt/seedbox/docker/{{user.stdout}}/plex_patrol/settings.ini"
+      register: plex_patrol_config
+
+    - name: Import default config
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/plex_patrol/templates/settings.ini.j2
+        dest: /opt/seedbox/docker/{{user.stdout}}/plex_patrol/settings.ini
+        owner: "{{userid.stdout}}"
+        group: "{{groupid.stdout}}"
+        mode: 0775
+        force: yes
+      when: not plex_patrol_config.stat.exists
+
+    - name: Create and start container
+      docker_container:
+        name: plex_patrol
+        image: "cloudb0x/plex_patrol:latest"
+        pull: yes
+        user: "{{userid.stdout}}:{{groupid.stdout}}"
+        volumes:
+          - "/etc/localtime:/etc/localtime:ro"
+          - "/opt/seedbox/docker/{{user.stdout}}/plex_patrol:/config"
+        networks:
+          - name: traefik_proxy
+        purge_networks: yes
+        restart_policy: unless-stopped
+        state: started
