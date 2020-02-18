@@ -27,16 +27,6 @@
         subdomain: ubooquity
       when: cloudflare_config.stat.exists
 
-    - name: Wait for 10 seconds before continuing
-      wait_for:
-        timeout: 10
-
-    - name: "Set DNS Record on CloudFlare"
-      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
-      vars:
-        subdomain: ubooquityadmin
-      when: cloudflare_config.stat.exists
-
     # FACTS #######################################################################
     - name: 'Set Known Facts'
       set_fact:
@@ -55,7 +45,7 @@
           traefik.enable: 'true'
           traefik.app.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
           traefik.app.port: '2202'
-          traefik.admin.frontend.rule: 'Host:ubooquityadmin.{{domain.stdout}}'
+          traefik.admin.frontend.rule: 'Host:ubooquity.{{domain.stdout}}; PathPrefix:/admin,/admin-res,/admin-api'
           traefik.admin.port: '2502'
           traefik.docker.network: 'traefik_proxy'
           traefik.frontend.headers.SSLHost: '{{domain.stdout}}'
