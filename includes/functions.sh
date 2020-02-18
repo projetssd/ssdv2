@@ -1086,6 +1086,24 @@ do
 		read -r
 		fi
 
+		if [[ "$line" == "pydio" ]]; then
+		echo ""
+		echo -e "${BLUE}### CONFIG POST COMPOSE PYDIO ###${NC}"
+		echo -e " ${BWHITE}* Configuration pydio...${NC}"
+		echo ""
+			echo -e "${CCYAN}-----------------------------------------------------------------------------------${CEND}"
+			echo -e "${CGREEN}		Localhost: 'db-pydio'						    ${CEND}"
+			echo -e "${CGREEN}		MYSQL_DATABASE: 'pydio'					            ${CEND}"
+ 			echo -e "${YELLOW}		MYSQL_USER: 'pydio'						    ${CEND}"
+			echo -e "${YELLOW}		MYSQL_PASSWORD: 'pydio'					            ${CEND}"
+			echo -e "${CGREEN}		MYSQL_ROOT_PASSWORD: 'pydio'					    ${CEND}"
+			echo -e "${CCYAN}-----------------------------------------------------------------------------------${CEND}"
+		echo ""
+		echo -e "\nNoter les ${CCYAN}informations du dessus${CEND} et appuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+		read -r
+		fi
+
+
 		if [[ "$line" == "wordpress" ]]; then
 		echo ""
 		echo -e "${BLUE}### CONFIG POST COMPOSE WORDPRESS ###${NC}"

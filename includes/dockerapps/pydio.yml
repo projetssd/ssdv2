@@ -1,0 +1,116 @@
+#!/bin/bash
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+
+    # VARIABLES ################################################################################
+    - name: 'Including variables'
+      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+
+    # CLOUDFLARE ###############################################################################
+    - name: Check config cloudflare exists
+      stat:
+        path: "/opt/seedbox/variables/cloudflare_api"
+      register: cloudflare_config
+
+    - name: Check config oauth_client exists
+      stat:
+        path: "/opt/seedbox/variables/oauth_client"
+      register: oauth_client
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: 'pydio'
+      when: cloudflare_config.stat.exists
+
+    - name: Create pydio-net network
+      docker_network:
+        name: 'pydio-net'
+        state: present
+
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
+      with_items:
+        - '/opt/seedbox/docker/{{user.stdout}}/pydio'
+
+###################################### Début de zone à modifier si besoin #######################
+
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'pydio'
+        image: 'pydio/cells'
+
+##################################### Fin de zone à modifier #####################################
+
+    # LABELS ######################################################################
+    - name: 'Ajout label traefik'
+      set_fact:
+        pg_labels:
+          traefik.enable: 'true'
+          traefik.backend: 'cells'
+          traefik.port: '80'
+          traefik.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
+          traefik.frontend.headers.SSLHost: '{{pgrole}}.{{domain.stdout}}'
+          traefik.docker.network: traefik_proxy
+          traefik.frontend.passHostHeader: 'true'
+          traefik.frontend.headers.SSLForceHost: 'true'
+          traefik.frontend.headers.SSLRedirect: 'true'
+          traefik.frontend.headers.browserXSSFilter: 'true'
+          traefik.frontend.headers.contentTypeNosniff: 'true'
+          traefik.frontend.headers.forceSTSHeader: 'true'
+          traefik.frontend.headers.STSSeconds: '315360000'
+          traefik.frontend.headers.STSIncludeSubdomains: 'true'
+          traefik.frontend.headers.STSPreload: 'true'
+          traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+          traefik.frontend.headers.frameDeny: "true"
+
+    ## volumes docker
+    - name: 'Setting PG Volumes'
+      set_fact:
+        pg_volumes: 
+          - '/opt/seedbox/docker/{{user.stdout}}/pydio:/var/cells'
+          - '/opt/seedbox/docker/{{user.stdout}}/pydio/data:/var/cells/data'
+          - '/home/{{user.stdout}}:/home/{{user.stdout}}'
+
+    - name: 'Setting PG ENV'
+      set_fact:
+        pg_env:
+          CELLS_BIND: 'pydio.{{domain.stdout}}:80'
+          CELLS_EXTERNAL: 'https://pydio.{{domain.stdout}}'
+          CELLS_NO_TLS: '1'
+
+    - name: 'Deploying db-pydio'
+      docker_container:
+        name: 'db-pydio'
+        image: 'mysql:5.7'
+        pull: yes
+        env:
+          MYSQL_DATABASE: 'pydio'
+          MYSQL_USER: 'pydio'
+          MYSQL_PASSWORD: 'pydio'
+          MYSQL_ROOT_PASSWORD: 'pydio'
+          command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+        restart_policy: always
+        networks:
+          - name: 'pydio-net'
+        state: started
+
+    - name: Wait for 10 seconds before continuing
+      wait_for:
+        timeout: 10
+
+    - name: 'Deploying pydio'
+      docker_container:
+        name: 'pydio'
+        image: '{{image}}'
+        pull: yes
+        volumes: '{{pg_volumes}}'
+        env: '{{pg_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+          - name: 'pydio-net'
+        state: started
+        labels: '{{pg_labels}}'
