@@ -8,7 +8,62 @@
     # VARIABLES ############################################################
     - name: 'Including variables'
       include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
-      
+
+    - name: 'ApiKey Ombi'
+      shell: | 
+        sqlite3 /opt/seedbox/docker/yohann/ombi/OmbiSettings.db 'select Content from "GlobalSettings" where id = 1' > /opt/seedbox/docker/yohann/ombi/key.txt
+        grep -Po '(?<=ApiKey)\W*\K[^ ]*' /opt/seedbox/docker/yohann/ombi/key.txt | cut -d',' -f1 | sed 's/.$//'
+      register: ombi
+
+    - name: 'ApiKey Ombi'
+      debug:
+        msg: '{{ ombi.stdout }}'
+
+    - name: 'ApiKey Sonarr'
+      shell: |
+        sed -n 's:.*<ApiKey>\(.*\)</ApiKey>.*:\1:p' /opt/seedbox/docker/{{user.stdout}}/sonarr3/config/config.xml
+      register: sonarr
+
+    - name: 'ApiKey Sonarr'
+      debug:
+        msg: '{{ sonarr.stdout }}'
+
+    - name: 'ApiKey Radarr'
+      shell: |
+        sed -n 's:.*<ApiKey>\(.*\)</ApiKey>.*:\1:p' /opt/seedbox/docker/{{user.stdout}}/radarr/config/config.xml
+      register: radarr
+
+    - name: 'ApiKey Radarr'
+      debug:
+        msg: '{{ radarr.stdout }}'
+
+    - name: 'ApiKey Lidarr'
+      shell: |
+        sed -n 's:.*<ApiKey>\(.*\)</ApiKey>.*:\1:p' /opt/seedbox/docker/{{user.stdout}}/lidarr/config.xml
+      register: lidarr
+
+    - name: 'ApiKey lidarr'
+      debug:
+        msg: '{{ lidarr.stdout }}'
+
+    - name: 'ApiKey Tautulli'
+      shell: |
+        grep "api_key" /opt/seedbox/docker/{{user.stdout}}/tautulli/config.ini | cut -d '=' -f2 | sed 's/ //g' | head -1
+      register: tautulli
+
+    - name: 'ApiKey Tautulli'
+      debug:
+        msg: '{{ tautulli.stdout }}'
+
+    - name: 'ApiKey Maxmind'
+      shell: |
+        grep "maxmind_license_key" /opt/seedbox/docker/{{user.stdout}}/tautulli/config.ini | cut -d '=' -f2 | sed 's/ //g'
+      register: maxmind
+
+    - name: 'ApiKey Maxmind'
+      debug:
+        msg: '{{ maxmind.stdout }}'
+
     # FACTS #######################################################################
 
     - name: Check config cloudflare exists
@@ -24,17 +79,17 @@
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: varken
+        subdomain: grafana
       when: cloudflare_config.stat.exists
 
     - name: 'Set Known Facts'
       set_fact:
-        pgrole: 'varken'
-        intport: '80'
-        image: 'boerderij/varken'
+        pgrole: 'grafana'
+        intport: '3000'
+        image: 'grafana/grafana'
 
     - name: Creating paths
-      file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
+      file: 'path={{item}} state=directory mode=0775 owner=472 group=104'
       with_items:
         - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}'
 
@@ -45,47 +100,158 @@
           traefik.enable: 'true'
           traefik.port: '{{intport}}'
           traefik.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
-          traefik.frontend.auth.basic: '{{ passwd.stdout if (not oauth_client.stat.exists) | default(false) else omit }}'
           traefik.frontend.headers.SSLHost: '{{pgrole}}.{{domain.stdout}}'
           traefik.docker.network: traefik_proxy
           traefik.frontend.passHostHeader: 'true'
-          traefik.frontend.headers.SSLForceHost: 'true'
-          traefik.frontend.headers.SSLRedirect: 'true'
-          traefik.frontend.headers.browserXSSFilter: 'true'
-          traefik.frontend.headers.contentTypeNosniff: 'true'
-          traefik.frontend.headers.forceSTSHeader: 'true'
-          traefik.frontend.headers.STSSeconds: '315360000'
-          traefik.frontend.headers.STSIncludeSubdomains: 'true'
-          traefik.frontend.headers.STSPreload: 'true'
-          traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
-          traefik.frontend.headers.frameDeny: "true"
-          traefik.frontend.auth.forward.address: 'http://oauth:4181'
-          traefik.frontend.auth.forward.authResponseHeaders: 'X-Forwarded-User'
-          traefik.frontend.auth.forward.trustForwardHeader: 'true'
 
-    - name: 'Setting PG Volumes'
+    # Granana #############################################################
+
+    - name: 'Setting Volumes Grafana'
       set_fact:
-        pg_volumes:
+        grafana_volumes:
           - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}:/config'
-          - '/etc/localtime:/etc/localtime:ro'
 
-    - name: 'Setting PG ENV'
+    - name: 'Setting Grafana ENV'
       set_fact:
-        pg_env:
-          PUID: '{{userid.stdout}}'
-          PGID: '{{groupid.stdout}}'
-
-    # MAIN DEPLOYMENT #############################################################
+        grafana_env:
+          GF_SECURITY_ADMIN_PASSWORD: 'grafana'
+          GF_PATHS_DATA: '/config/data'
+          GF_PATHS_LOGS: '/config/logs'
+          GF_PATHS_PLUGINS: '/config/plugins'
+          GF_INSTALL_PLUGINS: 'grafana-piechart-panel,grafana-worldmap-panel'
 
     - name: 'Deploying {{pgrole}}'
       docker_container:
         name: '{{pgrole}}'
         image: '{{image}}'
+        user: '472'
         pull: yes
-        volumes: '{{pg_volumes}}'
-        env: '{{pg_env}}'
+        volumes: '{{grafana_volumes}}'
+        env: '{{grafana_env}}'
         restart_policy: unless-stopped
         networks:
           - name: traefik_proxy
         state: started
         labels: '{{pg_labels}}'
+
+    # Influxdb #############################################################
+
+    # LABELS ######################################################################
+    - name: 'Ajout label traefik'
+      set_fact:
+        influxdb_labels:
+          traefik.enable: 'true'
+          traefik.port: '8086'
+          traefik.frontend.rule: 'Host:influxdb.{{domain.stdout}}'
+          traefik.frontend.headers.SSLHost: 'influxdb.{{domain.stdout}}'
+          traefik.docker.network: traefik_proxy
+          traefik.frontend.passHostHeader: 'true'
+
+    - name: 'Setting Influxdb ENV'
+      set_fact:
+        influxdb_env:
+          INFLUXDB_USER: 'varken'
+          INFLUXDB_USER_PASSWORD: 'test'
+
+    - name: 'Setting Volumes influxdb'
+      set_fact:
+        influxdb_volumes:
+          - '/opt/seedbox/docker/{{user.stdout}}/influxdb/config:/var/lib/influxdb'
+
+    - name: 'Deploying influxdb'
+      docker_container:
+        name: 'influxdb'
+        hostname: 'influxdb'
+        image: 'influxdb:1.5.4-alpine'
+        pull: yes
+        volumes: '{{influxdb_volumes}}'
+        env: '{{influxdb_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+        state: started
+        labels: '{{influxdb_labels}}'
+
+    # Varken #############################################################
+
+    - name: 'Setting Varken ENV'
+      set_fact:
+        varken_env:
+          TZ: 'Europe/Paris'
+          VRKN_GLOBAL_SONARR_SERVER_IDS: '1'
+          VRKN_GLOBAL_RADARR_SERVER_IDS: '1'
+          VRKN_GLOBAL_LIDARR_SERVER_IDS: '1'
+          VRKN_GLOBAL_TAUTULLI_SERVER_IDS: '1'
+          VRKN_GLOBAL_OMBI_SERVER_IDS: '1'
+          VRKN_GLOBAL_MAXMIND_LICENSE_KEY: '{{ maxmind.stdout }}'
+          VRKN_INFLUXDB_URL: 'influxdb'  
+          VRKN_INFLUXDB_PORT: '8086'
+          VRKN_INFLUXDB_SSL: 'false'
+          VRKN_INFLUXDB_VERIFY_SSL: 'false'
+          VRKN_INFLUXDB_USERNAME: 'root'
+          VRKN_INFLUXDB_PASSWORD: 'root'
+          VRKN_TAUTULLI_1_URL: 'tautulli.{{ domain.stdout }}'
+          VRKN_TAUTULLI_1_FALLBACK_IP: '1.1.1.1'
+          VRKN_TAUTULLI_1_APIKEY: '{{ tautulli.stdout }}'
+          VRKN_TAUTULLI_1_SSL: 'false'
+          VRKN_TAUTULLI_1_VERIFY_SSL: 'false'
+          VRKN_TAUTULLI_1_GET_ACTIVITY: 'true'
+          VRKN_TAUTULLI_1_GET_ACTIVITY_RUN_SECONDS: '30'
+          VRKN_TAUTULLI_1_GET_STATS: 'true'
+          VRKN_TAUTULLI_1_GET_STATS_RUN_SECONDS: '3600'
+          VRKN_SONARR_1_URL: 'sonarr3.{{ domain.stdout }}'
+          VRKN_SONARR_1_APIKEY: '{{ sonarr.stdout }}'
+          VRKN_SONARR_1_SSL: 'false'
+          VRKN_SONARR_1_VERIFY_SSL: 'false'
+          VRKN_SONARR_1_MISSING_DAYS: '7'
+          VRKN_SONARR_1_MISSING_DAYS_RUN_SECONDS: '300'
+          VRKN_SONARR_1_FUTURE_DAYS: '1'
+          VRKN_SONARR_1_FUTURE_DAYS_RUN_SECONDS: '300'
+          VRKN_SONARR_1_QUEUE: 'true'
+          VRKN_SONARR_1_QUEUE_RUN_SECONDS: '300'
+          VRKN_RADARR_1_URL: 'radarr.{{ domain.stdout }}'
+          VRKN_RADARR_1_APIKEY: '{{ radarr.stdout }}'
+          VRKN_RADARR_1_SSL: 'false'
+          VRKN_RADARR_1_VERIFY_SSL: 'false'
+          VRKN_RADARR_1_QUEUE: 'true'
+          VRKN_RADARR_1_QUEUE_RUN_SECONDS: '300'
+          VRKN_RADARR_1_GET_MISSING: 'true'
+          VRKN_RADARR_1_GET_MISSING_RUN_SECONDS: '300'
+          VRKN_LIDARR_1_URL: 'lidarr.{{ domain.stdout }}'
+          VRKN_LIDARR_1_APIKEY: '{{ lidarr.stdout }}'
+          VRKN_LIDARR_1_SSL: 'false'
+          VRKN_LIDARR_1_VERIFY_SSL: 'false'
+          VRKN_LIDARR_1_MISSING_DAYS: '30'
+          VRKN_LIDARR_1_MISSING_DAYS_RUN_SECONDS: '300'
+          VRKN_LIDARR_1_FUTURE_DAYS: '30'
+          VRKN_LIDARR_1_FUTURE_DAYS_RUN_SECONDS: '300'
+          VRKN_LIDARR_1_QUEUE: 'true'
+          VRKN_LIDARR_1_QUEUE_RUN_SECONDS: '300'
+          VRKN_OMBI_1_URL: 'ombi.{{ domain.stdout }}'
+          VRKN_OMBI_1_APIKEY: '{{ ombi.stdout }}'
+          VRKN_OMBI_1_SSL: 'false'
+          VRKN_OMBI_1_VERIFY_SSL: 'false'
+          VRKN_OMBI_1_GET_REQUEST_TYPE_COUNTS: 'true'
+          VRKN_OMBI_1_REQUEST_TYPE_RUN_SECONDS: '300'
+          VRKN_OMBI_1_GET_REQUEST_TOTAL_COUNTS: 'true'
+          VRKN_OMBI_1_REQUEST_TOTAL_RUN_SECONDS: '300'
+          VRKN_OMBI_1_GET_ISSUE_STATUS_COUNTS: 'true'
+          VRKN_OMBI_1_ISSUE_STATUS_RUN_SECONDS: '300'
+
+    - name: 'Setting Volumes Varken'
+      set_fact:
+        varken_volumes:
+          - '/opt/seedbox/docker/{{user.stdout}}/varken/config:/config'
+
+    - name: 'Deploying Varken'
+      docker_container:
+        name: 'varken'
+        hostname: 'varken'
+        image: 'boerderij/varken'
+        pull: yes
+        volumes: '{{varken_volumes}}'
+        env: '{{varken_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+        state: started
