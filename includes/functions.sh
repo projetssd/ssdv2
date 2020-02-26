@@ -1281,6 +1281,13 @@ function manage_apps() {
 			docker rm -f db-$APPSELECTED
 			fi
 
+			if [[ "$APPSELECTED" = "varken" ]]; then
+			docker rm -f influxdb telegraf grafana
+			rm -rf /opt/seedbox/docker/$SEEDUSER/telegraf
+			rm -rf /opt/seedbox/docker/$SEEDUSER/grafana
+			rm -rf /opt/seedbox/docker/$SEEDUSER/influxdb
+			fi
+
 			checking_errors $?
 			echo""
 			echo -e "${BLUE}### $APPSELECTED a été supprimé ###${NC}"

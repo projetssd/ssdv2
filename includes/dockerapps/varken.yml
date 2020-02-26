@@ -96,7 +96,7 @@
     # LABELS ######################################################################
     - name: 'Ajout label traefik'
       set_fact:
-        pg_labels:
+        grafana_labels:
           traefik.enable: 'true'
           traefik.port: '{{intport}}'
           traefik.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
@@ -104,48 +104,7 @@
           traefik.docker.network: traefik_proxy
           traefik.frontend.passHostHeader: 'true'
 
-    # Granana #############################################################
-
-    - name: 'Setting Volumes Grafana'
-      set_fact:
-        grafana_volumes:
-          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}:/config'
-
-    - name: 'Setting Grafana ENV'
-      set_fact:
-        grafana_env:
-          GF_SECURITY_ADMIN_PASSWORD: 'grafana'
-          GF_PATHS_DATA: '/config/data'
-          GF_PATHS_LOGS: '/config/logs'
-          GF_PATHS_PLUGINS: '/config/plugins'
-          GF_INSTALL_PLUGINS: 'grafana-piechart-panel,grafana-worldmap-panel'
-
-    - name: 'Deploying {{pgrole}}'
-      docker_container:
-        name: '{{pgrole}}'
-        image: '{{image}}'
-        user: '472'
-        pull: yes
-        volumes: '{{grafana_volumes}}'
-        env: '{{grafana_env}}'
-        restart_policy: unless-stopped
-        networks:
-          - name: traefik_proxy
-        state: started
-        labels: '{{pg_labels}}'
-
     # Influxdb #############################################################
-
-    # LABELS ######################################################################
-    - name: 'Ajout label traefik'
-      set_fact:
-        influxdb_labels:
-          traefik.enable: 'true'
-          traefik.port: '8086'
-          traefik.frontend.rule: 'Host:influxdb.{{domain.stdout}}'
-          traefik.frontend.headers.SSLHost: 'influxdb.{{domain.stdout}}'
-          traefik.docker.network: traefik_proxy
-          traefik.frontend.passHostHeader: 'true'
 
     - name: 'Setting Influxdb ENV'
       set_fact:
@@ -170,7 +129,42 @@
         networks:
           - name: traefik_proxy
         state: started
-        labels: '{{influxdb_labels}}'
+
+    # telegraf #############################################################
+
+    - name: Wait for 10 seconds before continuing
+      wait_for:
+        timeout: 10
+
+    - name: 'Setting Influxdb ENV'
+      set_fact:
+        telegraf_env:
+          HOST_PROC: '/host/proc'
+
+    - name: 'Setting Volumes telegraf'
+      set_fact:
+        telegraf_volumes:
+          - '/var/run/docker.sock:/var/run/docker.sock'
+          - '/opt/seedbox/docker/{{user.stdout}}/telegraf:/etc/telegraf'
+          - '/proc:/host/proc:ro'
+
+    - name: 'Deploying telegraf'
+      docker_container:
+        name: 'telegraf'
+        hostname: 'telegraf'
+        image: 'telegraf'
+        pull: yes
+        volumes: '{{telegraf_volumes}}'
+        env: '{{telegraf_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+        state: started
+
+    - name: Import telegraf config
+      template:
+        src: /opt/seedbox-compose/includes/dockerapps/templates/varken/telegraf.conf.j2
+        dest: /opt/seedbox/docker/{{user.stdout}}/telegraf/telegraf.conf
 
     # Varken #############################################################
 
@@ -190,7 +184,7 @@
           VRKN_INFLUXDB_VERIFY_SSL: 'false'
           VRKN_INFLUXDB_USERNAME: 'root'
           VRKN_INFLUXDB_PASSWORD: 'root'
-          VRKN_TAUTULLI_1_URL: 'tautulli.{{ domain.stdout }}'
+          VRKN_TAUTULLI_1_URL: 'tautulli:8181'
           VRKN_TAUTULLI_1_FALLBACK_IP: '1.1.1.1'
           VRKN_TAUTULLI_1_APIKEY: '{{ tautulli.stdout }}'
           VRKN_TAUTULLI_1_SSL: 'false'
@@ -199,7 +193,7 @@
           VRKN_TAUTULLI_1_GET_ACTIVITY_RUN_SECONDS: '30'
           VRKN_TAUTULLI_1_GET_STATS: 'true'
           VRKN_TAUTULLI_1_GET_STATS_RUN_SECONDS: '3600'
-          VRKN_SONARR_1_URL: 'sonarr3.{{ domain.stdout }}'
+          VRKN_SONARR_1_URL: 'sonarr3:8989'
           VRKN_SONARR_1_APIKEY: '{{ sonarr.stdout }}'
           VRKN_SONARR_1_SSL: 'false'
           VRKN_SONARR_1_VERIFY_SSL: 'false'
@@ -209,7 +203,7 @@
           VRKN_SONARR_1_FUTURE_DAYS_RUN_SECONDS: '300'
           VRKN_SONARR_1_QUEUE: 'true'
           VRKN_SONARR_1_QUEUE_RUN_SECONDS: '300'
-          VRKN_RADARR_1_URL: 'radarr.{{ domain.stdout }}'
+          VRKN_RADARR_1_URL: 'radarr:7878'
           VRKN_RADARR_1_APIKEY: '{{ radarr.stdout }}'
           VRKN_RADARR_1_SSL: 'false'
           VRKN_RADARR_1_VERIFY_SSL: 'false'
@@ -217,7 +211,7 @@
           VRKN_RADARR_1_QUEUE_RUN_SECONDS: '300'
           VRKN_RADARR_1_GET_MISSING: 'true'
           VRKN_RADARR_1_GET_MISSING_RUN_SECONDS: '300'
-          VRKN_LIDARR_1_URL: 'lidarr.{{ domain.stdout }}'
+          VRKN_LIDARR_1_URL: 'lidarr:8686'
           VRKN_LIDARR_1_APIKEY: '{{ lidarr.stdout }}'
           VRKN_LIDARR_1_SSL: 'false'
           VRKN_LIDARR_1_VERIFY_SSL: 'false'
@@ -255,3 +249,35 @@
         networks:
           - name: traefik_proxy
         state: started
+
+    # Granana #############################################################
+
+    - name: 'Setting Volumes Grafana'
+      set_fact:
+        grafana_volumes:
+          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}:/config'
+
+
+    - name: 'Setting Grafana ENV'
+      set_fact:
+        grafana_env:
+          GF_SECURITY_ADMIN_PASSWORD: 'grafana'
+          GF_PATHS_DATA: '/config/data'
+          GF_PATHS_LOGS: '/config/logs'
+          GF_PATHS_PLUGINS: '/config/plugins'
+          GF_INSTALL_PLUGINS: 'grafana-piechart-panel,grafana-worldmap-panel'
+
+    - name: 'Deploying {{pgrole}}'
+      docker_container:
+        name: '{{pgrole}}'
+        image: '{{image}}'
+        user: '472'
+        pull: yes
+        volumes: '{{grafana_volumes}}'
+        env: '{{grafana_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+        state: started
+        labels: '{{grafana_labels}}'
+
