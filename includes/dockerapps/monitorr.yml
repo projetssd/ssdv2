@@ -1,10 +1,5 @@
 #!/bin/bash
-#
-# Title:      PGBlitz (Reference Title File)
-# Author(s):  Admin9705
-# URL:        https://pgblitz.com - http://github.pgblitz.com
-# GNU:        General Public License v3.0
-################################################################################
+
 ---
 - hosts: localhost
   gather_facts: false
@@ -13,7 +8,7 @@
     # VARIABLES ############################################################
     - name: 'Including variables'
       include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
- 
+      
     # FACTS #######################################################################
 
     - name: Check config cloudflare exists
@@ -29,14 +24,14 @@
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: organizr
+        subdomain: monitorr
       when: cloudflare_config.stat.exists
 
     - name: 'Set Known Facts'
       set_fact:
-        pgrole: 'organizr'
+        pgrole: 'monitorr'
         intport: '80'
-        image: 'organizrtools/organizr-v2'
+        image: 'monitorr/monitorr'
 
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
@@ -72,16 +67,17 @@
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
-          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}:/config'
-          - '/etc/localtime:/etc/localtime:ro'
+          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}:/app'
 
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
           PUID: '{{userid.stdout}}'
           PGID: '{{groupid.stdout}}'
+          TZ: 'Europe/Paris'
 
     # MAIN DEPLOYMENT #############################################################
+
     - name: 'Deploying {{pgrole}}'
       docker_container:
         name: '{{pgrole}}'

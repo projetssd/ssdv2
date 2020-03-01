@@ -11,8 +11,8 @@
 
     - name: 'ApiKey Ombi'
       shell: | 
-        sqlite3 /opt/seedbox/docker/yohann/ombi/OmbiSettings.db 'select Content from "GlobalSettings" where id = 1' > /opt/seedbox/docker/yohann/ombi/key.txt
-        grep -Po '(?<=ApiKey)\W*\K[^ ]*' /opt/seedbox/docker/yohann/ombi/key.txt | cut -d',' -f1 | sed 's/.$//'
+        sqlite3 /opt/seedbox/docker/{{user.stdout}}/ombi/OmbiSettings.db 'select Content from "GlobalSettings" where id = 1' > /opt/seedbox/docker/{{user.stdout}}/ombi/key.txt
+        grep -Po '(?<=ApiKey)\W*\K[^ ]*' /opt/seedbox/docker/{{user.stdout}}/ombi/key.txt | cut -d',' -f1 | sed 's/.$//'
       register: ombi
 
     - name: 'ApiKey Ombi'
@@ -101,8 +101,23 @@
           traefik.port: '{{intport}}'
           traefik.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
           traefik.frontend.headers.SSLHost: '{{pgrole}}.{{domain.stdout}}'
+          traefik.frontend.auth.basic: '{{ passwd.stdout if (not oauth_client.stat.exists) | default(false) else omit }}'
           traefik.docker.network: traefik_proxy
           traefik.frontend.passHostHeader: 'true'
+          traefik.frontend.headers.SSLForceHost: 'true'
+          traefik.frontend.headers.SSLRedirect: 'true'
+          traefik.frontend.headers.browserXSSFilter: 'true'
+          traefik.frontend.headers.contentTypeNosniff: 'true'
+          traefik.frontend.headers.forceSTSHeader: 'true'
+          traefik.frontend.headers.STSSeconds: '315360000'
+          traefik.frontend.headers.STSIncludeSubdomains: 'true'
+          traefik.frontend.headers.STSPreload: 'true'
+          traefik.frontend.headers.frameDeny: 'true'
+          traefik.frontend.headers.customFrameOptionsValue: 'ALLOW-FROM https://{{pgrole}}.{{domain.stdout}}'
+          traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+          traefik.frontend.auth.forward.address: 'http://oauth:4181'
+          traefik.frontend.auth.forward.authResponseHeaders: 'X-Forwarded-User'
+          traefik.frontend.auth.forward.trustForwardHeader: 'true'
 
     # Influxdb #############################################################
 
@@ -256,7 +271,6 @@
       set_fact:
         grafana_volumes:
           - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}:/config'
-
 
     - name: 'Setting Grafana ENV'
       set_fact:
