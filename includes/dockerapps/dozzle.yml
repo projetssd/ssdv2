@@ -1,0 +1,99 @@
+#!/bin/bash
+#
+# Title:      Dozzle
+# Author(s):  Amir Raminfar (amir20)
+# URL:        https://dozzle.dev/ - https://github.com/amir20/dozzle
+# GNU:        General Public License v3.0
+###################################################################################
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+
+    # VARIABLES ###################################################################
+
+    - name: 'Including variables'
+      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+      
+    # FACTS #######################################################################
+
+    - name: Check config cloudflare exists
+      stat:
+        path: "/opt/seedbox/variables/cloudflare_api"
+      register: cloudflare_config
+
+    - name: Check config oauth_client exists
+      stat:
+        path: "/opt/seedbox/variables/oauth_client"
+      register: oauth_client
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: dozzle
+      when: cloudflare_config.stat.exists
+
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'dozzle'
+        intport: '8080'
+        image: 'amir20/dozzle'
+
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
+      with_items:
+        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}'
+
+    # LABELS #### KEEPS BOTTOM CLEAN ###############################################
+    - name: 'Adding Traefik'
+      set_fact:
+        pg_labels:
+          traefik.enable: 'true'
+          traefik.port: '{{intport}}'
+          traefik.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
+          traefik.frontend.auth.basic: '{{ passwd.stdout if (not oauth_client.stat.exists) | default(false) else omit }}'
+          traefik.frontend.headers.SSLHost: '{{pgrole}}.{{domain.stdout}}'
+          traefik.docker.network: traefik_proxy
+          traefik.frontend.passHostHeader: 'true'
+          traefik.frontend.headers.SSLForceHost: 'true'
+          traefik.frontend.headers.SSLRedirect: 'true'
+          traefik.frontend.headers.browserXSSFilter: 'true'
+          traefik.frontend.headers.contentTypeNosniff: 'true'
+          traefik.frontend.headers.forceSTSHeader: 'true'
+          traefik.frontend.headers.STSSeconds: '315360000'
+          traefik.frontend.headers.STSIncludeSubdomains: 'true'
+          traefik.frontend.headers.STSPreload: 'true'
+          traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+          traefik.frontend.headers.frameDeny: "true"
+          traefik.frontend.auth.forward.address: 'http://oauth:4181'
+          traefik.frontend.auth.forward.authResponseHeaders: 'X-Forwarded-User'
+          traefik.frontend.auth.forward.trustForwardHeader: 'true'
+
+    - name: 'Setting PG Volumes'
+      set_fact:
+        pg_volumes:
+          - '/var/run/docker.sock:/var/run/docker.sock'
+          - '/etc/localtime:/etc/localtime:ro'
+
+    - name: 'Setting PG ENV'
+      set_fact:
+        pg_env:
+          DOZZLE_ADDR: ':8080'
+          DOZZLE_BASE: '/'
+          DOZZLE_LEVEL: 'info'
+          DOZZLE_TAILSIZE: '300'
+
+    # MAIN SCRIPT ##############################################################
+
+    - name: 'Deploying {{pgrole}}'
+      docker_container:
+        name: '{{pgrole}}'
+        image: '{{image}}'
+        pull: yes
+        volumes: '{{pg_volumes}}'
+        env: '{{pg_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+        state: started
+        labels: '{{pg_labels}}'

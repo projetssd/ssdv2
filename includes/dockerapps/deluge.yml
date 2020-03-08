@@ -1,0 +1,159 @@
+#!/bin/bash
+#
+# Title:      PGBlitz (Reference Title File)
+# Authors:    Admin9705, Deiteq, and many PGBlitz Contributors
+# URL:        https://pgblitz.com - http://github.pgblitz.com
+# GNU:        General Public License v3.0
+################################################################################
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+
+    # VARIABLES ############################################################
+    - name: 'Including variables'
+      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+      
+    # FACTS #######################################################################
+
+    - name: Check config cloudflare exists
+      stat:
+        path: "/opt/seedbox/variables/cloudflare_api"
+      register: cloudflare_config
+
+    - name: Check config oauth_client exists
+      stat:
+        path: "/opt/seedbox/variables/oauth_client"
+      register: oauth_client
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: deluge
+      when: cloudflare_config.stat.exists
+
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'deluge'
+        intport: '8112'
+        image: 'linuxserver/deluge'
+
+    - name: 'Creating rutorrent folder paths'
+      file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
+      with_items:
+        - '/home/{{user.stdout}}/local/{{pgrole}}'
+        - '/home/{{user.stdout}}/local/{{pgrole}}/downloads'
+        - '/home/{{user.stdout}}/local/{{pgrole}}/incomplete'
+        - '/home/{{user.stdout}}/local/{{pgrole}}/torrent'
+        - '/home/{{user.stdout}}/local/{{pgrole}}/watch'
+
+    # LABELS ######################################################################
+    - name: 'Adding Traefik'
+      set_fact:
+        pg_labels:
+          traefik.enable: 'true'
+          traefik.port: '{{intport}}'
+          traefik.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
+          traefik.frontend.auth.basic: '{{ passwd.stdout if (not oauth_client.stat.exists) | default(false) else omit }}'
+          traefik.frontend.headers.SSLHost: '{{pgrole}}.{{domain.stdout}}'
+          traefik.docker.network: traefik_proxy
+          traefik.frontend.passHostHeader: 'true'
+          traefik.frontend.headers.SSLForceHost: 'true'
+          traefik.frontend.headers.SSLRedirect: 'true'
+          traefik.frontend.headers.browserXSSFilter: 'true'
+          traefik.frontend.headers.contentTypeNosniff: 'true'
+          traefik.frontend.headers.forceSTSHeader: 'true'
+          traefik.frontend.headers.STSSeconds: '315360000'
+          traefik.frontend.headers.STSIncludeSubdomains: 'true'
+          traefik.frontend.headers.STSPreload: 'true'
+          traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+          traefik.frontend.auth.forward.address: 'http://oauth:4181'
+          traefik.frontend.auth.forward.authResponseHeaders: 'X-Forwarded-User'
+          traefik.frontend.auth.forward.trustForwardHeader: 'true'
+
+    - name: 'Setting PG Volumes'
+      set_fact:
+        pg_volumes:
+          - '/etc/localtime:/etc/localtime:ro'
+          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}:/config'
+          - '/home/{{user.stdout}}:/home/{{user.stdout}}'
+
+    - name: 'Setting PG ENV'
+      set_fact:
+        pg_env:
+          PUID: '{{userid.stdout}}'
+          PGID: '{{groupid.stdout}}'
+
+    # MAIN DEPLOYMENT #############################################################
+    - name: 'Deploying {{pgrole}}'
+      docker_container:
+        name: '{{pgrole}}'
+        image: '{{image}}'
+        pull: yes
+        published_ports:
+          - '127.0.0.1:8112:8112'
+          - '127.0.0.1:58112:58112'
+          - '127.0.0.1:58846:58846'
+        volumes: '{{pg_volumes}}'
+        env: '{{pg_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+        state: started
+        labels: '{{pg_labels}}'
+
+    # CONFIGURATION ###########################################################
+    - name: 'Waiting for {{pgrole}} to initialize'
+      wait_for:
+        timeout: 10
+
+    - name: Stopping {{pgrole}}
+      docker_container:
+        name: '{{pgrole}}'
+        state: stopped
+
+    - name: 'Checking for appdata'
+      wait_for:
+        path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/core.conf'
+        state: present
+        delay: 5
+
+    - name: Set move completed location
+      lineinfile:
+        path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/core.conf'
+        regexp: '"move_completed_path".*'
+        line: '"move_completed_path": "/home/{{user.stdout}}/local/{{pgrole}}/downloads",'
+        state: present
+
+    - name: Set download location
+      lineinfile:
+        path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/core.conf'
+        regexp: '"download_location".*'
+        line: '"download_location": "/home/{{user.stdout}}/local/{{pgrole}}/incomplete",'
+        state: present
+
+    - name: Setting torrent file directory
+      lineinfile:
+        path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/core.conf'
+        regexp: '"torrentfiles_location".*'
+        line: '"torrentfiles_location": "/home/{{user.stdout}}/local/{{pgrole}}/torrent",'
+        state: present
+
+    - name: Setting torrent watch directory
+      lineinfile:
+        path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/core.conf'
+        regexp: '"autoadd_location".*'
+        line: '"autoadd_location": "/home/{{user.stdout}}/local/{{pgrole}}/watch",'
+        state: present
+
+    - name: Setting move_completed
+      lineinfile:
+        path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/core.conf'
+        regexp: '"move_completed".*'
+        line: '"move_completed": true,'
+        state: present
+
+    - name: Restart {{pgrole}}
+      docker_container:
+        name: '{{pgrole}}'
+        state: started
