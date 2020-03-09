@@ -672,7 +672,7 @@ function install_plexdrive() {
 	if [[ ! -e "$PLEXDRIVE" ]]; then
 		echo -e " ${BWHITE}* Installation plexdrive${NC}"
 		cd /tmp
-		wget $(curl -s https://api.github.com/repos/dweidenfeld/plexdrive/releases/latest | grep 'browser_' | cut -d\" -f4 | grep plexdrive-linux-amd64) -q -O plexdrive > /dev/null 2>&1
+		wget https://github.com/plexdrive/plexdrive/releases/download/5.0.0/plexdrive-linux-amd64 -q -O plexdrive > /dev/null 2>&1
 		chmod -c +x /tmp/plexdrive > /dev/null 2>&1
 		#install plexdrive
 		mv -v /tmp/plexdrive /usr/bin/ > /dev/null 2>&1
