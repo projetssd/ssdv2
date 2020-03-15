@@ -264,14 +264,15 @@ function script_classique() {
 	fi
 
 	echo ""
-	echo -e "${CCYAN}SEEDBOX CLASSIQUE${CEND}"
+	echo -e "${CCYAN}SEEDBOX RCLONE/PLEXDRIVE${CEND}"
 	echo -e "${CGREEN}${CEND}"
-	echo -e "${CGREEN}   1) Desinstaller la seedbox ${CEND}"
+	echo -e "${CGREEN}   1) Désinstaller la seedbox ${CEND}"
 	echo -e "${CGREEN}   2) Ajout/Supression d'Applis${CEND}"
 	echo -e "${CGREEN}   3) Outils${CEND}"
+	echo -e "${CGREEN}   4) Quitter${CEND}"
 
 	echo -e ""
-	read -p "Votre choix [1-3]: " PORT_CHOICE
+	read -p "Votre choix [1-4]: " PORT_CHOICE
 
 	case $PORT_CHOICE in
 		1) ## Installation de la seedbox
@@ -279,14 +280,17 @@ function script_classique() {
 		echo ""
 		echo -e "${YELLOW}### Seedbox-Compose déjà installée !###${NC}"
 		if (whiptail --title "Seedbox-Compose déjà installée" --yesno "Désinstaller complètement la Seedbox ?" 7 50) then
-			uninstall_seedbox
+			if (whiptail --title "ATTENTION" --yesno "Etes vous sur de vouloir désintaller la seedbox ?" 7 55) then
+			    uninstall_seedbox
+			else
+			    script_classique
+			fi
 		else
 			script_classique
 		fi
 		;;
 		2)
 		clear
-		logo
 		## Ajout d'Applications
 		echo""
 		clear
@@ -298,34 +302,134 @@ function script_classique() {
 			echo ""
 			echo -e "${CCYAN}OUTILS${CEND}"
 			echo -e "${CGREEN}${CEND}"
-			echo -e "${CGREEN}   1) Mise à jour Cloudflare${CEND}"
-			echo -e "${CGREEN}   2) Installation du motd${CEND}"
-			echo -e "${CGREEN}   3) Traktarr${CEND}"
-			echo -e "${CGREEN}   4) Webtools${CEND}"
-			echo -e "${CGREEN}   5) rtorrent-cleaner de ${CCYAN}@Magicalex-Mondedie.fr${CEND}${NC}"
-			echo -e "${CGREEN}   6) Openvpn${CEND}"
-			echo -e "${CGREEN}   7) Retour menu principal${CEND}"
+			echo -e "${CGREEN}   1) Sécuriser la Seddbox${CEND}"
+			echo -e "${CGREEN}   2) Mise à jour Seedbox avec Cloudflare${CEND}"
+			echo -e "${CGREEN}   3) Changement du nom de Domaine${CEND}"
+			if docker ps | grep -q mailserver; then
+			echo -e "${YELLOW}   4) Desinstaller Mailserver @Hardware${CEND}"
+			else
+			echo -e "${CGREEN}   4) Installer Mailserver @Hardware${CEND}"
+			fi
+			echo -e "${CGREEN}   5) Modèle Création Appli Personnalisée Docker${CEND}"
+			echo -e "${CGREEN}   6) Installation du motd${CEND}"
+			echo -e "${CGREEN}   7) Traktarr${CEND}"
+			echo -e "${CGREEN}   8) Webtools${CEND}"
+			echo -e "${CGREEN}   9) rtorrent-cleaner de ${CCYAN}@Magicalex-Mondedie.fr${CEND}${NC}"
+			echo -e "${CGREEN}   10) Openvpn${CEND}"
+			echo -e "${CGREEN}   11) Plex_Patrol${CEND}"
+			echo -e "${CGREEN}   12) Retour menu principal${CEND}"
 			echo -e ""
-			read -p "Votre choix [1-7]: " OUTILS
+			read -p "Votre choix [1-12]: " OUTILS
 
 			case $OUTILS in
 
-			1) ## Mise à jour - Nouvelle version du script
-			clear
-			echo ""
-			/opt/seedbox-compose/includes/config/update/update
+			1) ## Mise en place Google OAuth avec Traefik
+				clear
+				logo
+				echo ""
+				echo -e "${CCYAN}SECURISER APPLIS DOCKER${CEND}"
+				echo -e "${CGREEN}${CEND}"
+				echo -e "${CGREEN}   1) Sécuriser Traefik avec Google OAuth2${CEND}"
+				echo -e "${CGREEN}   2) Sécuriser avec Authentification Classique${CEND}"
+				echo -e "${CGREEN}   3) Ajout / Supression adresses mail autorisées pour Google OAuth2${CEND}"
+				echo -e "${CGREEN}   4) Modification port SSH, mise à jour fail2ban, installation Iptables${CEND}"
+				echo -e "${CGREEN}   5) Retour menu principal${CEND}"
+
+				echo -e ""
+				read -p "Votre choix [1-5]: " OAUTH
+				case $OAUTH in
+
+				1)
+				clear
+				echo ""
+				/opt/seedbox-compose/includes/config/scripts/oauth.sh
+				script_classique
+				;;
+
+				2)
+				clear
+				echo ""
+				rm /opt/seedbox/variables/oauth_client > /dev/null 2>&1
+				rm /opt/seedbox/variables/oauth_secret > /dev/null 2>&1
+				rm /opt/seedbox/variables/openssl > /dev/null 2>&1
+				/opt/seedbox-compose/includes/config/scripts/basique.sh
+				script_classique
+				;;
+
+				3)
+				clear
+				logo
+				echo ""
+    				>&2 echo -n -e "${BWHITE}Compte(s) Gmail utilisé(s), séparés d'une virgule si plusieurs: ${CEND}"
+    				read email
+    				echo $email > /opt/seedbox/variables/email
+				ansible-playbook /opt/seedbox-compose/includes/dockerapps/traefik.yml
+				script_classique
+				;;
+
+				4)
+				clear
+				echo ""
+				/opt/seedbox-compose/includes/config/scripts/iptables.sh
+				#script_plexdrive
+				;;
+
+				5)
+				script_classique
+				;;
+
+				esac
+			;;
+
+			2) ## Mise à jour Cloudflare
+			/opt/seedbox-compose/includes/config/scripts/cloudflare.sh
+			script_classique
+			;;
+
+			3) ## Changement du nom de domaine
+			/opt/seedbox-compose/includes/config/scripts/domain.sh
+			script_classique
+			;;
+
+			4) ## Installation du mailserver @Hardware
+			if docker ps | grep -q mailserver; then
+			    echo -e "${BLUE}### DESINSTALLATION DU MAILSERVER ###${NC}"
+			    echo ""
+			    echo -e " ${BWHITE}* désinstallation mailserver @Hardware${NC}"
+			    docker rm -f mailserver postfixadmin mariadb redis rainloop > /dev/null 2>&1
+			    rm -rf /mnt/docker > /dev/null 2>&1
+			    checking_errors $?
+			    echo""
+			    echo -e "${BLUE}### Mailserver a été supprimé ###${NC}"
+			    echo ""
+			else
+			    echo -e "${BLUE}### INSTALLATION DU MAILSERVER ###${NC}"
+			    echo ""
+			    echo -e " ${BWHITE}* Installation mailserver @Hardware${NC}"
+			    ansible-playbook /opt/seedbox-compose/includes/config/roles/mailserver/tasks/main.yml
+			    echo ""
+			    echo -e " ${CCYAN}* https://github.com/laster13/patxav/wiki/Configuration-Mailserver-@Hardware${NC}"
+			fi
 			pause
 			script_classique
 			;;
 
-			2) ## Installation du motd
+			5) ## Modèle création appli docker
+			clear
+			echo ""
+			/opt/seedbox-compose/includes/config/scripts/docker_create.sh
+			script_classique
+			;;
+
+			6) ## Installation du motd
 			clear
 			echo ""
 			motd
 			pause
-			script_classique			;;
+			script_classique
+			;;
 
-			3) ## Installation de traktarr
+			7) ## Installation de traktarr
 			clear
 			echo ""
 			traktarr
@@ -333,7 +437,7 @@ function script_classique() {
 			script_classique
 			;;
 
-			4) ## Installation de Webtools
+			8) ## Installation de Webtools
 			clear
 			echo ""
 			webtools
@@ -341,25 +445,37 @@ function script_classique() {
 			script_classique
 			;;
 
-			5) ## Installation de rtorrent-cleaner
+			9) ## Installation de rtorrent-cleaner
 			clear
 			echo ""
 			rtorrent-cleaner
-			docker run -it --rm -v /home/$SEEDUSER/local/rutorrent:/home/$SEEDUSER/local/rutorrent -v /run/php:/run/php magicalex/docker-rtorrent-cleaner
+			docker run -it --rm -v /home/$SEEDUSER/local/rutorrent:/home/$SEEDUSER/local/rutorrent -v /run/php:/run/php magicalex/rtorrent-cleaner
 			pause
-			script_classique			;;
+			script_classique
+			;;
 
-			6)
+			10) ## Installation openvpn
 			openvpn
 			pause
 			script_classique
 			;;
 
-			7)
+
+			11) ## Installation Plex_Patrol
+			ansible-playbook /opt/seedbox-compose/includes/config/roles/plex_patrol/tasks/main.yml
+    			echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour revenir au menu principal..."
+    			read -r
+			script_classique
+			;;
+
+			12)
 			script_classique
 			;;
 
 			esac
+		;;
+		4)
+		exit
 		;;
 	esac
 	fi
@@ -427,22 +543,23 @@ function script_plexdrive() {
 			echo -e "${CCYAN}OUTILS${CEND}"
 			echo -e "${CGREEN}${CEND}"
 			echo -e "${CGREEN}   1) Sécuriser la Seddbox${CEND}"
-			echo -e "${CGREEN}   2) Modèle Création Appli Personnalisée Docker${CEND}"
-			echo -e "${CGREEN}   3) Installation du motd${CEND}"
-			echo -e "${CGREEN}   4) Traktarr${CEND}"
-			echo -e "${CGREEN}   5) Webtools${CEND}"
-			echo -e "${CGREEN}   6) rtorrent-cleaner de ${CCYAN}@Magicalex-Mondedie.fr${CEND}${NC}"
-			echo -e "${CGREEN}   7) Openvpn${CEND}"
+			echo -e "${CGREEN}   2) Mise à jour Seedbox avec Cloudflare${CEND}"
+			echo -e "${CGREEN}   3) Changement du nom de Domaine${CEND}"
 			if docker ps | grep -q mailserver; then
-			echo -e "${YELLOW}   8) Desinstaller Mailserver @Hardware${CEND}"
+			echo -e "${YELLOW}   4) Desinstaller Mailserver @Hardware${CEND}"
 			else
-			echo -e "${CGREEN}   8) Installer Mailserver @Hardware${CEND}"
+			echo -e "${CGREEN}   4) Installer Mailserver @Hardware${CEND}"
 			fi
-			echo -e "${CGREEN}   9) Mise à jour Seedbox avec Cloudflare${CEND}"
-			echo -e "${CGREEN}   10) Plex_Patrol${CEND}"
-			echo -e "${CGREEN}   11) Retour menu principal${CEND}"
+			echo -e "${CGREEN}   5) Modèle Création Appli Personnalisée Docker${CEND}"
+			echo -e "${CGREEN}   6) Installation du motd${CEND}"
+			echo -e "${CGREEN}   7) Traktarr${CEND}"
+			echo -e "${CGREEN}   8) Webtools${CEND}"
+			echo -e "${CGREEN}   9) rtorrent-cleaner de ${CCYAN}@Magicalex-Mondedie.fr${CEND}${NC}"
+			echo -e "${CGREEN}   10) Openvpn${CEND}"
+			echo -e "${CGREEN}   11) Plex_Patrol${CEND}"
+			echo -e "${CGREEN}   12) Retour menu principal${CEND}"
 			echo -e ""
-			read -p "Votre choix [1-11]: " OUTILS
+			read -p "Votre choix [1-12]: " OUTILS
 
 			case $OUTILS in
 
@@ -465,7 +582,7 @@ function script_plexdrive() {
 				1)
 				clear
 				echo ""
-				/opt/seedbox-compose/includes/config/update/oauth.sh
+				/opt/seedbox-compose/includes/config/scripts/oauth.sh
 				script_plexdrive
 				;;
 
@@ -475,7 +592,7 @@ function script_plexdrive() {
 				rm /opt/seedbox/variables/oauth_client > /dev/null 2>&1
 				rm /opt/seedbox/variables/oauth_secret > /dev/null 2>&1
 				rm /opt/seedbox/variables/openssl > /dev/null 2>&1
-				/opt/seedbox-compose/includes/config/update/basique.sh
+				/opt/seedbox-compose/includes/config/scripts/basique.sh
 				script_plexdrive
 				;;
 
@@ -493,7 +610,7 @@ function script_plexdrive() {
 				4)
 				clear
 				echo ""
-				/opt/seedbox-compose/includes/config/update/iptables.sh
+				/opt/seedbox-compose/includes/config/scripts/iptables.sh
 				#script_plexdrive
 				;;
 
@@ -504,53 +621,17 @@ function script_plexdrive() {
 				esac
 			;;
 
-			2) ## Modèle création appli docker
-			clear
-			echo ""
-			/opt/seedbox-compose/includes/config/update/docker_create.sh
+			2) ## Mise à jour Cloudflare
+			/opt/seedbox-compose/includes/config/scripts/cloudflare.sh
 			script_plexdrive
 			;;
 
-			3) ## Installation du motd
-			clear
-			echo ""
-			motd
-			pause
+			3) ## Changement du nom de domaine
+			/opt/seedbox-compose/includes/config/scripts/domain.sh
 			script_plexdrive
 			;;
 
-			4) ## Installation de traktarr
-			clear
-			echo ""
-			traktarr
-			pause
-			script_plexdrive
-			;;
-
-			5) ## Installation de Webtools
-			clear
-			echo ""
-			webtools
-			pause
-			script_plexdrive
-			;;
-
-			6) ## Installation de rtorrent-cleaner
-			clear
-			echo ""
-			rtorrent-cleaner
-			docker run -it --rm -v /home/$SEEDUSER/local/rutorrent:/home/$SEEDUSER/local/rutorrent -v /run/php:/run/php magicalex/rtorrent-cleaner
-			pause
-			script_plexdrive
-			;;
-
-			7)
-			openvpn
-			pause
-			script_plexdrive
-			;;
-
-			8) ## Installation du mailserver @Hardware
+			4) ## Installation du mailserver @Hardware
 			if docker ps | grep -q mailserver; then
 			    echo -e "${BLUE}### DESINSTALLATION DU MAILSERVER ###${NC}"
 			    echo ""
@@ -573,19 +654,61 @@ function script_plexdrive() {
 			script_plexdrive
 			;;
 
-			9)
-			/opt/seedbox-compose/includes/config/scripts/cloudflare.sh
+			5) ## Modèle création appli docker
+			clear
+			echo ""
+			/opt/seedbox-compose/includes/config/scripts/docker_create.sh
 			script_plexdrive
 			;;
 
-			10)
+			6) ## Installation du motd
+			clear
+			echo ""
+			motd
+			pause
+			script_plexdrive
+			;;
+
+			7) ## Installation de traktarr
+			clear
+			echo ""
+			traktarr
+			pause
+			script_plexdrive
+			;;
+
+			8) ## Installation de Webtools
+			clear
+			echo ""
+			webtools
+			pause
+			script_plexdrive
+			;;
+
+			9) ## Installation de rtorrent-cleaner
+			clear
+			echo ""
+			rtorrent-cleaner
+			docker run -it --rm -v /home/$SEEDUSER/local/rutorrent:/home/$SEEDUSER/local/rutorrent -v /run/php:/run/php magicalex/rtorrent-cleaner
+			pause
+			script_plexdrive
+			;;
+
+			10) ## Installation openvpn
+			openvpn
+			pause
+			script_plexdrive
+			;;
+
+
+			11) ## Installation Plex_Patrol
 			ansible-playbook /opt/seedbox-compose/includes/config/roles/plex_patrol/tasks/main.yml
     			echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour revenir au menu principal..."
     			read -r
 			script_plexdrive
 			;;
 
-			11)
+			12)
 			script_plexdrive
 			;;
 
