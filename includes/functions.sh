@@ -264,7 +264,7 @@ function script_classique() {
 	fi
 
 	echo ""
-	echo -e "${CCYAN}SEEDBOX RCLONE/PLEXDRIVE${CEND}"
+	echo -e "${CCYAN}SEEDBOX CLASSIQUE${CEND}"
 	echo -e "${CGREEN}${CEND}"
 	echo -e "${CGREEN}   1) Désinstaller la seedbox ${CEND}"
 	echo -e "${CGREEN}   2) Ajout/Supression d'Applis${CEND}"
