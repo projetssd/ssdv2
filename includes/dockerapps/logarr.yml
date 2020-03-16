@@ -68,6 +68,7 @@
         pg_volumes:
           - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}:/app'
           - '/home/{{user.stdout}}:/home/{{user.stdout}}'
+          - '/opt/seedbox/docker/{{user.stdout}}:/opt/seedbox/docker/{{user.stdout}}'
 
     - name: 'Setting PG ENV'
       set_fact:
