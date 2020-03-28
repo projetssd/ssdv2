@@ -35,16 +35,7 @@ function update_system() {
 			checking_errors $?
 }
 
-function check_domain() {
-		TESTDOMAIN=$1
-		echo -e " ${BWHITE}* Checking domain - ping $TESTDOMAIN...${NC}"
-		ping -c 1 $TESTDOMAIN | grep "$IPADDRESS" > /dev/null
-		checking_errors $?
-}
-
 function cloudflare() {
-		cloudflare="/opt/seedbox/variables/cloudflare_api"
-		if [[ ! -e "$cloudflare" ]]; then
 		echo -e "${BLUE}### Gestion des DNS ###${NC}"
 		echo ""
 			echo -e "${CCYAN}------------------------------------------------------------------${CEND}"
@@ -56,10 +47,10 @@ function cloudflare() {
 			echo -e "${CCYAN}   consommer votre bande passante et les ressources serveur.      ${CEND}"
 			echo -e "${CCYAN}------------------------------------------------------------------${CEND}"
 		echo ""
-                	#read -rp "Souhaitez vous utiliser les DNS Cloudflare ? (o/n) : " OUI
 			read -rp $'\e[33mSouhaitez vous utiliser les DNS Cloudflare ? (o/n)\e[0m :' OUI
 
 			if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
+				ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 				if [ -z "$cloud_email" ] || [ -z "$cloud_api" ]; then
     				cloud_email=$1
     				cloud_api=$2
@@ -68,22 +59,21 @@ function cloudflare() {
 				while [ -z "$cloud_email" ]; do
     				>&2 echo -n -e "${BWHITE}Votre Email Cloudflare: ${CEND}"
     				read cloud_email
-    				echo $cloud_email > /opt/seedbox/variables/cloudflare_email
+				sed -i "s/login:/login: $cloud_email/" /opt/seedbox/variables/account.yml
 				done
 
 				while [ -z "$cloud_api" ]; do
     				>&2 echo -n -e "${BWHITE}Votre API Cloudflare: ${CEND}"
     				read cloud_api
-    				echo $cloud_api > /opt/seedbox/variables/cloudflare_api
+				sed -i "s/api:/api: $cloud_api/" /opt/seedbox/variables/account.yml
 				done
 			fi
 		echo ""
-		fi
 }
 
 function oauth() {
-		oauth="/opt/seedbox/variables/oauth_client"
-		if [[ ! -e "$oauth" ]]; then
+		grep -w "client" /opt/seedbox/variables/account.yml | cut -d: -f2 | tr -d ' ' > /dev/null 2>&1
+		if [[ "$?" != "0" ]]; then
 		echo -e "${BLUE}### Google OAuth2 avec Traefik – Secure SSO pour les services Docker ###${NC}"
 		echo ""
 			echo -e "${CCYAN}------------------------------------------------------------------${CEND}"
@@ -108,22 +98,24 @@ function oauth() {
 				while [ -z "$oauth_client" ]; do
     				>&2 echo -n -e "${BWHITE}Oauth_client: ${CEND}"
     				read oauth_client
-    				echo $oauth_client > /opt/seedbox/variables/oauth_client
+				sed -i "s/client:/client: $oauth_client/" /opt/seedbox/variables/account.yml
 				done
 
 				while [ -z "$oauth_secret" ]; do
     				>&2 echo -n -e "${BWHITE}Oauth_secret: ${CEND}"
     				read oauth_secret
-    				echo $oauth_secret > /opt/seedbox/variables/oauth_secret
+				sed -i "s/secret:/secret: $oauth_secret/" /opt/seedbox/variables/account.yml
 				done
 
 				while [ -z "$email" ]; do
     				>&2 echo -n -e "${BWHITE}Compte Gmail utilisé(s), séparés d'une virgule si plusieurs: ${CEND}"
     				read email
-    				echo $email > /opt/seedbox/variables/email
+				sed -i "s/account:/account: $email/" /opt/seedbox/variables/account.yml
 				done
 
-				openssl rand -hex 16 > /opt/seedbox/variables/openssl
+				openssl=$(openssl rand -hex 16)
+				sed -i "s/openssl:/openssl: $openssl/" /opt/seedbox/variables/account.yml
+
 				echo ""
     				echo -e "${CRED}---------------------------------------------------------------${CEND}"
     				echo -e "${CCYAN}    IMPORTANT:	Avant la 1ere connexion			       ${CEND}"
@@ -134,42 +126,26 @@ function oauth() {
 				echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
 				read -r
 			fi
-		echo ""
 		fi
+		echo ""
 }
 
 function rtorrent-cleaner() {
 			#configuration de rtorrent-cleaner avec ansible
 			echo -e "${BLUE}### RTORRENT-CLEANER ###${NC}"
+			echo ""
 			echo -e " ${BWHITE}* Installation RTORRENT-CLEANER${NC}"
 
 			## choix de l'utilisateur
-			SEEDUSER=$(cat /opt/seedbox/variables/users)
+			SEEDUSER=$(cat /etc/passwd | tail -1 | cut -d: -f1)
 			cp -r $BASEDIR/includes/config/rtorrent-cleaner/rtorrent-cleaner /usr/local/bin
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /usr/local/bin/rtorrent-cleaner
-			checking_errors $?
 }
 
 function motd() {
 			#configuration d'un motd avec ansible
 			echo -e "${BLUE}### MOTD ###${NC}"
 			echo -e " ${BWHITE}* Installation MOTD${NC}"
-			
-			#variables
-			SEEDUSER=$(cat /opt/seedbox/variables/users)
-			APPLITAUTULLI="/opt/seedbox/docker/$SEEDUSER/tautulli"
-			PLEXCAN="/home/$SEEDUSER/scripts/plex_autoscan"
-
-			if [ -d "$APPLITAUTULLI" ]; then
-			tautulli=$(grep "api_key" /opt/seedbox/docker/$SEEDUSER/tautulli/config.ini | cut -d '=' -f2 | tr -d ' ' | head -1)
-			echo $tautulli > /opt/seedbox/variables/tautulli
-			fi
-
-			if [ -d "$PLEXCAN" ]; then
-			plexautoscan=$(grep "3468" /home/$SEEDUSER/scripts/plex_autoscan/plex_autoscan.sh | cut -d '/' -f4 | tr -d ' ')
-			echo $plexautoscan > /opt/seedbox/variables/plexautoscan
-			fi
-
 			ansible-playbook /opt/seedbox-compose/includes/config/roles/motd/tasks/start.yml
 			checking_errors $?
 			echo ""
@@ -306,9 +282,9 @@ function script_classique() {
 			echo -e "${CGREEN}   2) Mise à jour Seedbox avec Cloudflare${CEND}"
 			echo -e "${CGREEN}   3) Changement du nom de Domaine${CEND}"
 			if docker ps | grep -q mailserver; then
-			echo -e "${YELLOW}   4) Desinstaller Mailserver @Hardware${CEND}"
+			echo -e "${YELLOW}   4) Desinstaller Mailserver ${CCYAN}@Hardware-Mondedie.fr${CEND}${NC}"
 			else
-			echo -e "${CGREEN}   4) Installer Mailserver @Hardware${CEND}"
+			echo -e "${CGREEN}   4) Installer Mailserver ${CCYAN}@Hardware-Mondedie.fr${CEND}${NC}"
 			fi
 			echo -e "${CGREEN}   5) Modèle Création Appli Personnalisée Docker${CEND}"
 			echo -e "${CGREEN}   6) Installation du motd${CEND}"
@@ -333,10 +309,11 @@ function script_classique() {
 				echo -e "${CGREEN}   2) Sécuriser avec Authentification Classique${CEND}"
 				echo -e "${CGREEN}   3) Ajout / Supression adresses mail autorisées pour Google OAuth2${CEND}"
 				echo -e "${CGREEN}   4) Modification port SSH, mise à jour fail2ban, installation Iptables${CEND}"
-				echo -e "${CGREEN}   5) Retour menu principal${CEND}"
+				echo -e "${CGREEN}   5) Mise à Jour - Chiffrement des Variables${CEND}"
+				echo -e "${CGREEN}   6) Retour menu principal${CEND}"
 
 				echo -e ""
-				read -p "Votre choix [1-5]: " OAUTH
+				read -p "Votre choix [1-6]: " OAUTH
 				case $OAUTH in
 
 				1)
@@ -349,9 +326,11 @@ function script_classique() {
 				2)
 				clear
 				echo ""
-				rm /opt/seedbox/variables/oauth_client > /dev/null 2>&1
-				rm /opt/seedbox/variables/oauth_secret > /dev/null 2>&1
-				rm /opt/seedbox/variables/openssl > /dev/null 2>&1
+				ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+				sed -i "/client:/c\   client: " /opt/seedbox/variables/account.yml
+				sed -i "/secret:/c\   secret: " /opt/seedbox/variables/account.yml
+				sed -i "/account:/c\   account: " /opt/seedbox/variables/account.yml
+				sed -i "/openssl:/c\   openssl: " /opt/seedbox/variables/account.yml
 				/opt/seedbox-compose/includes/config/scripts/basique.sh
 				script_classique
 				;;
@@ -360,10 +339,20 @@ function script_classique() {
 				clear
 				logo
 				echo ""
+				ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
     				>&2 echo -n -e "${BWHITE}Compte(s) Gmail utilisé(s), séparés d'une virgule si plusieurs: ${CEND}"
     				read email
-    				echo $email > /opt/seedbox/variables/email
+				sed -i "/account:/c\   account: $email" /opt/seedbox/variables/account.yml
 				ansible-playbook /opt/seedbox-compose/includes/dockerapps/traefik.yml
+				ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+
+				echo -e "${CRED}---------------------------------------------------------------${CEND}"
+    				echo -e "${CRED}     /!\ MISE A JOUR EFFECTUEE AVEC SUCCES /!\      ${CEND}"
+    				echo -e "${CRED}---------------------------------------------------------------${CEND}"
+
+				echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+				read -r
+
 				script_classique
 				;;
 
@@ -371,10 +360,18 @@ function script_classique() {
 				clear
 				echo ""
 				/opt/seedbox-compose/includes/config/scripts/iptables.sh
-				#script_plexdrive
+				script_classique
 				;;
 
 				5)
+				clear
+				echo ""
+				/opt/seedbox-compose/includes/config/scripts/update.sh
+				script_classique
+				;;
+
+
+				6)
 				script_classique
 				;;
 
@@ -463,6 +460,11 @@ function script_classique() {
 
 			11) ## Installation Plex_Patrol
 			ansible-playbook /opt/seedbox-compose/includes/config/roles/plex_patrol/tasks/main.yml
+			SEEDUSER=$(cat /etc/passwd | tail -1 | cut -d: -f1)
+			DOMAIN=$(cat /home/$SEEDUSER/resume | tail -1 | cut -d. -f2-3)
+			FQDNTMP="plex_patrol.$DOMAIN"
+			echo "$FQDNTMP" >> /home/$SEEDUSER/resume
+			cp "/opt/seedbox-compose/includes/config/roles/plex_patrol/tasks/main.yml" "$CONFDIR/conf/plex_patrol.yml" > /dev/null 2>&1
     			echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour revenir au menu principal..."
     			read -r
 			script_classique
@@ -573,10 +575,11 @@ function script_plexdrive() {
 				echo -e "${CGREEN}   2) Sécuriser avec Authentification Classique${CEND}"
 				echo -e "${CGREEN}   3) Ajout / Supression adresses mail autorisées pour Google OAuth2${CEND}"
 				echo -e "${CGREEN}   4) Modification port SSH, mise à jour fail2ban, installation Iptables${CEND}"
-				echo -e "${CGREEN}   5) Retour menu principal${CEND}"
+				echo -e "${CGREEN}   5) Mise à Jour - Chiffrement des Variables${CEND}"
+				echo -e "${CGREEN}   6) Retour menu principal${CEND}"
 
 				echo -e ""
-				read -p "Votre choix [1-5]: " OAUTH
+				read -p "Votre choix [1-6]: " OAUTH
 				case $OAUTH in
 
 				1)
@@ -589,9 +592,12 @@ function script_plexdrive() {
 				2)
 				clear
 				echo ""
-				rm /opt/seedbox/variables/oauth_client > /dev/null 2>&1
-				rm /opt/seedbox/variables/oauth_secret > /dev/null 2>&1
-				rm /opt/seedbox/variables/openssl > /dev/null 2>&1
+				ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+				sed -i "/client:/c\   client: " /opt/seedbox/variables/account.yml
+				sed -i "/secret:/c\   secret: " /opt/seedbox/variables/account.yml
+				sed -i "/openssl:/c\   openssl: " /opt/seedbox/variables/account.yml
+				sed -i "/account:/c\   account: " /opt/seedbox/variables/account.yml
+
 				/opt/seedbox-compose/includes/config/scripts/basique.sh
 				script_plexdrive
 				;;
@@ -600,10 +606,20 @@ function script_plexdrive() {
 				clear
 				logo
 				echo ""
+				ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
     				>&2 echo -n -e "${BWHITE}Compte(s) Gmail utilisé(s), séparés d'une virgule si plusieurs: ${CEND}"
     				read email
-    				echo $email > /opt/seedbox/variables/email
+				sed -i "/account:/c\   account: $email" /opt/seedbox/variables/account.yml
 				ansible-playbook /opt/seedbox-compose/includes/dockerapps/traefik.yml
+				ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+
+				echo -e "${CRED}---------------------------------------------------------------${CEND}"
+    				echo -e "${CRED}     /!\ MISE A JOUR EFFECTUEE AVEC SUCCES /!\      ${CEND}"
+    				echo -e "${CRED}---------------------------------------------------------------${CEND}"
+
+				echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+				read -r
+
 				script_plexdrive
 				;;
 
@@ -611,10 +627,18 @@ function script_plexdrive() {
 				clear
 				echo ""
 				/opt/seedbox-compose/includes/config/scripts/iptables.sh
-				#script_plexdrive
+				script_plexdrive
 				;;
 
 				5)
+				clear
+				echo ""
+				/opt/seedbox-compose/includes/config/scripts/update.sh
+				script_plexdrive
+				;;
+
+
+				6)
 				script_plexdrive
 				;;
 
@@ -700,12 +724,16 @@ function script_plexdrive() {
 			script_plexdrive
 			;;
 
-
 			11) ## Installation Plex_Patrol
 			ansible-playbook /opt/seedbox-compose/includes/config/roles/plex_patrol/tasks/main.yml
+			SEEDUSER=$(cat /etc/passwd | tail -1 | cut -d: -f1)
+			DOMAIN=$(cat /home/$SEEDUSER/resume | tail -1 | cut -d. -f2-3)
+			FQDNTMP="plex_patrol.$DOMAIN"
+			echo "$FQDNTMP" >> /home/$SEEDUSER/resume
+			cp "/opt/seedbox-compose/includes/config/roles/plex_patrol/tasks/main.yml" "$CONFDIR/conf/plex_patrol.yml" > /dev/null 2>&1
     			echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour revenir au menu principal..."
     			read -r
-			script_plexdrive
+			script_classique
 			;;
 
 			12)
@@ -844,8 +872,8 @@ function install_rclone() {
 		REMOTE=$(grep -iC 4 "token" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
 		REMOTEPLEX=$(grep -iC 2 "/mnt/plexdrive" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
 		REMOTECRYPT=$(grep -v -e $REMOTEPLEX -e $REMOTE /root/.config/rclone/rclone.conf | grep "\[" | sed "s/\[//g" | sed "s/\]//g" | head -n 1)
-		echo $REMOTEPLEX > /opt/seedbox/variables/remoteplex
-		echo $REMOTECRYPT > /opt/seedbox/variables/remote
+		sed -i "s/remote:/remote: $REMOTECRYPT/" /opt/seedbox/variables/account.yml
+		sed -i "s/crypt:/crypt: $REMOTEPLEX/" /opt/seedbox/variables/account.yml
 
 		ansible-playbook /opt/seedbox-compose/includes/config/roles/rclone/tasks/main.yml
 
@@ -889,51 +917,46 @@ function install_docker() {
 function define_parameters() {
 	echo -e "${BLUE}### INFORMATIONS UTILISATEURS ###${NC}"
 	mkdir -p $CONFDIR/variables
+	cp /opt/seedbox-compose/includes/config/account.yml /opt/seedbox/variables/account.yml
 	create_user
 	CONTACTEMAIL=$(whiptail --title "Adresse Email" --inputbox \
 	"Merci de taper votre adresse Email :" 7 50 3>&1 1>&2 2>&3)
-	echo $CONTACTEMAIL > $MAILFILE
+	sed -i "s/mail:/mail: $CONTACTEMAIL/" /opt/seedbox/variables/account.yml
 
 	DOMAIN=$(whiptail --title "Votre nom de Domaine" --inputbox \
 	"Merci de taper votre nom de Domaine (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3)
-	echo $DOMAIN > $DOMAINFILE
+	sed -i "s/domain:/domain: $DOMAIN/" /opt/seedbox/variables/account.yml
 	echo ""
 }
 
 function create_user() {
-	if [[ ! -f "$GROUPFILE" ]]; then
-		touch $GROUPFILE
 		SEEDGROUP=$(whiptail --title "Group" --inputbox \
         	"Création d'un groupe pour la Seedbox" 7 50 3>&1 1>&2 2>&3)
-		echo "$SEEDGROUP" > "$GROUPFILE"
     		egrep "^$SEEDGROUP" /etc/group >/dev/null
 		if [[ "$?" != "0" ]]; then
 			echo -e " ${BWHITE}* Création du groupe $SEEDGROUP"
 	    	groupadd $SEEDGROUP
 	    	checking_errors $?
 		else
-			SEEDGROUP=$TMPGROUP
 	    	echo -e " ${YELLOW}* Le groupe $SEEDGROUP existe déjà.${NC}"
 		fi
-		if [[ ! -f "$USERSFILE" ]]; then
-			touch $USERSFILE
-		fi
+		sed -i "s/group:/group: $SEEDGROUP/" /opt/seedbox/variables/account.yml
+
 		SEEDUSER=$(whiptail --title "Administrateur" --inputbox \
 			"Nom d'Administrateur de la Seedbox :" 7 50 3>&1 1>&2 2>&3)
 		[[ "$?" = 1 ]] && script_plexdrive;
 		PASSWORD=$(whiptail --title "Password" --passwordbox \
 			"Mot de passe :" 7 50 3>&1 1>&2 2>&3)
-		echo $PASSWORD > $CONFDIR/variables/pass
+		sed -i "s/pass:/pass: $PASSWORD/" /opt/seedbox/variables/account.yml
 		egrep "^$SEEDUSER" /etc/passwd >/dev/null
 		if [ $? -eq 0 ]; then
 			echo -e " ${YELLOW}* L'utilisateur existe déjà !${NC}"
 			USERID=$(id -u $SEEDUSER)
 			GRPID=$(id -g $SEEDUSER)
-			echo $USERID > $CONFDIR/variables/userid
-			echo $GRPID > $CONFDIR/variables/groupid
-
+			sed -i "s/userid:/userid: $USERID/" /opt/seedbox/variables/account.yml
+			sed -i "s/groupid:/groupid: $GRPID/" /opt/seedbox/variables/account.yml
 			usermod -a -G docker $SEEDUSER > /dev/null 2>&1
-			echo -e " ${BWHITE}* Ajout de $SEEDUSER in $SEEDGROUP"
+			echo -e " ${BWHITE}* Ajout de $SEEDUSER à $SEEDGROUP"
 			usermod -a -G $SEEDGROUP $SEEDUSER
 			checking_errors $?
 		else
@@ -947,25 +970,21 @@ function create_user() {
 			checking_errors $?
 			USERID=$(id -u $SEEDUSER)
 			GRPID=$(id -g $SEEDUSER)
-			echo $USERID > $CONFDIR/variables/userid
-			echo $GRPID > $CONFDIR/variables/groupid
+			sed -i "s/userid:/userid: $USERID/" /opt/seedbox/variables/account.yml
+			sed -i "s/groupid:/groupid: $GRPID/" /opt/seedbox/variables/account.yml
 		fi
-		add_user_htpasswd $SEEDUSER $PASSWORD
-		echo $SEEDUSER > $USERSFILE
+		htpasswd -c -b /tmp/.htpasswd $SEEDUSER $PASSWORD > /dev/null 2>&1
+		htpwd=$(cat /tmp/.htpasswd)
+		sed -i "/htpwd:/c\   htpwd: $htpwd" /opt/seedbox/variables/account.yml
+		sed -i "s/name:/name: $SEEDUSER/" /opt/seedbox/variables/account.yml
+		echo $PASSWORD > ~/.vault_pass
+		echo "vault_password_file = ~/.vault_pass" >> /etc/ansible/ansible.cfg
 		return
-	else
-		TMPGROUP=$(cat $GROUPFILE)
-		if [[ "$TMPGROUP" == "" ]]; then
-			SEEDGROUP=$(whiptail --title "Group" --inputbox \
-        		"Création d'un groupe pour la Seedbox" 7 50 3>&1 1>&2 2>&3)
-        	fi
-	fi
 }
 
 function choose_services() {
 	echo -e "${BLUE}### SERVICES ###${NC}"
 	echo -e " ${BWHITE}--> Services en cours d'installation : ${NC}"
-
 	menuservices="/tmp/menuservices.txt"
 	if [[ -e "$menuservices" ]]; then
 	rm /tmp/menuservices.txt
@@ -1029,7 +1048,6 @@ function webserver() {
 function choose_media_folder_classique() {
 	echo -e "${BLUE}### DOSSIERS MEDIAS ###${NC}"
 	echo -e " ${BWHITE}--> Création des dossiers Medias : ${NC}"
-	SEEDUSER=$(cat /opt/seedbox/variables/users)
 	mkdir -p /home/$SEEDUSER/filebot
 	mkdir -p /home/$SEEDUSER/local/{Films,Series,Musiques,Animes}
 	chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER
@@ -1093,31 +1111,7 @@ function choose_media_folder_plexdrive() {
 	echo ""
 }
 
-function add_user_htpasswd() {
-	HTFOLDER="$CONFDIR/passwd/"
-	mkdir -p $CONFDIR/passwd
-	HTTEMPFOLDER="/tmp/"
-	HTFILE=".htpasswd-$SEEDUSER"
-	if [[ $1 == "" ]]; then
-		echo ""
-		echo -e "${BLUE}## HTPASSWD MANAGER ##${NC}"
-		HTUSER=$(whiptail --title "HTUser" --inputbox "Enter username for htaccess" 10 60 3>&1 1>&2 2>&3)
-		HTPASSWORD=$(whiptail --title "HTPassword" --passwordbox "Enter password" 10 60 3>&1 1>&2 2>&3)
-	else
-		HTUSER=$1
-		HTPASSWORD=$2
-	fi
-	if [[ ! -f $HTFOLDER$HTFILE ]]; then
-		htpasswd -c -b $HTTEMPFOLDER$HTFILE $HTUSER $HTPASSWORD > /dev/null 2>&1
-	else
-		htpasswd -b $HTFOLDER$HTFILE $HTUSER $HTPASSWORD > /dev/null 2>&1
-	fi
-	valid_htpasswd
-}
-
 function install_services() {
-	DOMAIN=$(cat /opt/seedbox/variables/domain)
-	SEEDUSER=$(cat /opt/seedbox/variables/users)
 	INSTALLEDFILE="/home/$SEEDUSER/resume"
 	touch $INSTALLEDFILE > /dev/null 2>&1
 
@@ -1136,9 +1130,11 @@ function install_services() {
 			echo -e " ${BWHITE}* Processing plex config file...${NC}"
 			echo ""
 			echo -e " ${GREEN}ATTENTION IMPORTANT - NE PAS FAIRE D'ERREUR - SINON DESINSTALLER ET REINSTALLER${NC}"
-			. /opt/seedbox-compose/includes/config/roles/plex_autoscan/plex_token.sh > "/opt/seedbox/variables/token"
+			ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+			token=$(. /opt/seedbox-compose/includes/config/roles/plex_autoscan/plex_token.sh)
+			sed -i "/token:/c\   token: $token" /opt/seedbox/variables/account.yml
 			ansible-playbook /opt/seedbox-compose/includes/config/roles/plex/tasks/main.yml
-
+			ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 		else
 			ansible-playbook "$BASEDIR/includes/dockerapps/$line.yml"
 			cp "$BASEDIR/includes/dockerapps/$line.yml" "$CONFDIR/conf/$line.yml" > /dev/null 2>&1
@@ -1328,26 +1324,12 @@ function plex_sections() {
 			plex_dupefinder
 }
 
-function valid_htpasswd() {
-	if [[ -d "$CONFDIR" ]]; then
-		HTFOLDER="$CONFDIR/passwd/"
-		mkdir -p $HTFOLDER
-		HTTEMPFOLDER="/tmp/"
-		HTFILE=".htpasswd-$SEEDUSER"
-		cat "$HTTEMPFOLDER$HTFILE" >> "$HTFOLDER$HTFILE"
-		cd $HTFOLDER
-		touch login
-		echo "$HTUSER $HTPASSWORD" >> "$HTFOLDER/login"
-		rm "$HTTEMPFOLDER$HTFILE"
-	fi
-}
-
 function manage_apps() {
 	echo -e "${BLUE}##########################################${NC}"
 	echo -e "${BLUE}###          GESTION DES APPLIS        ###${NC}"
 	echo -e "${BLUE}##########################################${NC}"
-	DOMAIN=$(cat /opt/seedbox/variables/domain)
-	SEEDUSER=$(cat /opt/seedbox/variables/users)
+	SEEDUSER=$(cat /etc/passwd | tail -1 | cut -d: -f1)
+	DOMAIN=$(cat /home/$SEEDUSER/resume | tail -1 | cut -d. -f2-3)
 	USERRESUMEFILE="/home/$SEEDUSER/resume"
 	echo ""
 	echo -e "${GREEN}### Gestion des Applis pour: $SEEDUSER ###${NC}"
@@ -1358,7 +1340,7 @@ function manage_apps() {
 	                "2" "Supprimer une Appli"  \
 			"3" "Réinitialisation Container" \
  			"4" "Ajout/Supression Sites Web" 3>&1 1>&2 2>&3)
-	[[ "$?" = 1 ]] && script_plexdrive;
+	[[ "$?" = 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi;
 	case $ACTIONONAPP in
 		"1" ) ## Ajout APP
 			echo -e " ${BWHITE}* Resume file: $USERRESUMEFILE${NC}"
@@ -1386,7 +1368,7 @@ function manage_apps() {
 			APPSELECTED=$(whiptail --title "App Manager" --menu \
 			              "Sélectionner l'Appli à supprimer" 19 45 11 \
 			              "${TABSERVICES[@]}"  3>&1 1>&2 2>&3)
-			[[ "$?" = 1 ]] && script_plexdrive;
+			[[ "$?" = 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi;
 			echo -e " ${GREEN}   * $APPSELECTED${NC}"
 			docker rm -f "$APPSELECTED"
 			sed -i "/$APPSELECTED/d" /home/$SEEDUSER/resume
@@ -1436,7 +1418,7 @@ function manage_apps() {
 			line=$(whiptail --title "App Manager" --menu \
 			              "Sélectionner le container à réinitialiser" 19 45 11 \
 			              "${TABSERVICES[@]}"  3>&1 1>&2 2>&3)
-			[[ "$?" = 1 ]] && script_plexdrive;
+			[[ "$?" = 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi;
 			echo -e " ${GREEN}   * $line${NC}"
 
 			if [ $line = "php5" ] || [ $line = "php7" ]; then
@@ -1477,7 +1459,7 @@ function manage_apps() {
 	                		"Selectionner une action :" 12 50 4 \
 	                		"1" "Ajout Site Web"  \
  					"2" "Supression Site Web" 3>&1 1>&2 2>&3)
-			[[ "$?" = 1 ]] && script_plexdrive;
+			[[ "$?" = 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi;
 
 			case $ACTIONONAPP in
 				"1" ) ## Ajout Site Web
@@ -1545,7 +1527,7 @@ echo ""
 					APPSELECTED=$(whiptail --title "App Manager" --menu \
 			              		"Sélectionner l'Appli à supprimer" 19 45 11 \
 			              		"${TABSERVICES[@]}"  3>&1 1>&2 2>&3)
-					[[ "$?" = 1 ]] && script_plexdrive;
+					[[ "$?" = 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi;
 
 					docker rm -f "$APPSELECTED"
 					sed -i "/$APPSELECTED/d" $INSTALLEDFILE
@@ -1573,27 +1555,18 @@ function resume_seedbox() {
 	echo -e "${BLUE}###     INFORMATION SEEDBOX INSTALL    ###${NC}"
 	echo -e "${BLUE}##########################################${NC}"
 	echo -e " ${BWHITE}* Accès Applis à partir de URL :${NC}"
+	PASSE=$(cat ~/.vault_pass)
 	for line in $(cat $INSTALLEDFILE);
 	do
 		ACCESSDOMAIN=$(echo $line)
 		DOCKERAPP=$(echo $line | cut -d\. -f1)
 		echo -e "	--> ${BWHITE}$DOCKERAPP${NC} --> ${YELLOW}$ACCESSDOMAIN${NC}"
 	done
-	IDENT="$CONFDIR/passwd/.htpasswd-$SEEDUSER"	
-	if [[ ! -d $IDENT ]]; then
-		PASSE=$(grep $SEEDUSER $CONFDIR/passwd/login | cut -d ' ' -f2)
-		echo ""
-		echo -e " ${BWHITE}* Vos IDs :${NC}"
-		echo -e "	--> Utilisateur: ${YELLOW}$SEEDUSER${NC}"
-		echo -e "	--> Password: ${YELLOW}$PASSE${NC}"
-		echo ""
-	else
-		echo -e " ${BWHITE}* Here is your IDs :${NC}"
-		echo -e "	--> Utilisateur: ${YELLOW}$HTUSER${NC}"
-		echo -e "	--> Password: ${YELLOW}$HTPASSWORD${NC}"
-		echo ""
-		echo ""
-	fi
+	echo ""
+	echo -e " ${BWHITE}* Vos IDs :${NC}"
+	echo -e "	--> Utilisateur: ${YELLOW}$SEEDUSER${NC}"
+	echo -e "	--> Password: ${YELLOW}$PASSE${NC}"
+	echo ""
 	rm -Rf $SERVICESPERUSER > /dev/null 2>&1
 }
 
@@ -1604,9 +1577,9 @@ function uninstall_seedbox() {
 	echo -e "${BLUE}##########################################${NC}"
 
 	## variables
-	SEEDUSER=$(cat /opt/seedbox/variables/users)
+	SEEDUSER=$(cat /etc/passwd | tail -1 | cut -d: -f1)
+	SEEDGROUP=$(cat /etc/group | tail -1 | cut -d: -f1)
 	USERHOMEDIR="/home/$SEEDUSER"
-	SEEDGROUP=$(cat $GROUPFILE)
 	PLEXDRIVE="/usr/bin/plexdrive"
 
 	if [[ -e "$PLEXDRIVE" ]]; then

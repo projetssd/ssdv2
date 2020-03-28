@@ -9,35 +9,37 @@
 #########################################################################
 ---
 
-- name: 'Register Domaine'
-  shell: 'cat /opt/seedbox/variables/domain'
-  register: domain
-  ignore_errors: True
+- name: Check config Tautulli exists
+  stat:
+    path: "/opt/seedbox/docker/{{user.name}}/tautulli/config.ini"
+  register: tautulli_config
 
-- name: 'Register pass'
-  shell: 'cat /opt/seedbox/variables/pass'
-  register: pass
-  ignore_errors: True
+- name: Check if plex_autoscan.service exists
+  stat:
+    path: "/etc/systemd/system/plex_autoscan.service"
+  register: plex_autoscan_service
 
-- name: 'Register user'
-  shell: 'cat /opt/seedbox/variables/users'
-  register: user
-  ignore_errors: True
-
-- name: 'Register group'
-  shell: 'cat /opt/seedbox/variables/group'
-  register: group
-  ignore_errors: True
-
-- name: 'Register tautulli'
-  shell: 'cat /opt/seedbox/variables/tautulli'
+- name: 'ApiKey Tautulli'
+  shell: |
+    grep "api_key" /opt/seedbox/docker/{{user.name}}/tautulli/config.ini | cut -d '=' -f2 | sed 's/ //g' | head -1
   register: tautulli
-  ignore_errors: True
+  when: tautulli_config.stat.exists
 
-- name: 'Register plexautoscan'
-  shell: 'cat /opt/seedbox/variables/plexautoscan'
-  register: plexautoscan
-  ignore_errors: True
+- name: 'ApiKey Tautulli'
+  debug:
+    msg: '{{ tautulli.stdout }}'
+  when: tautulli_config.stat.exists
+
+- name: 'Pass plex_autoscan'
+  shell: |
+    grep "3468" /home/{{user.name}}/scripts/plex_autoscan/plex_autoscan.sh | cut -d '/' -f4 | tr -d ' '
+  register: plex_autoscan
+  when: plex_autoscan_service.stat.exists
+
+- name: 'Pass plex_autoscan'
+  debug:
+    msg: '{{ plex_autoscan.stdout }}'
+  when: plex_autoscan_service.stat.exists
 
 - name: Get Public IP Address
   shell: dig -4 TXT +short o-o.myaddr.l.google.com @ns1.google.com | awk -F'\"' '{ print $2}'

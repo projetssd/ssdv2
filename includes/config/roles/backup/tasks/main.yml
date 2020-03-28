@@ -3,33 +3,9 @@
 
 - hosts: localhost
   gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
   tasks:
-
-    # VARIABLES ############################################################
-    - name: 'Register remote'
-      shell: 'cat /opt/seedbox/variables/remote'
-      register: remote
-      ignore_errors: True
-
-    - name: 'Register remoteplex'
-      shell: 'cat /opt/seedbox/variables/remoteplex'
-      register: remoteplex
-      ignore_errors: True
-
-    - name: 'Register user'
-      shell: 'cat /opt/seedbox/variables/users'
-      register: user
-      ignore_errors: True
-
-    - name: 'Register userid'
-      shell: 'cat /opt/seedbox/variables/userid'
-      register: userid
-      ignore_errors: True
-
-    - name: 'Register groupid'
-      shell: 'cat /opt/seedbox/variables/groupid'
-      register: groupid
-      ignore_errors: True
 
     - name: 'Import backup config'
       template:

@@ -25,12 +25,6 @@ SERVICES="$BASEDIR/includes/config/services"
 SERVICESUSER="/opt/seedbox/services-"
 MEDIASUSER="/opt/seedbox/media-"
 PACKAGESFILE="$BASEDIR/includes/config/packages"
-USERSFILE="$CONFDIR/variables/users"
-GROUPFILE="$CONFDIR/variables/group"
-MAILFILE="$CONFDIR/variables/mail"
-DOMAINFILE="$CONFDIR/variables/domain"
-REMOTECHIFFRE="$CONFDIR/variables/remote"
-REMOTEPLEXMEDIA="$CONFDIR/variables/remoteplex"
 
 export NEWT_COLORS='
   window=,white

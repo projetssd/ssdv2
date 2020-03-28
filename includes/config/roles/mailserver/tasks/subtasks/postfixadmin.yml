@@ -5,19 +5,19 @@
   set_fact:
     pg_labels:
       traefik.enable: 'true'
-      traefik.frontend.rule: 'Host:postfixadmin.{{domain.stdout}}'
+      traefik.frontend.rule: 'Host:postfixadmin.{{user.domain}}'
       traefik.port: '8888'
 
 - name: 'Deploying postfixadmin'
   docker_container:
     name: 'postfixadmin'
     recreate: true
-    domainname: '{{domain.stdout}}'
+    domainname: '{{user.domain}}'
     hostname: 'mail'
     image: 'hardware/postfixadmin'
     pull: yes
     env:
-      DBPASS: '{{pass.stdout}}'
+      DBPASS: '{{user.pass}}'
     restart_policy: unless-stopped
     networks:
       - name: mail_network

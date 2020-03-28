@@ -1,36 +1,59 @@
 #!/bin/bash
-#
-# Title:      PGBlitz (Reference Title File)
-# Author(s):  Admin9705
-# URL:        https://pgblitz.com - http://github.pgblitz.com
-# GNU:        General Public License v3.0
-################################################################################
+
 ---
 - hosts: localhost
   gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
   tasks:
-  
-    # VARIABLES ############################################################
-    - name: 'Including variables'
-      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
-      
+        
     # FACTS #######################################################################
 
-    - name: Check config cloudflare exists
-      stat:
-        path: "/opt/seedbox/variables/cloudflare_api"
-      register: cloudflare_config
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
+            (cloudflare.login is undefined)
+            or
+            (cloudflare.login is none)
+            or
+            (cloudflare.login | trim | length == 0)
+            or
+            (cloudflare.api is undefined)
+            or
+            (cloudflare.api is none)
+            or
+            (cloudflare.api | trim | length == 0)
+          )
+            else false }}"
 
-    - name: Check config oauth_client exists
-      stat:
-        path: "/opt/seedbox/variables/oauth_client"
-      register: oauth_client
+    - name: "Variables | Set 'oauth_enabled' variable"
+      set_fact:
+        oauth_enabled: "{{ true if not(
+            (oauth.client is undefined)
+            or
+            (oauth.client is none)
+            or
+            (oauth.client | trim | length == 0)
+            or
+            (oauth.secret is undefined)
+            or
+            (oauth.secret is none)
+            or
+            (oauth.secret | trim | length == 0)
+            or
+            (oauth.account is undefined)
+            or
+            (oauth.account is none)
+            or
+            (oauth.account | trim | length == 0)
+          )
+            else false }}"
 
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
         subdomain: tautulli
-      when: cloudflare_config.stat.exists
+      when: cloudflare_enabled
 
     - name: 'Set Known Facts'
       set_fact:
@@ -40,10 +63,10 @@
 
     # CORE (MANDATORY) ############################################################      
     - name: Creating scripts and plugins paths
-      file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
       with_items:
-        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/scripts'
-        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/plugins'
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/scripts'
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/plugins'
 
     - name: 'Check if Templates Exist for {{pgrole}}'
       stat:
@@ -53,17 +76,17 @@
     - name: 'Copying Scripts & Plugins'
       copy:
         src: ./templates/{{pgrole}}
-        dest: /opt/seedbox/docker/{{user.stdout}}
+        dest: /opt/seedbox/docker/{{user.name}}
         directory_mode: yes
         force: yes
-        owner: '{{userid.stdout}}'
-        group: '{{groupid.stdout}}'
+        owner: '{{user.userid}}'
+        group: '{{user.groupid}}'
         mode: 0775
       when: copycheck.stat.exists
       
     - name: 'Checking for existing app data'
       stat:
-        path: /opt/seedbox/docker/{{user.stdout}}/tautulli/config.ini
+        path: /opt/seedbox/docker/{{user.name}}/tautulli/config.ini
       register: confcheck
 
     # LABELS ######################################################################
@@ -72,9 +95,9 @@
         pg_labels:
           traefik.enable: 'true'
           traefik.port: '{{intport}}'
-          traefik.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
-          traefik.frontend.auth.basic: '{{ passwd.stdout if (not oauth_client.stat.exists) | default(false) else omit }}'
-          traefik.frontend.headers.SSLHost: '{{pgrole}}.{{domain.stdout}}'
+          traefik.frontend.rule: 'Host:{{pgrole}}.{{user.domain}}'
+          traefik.frontend.auth.basic: '{{ user.htpwd if not (oauth_enabled) | default(false) else omit }}'
+          traefik.frontend.headers.SSLHost: '{{pgrole}}.{{user.domain}}'
           traefik.docker.network: traefik_proxy
           traefik.frontend.passHostHeader: 'true'
           traefik.frontend.headers.SSLForceHost: 'true'
@@ -94,16 +117,16 @@
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
-          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}:/config'
-          - '/opt/seedbox/docker/{{user.stdout}}/plex/database/Library/Application Support/Plex Media Server/Logs:/logs'
-          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/scripts:/scripts'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}:/config'
+          - '/opt/seedbox/docker/{{user.name}}/plex/database/Library/Application Support/Plex Media Server/Logs:/logs'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/scripts:/scripts'
           - '/etc/localtime:/etc/localtime:ro'
 
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
-          PUID: '{{userid.stdout}}'
-          PGID: '{{groupid.stdout}}'
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
           TZ: 'Europe/Paris'
 
 
@@ -126,7 +149,7 @@
       block:
         - name: 'Waiting for {{pgrole}} to start'
           wait_for:
-            path: '/opt/seedbox/docker/{{user.stdout}}/tautulli/config.ini'
+            path: '/opt/seedbox/docker/{{user.name}}/tautulli/config.ini'
             state: present
 
         - name: Stop Container

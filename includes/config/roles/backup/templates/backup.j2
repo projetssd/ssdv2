@@ -9,7 +9,7 @@ CYELLOW="${CSI}1;33m"
 CCYAN="${CSI}0;36m"  
 
 # Variables
-remote={{remote.stdout}}
+remote={{rclone.remote}}
 remote_backups=BACKUPS
 NB_MAX_BACKUP=3
 CDAY=$(date +%d%m%Y-%H%M)
@@ -39,7 +39,7 @@ echo ""
 mkdir -p $BACKUP_FOLDER
 
 echo -e "${CCYAN}> Création de l'archive${CEND}"
-tar -I pigz -cf $ARCHIVE -P /opt/seedbox /home/{{user.stdout}}/scripts /home/{{user.stdout}}/resume /etc/systemd
+tar -I pigz -cf $ARCHIVE -P /opt/seedbox /home/{{user.name}}/scripts /home/{{user.name}}/resume /etc/systemd
 sleep 2s
 
 # Si une erreur survient lors de la compression
@@ -57,7 +57,7 @@ sleep 5
 
 echo -e "${CCYAN}> Envoie Archive vers Google Drive${CEND}"
 # Envoie Archive vers Google Drive
-rclone --config "/root/.config/rclone/rclone.conf" copy "$BACKUP_FOLDER" "{{remote.stdout}}:/{{user.stdout}}/$remote_backups/backup-$CDAY" -v --log-file=/var/log/backup.log
+rclone --config "/root/.config/rclone/rclone.conf" copy "$BACKUP_FOLDER" "{{rclone.remote}}:/{{user.name}}/$remote_backups/backup-$CDAY" -v --log-file=/var/log/backup.log
 
 # Nombre de sauvegardes effectuées
 nbBackup=$(find $BACKUP_PARTITION -type d -name 'backup-*' | wc -l)
@@ -73,7 +73,7 @@ if [[ "$nbBackup" -gt "$NB_MAX_BACKUP" ]]; then
 
 # Suppression Archive Google Drive
 echo -e "${CCYAN}> Suppression de l'archive la plus ancienne${CEND}"
-rclone --config "/root/.config/rclone/rclone.conf" purge "{{remote.stdout}}:/{{user.stdout}}/$remote_backups/$oldestBackupFile" -v --log-file=/var/log/backup.log
+rclone --config "/root/.config/rclone/rclone.conf" purge "{{rclone.remote}}:/{{user.name}}/$remote_backups/$oldestBackupFile" -v --log-file=/var/log/backup.log
 fi
 echo ""
 echo -e "${CRED}-------------------------------------------------------${CEND}"

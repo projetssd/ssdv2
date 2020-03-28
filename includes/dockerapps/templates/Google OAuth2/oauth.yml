@@ -1,54 +1,22 @@
 ---
 
-# VARIABLES ######################################################################################
-
-- name: 'Register Domain'
-  shell: 'cat /opt/seedbox/variables/domain'
-  register: domain
-  ignore_errors: True
-
-- name: 'Register oauth_client'
-  shell: 'cat /opt/seedbox/variables/oauth_client'
-  register: oauth_client
-  ignore_errors: True
-
-- name: 'Register oauth_secret'
-  shell: 'cat /opt/seedbox/variables/oauth_secret'
-  register: oauth_secret
-  ignore_errors: True
-
-- name: 'Register openssl'
-  shell: 'cat /opt/seedbox/variables/openssl'
-  register: openssl
-  ignore_errors: True
-
-- name: 'Register email'
-  shell: 'cat /opt/seedbox/variables/email'
-  register: email
-  ignore_errors: True
-
-- name: Check config cloudflare exists
-  stat:
-    path: "/opt/seedbox/variables/cloudflare_api"
-  register: cloudflare_config
-
 - name: "Set DNS Record on CloudFlare"
   include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
   vars:
     subdomain: oauth
-  when: cloudflare_config.stat.exists
+  when: cloudflare_enabled
 
 - name: 'Setting PG ENV'
   set_fact:
     pg_env:
-      PROVIDERS_GOOGLE_CLIENT_ID: '{{oauth_client.stdout}}'
-      PROVIDERS_GOOGLE_CLIENT_SECRET: '{{oauth_secret.stdout}}'
-      SECRET: '{{openssl.stdout}}'
-      COOKIE_DOMAIN: '{{domain.stdout}}'
+      PROVIDERS_GOOGLE_CLIENT_ID: '{{oauth.client}}'
+      PROVIDERS_GOOGLE_CLIENT_SECRET: '{{oauth.secret}}'
+      SECRET: '{{oauth.openssl}}'
+      COOKIE_DOMAIN: '{{user.domain}}'
       INSECURE_COOKIE: 'true'
-      AUTH_HOST: 'oauth.{{domain.stdout}}'
+      AUTH_HOST: 'oauth.{{user.domain}}'
       URL_PATH: '/_oauth'
-      WHITELIST: '{{email.stdout}}'
+      WHITELIST: '{{oauth.account}}'
       LOG_LEVEL: 'info'
       LIFETIME: '2592000' # 30 days
 
@@ -58,7 +26,7 @@
       traefik.enable: 'true'
       traefik.backend: 'oauth'
       traefik.port: '4181'
-      traefik.frontend.rule: 'Host:oauth.{{domain.stdout}}'
+      traefik.frontend.rule: 'Host:oauth.{{user.domain}}'
       traefik.docker.network: 'traefik_proxy'
       traefik.frontend.passHostHeader: 'true'
       traefik.frontend.headers.SSLForceHost: 'true'

@@ -4,8 +4,8 @@ source includes/functions.sh
 source includes/variables.sh
 
 ## Variable
-DOMAIN=$(cat /opt/seedbox/variables/domain)
-SEEDUSER=$(cat /opt/seedbox/variables/users)
+SEEDUSER=$(cat /etc/passwd | tail -1 | cut -d: -f1)
+DOMAIN=$(cat /home/$SEEDUSER/resume | tail -1 | cut -d. -f2-3)
 INSTALLEDFILE="/home/$SEEDUSER/resume"
 
     	echo -e "${CRED}---------------------------------------------------------------${CEND}"
@@ -54,7 +54,9 @@ fi
 ansible-playbook /opt/seedbox/conf/$appli.yml
 FQDNTMP="$appli.$DOMAIN"
 echo "$FQDNTMP" >> $INSTALLEDFILE
-
+rm /opt/seedbox/variables/image
+rm /opt/seedbox/variables/port
+rm /opt/seedbox/variables/appli
     echo ""
     echo -e "${CRED}------------------------------------------------------------------${CEND}"
     echo -e "${CRED}        INSTALLATION DE L'APPLI $appli TERMINEE		      ${CEND}"

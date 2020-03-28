@@ -8,28 +8,55 @@
 ---
 - hosts: localhost
   gather_facts: True
-
+  vars_files:
+    - /opt/seedbox/variables/account.yml
   tasks:
   
-    # VARIABLES ################################################################
-    - name: 'Including variables'
-      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
+            (cloudflare.login is undefined)
+            or
+            (cloudflare.login is none)
+            or
+            (cloudflare.login | trim | length == 0)
+            or
+            (cloudflare.api is undefined)
+            or
+            (cloudflare.api is none)
+            or
+            (cloudflare.api | trim | length == 0)
+          )
+            else false }}"
 
-    - name: Check config oauth_client exists
-      stat:
-        path: "/opt/seedbox/variables/oauth_client"
-      register: oauth_client
-
-    - name: Check config cloudflare exists
-      stat:
-        path: "/opt/seedbox/variables/cloudflare_api"
-      register: cloudflare_config
+    - name: "Variables | Set 'oauth_enabled' variable"
+      set_fact:
+        oauth_enabled: "{{ true if not(
+            (oauth.client is undefined)
+            or
+            (oauth.client is none)
+            or
+            (oauth.client | trim | length == 0)
+            or
+            (oauth.secret is undefined)
+            or
+            (oauth.secret is none)
+            or
+            (oauth.secret | trim | length == 0)
+            or
+            (oauth.account is undefined)
+            or
+            (oauth.account is none)
+            or
+            (oauth.account | trim | length == 0)
+          )
+            else false }}"
 
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
         subdomain: traefik
-      when: cloudflare_config.stat.exists
+      when: cloudflare_enabled
       
     - name: Remove Traefik
       docker_container:
@@ -50,9 +77,9 @@
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
-          CF_API_EMAIL: '{{cloudflare_email.stdout}}'
-          CF_API_KEY: '{{cloudflare_api.stdout}}'
-      when: cloudflare_config.stat.exists
+          CF_API_EMAIL: '{{cloudflare.login}}'
+          CF_API_KEY: '{{cloudflare.api}}'
+      when: cloudflare_enabled
 
     - name: Installing ACME
       template:
@@ -71,7 +98,7 @@
         force: yes
         owner: '0'
         group: '0'
-      when: cloudflare_config.stat.exists == False
+      when: cloudflare_enabled is false
 
     - name: Installing Traefik.Toml
       template:
@@ -80,16 +107,16 @@
         force: yes
         owner: '0'
         group: '0'
-      when: cloudflare_config.stat.exists
+      when: cloudflare_enabled
 
     - name: 'Ajout label traefik'
       set_fact:
         pg_labels:
           traefik.enable: 'true'
           traefik.port: '8080'
-          traefik.frontend.rule: 'Host:traefik.{{domain.stdout}}'
-          traefik.frontend.auth.basic: '{{ passwd.stdout if (not oauth_client.stat.exists) | default(false) else omit }}'
-          traefik.frontend.headers.SSLHost: 'traefik.{{domain.stdout}}'
+          traefik.frontend.rule: 'Host:traefik.{{user.domain}}'
+          traefik.frontend.auth.basic: '{{ user.htpwd if (not oauth_enabled) | default(false) else omit }}'
+          traefik.frontend.headers.SSLHost: 'traefik.{{user.domain}}'
           traefik.docker.network: traefik_proxy
           traefik.frontend.passHostHeader: 'true'
           traefik.frontend.headers.SSLForceHost: 'true'
@@ -116,7 +143,7 @@
           - "443:443"
           - "80:80"
         command: ["--web", "--accessLog.filePath=/var/log/access.log", "--accessLog.filters.statusCodes=400-499"]
-        env: "{{pg_env if cloudflare_config.stat.exists == True | default(false) else omit}}"
+        env: "{{pg_env if cloudflare_enabled == true | default(false) else omit}}"
         volumes:
           - /var/run/docker.sock:/var/run/docker.sock:ro
           - /etc/localtime:/etc/localtime:ro
@@ -131,4 +158,4 @@
 
     - name: Google OAuth2 tasks
       include_tasks: 'templates/Google OAuth2/oauth.yml'
-      when: oauth_client.stat.exists
+      when: oauth_enabled

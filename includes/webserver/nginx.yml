@@ -3,6 +3,8 @@
 ---
 - hosts: localhost
   gather_facts: true
+  vars_files:
+    - /opt/seedbox/variables/account.yml
   vars_prompt:
     - name: sousdomain
       prompt: "Definir le Domaine ou Sous Domaine"
@@ -15,38 +17,51 @@
 
   tasks:
 
-    # VARIABLES ###################################################################
-    - name: 'Including variables'
-      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
+            (cloudflare.login is undefined)
+            or
+            (cloudflare.login is none)
+            or
+            (cloudflare.login | trim | length == 0)
+            or
+            (cloudflare.api is undefined)
+            or
+            (cloudflare.api is none)
+            or
+            (cloudflare.api | trim | length == 0)
+          )
+            else false }}"
 
-    - name: Set sousdomain variable
-      shell: echo "{{ sousdomain }}" > /opt/seedbox/variables/sousdomain
-      when: sousdomain is defined
-
-    - name: 'Register Sous Domaine'
-      shell: 'cat /opt/seedbox/variables/sousdomain'
-      register: sousdomain
-      when: sousdomain is defined
-
-    - name: Set PHP variable
-      shell: echo "{{ php }}" > /opt/seedbox/variables/php
-      when: sousdomain is defined
-
-    - name: 'Register php'
-      shell: 'cat /opt/seedbox/variables/php'
-      register: php
-      when: sousdomain is defined
-
-    - name: Check config cloudflare exists
-      stat:
-        path: "/opt/seedbox/variables/cloudflare_api"
-      register: cloudflare_config
+    - name: "Variables | Set 'oauth_enabled' variable"
+      set_fact:
+        oauth_enabled: "{{ true if not(
+            (oauth.client is undefined)
+            or
+            (oauth.client is none)
+            or
+            (oauth.client | trim | length == 0)
+            or
+            (oauth.secret is undefined)
+            or
+            (oauth.secret is none)
+            or
+            (oauth.secret | trim | length == 0)
+            or
+            (oauth.account is undefined)
+            or
+            (oauth.account is none)
+            or
+            (oauth.account | trim | length == 0)
+          )
+            else false }}"
 
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: "{{ sousdomain.stdout }}"
-      when: cloudflare_config.stat.exists
+        subdomain: "{{ sousdomain }}"
+      when: cloudflare_enabled
 
     - name: Create network
       docker_network:
@@ -57,15 +72,15 @@
     # FACTS #######################################################################
     - name: 'Set Known Facts'
       set_fact:
-        pgrole: '{{ sousdomain.stdout }}'
+        pgrole: '{{ sousdomain }}'
         intport: '80'
         image: 'nginx'
 
     - name: Creating paths
-      file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
       with_items:
-        - '/opt/seedbox/docker/{{user.stdout}}/webserver/{{pgrole}}'
-        - '/opt/seedbox/docker/{{user.stdout}}/webserver/{{pgrole}}/config'
+        - '/opt/seedbox/docker/{{user.name}}/webserver/{{pgrole}}'
+        - '/opt/seedbox/docker/{{user.name}}/webserver/{{pgrole}}/config'
 
     # LABELS ######################################################################
     - name: 'Ajout label traefik'
@@ -73,8 +88,8 @@
         pg_labels:
           traefik.enable: 'true'
           traefik.port: '{{intport}}'
-          traefik.frontend.rule: 'Host:{{sousdomain.stdout}}'
-          traefik.frontend.headers.SSLHost: '{{sousdomain.stdout}}'
+          traefik.frontend.rule: 'Host:{{sousdomain}}'
+          traefik.frontend.headers.SSLHost: '{{sousdomain}}'
           traefik.frontend.headers.SSLRedirect: 'true'
           traefik.frontend.headers.STSIncludeSubdomains: 'true'
           traefik.frontend.headers.STSPreload: 'true'
@@ -87,14 +102,14 @@
     - name: Import default config
       template:
         src: /opt/seedbox-compose/includes/webserver/app.conf.j2
-        dest: /opt/seedbox/docker/{{user.stdout}}/webserver/{{pgrole}}/config/app.conf
+        dest: /opt/seedbox/docker/{{user.name}}/webserver/{{pgrole}}/config/app.conf
         force: yes
 
     - name: 'Setting Volumes'
       set_fact:
         pg_volumes:
           - '/var/www/{{pgrole}}:/var/www/{{pgrole}}/app/'
-          - '/opt/seedbox/docker/{{user.stdout}}/webserver/{{pgrole}}/config/app.conf:/etc/nginx/conf.d/app.conf'
+          - '/opt/seedbox/docker/{{user.name}}/webserver/{{pgrole}}/config/app.conf:/etc/nginx/conf.d/app.conf'
 
     # MAIN DEPLOYMENT #############################################################
 
@@ -110,9 +125,9 @@
         state: started
         labels: '{{pg_labels}}'
 
-    - name: 'Populate /home/{{user.stdout}}/resume'
-      shell: 'echo {{ sousdomain.stdout }} >> /opt/seedbox/docker/{{user.stdout}}/webserver/resume'
+    - name: 'Populate /home/{{user.name}}/resume'
+      shell: 'echo {{ sousdomain }} >> /opt/seedbox/docker/{{user.name}}/webserver/resume'
 
     - name: "Install php"
-      include_tasks: "/opt/seedbox-compose/includes/webserver/{{ php.stdout }}.yml"
+      include_tasks: "/opt/seedbox-compose/includes/webserver/{{ php }}.yml"
 

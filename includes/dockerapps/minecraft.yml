@@ -52,14 +52,14 @@
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: logarr
+        subdomain: minecraft
       when: cloudflare_enabled
 
     - name: 'Set Known Facts'
       set_fact:
-        pgrole: 'logarr'
-        intport: '80'
-        image: 'monitorr/logarr-alpha'
+        pgrole: 'minecraft'
+        intport: '8080'
+        image: 'tekgator/docker-mcmyadmin'
 
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
@@ -94,16 +94,14 @@
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
-          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}:/app'
-          - '/home/{{user.name}}:/home/{{user.name}}'
-          - '/opt/seedbox/docker/{{user.name}}:/opt/seedbox/docker/{{user.name}}'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}:/data'
+          - '/etc/localtime:/etc/localtime:ro'
 
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
           PUID: '{{user.userid}}'
           PGID: '{{user.groupid}}'
-          TZ: 'Europe/Paris'
 
     # MAIN DEPLOYMENT #############################################################
 
@@ -111,6 +109,10 @@
       docker_container:
         name: '{{pgrole}}'
         image: '{{image}}'
+        pull: yes
+        published_ports:
+          - '8080:8080'
+          - '25565:25565'
         volumes: '{{pg_volumes}}'
         env: '{{pg_env}}'
         restart_policy: unless-stopped

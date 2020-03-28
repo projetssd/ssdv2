@@ -9,9 +9,9 @@
 #########################################################################
 ---
 - name: "UnionFS | Create unionfs directories"
-  file: "path={{ item }} state=directory mode=0775 owner={{ user.stdout }} group={{ group.stdout }} recurse=yes"
+  file: "path={{ item }} state=directory mode=0775 owner={{ user.name }} group={{ user.group }} recurse=yes"
   with_items:
-    - /home/{{ user.stdout }}/local/.unionfs-fuse
+    - /home/{{ user.name }}/local/.unionfs-fuse
 
 - name: "UnionFS | Install unionfs"
   apt:

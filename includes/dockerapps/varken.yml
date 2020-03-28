@@ -3,84 +3,149 @@
 ---
 - hosts: localhost
   gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
   tasks:
-  
-    # VARIABLES ############################################################
-    - name: 'Including variables'
-      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+
+    - name: Check config Ombi exists
+      stat:
+        path: "/opt/seedbox/docker/{{user.name}}/ombi/OmbiSettings.db"
+      register: ombi_config
+
+    - name: Check config sonarr exists
+      stat:
+        path: "/opt/seedbox/docker/{{user.name}}/sonarr3/config/config.xml"
+      register: sonarr_config
+
+    - name: Check config radarr exists
+      stat:
+        path: "/opt/seedbox/docker/{{user.name}}/radarr/config/config.xml"
+      register: radarr_config
+
+    - name: Check config lidarr exists
+      stat:
+        path: "/opt/seedbox/docker/{{user.name}}/lidarr/config.xml"
+      register: lidarr_config
+
+    - name: Check config Tautulli exists
+      stat:
+        path: "/opt/seedbox/docker/{{user.name}}/tautulli/config.ini"
+      register: tautulli_config
 
     - name: 'ApiKey Ombi'
       shell: | 
-        sqlite3 /opt/seedbox/docker/{{user.stdout}}/ombi/OmbiSettings.db 'select Content from "GlobalSettings" where id = 1' > /opt/seedbox/docker/{{user.stdout}}/ombi/key.txt
-        grep -Po '(?<=ApiKey)\W*\K[^ ]*' /opt/seedbox/docker/{{user.stdout}}/ombi/key.txt | cut -d',' -f1 | sed 's/.$//'
+        sqlite3 /opt/seedbox/docker/{{user.name}}/ombi/OmbiSettings.db 'select Content from "GlobalSettings" where id = 1' > /opt/seedbox/docker/{{user.name}}/ombi/key.txt
+        grep -Po '(?<=ApiKey)\W*\K[^ ]*' /opt/seedbox/docker/{{user.name}}/ombi/key.txt | cut -d',' -f1 | sed 's/.$//'
       register: ombi
+      when: ombi_config.stat.exists
 
     - name: 'ApiKey Ombi'
       debug:
         msg: '{{ ombi.stdout }}'
+      when: ombi_config.stat.exists
 
     - name: 'ApiKey Sonarr'
       shell: |
-        sed -n 's:.*<ApiKey>\(.*\)</ApiKey>.*:\1:p' /opt/seedbox/docker/{{user.stdout}}/sonarr3/config/config.xml
+        sed -n 's:.*<ApiKey>\(.*\)</ApiKey>.*:\1:p' /opt/seedbox/docker/{{user.name}}/sonarr3/config/config.xml
       register: sonarr
+      when: sonarr_config.stat.exists
 
     - name: 'ApiKey Sonarr'
       debug:
         msg: '{{ sonarr.stdout }}'
+      when: sonarr_config.stat.exists
 
     - name: 'ApiKey Radarr'
       shell: |
-        sed -n 's:.*<ApiKey>\(.*\)</ApiKey>.*:\1:p' /opt/seedbox/docker/{{user.stdout}}/radarr/config/config.xml
+        sed -n 's:.*<ApiKey>\(.*\)</ApiKey>.*:\1:p' /opt/seedbox/docker/{{user.name}}/radarr/config/config.xml
       register: radarr
+      when: radarr_config.stat.exists
 
     - name: 'ApiKey Radarr'
       debug:
         msg: '{{ radarr.stdout }}'
+      when: radarr_config.stat.exists
 
     - name: 'ApiKey Lidarr'
       shell: |
-        sed -n 's:.*<ApiKey>\(.*\)</ApiKey>.*:\1:p' /opt/seedbox/docker/{{user.stdout}}/lidarr/config.xml
+        sed -n 's:.*<ApiKey>\(.*\)</ApiKey>.*:\1:p' /opt/seedbox/docker/{{user.name}}/lidarr/config.xml
       register: lidarr
+      when: lidarr_config.stat.exists
 
     - name: 'ApiKey lidarr'
       debug:
         msg: '{{ lidarr.stdout }}'
+      when: lidarr_config.stat.exists
 
     - name: 'ApiKey Tautulli'
       shell: |
-        grep "api_key" /opt/seedbox/docker/{{user.stdout}}/tautulli/config.ini | cut -d '=' -f2 | sed 's/ //g' | head -1
+        grep "api_key" /opt/seedbox/docker/{{user.name}}/tautulli/config.ini | cut -d '=' -f2 | sed 's/ //g' | head -1
       register: tautulli
+      when: tautulli_config.stat.exists
 
     - name: 'ApiKey Tautulli'
       debug:
         msg: '{{ tautulli.stdout }}'
+      when: tautulli_config.stat.exists
 
     - name: 'ApiKey Maxmind'
       shell: |
-        grep "maxmind_license_key" /opt/seedbox/docker/{{user.stdout}}/tautulli/config.ini | cut -d '=' -f2 | sed 's/ //g'
+        grep "maxmind_license_key" /opt/seedbox/docker/{{user.name}}/tautulli/config.ini | cut -d '=' -f2 | sed 's/ //g'
       register: maxmind
+      when: tautulli_config.stat.exists
 
     - name: 'ApiKey Maxmind'
       debug:
         msg: '{{ maxmind.stdout }}'
+      when: tautulli_config.stat.exists
 
     # FACTS #######################################################################
 
-    - name: Check config cloudflare exists
-      stat:
-        path: "/opt/seedbox/variables/cloudflare_api"
-      register: cloudflare_config
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
+            (cloudflare.login is undefined)
+            or
+            (cloudflare.login is none)
+            or
+            (cloudflare.login | trim | length == 0)
+            or
+            (cloudflare.api is undefined)
+            or
+            (cloudflare.api is none)
+            or
+            (cloudflare.api | trim | length == 0)
+          )
+            else false }}"
 
-    - name: Check config oauth_client exists
-      stat:
-        path: "/opt/seedbox/variables/oauth_client"
-      register: oauth_client
+    - name: "Variables | Set 'oauth_enabled' variable"
+      set_fact:
+        oauth_enabled: "{{ true if not(
+            (oauth.client is undefined)
+            or
+            (oauth.client is none)
+            or
+            (oauth.client | trim | length == 0)
+            or
+            (oauth.secret is undefined)
+            or
+            (oauth.secret is none)
+            or
+            (oauth.secret | trim | length == 0)
+            or
+            (oauth.account is undefined)
+            or
+            (oauth.account is none)
+            or
+            (oauth.account | trim | length == 0)
+          )
+            else false }}"
 
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
         subdomain: grafana
-      when: cloudflare_config.stat.exists
+      when: cloudflare_enabled
 
     - name: 'Set Known Facts'
       set_fact:
@@ -91,7 +156,7 @@
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775 owner=472 group=104'
       with_items:
-        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}'
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
 
     # LABELS ######################################################################
     - name: 'Ajout label traefik'
@@ -99,9 +164,8 @@
         grafana_labels:
           traefik.enable: 'true'
           traefik.port: '{{intport}}'
-          traefik.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
-          traefik.frontend.headers.SSLHost: '{{pgrole}}.{{domain.stdout}}'
-          traefik.frontend.auth.basic: '{{ passwd.stdout if (not oauth_client.stat.exists) | default(false) else omit }}'
+          traefik.frontend.rule: 'Host:{{pgrole}}.{{user.domain}}'
+          traefik.frontend.headers.SSLHost: '{{pgrole}}.{{user.domain}}'
           traefik.docker.network: traefik_proxy
           traefik.frontend.passHostHeader: 'true'
           traefik.frontend.headers.SSLForceHost: 'true'
@@ -112,12 +176,8 @@
           traefik.frontend.headers.STSSeconds: '315360000'
           traefik.frontend.headers.STSIncludeSubdomains: 'true'
           traefik.frontend.headers.STSPreload: 'true'
-          traefik.frontend.headers.frameDeny: 'true'
-          traefik.frontend.headers.customFrameOptionsValue: 'ALLOW-FROM https://{{pgrole}}.{{domain.stdout}}'
+          traefik.frontend.headers.customFrameOptionsValue: 'ALLOW-FROM https://{{pgrole}}.{{user.domain}}'
           traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
-          traefik.frontend.auth.forward.address: 'http://oauth:4181'
-          traefik.frontend.auth.forward.authResponseHeaders: 'X-Forwarded-User'
-          traefik.frontend.auth.forward.trustForwardHeader: 'true'
 
     # Influxdb #############################################################
 
@@ -130,7 +190,7 @@
     - name: 'Setting Volumes influxdb'
       set_fact:
         influxdb_volumes:
-          - '/opt/seedbox/docker/{{user.stdout}}/influxdb/config:/var/lib/influxdb'
+          - '/opt/seedbox/docker/{{user.name}}/influxdb/config:/var/lib/influxdb'
 
     - name: 'Deploying influxdb'
       docker_container:
@@ -160,7 +220,7 @@
       set_fact:
         telegraf_volumes:
           - '/var/run/docker.sock:/var/run/docker.sock'
-          - '/opt/seedbox/docker/{{user.stdout}}/telegraf:/etc/telegraf'
+          - '/opt/seedbox/docker/{{user.name}}/telegraf:/etc/telegraf'
           - '/proc:/host/proc:ro'
 
     - name: 'Deploying telegraf'
@@ -179,7 +239,7 @@
     - name: Import telegraf config
       template:
         src: /opt/seedbox-compose/includes/dockerapps/templates/varken/telegraf.conf.j2
-        dest: /opt/seedbox/docker/{{user.stdout}}/telegraf/telegraf.conf
+        dest: /opt/seedbox/docker/{{user.name}}/telegraf/telegraf.conf
 
     # Varken #############################################################
 
@@ -192,7 +252,7 @@
           VRKN_GLOBAL_LIDARR_SERVER_IDS: '1'
           VRKN_GLOBAL_TAUTULLI_SERVER_IDS: '1'
           VRKN_GLOBAL_OMBI_SERVER_IDS: '1'
-          VRKN_GLOBAL_MAXMIND_LICENSE_KEY: '{{ maxmind.stdout }}'
+          VRKN_GLOBAL_MAXMIND_LICENSE_KEY: '{{ maxmind.stdout if (tautulli_config.stat.exists) | default(false) else omit }}'
           VRKN_INFLUXDB_URL: 'influxdb'  
           VRKN_INFLUXDB_PORT: '8086'
           VRKN_INFLUXDB_SSL: 'false'
@@ -201,7 +261,7 @@
           VRKN_INFLUXDB_PASSWORD: 'root'
           VRKN_TAUTULLI_1_URL: 'tautulli:8181'
           VRKN_TAUTULLI_1_FALLBACK_IP: '1.1.1.1'
-          VRKN_TAUTULLI_1_APIKEY: '{{ tautulli.stdout }}'
+          #VRKN_TAUTULLI_1_APIKEY: '{{ tautulli.stdout if (tautulli.config.stat.exists) | default(false) else omit }}'
           VRKN_TAUTULLI_1_SSL: 'false'
           VRKN_TAUTULLI_1_VERIFY_SSL: 'false'
           VRKN_TAUTULLI_1_GET_ACTIVITY: 'true'
@@ -209,7 +269,7 @@
           VRKN_TAUTULLI_1_GET_STATS: 'true'
           VRKN_TAUTULLI_1_GET_STATS_RUN_SECONDS: '3600'
           VRKN_SONARR_1_URL: 'sonarr3:8989'
-          VRKN_SONARR_1_APIKEY: '{{ sonarr.stdout }}'
+          #VRKN_SONARR_1_APIKEY: '{{ sonarr.stdout if (sonarr.config.stat.exists) | default(false) else omit }}'
           VRKN_SONARR_1_SSL: 'false'
           VRKN_SONARR_1_VERIFY_SSL: 'false'
           VRKN_SONARR_1_MISSING_DAYS: '7'
@@ -219,7 +279,7 @@
           VRKN_SONARR_1_QUEUE: 'true'
           VRKN_SONARR_1_QUEUE_RUN_SECONDS: '300'
           VRKN_RADARR_1_URL: 'radarr:7878'
-          VRKN_RADARR_1_APIKEY: '{{ radarr.stdout }}'
+          #VRKN_RADARR_1_APIKEY: '{{ radarr.stdout if (radarr.config.stat.exists) | default(false) else omit }}'
           VRKN_RADARR_1_SSL: 'false'
           VRKN_RADARR_1_VERIFY_SSL: 'false'
           VRKN_RADARR_1_QUEUE: 'true'
@@ -227,7 +287,7 @@
           VRKN_RADARR_1_GET_MISSING: 'true'
           VRKN_RADARR_1_GET_MISSING_RUN_SECONDS: '300'
           VRKN_LIDARR_1_URL: 'lidarr:8686'
-          VRKN_LIDARR_1_APIKEY: '{{ lidarr.stdout }}'
+          #VRKN_LIDARR_1_APIKEY: '{{ lidarr.stdout if (lidarr.config.stat.exists) | default(false) else omit }}'
           VRKN_LIDARR_1_SSL: 'false'
           VRKN_LIDARR_1_VERIFY_SSL: 'false'
           VRKN_LIDARR_1_MISSING_DAYS: '30'
@@ -236,8 +296,8 @@
           VRKN_LIDARR_1_FUTURE_DAYS_RUN_SECONDS: '300'
           VRKN_LIDARR_1_QUEUE: 'true'
           VRKN_LIDARR_1_QUEUE_RUN_SECONDS: '300'
-          VRKN_OMBI_1_URL: 'ombi.{{ domain.stdout }}'
-          VRKN_OMBI_1_APIKEY: '{{ ombi.stdout }}'
+          VRKN_OMBI_1_URL: 'ombi.{{ user.domain }}'
+          #VRKN_OMBI_1_APIKEY: '{{ ombi.stdout if (ombi.config.stat.exists) | default(false) else omit }}'
           VRKN_OMBI_1_SSL: 'false'
           VRKN_OMBI_1_VERIFY_SSL: 'false'
           VRKN_OMBI_1_GET_REQUEST_TYPE_COUNTS: 'true'
@@ -250,7 +310,7 @@
     - name: 'Setting Volumes Varken'
       set_fact:
         varken_volumes:
-          - '/opt/seedbox/docker/{{user.stdout}}/varken/config:/config'
+          - '/opt/seedbox/docker/{{user.name}}/varken/config:/config'
 
     - name: 'Deploying Varken'
       docker_container:
@@ -270,7 +330,7 @@
     - name: 'Setting Volumes Grafana'
       set_fact:
         grafana_volumes:
-          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}:/config'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}:/config'
 
     - name: 'Setting Grafana ENV'
       set_fact:

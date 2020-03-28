@@ -1,0 +1,255 @@
+#!/bin/bash
+
+---
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
+  tasks:
+  
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
+            (cloudflare.login is undefined)
+            or
+            (cloudflare.login is none)
+            or
+            (cloudflare.login | trim | length == 0)
+            or
+            (cloudflare.api is undefined)
+            or
+            (cloudflare.api is none)
+            or
+            (cloudflare.api | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Variables | Set 'oauth_enabled' variable"
+      set_fact:
+        oauth_enabled: "{{ true if not(
+            (oauth.client is undefined)
+            or
+            (oauth.client is none)
+            or
+            (oauth.client | trim | length == 0)
+            or
+            (oauth.secret is undefined)
+            or
+            (oauth.secret is none)
+            or
+            (oauth.secret | trim | length == 0)
+            or
+            (oauth.account is undefined)
+            or
+            (oauth.account is none)
+            or
+            (oauth.account | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: jitsi
+      when: cloudflare_enabled
+
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'jitsi'
+        intport: '80'
+        image: 'jitsi/web'
+
+    - name: Create meet.jitsi
+      docker_network:
+        name: meet.jitsi
+        state: present
+
+    - name: 'Ajout label traefik'
+      set_fact:
+        pg_labels:
+          traefik.enable: 'true'
+          traefik.port: '{{intport}}'
+          traefik.frontend.rule: 'Host:{{pgrole}}.{{user.domain}}'
+          traefik.frontend.headers.SSLHost: '{{pgrole}}.{{user.domain}}'
+          traefik.docker.network: traefik_proxy
+          traefik.frontend.passHostHeader: 'true'
+          traefik.frontend.headers.SSLForceHost: 'true'
+          traefik.frontend.headers.SSLRedirect: 'true'
+          traefik.frontend.headers.browserXSSFilter: 'true'
+          traefik.frontend.headers.contentTypeNosniff: 'true'
+          traefik.frontend.headers.forceSTSHeader: 'true'
+          traefik.frontend.headers.STSSeconds: '315360000'
+          traefik.frontend.headers.STSIncludeSubdomains: 'true'
+          traefik.frontend.headers.STSPreload: 'true'
+          traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+          traefik.frontend.headers.frameDeny: "true"
+
+    - name: 'Setting jitsi Volumes'
+      set_fact:
+        jitsi_volumes:
+          - '/opt/seedbox/docker/{{user.name}}/.jitsi-meet-cfg/web:/config'
+          - '/opt/seedbox/docker/{{user.name}}/.jitsi-meet-cfg/web/letsencrypt:/etc/letsencrypt'
+          - '/opt/seedbox/docker/{{user.name}}/.jitsi-meet-cfg/transcripts:/usr/share/jitsi-meet/transcripts'
+
+    - name: 'Setting jitsi ENV'
+      set_fact:
+        jitsi_env:
+          JICOFO_AUTH_USER: 'focus'
+          PUBLIC_URL: '{{pgrole}}.{{user.domain}}'
+          ENABLE_LETSENCRYPT: '1'
+          LETSENCRYPT_DOMAIN: '{{pgrole}}.{{user.domain}}'
+          LETSENCRYPT_EMAIL: '{{user.mail}}'
+          XMPP_DOMAIN: 'meet.jitsi'
+          XMPP_AUTH_DOMAIN: 'auth.meet.jitsi'
+          XMPP_BOSH_URL_BASE: 'http://xmpp.meet.jitsi:5280'
+          XMPP_GUEST_DOMAIN: 'guest.meet.jitsi'
+          XMPP_MUC_DOMAIN: 'muc.meet.jitsi'
+          XMPP_RECORDER_DOMAIN: 'recorder.meet.jitsi'
+          JIBRI_BREWERY_MUC: 'jvbbrewery'
+          JIBRI_PENDING_TIMEOUT: '90'
+          JIBRI_XMPP_USER: 'jibri'
+          JIBRI_XMPP_PASSWORD: 'passw0rd'
+          JIBRI_RECORDER_USER: 'recorder'
+          JIBRI_RECORDER_PASSWORD: 'passw0rd'
+          TZ: 'Europe/Paris'
+
+    - name: 'Deploying {{pgrole}}'
+      docker_container:
+        name: '{{pgrole}}'
+        image: '{{image}}'
+        published_ports:
+          - '8000:80'
+          - '8443:443'
+        pull: yes
+        volumes: '{{jitsi_volumes}}'
+        env: '{{jitsi_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: meet.jitsi
+            aliases:
+              - xmpp.meet.jitsi
+          - name: traefik_proxy
+        state: started
+        labels: '{{pg_labels}}'
+
+###################################PROSODY###########################################
+
+    - name: 'Setting prosody Volumes'
+      set_fact:
+        prosody_volumes:
+          - '/opt/seedbox/docker/{{user.name}}/.jitsi-meet-cfg/prosody:/config'
+
+    - name: 'Setting prosody ENV'
+      set_fact:
+        prosody_env:
+          XMPP_INTERNAL_MUC_DOMAIN: 'internal-muc.meet.jitsi'
+          XMPP_DOMAIN: 'meet.jitsi'
+          XMPP_AUTH_DOMAIN: 'auth.meet.jitsi'
+          XMPP_GUEST_DOMAIN: 'guest.meet.jitsi'
+          XMPP_MUC_DOMAIN: 'muc.meet.jitsi'
+          XMPP_RECORDER_DOMAIN: 'recorder.meet.jitsi'
+          JICOFO_AUTH_USER: 'focus'
+          JICOFO_COMPONENT_SECRET: 's3cr37'
+          JICOFO_AUTH_PASSWORD: 'passw0rd'
+          JVB_AUTH_USER: 'jvb'
+          JVB_AUTH_PASSWORD: 'passw0rd'
+          JIGASI_XMPP_USER: 'jigasi'
+          JIGASI_XMPP_PASSWORD: 'passw0rd'
+          JIBRI_XMPP_USER: 'jibri'
+          JIBRI_XMPP_PASSWORD: 'passw0rd'
+          JIBRI_RECORDER_USER: 'recorder'
+          JIBRI_RECORDER_PASSWORD: 'passw0rd'
+          LOG_LEVEL: 'info'
+          TZ: 'Europe/Paris'
+
+    - name: 'Deploying prosody'
+      docker_container:
+        name: 'prosody'
+        image: 'jitsi/prosody'
+        pull: yes
+        published_ports:
+          - '5222:5222'
+          - '5347:5347'
+          - '5280:5280'
+        volumes: '{{prosody_volumes}}'
+        env: '{{prosody_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: meet.jitsi
+            aliases:
+              - xmpp.meet.jitsi
+        state: started
+
+##############################jicofo################################################################
+
+    - name: 'Setting jicofo Volumes'
+      set_fact:
+        jicofo_volumes:
+          - '/opt/seedbox/docker/{{user.name}}/.jitsi-meet-cfg/jicofo:/config'
+
+    - name: 'Setting jicofo ENV'
+      set_fact:
+        jicofo_env:
+          JICOFO_AUTH_USER: 'focus'
+          XMPP_INTERNAL_MUC_DOMAIN: 'internal-muc.meet.jitsi'
+          XMPP_DOMAIN: 'meet.jitsi'
+          XMPP_AUTH_DOMAIN: 'auth.meet.jitsi'
+          XMPP_SERVER: 'xmpp.meet.jitsi'
+          JICOFO_COMPONENT_SECRET: 's3cr37'
+          JICOFO_AUTH_PASSWORD: 'passw0rd'
+          JVB_BREWERY_MUC: 'jvbbrewery'
+          JIGASI_BREWERY_MUC: 'jigasibrewery'
+          JIBRI_BREWERY_MUC: 'jibribrewery'
+          JIBRI_PENDING_TIMEOUT: '90'
+          TZ: 'Europe/Paris'
+
+    - name: 'Deploying jicofo'
+      docker_container:
+        name: 'jicofo'
+        image: 'jitsi/jicofo'
+        pull: yes
+        volumes: '{{jicofo_volumes}}'
+        env: '{{jicofo_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: meet.jitsi
+        state: started
+
+##############################jvb################################################################
+
+    - name: 'Setting jvb Volumes'
+      set_fact:
+        jvb_volumes:
+          - '/opt/seedbox/docker/{{user.name}}/.jitsi-meet-cfg/jvb:/config'
+
+    - name: 'Setting jvb ENV'
+      set_fact:
+        jvb_env:
+          XMPP_INTERNAL_MUC_DOMAIN: 'internal-muc.meet.jitsi'
+          XMPP_AUTH_DOMAIN: 'auth.meet.jitsi'
+          XMPP_SERVER: 'xmpp.meet.jitsi'
+          JVB_AUTH_USER: 'jvb'
+          JVB_AUTH_PASSWORD: 'passw0rd'
+          JVB_BREWERY_MUC: 'jvbbrewery'
+          JVB_PORT: '10000'
+          JVB_TCP_HARVESTER_DISABLED: 'true'
+          JVB_TCP_PORT: '4443'
+          JVB_STUN_SERVERS: 'stun.l.google.com:19302,stun1.l.google.com:19302,stun2.l.google.com:19302'
+          TZ: 'Europe/Paris'
+
+    - name: 'Deploying jvb'
+      docker_container:
+        name: 'jvb'
+        image: 'jitsi/jvb'
+        published_ports:
+          - '10000:10000/udp'
+          - '4443:4443'
+        pull: yes
+        volumes: '{{jvb_volumes}}'
+        env: '{{jvb_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: meet.jitsi
+        state: started
+
+

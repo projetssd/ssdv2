@@ -1,7 +1,7 @@
 {
   "autoscan": {
-    "api_key": "{{ plexautoscan.stdout }}",
-    "url": "http://plex.{{ domain.stdout }}:3468"
+    "api_key": "{{ 'plex_autoscan.stdout' if (plex_autoscan_service.stat.exists) | default(false) else omit }}",
+    "url": "http://plex.{{ user.domain }}:3468"
   },
   "motd": {
     "banner_title": "{{ ( cloudbox_type | default('Mondedie',true) ) | capitalize }}",
@@ -16,11 +16,11 @@
     "title_color": "LBLU"
   },
   "nzbget": {
-    "url": "https://{{ user.stdout }}:{{ pass.stdout }}@nzbget.{{ domain.stdout }}"
+    "url": "https://{{ user.name }}:{{ user.pass }}@nzbget.{{ user.domain }}"
   },
   "plexpy": {
       "url": "http://{{ public_ip_lookup.stdout }}:8181",
-      "api_key": "{{ tautulli.stdout }}"
+      "api_key": "{{ 'tautulli.stdout' if (tautulli_config.stat.exists) | default(false) else omit }}"
   },
   "rtorrent": {
     "url": "http://{{ public_ip_lookup.stdout }}:8999"

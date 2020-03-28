@@ -3,27 +3,24 @@ clear
 source includes/functions.sh
 source includes/variables.sh
 
+## Variable
+SEEDUSER=$(cat /etc/passwd | tail -1 | cut -d: -f1)
+DOMAIN=$(cat /home/$SEEDUSER/resume | tail -1 | cut -d. -f2-3)
+SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
+
     	echo -e "${CRED}---------------------------------------------------------------${CEND}"
     	echo -e "${CRED}     /!\ MISE A JOUR DU SERVEUR AVEC CLOUDFLARE /!\            ${CEND}"
     	echo -e "${CRED}---------------------------------------------------------------${CEND}"
 	echo ""
 
-## Mise à jour du systeme
-update_system
-
-## INSTALLATION DES PACKAGES
-install_base_packages
-
 ## suppression des yml dans /opt/seedbox/conf
-rm /opt/seedbox/conf/*
+rm /opt/seedbox/conf/* > /dev/null 2>&1
+
+## suppression container
+docker rm -f $(docker ps -aq) > /dev/null 2>&1
 
 ## suppression traefik
-docker rm -f traefik > /dev/null 2>&1
 rm -rf /opt/seedbox/docker/traefik
-
-## supression portainer
-docker rm -f portainer > /dev/null 2>&1
-rm -rf /opt/seedbox/docker/portainer
 
 ## cloudflare
 echo ""
@@ -33,13 +30,17 @@ cloudflare
 install_traefik
 install_portainer
 
+echo ""
+## reinstallation watchtower
+install_watchtower
+echo ""
+
 ## reinstallation application
-SEEDUSER=$(cat /opt/seedbox/variables/users)
-SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 while read line; do echo $line | cut -d'.' -f1; done < /home/$SEEDUSER/resume > $SERVICESUSER$SEEDUSER
-mv /home/$SEEDUSER/resume /tmp
+rm /home/$SEEDUSER/resume
 install_services
-mv /tmp/resume /home/$SEEDUSER/
+ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+
 rm $SERVICESUSER$SEEDUSER
     	echo -e "${CRED}---------------------------------------------------------------${CEND}"
     	echo -e "${CRED}     /!\ MISE A JOUR DU SERVEUR EFFECTUEE AVEC SUCCES /!\     ${CEND}"

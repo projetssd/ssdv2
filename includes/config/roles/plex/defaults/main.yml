@@ -13,14 +13,14 @@
 ################################
 
 plex_folders:
-  - "/opt/seedbox/docker/{{ user.stdout }}/plex"
-  - "/opt/seedbox/docker/{{ user.stdout }}/plex/config"
-  - "/opt/seedbox/docker/{{ user.stdout }}/plex/config/Library"
-  - "/opt/seedbox/docker/{{ user.stdout }}/plex/config/Library/Application Support"
-  - "/opt/seedbox/docker/{{ user.stdout }}/plex/config/Library/Application Support/Plex Media Server"
-  - "/opt/seedbox/docker/{{ user.stdout }}/plex/config/Library/Application Support/Plex Media Server/Plug-ins"
-  - "/opt/seedbox/docker/{{ user.stdout }}/plex/config/Library/Logs"
-  - "/opt/seedbox/docker/{{ user.stdout }}/plex/config/Library/Logs/Plex Media Server"
+  - "/opt/seedbox/docker/{{ user.name }}/plex"
+  - "/opt/seedbox/docker/{{ user.name }}/plex/config"
+  - "/opt/seedbox/docker/{{ user.name }}/plex/config/Library"
+  - "/opt/seedbox/docker/{{ user.name }}/plex/config/Library/Application Support"
+  - "/opt/seedbox/docker/{{ user.name }}/plex/config/Library/Application Support/Plex Media Server"
+  - "/opt/seedbox/docker/{{ user.name }}/plex/config/Library/Application Support/Plex Media Server/Plug-ins"
+  - "/opt/seedbox/docker/{{ user.name }}/plex/config/Library/Logs"
+  - "/opt/seedbox/docker/{{ user.name }}/plex/config/Library/Logs/Plex Media Server"
   - "{{ plex.transcodes }}/plex"
 
 ################################
@@ -61,9 +61,9 @@ plex_docker_ports: "{{ (web_tools_ports + plex_main_ports) if (plex.open_main_po
 
 plex_docker_volumes:
   - "/etc/localtime:/etc/localtime:ro"
-  - '/home/{{user.stdout}}:/home/{{user.stdout}}'
-  - '/home/{{user.stdout}}/Medias:/data'
-  - '/opt/seedbox/docker/{{user.stdout}}/plex/config:/config'
+  - '/home/{{user.name}}:/home/{{user.name}}'
+  - '/home/{{user.name}}/Medias:/data'
+  - '/opt/seedbox/docker/{{user.name}}/plex/config:/config'
   - "/tmp:/tmp"
   - "/dev/shm:/dev/shm"
   - "{{ plex.transcodes }}/plex:/transcode"

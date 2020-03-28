@@ -3,22 +3,55 @@
 ---
 - hosts: localhost
   gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
   tasks:
 
-    # VARIABLES ###################################################################
-    - name: 'Including variables'
-      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
+            (cloudflare.login is undefined)
+            or
+            (cloudflare.login is none)
+            or
+            (cloudflare.login | trim | length == 0)
+            or
+            (cloudflare.api is undefined)
+            or
+            (cloudflare.api is none)
+            or
+            (cloudflare.api | trim | length == 0)
+          )
+            else false }}"
 
-    - name: Check config cloudflare exists
-      stat:
-        path: "/opt/seedbox/variables/cloudflare_api"
-      register: cloudflare_config
+    - name: "Variables | Set 'oauth_enabled' variable"
+      set_fact:
+        oauth_enabled: "{{ true if not(
+            (oauth.client is undefined)
+            or
+            (oauth.client is none)
+            or
+            (oauth.client | trim | length == 0)
+            or
+            (oauth.secret is undefined)
+            or
+            (oauth.secret is none)
+            or
+            (oauth.secret | trim | length == 0)
+            or
+            (oauth.account is undefined)
+            or
+            (oauth.account is none)
+            or
+            (oauth.account | trim | length == 0)
+          )
+            else false }}"
 
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
         subdomain: phpmyadmin
-      when: cloudflare_config.stat.exists
+      when: cloudflare_enabled
 
     # FACTS #######################################################################
     - name: 'Set Known Facts'
@@ -33,8 +66,8 @@
         pg_labels:
           traefik.enable: 'true'
           traefik.port: '{{intport}}'
-          traefik.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
-          traefik.frontend.headers.SSLHost: '{{domain.stdout}}'
+          traefik.frontend.rule: 'Host:{{pgrole}}.{{user.domain}}'
+          traefik.frontend.headers.SSLHost: '{{user.domain}}'
           traefik.frontend.headers.SSLRedirect: 'true'
           traefik.frontend.headers.STSIncludeSubdomains: 'true'
           traefik.frontend.headers.STSPreload: 'true'
@@ -63,6 +96,6 @@
         state: started
         labels: '{{pg_labels}}'
 
-    - name: 'Populate /home/{{user.stdout}}/resume'
-      shell: 'echo {{ pgrole }} >> /opt/seedbox/docker/{{user.stdout}}/webserver/resume'
+    - name: 'Populate /home/{{user.name}}/resume'
+      shell: 'echo {{ pgrole }} >> /opt/seedbox/docker/{{user.name}}/webserver/resume'
 

@@ -5,9 +5,9 @@
         "rclone_config_path": "/root/.config/rclone/rclone.conf"
     },
     "hidden": {
-        "/home/{{user.stdout}}/local/.unionfs-fuse": {
+        "/home/{{user.name}}/local/.unionfs-fuse": {
             "hidden_remotes": [
-                "{{remote.stdout}}"
+                "{{rclone.remote}}"
             ]
         }
     },
@@ -15,8 +15,8 @@
     },
     "plex": {
         "enabled": false,
-        "url": "https://plex.{{domain.stdout}}",
-        "token": "{{token.stdout}}",
+        "url": "https://plex.{{user.domain}}",
+        "token": "{{plex.token}}",
         "poll_interval": 60,
         "verbose_notifications": false,
         "max_streams_before_throttle": 1,
@@ -33,8 +33,8 @@
         }
     },
     "remotes": {
-        "{{remote.stdout}}": {
-            "hidden_remote": "{{remote.stdout}}:/{{user.stdout}}",
+        "{{rclone.remote}}": {
+            "hidden_remote": "{{rclone.remote}}:/{{user.name}}",
             "rclone_excludes": [
                 "**partial~",
                 "**_HIDDEN~",
@@ -69,15 +69,15 @@
             },
             "rclone_command": "move",
             "remove_empty_dir_depth": 2,
-            "sync_remote": "{{remote.stdout}}:/{{user.stdout}}",
-            "upload_folder": "/home/{{user.stdout}}/local",
-            "upload_remote": "{{remote.stdout}}:/{{user.stdout}}"
+            "sync_remote": "{{rclone.remote}}:/{{user.name}}",
+            "upload_folder": "/home/{{user.name}}/local",
+            "upload_remote": "{{rclone.remote}}:/{{user.name}}"
         }
     },
     "syncer": {
     },
     "uploader": {
-        "{{remote.stdout}}": {
+        "{{rclone.remote}}": {
             "check_interval": 30,
             "exclude_open_files": false,
             "max_size_gb": 200,

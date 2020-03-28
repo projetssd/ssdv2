@@ -3,29 +3,57 @@
 ---
 - hosts: localhost
   gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
   tasks:
-
-    # VARIABLES ############################################################
-    - name: 'Including variables'
-      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
-      
+        
     # FACTS #######################################################################
 
-    - name: Check config cloudflare exists
-      stat:
-        path: "/opt/seedbox/variables/cloudflare_api"
-      register: cloudflare_config
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
+            (cloudflare.login is undefined)
+            or
+            (cloudflare.login is none)
+            or
+            (cloudflare.login | trim | length == 0)
+            or
+            (cloudflare.api is undefined)
+            or
+            (cloudflare.api is none)
+            or
+            (cloudflare.api | trim | length == 0)
+          )
+            else false }}"
 
-    - name: Check config oauth_client exists
-      stat:
-        path: "/opt/seedbox/variables/oauth_client"
-      register: oauth_client
+    - name: "Variables | Set 'oauth_enabled' variable"
+      set_fact:
+        oauth_enabled: "{{ true if not(
+            (oauth.client is undefined)
+            or
+            (oauth.client is none)
+            or
+            (oauth.client | trim | length == 0)
+            or
+            (oauth.secret is undefined)
+            or
+            (oauth.secret is none)
+            or
+            (oauth.secret | trim | length == 0)
+            or
+            (oauth.account is undefined)
+            or
+            (oauth.account is none)
+            or
+            (oauth.account | trim | length == 0)
+          )
+            else false }}"
 
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
         subdomain: ubooquity
-      when: cloudflare_config.stat.exists
+      when: cloudflare_enabled
 
     # FACTS #######################################################################
     - name: 'Set Known Facts'
@@ -36,20 +64,20 @@
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775 owner=1042 group=1042'
       with_items:
-        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}'
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
 
     # LABELS ######################################################################
     - name: 'Adding Traefik'
       set_fact:
         pg_labels:
           traefik.enable: 'true'
-          traefik.app.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
+          traefik.app.frontend.rule: 'Host:{{pgrole}}.{{user.domain}}'
           traefik.app.port: '2202'
-          traefik.admin.frontend.rule: 'Host:ubooquity.{{domain.stdout}}; PathPrefix:/admin,/admin-res,/admin-api'
+          traefik.admin.frontend.rule: 'Host:ubooquity.{{user.domain}}; PathPrefix:/admin,/admin-res,/admin-api'
           traefik.admin.port: '2502'
           traefik.docker.network: 'traefik_proxy'
-          traefik.frontend.headers.SSLHost: '{{domain.stdout}}'
-          traefik.frontend.auth.basic: '{{ passwd.stdout if (not oauth_client.stat.exists) | default(false) else omit }}'
+          traefik.frontend.headers.SSLHost: '{{user.domain}}'
+          traefik.frontend.auth.basic: '{{ user.htpwd if not (oauth_enabled) | default(false) else omit }}'
           traefik.frontend.headers.SSLRedirect: 'true'
           traefik.frontend.headers.STSIncludeSubdomains: 'true'
           traefik.frontend.headers.STSPreload: 'true'
@@ -65,9 +93,9 @@
     - name: 'Setting Volumes'
       set_fact:
         pg_volumes:
-          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}:/config'
-          - '/home/{{user.stdout}}:/home/{{user.stdout}}'
-          - '/home/{{user.stdout}}:/media'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}:/config'
+          - '/home/{{user.name}}:/home/{{user.name}}'
+          - '/home/{{user.name}}:/media'
           - '/etc/localtime:/etc/localtime:ro'
 
     - name: 'Setting ENV'

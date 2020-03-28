@@ -1,36 +1,59 @@
 #!/bin/bash
-#
-# Title:      PGBlitz (Reference Title File)
-# Author(s):  Admin9705
-# URL:        https://pgblitz.com - http://github.pgblitz.com
-# GNU:        General Public License v3.0
-################################################################################
+
 ---
 - hosts: localhost
   gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
   tasks:
-  
-    # VARIABLES ############################################################
-    - name: 'Including variables'
-      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
-
+        
     # FACTS #######################################################################
 
-    - name: Check config cloudflare exists
-      stat:
-        path: "/opt/seedbox/variables/cloudflare_api"
-      register: cloudflare_config
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
+            (cloudflare.login is undefined)
+            or
+            (cloudflare.login is none)
+            or
+            (cloudflare.login | trim | length == 0)
+            or
+            (cloudflare.api is undefined)
+            or
+            (cloudflare.api is none)
+            or
+            (cloudflare.api | trim | length == 0)
+          )
+            else false }}"
 
-    - name: Check config oauth_client exists
-      stat:
-        path: "/opt/seedbox/variables/oauth_client"
-      register: oauth_client
+    - name: "Variables | Set 'oauth_enabled' variable"
+      set_fact:
+        oauth_enabled: "{{ true if not(
+            (oauth.client is undefined)
+            or
+            (oauth.client is none)
+            or
+            (oauth.client | trim | length == 0)
+            or
+            (oauth.secret is undefined)
+            or
+            (oauth.secret is none)
+            or
+            (oauth.secret | trim | length == 0)
+            or
+            (oauth.account is undefined)
+            or
+            (oauth.account is none)
+            or
+            (oauth.account | trim | length == 0)
+          )
+            else false }}"
 
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
         subdomain: nextcloud
-      when: cloudflare_config.stat.exists
+      when: cloudflare_enabled
 
     - name: 'Set Known Facts'
       set_fact:
@@ -45,9 +68,9 @@
         state: present
 
     - name: Creating paths
-      file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
       with_items:
-        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}'
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
 
     # LABELS ######################################################################
     - name: 'Adding Traefik'
@@ -57,9 +80,9 @@
           traefik.enable: 'true'
           traefik.https.port: '443'
           traefik.https.frontend.entryPoints: 'https'
-          traefik.https.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
-          traefik.frontend.auth.basic: '{{ passwd.stdout if (not oauth_client.stat.exists) | default(false) else omit }}'
-          traefik.frontend.headers.SSLHost: '{{pgrole}}.{{domain.stdout}}'
+          traefik.frontend.rule: 'Host:{{pgrole}}.{{user.domain}}'
+          traefik.frontend.auth.basic: '{{ user.htpwd if not (oauth_enabled) | default(false) else omit }}'
+          traefik.frontend.headers.SSLHost: '{{pgrole}}.{{user.domain}}'
           traefik.docker.network: traefik_proxy
           traefik.frontend.passHostHeader: 'true'
           traefik.frontend.headers.SSLForceHost: 'true'
@@ -83,11 +106,11 @@
         image: 'linuxserver/mariadb'
         pull: yes
         volumes:
-          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/db-nextcloud:/config'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/db-nextcloud:/config'
           - '/etc/localtime:/etc/localtime:ro'
         env:
-          PUID: '{{userid.stdout}}'
-          PGID: '{{groupid.stdout}}'
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
           MYSQL_ROOT_PASSWORD: 'nextcloud'
           MYSQL_PASSWORD: 'nextcloud'
           MYSQL_DATABASE: 'nextcloud'
@@ -102,20 +125,19 @@
       wait_for:
         timeout: 10
 
-
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
           - '/etc/localtime:/etc/localtime:ro'
-          - '/opt/seedbox/docker/{{user.stdout}}/nextcloud/data:/data'
-          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/conf:/config'
-          - '/home/{{user.stdout}}:/home/{{user.stdout}}'
+          - '/opt/seedbox/docker/{{user.name}}/nextcloud/data:/data'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/conf:/config'
+          - '/home/{{user.name}}:/home/{{user.name}}'
 
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
-          PUID: '{{userid.stdout}}'
-          PGID: '{{groupid.stdout}}'
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
           MYSQL_ROOT_PASSWORD: 'nextcloud'
           MYSQL_PASSWORD: 'nextcloud'
           MYSQL_DATABASE: 'nextcloud'
@@ -127,8 +149,8 @@
         image: 'linuxserver/nextcloud'
         pull: yes
         env:
-          PUID: '{{userid.stdout}}'
-          PGID: '{{groupid.stdout}}'
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
         volumes: '{{pg_volumes}}'
         networks:
           - name: traefik_proxy

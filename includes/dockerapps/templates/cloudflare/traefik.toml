@@ -28,7 +28,7 @@ defaultEntryPoints = ["https","http"]
 
 [acme]
 acmeLogging = true
-email = "{{mail.stdout}}"
+email = "{{user.mail}}"
 storage = "/etc/traefik/acme/acme.json"
 entryPoint = "https"
   [acme.dnsChallenge]
@@ -36,13 +36,13 @@ entryPoint = "https"
     delayBeforeCheck = "0"
 
 [[acme.domains]]
-  main = "{{domain.stdout}}"
+  main = "{{user.domain}}"
 [[acme.domains]]
-  main = "*.{{domain.stdout}}"
+  main = "*.{{user.domain}}"
 
 [docker]
 endpoint = "unix:///var/run/docker.sock"
-domain = "{{domain.stdout}}"
+domain = "{{user.domain}}"
 watch = true
 exposedbydefault = false
 network = "traefik_proxy"

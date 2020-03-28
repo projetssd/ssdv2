@@ -8,9 +8,9 @@ After=network-online.target docker.service
 User=0
 Group=0
 Type=simple
-WorkingDirectory=/home/{{user.stdout}}/scripts/traktarr/
+WorkingDirectory=/home/{{user.name}}/scripts/traktarr/
 TimeoutStartSec=900
-ExecStart=/usr/bin/python3 /home/{{user.stdout}}/scripts/traktarr/traktarr.py run
+ExecStart=/usr/bin/python3 /home/{{user.name}}/scripts/traktarr/traktarr.py run
 Restart=always
 RestartSec=10
 

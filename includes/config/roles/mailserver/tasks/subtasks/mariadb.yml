@@ -23,7 +23,7 @@
       MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
       MYSQL_DATABASE: 'postfix'
       MYSQL_USER: 'postfix'
-      MYSQL_PASSWORD: '{{pass.stdout}}'
+      MYSQL_PASSWORD: '{{user.pass}}'
     restart_policy: unless-stopped
     networks:
       - name: mail_network

@@ -1,36 +1,59 @@
 #!/bin/bash
-#
-# Title:      PGBlitz (Reference Title File)
-# Author(s):  Admin9705
-# URL:        https://pgblitz.com - http://github.pgblitz.com
-# GNU:        General Public License v3.0
-################################################################################
+
 ---
 - hosts: localhost
   gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
   tasks:
-
-    # VARIABLES ############################################################
-    - name: 'Including variables'
-      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
-      
+        
     # FACTS #######################################################################
 
-    - name: Check config cloudflare exists
-      stat:
-        path: "/opt/seedbox/variables/cloudflare_api"
-      register: cloudflare_config
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
+            (cloudflare.login is undefined)
+            or
+            (cloudflare.login is none)
+            or
+            (cloudflare.login | trim | length == 0)
+            or
+            (cloudflare.api is undefined)
+            or
+            (cloudflare.api is none)
+            or
+            (cloudflare.api | trim | length == 0)
+          )
+            else false }}"
 
-    - name: Check config oauth_client exists
-      stat:
-        path: "/opt/seedbox/variables/oauth_client"
-      register: oauth_client
+    - name: "Variables | Set 'oauth_enabled' variable"
+      set_fact:
+        oauth_enabled: "{{ true if not(
+            (oauth.client is undefined)
+            or
+            (oauth.client is none)
+            or
+            (oauth.client | trim | length == 0)
+            or
+            (oauth.secret is undefined)
+            or
+            (oauth.secret is none)
+            or
+            (oauth.secret | trim | length == 0)
+            or
+            (oauth.account is undefined)
+            or
+            (oauth.account is none)
+            or
+            (oauth.account | trim | length == 0)
+          )
+            else false }}"
 
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
         subdomain: jackett
-      when: cloudflare_config.stat.exists
+      when: cloudflare_enabled
 
     - name: 'Set Known Facts'
       set_fact:
@@ -39,29 +62,29 @@
         image: 'linuxserver/jackett'
 
     - name: Creating paths
-      file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
       with_items:
-        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}'
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
 
     # MIGRATIONS (MANDATORY) ############################################################
     - name: Checking for old app data
       stat:
-        path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/Jackett/ServerConfig.json'
+        path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/Jackett/ServerConfig.json'
       register: olddatacheck
 
     - name: Migrating appdata
-      shell: 'mv /opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/Jackett/* /opt/seedbox/docker/{{user.stdout}}/{{pgrole}}'
+      shell: 'mv /opt/seedbox/docker/{{user.name}}/{{pgrole}}/Jackett/* /opt/seedbox/docker/{{user.name}}/{{pgrole}}'
       ignore_errors: yes
       when: olddatacheck.stat.exists
 
     - name: Migrating appdata
-      shell: 'rmdir /opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/Jackett'
+      shell: 'rmdir /opt/seedbox/docker/{{user.name}}/{{pgrole}}/Jackett'
       ignore_errors: yes
       when: olddatacheck.stat.exists
 
     - name: Checking for existing app data
       stat:
-        path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/ServerConfig.json'
+        path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/ServerConfig.json'
       register: datacheck
 
     # LABELS ######################################################################
@@ -70,9 +93,9 @@
         pg_labels:
           traefik.enable: 'true'
           traefik.port: '{{intport}}'
-          traefik.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
-          traefik.frontend.auth.basic: '{{ passwd.stdout if (not oauth_client.stat.exists) | default(false) else omit }}'
-          traefik.frontend.headers.SSLHost: '{{pgrole}}.{{domain.stdout}}'
+          traefik.frontend.rule: 'Host:{{pgrole}}.{{user.domain}}'
+          traefik.frontend.auth.basic: '{{ user.htpwd if not (oauth_enabled) | default(false) else omit }}'
+          traefik.frontend.headers.SSLHost: '{{pgrole}}.{{user.domain}}'
           traefik.docker.network: traefik_proxy
           traefik.frontend.passHostHeader: 'true'
           traefik.frontend.headers.SSLForceHost: 'true'
@@ -92,14 +115,14 @@
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
-          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}:/config/Jackett'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}:/config/Jackett'
           - '/etc/localtime:/etc/localtime:ro'
 
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
-          PUID: '{{userid.stdout}}'
-          PGID: '{{groupid.stdout}}'
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
 
     # MAIN DEPLOYMENT #############################################################
     - name: 'Deploying {{pgrole}}'
@@ -118,7 +141,7 @@
     # CONFIGURATION ####################################################
     - name: 'Waiting for {{pgrole}} to initialize'
       wait_for:
-        path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/ServerConfig.json'
+        path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/ServerConfig.json'
         state: present
         msg: ServerConfig.json creation failed
 

@@ -8,24 +8,14 @@
 #                   GNU General Public License v3.0                      #
 ##########################################################################
 ---
-- name: 'Register plexuser'
-  shell: 'cat /opt/seedbox/variables/plexuser'
-  register: plexuser
-  ignore_errors: True
-
-- name: 'Register plexpass'
-  shell: 'cat /opt/seedbox/variables/plexpass'
-  register: plexpass
-  ignore_errors: True
-
 - name: Claim Server | Get Plex Media Server claim code via API
   block:
 
   - name: "Get Plex Media Server claim code"
     uri:
       url: https://plex.tv/api/claim/token.json
-      user: "{{ plexuser.stdout }}"
-      password: "{{ plexpass.stdout }}"
+      user: "{{ plex.ident }}"
+      password: "{{ plex.sesame }}"
       force_basic_auth: yes
     register: plex_claim
 

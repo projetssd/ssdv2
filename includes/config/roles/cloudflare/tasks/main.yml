@@ -8,15 +8,6 @@
 #                   GNU General Public License v3.0                     #
 #########################################################################
 ---
-- name: 'Register cloudflare_email'
-  shell: 'cat /opt/seedbox/variables/cloudflare_email'
-  register: cloudflare_email
-  ignore_errors: True
-
-- name: 'Register cloudflare_api'
-  shell: 'cat /opt/seedbox/variables/cloudflare_api'
-  register: cloudflare_api
-  ignore_errors: True
 
 - name: Install 'dnsutils'
   apt: "name=dnsutils state=present"
@@ -31,13 +22,13 @@
 
 - name: Set 'record' variable
   set_fact:
-    record: "{{ (subdomain == domain.stdout) | ternary(domain.stdout,subdomain + '.' + domain.stdout) }}"
+    record: "{{ (subdomain == user.domain) | ternary(user.domain,subdomain + '.' + user.domain) }}"
 
 - name: Set DNS Record
   cloudflare_dns:
-    account_api_token: "{{ cloudflare_api.stdout }}"
-    account_email: "{{ cloudflare_email.stdout }}"
-    zone: "{{ domain.stdout }}"
+    account_api_token: "{{ cloudflare.api }}"
+    account_email: "{{ cloudflare.login }}"
+    zone: "{{ user.domain }}"
     state: present
     solo: true
     proxied: yes

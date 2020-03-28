@@ -1,48 +1,73 @@
 #!/bin/bash
+
 ---
 - hosts: localhost
   gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
   tasks:
+        
+    # FACTS #######################################################################
 
-    # VARIABLES ################################################################################
-    - name: 'Including variables'
-      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
+            (cloudflare.login is undefined)
+            or
+            (cloudflare.login is none)
+            or
+            (cloudflare.login | trim | length == 0)
+            or
+            (cloudflare.api is undefined)
+            or
+            (cloudflare.api is none)
+            or
+            (cloudflare.api | trim | length == 0)
+          )
+            else false }}"
 
-    # CLOUDFLARE ###############################################################################
-    - name: Check config cloudflare exists
-      stat:
-        path: "/opt/seedbox/variables/cloudflare_api"
-      register: cloudflare_config
-
-    - name: Check config oauth_client exists
-      stat:
-        path: "/opt/seedbox/variables/oauth_client"
-      register: oauth_client
+    - name: "Variables | Set 'oauth_enabled' variable"
+      set_fact:
+        oauth_enabled: "{{ true if not(
+            (oauth.client is undefined)
+            or
+            (oauth.client is none)
+            or
+            (oauth.client | trim | length == 0)
+            or
+            (oauth.secret is undefined)
+            or
+            (oauth.secret is none)
+            or
+            (oauth.secret | trim | length == 0)
+            or
+            (oauth.account is undefined)
+            or
+            (oauth.account is none)
+            or
+            (oauth.account | trim | length == 0)
+          )
+            else false }}"
 
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
         subdomain: 'pydio'
-      when: cloudflare_config.stat.exists
+      when: cloudflare_enabled
 
     - name: Create pydio-net network
       docker_network:
         name: 'pydio-net'
         state: present
 
-    - name: Creating paths
-      file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
-      with_items:
-        - '/opt/seedbox/docker/{{user.stdout}}/pydio'
-
-###################################### Début de zone à modifier si besoin #######################
-
     - name: 'Set Known Facts'
       set_fact:
         pgrole: 'pydio'
         image: 'pydio/cells'
-
-##################################### Fin de zone à modifier #####################################
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
+      with_items:
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
 
     # LABELS ######################################################################
     - name: 'Ajout label traefik'
@@ -51,8 +76,8 @@
           traefik.enable: 'true'
           traefik.backend: 'cells'
           traefik.port: '80'
-          traefik.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
-          traefik.frontend.headers.SSLHost: '{{pgrole}}.{{domain.stdout}}'
+          traefik.frontend.rule: 'Host:{{pgrole}}.{{user.domain}}'
+          traefik.frontend.headers.SSLHost: '{{pgrole}}.{{user.domain}}'
           traefik.docker.network: traefik_proxy
           traefik.frontend.passHostHeader: 'true'
           traefik.frontend.headers.SSLForceHost: 'true'
@@ -70,15 +95,15 @@
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes: 
-          - '/opt/seedbox/docker/{{user.stdout}}/pydio:/var/cells'
-          - '/opt/seedbox/docker/{{user.stdout}}/pydio/data:/var/cells/data'
-          - '/home/{{user.stdout}}:/home/{{user.stdout}}'
+          - '/opt/seedbox/docker/{{user.name}}/pydio:/var/cells'
+          - '/opt/seedbox/docker/{{user.name}}/pydio/data:/var/cells/data'
+          - '/home/{{user.name}}:/home/{{user.name}}'
 
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
-          CELLS_BIND: 'pydio.{{domain.stdout}}:80'
-          CELLS_EXTERNAL: 'https://pydio.{{domain.stdout}}'
+          CELLS_BIND: 'pydio.{{user.domain}}:80'
+          CELLS_EXTERNAL: 'https://pydio.{{user.domain}}'
           CELLS_NO_TLS: '1'
 
     - name: 'Deploying db-pydio'

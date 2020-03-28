@@ -16,13 +16,13 @@ fi
 while [ -z "$PLEX_LOGIN" ]; do
     >&2 echo -n 'Your Plex login (e-mail or username): '
     read PLEX_LOGIN
-    echo $PLEX_LOGIN > /opt/seedbox/variables/plexuser
+    sed -i "/ident:/c\   ident: $PLEX_LOGIN" /opt/seedbox/variables/account.yml
 done
 
 while [ -z "$PLEX_PASSWORD" ]; do
     >&2 echo -n 'Your Plex password: '
     read PLEX_PASSWORD
-    echo $PLEX_PASSWORD > /opt/seedbox/variables/plexpass
+    sed -i "/sesame:/c\   sesame: $PLEX_PASSWORD" /opt/seedbox/variables/account.yml
 done
 
 >&2 echo 'Retrieving a X-Plex-Token using Plex login/password...'

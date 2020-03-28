@@ -136,6 +136,7 @@ case $CHOICE in
 			install_docker
 			define_parameters
 			cloudflare
+			pause
 			install_traefik
 			install_portainer
 			install_watchtower
@@ -146,6 +147,7 @@ case $CHOICE in
 			filebot
 			resume_seedbox
 			pause
+			ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 			script_classique
 		else
 		script_classique
@@ -184,6 +186,7 @@ case $CHOICE in
 			sauve
 			resume_seedbox
 			pause
+			ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 			script_plexdrive
 		else
 		script_plexdrive
@@ -220,7 +223,7 @@ case $CHOICE in
 			install_watchtower
 			SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 			while read line; do echo $line | cut -d'.' -f1; done < /home/$SEEDUSER/resume > $SERVICESUSER$SEEDUSER
-			mv /home/$SEEDUSER/resume /tmp
+			rm /home/$SEEDUSER/resume
 			install_services
 
 			## restauration plex_dupefinder
@@ -250,7 +253,6 @@ case $CHOICE in
 			## restauration des crons
 			(crontab -l | grep . ; echo "*/1 * * * * /opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh") | crontab -
 			ln -s /home/$SEEDUSER/scripts/plex_dupefinder/plex_dupefinder.py /usr/local/bin/plexdupes
-			mv /tmp/resume /home/$SEEDUSER/
 			rm $SERVICESUSER$SEEDUSER
 			checking_errors $?
     			echo ""
@@ -259,6 +261,7 @@ case $CHOICE in
     			echo -e "${CRED}---------------------------------------------------------------${CEND}"
 			echo ""
 			pause
+			ansible-vault crypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 			script_plexdrive
 		else
 		script_plexdrive

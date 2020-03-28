@@ -4,10 +4,9 @@ source includes/functions.sh
 source includes/variables.sh
 
 ## Variable
-DOMAIN=$(cat /opt/seedbox/variables/domain)
-SEEDUSER=$(cat /opt/seedbox/variables/users)
+SEEDUSER=$(cat /etc/passwd | tail -1 | cut -d: -f1)
+DOMAIN=$(cat /home/$SEEDUSER/resume | tail -1 | cut -d. -f2-3)
 SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
-INSTALLEDFILE="/home/$SEEDUSER/resume"
 
     	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
     	echo -e "${CCYAN}    /!\ Auth Basique avec Traefik – Secure pour les services Docker /!\      ${CEND}"
@@ -21,7 +20,7 @@ rm /opt/seedbox/conf/* > /dev/null 2>&1
 docker rm -f $(docker ps -aq) > /dev/null 2>&1
 
 ## reinstallation traefik, portainer
-ansible-playbook /opt/seedbox-compose/includes/dockerapps/traefik.yml
+install_traefik
 install_portainer
 
 echo ""
@@ -31,9 +30,10 @@ echo ""
 
 ## reinstallation application
 while read line; do echo $line | cut -d'.' -f1; done < /home/$SEEDUSER/resume > $SERVICESPERUSER
-mv /home/$SEEDUSER/resume /tmp
+rm /home/$SEEDUSER/resume
 install_services
-mv /tmp/resume /home/$SEEDUSER/
+ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+
 rm $SERVICESUSER$SEEDUSER
     	echo -e "${CRED}---------------------------------------------------------------${CEND}"
     	echo -e "${CRED}     /!\ MISE A JOUR DU SERVEUR EFFECTUEE AVEC SUCCES /!\      ${CEND}"

@@ -5,13 +5,13 @@
   set_fact:
     pg_labels:
       traefik.enable: 'true'
-      traefik.frontend.rule: 'Host:spam.{{domain.stdout}}'
+      traefik.frontend.rule: 'Host:spam.{{user.domain}}'
       traefik.port: '11334'
       traefik.docker.network: 'traefik_proxy'
 
 - name: 'Deploying mailserver'
   docker_container:
-    domainname: '{{domain.stdout}}'
+    domainname: '{{user.domain}}'
     name: 'mailserver'
     recreate: true
     image: 'hardware/mailserver:1.1-stable'
@@ -27,8 +27,8 @@
       - '/mnt/docker/mail:/var/mail'
       - '/opt/seedbox/docker/traefik/acme:/etc/letsencrypt/acme'
     env:
-      DBPASS: '{{pass.stdout}}'
-      RSPAMD_PASSWORD: '{{pass.stdout}}'
+      DBPASS: '{{user.pass}}'
+      RSPAMD_PASSWORD: '{{user.pass}}'
     restart_policy: unless-stopped
     networks:
       - name: mail_network

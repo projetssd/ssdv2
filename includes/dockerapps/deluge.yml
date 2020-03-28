@@ -1,36 +1,59 @@
 #!/bin/bash
-#
-# Title:      PGBlitz (Reference Title File)
-# Authors:    Admin9705, Deiteq, and many PGBlitz Contributors
-# URL:        https://pgblitz.com - http://github.pgblitz.com
-# GNU:        General Public License v3.0
-################################################################################
+
 ---
 - hosts: localhost
   gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
   tasks:
-
-    # VARIABLES ############################################################
-    - name: 'Including variables'
-      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
-      
+        
     # FACTS #######################################################################
 
-    - name: Check config cloudflare exists
-      stat:
-        path: "/opt/seedbox/variables/cloudflare_api"
-      register: cloudflare_config
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
+            (cloudflare.login is undefined)
+            or
+            (cloudflare.login is none)
+            or
+            (cloudflare.login | trim | length == 0)
+            or
+            (cloudflare.api is undefined)
+            or
+            (cloudflare.api is none)
+            or
+            (cloudflare.api | trim | length == 0)
+          )
+            else false }}"
 
-    - name: Check config oauth_client exists
-      stat:
-        path: "/opt/seedbox/variables/oauth_client"
-      register: oauth_client
+    - name: "Variables | Set 'oauth_enabled' variable"
+      set_fact:
+        oauth_enabled: "{{ true if not(
+            (oauth.client is undefined)
+            or
+            (oauth.client is none)
+            or
+            (oauth.client | trim | length == 0)
+            or
+            (oauth.secret is undefined)
+            or
+            (oauth.secret is none)
+            or
+            (oauth.secret | trim | length == 0)
+            or
+            (oauth.account is undefined)
+            or
+            (oauth.account is none)
+            or
+            (oauth.account | trim | length == 0)
+          )
+            else false }}"
 
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
         subdomain: deluge
-      when: cloudflare_config.stat.exists
+      when: cloudflare_enabled
 
     - name: 'Set Known Facts'
       set_fact:
@@ -39,13 +62,13 @@
         image: 'linuxserver/deluge'
 
     - name: 'Creating rutorrent folder paths'
-      file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
       with_items:
-        - '/home/{{user.stdout}}/local/{{pgrole}}'
-        - '/home/{{user.stdout}}/local/{{pgrole}}/downloads'
-        - '/home/{{user.stdout}}/local/{{pgrole}}/incomplete'
-        - '/home/{{user.stdout}}/local/{{pgrole}}/torrent'
-        - '/home/{{user.stdout}}/local/{{pgrole}}/watch'
+        - '/home/{{user.name}}/local/{{pgrole}}'
+        - '/home/{{user.name}}/local/{{pgrole}}/downloads'
+        - '/home/{{user.name}}/local/{{pgrole}}/incomplete'
+        - '/home/{{user.name}}/local/{{pgrole}}/torrent'
+        - '/home/{{user.name}}/local/{{pgrole}}/watch'
 
     # LABELS ######################################################################
     - name: 'Adding Traefik'
@@ -53,9 +76,9 @@
         pg_labels:
           traefik.enable: 'true'
           traefik.port: '{{intport}}'
-          traefik.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
-          traefik.frontend.auth.basic: '{{ passwd.stdout if (not oauth_client.stat.exists) | default(false) else omit }}'
-          traefik.frontend.headers.SSLHost: '{{pgrole}}.{{domain.stdout}}'
+          traefik.frontend.rule: 'Host:{{pgrole}}.{{user.domain}}'
+          traefik.frontend.auth.basic: '{{ user.htpwd if not (oauth_enabled) | default(false) else omit }}'
+          traefik.frontend.headers.SSLHost: '{{pgrole}}.{{user.domain}}'
           traefik.docker.network: traefik_proxy
           traefik.frontend.passHostHeader: 'true'
           traefik.frontend.headers.SSLForceHost: 'true'
@@ -75,14 +98,14 @@
       set_fact:
         pg_volumes:
           - '/etc/localtime:/etc/localtime:ro'
-          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}:/config'
-          - '/home/{{user.stdout}}:/home/{{user.stdout}}'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}:/config'
+          - '/home/{{user.name}}:/home/{{user.name}}'
 
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
-          PUID: '{{userid.stdout}}'
-          PGID: '{{groupid.stdout}}'
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
 
     # MAIN DEPLOYMENT #############################################################
     - name: 'Deploying {{pgrole}}'
@@ -114,41 +137,41 @@
 
     - name: 'Checking for appdata'
       wait_for:
-        path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/core.conf'
+        path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/core.conf'
         state: present
         delay: 5
 
     - name: Set move completed location
       lineinfile:
-        path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/core.conf'
+        path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/core.conf'
         regexp: '"move_completed_path".*'
-        line: '"move_completed_path": "/home/{{user.stdout}}/local/{{pgrole}}/downloads",'
+        line: '"move_completed_path": "/home/{{user.name}}/local/{{pgrole}}/downloads",'
         state: present
 
     - name: Set download location
       lineinfile:
-        path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/core.conf'
+        path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/core.conf'
         regexp: '"download_location".*'
-        line: '"download_location": "/home/{{user.stdout}}/local/{{pgrole}}/incomplete",'
+        line: '"download_location": "/home/{{user.name}}/local/{{pgrole}}/incomplete",'
         state: present
 
     - name: Setting torrent file directory
       lineinfile:
-        path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/core.conf'
+        path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/core.conf'
         regexp: '"torrentfiles_location".*'
-        line: '"torrentfiles_location": "/home/{{user.stdout}}/local/{{pgrole}}/torrent",'
+        line: '"torrentfiles_location": "/home/{{user.name}}/local/{{pgrole}}/torrent",'
         state: present
 
     - name: Setting torrent watch directory
       lineinfile:
-        path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/core.conf'
+        path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/core.conf'
         regexp: '"autoadd_location".*'
-        line: '"autoadd_location": "/home/{{user.stdout}}/local/{{pgrole}}/watch",'
+        line: '"autoadd_location": "/home/{{user.name}}/local/{{pgrole}}/watch",'
         state: present
 
     - name: Setting move_completed
       lineinfile:
-        path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/core.conf'
+        path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/core.conf'
         regexp: '"move_completed".*'
         line: '"move_completed": true,'
         state: present

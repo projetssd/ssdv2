@@ -11,21 +11,9 @@
 
 - hosts: localhost
   gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
   tasks:
-
-    # VARIABLES ############################################################
-    - name: 'Including variables'
-      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
-
-    - name: 'Register token'
-      shell: 'cat /opt/seedbox/variables/token'
-      register: token
-      ignore_errors: True
-
-    - name: 'Register remote'
-      shell: 'cat /opt/seedbox/variables/remote'
-      register: remote
-      ignore_errors: True
 
     - name: Check unionfs_service service exists
       stat:
@@ -50,52 +38,52 @@
       when: cloudplow_service.stat.exists
 
     - name: Create cloudplow directories
-      file: "path={{ item }} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}} recurse=yes"
+      file: "path={{ item }} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}} recurse=yes"
       with_items:
-        - /home/{{user.stdout}}/scripts/cloudplow
+        - /home/{{user.name}}/scripts/cloudplow
 
     - name: Clone cloudplow
       git:
         repo: https://github.com/l3uddz/cloudplow/
-        dest: /home/{{user.stdout}}/scripts/cloudplow
+        dest: /home/{{user.name}}/scripts/cloudplow
         version: HEAD
         force: yes
       become: yes
-      become_user: "{{user.stdout}}"
+      become_user: "{{user.name}}"
 
     - name: Install pip requirements
       pip:
-        requirements: /home/{{user.stdout}}/scripts/cloudplow/requirements.txt
+        requirements: /home/{{user.name}}/scripts/cloudplow/requirements.txt
         executable: pip3
 
     - name: Check config exists
       stat:
-        path: "/home/{{user.stdout}}/scripts/cloudplow/config.json"
+        path: "/home/{{user.name}}/scripts/cloudplow/config.json"
       register: cloudplow_config
 
     - name: Import default config
       template:
         src: /opt/seedbox-compose/includes/config/roles/cloudplow/templates/config.json.j2
-        dest: /home/{{user.stdout}}/scripts/cloudplow/config.json
-        owner: "{{userid.stdout}}"
-        group: "{{groupid.stdout}}"
+        dest: /home/{{user.name}}/scripts/cloudplow/config.json
+        owner: "{{user.userid}}"
+        group: "{{user.groupid}}"
         mode: 0775
         force: yes
       when: not cloudplow_config.stat.exists
 
     - name: Set cloudplow.py as executable
       file:
-        path: /home/{{user.stdout}}/scripts/cloudplow/cloudplow.py
-        owner: "{{userid.stdout}}"
-        group: "{{groupid.stdout}}"
+        path: /home/{{user.name}}/scripts/cloudplow/cloudplow.py
+        owner: "{{user.userid}}"
+        group: "{{user.groupid}}"
         mode: a+x
 
     - name: Set directory permissions
-      file: "path=/home/{{user.stdout}}/scripts/cloudplow state=directory owner=0 group=0 recurse=yes"
+      file: "path=/home/{{user.name}}/scripts/cloudplow state=directory owner=0 group=0 recurse=yes"
 
     - name: "Create /usr/local/bin symlink"
       file:
-        src: "/home/{{user.stdout}}/scripts/cloudplow/cloudplow.py"
+        src: "/home/{{user.name}}/scripts/cloudplow/cloudplow.py"
         dest: "/usr/local/bin/cloudplow"
         state: link
 

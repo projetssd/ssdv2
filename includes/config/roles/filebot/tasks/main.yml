@@ -8,22 +8,20 @@
 ---
 - hosts: localhost
   gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
   tasks:
-
-    # VARIABLES ############################################################
-    - name: 'Including variables'
-      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
 
     # FILEBOT ##############################################################
     - name: Check filebot
       stat:
-        path: '/opt/seedbox/docker/{{user.stdout}}/.filebot'
+        path: '/opt/seedbox/docker/{{user.name}}/.filebot'
       register: filebot
 
     - name: Create Basic Directories
-      file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
       with_items:
-        - '/opt/seedbox/docker/{{user.stdout}}/.filebot'
+        - '/opt/seedbox/docker/{{user.name}}/.filebot'
       when:
         - filebot.stat.exists == False
 
@@ -38,16 +36,16 @@
     - name: Execute the zsh-installer.sh
       shell: /tmp/tar.sh
       args:
-        chdir: /opt/seedbox/docker/{{user.stdout}}/.filebot
+        chdir: /opt/seedbox/docker/{{user.name}}/.filebot
       when:
         - filebot.stat.exists == False
 
     - name: Import default filebot-process.sh
       template:
         src: /opt/seedbox-compose/includes/config/roles/filebot/templates/filebot-process.sh.j2
-        dest: /opt/seedbox/docker/{{user.stdout}}/.filebot/filebot-process.sh
-        owner: "{{userid.stdout}}"
-        group: "{{groupid.stdout}}"
+        dest: /opt/seedbox/docker/{{user.name}}/.filebot/filebot-process.sh
+        owner: "{{user.userid}}"
+        group: "{{user.groupid}}"
         mode: 0755
         force: yes
       when:
@@ -55,32 +53,22 @@
 
     - name: Set filebot.sh as executable
       file:
-        path: /opt/seedbox/docker/{{user.stdout}}/.filebot/filebot.sh
-        owner: "{{user.stdout}}"
-        group: "{{groupid.stdout}}"
+        path: /opt/seedbox/docker/{{user.name}}/.filebot/filebot.sh
+        owner: "{{user.name}}"
+        group: "{{user.groupid}}"
         mode: a+x
       when:
         - filebot.stat.exists == False
 
     - name: Set update-filebot.sh as executable
       file:
-        path: /opt/seedbox/docker/{{user.stdout}}/.filebot/update-filebot.sh 
-        owner: "{{user.stdout}}"
-        group: "{{groupid.stdout}}"
+        path: /opt/seedbox/docker/{{user.name}}/.filebot/update-filebot.sh 
+        owner: "{{user.name}}"
+        group: "{{user.groupid}}"
         mode: a+x
-      when:
-        - filebot.stat.exists == False
-
-    - name: Import license
-      template:
-        src: /opt/seedbox-compose/includes/config/roles/filebot/templates/FileBot_License.psm.j2
-        dest: /opt/seedbox/docker/{{user.stdout}}/.filebot/FileBot_License.psm
-
-    - name: activate license
-      command: filebot --license /opt/seedbox/docker/{{user.stdout}}/.filebot/FileBot_License.psm
       when:
         - filebot.stat.exists == False
 
     - name: Set cron
       shell: |
-        (crontab -l | grep . ; echo "*/1 * * * * /opt/seedbox/docker/{{user.stdout}}/.filebot/filebot-process.sh") | crontab -
+        (crontab -l | grep . ; echo "*/1 * * * * /opt/seedbox/docker/{{user.name}}/.filebot/filebot-process.sh") | crontab -

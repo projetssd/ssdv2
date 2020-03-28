@@ -5,7 +5,7 @@
   set_fact:
     pg_labels:
       traefik.enable: 'true'
-      traefik.frontend.rule: 'Host:webmail.{{domain.stdout}}'
+      traefik.frontend.rule: 'Host:webmail.{{user.domain}}'
       traefik.port: '8888'
 
 - name: 'Deploying rainloop'

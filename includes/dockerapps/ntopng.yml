@@ -3,42 +3,57 @@
 ---
 - hosts: localhost
   gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
   tasks:
+        
+    # FACTS #######################################################################
 
-    # VARIABLES ################################################################################
-    - name: 'Including variables'
-      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
+            (cloudflare.login is undefined)
+            or
+            (cloudflare.login is none)
+            or
+            (cloudflare.login | trim | length == 0)
+            or
+            (cloudflare.api is undefined)
+            or
+            (cloudflare.api is none)
+            or
+            (cloudflare.api | trim | length == 0)
+          )
+            else false }}"
 
-    - name: 'Register appli'
-      shell: 'cat /opt/seedbox/variables/appli'
-      register: appli
-      ignore_errors: True
-
-    - name: 'Register port'
-      shell: 'cat /opt/seedbox/variables/port'
-      register: port
-      ignore_errors: True
-
-    - name: 'Register image'
-      shell: 'cat /opt/seedbox/variables/image'
-      register: image
-      ignore_errors: True
-
-    - name: Check config cloudflare exists
-      stat:
-        path: "/opt/seedbox/variables/cloudflare_api"
-      register: cloudflare_config
-
-    - name: Check config oauth_client exists
-      stat:
-        path: "/opt/seedbox/variables/oauth_client"
-      register: oauth_client
+    - name: "Variables | Set 'oauth_enabled' variable"
+      set_fact:
+        oauth_enabled: "{{ true if not(
+            (oauth.client is undefined)
+            or
+            (oauth.client is none)
+            or
+            (oauth.client | trim | length == 0)
+            or
+            (oauth.secret is undefined)
+            or
+            (oauth.secret is none)
+            or
+            (oauth.secret | trim | length == 0)
+            or
+            (oauth.account is undefined)
+            or
+            (oauth.account is none)
+            or
+            (oauth.account | trim | length == 0)
+          )
+            else false }}"
 
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
         subdomain: 'ntopng'
-      when: cloudflare_config.stat.exists
+      when: cloudflare_enabled
 
     - name: 'Set Known Facts'
       set_fact:
@@ -49,8 +64,8 @@
     - name: 'Creating ntopng folder paths'
       file: 'path={{item}} state=directory mode=0775 owner=999 group=999'
       with_items:
-        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/config'
-        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/data'
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config'
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/data'
 
     # LABELS ######################################################################
     - name: 'Ajout label traefik'
@@ -58,9 +73,8 @@
         pg_labels:
           traefik.enable: 'true'
           traefik.port: '{{intport}}'
-          traefik.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
-          traefik.frontend.auth.basic: '{{ passwd.stdout if (not oauth_client.stat.exists) | default(false) else omit }}'
-          traefik.frontend.headers.SSLHost: '{{pgrole}}.{{domain.stdout}}'
+          traefik.frontend.rule: 'Host:{{pgrole}}.{{user.domain}}'
+          traefik.frontend.headers.SSLHost: '{{pgrole}}.{{user.domain}}'
           traefik.docker.network: traefik_proxy
           traefik.frontend.passHostHeader: 'true'
           traefik.frontend.headers.SSLForceHost: 'true'
@@ -73,19 +87,12 @@
           traefik.frontend.headers.STSPreload: 'true'
           traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
           traefik.frontend.headers.frameDeny: "true"
-          traefik.frontend.auth.forward.address: 'http://oauth:4181'
-          traefik.frontend.auth.forward.authResponseHeaders: 'X-Forwarded-User'
-          traefik.frontend.auth.forward.trustForwardHeader: 'true'
-
-###################################### Début de zone à modifier si besoin #######################
 
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
-          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/config:/etc/ntopng'
-          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/data:/var/lib/ntopng'
-
-##################################### Fin de zone à modifier #####################################
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config:/etc/ntopng'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/data:/var/lib/ntopng'
 
     - name: 'Deploying {{pgrole}}'
       docker_container:

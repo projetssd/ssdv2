@@ -1,36 +1,59 @@
 #!/bin/bash
-#
-# Title:      PGBlitz (Reference Title File)
-# Author(s):  Admin9705
-# URL:        https://pgblitz.com - http://github.pgblitz.com
-# GNU:        General Public License v3.0
-################################################################################
+
 ---
 - hosts: localhost
   gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
   tasks:
-  
-    # VARIABLES ############################################################
-    - name: 'Including variables'
-      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
-      
+        
     # FACTS #######################################################################
 
-    - name: Check config cloudflare exists
-      stat:
-        path: "/opt/seedbox/variables/cloudflare_api"
-      register: cloudflare_config
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
+            (cloudflare.login is undefined)
+            or
+            (cloudflare.login is none)
+            or
+            (cloudflare.login | trim | length == 0)
+            or
+            (cloudflare.api is undefined)
+            or
+            (cloudflare.api is none)
+            or
+            (cloudflare.api | trim | length == 0)
+          )
+            else false }}"
 
-    - name: Check config oauth_client exists
-      stat:
-        path: "/opt/seedbox/variables/oauth_client"
-      register: oauth_client
+    - name: "Variables | Set 'oauth_enabled' variable"
+      set_fact:
+        oauth_enabled: "{{ true if not(
+            (oauth.client is undefined)
+            or
+            (oauth.client is none)
+            or
+            (oauth.client | trim | length == 0)
+            or
+            (oauth.secret is undefined)
+            or
+            (oauth.secret is none)
+            or
+            (oauth.secret | trim | length == 0)
+            or
+            (oauth.account is undefined)
+            or
+            (oauth.account is none)
+            or
+            (oauth.account | trim | length == 0)
+          )
+            else false }}"
 
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
         subdomain: sabnzbd
-      when: cloudflare_config.stat.exists
+      when: cloudflare_enabled
 
     - name: 'Set Known Facts'
       set_fact:
@@ -38,14 +61,14 @@
         intport: '8080'
         image: 'linuxserver/sabnzbd'
 
-    - name: 'Creating sabnzbd folder paths'
-      file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
       with_items:
-        - '/home/{{user.stdout}}/local/{{pgrole}}'
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
 
     - name: 'Checking for existing app data'
       stat:
-        path: /opt/appdata/sabnzbd/sabnzbd.ini
+        path: /opt/seedbox/docker/{{user.name}}/{{pgrole}}/sabnzbd.ini
       register: inicheck
 
     # LABELS ######################################################################
@@ -54,9 +77,9 @@
         pg_labels:
           traefik.enable: 'true'
           traefik.port: '{{intport}}'
-          traefik.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
-          traefik.frontend.auth.basic: '{{ passwd.stdout if (not oauth_client.stat.exists) | default(false) else omit }}'
-          traefik.frontend.headers.SSLHost: '{{pgrole}}.{{domain.stdout}}'
+          traefik.frontend.rule: 'Host:{{pgrole}}.{{user.domain}}'
+          traefik.frontend.auth.basic: '{{ user.htpwd if not (oauth_enabled) | default(false) else omit }}'
+          traefik.frontend.headers.SSLHost: '{{pgrole}}.{{user.domain}}'
           traefik.docker.network: traefik_proxy
           traefik.frontend.passHostHeader: 'true'
           traefik.frontend.headers.SSLForceHost: 'true'
@@ -77,14 +100,14 @@
       set_fact:
         pg_volumes:
           - '/etc/localtime:/etc/localtime:ro'
-          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}:/config'
-          - '/home/{{user.stdout}}:/home/{{user.stdout}}'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}:/config'
+          - '/home/{{user.name}}:/home/{{user.name}}'
 
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
-          PUID: '{{userid.stdout}}'
-          PGID: '{{groupid.stdout}}'
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
 
     # MAIN DEPLOYMENT #############################################################
 
@@ -104,7 +127,7 @@
     # CONFIGURATION ###########################################################
     - name: 'Waiting for {{pgrole}} to initialize'
       wait_for:
-        path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/sabnzbd.ini'
+        path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/sabnzbd.ini'
         state: present
         delay: 5
         
@@ -118,15 +141,15 @@
       block:
         - name: Set host_whitelist
           ini_file:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/sabnzbd.ini'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/sabnzbd.ini'
             section: misc
             option: host_whitelist
-            value: 'sabnzbd.{{domain.stdout}},'
+            value: 'sabnzbd.{{user.domain}},'
             state: present
 
         - name: Set direct_unpack
           ini_file:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/sabnzbd.ini'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/sabnzbd.ini'
             section: misc
             option: direct_unpack
             value: '1'
@@ -134,7 +157,7 @@
 
         - name: Set ignore_samples
           ini_file:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/sabnzbd.ini'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/sabnzbd.ini'
             section: misc
             option: ignore_samples
             value: '1'
@@ -142,7 +165,7 @@
 
         - name: set unwanted_extensions
           ini_file:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/sabnzbd.ini'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/sabnzbd.ini'
             section: misc
             option: unwanted_extensions
             value: exe, com, bat, sh, iso, m2ts, mt2s
@@ -150,7 +173,7 @@
 
         - name: set cleanup_list
           ini_file:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/sabnzbd.ini'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/sabnzbd.ini'
             section: misc
             option: cleanup_list
             value: nfo, exe, com, bat, txt, doc, xls, xlxs, docx, doc, jpg, jeg, gif, png
@@ -158,7 +181,7 @@
 
         - name: set action_on_unwanted_extensions
           ini_file:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/sabnzbd.ini'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/sabnzbd.ini'
             section: misc
             option: action_on_unwanted_extensions
             value: '2'
@@ -166,7 +189,7 @@
 
         - name: set pause_on_pwrar - aborts encrypted rar rather than pausing
           ini_file:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/sabnzbd.ini'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/sabnzbd.ini'
             section: misc
             option: pause_on_pwrar
             value: '2'
@@ -174,7 +197,7 @@
 
         - name: set new_nzb_on_failure - try a new nzb if it fails
           ini_file:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/sabnzbd.ini'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/sabnzbd.ini'
             section: misc
             option: new_nzb_on_failure
             value: '1'
@@ -182,7 +205,7 @@
 
         - name: set flat_unpack
           ini_file:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/sabnzbd.ini'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/sabnzbd.ini'
             section: misc
             option: flat_unpack
             value: '1'
@@ -190,7 +213,7 @@
 
         - name: set download_free
           ini_file:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/sabnzbd.ini'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/sabnzbd.ini'
             section: misc
             option: download_free
             value: '25G'

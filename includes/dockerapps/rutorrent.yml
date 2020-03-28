@@ -1,36 +1,59 @@
 #!/bin/bash
-#
-# Title:      PGBlitz (Reference Title File)
-# Author(s):  Admin9705
-# URL:        https://pgblitz.com - http://github.pgblitz.com
-# GNU:        General Public License v3.0
-################################################################################
+
 ---
 - hosts: localhost
   gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
   tasks:
-  
-    # VARIABLES ############################################################
-    - name: 'Including variables'
-      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
-      
+        
     # FACTS #######################################################################
 
-    - name: Check config cloudflare exists
-      stat:
-        path: "/opt/seedbox/variables/cloudflare_api"
-      register: cloudflare_config
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
+            (cloudflare.login is undefined)
+            or
+            (cloudflare.login is none)
+            or
+            (cloudflare.login | trim | length == 0)
+            or
+            (cloudflare.api is undefined)
+            or
+            (cloudflare.api is none)
+            or
+            (cloudflare.api | trim | length == 0)
+          )
+            else false }}"
 
-    - name: Check config oauth_client exists
-      stat:
-        path: "/opt/seedbox/variables/oauth_client"
-      register: oauth_client
+    - name: "Variables | Set 'oauth_enabled' variable"
+      set_fact:
+        oauth_enabled: "{{ true if not(
+            (oauth.client is undefined)
+            or
+            (oauth.client is none)
+            or
+            (oauth.client | trim | length == 0)
+            or
+            (oauth.secret is undefined)
+            or
+            (oauth.secret is none)
+            or
+            (oauth.secret | trim | length == 0)
+            or
+            (oauth.account is undefined)
+            or
+            (oauth.account is none)
+            or
+            (oauth.account | trim | length == 0)
+          )
+            else false }}"
 
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
         subdomain: rutorrent
-      when: cloudflare_config.stat.exists
+      when: cloudflare_enabled
 
     - name: 'Set Known Facts'
       set_fact:
@@ -47,20 +70,20 @@
     - name: Delete stock themes
       shell: 'path={{item}} state=absent'
       with_items:
-        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/plugins/mobile'
-        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/plugins/theme/themes/FlatUI_Dark'
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/plugins/mobile'
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/plugins/theme/themes/FlatUI_Dark'
 
     - name: Creating scripts and plugins paths
-      file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
       with_items:
-        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/scripts'
-        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/plugins'
-        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/plugins/theme'
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/scripts'
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/plugins'
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/plugins/theme'
 
     - name: 'Creating rutorrent folder paths'
-      file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
       with_items:
-        - '/home/{{user.stdout}}/local/{{pgrole}}'
+        - '/home/{{user.name}}/local/{{pgrole}}'
 
     - name: 'Check if Templates Exist for {{pgrole}}'
       stat:
@@ -70,17 +93,17 @@
     - name: 'Copying Scripts & Plugins'
       copy:
         src: /opt/seedbox-compose/includes/dockerapps/templates/{{pgrole}}
-        dest: /opt/seedbox/docker/{{user.stdout}}
+        dest: /opt/seedbox/docker/{{user.name}}
         directory_mode: yes
         force: yes
-        owner: '{{userid.stdout}}'
-        group: '{{groupid.stdout}}'
+        owner: '{{user.userid}}'
+        group: '{{user.groupid}}'
         mode: 0775
       when: copycheck.stat.exists
 
     - name: Checking for existing app data
       stat:
-        path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rutorrent/rtorrent/rtorrent.rc'
+        path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rutorrent/rtorrent/rtorrent.rc'
       register: rccheck
 
     # LABELS ######################################################################
@@ -89,9 +112,9 @@
         pg_labels:
           traefik.enable: 'true'
           traefik.port: '{{intport}}'
-          traefik.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
-          traefik.frontend.auth.basic: '{{ passwd.stdout if (not oauth_client.stat.exists) | default(false) else omit }}'
-          traefik.frontend.headers.SSLHost: '{{pgrole}}.{{domain.stdout}}'
+          traefik.frontend.rule: 'Host:{{pgrole}}.{{user.domain}}'
+          traefik.frontend.auth.basic: '{{ user.htpwd if not (oauth_enabled) | default(false) else omit }}'
+          traefik.frontend.headers.SSLHost: '{{pgrole}}.{{user.domain}}'
           traefik.docker.network: traefik_proxy
           traefik.frontend.passHostHeader: 'true'
           traefik.frontend.headers.SSLForceHost: 'true'
@@ -103,24 +126,24 @@
           traefik.frontend.headers.STSIncludeSubdomains: 'true'
           traefik.frontend.headers.STSPreload: 'true'
           traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+          traefik.frontend.headers.frameDeny: "true"
           traefik.frontend.auth.forward.address: 'http://oauth:4181'
           traefik.frontend.auth.forward.authResponseHeaders: 'X-Forwarded-User'
           traefik.frontend.auth.forward.trustForwardHeader: 'true'
-          com.centurylinklabs.watchtower.enable: 'false'
 
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
           - '/etc/localtime:/etc/localtime:ro'
-          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}:/config'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}:/config'
           - '/run/php:/run/php'
-          - '/home/{{user.stdout}}:/home/{{user.stdout}}'
+          - '/home/{{user.name}}:/home/{{user.name}}'
 
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
-          PUID: '{{userid.stdout}}'
-          PGID: '{{groupid.stdout}}'
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
 
     # MAIN DEPLOYMENT #############################################################
     - name: 'Deploying {{pgrole}}'
@@ -143,7 +166,7 @@
     # CONFIGURATION ####################################################
     - name: 'Waiting for {{pgrole}} to initialize'
       wait_for:
-        path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rtorrent/rtorrent.rc'
+        path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rtorrent/rtorrent.rc'
         state: present
         msg: rtorrent.rc creation failed
 
@@ -157,49 +180,49 @@
 
     # This is needed for rutorrent b/c it's weird.
     - name: 'Setting ownership on appdata recursivley (this can take a while!)'
-      shell: 'chown -R {{userid.stdout}}:{{groupid.stdout}} /opt/seedbox/docker/{{user.stdout}}/{{pgrole}}'
+      shell: 'chown -R {{user.userid}}:{{user.groupid}} /opt/seedbox/docker/{{user.name}}/{{pgrole}}'
 
     - name: 'Setting permissions on appdata recursivley (this can take a while!)'
-      shell: 'chmod -R 775 /opt/seedbox/docker/{{user.stdout}}/{{pgrole}}'
+      shell: 'chmod -R 775 /opt/seedbox/docker/{{user.name}}/{{pgrole}}'
 
     - name: Set download location
       lineinfile:
-        path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rtorrent/rtorrent.rc'
+        path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rtorrent/rtorrent.rc'
         regexp: '#*directory\s*=.*'
-        line: 'directory = /home/{{user.stdout}}/local/{{pgrole}}'
+        line: 'directory = /home/{{user.name}}/local/{{pgrole}}'
         state: present
 
     - name: Set download location
       lineinfile:
-        path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rtorrent/rtorrent.rc'
+        path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rtorrent/rtorrent.rc'
         regexp: '#*directory.default.set\s*=.*'
-        line: 'directory.default.set = /home/{{user.stdout}}/local/{{pgrole}}'
+        line: 'directory.default.set = /home/{{user.name}}/local/{{pgrole}}'
         state: present
 
     # - name: Set download completed move location
     #   lineinfile:
-    #     path: "/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rtorrent/rtorrent.rc"
+    #     path: "/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rtorrent/rtorrent.rc"
     #     regexp: '#*method.insert\s*=\s*d.get_finished_dir.*'
     #     line: 'method.insert = d.get_finished_dir, simple, "cat={path.stdout}}/downloads/{{pgrole}}/,$d.custom1="'
     #     state: present
 
     # - name: Set download data path location
     #   lineinfile:
-    #     path: "/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rtorrent/rtorrent.rc"
+    #     path: "/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rtorrent/rtorrent.rc"
     #     regexp: '#*method.insert\s*=\s*d.data_path.*'
     #     line: 'method.insert = d.data_path, simple, "if=(d.is_multi_file), (cat,(d.directory),/), (cat,(d.directory),/,(d.name))"'
     #     state: present
 
     # - name: Enable download completed move
     #   lineinfile:
-    #     path: "/opt/seedbox/docker{{user.stdout}}/{{pgrole}}/rtorrent/rtorrent.rc"
+    #     path: "/opt/seedbox/docker{{user.name}}/{{pgrole}}/rtorrent/rtorrent.rc"
     #     regexp: '#*method.insert\s*=\s*d.move_to_complete,\s*simple.*'
     #     line: 'method.insert = d.move_to_complete, simple, "d.directory.set=$argument.1=; execute=mkdir,-p,$argument.1=; execute=mv,-u,$argument.0=,$argument.1=; d.save_full_session="'
     #     state: present
 
     # - name: Enable download completed move event
     #   lineinfile:
-    #     path: "/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rtorrent/rtorrent.rc"
+    #     path: "/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rtorrent/rtorrent.rc"
     #     regexp: '#*method.set_key\s*=\s*event.download.finished,move_complete.*'
     #     line: 'method.set_key = event.download.finished,move_complete,"d.move_to_complete=$d.data_path=,$d.get_finished_dir="'
     #     state: present
@@ -209,175 +232,175 @@
       block:
         - name: Upload Rate
           lineinfile:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rtorrent/rtorrent.rc'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rtorrent/rtorrent.rc'
             regexp: '#*upload_rate\s*=.*'
             line: 'upload_rate = 100000'
             state: present
 
         - name: Update Port Range
           lineinfile:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rtorrent/rtorrent.rc'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rtorrent/rtorrent.rc'
             regexp: '#*port_range\s*=.*'
             line: 'port_range = {{extport2}}-{{intport2}}'
             state: present
 
         - name: Download Rate
           lineinfile:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rtorrent/rtorrent.rc'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rtorrent/rtorrent.rc'
             regexp: '#*download_rate\s*=.*'
             line: 'download_rate = 100000'
             state: present
 
         - name: Low Disk - Set to 5GB
           lineinfile:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rtorrent/rtorrent.rc'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rtorrent/rtorrent.rc'
             regexp: '#*schedule\s*=\s*low_diskspace.*'
             line: 'schedule = low_diskspace,5,60,close_low_diskspace=5000M'
             state: present
 
         - name: max_downloads
           lineinfile:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rtorrent/rtorrent.rc'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rtorrent/rtorrent.rc'
             regexp: '#*throttle.max_downloads.global.set\s*=.*'
             line: 'throttle.max_downloads.global.set = 500'
             state: present
 
         - name: max_uploads
           lineinfile:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rtorrent/rtorrent.rc'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rtorrent/rtorrent.rc'
             regexp: '#*throttle.max_uploads.global.set\s*=.*'
             line: 'throttle.max_uploads.global.set = 50'
             state: present
 
         - name: No File Allocation
           lineinfile:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rtorrent/rtorrent.rc'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rtorrent/rtorrent.rc'
             regexp: '#*system.file.allocate.set\s*=.*'
             line: 'system.file.allocate.set = 0'
             state: present
 
         - name: min_peers
           lineinfile:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rtorrent/rtorrent.rc'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rtorrent/rtorrent.rc'
             regexp: '#*min_peers\s*=.*'
             line: 'min_peers = 40'
             state: present
 
         - name: max_peers
           lineinfile:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rtorrent/rtorrent.rc'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rtorrent/rtorrent.rc'
             regexp: '#*max_peers\s*=.*'
             line: 'max_peers = 1200'
             state: present
 
         - name: max_uploads
           lineinfile:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rtorrent/rtorrent.rc'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rtorrent/rtorrent.rc'
             regexp: '#*max_uploads\s*=.*'
             line: 'max_uploads = 15'
             state: present
 
         - name: max_downloads
           lineinfile:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rtorrent/rtorrent.rc'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rtorrent/rtorrent.rc'
             regexp: '#*max_downloads\s*=.*'
             line: 'max_downloads = 10'
             state: present
 
         - name: Upload Rate
           lineinfile:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rtorrent/rtorrent.rc'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rtorrent/rtorrent.rc'
             regexp: '#*upload_rate\s*=.*'
             line: 'upload_rate = 30000'
             state: present
 
         - name: Download Rate
           lineinfile:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rtorrent/rtorrent.rc'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rtorrent/rtorrent.rc'
             regexp: '#*download_rate\s*=.*'
             line: 'download_rate = 90000'
             state: present
 
         - name: Global Upload to Unlmited
           lineinfile:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rtorrent/rtorrent.rc'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rtorrent/rtorrent.rc'
             regexp: '#*throttle.global_up.max_rate.set_kb\s*=.*'
             line: 'throttle.global_up.max_rate.set_kb = 0'
             state: present
 
         - name: DHT disable
           lineinfile:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rtorrent/rtorrent.rc'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rtorrent/rtorrent.rc'
             regexp: '#*dht\s*=.*'
             line: '#dht = auto'
             state: present
 
         - name: DHT port
           lineinfile:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rtorrent/rtorrent.rc'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rtorrent/rtorrent.rc'
             regexp: '#*dht_port\s*=.*'
             line: '#dht_port = 6881'
             state: present
 
         - name: check Hash
           lineinfile:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rtorrent/rtorrent.rc'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rtorrent/rtorrent.rc'
             regexp: '#*check_hash\s*=.*'
             line: 'check_hash = no'
             state: present
 
         - name: Preload Piece to Host
           lineinfile:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rtorrent/rtorrent.rc'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rtorrent/rtorrent.rc'
             regexp: '#*pieces.preload.type\s*=.*'
             line: 'pieces.preload.type = 2'
             state: present
 
         - name: lower DNS timeout
           lineinfile:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rtorrent/rtorrent.rc'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rtorrent/rtorrent.rc'
             regexp: '#*network.http.dns_cache_timeout.set\s*=.*'
             line: 'network.http.dns_cache_timeout.set = 25'
             state: present
 
         - name: Network Send Buffer Size
           lineinfile:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rtorrent/rtorrent.rc'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rtorrent/rtorrent.rc'
             regexp: '#*network.send_buffer.size.set\s*=.*'
             line: 'network.send_buffer.size.set = 12M'
             state: present
 
         - name: Network Recived Buffer Size
           lineinfile:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rtorrent/rtorrent.rc'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rtorrent/rtorrent.rc'
             regexp: '#*network.receive_buffer.size.set\s*=.*'
             line: 'network.receive_buffer.size.set = 4M'
             state: present
 
         - name: Announce-Interval Min rescan
           lineinfile:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rtorrent/rtorrent.rc'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rtorrent/rtorrent.rc'
             regexp: '#*throttle.min_peers.seed.set\s*=.*'
             line: 'throttle.min_peers.seed.set = 0'
             state: present
 
         - name: Announce-Interval Max rescan
           lineinfile:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rtorrent/rtorrent.rc'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rtorrent/rtorrent.rc'
             regexp: '#*throttle.max_peers.seed.set\s*=.*'
             line: 'throttle.max_peers.seed.set = -1'
             state: present
 
         - name: Do not save uploaded Torrents
           lineinfile:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rutorrent/settings/config.php'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rutorrent/settings/config.php'
             regexp: '\$saveUploadedTorrents\s*=.*'
             line: '$saveUploadedTorrents = false;'
             state: present
 
         - name: overwrite uploaded Torrents
           lineinfile:
-            path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/rutorrent/settings/config.php'
+            path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/rutorrent/settings/config.php'
             regexp: '\$overwriteUploadedTorrents\s*=.*'
             line: '$overwriteUploadedTorrents = true;'
             state: present
