@@ -7,6 +7,7 @@ source includes/variables.sh
 SEEDUSER=$(cat /etc/passwd | tail -1 | cut -d: -f1)
 DOMAIN=$(cat /home/$SEEDUSER/resume | tail -1 | cut -d. -f2-3)
 SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
+cp /opt/seedbox-compose/includes/config/account.yml /opt/seedbox/variables
 
     	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
     	echo -e "${CCYAN}    /!\ Mise à jour - Chiffrement des Variables /!\			      ${CEND}"

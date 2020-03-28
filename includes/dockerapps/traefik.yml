@@ -98,7 +98,7 @@
         force: yes
         owner: '0'
         group: '0'
-      when: cloudflare_enabled is false
+      when: not cloudflare_enabled
 
     - name: Installing Traefik.Toml
       template:
