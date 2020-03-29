@@ -35,6 +35,8 @@ install_portainer
 install_watchtower
 
 ## reinstallation application
+echo -e "${BLUE}### REINITIALISATION DES APPLICATIONS ###${NC}"
+echo -e " ${BWHITE}* Les fichiers de configuration ne seront pas effacés${NC}"
 SEEDUSER=$(cat /etc/passwd | tail -1 | cut -d: -f1)
 SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 while read line; do echo $line | cut -d'.' -f1; done < /home/$SEEDUSER/resume > $SERVICESUSER$SEEDUSER

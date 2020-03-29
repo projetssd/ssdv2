@@ -1393,6 +1393,13 @@ function manage_apps() {
 			rm -rf /opt/seedbox/docker/$SEEDUSER/influxdb
 			fi
 
+			if [[ "$APPSELECTED" = "jitsi" ]]; then
+			docker rm -f prosody jicofo jvb
+			rm -rf /opt/seedbox/docker/$SEEDUSER/prosody
+			rm -rf /opt/seedbox/docker/$SEEDUSER/jicofo
+			rm -rf /opt/seedbox/docker/$SEEDUSER/jvb
+			fi
+
 			checking_errors $?
 			echo""
 			echo -e "${BLUE}### $APPSELECTED a été supprimé ###${NC}"

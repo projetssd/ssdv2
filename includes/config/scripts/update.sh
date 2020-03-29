@@ -7,6 +7,9 @@ source includes/variables.sh
 SEEDUSER=$(cat /etc/passwd | tail -1 | cut -d: -f1)
 DOMAIN=$(cat /home/$SEEDUSER/resume | tail -1 | cut -d. -f2-3)
 SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
+pass=$(cat /opt/seedbox/variables/pass)
+echo $pass > ~/.vault_pass
+echo "vault_password_file = ~/.vault_pass" >> /etc/ansible/ansible.cfg
 cp /opt/seedbox-compose/includes/config/account.yml /opt/seedbox/variables
 
     	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
@@ -28,7 +31,6 @@ if [[ -e "/opt/seedbox/variables/token" ]]; then token=$(cat /opt/seedbox/variab
 if [[ -e "/opt/seedbox/variables/remote" ]]; then remote=$(cat /opt/seedbox/variables/remote); sed -i "/remote:/c\   remote: $remote" /opt/seedbox/variables/account.yml; fi
 if [[ -e "/opt/seedbox/variables/remoteplex" ]]; then crypt=$(cat /opt/seedbox/variables/remoteplex); sed -i "/crypt:/c\   crypt: $crypt" /opt/seedbox/variables/account.yml; fi
 
-
 name=$(cat /opt/seedbox/variables/users)
 domain=$(cat /opt/seedbox/variables/domain)
 mail=$(cat /opt/seedbox/variables/mail)
@@ -37,7 +39,6 @@ userid=$(cat /opt/seedbox/variables/userid)
 groupid=$(cat /opt/seedbox/variables/groupid)
 pass=$(cat /opt/seedbox/variables/pass)
 htpwd=$(cat /opt/seedbox/passwd/.htpasswd-$SEEDUSER)
-
 
 sed -i "/name:/c\   name: $name" /opt/seedbox/variables/account.yml
 sed -i "/domain:/c\   domain: $domain" /opt/seedbox/variables/account.yml
@@ -64,6 +65,8 @@ install_watchtower
 echo ""
 
 ## reinstallation application
+echo -e "${BLUE}### REINITIALISATION DES APPLICATIONS ###${NC}"
+echo -e " ${BWHITE}* Les fichiers de configuration ne seront pas effacés${NC}"
 while read line; do echo $line | cut -d'.' -f1; done < /home/$SEEDUSER/resume > $SERVICESPERUSER
 rm /home/$SEEDUSER/resume
 install_services
