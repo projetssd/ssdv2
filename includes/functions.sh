@@ -1395,9 +1395,7 @@ function manage_apps() {
 
 			if [[ "$APPSELECTED" = "jitsi" ]]; then
 			docker rm -f prosody jicofo jvb
-			rm -rf /opt/seedbox/docker/$SEEDUSER/prosody
-			rm -rf /opt/seedbox/docker/$SEEDUSER/jicofo
-			rm -rf /opt/seedbox/docker/$SEEDUSER/jvb
+			rm -rf /opt/seedbox/docker/$SEEDUSER/.jitsi-meet-cfg
 			fi
 
 			checking_errors $?
