@@ -141,7 +141,7 @@
 
       - name: 'Turn Off Reporting'
         xml:
-          path: '/opt/seedbox/docker/{{user.name}}//{{pgrole}}/config/system.xml'
+          path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config/system.xml'
           xpath: /ServerConfiguration/EnableAnonymousUsageReporting
           value: 'false'
 
