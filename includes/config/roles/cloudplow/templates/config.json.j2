@@ -14,15 +14,15 @@
     "notifications": {
     },
     "plex": {
-        "enabled": false,
+        "enabled": true,
         "url": "https://plex.{{user.domain}}",
         "token": "{{plex.token}}",
         "poll_interval": 60,
-        "verbose_notifications": false,
+        "notifications": false,
         "max_streams_before_throttle": 1,
         "rclone": {
             "throttle_speeds": {
-                "0": "1000M",
+                "0": "100M",
                 "1": "50M",
                 "2": "40M",
                 "3": "30M",
@@ -47,24 +47,24 @@
             ],
             "rclone_extras": {
                 "--checkers": 16,
-                "--drive-chunk-size": "128M",
+                "--drive-chunk-size": "64M",
                 "--stats": "60s",
                 "--transfers": 8,
                 "--verbose": 1,
                 "--skip-links": null,
-                "--retries": 1,
-                "--low-level-retries": 2
+                "--drive-stop-on-upload-limit": null,
+                "--user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.131 Safari/537.36"
             },
             "rclone_sleeps": {
                 "Failed to copy: googleapi: Error 403: User rate limit exceeded": {
-                    "count": 10,
+                    "count": 5,
                     "sleep": 25,
-                    "timeout": 7200
+                    "timeout": 3600
                 },
                 " 0/s,": {
-                    "count": 16,
+                    "count": 15,
                     "sleep": 25,
-                    "timeout": 62
+                    "timeout": 140
                 }
             },
             "rclone_command": "move",
@@ -78,12 +78,18 @@
     },
     "uploader": {
         "{{rclone.remote}}": {
+            "can_be_throttled": true,
             "check_interval": 30,
-            "exclude_open_files": false,
+            "exclude_open_files": true,
             "max_size_gb": 200,
             "opened_excludes": [
                 "/rutorrent/"
             ],
+            "schedule": {
+                "allowed_from": "04:00",
+                "allowed_until": "08:00",
+                "enabled": false
+            },
             "size_excludes": [
                 "rutorrent/*"
             ],
