@@ -547,7 +547,7 @@ function script_plexdrive() {
 			echo -e "${CGREEN}   1) Sécuriser la Seddbox${CEND}"
 			echo -e "${CGREEN}   2) Mise à jour Seedbox avec Cloudflare${CEND}"
 			echo -e "${CGREEN}   3) Changement du nom de Domaine${CEND}"
-			echo -e "${CGREEN}   4) Configuration Drive pour Backup${CEND}"
+			echo -e "${CGREEN}   4) Configuration 2ème Drive pour Backup${CEND}"
 			if docker ps | grep -q mailserver; then
 			echo -e "${YELLOW}   4) Desinstaller Mailserver ${CCYAN}@Hardware-Mondedie.fr${CEND}${NC}"
 			else
