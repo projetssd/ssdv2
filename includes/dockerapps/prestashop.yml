@@ -52,27 +52,20 @@
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: emby
+        subdomain: prestashop
       when: cloudflare_enabled
 
     - name: 'Set Known Facts'
       set_fact:
-        pgrole: 'emby'
-        intport: '8096'
-        extport: '8096'
-        image: 'emby/embyserver'
+        pgrole: 'prestashop'
+        intport: '80'
+        image: 'prestashop/prestashop'
 
-    - name: Creating paths
-      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
-      with_items:
-        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
+    - name: Create prestashop-net network
+      docker_network:
+        name: prestashop-net
+        state: present
 
-    # CORE (MANDATORY) ############################################################
-    - name: 'XML Check'
-      stat:
-        path: /opt/seedbox/docker/{{user.name}}/{{pgrole}}/config/system.xml
-      register: xmlcheck
-      
     # LABELS ######################################################################
     - name: 'Adding Traefik'
       set_fact:
@@ -81,72 +74,62 @@
           traefik.port: '{{intport}}'
           traefik.frontend.rule: 'Host:{{pgrole}}.{{user.domain}}'
           traefik.frontend.headers.SSLHost: '{{pgrole}}.{{user.domain}}'
+          traefik.docker.network: traefik_proxy
+          traefik.frontend.passHostHeader: 'true'
+          traefik.frontend.headers.SSLForceHost: 'true'
           traefik.frontend.headers.SSLRedirect: 'true'
-          traefik.frontend.headers.STSIncludeSubdomains: 'true'
-          traefik.frontend.headers.STSPreload: 'true'
-          traefik.frontend.headers.STSSeconds: '315360000'
           traefik.frontend.headers.browserXSSFilter: 'true'
           traefik.frontend.headers.contentTypeNosniff: 'true'
-          traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
           traefik.frontend.headers.forceSTSHeader: 'true'
+          traefik.frontend.headers.STSSeconds: '315360000'
+          traefik.frontend.headers.STSIncludeSubdomains: 'true'
+          traefik.frontend.headers.STSPreload: 'true'
+          traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+          traefik.frontend.headers.frameDeny: "true"
 
-    - name: 'Setting PG Volumes'
-      set_fact:
-        pg_volumes:
+    - name: 'Deploying db-prestashop'
+      docker_container:
+        name: 'db-prestashop'
+        recreate: true
+        image: 'linuxserver/mariadb'
+        pull: yes
+        volumes:
+          - '/opt/seedbox/docker/{{user.name}}/prestashop/db-prestashop:/config'
           - '/etc/localtime:/etc/localtime:ro'
-          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}:/config'
-          - '/home/{{user.name}}:/home/{{user.name}}'
+        env:
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
+          MYSQL_ROOT_PASSWORD: 'prestashop'
+          MYSQL_PASSWORD: 'prestashop'
+          MYSQL_DATABASE: 'prestashop'
+          MYSQL_USER: 'prestashop'
+        restart_policy: unless-stopped
+        networks:
+          - name: prestashop-net
+        state: started
+
+    - name: Wait for 10 seconds before continuing
+      wait_for:
+        timeout: 10
 
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
-          UID: '{{user.userid}}'
-          GID: '{{user.groupid}}'
-          GIDLIST: '{{user.groupid}}'
+          PS_LANGUAGE: 'fr'
+          PS_ENABLE_SSL: 'true'
+          PS_DOMAIN: 'https://prestashop.{{user.domain}}'
 
-    # MAIN DEPLOYMENT #############################################################
-    - name: 'Deploying {{pgrole}}'
+    - name: Create and start prestashop container
       docker_container:
-        name: '{{pgrole}}'
-        image: '{{image}}'
+        name: prestashop
+        image: 'prestashop/prestashop'
         pull: yes
-        published_ports:
-          - '{{extport}}:{{intport}}'
-        volumes: '{{pg_volumes}}'
-        env: '{{pg_env}}'
-        restart_policy: unless-stopped
+        env:
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
         networks:
           - name: traefik_proxy
-        expose: '8096'
+          - name: prestashop-net
+        restart_policy: unless-stopped
         state: started
         labels: '{{pg_labels}}'
-
-    # FIRST TIME CONFIGURATION ###########################################################
-    - name: 'Configuring {{pgrole}} for first time use'
-      block:
-
-      - name: 'Pending XML Generation'
-        wait_for:
-          path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config/system.xml'
-          state: present
-
-      - name: 'Wait 5 Seconds'
-        wait_for:
-          timeout: 5
-
-      - name: 'Stop {{pgrole}}'
-        docker_container:
-          name: '{{pgrole}}'
-          state: stopped
-
-      - name: 'Turn Off Reporting'
-        xml:
-          path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config/system.xml'
-          xpath: /ServerConfiguration/EnableAnonymousUsageReporting
-          value: 'false'
-
-      - name: 'Restart {{pgrole}}'
-        docker_container:
-          name: '{{pgrole}}'
-          state: started
-      when: not xmlcheck.stat.exists

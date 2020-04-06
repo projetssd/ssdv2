@@ -14,15 +14,15 @@
     "notifications": {
     },
     "plex": {
-        "enabled": true,
+        "enabled": false,
         "url": "https://plex.{{user.domain}}",
         "token": "{{plex.token}}",
         "poll_interval": 60,
-        "notifications": false,
+        "verbose_notifications": false,
         "max_streams_before_throttle": 1,
         "rclone": {
             "throttle_speeds": {
-                "0": "100M",
+                "0": "1000M",
                 "1": "50M",
                 "2": "40M",
                 "3": "30M",
@@ -47,7 +47,7 @@
             ],
             "rclone_extras": {
                 "--checkers": 16,
-                "--drive-chunk-size": "64M",
+                "--drive-chunk-size": "64",
                 "--stats": "60s",
                 "--transfers": 8,
                 "--verbose": 1,
@@ -72,15 +72,41 @@
             "sync_remote": "{{rclone.remote}}:/{{user.name}}",
             "upload_folder": "/home/{{user.name}}/local",
             "upload_remote": "{{rclone.remote}}:/{{user.name}}"
+        },
+        "{{rclone.drivetwo}}": {
+            "hidden_remote": "",
+            "rclone_excludes": [],
+            "rclone_extras": {},
+            "rclone_sleeps": {},
+            "remove_empty_dir_depth": 2,
+            "sync_remote": "{{rclone.drivetwo}}:/{{user.name}}",
+            "upload_folder": "",
+            "upload_remote": ""
         }
     },
     "syncer": {
+        "{{rclone.remote}}2{{rclone.drivetwo}}": {
+            "rclone_extras": {
+                "--bwlimit": "70M",
+                "--checkers": 16,
+                "--drive-chunk-size": "64M",
+                "--stats": "60s",
+                "--transfers": 8,
+                "--verbose": 1
+            },
+            "service": "local",
+            "sync_from": "{{rclone.remote}}",
+            "sync_interval": 26,
+            "sync_to": "{{rclone.drivetwo}}",
+            "tool_path": "/usr/bin/rclone",
+            "use_copy": true,
+            "instance_destroy": false
+          }
     },
     "uploader": {
         "{{rclone.remote}}": {
-            "can_be_throttled": true,
             "check_interval": 30,
-            "exclude_open_files": true,
+            "exclude_open_files": false,
             "max_size_gb": 200,
             "opened_excludes": [
                 "/rutorrent/"
@@ -88,7 +114,7 @@
             "schedule": {
                 "allowed_from": "04:00",
                 "allowed_until": "08:00",
-                "enabled": false
+                "enabled": true
             },
             "size_excludes": [
                 "rutorrent/*"
