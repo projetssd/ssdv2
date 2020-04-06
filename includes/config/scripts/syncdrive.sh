@@ -13,6 +13,7 @@ source includes/variables.sh
 ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 
 ## récupération du remote (2eme drive)
+sed -n -i '1h; 1!H; ${x; s/\n*$//; p}' /root/.config/rclone/rclone.conf > /dev/null 2>&1
 remote=$(tac /root/.config/rclone/rclone.conf | grep -A 3 'Medias' | head -3 | tail -1 | sed "s/\[//g" | sed "s/\]//g")
 
 ## Mise à jour du fichier account.yml avec rajout de la variable 'drivetwo'

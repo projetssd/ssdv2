@@ -4,7 +4,7 @@ source includes/functions.sh
 source includes/variables.sh
 
 ## Variable
-SEEDUSER=$(cat /etc/passwd | tail -1 | cut -d: -f1)
+SEEDUSER=$(ls /opt/seedbox/media* | cut -d '-' -f2)
 DOMAIN=$(cat /home/$SEEDUSER/resume | tail -1 | cut -d. -f2-3)
 SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 

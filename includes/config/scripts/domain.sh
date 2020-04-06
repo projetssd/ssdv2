@@ -37,7 +37,7 @@ install_watchtower
 ## reinstallation application
 echo -e "${BLUE}### REINITIALISATION DES APPLICATIONS ###${NC}"
 echo -e " ${BWHITE}* Les fichiers de configuration ne seront pas effacés${NC}"
-SEEDUSER=$(cat /etc/passwd | tail -1 | cut -d: -f1)
+SEEDUSER=$(ls /opt/seedbox/media* | cut -d '-' -f2)
 SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 while read line; do echo $line | cut -d'.' -f1; done < /home/$SEEDUSER/resume > $SERVICESUSER$SEEDUSER
 rm /home/$SEEDUSER/resume

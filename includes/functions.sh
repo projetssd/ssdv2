@@ -137,7 +137,7 @@ function rtorrent-cleaner() {
 			echo -e " ${BWHITE}* Installation RTORRENT-CLEANER${NC}"
 
 			## choix de l'utilisateur
-			SEEDUSER=$(cat /etc/passwd | tail -1 | cut -d: -f1)
+			SEEDUSER=$(ls /opt/seedbox/media* | cut -d '-' -f2)
 			cp -r $BASEDIR/includes/config/rtorrent-cleaner/rtorrent-cleaner /usr/local/bin
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /usr/local/bin/rtorrent-cleaner
 }
@@ -460,7 +460,7 @@ function script_classique() {
 
 			11) ## Installation Plex_Patrol
 			ansible-playbook /opt/seedbox-compose/includes/config/roles/plex_patrol/tasks/main.yml
-			SEEDUSER=$(cat /etc/passwd | tail -1 | cut -d: -f1)
+			SEEDUSER=$(ls /opt/seedbox/media* | cut -d '-' -f2)
 			DOMAIN=$(cat /home/$SEEDUSER/resume | tail -1 | cut -d. -f2-3)
 			FQDNTMP="plex_patrol.$DOMAIN"
 			echo "$FQDNTMP" >> /home/$SEEDUSER/resume
@@ -786,7 +786,7 @@ password2 = PjV8d2CRzb6mPUWSGsIeqNw
 
 			12) ## Installation Plex_Patrol
 			ansible-playbook /opt/seedbox-compose/includes/config/roles/plex_patrol/tasks/main.yml
-			SEEDUSER=$(cat /etc/passwd | tail -1 | cut -d: -f1)
+			SEEDUSER=$(ls /opt/seedbox/media* | cut -d '-' -f2)
 			DOMAIN=$(cat /home/$SEEDUSER/resume | tail -1 | cut -d. -f2-3)
 			FQDNTMP="plex_patrol.$DOMAIN"
 			echo "$FQDNTMP" >> /home/$SEEDUSER/resume
@@ -926,6 +926,7 @@ function install_rclone() {
         		fi
         	echo "$EXCLUDEPATH" >> /root/.config/rclone/rclone.conf
     		done
+		sed -n -i '1h; 1!H; ${x; s/\n*$//; p}' /root/.config/rclone/rclone.conf > /dev/null 2>&1
 		echo ""
 
 		## Mise en variables des remotes
@@ -1388,7 +1389,7 @@ function manage_apps() {
 	echo -e "${BLUE}##########################################${NC}"
 	echo -e "${BLUE}###          GESTION DES APPLIS        ###${NC}"
 	echo -e "${BLUE}##########################################${NC}"
-	SEEDUSER=$(cat /etc/passwd | tail -1 | cut -d: -f1)
+	SEEDUSER=$(ls /opt/seedbox/media* | cut -d '-' -f2)
 	DOMAIN=$(cat /home/$SEEDUSER/resume | tail -1 | cut -d. -f2-3)
 	USERRESUMEFILE="/home/$SEEDUSER/resume"
 	echo ""
@@ -1642,7 +1643,7 @@ function uninstall_seedbox() {
 	echo -e "${BLUE}##########################################${NC}"
 
 	## variables
-	SEEDUSER=$(cat /etc/passwd | tail -1 | cut -d: -f1)
+	SEEDUSER=$(ls /opt/seedbox/media* | cut -d '-' -f2)
 	SEEDGROUP=$(cat /etc/group | tail -1 | cut -d: -f1)
 	USERHOMEDIR="/home/$SEEDUSER"
 	PLEXDRIVE="/usr/bin/plexdrive"
