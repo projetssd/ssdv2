@@ -7,6 +7,37 @@
     - /opt/seedbox/variables/account.yml
   tasks:
   
+
+    - name: 'JICOFO_COMPONENT_SECRET'
+      shell: | 
+        openssl rand -hex 16
+      register: jicofo_component_secret
+
+    - name: 'JICOFO_AUTH_PASSWORD'
+      shell: | 
+        openssl rand -hex 16
+      register: jicofo_auth_passwd
+
+    - name: 'JVB_AUTH_PASSWORD'
+      shell: | 
+        openssl rand -hex 16
+      register: jvb_auth_passwd
+
+    - name: 'JIGASI_XMPP_PASSWORD'
+      shell: | 
+        openssl rand -hex 16
+      register: jigasi_xmpp_password
+
+    - name: 'JIBRI_RECORDER_PASSWORD'
+      shell: | 
+        openssl rand -hex 16
+      register: jibri_recorder_password
+
+    - name: 'JIBRI_XMPP_PASSWORD'
+      shell: | 
+        openssl rand -hex 16
+      register: jibri_xmpp_password
+
     - name: "Variables | Set 'cloudflare_enabled' variable"
       set_fact:
         cloudflare_enabled: "{{ true if not(
@@ -82,7 +113,7 @@
           traefik.frontend.headers.STSIncludeSubdomains: 'true'
           traefik.frontend.headers.STSPreload: 'true'
           traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
-          traefik.frontend.headers.frameDeny: "false"
+          traefik.frontend.headers.frameDeny: "true"
 
     - name: 'Setting jitsi Volumes'
       set_fact:
@@ -108,9 +139,9 @@
           JIBRI_BREWERY_MUC: 'jvbbrewery'
           JIBRI_PENDING_TIMEOUT: '90'
           JIBRI_XMPP_USER: 'jibri'
-          JIBRI_XMPP_PASSWORD: 'passw0rd'
+          JIBRI_XMPP_PASSWORD: '{{jibri_xmpp_password.stdout}}'
           JIBRI_RECORDER_USER: 'recorder'
-          JIBRI_RECORDER_PASSWORD: 'passw0rd'
+          JIBRI_RECORDER_PASSWORD: '{{jibri_recorder_password.stdout}}'
           TZ: 'Europe/Paris'
 
     - name: 'Deploying {{pgrole}}'
@@ -149,16 +180,16 @@
           XMPP_MUC_DOMAIN: 'muc.meet.jitsi'
           XMPP_RECORDER_DOMAIN: 'recorder.meet.jitsi'
           JICOFO_AUTH_USER: 'focus'
-          JICOFO_COMPONENT_SECRET: 's3cr37'
-          JICOFO_AUTH_PASSWORD: 'passw0rd'
+          JICOFO_COMPONENT_SECRET: '{{jicofo_component_secret.stdout}}'
+          JICOFO_AUTH_PASSWORD: '{{jicofo_auth_passwd.stdout}}'
           JVB_AUTH_USER: 'jvb'
-          JVB_AUTH_PASSWORD: 'passw0rd'
+          JVB_AUTH_PASSWORD: '{{jvb_auth_passwd.stdout}}'
           JIGASI_XMPP_USER: 'jigasi'
-          JIGASI_XMPP_PASSWORD: 'passw0rd'
+          JIGASI_XMPP_PASSWORD: '{{jigasi_xmpp_password.stdout}}'
           JIBRI_XMPP_USER: 'jibri'
-          JIBRI_XMPP_PASSWORD: 'passw0rd'
+          JIBRI_XMPP_PASSWORD: '{{jibri_xmpp_password.stdout}}'
           JIBRI_RECORDER_USER: 'recorder'
-          JIBRI_RECORDER_PASSWORD: 'passw0rd'
+          JIBRI_RECORDER_PASSWORD: '{{jibri_recorder_password.stdout}}'
           LOG_LEVEL: 'info'
           TZ: 'Europe/Paris'
 
@@ -195,8 +226,8 @@
           XMPP_DOMAIN: 'meet.jitsi'
           XMPP_AUTH_DOMAIN: 'auth.meet.jitsi'
           XMPP_SERVER: 'xmpp.meet.jitsi'
-          JICOFO_COMPONENT_SECRET: 's3cr37'
-          JICOFO_AUTH_PASSWORD: 'passw0rd'
+          JICOFO_COMPONENT_SECRET: '{{jicofo_component_secret.stdout}}'
+          JICOFO_AUTH_PASSWORD: '{{jicofo_auth_passwd.stdout}}'
           JVB_BREWERY_MUC: 'jvbbrewery'
           JIGASI_BREWERY_MUC: 'jigasibrewery'
           JIBRI_BREWERY_MUC: 'jibribrewery'
@@ -229,7 +260,7 @@
           XMPP_AUTH_DOMAIN: 'auth.meet.jitsi'
           XMPP_SERVER: 'xmpp.meet.jitsi'
           JVB_AUTH_USER: 'jvb'
-          JVB_AUTH_PASSWORD: 'passw0rd'
+          JVB_AUTH_PASSWORD: '{{jvb_auth_passwd.stdout}}'
           JVB_BREWERY_MUC: 'jvbbrewery'
           JVB_PORT: '10000'
           JVB_TCP_HARVESTER_DISABLED: 'true'
@@ -252,4 +283,16 @@
           - name: meet.jitsi
         state: started
 
+    - name: 'Stopping Jitsi'
+      docker_container:
+        name: 'jitsi'
+        state: stopped
 
+    - name: 'replace bosh'
+      shell: | 
+        sed -i "/bosh/c\    bosh: 'https://jitsi.{{user.domain}}/http-bind'," /opt/seedbox/docker/{{user.name}}/.jitsi-meet-cfg/web/config.js
+
+    - name: Restart Docker Container
+      docker_container:
+        name: 'jitsi'
+        state: started
