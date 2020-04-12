@@ -126,7 +126,7 @@
       set_fact:
         jitsi_env:
           JICOFO_AUTH_USER: 'focus'
-          PUBLIC_URL: '{{pgrole}}.{{user.domain}}'
+          PUBLIC_URL: 'https://{{pgrole}}.{{user.domain}}'
           ENABLE_LETSENCRYPT: '1'
           LETSENCRYPT_DOMAIN: '{{pgrole}}.{{user.domain}}'
           LETSENCRYPT_EMAIL: '{{user.mail}}'
@@ -281,18 +281,4 @@
         restart_policy: unless-stopped
         networks:
           - name: meet.jitsi
-        state: started
-
-    - name: 'Stopping Jitsi'
-      docker_container:
-        name: 'jitsi'
-        state: stopped
-
-    - name: 'replace bosh'
-      shell: | 
-        sed -i "/bosh/c\    bosh: 'https://jitsi.{{user.domain}}/http-bind'," /opt/seedbox/docker/{{user.name}}/.jitsi-meet-cfg/web/config.js
-
-    - name: Restart Docker Container
-      docker_container:
-        name: 'jitsi'
         state: started
