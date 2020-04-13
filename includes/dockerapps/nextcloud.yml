@@ -81,7 +81,7 @@
           traefik.https.port: '443'
           traefik.https.frontend.entryPoints: 'https'
           traefik.frontend.rule: 'Host:{{pgrole}}.{{user.domain}}'
-          traefik.frontend.auth.basic: '{{ user.htpwd if not (oauth_enabled) | default(false) else omit }}'
+          #traefik.frontend.auth.basic: '{{ user.htpwd if not (oauth_enabled) | default(false) else omit }}'
           traefik.frontend.headers.SSLHost: '{{pgrole}}.{{user.domain}}'
           traefik.docker.network: traefik_proxy
           traefik.frontend.passHostHeader: 'true'
@@ -93,11 +93,11 @@
           traefik.frontend.headers.STSSeconds: '315360000'
           traefik.frontend.headers.STSIncludeSubdomains: 'true'
           traefik.frontend.headers.STSPreload: 'true'
-          traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+          #traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
           traefik.frontend.headers.frameDeny: "false"
-          traefik.frontend.auth.forward.address: 'http://oauth:4181'
-          traefik.frontend.auth.forward.authResponseHeaders: 'X-Forwarded-User'
-          traefik.frontend.auth.forward.trustForwardHeader: 'true'
+          #traefik.frontend.auth.forward.address: 'http://oauth:4181'
+          #traefik.frontend.auth.forward.authResponseHeaders: 'X-Forwarded-User'
+          #traefik.frontend.auth.forward.trustForwardHeader: 'true'
 
     - name: 'Deploying db-nextcloud'
       docker_container:
@@ -129,6 +129,7 @@
       set_fact:
         pg_volumes:
           - '/etc/localtime:/etc/localtime:ro'
+          - '/opt/seedbox/docker/{{user.name}}/nextcloud/app:/app'
           - '/opt/seedbox/docker/{{user.name}}/nextcloud/data:/data'
           - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/conf:/config'
           - '/home/{{user.name}}:/home/{{user.name}}'
@@ -158,3 +159,44 @@
         restart_policy: unless-stopped
         state: started
         labels: '{{pg_labels}}'
+
+#########################coturn#############################################################
+
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
+      with_items:
+        - '/opt/seedbox/docker/{{user.name}}/coturn'
+
+    - name: 'SECRET'
+      shell: | 
+        openssl rand -hex 16
+      register: secret
+
+    - name: Get Public IP Address
+      shell: dig -4 TXT +short o-o.myaddr.l.google.com @ns1.google.com | awk -F'\"' '{ print $2}'
+      register: public_ip_lookup
+
+    - name: 'Setting PG Volumes'
+      set_fact:
+        coturn_volumes:
+          - '/opt/seedbox/docker/{{user.name}}/coturn:/var/lib/coturn'
+
+    - name: Import default config
+      template:
+        src: /opt/seedbox-compose/includes/dockerapps/templates/nextcloud/turnserver.conf.j2
+        dest: /opt/seedbox/docker/{{user.name}}/coturn/turnserver.conf
+        force: yes
+
+    - name: Create and start coturn container
+      docker_container:
+        name: coturn
+        hostname: coturn
+        image: 'woahbase/alpine-coturn'
+        pull: yes
+        env:
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
+        volumes: '{{coturn_volumes}}'
+        network_mode: host
+        restart_policy: unless-stopped
+        state: started

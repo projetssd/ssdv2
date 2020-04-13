@@ -1,0 +1,11 @@
+listening-port=3478
+fingerprint
+use-auth-secret
+static-auth-secret={{secret.stdout}}
+realm=coturn
+total-quota=100
+bps-capacity=0
+stale-nonce
+no-multicast-peers
+cli-password=$5$79a316b350311570$81df9cfb9af7f5e5a76eada31e7097b663a0670f99a3c07ded3f1c8e59c5658a
+external-ip={{public_ip_lookup.stdout}}
