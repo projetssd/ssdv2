@@ -129,7 +129,6 @@
       set_fact:
         pg_volumes:
           - '/etc/localtime:/etc/localtime:ro'
-          - '/opt/seedbox/docker/{{user.name}}/nextcloud/app:/app'
           - '/opt/seedbox/docker/{{user.name}}/nextcloud/data:/data'
           - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/conf:/config'
           - '/home/{{user.name}}:/home/{{user.name}}'
@@ -160,7 +159,7 @@
         state: started
         labels: '{{pg_labels}}'
 
-#########################coturn#############################################################
+######################### Coturn #############################################################
 
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
@@ -200,3 +199,55 @@
         network_mode: host
         restart_policy: unless-stopped
         state: started
+
+####################### Collabora #############################################################
+
+    - name: 'domain'
+      shell: | 
+        cat /home/{{user.name}}/resume | tail -1 | cut -d. -f2
+      register: domain
+
+    - name: 'domain'
+      debug:
+        msg: '{{ domain.stdout }}'
+
+    - name: 'com'
+      shell: | 
+        cat /home/{{user.name}}/resume | tail -1 | cut -d. -f3
+      register: com
+
+    - name: 'com'
+      debug:
+        msg: '{{ com.stdout }}'
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: collabora
+      when: cloudflare_enabled
+
+    - name: 'Adding Traefik'
+      set_fact:
+        co_labels:
+          traefik.enable: 'true'
+          traefik.port: '9980'
+          traefik.frontend.rule: 'Host:collabora.{{user.domain}}'
+          traefik.docker.network: traefik_proxy
+
+    - name: Create and start Collabora container
+      docker_container:
+        name: collabora
+        image: 'collabora/code'
+        pull: yes
+        env:
+          extra_params: '--o:ssl.enable=false --o:ssl.termination=true'
+          domain: 'nextcloud\\.{{domain.stdout}}\\.{{com.stdout}}'
+          username: '{{user.name}}'
+          password: '{{user.pass}}'
+          DONT_GEN_SSL_CERT: 'true'
+        networks:
+          - name: traefik_proxy
+        restart_policy: unless-stopped
+        state: started
+        labels: '{{co_labels}}'
+
