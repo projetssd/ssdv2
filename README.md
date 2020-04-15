@@ -16,7 +16,7 @@ Ce script est basé sur CloudBox [(Lien du GitHub)](https://github.com/Cloudbox/
 4. Connaissances en Docker
 5. Un compte Google Drive si la seedbox est orienté PlexDrive
 
-# Installation (en root)
+# Installation en root
 
 1. Mise à jour des paquets :
 ```
