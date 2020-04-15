@@ -6,8 +6,6 @@
 
 Mise à jour avec Ansible le 10/07/2019
 
-Ce script est basé sur CloudBox [(Lien du GitHub)](https://github.com/Cloudbox/Cloudbox) , il a été modifier par laster13 permettant d'avoir une installation beaucoup plus libre de ce que propose Cloudbox.
-
 # Pré-requis
 
 1. Un serveur Ubuntu 18.04/Debian 10
