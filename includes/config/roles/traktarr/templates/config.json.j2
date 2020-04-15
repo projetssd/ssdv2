@@ -96,13 +96,11 @@
   },
   "radarr": {
     "api_key": "{{ radarr_api_key | default('',true) }}",
-    "profile": "HD-1080p",
     "url": "http://localhost:7878/",
     "root_folder": "/home/{{user.name}}/Medias/Films/"
   },
   "sonarr": {
     "api_key": "{{ sonarr_api_key | default('',true) }}",
-    "profile": "HD-1080p",
     "url": "http://localhost:8989/",
     "root_folder": "/home/{{user.name}}/Medias/Series/",
     "tags": {}

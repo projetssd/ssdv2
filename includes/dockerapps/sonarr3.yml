@@ -52,12 +52,12 @@
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: sonarr3
+        subdomain: sonarr
       when: cloudflare_enabled
 
     - name: 'Set Known Facts'
       set_fact:
-        pgrole: 'sonarr3'
+        pgrole: 'sonarr'
         intport: '8989'
         image: 'linuxserver/sonarr:preview'
 
@@ -111,6 +111,8 @@
         name: '{{pgrole}}'
         image: '{{image}}'
         pull: yes
+        published_ports:
+          - '127.0.0.1:8989:8989'
         volumes: '{{pg_volumes}}'
         env: '{{pg_env}}'
         restart_policy: unless-stopped

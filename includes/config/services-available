@@ -2,6 +2,7 @@ Plex-PlexMediaServer
 Emby-EmbyMediaServer
 Jellyfin-EmbyMediaServer
 Radarr-MoviesAutomation-ForkSonarr
+Radarr3-MoviesAutomation-ForkSonarr
 Sensorr-MoviesAutomation
 Sonarr-TVShowsAutomation
 Sonarr3-TVShowsAutomation
@@ -40,3 +41,4 @@ Dozzle-LogViewerForDocker
 Logarr-SelfHostedPHPAppConsolidateLogs
 Minecraft-McMyAdminadministrateMinecraft
 Jitsi-SecureVideoconferencingSolutions
+Mellow-CanCommunicateWithSeveralAPIs

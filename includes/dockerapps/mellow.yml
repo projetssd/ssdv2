@@ -52,29 +52,26 @@
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: sonarr
+        subdomain: 'mellow'
       when: cloudflare_enabled
-
-    - name: 'Set Known Facts'
-      set_fact:
-        pgrole: 'sonarr'
-        intport: '8989'
-        extport: '8989'
-        image: 'linuxserver/sonarr'
 
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
       with_items:
-        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
+        - '/opt/seedbox/docker/{{user.name}}/mellow'
 
-    # LABELS ######################################################################
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'mellow'
+        intport: '5060'
+        image: 'voidp/mellow'
+
     - name: 'Ajout label traefik'
       set_fact:
         pg_labels:
           traefik.enable: 'true'
           traefik.port: '{{intport}}'
           traefik.frontend.rule: 'Host:{{pgrole}}.{{user.domain}}'
-          traefik.frontend.auth.basic: '{{ user.htpwd if not (oauth_enabled) | default(false) else omit }}'
           traefik.frontend.headers.SSLHost: '{{pgrole}}.{{user.domain}}'
           traefik.docker.network: traefik_proxy
           traefik.frontend.passHostHeader: 'true'
@@ -87,35 +84,18 @@
           traefik.frontend.headers.STSIncludeSubdomains: 'true'
           traefik.frontend.headers.STSPreload: 'true'
           traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
-          traefik.frontend.headers.frameDeny: "false"
-          traefik.frontend.auth.forward.address: 'http://oauth:4181'
-          traefik.frontend.auth.forward.authResponseHeaders: 'X-Forwarded-User'
-          traefik.frontend.auth.forward.trustForwardHeader: 'true'
 
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
-          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config:/config'
-          - '/home/{{user.name}}:/home/{{user.name}}'
-          - '/etc/localtime:/etc/localtime:ro'
+          - '/opt/seedbox/docker/{{user.name}}/mellow:/usr/src/app/data/'
 
-    - name: 'Setting PG ENV'
-      set_fact:
-        pg_env:
-          PUID: '{{user.userid}}'
-          PGID: '{{user.groupid}}'
-
-    # MAIN DEPLOYMENT #############################################################
-
-    - name: 'Deploying {{pgrole}}'
+    - name: 'Deploying {{appli.stdout}}'
       docker_container:
-        name: '{{pgrole}}'
+        name: 'mellow'
         image: '{{image}}'
         pull: yes
-        published_ports:
-          - '127.0.0.1:8989:8989'
         volumes: '{{pg_volumes}}'
-        env: '{{pg_env}}'
         restart_policy: unless-stopped
         networks:
           - name: traefik_proxy
