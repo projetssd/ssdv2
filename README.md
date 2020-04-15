@@ -8,12 +8,6 @@ Mise à jour avec Ansible le 10/07/2019
 
 Ce script est basé sur CloudBox [(Lien du GitHub)](https://github.com/Cloudbox/Cloudbox) , il a été modifier par laster13 permettant d'avoir une installation beaucoup plus libre de ce que propose Cloudbox.
 
-Les images utilisées pour ce projet sont:
-* [Traefik](https://traefik.io/) pour gérer les I/O web
-* [xataz/rtorrent-rutorrent](https://hub.docker.com/r/xataz/rtorrent-rutorrent/)  
-* [Emby](https://hub.docker.com/r/emby/embyserver/)  
-* ...
-
 # Pré-requis
 
 1. Un serveur Ubuntu 18.04/Debian 10

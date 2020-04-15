@@ -55,22 +55,9 @@
         subdomain: synclounge
       when: cloudflare_enabled
 
-    - name: "Set DNS Record on CloudFlare"
-      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
-      vars:
-        subdomain: webui
-      when: cloudflare_enabled
-
-    - name: "Set DNS Record on CloudFlare"
-      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
-      vars:
-        subdomain: slserver
-      when: cloudflare_enabled
-
     - name: 'Set Known Facts'
       set_fact:
         pgrole: 'synclounge'
-        intport: '8088'
         image: 'starbix/synclounge'
 
     - name: Creating paths
@@ -83,13 +70,10 @@
       set_fact:
         pg_labels:
           traefik.enable: 'true'
-          traefik.webui.frontend.redirect.entryPoint: 'https'
           traefik.webui.backend: 'synclounge'
-          traefik.webui.frontend.rule: 'Host:webui.{{user.domain}},{{pgrole}}.{{user.domain}}'
+          traefik.webui.frontend.rule: 'Host:{{pgrole}}.{{user.domain}}'
           traefik.webui.port: '8088'
-          traefik.slserver.frontend.redirect.entryPoint: 'https'
-          traefik.slserver.backend: 'slserver'
-          traefik.slserver.frontend.rule: 'Host:slserver.{{user.domain}}'
+          traefik.slserver.frontend.rule: 'Host:{{pgrole}}.{{user.domain}}; PathPrefix:/slserver'
           traefik.slserver.port: '8089'
 
     - name: 'Setting PG Volumes'
@@ -103,7 +87,7 @@
         pg_env:
           UID: '{{user.userid}}'
           GID: '{{user.groupid}}'
-          DOMAIN: '{{pgrole}}.{{user.domain}}'
+          DOMAIN: '{{user.domain}}'
 
     # MAIN DEPLOYMENT #############################################################
 
@@ -113,7 +97,8 @@
         image: '{{image}}'
         pull: yes
         published_ports:
-          - '127.0.0.1:8088:8088'
+          - '8088:8088'
+          - '8089:8089'
         volumes: '{{pg_volumes}}'
         env: '{{pg_env}}'
         restart_policy: unless-stopped
