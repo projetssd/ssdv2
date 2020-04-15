@@ -148,6 +148,7 @@ case $CHOICE in
 			resume_seedbox
 			pause
 			ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+			touch /opt/seedbox/media-$SEEDUSER
 			script_classique
 		else
 		script_classique
