@@ -74,7 +74,7 @@
           traefik.port: '{{intport}}'
           traefik.frontend.rule: 'Host:{{pgrole}}.{{user.domain}}'
           traefik.frontend.headers.SSLHost: '{{pgrole}}.{{user.domain}}'
-          traefik.docker.network: traefik_proxy
+          traefik.docker.network: 'traefik_proxy'
           traefik.frontend.passHostHeader: 'true'
           traefik.frontend.headers.SSLForceHost: 'true'
           traefik.frontend.headers.SSLRedirect: 'true'

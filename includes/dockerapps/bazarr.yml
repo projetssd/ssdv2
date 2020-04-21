@@ -71,9 +71,9 @@
           traefik.enable: 'true'
           traefik.port: '{{intport}}'
           traefik.frontend.rule: 'Host:{{pgrole}}.{{user.domain}}'
-          traefik.frontend.auth.basic: '{{ user.htpwd if not (oauth_enabled) | default(false) else omit }}'
+          traefik.frontend.auth.basic.users: '{{ user.htpwd if not (oauth_enabled) | default(false) else omit }}'
           traefik.frontend.headers.SSLHost: '{{pgrole}}.{{user.domain}}'
-          traefik.docker.network: traefik_proxy
+          traefik.docker.network: 'traefik_proxy'
           traefik.frontend.passHostHeader: 'true'
           traefik.frontend.headers.SSLForceHost: 'true'
           traefik.frontend.headers.SSLRedirect: 'true'
