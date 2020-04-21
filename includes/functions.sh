@@ -59,13 +59,13 @@ function cloudflare() {
 				while [ -z "$cloud_email" ]; do
     				>&2 echo -n -e "${BWHITE}Votre Email Cloudflare: ${CEND}"
     				read cloud_email
-				sed -i "s/login:/login: $cloud_email/" /opt/seedbox/variables/account.yml
+				sed -i "/login:/c\   login: $cloud_email" /opt/seedbox/variables/account.yml
 				done
 
 				while [ -z "$cloud_api" ]; do
     				>&2 echo -n -e "${BWHITE}Votre API Cloudflare: ${CEND}"
     				read cloud_api
-				sed -i "s/api:/api: $cloud_api/" /opt/seedbox/variables/account.yml
+				sed -i "/api:/c\   api: $cloud_api" /opt/seedbox/variables/account.yml
 				done
 			fi
 		echo ""
