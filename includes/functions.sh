@@ -549,7 +549,7 @@ function script_plexdrive() {
 			echo -e "${CGREEN}   3) Changement du nom de Domaine${CEND}"
 			echo -e "${CGREEN}   4) Configuration 2ème Drive pour Backup${CEND}"
 			if docker ps | grep -q mailserver; then
-			echo -e "${YELLOW}   4) Desinstaller Mailserver ${CCYAN}@Hardware-Mondedie.fr${CEND}${NC}"
+			echo -e "${YELLOW}   5) Desinstaller Mailserver ${CCYAN}@Hardware-Mondedie.fr${CEND}${NC}"
 			else
 			echo -e "${CGREEN}   5) Installer Mailserver ${CCYAN}@Hardware-Mondedie.fr${CEND}${NC}"
 			fi
