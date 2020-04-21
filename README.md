@@ -2,6 +2,9 @@
 [![](https://img.shields.io/github/repo-size/laster13/patxav.svg?style=flat)](https://github.com/laster13/patxav)
 
 --- 
+
+![](https://nextcloud.teamsyno.com/s/cSXRe5X7FyDEEqQ/preview)
+
 # Introduction
 
 Mise à jour avec Ansible le 10/07/2019
