@@ -95,6 +95,13 @@
               - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config:/config'
               - '/home/{{user.name}}/Medias/books:/books'
               - '/etc/localtime:/etc/localtime:ro'
+
+        - name: 'Setting PG ENV'
+          set_fact:
+            pg_env:
+              UID: '{{user.userid}}'
+              GID: '{{user.groupid}}'
+              spring.profiles.active: 'claim'
     
         # MAIN DEPLOYMENT #############################################################
     
@@ -105,8 +112,8 @@
             pull: yes
             published_ports:
                 - '127.0.0.1:8080:8080'
-            user: '{{user.userid}}:{{user.groupid}}'
             volumes: '{{pg_volumes}}'
+            env: '{{pg_env}}'
             restart_policy: unless-stopped
             networks:
               - name: traefik_proxy
