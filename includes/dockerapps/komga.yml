@@ -1,0 +1,114 @@
+#!/bin/bash
+
+---
+    - hosts: localhost
+      gather_facts: false
+      vars_files:
+        - /opt/seedbox/variables/account.yml
+      tasks:
+      
+        - name: "Variables | Set 'cloudflare_enabled' variable"
+          set_fact:
+            cloudflare_enabled: "{{ true if not(
+                (cloudflare.login is undefined)
+                or
+                (cloudflare.login is none)
+                or
+                (cloudflare.login | trim | length == 0)
+                or
+                (cloudflare.api is undefined)
+                or
+                (cloudflare.api is none)
+                or
+                (cloudflare.api | trim | length == 0)
+              )
+                else false }}"
+    
+        - name: "Variables | Set 'oauth_enabled' variable"
+          set_fact:
+            oauth_enabled: "{{ true if not(
+                (oauth.client is undefined)
+                or
+                (oauth.client is none)
+                or
+                (oauth.client | trim | length == 0)
+                or
+                (oauth.secret is undefined)
+                or
+                (oauth.secret is none)
+                or
+                (oauth.secret | trim | length == 0)
+                or
+                (oauth.account is undefined)
+                or
+                (oauth.account is none)
+                or
+                (oauth.account | trim | length == 0)
+              )
+                else false }}"
+    
+        - name: "Set DNS Record on CloudFlare"
+          include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+          vars:
+            subdomain: komga
+          when: cloudflare_enabled
+    
+        - name: 'Set Known Facts'
+          set_fact:
+            pgrole: 'komga'
+            intport: '8080'
+            image: 'gotson/komga:latest'
+    
+        - name: Creating paths
+          file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
+          with_items:
+            - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
+    
+        # LABELS ######################################################################
+        - name: 'Ajout label traefik'
+          set_fact:
+            pg_labels:
+              traefik.enable: 'true'
+              traefik.port: '{{intport}}'
+              traefik.frontend.rule: 'Host:{{pgrole}}.{{user.domain}}'
+              #traefik.frontend.auth.basic.users: '{{ user.htpwd if not (oauth_enabled) | default(false) else omit }}'
+              traefik.frontend.headers.SSLHost: '{{pgrole}}.{{user.domain}}'
+              traefik.docker.network: 'traefik_proxy'
+              traefik.frontend.passHostHeader: 'true'
+              traefik.frontend.headers.SSLForceHost: 'true'
+              traefik.frontend.headers.SSLRedirect: 'true'
+              traefik.frontend.headers.browserXSSFilter: 'true'
+              traefik.frontend.headers.contentTypeNosniff: 'true'
+              traefik.frontend.headers.forceSTSHeader: 'true'
+              traefik.frontend.headers.STSSeconds: '315360000'
+              traefik.frontend.headers.STSIncludeSubdomains: 'true'
+              traefik.frontend.headers.STSPreload: 'true'
+              traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+              traefik.frontend.headers.frameDeny: "false"
+              #traefik.frontend.auth.forward.address: 'http://oauth:4181'
+              #traefik.frontend.auth.forward.authResponseHeaders: 'X-Forwarded-User'
+              #traefik.frontend.auth.forward.trustForwardHeader: 'true'
+    
+        - name: 'Setting PG Volumes'
+          set_fact:
+            pg_volumes:
+              - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config:/config'
+              - '/home/{{user.name}}/Medias/books:/books'
+              - '/etc/localtime:/etc/localtime:ro'
+    
+        # MAIN DEPLOYMENT #############################################################
+    
+        - name: 'Deploying {{pgrole}}'
+          docker_container:
+            name: '{{pgrole}}'
+            image: '{{image}}'
+            pull: yes
+            published_ports:
+                - '127.0.0.1:8080:8080'
+            user: '{{user.userid}}:{{user.groupid}}'
+            volumes: '{{pg_volumes}}'
+            restart_policy: unless-stopped
+            networks:
+              - name: traefik_proxy
+            state: started
+            labels: '{{pg_labels}}'
