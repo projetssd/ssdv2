@@ -71,24 +71,20 @@
       set_fact:
         pg_labels:
           traefik.enable: 'true'
-          traefik.app.frontend.rule: 'Host:{{pgrole}}.{{user.domain}}'
-          traefik.app.port: '2202'
-          traefik.admin.frontend.rule: 'Host:ubooquity.{{user.domain}}; PathPrefix:/admin,/admin-res,/admin-api'
-          traefik.admin.port: '2502'
-          traefik.docker.network: 'traefik_proxy'
-          traefik.frontend.headers.SSLHost: '{{user.domain}}'
-          traefik.frontend.auth.basic: '{{ user.htpwd if not (oauth_enabled) | default(false) else omit }}'
-          traefik.frontend.headers.SSLRedirect: 'true'
-          traefik.frontend.headers.STSIncludeSubdomains: 'true'
-          traefik.frontend.headers.STSPreload: 'true'
-          traefik.frontend.headers.STSSeconds: '315360000'
-          traefik.frontend.headers.browserXSSFilter: 'true'
-          traefik.frontend.headers.contentTypeNosniff: 'true'
-          traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
-          traefik.frontend.headers.forceSTSHeader: 'true'
-          traefik.frontend.auth.forward.address: 'http://oauth:4181'
-          traefik.frontend.auth.forward.authResponseHeaders: 'X-Forwarded-User'
-          traefik.frontend.auth.forward.trustForwardHeader: 'true'
+          ## HTTP Routers
+          traefik.http.routers.ubooquity-app-rtr.entrypoints: 'https'
+          traefik.http.routers.ubooquity-app-rtr.rule: 'Host(`ubooquity.{{user.domain}}`)'
+          traefik.http.routers.ubooquity-app-rtr.tls: 'true'
+          traefik.http.routers.ubooquity-admin-rtr.entrypoints: 'https'
+          traefik.http.routers.ubooquity-admin-rtr.rule: 'Host(`ubooquity.{{user.domain}}`) && (PathPrefix(`/admin`) || PathPrefix(`/admin-res`) || PathPrefix(`/admin-api`))'
+          traefik.http.routers.ubooquity-admin-rtr.tls: 'true'
+          ## Middlewares
+          traefik.http.routers.ubooquity-webui-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          ## HTTP Services
+          traefik.http.routers.ubooquity-app-rtr.service: 'ubooquity-app-svc'
+          traefik.http.services.ubooquity-app-svc.loadbalancer.server.port: '2202'
+          traefik.http.routers.ubooquity-admin-rtr.service: 'ubooquity-admin-svc'
+          traefik.http.services.ubooquity-admin-svc.loadbalancer.server.port: '2502'
 
     - name: 'Setting Volumes'
       set_fact:

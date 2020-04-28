@@ -245,10 +245,11 @@ function script_classique() {
 	echo -e "${CGREEN}   1) Désinstaller la seedbox ${CEND}"
 	echo -e "${CGREEN}   2) Ajout/Supression d'Applis${CEND}"
 	echo -e "${CGREEN}   3) Outils${CEND}"
-	echo -e "${CGREEN}   4) Quitter${CEND}"
+	echo -e "${CGREEN}   4) Mise à jour Traefik v1.7 --> v2.20${CEND}"
+	echo -e "${CGREEN}   5) Quitter${CEND}"
 
 	echo -e ""
-	read -p "Votre choix [1-4]: " PORT_CHOICE
+	read -p "Votre choix [1-5]: " PORT_CHOICE
 
 	case $PORT_CHOICE in
 		1) ## Installation de la seedbox
@@ -475,8 +476,14 @@ function script_classique() {
 			;;
 
 			esac
+                ;;
+
+		4) ## Mise à jour traefik v 1.7 --> v 2.20
+		/opt/seedbox-compose/includes/config/scripts/traefik.sh
+                script_classique
 		;;
-		4)
+
+		5)
 		exit
 		;;
 	esac
@@ -511,10 +518,11 @@ function script_plexdrive() {
 	echo -e "${CGREEN}   1) Désinstaller la seedbox ${CEND}"
 	echo -e "${CGREEN}   2) Ajout/Supression d'Applis${CEND}"
 	echo -e "${CGREEN}   3) Outils${CEND}"
-	echo -e "${CGREEN}   4) Quitter${CEND}"
+	echo -e "${CGREEN}   4) Mise à jour Traefik v1.7 --> v2.20${CEND}"
+	echo -e "${CGREEN}   5) Quitter${CEND}"
 
 	echo -e ""
-	read -p "Votre choix [1-4]: " PORT_CHOICE
+	read -p "Votre choix [1-5]: " PORT_CHOICE
 
 	case $PORT_CHOICE in
 		1) ## Installation de la seedbox
@@ -802,7 +810,13 @@ password2 = PjV8d2CRzb6mPUWSGsIeqNw
 
 			esac
 		;;
-		4)
+
+		4) ## Mise à jour traefik v 1.7 --> v 2.20
+		/opt/seedbox-compose/includes/config/scripts/traefik.sh
+                script_classique
+		;;
+
+		5)
 		exit
 		;;
 	esac

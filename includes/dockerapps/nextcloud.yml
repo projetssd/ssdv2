@@ -76,23 +76,17 @@
     - name: 'Adding Traefik'
       set_fact:
         pg_labels:
-          traefik.protocol: 'https'
           traefik.enable: 'true'
-          traefik.https.port: '443'
-          traefik.https.frontend.entryPoints: 'https'
-          traefik.frontend.rule: 'Host:{{pgrole}}.{{user.domain}}'
-          traefik.frontend.headers.SSLHost: '{{pgrole}}.{{user.domain}}'
-          traefik.docker.network: 'traefik_proxy'
-          traefik.frontend.passHostHeader: 'true'
-          traefik.frontend.headers.SSLForceHost: 'true'
-          traefik.frontend.headers.SSLRedirect: 'true'
-          traefik.frontend.headers.browserXSSFilter: 'true'
-          traefik.frontend.headers.contentTypeNosniff: 'true'
-          traefik.frontend.headers.forceSTSHeader: 'true'
-          traefik.frontend.headers.STSSeconds: '315360000'
-          traefik.frontend.headers.STSIncludeSubdomains: 'true'
-          traefik.frontend.headers.STSPreload: 'true'
-          traefik.frontend.headers.frameDeny: "false"
+          ## TCP Routers
+          traefik.tcp.routers.nextcloud-tcp.entrypoints: 'https'
+          traefik.tcp.routers.nextcloud-tcp.rule: 'HostSNI(`nextcloud.{{user.domain}}`)'
+          traefik.tcp.routers.nextcloud-tcp.tls: 'true'
+          traefik.tcp.routers.nextcloud-tcp.tls.passthrough: 'true'
+          ## Middlewares
+          #traefik.http.routers.nextcloud-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          ## HTTP Services
+          traefik.tcp.routers.nextcloud-tcp.service: 'nextcloud-tcp-svc'
+          traefik.tcp.services.nextcloud-tcp-svc.loadbalancer.server.port: '443'
 
     - name: 'Deploying db-nextcloud'
       docker_container:
@@ -224,10 +218,14 @@
     - name: 'Adding Traefik'
       set_fact:
         co_labels:
-          traefik.enable: 'true'
-          traefik.port: '9980'
-          traefik.frontend.rule: 'Host:collabora.{{user.domain}}'
-          traefik.docker.network: traefik_proxy
+          traefik.http.routers.collabora-rtr.entrypoints: 'https'
+          traefik.http.routers.collabora-rtr.rule: 'Host(`collabora.{{user.domain}}`)'
+          traefik.http.routers.collabora-rtr.tls: 'true'
+          ## Middlewares
+          #traefik.http.routers.collabora-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          ## HTTP Services
+          traefik.http.routers.collabora-rtr.service: 'collabora-svc'
+          traefik.http.services.collabora-svc.loadbalancer.server.port: '9980'
 
     - name: Create and start Collabora container
       docker_container:
@@ -245,4 +243,3 @@
         restart_policy: unless-stopped
         state: started
         labels: '{{co_labels}}'
-

@@ -70,27 +70,22 @@
       set_fact:
         pg_labels:
           traefik.enable: 'true'
-          traefik.port: '{{intport}}'
-          traefik.frontend.rule: 'Host:{{pgrole}}.{{user.domain}}'
-          traefik.frontend.headers.SSLHost: '{{pgrole}}.{{user.domain}}'
-          traefik.docker.network: 'traefik_proxy'
-          traefik.frontend.passHostHeader: 'true'
-          traefik.frontend.headers.SSLForceHost: 'true'
-          traefik.frontend.headers.SSLRedirect: 'true'
-          traefik.frontend.headers.browserXSSFilter: 'true'
-          traefik.frontend.headers.contentTypeNosniff: 'true'
-          traefik.frontend.headers.forceSTSHeader: 'true'
-          traefik.frontend.headers.STSSeconds: '315360000'
-          traefik.frontend.headers.STSIncludeSubdomains: 'true'
-          traefik.frontend.headers.STSPreload: 'true'
-          traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+          ## HTTP Routers
+          traefik.http.routers.mellow-rtr.entrypoints: 'https'
+          traefik.http.routers.mellow-rtr.rule: 'Host(`mellow.{{user.domain}}`)'
+          traefik.http.routers.mellow-rtr.tls: 'true'
+          ## Middlewares
+          traefik.http.routers.mellow-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          ## HTTP Services
+          traefik.http.routers.mellow-rtr.service: 'mellow-svc'
+          traefik.http.services.mellow-svc.loadbalancer.server.port: '5060'
 
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
           - '/opt/seedbox/docker/{{user.name}}/mellow:/usr/src/app/data/'
 
-    - name: 'Deploying {{appli.stdout}}'
+    - name: 'Deploying mellow'
       docker_container:
         name: 'mellow'
         image: '{{image}}'

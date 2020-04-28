@@ -124,17 +124,13 @@
       set_fact:
         default_labels:
           traefik.enable: 'true'
-          traefik.port: '32400'
-          traefik.frontend.rule: 'Host:plex.{{user.domain}}'
-          traefik.frontend.headers.SSLHost: '{{user.domain}}'
-          traefik.frontend.headers.SSLRedirect: 'true'
-          traefik.frontend.headers.STSIncludeSubdomains: 'true'
-          traefik.frontend.headers.STSPreload: 'true'
-          traefik.frontend.headers.STSSeconds: '315360000'
-          traefik.frontend.headers.browserXSSFilter: 'true'
-          traefik.frontend.headers.contentTypeNosniff: 'true'
-          traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
-          traefik.frontend.headers.forceSTSHeader: 'true'
+          ## HTTP Routers
+          traefik.http.routers.plex-rtr.entrypoints: 'https'
+          traefik.http.routers.plex-rtr.rule: 'Host(`plex.{{user.domain}}`)'
+          traefik.http.routers.plex-rtr.tls: 'true'
+          ## HTTP Services
+          traefik.http.routers.plex-rtr.service: 'plex-svc'
+          traefik.http.services.plex-svc.loadbalancer.server.port: '32400'
 
     - name: "Create and start container"
       docker_container:

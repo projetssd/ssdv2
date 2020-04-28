@@ -5,14 +5,14 @@ bantime = 600
 
 [traefik-auth]
 enabled = true
-logpath = /var/log/traefik/access.log
+logpath = /opt/seedbox/docker/traefik/traefik.log
 port = http,https
 banaction = docker-action
 maxretry = 10
 
 [traefik-botsearch]
 enabled = true
-logpath = /var/log/traefik/access.log
+logpath = /opt/seedbox/docker/traefik/traefik.log
 maxretry = 10
 port = http,https
 banaction = iptables-multiport
@@ -20,7 +20,7 @@ banaction = iptables-multiport
 [traefik-badbots]
 enabled = true
 filter = apache-badbots
-logpath = /var/log/traefik/access.log
+logpath = /opt/seedbox/docker/traefik/traefik.log
 maxretry = 10
 port = http,https
 banaction = iptables-multiport

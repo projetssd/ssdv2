@@ -72,21 +72,15 @@
       set_fact:
         pg_labels:
           traefik.enable: 'true'
-          traefik.port: '{{intport}}'
-          traefik.frontend.rule: 'Host:{{pgrole}}.{{user.domain}}'
-          traefik.frontend.headers.SSLHost: '{{pgrole}}.{{user.domain}}'
-          traefik.docker.network: 'traefik_proxy'
-          traefik.frontend.passHostHeader: 'true'
-          traefik.frontend.headers.SSLForceHost: 'true'
-          traefik.frontend.headers.SSLRedirect: 'true'
-          traefik.frontend.headers.browserXSSFilter: 'true'
-          traefik.frontend.headers.contentTypeNosniff: 'true'
-          traefik.frontend.headers.forceSTSHeader: 'true'
-          traefik.frontend.headers.STSSeconds: '315360000'
-          traefik.frontend.headers.STSIncludeSubdomains: 'true'
-          traefik.frontend.headers.STSPreload: 'true'
-          traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
-          traefik.frontend.headers.frameDeny: "false"
+          ## HTTP Routers
+          traefik.http.routers.ntopng-rtr.entrypoints: 'https'
+          traefik.http.routers.ntopng-rtr.rule: 'Host(`ntopng.{{user.domain}}`)'
+          traefik.http.routers.ntopng-rtr.tls: 'true'
+          ## Middlewares
+          traefik.http.routers.ntopng-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          ## HTTP Services
+          traefik.http.routers.ntopng-rtr.service: 'ntopng-svc'
+          traefik.http.services.ntopng-svc.loadbalancer.server.port: '3000'
 
     - name: 'Setting PG Volumes'
       set_fact:

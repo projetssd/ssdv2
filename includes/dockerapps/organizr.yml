@@ -69,23 +69,17 @@
     # LABELS ######################################################################
     - name: 'Ajout label traefik'
       set_fact:
-        pg_labels:
+        labels:
           traefik.enable: 'true'
-          traefik.port: '{{intport}}'
-          traefik.frontend.rule: 'Host:{{pgrole}}.{{user.domain}}'
-          traefik.frontend.headers.SSLHost: '{{pgrole}}.{{user.domain}}'
-          traefik.docker.network: 'traefik_proxy'
-          traefik.frontend.passHostHeader: 'true'
-          traefik.frontend.headers.SSLForceHost: 'true'
-          traefik.frontend.headers.SSLRedirect: 'true'
-          traefik.frontend.headers.browserXSSFilter: 'true'
-          traefik.frontend.headers.contentTypeNosniff: 'true'
-          traefik.frontend.headers.forceSTSHeader: 'true'
-          traefik.frontend.headers.STSSeconds: '315360000'
-          traefik.frontend.headers.STSIncludeSubdomains: 'true'
-          traefik.frontend.headers.STSPreload: 'true'
-          traefik.frontend.headers.customFrameOptionsValue: 'ALLOW-FROM https://{{pgrole}}.{{user.domain}}'
-          traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
+          ## HTTP Routers
+          traefik.http.routers.organizr-rtr.entrypoints: 'https'
+          traefik.http.routers.organizr-rtr.rule: 'Host(`organizr.{{user.domain}}`,`{{user.domain}}`)'
+          traefik.http.routers.organizr-rtr.tls: 'true'
+          ## Middlewares
+          traefik.http.routers.organizr-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          ## HTTP Services
+          traefik.http.routers.organizr-rtr.service: 'organizr-svc'
+          traefik.http.services.organizr-svc.loadbalancer.server.port: '80'
 
     - name: 'Setting PG Volumes'
       set_fact:
@@ -111,4 +105,4 @@
         networks:
           - name: traefik_proxy
         state: started
-        labels: '{{pg_labels}}'
+        labels: '{{labels}}'

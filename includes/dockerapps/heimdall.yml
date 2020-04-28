@@ -66,32 +66,19 @@
       with_items:
         - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
 
-    # LABELS ######################################################################
-    - name: 'Adding Traefik'
+    - name: 'Ajout label traefik'
       set_fact:
-        pg_labels:
-          traefik.protocol: 'https'
+        labels:
           traefik.enable: 'true'
-          traefik.https.port: '443'
-          traefik.https.frontend.entryPoints: 'https'
-          traefik.https.frontend.rule: 'Host:{{pgrole}}.{{user.domain}}'
-          traefik.frontend.auth.basic.users: '{{ user.htpwd if not (oauth_enabled) | default(false) else omit }}'
-          traefik.frontend.headers.SSLHost: '{{pgrole}}.{{user.domain}}'
-          traefik.docker.network: 'traefik_proxy'
-          traefik.frontend.passHostHeader: 'true'
-          traefik.frontend.headers.SSLForceHost: 'true'
-          traefik.frontend.headers.SSLRedirect: 'true'
-          traefik.frontend.headers.browserXSSFilter: 'true'
-          traefik.frontend.headers.contentTypeNosniff: 'true'
-          traefik.frontend.headers.forceSTSHeader: 'true'
-          traefik.frontend.headers.STSSeconds: '315360000'
-          traefik.frontend.headers.STSIncludeSubdomains: 'true'
-          traefik.frontend.headers.STSPreload: 'true'
-          traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
-          traefik.frontend.headers.frameDeny: "false"
-          traefik.frontend.auth.forward.address: 'http://oauth:4181'
-          traefik.frontend.auth.forward.authResponseHeaders: 'X-Forwarded-User'
-          traefik.frontend.auth.forward.trustForwardHeader: 'true'
+          ## HTTP Routers
+          traefik.http.routers.heimdall-rtr.entrypoints: 'https'
+          traefik.http.routers.heimdall-rtr.rule: 'Host(`heimdall.{{user.domain}}`)'
+          traefik.http.routers.heimdall-rtr.tls: 'true'
+          ## Middlewares
+          traefik.http.routers.heimdall-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          ## HTTP Services
+          traefik.http.routers.heimdall-rtr.service: 'heimdall-svc'
+          traefik.http.services.heimdall-svc.loadbalancer.server.port: '80'
 
     - name: 'Setting PG Volumes'
       set_fact:
@@ -117,4 +104,4 @@
         networks:
           - name: traefik_proxy
         state: started
-        labels: '{{pg_labels}}'
+        labels: '{{labels}}'

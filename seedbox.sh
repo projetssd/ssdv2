@@ -136,7 +136,7 @@ case $CHOICE in
 			install_docker
 			define_parameters
 			cloudflare
-			pause
+			oauth
 			install_traefik
 			install_portainer
 			install_watchtower
@@ -167,6 +167,7 @@ case $CHOICE in
 			install_docker
 			define_parameters
 			cloudflare
+                        oauth
 			install_traefik
 			install_plexdrive
 			install_rclone

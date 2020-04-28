@@ -69,25 +69,17 @@
           set_fact:
             pg_labels:
               traefik.enable: 'true'
-              traefik.port: '{{intport}}'
-              traefik.frontend.rule: 'Host:{{pgrole}}.{{user.domain}}'
-              #traefik.frontend.auth.basic.users: '{{ user.htpwd if not (oauth_enabled) | default(false) else omit }}'
-              traefik.frontend.headers.SSLHost: '{{pgrole}}.{{user.domain}}'
-              traefik.docker.network: 'traefik_proxy'
-              traefik.frontend.passHostHeader: 'true'
-              traefik.frontend.headers.SSLForceHost: 'true'
-              traefik.frontend.headers.SSLRedirect: 'true'
-              traefik.frontend.headers.browserXSSFilter: 'true'
-              traefik.frontend.headers.contentTypeNosniff: 'true'
-              traefik.frontend.headers.forceSTSHeader: 'true'
-              traefik.frontend.headers.STSSeconds: '315360000'
-              traefik.frontend.headers.STSIncludeSubdomains: 'true'
-              traefik.frontend.headers.STSPreload: 'true'
-              traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
-              traefik.frontend.headers.frameDeny: "false"
-              #traefik.frontend.auth.forward.address: 'http://oauth:4181'
-              #traefik.frontend.auth.forward.authResponseHeaders: 'X-Forwarded-User'
-              #traefik.frontend.auth.forward.trustForwardHeader: 'true'
+              ## HTTP Routers
+              traefik.http.routers.komga-rtr.entrypoints: 'https'
+              traefik.http.routers.komga-rtr.rule: 'Host(`komga.{{user.domain}}`)'
+              traefik.http.routers.komga-rtr.tls: 'true'
+              ## Middlewares
+              traefik.http.routers.komga-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+              ## HTTP Services
+              #traefik.http.routers.komga-rtr.tls.certresolver: 'dns-cloudflare' 
+              traefik.http.routers.komga-rtr.service: 'komga-svc'
+              traefik.http.services.komga-svc.loadbalancer.server.port: '8080'
+
     
         - name: 'Setting PG Volumes'
           set_fact:
@@ -110,8 +102,6 @@
             name: '{{pgrole}}'
             image: '{{image}}'
             pull: yes
-            published_ports:
-                - '127.0.0.1:8080:8080'
             volumes: '{{pg_volumes}}'
             env: '{{pg_env}}'
             restart_policy: unless-stopped

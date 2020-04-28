@@ -1,32 +1,28 @@
 ---
 - hosts: localhost
   gather_facts: true
+  vars_files:
+    - /opt/seedbox/variables/account.yml
   tasks:
+        
+    # FACTS #######################################################################
 
-    - name: Check config cloudflare exists
-      stat:
-        path: "/opt/seedbox/variables/cloudflare_api"
-      register: cloudflare_config
-
-    - name: Check config ssh exists
-      stat:
-        path: "/opt/seedbox/variables/ssh"
-      register: ssh_config
-
-    - name: 'Register cloudflare_email'
-      shell: 'cat /opt/seedbox/variables/cloudflare_email'
-      register: cloudflare_email
-      when: cloudflare_config.stat.exists
-
-    - name: 'Register cloudflare_api'
-      shell: 'cat /opt/seedbox/variables/cloudflare_api'
-      register: cloudflare_api
-      when: cloudflare_config.stat.exists
-
-    - name: 'Register SSH'
-      shell: 'cat /opt/seedbox/variables/ssh'
-      register: ssh
-      when: ssh_config.stat.exists
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
+            (cloudflare.login is undefined)
+            or
+            (cloudflare.login is none)
+            or
+            (cloudflare.login | trim | length == 0)
+            or
+            (cloudflare.api is undefined)
+            or
+            (cloudflare.api is none)
+            or
+            (cloudflare.api | trim | length == 0)
+          )
+            else false }}"
 
     - name: Install Fail2ban
       apt:
@@ -48,7 +44,7 @@
     - name: 'recuperation port ssh'
       debug:
         msg:
-        - "{{ ssh.stdout if (ssh_config.stat.exists) else ansible_env['SSH_CLIENT'].split() | last }}"
+        - "{{ ansible_env['SSH_CLIENT'].split() | last }}"
 
     - name: Import customs.conf 
       template:
@@ -82,8 +78,8 @@
           src: /opt/seedbox-compose/includes/config/roles/fail2ban/templates/docker-action.conf.j2
           dest: /etc/fail2ban/action.d/docker-action.conf
           force: yes
+      when: not cloudflare_enabled
 
-      when: not cloudflare_config.stat.exists
 
     - name: "'files.conf when Cloudflare exist' Tasks"
       block:
@@ -100,7 +96,7 @@
           dest: /etc/fail2ban/jail.d/traefik_clouflare.conf
           force: yes
 
-      when: cloudflare_config.stat.exists
+      when: cloudflare_enabled
 
     - name: Sart Fail2ban service
       systemd:

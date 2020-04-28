@@ -74,22 +74,15 @@
       set_fact:
         pg_labels:
           traefik.enable: 'true'
-          traefik.backend: 'cells'
-          traefik.port: '80'
-          traefik.frontend.rule: 'Host:{{pgrole}}.{{user.domain}}'
-          traefik.frontend.headers.SSLHost: '{{pgrole}}.{{user.domain}}'
-          traefik.docker.network: 'traefik_proxy'
-          traefik.frontend.passHostHeader: 'true'
-          traefik.frontend.headers.SSLForceHost: 'true'
-          traefik.frontend.headers.SSLRedirect: 'true'
-          traefik.frontend.headers.browserXSSFilter: 'true'
-          traefik.frontend.headers.contentTypeNosniff: 'true'
-          traefik.frontend.headers.forceSTSHeader: 'true'
-          traefik.frontend.headers.STSSeconds: '315360000'
-          traefik.frontend.headers.STSIncludeSubdomains: 'true'
-          traefik.frontend.headers.STSPreload: 'true'
-          traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
-          traefik.frontend.headers.frameDeny: "false"
+          ## HTTP Routers
+          traefik.http.routers.pydio-rtr.entrypoints: 'https'
+          traefik.http.routers.pydio-rtr.rule: 'Host(`pydio.{{user.domain}}`)'
+          traefik.http.routers.pydio-rtr.tls: 'true'
+          ## Middlewares
+          traefik.http.routers.pydio-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          ## HTTP Services
+          traefik.http.routers.pydio-rtr.service: 'pydio-svc'
+          traefik.http.services.pydio-svc.loadbalancer.server.port: '80'
 
     ## volumes docker
     - name: 'Setting PG Volumes'

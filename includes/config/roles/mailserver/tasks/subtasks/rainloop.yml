@@ -5,8 +5,15 @@
   set_fact:
     pg_labels:
       traefik.enable: 'true'
-      traefik.frontend.rule: 'Host:webmail.{{user.domain}}'
-      traefik.port: '8888'
+      ## HTTP Routers
+      traefik.http.routers.webmail-rtr.entrypoints: 'https'
+      traefik.http.routers.webmail-rtr.rule: 'Host(`webmail.{{user.domain}}`)'
+      traefik.http.routers.webmail-rtr.tls: 'true'
+      ## Middlewares
+      traefik.http.routers.webmail-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+      ## HTTP Services
+      traefik.http.routers.webmail-rtr.service: 'webmail-svc'
+      traefik.http.services.webmail-svc.loadbalancer.server.port: '8888'
 
 - name: 'Deploying rainloop'
   docker_container:

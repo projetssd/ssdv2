@@ -1,7 +1,7 @@
 #!/bin/bash
 
-source includes/functions.sh
-source includes/variables.sh
+source /opt/seedbox-compose/includes/functions.sh
+source /opt/seedbox-compose/includes/variables.sh
 
 ## Variables
 SEEDUSER=$(ls /opt/seedbox/media* | cut -d '-' -f2)
@@ -16,7 +16,7 @@ cp /opt/seedbox-compose/includes/config/account.yml /opt/seedbox/variables
     	echo -e "${CCYAN}    /!\ Mise à jour - Chiffrement des Variables /!\			      ${CEND}"
     	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
 	echo ""
-
+pause
 if [[ -e "/opt/seedbox/variables/cloudflare_api" ]]; then api=$(cat /opt/seedbox/variables/cloudflare_api); sed -i "/api:/c\   api: $api" /opt/seedbox/variables/account.yml; fi
 if [[ -e "/opt/seedbox/variables/cloudflare_email" ]]; then login=$(cat /opt/seedbox/variables/cloudflare_email); sed -i "/login:/c\   login: $login" /opt/seedbox/variables/account.yml; fi
 if [[ -e "/opt/seedbox/variables/oauth_client" ]]; then client=$(cat /opt/seedbox/variables/oauth_client); sed -i "/client:/c\   client: $client" /opt/seedbox/variables/account.yml; fi

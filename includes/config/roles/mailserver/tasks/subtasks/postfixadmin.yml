@@ -5,8 +5,16 @@
   set_fact:
     pg_labels:
       traefik.enable: 'true'
-      traefik.frontend.rule: 'Host:postfixadmin.{{user.domain}}'
-      traefik.port: '8888'
+      ## HTTP Routers
+      traefik.http.routers.postfixadmin-rtr.entrypoints: 'https'
+      traefik.http.routers.postfixadmin-rtr.rule: 'Host(`postfixadmin.{{user.domain}}`)'
+      traefik.http.routers.postfixadmin-rtr.tls: 'true'
+      ## Middlewares
+      traefik.http.routers.postfixadmin-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+      ## HTTP Services
+      traefik.http.routers.postfixadmin-rtr.service: 'postfixadmin-svc'
+      traefik.http.services.postfixadmin-svc.loadbalancer.server.port: '8888'
+
 
 - name: 'Deploying postfixadmin'
   docker_container:

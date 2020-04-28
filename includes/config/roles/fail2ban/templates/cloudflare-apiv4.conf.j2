@@ -66,9 +66,9 @@ name = default
 # Notes.: Replaces <cfuser> in actionban and actionunban with cfuser value below
 # Values: Your CloudFlare user account
 
-cfuser = {{ cloudflare_email.stdout }}
+cfuser = {{ cloudflare.login }}
 
 # Option: cftoken (Global API Key)
 # Notes.: Replaces <cftoken> in actionban and actionunban with cftoken value below
 # Values: Your CloudFlare API key 
-cftoken = {{ cloudflare_api.stdout }}
+cftoken = {{ cloudflare.api }}
