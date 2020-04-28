@@ -68,6 +68,7 @@
       with_items:
         - /opt/seedbox/docker/traefik
         - /opt/seedbox/docker/traefik/acme
+        - /opt/seedbox/docker/traefik/rules
 
     - name: Check acme.json exists
       stat:
