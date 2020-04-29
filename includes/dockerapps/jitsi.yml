@@ -104,7 +104,7 @@
             traefik.http.routers.jitsi-rtr.rule: 'Host(`jitsi.{{user.domain}}`)'
             traefik.http.routers.jitsi-rtr.tls: 'true'
             ## Middlewares
-            traefik.http.routers.jitsi-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+            #traefik.http.routers.jitsi-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
             ## HTTP Services
             traefik.http.routers.jitsi-rtr.service: 'jitsi-svc'
             traefik.http.services.jitsi-svc.loadbalancer.server.port: '80'

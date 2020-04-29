@@ -52,48 +52,81 @@
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: organizr
+        subdomain: filerun
       when: cloudflare_enabled
 
     - name: 'Set Known Facts'
       set_fact:
-        pgrole: 'organizr'
-        intport: '80'
-        image: 'organizrtools/organizr-v2'
+        pgrole: 'filerun'
+        image: 'afian/filerun'
+
+    - name: Create filerun-net network
+      docker_network:
+        name: filerun-net
+        state: present
 
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
       with_items:
         - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
 
-    # LABELS ######################################################################
+    # LABELS #######################################################################
     - name: 'Ajout label traefik'
       set_fact:
-        labels:
+        pg_labels:
           traefik.enable: 'true'
           ## HTTP Routers
-          traefik.http.routers.organizr-rtr.entrypoints: 'https'
-          traefik.http.routers.organizr-rtr.rule: 'Host(`organizr.{{user.domain}}`,`{{user.domain}}`)'
-          traefik.http.routers.organizr-rtr.tls: 'true'
+          traefik.http.routers.filerun-rtr.entrypoints: 'https'
+          traefik.http.routers.filerun-rtr.rule: 'Host(`filerun.{{user.domain}}`)'
+          traefik.http.routers.filerun-rtr.tls: 'true'
           ## Middlewares
-          #traefik.http.routers.organizr-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          traefik.http.routers.filerun-seafapp-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
           ## HTTP Services
-          traefik.http.routers.organizr-rtr.service: 'organizr-svc'
-          traefik.http.services.organizr-svc.loadbalancer.server.port: '80'
+          traefik.http.routers.filerun-rtr.service: 'filerun-svc'
+          traefik.http.services.filerun-svc.loadbalancer.server.port: '80'
+
+    - name: 'Deploying db-filerun'
+      docker_container:
+        name: 'db-filerun'
+        recreate: true
+        image: 'linuxserver/mariadb'
+        pull: yes
+        volumes:
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/db-filerun:/config'
+          - '/etc/localtime:/etc/localtime:ro'
+        env:
+          MYSQL_ROOT_PASSWORD: '{{user.pass}}'
+          MYSQL_USER: 'filerun'
+          MYSQL_PASSWORD: 'filerun'
+          MYSQL_DATABASE: 'filerun'
+        restart_policy: unless-stopped
+        networks:
+          - name: filerun-net
+        state: started
+
+    - name: Wait for 10 seconds before continuing
+      wait_for:
+        timeout: 10
 
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
-          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}:/config'
-          - '/etc/localtime:/etc/localtime:ro'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/html:/var/www/html'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/user-files:/user-files'
 
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
-          PUID: '{{user.userid}}'
-          PGID: '{{user.groupid}}'
+          FR_DB_HOST: 'db-filerun'
+          FR_DB_PORT: '3306'
+          FR_DB_NAME: 'filerun'
+          FR_DB_USER: 'filerun'
+          FR_DB_PASS: 'filerun'
+          APACHE_RUN_USER: 'www-data'
+          APACHE_RUN_USER_ID: '33'
+          APACHE_RUN_GROUP: 'www-data'
+          APACHE_RUN_GROUP_ID: '33'
 
-    # MAIN DEPLOYMENT #############################################################
     - name: 'Deploying {{pgrole}}'
       docker_container:
         name: '{{pgrole}}'
@@ -104,5 +137,6 @@
         restart_policy: unless-stopped
         networks:
           - name: traefik_proxy
+          - name: filerun-net
         state: started
-        labels: '{{labels}}'
+        labels: '{{pg_labels}}'
