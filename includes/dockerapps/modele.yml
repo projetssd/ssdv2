@@ -97,7 +97,7 @@
           ## Middlewares
           traefik.http.routers.'{{pgrole}}'-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
           ## HTTP Services
-          traefik.http.routers.'{{pgrole}}'-rtr.service: ''{{pgrole}}'-svc'
+          traefik.http.routers.'{{pgrole}}'-rtr.service: '{{pgrole}}-svc'
           traefik.http.services.'{{pgrole}}'-svc.loadbalancer.server.port: '{{port.stdout}}'
 
 ###################################### Début de zone à modifier si besoin #######################

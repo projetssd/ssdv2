@@ -52,14 +52,14 @@
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: nzbhydra
+        subdomain: readarr
       when: cloudflare_enabled
 
     - name: 'Set Known Facts'
       set_fact:
-        pgrole: 'nzbhydra'
-        intport: '5076'
-        image: 'linuxserver/nzbhydra2'
+        pgrole: 'readarr'
+        intport: '8787'
+        image: 'hotio/readarr:unstable'
 
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
@@ -72,21 +72,21 @@
         pg_labels:
           traefik.enable: 'true'
           ## HTTP Routers
-          traefik.http.routers.nzbhydra-rtr.entrypoints: 'https'
-          traefik.http.routers.nzbhydra-rtr.rule: 'Host(`nzbhydra.{{user.domain}}`)'
-          traefik.http.routers.nzbhydra-rtr.tls: 'true'
+          traefik.http.routers.readarr-rtr.entrypoints: 'https'
+          traefik.http.routers.readarr-rtr.rule: 'Host(`readarr.{{user.domain}}`)'
+          traefik.http.routers.readarr-rtr.tls: 'true'
           ## Middlewares
-          traefik.http.routers.nzbhydra-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          traefik.http.routers.readarr-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
           ## HTTP Services
-          traefik.http.routers.nzbhydra-rtr.service: 'nzbhydra-svc'
-          traefik.http.services.nzbhydra-svc.loadbalancer.server.port: '5076'
+          traefik.http.routers.readarr-rtr.service: 'readarr-svc'
+          traefik.http.services.readarr-svc.loadbalancer.server.port: '8787'
 
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
-          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}:/config'
-          - '/etc/localtime:/etc/localtime:ro'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config:/config'
           - '/home/{{user.name}}:/home/{{user.name}}'
+          - '/etc/localtime:/etc/localtime:ro'
 
     - name: 'Setting PG ENV'
       set_fact:
@@ -95,6 +95,7 @@
           PGID: '{{user.groupid}}'
 
     # MAIN DEPLOYMENT #############################################################
+
     - name: 'Deploying {{pgrole}}'
       docker_container:
         name: '{{pgrole}}'

@@ -112,7 +112,7 @@
       set_fact:
         pg_volumes:
           - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/html:/var/www/html'
-          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/user-files:/user-files'
+          - '/home/{{user.name}}:/user-files':/user-files'
 
     - name: 'Setting PG ENV'
       set_fact:
@@ -126,6 +126,16 @@
           APACHE_RUN_USER_ID: '33'
           APACHE_RUN_GROUP: 'www-data'
           APACHE_RUN_GROUP_ID: '33'
+
+          FR_DB_HOST: 'db-filerun'
+          FR_DB_PORT: '3306'
+          FR_DB_NAME: 'filerun'
+          FR_DB_USER: 'filerun'
+          FR_DB_PASS: 'filerun'
+          APACHE_RUN_USER: '{{user.name}}'
+          APACHE_RUN_USER_ID: '{{user.userid}}'
+          APACHE_RUN_GROUP: '{{user.group}}'
+          APACHE_RUN_GROUP_ID: '{{user.groupid}}'
 
     - name: 'Deploying {{pgrole}}'
       docker_container:

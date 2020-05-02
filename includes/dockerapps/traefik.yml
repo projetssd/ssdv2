@@ -133,7 +133,7 @@
           traefik.http.middlewares.redirect-to-https.redirectscheme.scheme: 'https'
           ## HTTP Routers
           traefik.http.routers.traefik-rtr.entrypoints: 'https'
-          traefik.http.routers.traefik-rtr.rule: 'Host(`radarr.{{user.domain}}`)'
+          traefik.http.routers.traefik-rtr.rule: 'Host(`traefik.{{user.domain}}`)'
           traefik.http.routers.traefik-rtr.tls: 'true'
           traefik.http.routers.traefik-rtr.tls.certresolver: 'letsencrypt'
           ## Services - API

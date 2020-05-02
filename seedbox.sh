@@ -263,7 +263,7 @@ case $CHOICE in
     			echo -e "${CRED}---------------------------------------------------------------${CEND}"
 			echo ""
 			pause
-			ansible-vault crypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+			ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 			script_plexdrive
 		else
 		script_plexdrive
