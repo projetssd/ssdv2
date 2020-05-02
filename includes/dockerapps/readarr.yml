@@ -65,6 +65,7 @@
       file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
       with_items:
         - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
+        - '/home/{{user.name}}/local/Books'
 
     # LABELS ######################################################################
     - name: 'Ajout label traefik'

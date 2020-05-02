@@ -112,7 +112,7 @@
       set_fact:
         pg_volumes:
           - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/html:/var/www/html'
-          - '/home/{{user.name}}:/user-files':/user-files'
+          - '/home/{{user.name}}:/user-files'
 
     - name: 'Setting PG ENV'
       set_fact:
