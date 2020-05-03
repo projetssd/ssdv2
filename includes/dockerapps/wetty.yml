@@ -2,7 +2,7 @@
 
 ---
 - hosts: localhost
-  gather_facts: false
+  gather_facts: true
   vars_files:
     - /opt/seedbox/variables/account.yml
   tasks:
@@ -49,6 +49,10 @@
           )
             else false }}"
 
+    - name: Get Public IP Address
+      shell: dig -4 TXT +short o-o.myaddr.l.google.com @ns1.google.com | awk -F'\"' '{ print $2}'
+      register: public_ip_lookup
+
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
@@ -91,8 +95,8 @@
         pg_env:
           VIRTUAL_HOST: 'wetty.{{user.domain}}'
           VIRTUAL_PORT: '3000'
-          REMOTE_SSH_SERVER: '138.201.207.147'
-          REMOTE_SSH_PORT: '1962'
+          REMOTE_SSH_SERVER: '{{public_ip_lookup.stdout}}'
+          REMOTE_SSH_PORT: "{{ ansible_env['SSH_CLIENT'].split() | last }}"
           REMOTE_SSH_USER: 'root'
 
     # MAIN DEPLOYMENT #############################################################
