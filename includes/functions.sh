@@ -1473,6 +1473,11 @@ function manage_apps() {
 			rm -rf /opt/seedbox/docker/$SEEDUSER/.jitsi-meet-cfg
 			fi
 
+			if [[ "$APPSELECTED" = "nextcloud" ]]; then
+			docker rm -f collabora coturn office
+			rm -rf /opt/seedbox/docker/$SEEDUSER/coturn
+			fi
+
 			checking_errors $?
 			echo""
 			echo -e "${BLUE}### $APPSELECTED a été supprimé ###${NC}"

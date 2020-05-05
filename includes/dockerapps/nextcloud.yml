@@ -218,6 +218,7 @@
     - name: 'Adding Traefik'
       set_fact:
         co_labels:
+          traefik.enable: 'true'
           traefik.http.routers.collabora-rtr.entrypoints: 'https'
           traefik.http.routers.collabora-rtr.rule: 'Host(`collabora.{{user.domain}}`)'
           traefik.http.routers.collabora-rtr.tls: 'true'
@@ -243,3 +244,37 @@
         restart_policy: unless-stopped
         state: started
         labels: '{{co_labels}}'
+
+#####################OnllyOffice###############################################################
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: office
+      when: cloudflare_enabled
+
+    - name: 'Adding Traefik'
+      set_fact:
+        off_labels:
+          traefik.enable: 'true'
+          traefik.http.routers.office-rtr.entrypoints: 'https'
+          traefik.http.routers.office-rtr.rule: 'Host(`office.{{user.domain}}`)'
+          traefik.http.routers.office-rtr.tls: 'true'
+          traefik.http.routers.office-rtr.service: 'office-svc'
+          traefik.http.services.office-svc.loadbalancer.server.port: '80'
+          traefik.http.services.office-svc.loadbalancer.passhostheader: 'true'
+          traefik.http.routers.office-rtr.middlewares: 'office-sslheaders'
+          traefik.http.middlewares.office-sslheaders.headers.customrequestheaders.X-Forwarded-Proto: 'https'
+
+    - name: Create and start office container
+      docker_container:
+        name: office
+        image: 'onlyoffice/documentserver:latest'
+        pull: yes
+        interactive: True
+        tty: true
+        networks:
+          - name: traefik_proxy
+        restart_policy: unless-stopped
+        state: started
+        labels: '{{off_labels}}'
