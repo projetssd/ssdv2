@@ -3,6 +3,11 @@
 ---
 - hosts: localhost
   gather_facts: false
+  vars_prompt:
+
+    - name: maxmind
+      prompt: "Saisir la licence Maxmind"
+      private: no
   vars_files:
     - /opt/seedbox/variables/account.yml
   tasks:
@@ -14,7 +19,7 @@
 
     - name: Check config sonarr exists
       stat:
-        path: "/opt/seedbox/docker/{{user.name}}/sonarr3/config/config.xml"
+        path: "/opt/seedbox/docker/{{user.name}}/sonarr/config/config.xml"
       register: sonarr_config
 
     - name: Check config radarr exists
@@ -46,7 +51,7 @@
 
     - name: 'ApiKey Sonarr'
       shell: |
-        sed -n 's:.*<ApiKey>\(.*\)</ApiKey>.*:\1:p' /opt/seedbox/docker/{{user.name}}/sonarr3/config/config.xml
+        sed -n 's:.*<ApiKey>\(.*\)</ApiKey>.*:\1:p' /opt/seedbox/docker/{{user.name}}/sonarr/config/config.xml
       register: sonarr
       when: sonarr_config.stat.exists
 
@@ -88,16 +93,6 @@
         msg: '{{ tautulli.stdout }}'
       when: tautulli_config.stat.exists
 
-    - name: 'ApiKey Maxmind'
-      shell: |
-        grep "maxmind_license_key" /opt/seedbox/docker/{{user.name}}/tautulli/config.ini | cut -d '=' -f2 | sed 's/ //g'
-      register: maxmind
-      when: tautulli_config.stat.exists
-
-    - name: 'ApiKey Maxmind'
-      debug:
-        msg: '{{ maxmind.stdout }}'
-      when: tautulli_config.stat.exists
 
     # FACTS #######################################################################
 
@@ -168,7 +163,7 @@
           traefik.http.routers.grafana-rtr.rule: 'Host(`grafana.{{user.domain}}`)'
           traefik.http.routers.grafana-rtr.tls: 'true'
           ## Middlewares
-          traefik.http.routers.grafana-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          #traefik.http.routers.grafana-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
           ## HTTP Services
           traefik.http.routers.grafana-rtr.service: 'grafana-svc'
           traefik.http.services.grafana-svc.loadbalancer.server.port: '3000'
@@ -201,11 +196,16 @@
 
     # telegraf #############################################################
 
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775'
+      with_items:
+        - '/opt/seedbox/docker/{{user.name}}/telegraf'
+
     - name: Wait for 10 seconds before continuing
       wait_for:
         timeout: 10
 
-    - name: 'Setting Influxdb ENV'
+    - name: 'Setting telegraf ENV'
       set_fact:
         telegraf_env:
           HOST_PROC: '/host/proc'
@@ -246,7 +246,7 @@
           VRKN_GLOBAL_LIDARR_SERVER_IDS: '1'
           VRKN_GLOBAL_TAUTULLI_SERVER_IDS: '1'
           VRKN_GLOBAL_OMBI_SERVER_IDS: '1'
-          VRKN_GLOBAL_MAXMIND_LICENSE_KEY: '{{ maxmind.stdout if (tautulli_config.stat.exists) | default(false) else omit }}'
+          VRKN_GLOBAL_MAXMIND_LICENSE_KEY: '{{ maxmind }}'
           VRKN_INFLUXDB_URL: 'influxdb'  
           VRKN_INFLUXDB_PORT: '8086'
           VRKN_INFLUXDB_SSL: 'false'
@@ -255,15 +255,15 @@
           VRKN_INFLUXDB_PASSWORD: 'root'
           VRKN_TAUTULLI_1_URL: 'tautulli:8181'
           VRKN_TAUTULLI_1_FALLBACK_IP: '1.1.1.1'
-          #VRKN_TAUTULLI_1_APIKEY: '{{ tautulli.stdout if (tautulli.config.stat.exists) | default(false) else omit }}'
+          VRKN_TAUTULLI_1_APIKEY: '{{ tautulli.stdout if (tautulli_config.stat.exists) | default(false) else omit }}'
           VRKN_TAUTULLI_1_SSL: 'false'
           VRKN_TAUTULLI_1_VERIFY_SSL: 'false'
           VRKN_TAUTULLI_1_GET_ACTIVITY: 'true'
           VRKN_TAUTULLI_1_GET_ACTIVITY_RUN_SECONDS: '30'
           VRKN_TAUTULLI_1_GET_STATS: 'true'
           VRKN_TAUTULLI_1_GET_STATS_RUN_SECONDS: '3600'
-          VRKN_SONARR_1_URL: 'sonarr3:8989'
-          #VRKN_SONARR_1_APIKEY: '{{ sonarr.stdout if (sonarr.config.stat.exists) | default(false) else omit }}'
+          VRKN_SONARR_1_URL: 'sonarr:8989'
+          VRKN_SONARR_1_APIKEY: '{{ sonarr.stdout if (sonarr_config.stat.exists) | default(false) else omit }}'
           VRKN_SONARR_1_SSL: 'false'
           VRKN_SONARR_1_VERIFY_SSL: 'false'
           VRKN_SONARR_1_MISSING_DAYS: '7'
@@ -273,7 +273,7 @@
           VRKN_SONARR_1_QUEUE: 'true'
           VRKN_SONARR_1_QUEUE_RUN_SECONDS: '300'
           VRKN_RADARR_1_URL: 'radarr:7878'
-          #VRKN_RADARR_1_APIKEY: '{{ radarr.stdout if (radarr.config.stat.exists) | default(false) else omit }}'
+          VRKN_RADARR_1_APIKEY: '{{ radarr.stdout if (radarr_config.stat.exists) | default(false) else omit }}'
           VRKN_RADARR_1_SSL: 'false'
           VRKN_RADARR_1_VERIFY_SSL: 'false'
           VRKN_RADARR_1_QUEUE: 'true'
@@ -281,7 +281,7 @@
           VRKN_RADARR_1_GET_MISSING: 'true'
           VRKN_RADARR_1_GET_MISSING_RUN_SECONDS: '300'
           VRKN_LIDARR_1_URL: 'lidarr:8686'
-          #VRKN_LIDARR_1_APIKEY: '{{ lidarr.stdout if (lidarr.config.stat.exists) | default(false) else omit }}'
+          VRKN_LIDARR_1_APIKEY: '{{ lidarr.stdout if (lidarr_config.stat.exists) | default(false) else omit }}'
           VRKN_LIDARR_1_SSL: 'false'
           VRKN_LIDARR_1_VERIFY_SSL: 'false'
           VRKN_LIDARR_1_MISSING_DAYS: '30'
@@ -291,7 +291,7 @@
           VRKN_LIDARR_1_QUEUE: 'true'
           VRKN_LIDARR_1_QUEUE_RUN_SECONDS: '300'
           VRKN_OMBI_1_URL: 'ombi.{{ user.domain }}'
-          #VRKN_OMBI_1_APIKEY: '{{ ombi.stdout if (ombi.config.stat.exists) | default(false) else omit }}'
+          VRKN_OMBI_1_APIKEY: '{{ ombi.stdout if (ombi_config.stat.exists) | default(false) else omit }}'
           VRKN_OMBI_1_SSL: 'false'
           VRKN_OMBI_1_VERIFY_SSL: 'false'
           VRKN_OMBI_1_GET_REQUEST_TYPE_COUNTS: 'true'

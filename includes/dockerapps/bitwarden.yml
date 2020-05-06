@@ -1,0 +1,182 @@
+#!/bin/bash
+
+---
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
+  tasks:
+        
+    # FACTS #######################################################################
+
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
+            (cloudflare.login is undefined)
+            or
+            (cloudflare.login is none)
+            or
+            (cloudflare.login | trim | length == 0)
+            or
+            (cloudflare.api is undefined)
+            or
+            (cloudflare.api is none)
+            or
+            (cloudflare.api | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Variables | Set 'oauth_enabled' variable"
+      set_fact:
+        oauth_enabled: "{{ true if not(
+            (oauth.client is undefined)
+            or
+            (oauth.client is none)
+            or
+            (oauth.client | trim | length == 0)
+            or
+            (oauth.secret is undefined)
+            or
+            (oauth.secret is none)
+            or
+            (oauth.secret | trim | length == 0)
+            or
+            (oauth.account is undefined)
+            or
+            (oauth.account is none)
+            or
+            (oauth.account | trim | length == 0)
+          )
+            else false }}"
+
+    - name: Create bw-net network
+      docker_network:
+        name: bw-net
+        state: present
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: bitwarden
+      when: cloudflare_enabled
+
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'bitwarden'
+        image: 'bitwardenrs/server:latest'
+
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
+      with_items:
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
+
+    # LABELS ######################################################################
+    - name: 'Ajout label traefik'
+      set_fact:
+        pg_labels:
+          traefik.enable: 'true'
+          ## HTTP Routers
+          traefik.http.routers.bitwarden-rtr.entrypoints: 'https'
+          traefik.http.routers.bitwarden-rtr.rule: 'Host(`bitwarden.{{user.domain}}`)'
+          traefik.http.routers.bitwarden-rtr.priority: '1'
+          traefik.http.routers.bitwarden-rtr.tls: 'true'
+          ## HTTP Services
+          traefik.http.routers.bitwarden-rtr.service: 'bitwarden-svc'
+          traefik.http.services.bitwarden-svc.loadbalancer.server.port: '80'
+          ## Bitwarden WebSocket
+          traefik.http.routers.bitwardenHub-rtr.entrypoints: 'https'
+          traefik.http.routers.bitwardenHub-rtr.rule: '(Host(`bitwarden.{{user.domain}}`) && Path(`/notifications/hub`))'
+          traefik.http.routers.bitwardenHub-rtr.priority: '2'
+          traefik.http.routers.bitwardenHub-rtr.tls: 'true'
+          traefik.http.routers.bitwardenHub-rtr.service: 'bitwardenHub-svc'
+          traefik.http.services.bitwardenHub-svc.loadbalancer.server.port: '3012'
+#         ## Admin Page - Used when DISABLE_ADMIN_TOKEN=true above
+          traefik.http.routers.bitwardenAdmin-rtr.entrypoints: 'https'
+          traefik.http.routers.bitwardenAdmin-rtr.rule: '(Host(`bitwarden.{{user.domain}}`) && Path(`/admin`))'
+          traefik.http.routers.bitwardenAdmin-rtr.priority: '3'
+          traefik.http.routers.bitwardenAdmin-rtr.tls: 'true'
+          traefik.http.routers.bitwardenAdmin-rtr.service: 'bitwarden-svc'
+
+    - name: 'Setting PG Volumes'
+      set_fact:
+        pg_volumes:
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}:/data'
+          - '/var/log/docker:/var/log/docker'
+          - '/etc/localtime:/etc/localtime:ro'
+
+    - name: 'Setting PG ENV'
+      set_fact:
+        pg_env:
+          SIGNUPS_ALLOWED: 'true' # Change to false after first login
+          INVITATIONS_ALLOWED: 'true' # Send invitation using admin page
+          WEBSOCKET_ENABLED: 'true'
+          LOG_FILE: '/var/log/docker/bitwarden.log'
+          DOMAIN: 'https://bitwarden.{{user.domain}}'
+#          SMTP_HOST: 'smtp.gmail.com'
+#          SMTP_FROM: '$SMTP_EMAIL'
+#          SMTP_PORT: '587'
+#          SMTP_SSL: 'true'
+#          SMTP_USERNAME: '$SMTP_EMAIL'
+#          SMTP_PASSWORD: '$SMTP_PASS'
+#          DISABLE_ADMIN_TOKEN=true ### USE WITH CAUTION!! Access admin page at bitwarden.$DOMAINNAME/admin to send invitations - anyone can access, add authorization!!!
+
+
+    # BITWARDEN DEPLOYMENT #############################################################
+
+    - name: 'Deploying {{pgrole}}'
+      docker_container:
+        name: '{{pgrole}}'
+        image: '{{image}}'
+        volumes: '{{pg_volumes}}'
+        env: '{{pg_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+          - name: bw-net
+        state: started
+        labels: '{{pg_labels}}'
+
+    # BITWARDEN BACKUP DEPLOYMENT #######################################################
+
+    ## Bitwarden Backup
+
+    ## To restore database from backup:
+      # docker exec -it bitwarden bash
+      # mv /data/db.sqlite3 /data/db.sqlite3.back
+      # sqlite3 /data/db.sqlite3 ".restore '/data/db-backup/select_db_file'"
+      # exit
+
+    - name: 'Setting Volumes'
+      set_fact:
+        bw_volumes:
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}:/data'
+          - '/etc/localtime:/etc/localtime:ro'
+          - /mnt/storage/backup/backup_databases/bitwarden:/dbbackup
+
+    - name: 'Setting ENV'
+      set_fact:
+        bw_env:
+          DB_FILE: '/data/db.sqlite3'
+          BACKUP_FILE: '/dbbackup/backup.sqlite3'
+          CRON_TIME: '30 4 * * *'
+          TIMESTAMP: 'true'
+          UID: '0'
+          GID: '0'
+
+    - name: 'Deploying Bitwarden Backup'
+      docker_container:
+        name: bw_backup
+        image: bruceforce/bw_backup
+        volumes: '{{bw_volumes}}'
+        env: '{{bw_env}}'
+        restart_policy: on-failure
+        networks:
+          - name: bw-net
+        state: started
+
+
+
+
+
+
+
