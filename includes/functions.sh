@@ -1478,6 +1478,10 @@ function manage_apps() {
 			rm -rf /opt/seedbox/docker/$SEEDUSER/coturn
 			fi
 
+			if [[ "$APPSELECTED" = "rtorrentvpn" ]]; then
+			rm /opt/seedbox/conf/rutorrent-vpn.yml
+			fi
+
 			checking_errors $?
 			echo""
 			echo -e "${BLUE}### $APPSELECTED a été supprimé ###${NC}"

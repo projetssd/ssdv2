@@ -9,6 +9,7 @@ Sonarr3-TVShowsAutomation
 Medusa-TVShowsAutomation
 Lidarr-MusicCollectionManager
 Rutorrent-TorrentClient
+Rtorrentvpn-TorrentClient
 Deluge-TorrentClient
 Jackett-TorrentProviders
 Sabnzbd-SabnzbdUsenet

@@ -1,0 +1,49 @@
+version: "3.7"
+services:
+
+  rutorrent:
+    container_name: rtorrentvpn
+    image:  binhex/arch-rtorrentvpn:latest
+    restart: always
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    networks:
+      traefik_proxy:
+    volumes:
+      - /opt/seedbox/docker/{{user.name}}/rtorrentvpn/config:/config
+      - /opt/seedbox/docker/{{user.name}}/rtorrentvpn/data:/data
+      - /home/{{user.name}}:/home/{{user.name}}
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - VPN_ENABLED=yes
+      - VPN_PROV={{vpn}}
+      - STRICT_PORT_FORWARD=yes
+      - ENABLE_PRIVOXY=yes
+      - ENABLE_AUTODL_IRSSI=yes
+      - ENABLE_RPC2=yes
+      - ENABLE_RPC2_AUTH=yes
+      - RPC2_USER={{user.name}}
+      - RPC2_PASS={{user.pass}}
+      - ENABLE_WEBUI_AUTH=no
+      - LAN_NETWORK={{reseau}}
+      - NAME_SERVERS=209.222.18.222,84.200.69.80,37.235.1.174,1.1.1.1,209.222.18.218,37.235.1.177,84.200.70.40,1.0.0.1
+      - DEBUG=false
+      - PHP_TZ=Europe/Paris
+      - UMASK=000
+      - PUID={{user.userid}}
+      - PGID={{user.groupid}}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.rtorrentvpn-rtr.entrypoints=https"
+      - "traefik.http.routers.rtorrentvpn-rtr.rule=Host(`rtorrentvpn.{{user.domain}}`)"
+      - "traefik.http.routers.rtorrentvpn-rtr.tls=true"
+      #- "traefik.http.routers.rtorrentvpn-rtr.middlewares={{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+      - "traefik.http.routers.rtorrentvpn-rtr.service=rtorrentvpn-svc"
+      - "traefik.http.services.rtorrentvpn-svc.loadbalancer.server.port=9080"
+
+networks:
+  traefik_proxy:
+    external: true
