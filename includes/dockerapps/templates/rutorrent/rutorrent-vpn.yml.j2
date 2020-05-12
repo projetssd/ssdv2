@@ -40,7 +40,7 @@ services:
       - "traefik.http.routers.rtorrentvpn-rtr.entrypoints=https"
       - "traefik.http.routers.rtorrentvpn-rtr.rule=Host(`rtorrentvpn.{{user.domain}}`)"
       - "traefik.http.routers.rtorrentvpn-rtr.tls=true"
-      #- "traefik.http.routers.rtorrentvpn-rtr.middlewares={{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+      - "traefik.http.routers.rtorrentvpn-rtr.middlewares={{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
       - "traefik.http.routers.rtorrentvpn-rtr.service=rtorrentvpn-svc"
       - "traefik.http.services.rtorrentvpn-svc.loadbalancer.server.port=9080"
 
