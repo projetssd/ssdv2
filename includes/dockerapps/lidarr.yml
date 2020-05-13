@@ -100,6 +100,8 @@
         name: '{{pgrole}}'
         image: '{{image}}'
         pull: yes
+        ports:
+          - '127.0.0.1:8686:8686'
         volumes: '{{pg_volumes}}'
         env: '{{pg_env}}'
         restart_policy: unless-stopped

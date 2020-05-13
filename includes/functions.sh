@@ -245,11 +245,10 @@ function script_classique() {
 	echo -e "${CGREEN}   1) Désinstaller la seedbox ${CEND}"
 	echo -e "${CGREEN}   2) Ajout/Supression d'Applis${CEND}"
 	echo -e "${CGREEN}   3) Outils${CEND}"
-	echo -e "${CGREEN}   4) Mise à jour Traefik v1.7 --> v2.20${CEND}"
-	echo -e "${CGREEN}   5) Quitter${CEND}"
+	echo -e "${CGREEN}   4) Quitter${CEND}"
 
 	echo -e ""
-	read -p "Votre choix [1-5]: " PORT_CHOICE
+	read -p "Votre choix [1-4]: " PORT_CHOICE
 
 	case $PORT_CHOICE in
 		1) ## Installation de la seedbox
@@ -292,9 +291,8 @@ function script_classique() {
 			echo -e "${CGREEN}   7) Traktarr${CEND}"
 			echo -e "${CGREEN}   8) Webtools${CEND}"
 			echo -e "${CGREEN}   9) rtorrent-cleaner de ${CCYAN}@Magicalex-Mondedie.fr${CEND}${NC}"
-			echo -e "${CGREEN}   10) Openvpn${CEND}"
-			echo -e "${CGREEN}   11) Plex_Patrol${CEND}"
-			echo -e "${CGREEN}   12) Retour menu principal${CEND}"
+			echo -e "${CGREEN}   10) Plex_Patrol${CEND}"
+			echo -e "${CGREEN}   11) Retour menu principal${CEND}"
 			echo -e ""
 			read -p "Votre choix [1-12]: " OUTILS
 
@@ -310,11 +308,10 @@ function script_classique() {
 				echo -e "${CGREEN}   2) Sécuriser avec Authentification Classique${CEND}"
 				echo -e "${CGREEN}   3) Ajout / Supression adresses mail autorisées pour Google OAuth2${CEND}"
 				echo -e "${CGREEN}   4) Modification port SSH, mise à jour fail2ban, installation Iptables${CEND}"
-				echo -e "${CGREEN}   5) Mise à Jour - Chiffrement des Variables${CEND}"
-				echo -e "${CGREEN}   6) Retour menu principal${CEND}"
+				echo -e "${CGREEN}   5) Retour menu principal${CEND}"
 
 				echo -e ""
-				read -p "Votre choix [1-6]: " OAUTH
+				read -p "Votre choix [1-5]: " OAUTH
 				case $OAUTH in
 
 				1)
@@ -365,14 +362,6 @@ function script_classique() {
 				;;
 
 				5)
-				clear
-				echo ""
-				/opt/seedbox-compose/includes/config/scripts/update.sh
-				script_classique
-				;;
-
-
-				6)
 				script_classique
 				;;
 
@@ -452,14 +441,7 @@ function script_classique() {
 			script_classique
 			;;
 
-			10) ## Installation openvpn
-			openvpn
-			pause
-			script_classique
-			;;
-
-
-			11) ## Installation Plex_Patrol
+			10) ## Installation Plex_Patrol
 			ansible-playbook /opt/seedbox-compose/includes/config/roles/plex_patrol/tasks/main.yml
 			SEEDUSER=$(ls /opt/seedbox/media* | cut -d '-' -f2)
 			DOMAIN=$(cat /home/$SEEDUSER/resume | tail -1 | cut -d. -f2-3)
@@ -471,19 +453,14 @@ function script_classique() {
 			script_classique
 			;;
 
-			12)
+			11)
 			script_classique
 			;;
 
 			esac
                 ;;
 
-		4) ## Mise à jour traefik v 1.7 --> v 2.20
-		/opt/seedbox-compose/includes/config/scripts/traefik.sh
-                script_classique
-		;;
-
-		5)
+		4)
 		exit
 		;;
 	esac
@@ -518,11 +495,10 @@ function script_plexdrive() {
 	echo -e "${CGREEN}   1) Désinstaller la seedbox ${CEND}"
 	echo -e "${CGREEN}   2) Ajout/Supression d'Applis${CEND}"
 	echo -e "${CGREEN}   3) Outils${CEND}"
-	echo -e "${CGREEN}   4) Mise à jour Traefik v1.7 --> v2.20${CEND}"
-	echo -e "${CGREEN}   5) Quitter${CEND}"
+	echo -e "${CGREEN}   4) Quitter${CEND}"
 
 	echo -e ""
-	read -p "Votre choix [1-5]: " PORT_CHOICE
+	read -p "Votre choix [1-4]: " PORT_CHOICE
 
 	case $PORT_CHOICE in
 		1) ## Installation de la seedbox
@@ -566,11 +542,10 @@ function script_plexdrive() {
 			echo -e "${CGREEN}   8) Traktarr${CEND}"
 			echo -e "${CGREEN}   9) Webtools${CEND}"
 			echo -e "${CGREEN}   10) rtorrent-cleaner de ${CCYAN}@Magicalex-Mondedie.fr${CEND}${NC}"
-			echo -e "${CGREEN}   11) Openvpn${CEND}"
-			echo -e "${CGREEN}   12) Plex_Patrol${CEND}"
-			echo -e "${CGREEN}   13) Retour menu principal${CEND}"
+			echo -e "${CGREEN}   11) Plex_Patrol${CEND}"
+			echo -e "${CGREEN}   12) Retour menu principal${CEND}"
 			echo -e ""
-			read -p "Votre choix [1-13]: " OUTILS
+			read -p "Votre choix [1-12]: " OUTILS
 
 			case $OUTILS in
 
@@ -584,11 +559,10 @@ function script_plexdrive() {
 				echo -e "${CGREEN}   2) Sécuriser avec Authentification Classique${CEND}"
 				echo -e "${CGREEN}   3) Ajout / Supression adresses mail autorisées pour Google OAuth2${CEND}"
 				echo -e "${CGREEN}   4) Modification port SSH, mise à jour fail2ban, installation Iptables${CEND}"
-				echo -e "${CGREEN}   5) Mise à Jour - Chiffrement des Variables${CEND}"
-				echo -e "${CGREEN}   6) Retour menu principal${CEND}"
+				echo -e "${CGREEN}   5) Retour menu principal${CEND}"
 
 				echo -e ""
-				read -p "Votre choix [1-6]: " OAUTH
+				read -p "Votre choix [1-5]: " OAUTH
 				case $OAUTH in
 
 				1)
@@ -640,14 +614,6 @@ function script_plexdrive() {
 				;;
 
 				5)
-				clear
-				echo ""
-				/opt/seedbox-compose/includes/config/scripts/update.sh
-				script_plexdrive
-				;;
-
-
-				6)
 				script_plexdrive
 				;;
 
@@ -786,13 +752,7 @@ password2 = PjV8d2CRzb6mPUWSGsIeqNw
 			script_plexdrive
 			;;
 
-			11) ## Installation openvpn
-			openvpn
-			pause
-			script_plexdrive
-			;;
-
-			12) ## Installation Plex_Patrol
+			11) ## Installation Plex_Patrol
 			ansible-playbook /opt/seedbox-compose/includes/config/roles/plex_patrol/tasks/main.yml
 			SEEDUSER=$(ls /opt/seedbox/media* | cut -d '-' -f2)
 			DOMAIN=$(cat /home/$SEEDUSER/resume | tail -1 | cut -d. -f2-3)
@@ -804,19 +764,14 @@ password2 = PjV8d2CRzb6mPUWSGsIeqNw
 			script_classique
 			;;
 
-			13)
+			12)
 			script_plexdrive
 			;;
 
 			esac
 		;;
 
-		4) ## Mise à jour traefik v 1.7 --> v 2.20
-		/opt/seedbox-compose/includes/config/scripts/traefik.sh
-                script_classique
-		;;
-
-		5)
+		4)
 		exit
 		;;
 	esac
@@ -1083,6 +1038,34 @@ function choose_services() {
 		echo $(echo ${APPDOCKER,,} | tr -d '"') >> $SERVICESPERUSER
 	done
 }
+
+function choose_other_services() {
+	echo -e "${BLUE}### SERVICES ###${NC}"
+	echo -e " ${BWHITE}--> Services en cours d'installation : ${NC}"
+	menuservices="/tmp/menuservices.txt"
+	if [[ -e "$menuservices" ]]; then
+	rm /tmp/menuservices.txt
+	fi
+
+	for app in $(cat /opt/seedbox-compose/includes/config/other-services-available);
+	do
+		service=$(echo $app | cut -d\- -f1)
+		desc=$(echo $app | cut -d\- -f2)
+		echo "$service $desc off" >> /tmp/menuservices.txt
+	done
+	SERVICESTOINSTALL=$(whiptail --title "Gestion des Applications" --checklist \
+	"Appuyer sur la barre espace pour la sélection" 28 64 21 \
+	$(cat /tmp/menuservices.txt) 3>&1 1>&2 2>&3)
+	[[ "$?" = 1 ]] && script_plexdrive && rm /tmp/menuservices.txt;
+	SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
+	touch $SERVICESPERUSER
+	for APPDOCKER in $SERVICESTOINSTALL
+	do
+		echo -e "	${GREEN}* $(echo $APPDOCKER | tr -d '"')${NC}"
+		echo $(echo ${APPDOCKER,,} | tr -d '"') >> $SERVICESPERUSER
+	done
+}
+
 
 function webserver() {
 	echo -e "${BLUE}### SERVICES ###${NC}"
@@ -1411,25 +1394,50 @@ function manage_apps() {
 	## CHOOSE AN ACTION FOR APPS
 	ACTIONONAPP=$(whiptail --title "App Manager" --menu \
 	                "Selectionner une action :" 12 50 4 \
-	                "1" "Ajout Docker Applis"  \
-	                "2" "Supprimer une Appli"  \
+	                "1" "Ajout Applications"  \
+	                "2" "Suppression Applications"  \
 			"3" "Réinitialisation Container" \
  			"4" "Ajout/Supression Sites Web" 3>&1 1>&2 2>&3)
 	[[ "$?" = 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi;
+
+
 	case $ACTIONONAPP in
 		"1" ) ## Ajout APP
-			echo -e " ${BWHITE}* Resume file: $USERRESUMEFILE${NC}"
-			echo ""
-			choose_services
-			install_services
-			resume_seedbox
-			pause
-			if [[ -e "$PLEXDRIVE" ]]; then
-				script_plexdrive
-			else
-				script_classique
-			fi
-			;;
+	                APPLISEEDBOX=$(whiptail --title "App Manager" --menu \
+	                                "Selectionner une action :" 12 50 4 \
+	                                "1" "Applications Seedbox"  \
+ 			                "2" "Autres Applications" 3>&1 1>&2 2>&3)
+                        case $APPLISEEDBOX in
+                                 "1" ) ## Ajout Applications Seedbox
+			                  echo -e " ${BWHITE}* Resume file: $USERRESUMEFILE${NC}"
+			                  echo ""
+			                  choose_services
+			                  install_services
+			                  resume_seedbox
+			                  pause
+			                  if [[ -e "$PLEXDRIVE" ]]; then
+				             script_plexdrive
+			                  else
+				             script_classique
+			                  fi
+                                          ;;
+
+                                 "2" )  ## Autres Applications
+			                  echo -e " ${BWHITE}* Resume file: $USERRESUMEFILE${NC}"
+			                  echo ""
+			                  choose_other_services
+			                  install_services
+			                  resume_seedbox
+			                  pause
+			                  if [[ -e "$PLEXDRIVE" ]]; then
+				             script_plexdrive
+			                  else
+				             script_classique
+			                  fi
+                                          ;;
+                        esac
+                 ;;
+
 		"2" ) ## Suppression APP
 			echo -e " ${BWHITE}* Resume file: $USERRESUMEFILE${NC}"
 			echo ""
