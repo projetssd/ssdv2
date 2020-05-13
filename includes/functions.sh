@@ -1407,6 +1407,7 @@ function manage_apps() {
 	                                "Selectionner une action :" 12 50 4 \
 	                                "1" "Applications Seedbox"  \
  			                "2" "Autres Applications" 3>&1 1>&2 2>&3)
+	                [[ "$?" = 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi;
                         case $APPLISEEDBOX in
                                  "1" ) ## Ajout Applications Seedbox
 			                  echo -e " ${BWHITE}* Resume file: $USERRESUMEFILE${NC}"
