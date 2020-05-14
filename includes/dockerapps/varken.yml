@@ -321,10 +321,16 @@
 
     # Granana #############################################################
 
+    - name: Import defaults.ini
+      template:
+        src: /opt/seedbox-compose/includes/dockerapps/templates/varken/defaults.ini
+        dest: /opt/seedbox/docker/{{user.name}}/{{pgrole}}/defaults.ini
+
     - name: 'Setting Volumes Grafana'
       set_fact:
         grafana_volumes:
           - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}:/config'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/defaults.ini:/usr/share/grafana/conf/defaults.ini'
 
     - name: 'Setting Grafana ENV'
       set_fact:
