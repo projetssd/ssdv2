@@ -33,14 +33,12 @@ services:
       - /opt/seedbox/docker/{{user.name}}/mattermost/plugins:/mattermost/plugins:rw
       - /opt/seedbox/docker/{{user.name}}/mattermost/client-plugins:/mattermost/client/plugins:rw
       - /etc/localtime:/etc/localtime:ro
-    ports:
-      - "8000:8000"
     environment:
       - MM_USERNAME={{user.name}}
       - MM_PASSWORD={{user.pass}}
       - MM_DBNAME=mattermost
       - MM_SQLSETTINGS_DATASOURCE=postgres://{{user.name}}:{{user.pass}}@db:5432/mattermost?sslmode=disable&connect_timeout=10
-      - MM_SERVICESETTINGS_SITEURL=https://mattermost.yohann.pw
+      - MM_SERVICESETTINGS_SITEURL=https://mattermost.{{user.domain}}
     labels:
         traefik.enable: 'true'
         traefik.http.routers.mattermost-rtr.entrypoints: 'https'
