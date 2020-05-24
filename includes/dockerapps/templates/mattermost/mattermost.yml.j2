@@ -1,0 +1,61 @@
+version: "3"
+
+services:
+
+  db:
+    build: db
+    read_only: true
+    container_name: db-mattermost
+    restart: unless-stopped
+    volumes:
+      - /opt/seedbox/docker/{{user.name}}/mattermost/db:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - POSTGRES_USER={{user.name}}
+      - POSTGRES_PASSWORD={{user.pass}}
+      - POSTGRES_DB=mattermost
+    networks:
+     - mattermost
+
+  app:
+    build:
+      context: app
+      args:
+        - edition=team
+        - PUID={{user.userid}}
+        - PGID={{user.groupid}}
+    container_name: mattermost
+    restart: unless-stopped
+    volumes:
+      - /opt/seedbox/docker/{{user.name}}/mattermost/config:/mattermost/config:rw
+      - /opt/seedbox/docker/{{user.name}}/mattermost/data:/mattermost/data:rw
+      - /opt/seedbox/docker/{{user.name}}/mattermost/logs:/mattermost/logs:rw
+      - /opt/seedbox/docker/{{user.name}}/mattermost/plugins:/mattermost/plugins:rw
+      - /opt/seedbox/docker/{{user.name}}/mattermost/client-plugins:/mattermost/client/plugins:rw
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "8000:8000"
+    environment:
+      - MM_USERNAME={{user.name}}
+      - MM_PASSWORD={{user.pass}}
+      - MM_DBNAME=mattermost
+      - MM_SQLSETTINGS_DATASOURCE=postgres://{{user.name}}:{{user.pass}}@db:5432/mattermost?sslmode=disable&connect_timeout=10
+      - MM_SERVICESETTINGS_SITEURL=https://mattermost.yohann.pw
+    labels:
+        traefik.enable: 'true'
+        traefik.http.routers.mattermost-rtr.entrypoints: 'https'
+        traefik.http.routers.mattermost-rtr.rule: 'Host(`mattermost.{{user.domain}}`)'
+        traefik.http.routers.mattermost-rtr.tls: 'true'
+        traefik.http.routers.mattermost-rtr.service: 'mattermost-svc'
+        traefik.http.services.mattermost-svc.loadbalancer.server.port: '8000'
+    networks:
+     - traefik_proxy
+     - mattermost
+
+networks:
+  traefik_proxy:
+    external: true
+  mattermost:
+    external:
+      name: bridge_mattermost
+

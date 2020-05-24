@@ -1193,6 +1193,10 @@ function install_services() {
 			sed -i "/token:/c\   token: $token" /opt/seedbox/variables/account.yml
 			ansible-playbook /opt/seedbox-compose/includes/config/roles/plex/tasks/main.yml
 			ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+
+		elif [[ "$line" == "mattermost" ]]; then
+			/opt/seedbox-compose/includes/dockerapps/templates/mattermost/mattermost.sh
+
 		else
 			ansible-playbook "$BASEDIR/includes/dockerapps/$line.yml"
 			cp "$BASEDIR/includes/dockerapps/$line.yml" "$CONFDIR/conf/$line.yml" > /dev/null 2>&1
@@ -1491,6 +1495,9 @@ function manage_apps() {
 			rm /opt/seedbox/conf/rutorrent-vpn.yml
 			fi
 
+			docker system prune -af > /dev/null 2>&1
+			docker volume rm $(docker volume ls -qf "dangling=true") > /dev/null 2>&1
+
 			checking_errors $?
 			echo""
 			echo -e "${BLUE}### $APPSELECTED a été supprimé ###${NC}"
@@ -1528,7 +1535,8 @@ function manage_apps() {
 			fi
 
 			docker rm -f "$line" > /dev/null 2>&1
-			docker rmi $image
+			docker system prune -af > /dev/null 2>&1
+			docker volume rm $(docker volume ls -qf "dangling=true") > /dev/null 2>&1
 			echo ""
 			sed -i "/$line/d" /home/$SEEDUSER/resume
 			echo $line >> $SERVICESPERUSER
@@ -1633,6 +1641,9 @@ echo ""
 					checking_errors $?
  					docker rm -f php7-$APPSELECTED > /dev/null 2>&1
 					docker rm -f php5-$APPSELECTED > /dev/null 2>&1
+
+					docker system prune -af > /dev/null 2>&1
+					docker volume rm $(docker volume ls -qf "dangling=true") > /dev/null 2>&1
 
 					echo ""
 					echo -e " ${CCYAN}* $APPSELECTED à bien été désinstallé ${NC}"
