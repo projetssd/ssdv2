@@ -16,7 +16,7 @@
       AUTH_HOST: 'oauth.{{user.domain}}'
       URL_PATH: '/_oauth'
       WHITELIST: '{{oauth.account}}'
-      LOG_LEVEL: 'info'
+      LOG_LEVEL: 'trace'
       LOG_FORMAT: 'text'
       LIFETIME: '2592000' # 30 days
 
