@@ -1496,9 +1496,8 @@ function manage_apps() {
 			fi
 
 			docker system prune -af > /dev/null 2>&1
-			docker volume rm $(docker volume ls -qf "dangling=true") > /dev/null 2>&1
-
 			checking_errors $?
+			docker volume rm $(docker volume ls -qf "dangling=true") > /dev/null 2>&1
 			echo""
 			echo -e "${BLUE}### $APPSELECTED a été supprimé ###${NC}"
 			echo ""
