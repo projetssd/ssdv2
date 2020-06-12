@@ -1015,6 +1015,8 @@ function create_user() {
 function choose_services() {
 	echo -e "${BLUE}### SERVICES ###${NC}"
 	echo -e " ${BWHITE}--> Services en cours d'installation : ${NC}"
+	SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
+	rm -Rf $SERVICESPERUSER > /dev/null 2>&1
 	menuservices="/tmp/menuservices.txt"
 	if [[ -e "$menuservices" ]]; then
 	rm /tmp/menuservices.txt
@@ -1042,6 +1044,8 @@ function choose_services() {
 function choose_other_services() {
 	echo -e "${BLUE}### SERVICES ###${NC}"
 	echo -e " ${BWHITE}--> Services en cours d'installation : ${NC}"
+	SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
+	rm -Rf $SERVICESPERUSER > /dev/null 2>&1
 	menuservices="/tmp/menuservices.txt"
 	if [[ -e "$menuservices" ]]; then
 	rm /tmp/menuservices.txt
@@ -1390,8 +1394,9 @@ function manage_apps() {
 	echo -e "${BLUE}##########################################${NC}"
 	echo -e "${BLUE}###          GESTION DES APPLIS        ###${NC}"
 	echo -e "${BLUE}##########################################${NC}"
-	SEEDUSER=$(ls /opt/seedbox/media* | cut -d '-' -f2)
-	DOMAIN=$(cat /home/$SEEDUSER/resume | tail -1 | cut -d. -f2-3)
+	ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+	SEEDUSER=$( grep name /opt/seedbox/variables/account.yml | cut -d : -f2 | sed 's/ //g')
+	DOMAIN=$( grep domain /opt/seedbox/variables/account.yml | cut -d : -f2 | sed 's/ //g')
 	USERRESUMEFILE="/home/$SEEDUSER/resume"
 	echo ""
 	echo -e "${GREEN}### Gestion des Applis pour: $SEEDUSER ###${NC}"
@@ -1446,6 +1451,19 @@ function manage_apps() {
 		"2" ) ## Suppression APP
 			echo -e " ${BWHITE}* Resume file: $USERRESUMEFILE${NC}"
 			echo ""
+
+			[ -s /home/$SEEDUSER/resume ]
+			if [[ "$?" == "1" ]]; then
+				echo -e " ${BWHITE}* Pas d'Applis à Désinstaller ${NC}"
+				pause
+				ansible-vault encrypt /opt/seedbox/variables/account.yml
+				if [[ -e "$PLEXDRIVE" ]]; then
+					script_plexdrive
+				else
+					script_classique
+				fi
+			fi
+
 			echo -e " ${BWHITE}* Application en cours de suppression${NC}"
 			TABSERVICES=()
 			for SERVICEACTIVATED in $(cat $USERRESUMEFILE)
@@ -1502,6 +1520,7 @@ function manage_apps() {
 			echo -e "${BLUE}### $APPSELECTED a été supprimé ###${NC}"
 			echo ""
 			pause
+			ansible-vault encrypt /opt/seedbox/variables/account.yml
 			if [[ -e "$PLEXDRIVE" ]]; then
 				script_plexdrive
 			else
@@ -1608,6 +1627,7 @@ echo -e "${CCYAN}━━━━━━━━━━━━━━━━━━━━━
 echo ""
 					fi
 					pause
+					ansible-vault encrypt /opt/seedbox/variables/account.yml
 					if [[ -e "$PLEXDRIVE" ]]; then
 						script_plexdrive
 					else
@@ -1647,6 +1667,7 @@ echo ""
 					echo ""
 					echo -e " ${CCYAN}* $APPSELECTED à bien été désinstallé ${NC}"
 					pause
+					ansible-vault encrypt /opt/seedbox/variables/account.yml
 					if [[ -e "$PLEXDRIVE" ]]; then
 						script_plexdrive
 					else
@@ -1676,6 +1697,7 @@ function resume_seedbox() {
 	echo -e "	--> Password: ${YELLOW}$PASSE${NC}"
 	echo ""
 	rm -Rf $SERVICESPERUSER > /dev/null 2>&1
+	ansible-vault encrypt /opt/seedbox/variables/account.yml
 }
 
 function uninstall_seedbox() {
@@ -1685,8 +1707,10 @@ function uninstall_seedbox() {
 	echo -e "${BLUE}##########################################${NC}"
 
 	## variables
-	SEEDUSER=$(ls /opt/seedbox/media* | cut -d '-' -f2)
-	SEEDGROUP=$(cat /etc/group | tail -1 | cut -d: -f1)
+	ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+	SEEDUSER=$( grep name /opt/seedbox/variables/account.yml | cut -d : -f2 | sed 's/ //g')
+	DOMAIN=$( grep domain /opt/seedbox/variables/account.yml | cut -d : -f2 | sed 's/ //g')
+	SEEDGROUP=$( grep group: /opt/seedbox/variables/account.yml | cut -d : -f2 | sed 's/ //g')
 	USERHOMEDIR="/home/$SEEDUSER"
 	PLEXDRIVE="/usr/bin/plexdrive"
 
@@ -1752,8 +1776,8 @@ function uninstall_seedbox() {
 	echo -e " ${BWHITE}* Supression du dossier /opt/seedbox...${NC}"
 	rm -Rf $CONFDIR
 	checking_errors $?
-
 	pause
+	ansible-vault encrypt /opt/seedbox/variables/account.yml
 }
 
 function pause() {

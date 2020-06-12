@@ -52,54 +52,57 @@
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: rutorrent
+        subdomain: sickchill
       when: cloudflare_enabled
 
     - name: 'Set Known Facts'
       set_fact:
-        pgrole: 'rutorrent'
-        image: 'mondedie/rutorrent:latest'
+        pgrole: 'sickchill'
+        image: 'linuxserver/sickchill'
 
-    - name: 'Creating rutorrent folder paths'
+    - name: Creating paths
       file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
       with_items:
-        - '/home/{{user.name}}/local/{{pgrole}}'
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
 
+    # LABELS ######################################################################
     - name: 'Ajout label traefik'
       set_fact:
         pg_labels:
           traefik.enable: 'true'
           ## HTTP Routers
-          traefik.http.routers.rutorrent-rtr.entrypoints: 'https'
-          traefik.http.routers.rutorrent-rtr.rule: 'Host(`rutorrent.{{user.domain}}`)'
-          traefik.http.routers.rutorrent-rtr.tls: 'true'
+          traefik.http.routers.sickchill-rtr.entrypoints: 'https'
+          traefik.http.routers.sickchill-rtr.rule: 'Host(`sickchill.{{user.domain}}`)'
+          traefik.http.routers.sickchill-rtr.tls: 'true'
           ## Middlewares
-          traefik.http.routers.rutorrent-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          traefik.http.routers.sickchill-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
           ## HTTP Services
-          traefik.http.routers.rutorrent-rtr.service: 'rutorrent-svc'
-          traefik.http.services.rutorrent-svc.loadbalancer.server.port: '8080'
+          traefik.http.routers.sickchill-rtr.service: 'sickchill-svc'
+          traefik.http.services.sickchill-svc.loadbalancer.server.port: '8081'
 
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
-          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config:/config'
-          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/data:/data'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}:/config'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}:/downloads'
           - '/home/{{user.name}}:/home/{{user.name}}'
+          - '/etc/localtime:/etc/localtime:ro'
 
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
-          UID: '{{user.userid}}'
-          GID: '{{user.groupid}}'
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
 
     # MAIN DEPLOYMENT #############################################################
+
     - name: 'Deploying {{pgrole}}'
       docker_container:
         name: '{{pgrole}}'
         image: '{{image}}'
         pull: yes
-        ports:
-          - '45000:45000'
+        published_ports:
+          - '127.0.0.1:8081:8081'
         volumes: '{{pg_volumes}}'
         env: '{{pg_env}}'
         restart_policy: unless-stopped
@@ -107,36 +110,3 @@
           - name: traefik_proxy
         state: started
         labels: '{{pg_labels}}'
-
-    - name: 'Stopping {{pgrole}}'
-      docker_container:
-        name: '{{pgrole}}'
-        state: stopped
-
-    - name: Set download location
-      lineinfile:
-        path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config/rtorrent/.rtorrent.rc'
-        regexp: '#*directory.default.set\s*=.*'
-        line: 'directory.default.set = /home/{{user.name}}/local/{{pgrole}}'
-        state: present
-
-    - name: Set download location
-      lineinfile:
-        path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config/rutorrent/conf/config.php'
-        regexp: '\$topDirectory\s*=.*'
-        line: $topDirectory = '/home/{{user.name}}';
-        state: present
-
-    - name: Clone ratio color
-      git:
-        repo: https://github.com/Micdu70/rutorrent-ratiocolor.git
-        dest: /opt/seedbox/docker/{{user.name}}/rutorrent/config/custom_plugins/ratiocolor
-
-    - name: Set MaterialDesign
-      shell: |
-        echo 'O:6:"rTheme":2:{s:4:"hash";s:9:"theme.dat";s:7:"current";s:14:"materialdesign";}' > /opt/seedbox/docker/{{user.name}}/rutorrent/config/rutorrent/share/settings/theme.dat
-
-    - name: Restart Docker Container
-      docker_container:
-        name: '{{pgrole}}'
-        state: started
