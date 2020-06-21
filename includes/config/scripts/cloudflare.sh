@@ -4,8 +4,11 @@ source includes/functions.sh
 source includes/variables.sh
 
 ## Variable
-SEEDUSER=$(ls /opt/seedbox/media* | cut -d '-' -f2)
-DOMAIN=$(cat /home/$SEEDUSER/resume | tail -1 | cut -d. -f2-3)
+ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
+SEEDUSER=$(cat /tmp/name)
+DOMAIN=$(cat /tmp/domain)
+SEEDGROUP=$(cat /tmp/group)
+rm /tmp/name /tmp/domain /tmp/group
 SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 
     	echo -e "${CRED}---------------------------------------------------------------${CEND}"

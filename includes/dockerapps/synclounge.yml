@@ -8,7 +8,11 @@
     tasks:
           
       # FACTS #######################################################################
-  
+      - name: Checking for existing app data
+        stat:
+          path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
+        register: check
+
       - name: "Variables | Set 'cloudflare_enabled' variable"
         set_fact:
           cloudflare_enabled: "{{ true if not(
@@ -79,7 +83,7 @@
             traefik.http.routers.synclounge-slserver-rtr.rule: 'Host(`synclounge.{{user.domain}}`) && PathPrefix(`/slserver`)'
             traefik.http.routers.synclounge-slserver-rtr.tls: 'true'
             ## Middlewares
-            traefik.http.routers.synclounge-webui-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+            traefik.http.routers.synclounge-webui-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
             ## HTTP Services
             traefik.http.routers.synclounge-webui-rtr.service: 'synclounge-webui-svc'
             traefik.http.services.synclounge-webui-svc.loadbalancer.server.port: '8088'

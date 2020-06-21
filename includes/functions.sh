@@ -1288,6 +1288,16 @@ do
 		read -r
 		fi
 
+		if [[ "$line" == "authelia" ]]; then
+		echo ""
+		echo -e "${BLUE}### CONFIG POST COMPOSE AUTHELIA ###${NC}"
+		echo -e " ${BWHITE}* Configuration Apllications avec Authelia...${NC}"
+		echo ""
+		/opt/seedbox-compose/includes/config/scripts/authelia.sh
+		echo ""
+		echo -e "\nNoter les ${CCYAN}informations du dessus${CEND} et appuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+		read -r
+		fi
 
 		if [[ "$line" == "wordpress" ]]; then
 		echo ""
@@ -1394,9 +1404,11 @@ function manage_apps() {
 	echo -e "${BLUE}##########################################${NC}"
 	echo -e "${BLUE}###          GESTION DES APPLIS        ###${NC}"
 	echo -e "${BLUE}##########################################${NC}"
-	ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
-	SEEDUSER=$( grep name /opt/seedbox/variables/account.yml | cut -d : -f2 | sed 's/ //g')
-	DOMAIN=$( grep domain /opt/seedbox/variables/account.yml | cut -d : -f2 | sed 's/ //g')
+        ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
+	SEEDUSER=$(cat /tmp/name)
+	DOMAIN=$(cat /tmp/domain)
+        SEEDGROUP=$(cat /tmp/group)
+        rm /tmp/name /tmp/domain /tmp/group
 	USERRESUMEFILE="/home/$SEEDUSER/resume"
 	echo ""
 	echo -e "${GREEN}### Gestion des Applis pour: $SEEDUSER ###${NC}"
@@ -1481,7 +1493,7 @@ function manage_apps() {
 			rm -rf /opt/seedbox/docker/$SEEDUSER/$APPSELECTED
 
 			if [[ "$APPSELECTED" != "plex" ]]; then
-			rm $CONFDIR/conf/$APPSELECTED.yml
+			rm $CONFDIR/conf/$APPSELECTED.yml > /dev/null 2>&1
 			fi
 
 			if [[ "$APPSELECTED" = "seafile" ]]; then
@@ -1513,6 +1525,11 @@ function manage_apps() {
 			rm /opt/seedbox/conf/rutorrent-vpn.yml
 			fi
 
+			if [[ "$APPSELECTED" = "authelia" ]]; then
+			/opt/seedbox-compose/includes/config/scripts/authelia.sh
+			sed -i '/authelia/d' /home/$SEEDUSER/resume > /dev/null 2>&1
+			fi
+
 			docker system prune -af > /dev/null 2>&1
 			checking_errors $?
 			docker volume rm $(docker volume ls -qf "dangling=true") > /dev/null 2>&1
@@ -1520,7 +1537,6 @@ function manage_apps() {
 			echo -e "${BLUE}### $APPSELECTED a été supprimé ###${NC}"
 			echo ""
 			pause
-			ansible-vault encrypt /opt/seedbox/variables/account.yml
 			if [[ -e "$PLEXDRIVE" ]]; then
 				script_plexdrive
 			else
@@ -1627,7 +1643,6 @@ echo -e "${CCYAN}━━━━━━━━━━━━━━━━━━━━━
 echo ""
 					fi
 					pause
-					ansible-vault encrypt /opt/seedbox/variables/account.yml
 					if [[ -e "$PLEXDRIVE" ]]; then
 						script_plexdrive
 					else
@@ -1667,7 +1682,6 @@ echo ""
 					echo ""
 					echo -e " ${CCYAN}* $APPSELECTED à bien été désinstallé ${NC}"
 					pause
-					ansible-vault encrypt /opt/seedbox/variables/account.yml
 					if [[ -e "$PLEXDRIVE" ]]; then
 						script_plexdrive
 					else
@@ -1697,7 +1711,6 @@ function resume_seedbox() {
 	echo -e "	--> Password: ${YELLOW}$PASSE${NC}"
 	echo ""
 	rm -Rf $SERVICESPERUSER > /dev/null 2>&1
-	ansible-vault encrypt /opt/seedbox/variables/account.yml
 }
 
 function uninstall_seedbox() {
@@ -1707,10 +1720,12 @@ function uninstall_seedbox() {
 	echo -e "${BLUE}##########################################${NC}"
 
 	## variables
-	ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
-	SEEDUSER=$( grep name /opt/seedbox/variables/account.yml | cut -d : -f2 | sed 's/ //g')
-	DOMAIN=$( grep domain /opt/seedbox/variables/account.yml | cut -d : -f2 | sed 's/ //g')
-	SEEDGROUP=$( grep group: /opt/seedbox/variables/account.yml | cut -d : -f2 | sed 's/ //g')
+        ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
+	SEEDUSER=$(cat /tmp/name)
+	DOMAIN=$(cat /tmp/domain)
+        SEEDGROUP=$(cat /tmp/group)
+        rm /tmp/name /tmp/domain /tmp/group
+
 	USERHOMEDIR="/home/$SEEDUSER"
 	PLEXDRIVE="/usr/bin/plexdrive"
 

@@ -37,7 +37,12 @@
         shell: | 
           openssl rand -hex 16
         register: jibri_xmpp_password
-  
+
+      - name: Checking for existing app data
+        stat:
+          path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
+        register: check
+
       - name: "Variables | Set 'cloudflare_enabled' variable"
         set_fact:
           cloudflare_enabled: "{{ true if not(

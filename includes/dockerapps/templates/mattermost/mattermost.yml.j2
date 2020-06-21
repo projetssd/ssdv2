@@ -44,7 +44,7 @@ services:
         traefik.http.routers.mattermost-rtr.entrypoints: 'https'
         traefik.http.routers.mattermost-rtr.rule: 'Host(`mattermost.{{user.domain}}`)'
         traefik.http.routers.mattermost-rtr.tls: 'true'
-        traefik.http.routers.mattermost-rtr.middlewares: 'chain-oauth@file'
+        #traefik.http.routers.mattermost-rtr.middlewares: 'chain-oauth@file'
         traefik.http.routers.mattermost-rtr.service: 'mattermost-svc'
         traefik.http.services.mattermost-svc.loadbalancer.server.port: '8000'
     networks:

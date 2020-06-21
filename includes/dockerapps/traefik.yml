@@ -11,6 +11,11 @@
   vars_files:
     - /opt/seedbox/variables/account.yml
   tasks:
+
+    - name: Checking for existing app data
+      stat:
+        path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
+      register: check
   
     - name: "Variables | Set 'cloudflare_enabled' variable"
       set_fact:
@@ -119,7 +124,7 @@
           ## Services - API
           traefik.http.routers.traefik-rtr.service: 'api@internal'
           ## Middlewares
-          traefik.http.routers.traefik-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          traefik.http.routers.traefik-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
       when: cloudflare_enabled
 
     - name: label traefik without cloudflare
@@ -139,7 +144,7 @@
           ## Services - API
           traefik.http.routers.traefik-rtr.service: 'api@internal'
           ## Middlewares
-          traefik.http.routers.traefik-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          traefik.http.routers.traefik-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
       when: not cloudflare_enabled
 
     - name: command traefik with cloudflare

@@ -20,6 +20,10 @@
   tasks:
         
     # FACTS #######################################################################
+    - name: Checking for existing app data
+      stat:
+        path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
+      register: check
 
     - name: "Variables | Set 'cloudflare_enabled' variable"
       set_fact:

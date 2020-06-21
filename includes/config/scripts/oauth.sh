@@ -4,8 +4,11 @@ source includes/functions.sh
 source includes/variables.sh
 
 ## Variable
-SEEDUSER=$(ls /opt/seedbox/media* | cut -d '-' -f2)
-DOMAIN=$(cat /home/$SEEDUSER/resume | tail -1 | cut -d. -f2-3)
+ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
+SEEDUSER=$(cat /tmp/name)
+DOMAIN=$(cat /tmp/domain)
+SEEDGROUP=$(cat /tmp/group)
+rm /tmp/name /tmp/domain /tmp/group
 SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 oauth_client=$1
 oauth_secret=$2
@@ -49,6 +52,11 @@ rm /opt/seedbox/conf/*
 
 ## suppression container
 docker rm -f $(docker ps -aq) > /dev/null 2>&1
+
+## supression Authelia si installé
+rm -rf /opt/seedbox/docker/$SEEDUSER/authelia > /dev/null 2>&1
+rm /opt/seedbox/conf/authelia.yml > /dev/null 2>&1
+sed -i '/authelia/d' /home/$SEEDUSER/resume > /dev/null 2>&1
 
 ## reinstallation traefik, portainer
 echo ""

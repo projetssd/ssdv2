@@ -1,0 +1,14 @@
+#!/bin/bash
+
+---
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
+  tasks:
+
+    - name: 
+      shell: |
+        echo {{user.name}} > /tmp/name
+        echo {{user.domain}} > /tmp/domain
+        echo {{user.group}} > /tmp/group

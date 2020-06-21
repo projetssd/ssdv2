@@ -7,6 +7,10 @@
   tasks:
         
     # FACTS #######################################################################
+    - name: Checking for existing app data
+      stat:
+        path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
+      register: check
 
     - name: "Variables | Set 'cloudflare_enabled' variable"
       set_fact:
@@ -76,7 +80,7 @@
           traefik.http.routers.cloudcmd-rtr.rule: 'Host(`cloudcmd.{{user.domain}}`)'
           traefik.http.routers.cloudcmd-rtr.tls: 'true'
           ## Middlewares
-          traefik.http.routers.cloudcmd-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          traefik.http.routers.cloudcmd-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
           ## HTTP Services
           traefik.http.routers.cloudcmd-rtr.service: 'cloudcmd-svc'
           traefik.http.services.cloudcmd-svc.loadbalancer.server.port: '8000'

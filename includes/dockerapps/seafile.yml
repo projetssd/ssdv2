@@ -8,6 +8,10 @@
   tasks:
         
     # FACTS #######################################################################
+    - name: Checking for existing app data
+      stat:
+        path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
+      register: check
 
     - name: "Variables | Set 'cloudflare_enabled' variable"
       set_fact:
@@ -83,7 +87,7 @@
           traefik.http.routers.seafile-secure-rtr.rule: 'Host(`seafile.{{user.domain}}`)'
           traefik.http.routers.seafile-secure-rtr.tls: 'true'
           ## Middlewares
-          traefik.http.routers.seafile-seafapp-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          traefik.http.routers.seafile-seafapp-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
           ## HTTP Services
           traefik.http.routers.seafile-rtr.service: 'seafile-svc'
           traefik.http.services.seafile-svc.loadbalancer.server.port: '80'
