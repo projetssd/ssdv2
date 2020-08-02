@@ -105,6 +105,7 @@
       docker_container:
         name: '{{pgrole}}'
         image: '{{image}}'
+        privileged: true
         pull: yes
         volumes: '{{pg_volumes}}'
         env: '{{pg_env}}'

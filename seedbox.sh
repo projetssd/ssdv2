@@ -211,11 +211,20 @@ case $CHOICE in
 			install_base_packages
 			install_docker
 			define_parameters
-			install_plexdrive
-			install_rclone
 			install_fail2ban
 			sauve
 			restore
+
+                        ## recuperation des config rclone && plexdrive
+		        wget https://github.com/plexdrive/plexdrive/releases/download/5.1.0/plexdrive-linux-amd64 -q -O plexdrive > /dev/null 2>&1
+		        chmod -c +x /tmp/plexdrive > /dev/null 2>&1
+             		mv -v /tmp/plexdrive /usr/bin/ > /dev/null 2>&1
+		        chown -c root:root /usr/bin/plexdrive > /dev/null 2>&1
+           		systemctl daemon-reload > /dev/null 2>&1
+	        	systemctl enable plexdrive.service > /dev/null 2>&1
+		        systemctl start plexdrive.service > /dev/null 2>&1
+			ansible-playbook /opt/seedbox-compose/includes/config/roles/rclone/tasks/main.yml
+
 			choose_media_folder_plexdrive
 			rm /etc/systemd/system/mergerfs.service > /dev/null 2>&1
 			unionfs_fuse
