@@ -339,7 +339,7 @@
           GF_PATHS_DATA: '/config/data'
           GF_PATHS_LOGS: '/config/logs'
           GF_PATHS_PLUGINS: '/config/plugins'
-          GF_INSTALL_PLUGINS: 'grafana-piechart-panel,grafana-worldmap-panel'
+          GF_INSTALL_PLUGINS: 'grafana-clock-panel,grafana-simple-json-datasource,grafana-worldmap-panel,grafana-piechart-panel'
 
     - name: 'Deploying {{pgrole}}'
       docker_container:
