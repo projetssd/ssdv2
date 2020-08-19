@@ -543,7 +543,8 @@ function script_plexdrive() {
 			echo -e "${CGREEN}   9) Webtools${CEND}"
 			echo -e "${CGREEN}   10) rtorrent-cleaner de ${CCYAN}@Magicalex-Mondedie.fr${CEND}${NC}"
 			echo -e "${CGREEN}   11) Plex_Patrol${CEND}"
-			echo -e "${CGREEN}   12) Retour menu principal${CEND}"
+			echo -e "${CGREEN}   12) Comptes de Service${CEND}"
+			echo -e "${CGREEN}   13) Retour menu principal${CEND}"
 			echo -e ""
 			read -p "Votre choix [1-12]: " OUTILS
 
@@ -765,6 +766,11 @@ password2 = PjV8d2CRzb6mPUWSGsIeqNw
 			;;
 
 			12)
+                        /opt/seedbox-compose/includes/config/scripts/sa-gen.sh
+			script_plexdrive
+			;;
+
+			13)
 			script_plexdrive
 			;;
 
