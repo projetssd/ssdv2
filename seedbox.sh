@@ -93,6 +93,7 @@ python -m pip install --disable-pip-version-check --upgrade --force-reinstall \
     requests \
     netaddr \
     jmespath \
+    cryptography==2.9.2 \
     ansible==${1-$ANSIBLE}
 
 # Configuration ansible
