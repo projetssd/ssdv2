@@ -47,7 +47,7 @@ echo ""
 gcloud init
 echo ""
 git clone https://github.com/88lex/sa-gen.git /opt/gen-sa
-git clone -b develop https://github.com/88lex/sasync.git /opt/sasync
+git clone https://github.com/88lex/sasync.git /opt/sasync
 echo ""
 ansible-playbook /opt/seedbox-compose/includes/config/roles/gen-sa/tasks/sa-gen.yml
 echo ""
