@@ -7,7 +7,7 @@ Commencez par ici si vous pensez avoir besoin de voir/revoir les bases: https://
 
 D'autres actions seront mises en place pour rendre l'accès au script encore plus "friendly to use", mais terminons déjà la première étape de la refonte !
 
-Yeaah! :)
+Yeaah! :0)
 
 [![](https://img.shields.io/github/repo-size/laster13/patxav.svg?style=flat)](https://github.com/laster13/patxav)
 
