@@ -1,3 +1,13 @@
+Une modification du tuto et pré-requis est imminente afin d'apporter quelques améliorations importantes à sa compréhension.
+
+Dans un premier temps, une chronologie sera détaillée, telle une feuille de route à partir du point de départ.
+
+Nous insistons sur le fait qu'une base Linux est absolument nécessaire et peut s'apprendre (très) rapidement. 
+Commencez par ici si vous pensez avoir besoin de voir/revoir les bases: https://www.sitedetout.com/tutoriels/commandes-linux-de-base/
+
+D'autres actions seront mises en place pour rendre l'accès au script encore plus "friendly to use", mais terminons déjà la première étape de la refonte !
+
+Yeaah! :)
 
 [![](https://img.shields.io/github/repo-size/laster13/patxav.svg?style=flat)](https://github.com/laster13/patxav)
 
