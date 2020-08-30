@@ -5,16 +5,23 @@
     - /opt/seedbox/variables/account.yml
   tasks:
 
+    - name: Create Basic Directories
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
+      with_items:
+        - '/home/{{user.name}}/scripts/crop'
+
     - name: install crop latest
       shell: |
-        mkdir -p /home/{{user.name}}/scripts/crop
         wget -P /home/{{user.name}}/scripts/ https://github.com/$(wget https://github.com/l3uddz/crop/releases/latest -O - | egrep '/.*/.*/.*linux_amd64.tar.gz' -o)
         archive=$(ls *linux_amd64.tar.gz)
         tar -xvf $archive -C /home/{{user.name}}/scripts/crop       
         chmod +x crop
         rm $archive
+      become: yes
+      become_user: "{{user.name}}"
       args:
         chdir: /home/{{user.name}}/scripts/
+
 
     - name: install gclone latest
       shell: |
@@ -28,4 +35,9 @@
       template:
         src: /opt/seedbox-compose/includes/config/roles/crop/templates/config.yaml.2
         dest: /home/{{user.name}}/scripts/crop/config.yaml
+        owner: "{{user.userid}}"
+        group: "{{user.groupid}}"
+        mode: 0600
+        force: yes
+
 
