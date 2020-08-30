@@ -1,0 +1,31 @@
+---
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
+  tasks:
+
+    - name: install crop latest
+      shell: |
+        mkdir -p /home/{{user.name}}/scripts/crop
+        wget -P /home/{{user.name}}/scripts/ https://github.com/$(wget https://github.com/l3uddz/crop/releases/latest -O - | egrep '/.*/.*/.*linux_amd64.tar.gz' -o)
+        archive=$(ls *linux_amd64.tar.gz)
+        tar -xvf $archive -C /home/{{user.name}}/scripts/crop       
+        chmod +x crop
+        rm $archive
+      args:
+        chdir: /home/{{user.name}}/scripts/
+
+    - name: install gclone latest
+      shell: |
+        wget -P /usr/local/bin https://transfer.cloudbox.media/get/FjUqh/rclone_gclone_v1.52.3-DEV_1
+        mv rclone_gclone_v1.52.3-DEV_1 gclone
+        chmod +x gclone
+      args:
+        chdir: /usr/local/bin/
+
+    - name: Import default config
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/crop/templates/config.yaml.2
+        dest: /home/{{user.name}}/scripts/crop/config.yaml
+
