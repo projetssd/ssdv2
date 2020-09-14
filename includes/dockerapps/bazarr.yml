@@ -91,6 +91,7 @@
           - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config:/config'
           - '/home/{{user.name}}/Medias/Films:/movies'
           - '/home/{{user.name}}/Medias/Series:/tv'
+          - '/home/{{user.name}}/Medias/Animes:/Animes'
 
     - name: 'Setting PG ENV'
       set_fact:
