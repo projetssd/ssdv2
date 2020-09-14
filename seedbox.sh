@@ -107,7 +107,7 @@ echo "command_warnings = False" >> /etc/ansible/ansible.cfg
 echo "callback_whitelist = profile_tasks" >> /etc/ansible/ansible.cfg
 echo "deprecation_warnings=False" >> /etc/ansible/ansible.cfg
 echo "inventory = /etc/ansible/inventories/local" >> /etc/ansible/ansible.cfg
-echo "interpreter_python=/usr/bin/python3" >> /etc/ansible/ansible.cfg
+echo "interpreter_python=/usr/bin/python" >> /etc/ansible/ansible.cfg
 
 ## Copy pip to /usr/bin
 cp /usr/local/bin/pip /usr/bin/pip
