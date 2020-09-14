@@ -107,7 +107,7 @@ echo "command_warnings = False" >> /etc/ansible/ansible.cfg
 echo "callback_whitelist = profile_tasks" >> /etc/ansible/ansible.cfg
 echo "deprecation_warnings=False" >> /etc/ansible/ansible.cfg
 echo "inventory = /etc/ansible/inventories/local" >> /etc/ansible/ansible.cfg
-echo "interpreter_python=/usr/bin/python" >> /etc/ansible/ansible.cfg
+echo "interpreter_python=/usr/bin/python3" >> /etc/ansible/ansible.cfg
 
 ## Copy pip to /usr/bin
 cp /usr/local/bin/pip /usr/bin/pip
@@ -139,7 +139,6 @@ case $CHOICE in
 			cloudflare
 			oauth
 			install_traefik
-			install_portainer
 			install_watchtower
 			install_fail2ban
 			choose_media_folder_classique
@@ -172,7 +171,6 @@ case $CHOICE in
 			install_traefik
 			install_plexdrive
 			install_rclone
-			install_portainer
 			install_watchtower
 			install_fail2ban
 			choose_media_folder_plexdrive
@@ -222,7 +220,6 @@ case $CHOICE in
 			unionfs_fuse
 			cloudflare
 			install_traefik
-			install_portainer
 			install_watchtower
 			SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 			while read line; do echo $line | cut -d'.' -f1; done < /home/$SEEDUSER/resume > $SERVICESUSER$SEEDUSER

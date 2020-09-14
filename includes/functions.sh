@@ -203,6 +203,28 @@ function plex_autoscan() {
 			checking_errors $?
 }
 
+function crop() {
+			#configuration crop avec ansible
+			echo -e "${BLUE}### CROP ###${NC}"
+                        /opt/seedbox-compose/includes/config/scripts/crop.sh
+			echo -e " ${BWHITE}* Installation crop${NC}"
+			ansible-playbook /opt/seedbox-compose/includes/config/roles/crop/tasks/main.yml
+			checking_errors $?
+}
+
+function backupList() {
+
+    echo ""
+    read -rp $'\e[32mSaisir le numéro du teamdrive\e[0m :' n
+
+    if [[ $n -lt 1 ]] || [[ $n -gt $i ]]; then
+        echo -e "\n${CRED}/!\ ERREUR: Numéro invalide !${CEND}"
+        echo ""
+        exit 1
+    fi
+}
+
+
 function cloudplow() {
 			#configuration plex_autoscan avec ansible
 			echo -e "${BLUE}### CLOUDPLOW ###${NC}"
@@ -494,7 +516,7 @@ function script_plexdrive() {
 	echo -e "${CGREEN}${CEND}"
 	echo -e "${CGREEN}   1) Désinstaller la seedbox ${CEND}"
 	echo -e "${CGREEN}   2) Ajout/Supression d'Applis${CEND}"
-	echo -e "${CGREEN}   3) Outils${CEND}"
+	echo -e "${CGREEN}   3) Gestion${CEND}"
 	echo -e "${CGREEN}   4) Quitter${CEND}"
 
 	echo -e ""
@@ -515,6 +537,7 @@ function script_plexdrive() {
 			script_plexdrive
 		fi
 		;;
+
 		2)
 		clear
 		## Ajout d'Applications
@@ -522,35 +545,24 @@ function script_plexdrive() {
 		clear
 			manage_apps
 		;;
+
 		3)
 			clear
 			logo
 			echo ""
-			echo -e "${CCYAN}OUTILS${CEND}"
+			echo -e "${CCYAN}GESTION${CEND}"
 			echo -e "${CGREEN}${CEND}"
-			echo -e "${CGREEN}   1) Sécuriser la Seedbox${CEND}"
-			echo -e "${CGREEN}   2) Mise à jour Seedbox avec Cloudflare${CEND}"
-			echo -e "${CGREEN}   3) Changement du nom de Domaine${CEND}"
-			echo -e "${CGREEN}   4) Configuration 2ème Drive pour Backup${CEND}"
-			if docker ps | grep -q mailserver; then
-			echo -e "${YELLOW}   5) Desinstaller Mailserver ${CCYAN}@Hardware-Mondedie.fr${CEND}${NC}"
-			else
-			echo -e "${CGREEN}   5) Installer Mailserver ${CCYAN}@Hardware-Mondedie.fr${CEND}${NC}"
-			fi
-			echo -e "${CGREEN}   6) Modèle Création Appli Personnalisée Docker${CEND}"
-			echo -e "${CGREEN}   7) Installation du motd${CEND}"
-			echo -e "${CGREEN}   8) Traktarr${CEND}"
-			echo -e "${CGREEN}   9) Webtools${CEND}"
-			echo -e "${CGREEN}   10) rtorrent-cleaner de ${CCYAN}@Magicalex-Mondedie.fr${CEND}${NC}"
-			echo -e "${CGREEN}   11) Plex_Patrol${CEND}"
-			echo -e "${CGREEN}   12) Comptes de Service${CEND}"
-			echo -e "${CGREEN}   13) Retour menu principal${CEND}"
+			echo -e "${CGREEN}   1) Sécurisation Syteme${CEND}"
+			echo -e "${CGREEN}   2) Utilitaires${CEND}"
+			echo -e "${CGREEN}   3) Outils (autoscan, crop, cloudplow etc..)${CEND}"
+			echo -e "${CGREEN}   4) Comptes de Service${CEND}"
+			echo -e "${CGREEN}   5) Retour menu principal${CEND}"
 			echo -e ""
-			read -p "Votre choix [1-12]: " OUTILS
+			read -p "Votre choix [1-5]: " GESTION
 
-			case $OUTILS in
+			case $GESTION in
 
-			1) ## Mise en place Google OAuth avec Traefik
+			1) ## sécurisation systeme
 				clear
 				logo
 				echo ""
@@ -560,10 +572,12 @@ function script_plexdrive() {
 				echo -e "${CGREEN}   2) Sécuriser avec Authentification Classique${CEND}"
 				echo -e "${CGREEN}   3) Ajout / Supression adresses mail autorisées pour Google OAuth2${CEND}"
 				echo -e "${CGREEN}   4) Modification port SSH, mise à jour fail2ban, installation Iptables${CEND}"
-				echo -e "${CGREEN}   5) Retour menu principal${CEND}"
+			        echo -e "${CGREEN}   5) Mise à jour Seedbox avec Cloudflare${CEND}"
+			        echo -e "${CGREEN}   6) Changement du nom de Domaine${CEND}"
+				echo -e "${CGREEN}   7) Retour menu principal${CEND}"
 
 				echo -e ""
-				read -p "Votre choix [1-5]: " OAUTH
+				read -p "Votre choix [1-7]: " OAUTH
 				case $OAUTH in
 
 				1)
@@ -614,36 +628,195 @@ function script_plexdrive() {
 				script_plexdrive
 				;;
 
-				5)
+			        5) ## Mise à jour Cloudflare
+			        /opt/seedbox-compose/includes/config/scripts/cloudflare.sh
+			        script_plexdrive
+			        ;;
+
+			        6) ## Changement du nom de domaine
+			        /opt/seedbox-compose/includes/config/scripts/domain.sh
+			        script_plexdrive
+			        ;;
+
+				7)
 				script_plexdrive
 				;;
-
 				esac
 			;;
+			2) ## utilitaires
+				clear
+				logo
+				echo ""
+				echo -e "${CCYAN}UTILITAIRES${CEND}"
+				echo -e "${CGREEN}${CEND}"
+			        echo -e "${CGREEN}   1) Installation du motd${CEND}"
+			        echo -e "${CGREEN}   2) Traktarr${CEND}"
+			        echo -e "${CGREEN}   3) Webtools${CEND}"
+			        echo -e "${CGREEN}   4) rtorrent-cleaner de ${CCYAN}@Magicalex-Mondedie.fr${CEND}${NC}"
+			        echo -e "${CGREEN}   5) Plex_Patrol${CEND}"
+			        echo -e "${CGREEN}   6) Modèle Création Appli Personnalisée Docker${CEND}"
+			        if docker ps | grep -q mailserver; then
+			        echo -e "${YELLOW}   7) Desinstaller Mailserver ${CCYAN}@Hardware-Mondedie.fr${CEND}${NC}"
+			        else
+			        echo -e "${CGREEN}   7) Installer Mailserver ${CCYAN}@Hardware-Mondedie.fr${CEND}${NC}"
+			        fi
+				echo -e "${CGREEN}   8) Retour menu principal${CEND}"
 
-			2) ## Mise à jour Cloudflare
-			/opt/seedbox-compose/includes/config/scripts/cloudflare.sh
-			script_plexdrive
-			;;
 
-			3) ## Changement du nom de domaine
-			/opt/seedbox-compose/includes/config/scripts/domain.sh
-			script_plexdrive
-			;;
+				echo -e ""
+				read -p "Votre choix [1-8]: " UTIL
+				case $UTIL in
 
-			4) ## Configuration Drive backup
-			clear
-			echo "" 
-			echo -e "${CCYAN}----------------------------------------------------------------------------------------${CEND}"
-    			echo -e "${CCYAN} 💬  Avant de poursuivre, veillez à ce que votre rclone.conf soit correctement configuré${CEND}"
-    			echo -e "${CCYAN} 💬  Il doit contenir en tout 5 remotes et ressembler à la structure ci dessous         ${CEND}"
-    			echo -e "${CCYAN} 💬  Sinon CTRL^C, préparer le rclone.conf et revenez ensuite sur ce menu               ${CEND}"
-    			echo -e "${CCYAN}----------------------------------------------------------------------------------------${CEND}"
-			echo ""
-			echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
-			read -r
 
-					tee <<-EOF
+			        1) ## Installation du motd
+			        clear
+			        echo ""
+			        motd
+			        pause
+			        script_plexdrive
+			        ;;
+
+			        2) ## Installation de traktarr
+			        clear
+			        echo ""
+			        traktarr
+			        pause
+			        script_plexdrive
+			        ;;
+
+			        3) ## Installation de Webtools
+			        clear
+			        echo ""
+			        webtools
+			        pause
+			        script_plexdrive
+			        ;;
+
+			        4) ## Installation de rtorrent-cleaner
+			        clear
+			        echo ""
+			        rtorrent-cleaner
+			        docker run -it --rm -v /home/$SEEDUSER/local/rutorrent:/home/$SEEDUSER/local/rutorrent -v /run/php:/run/php magicalex/rtorrent-cleaner
+			        pause
+			        script_plexdrive
+			        ;;
+
+			        5) ## Installation Plex_Patrol
+			        ansible-playbook /opt/seedbox-compose/includes/config/roles/plex_patrol/tasks/main.yml
+			        SEEDUSER=$(ls /opt/seedbox/media* | cut -d '-' -f2)
+			        DOMAIN=$(cat /home/$SEEDUSER/resume | tail -1 | cut -d. -f2-3)
+			        FQDNTMP="plex_patrol.$DOMAIN"
+			        echo "$FQDNTMP" >> /home/$SEEDUSER/resume
+			        cp "/opt/seedbox-compose/includes/config/roles/plex_patrol/tasks/main.yml" "$CONFDIR/conf/plex_patrol.yml" > /dev/null 2>&1
+    			        echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour revenir au menu principal..."
+    			        read -r
+			        script_plexdrive
+			        ;;
+
+			        6) ## Modèle création appli docker
+			        clear
+			        echo ""
+			        /opt/seedbox-compose/includes/config/scripts/docker_create.sh
+			        script_plexdrive
+			        ;;
+
+			        7) ## Installation du mailserver @Hardware
+			        if docker ps | grep -q mailserver; then
+			            echo -e "${BLUE}### DESINSTALLATION DU MAILSERVER ###${NC}"
+			            echo ""
+			            echo -e " ${BWHITE}* désinstallation mailserver @Hardware${NC}"
+			            docker rm -f mailserver postfixadmin mariadb redis rainloop > /dev/null 2>&1
+			            rm -rf /mnt/docker > /dev/null 2>&1
+			            checking_errors $?
+			            echo""
+			            echo -e "${BLUE}### Mailserver a été supprimé ###${NC}"
+			            echo ""
+			        else
+			            echo -e "${BLUE}### INSTALLATION DU MAILSERVER ###${NC}"
+			            echo ""
+			            echo -e " ${BWHITE}* Installation mailserver @Hardware${NC}"
+			            ansible-playbook /opt/seedbox-compose/includes/config/roles/mailserver/tasks/main.yml
+			            echo ""
+			            echo -e " ${CCYAN}* https://github.com/laster13/patxav/wiki/Configuration-Mailserver-@Hardware${NC}"
+			        fi
+			        pause
+			        script_plexdrive
+			        ;;
+
+				8)
+				script_plexdrive
+				;;
+			        esac
+                        ;;
+
+			3) ## Outils
+				clear
+				logo
+				echo ""
+				echo -e "${CCYAN}OUTILS${CEND}"
+				echo -e "${CGREEN}${CEND}"
+			        echo -e "${CGREEN}   1) Plex_autoscan${CEND}"
+			        echo -e "${CGREEN}   2) Autoscan (Nouvelle version de Plex_autoscan)${CEND}"
+			        echo -e "${CGREEN}   3) Cloudplow${CEND}"
+			        echo -e "${CGREEN}   4) Crop (Nouvelle version de Cloudplow)${CEND}"
+			        echo -e "${CGREEN}   5) Plex_dupefinder${CEND}"
+				echo -e "${CGREEN}   6) Retour menu principal${CEND}"
+
+				echo -e ""
+				read -p "Votre choix [1-6]: " OUTILS
+				case $OUTILS in
+
+			        1) ## Installation Plex_autoscan
+			        clear
+			        echo ""
+                                plex_autoscan
+			        pause
+			        script_plexdrive
+			        ;;
+
+			        2) ## Installation Autoscan
+			        clear
+			        echo ""
+		                ansible-playbook /opt/seedbox-compose/includes/config/roles/autoscan/tasks/main.yml
+			        pause
+			        script_plexdrive
+			        ;;
+
+			        3) ## Installation Cloudplow
+				        clear
+				        logo
+				        echo ""
+				        echo -e "${CCYAN}OUTILS${CEND}"
+				        echo -e "${CGREEN}${CEND}"
+			                echo -e "${CGREEN}   1) Cloudplow${CEND}"
+			                echo -e "${CGREEN}   2) Configuration Drive backup${CEND}"
+				        echo -e "${CGREEN}   3) Retour menu principal${CEND}"
+
+				        echo -e ""
+				        read -p "Votre choix [1-3]: " CLOUDPLOW
+				        case $CLOUDPLOW in
+
+                                           1) ## Cloudplow
+			                   clear
+			                   echo ""
+                                           cloudplow
+			                   pause
+			                   script_plexdrive
+                                           ;;
+
+                                           2) ## Configuration Drive backup
+			                   clear
+                                           echo "" 
+                                           echo -e "${CCYAN}----------------------------------------------------------------------------------------${CEND}"
+                                           echo -e "${CCYAN} 💬  Avant de poursuivre, veillez à ce que votre rclone.conf soit correctement configuré${CEND}"
+                                           echo -e "${CCYAN} 💬  Il doit contenir en tout 5 remotes et ressembler à la structure ci dessous         ${CEND}"
+                                           echo -e "${CCYAN} 💬  Sinon CTRL^C, préparer le rclone.conf et revenez ensuite sur ce menu               ${CEND}"
+                                           echo -e "${CCYAN}----------------------------------------------------------------------------------------${CEND}"
+                                           echo ""
+                                           echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+                                           read -r
+
+tee <<-EOF
 🚀 Cloudplow                           📓 Reference: https://github.com/laster13/patxav
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 [exemple]
@@ -684,103 +857,83 @@ password2 = PjV8d2CRzb6mPUWSGsIeqNw
 🚀 Cloudplow                           📓 Reference: https://github.com/laster13/patxav
 					EOF
 
-			echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer ou CTRL^C pour stopper..."
-			read -r
-			/opt/seedbox-compose/includes/config/scripts/syncdrive.sh
-			script_plexdrive
-			;;
+                                         echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer ou CTRL^C pour stopper..."
+                                         read -r
+                                         /opt/seedbox-compose/includes/config/scripts/syncdrive.sh
+                                         script_plexdrive
+                                         ;;
 
-			5) ## Installation du mailserver @Hardware
-			if docker ps | grep -q mailserver; then
-			    echo -e "${BLUE}### DESINSTALLATION DU MAILSERVER ###${NC}"
-			    echo ""
-			    echo -e " ${BWHITE}* désinstallation mailserver @Hardware${NC}"
-			    docker rm -f mailserver postfixadmin mariadb redis rainloop > /dev/null 2>&1
-			    rm -rf /mnt/docker > /dev/null 2>&1
-			    checking_errors $?
-			    echo""
-			    echo -e "${BLUE}### Mailserver a été supprimé ###${NC}"
-			    echo ""
-			else
-			    echo -e "${BLUE}### INSTALLATION DU MAILSERVER ###${NC}"
-			    echo ""
-			    echo -e " ${BWHITE}* Installation mailserver @Hardware${NC}"
-			    ansible-playbook /opt/seedbox-compose/includes/config/roles/mailserver/tasks/main.yml
-			    echo ""
-			    echo -e " ${CCYAN}* https://github.com/laster13/patxav/wiki/Configuration-Mailserver-@Hardware${NC}"
-			fi
-			pause
-			script_plexdrive
-			;;
+                                         3) ## Menu principal
+				         script_plexdrive
+				         ;;
+                                         esac
+                                ;;
 
-			6) ## Modèle création appli docker
-			clear
-			echo ""
-			/opt/seedbox-compose/includes/config/scripts/docker_create.sh
-			script_plexdrive
-			;;
+			        4) ## Installation Crop
+			        clear
+                                crop
+			        echo ""
+			        pause
+			        script_plexdrive
+			        ;;
 
-			7) ## Installation du motd
-			clear
-			echo ""
-			motd
-			pause
-			script_plexdrive
-			;;
+			        5) ## Installation plex_dupefinder
+			        clear
+                                plex_dupefinder
+			        echo ""
+			        pause
+			        script_plexdrive
+			        ;;
 
-			8) ## Installation de traktarr
-			clear
-			echo ""
-			traktarr
-			pause
-			script_plexdrive
-			;;
+				6)
+				script_plexdrive
+				;;
+                                esac
+                        ;;
 
-			9) ## Installation de Webtools
-			clear
-			echo ""
-			webtools
-			pause
-			script_plexdrive
-			;;
+			4) ## Comptes de Services
+				clear
+				logo
+				echo ""
+				echo -e "${CCYAN}COMPTES DE SERVICES${CEND}"
+				echo -e "${CGREEN}${CEND}"
+			        echo -e "${CGREEN}   1) Création des SA avec sa_gen${CEND}"
+			        echo -e "${CGREEN}   2) Création des SA avec safire${CEND}"
+				echo -e "${CGREEN}   3) Sasync - upload/copy/sync share drive/teamdrive${CEND}"
+				echo -e "${CGREEN}   4) Retour menu principal${CEND}"
+				echo -e ""
+				read -p "Votre choix [1-4]: " SERVICES
+				case $SERVICES in
 
-			10) ## Installation de rtorrent-cleaner
-			clear
-			echo ""
-			rtorrent-cleaner
-			docker run -it --rm -v /home/$SEEDUSER/local/rutorrent:/home/$SEEDUSER/local/rutorrent -v /run/php:/run/php magicalex/rtorrent-cleaner
-			pause
-			script_plexdrive
-			;;
+				1) ## Création des SA
+                                /opt/seedbox-compose/includes/config/scripts/sa-gen.sh
+			        script_plexdrive
+				;;
 
-			11) ## Installation Plex_Patrol
-			ansible-playbook /opt/seedbox-compose/includes/config/roles/plex_patrol/tasks/main.yml
-			SEEDUSER=$(ls /opt/seedbox/media* | cut -d '-' -f2)
-			DOMAIN=$(cat /home/$SEEDUSER/resume | tail -1 | cut -d. -f2-3)
-			FQDNTMP="plex_patrol.$DOMAIN"
-			echo "$FQDNTMP" >> /home/$SEEDUSER/resume
-			cp "/opt/seedbox-compose/includes/config/roles/plex_patrol/tasks/main.yml" "$CONFDIR/conf/plex_patrol.yml" > /dev/null 2>&1
-    			echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour revenir au menu principal..."
-    			read -r
-			script_classique
-			;;
+				2) ## Installation safire
+                                /opt/seedbox-compose/includes/config/scripts/safire.sh
+			        script_plexdrive
+				;;
 
-			12)
-                        /opt/seedbox-compose/includes/config/scripts/sa-gen.sh
-			script_plexdrive
-			;;
+				3) ## Installation sasync
+				sed -i '/chiffre/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                                remote=$(grep -iC 1 "type = drive" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
+                                sed -i "/remote/a \ \ \ chiffre: $remote" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                                /opt/seedbox-compose/includes/config/scripts/sasync.sh
+			        script_plexdrive
+				;;
 
-			13)
-			script_plexdrive
-			;;
-
-			esac
-		;;
-
+				4)
+				script_plexdrive
+				;;
+                                esac
+                        ;;
+                        esac
+                ;;
 		4)
 		exit
 		;;
-	esac
+	        esac
 	fi
 }
 
@@ -821,23 +974,6 @@ function install_traefik() {
 		echo -e " ${BWHITE}* Installation Traefik${NC}"
 		ansible-playbook /opt/seedbox-compose/includes/dockerapps/traefik.yml
 		checking_errors $?		
-	echo ""
-}
-
-function install_portainer() {
-	echo -e "${BLUE}### PORTAINER ###${NC}"
-	INSTALLEDFILE="/home/$SEEDUSER/resume"
-	if docker ps | grep -q portainer; then
-		echo -e " ${BWHITE}--> portainer est déjà installé !${NC}"
-		else
-		if (whiptail --title "Docker Portainer" --yesno "Voulez vous installer portainer" 7 50) then
-			echo -e " ${BWHITE}* Installation Portainer${NC}"
-			ansible-playbook /opt/seedbox-compose/includes/dockerapps/portainer.yml
-			checking_errors $?
-		else
-			echo -e " ${BWHITE}--> portainer n'est pas installé !${NC}"
-		fi
-	fi
 	echo ""
 }
 
@@ -901,11 +1037,17 @@ function install_rclone() {
         		fi
         	echo "$EXCLUDEPATH" >> /root/.config/rclone/rclone.conf
     		done
+		echo ""
+	else
+		echo -e " ${CCYAN}* rclone.conf est déjà configuré !${NC}"
+                sleep 2s
+
+	fi
 		sed -n -i '1h; 1!H; ${x; s/\n*$//; p}' /root/.config/rclone/rclone.conf > /dev/null 2>&1
 		echo ""
 
 		## Mise en variables des remotes
-		REMOTE=$(grep -iC 4 "token" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
+		REMOTE=$(grep -iC 1 "type = drive" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
 		REMOTEPLEX=$(grep -iC 2 "/mnt/plexdrive" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
 		REMOTECRYPT=$(grep -v -e $REMOTEPLEX -e $REMOTE /root/.config/rclone/rclone.conf | grep "\[" | sed "s/\[//g" | sed "s/\]//g" | head -n 1)
 		sed -i "s/remote:/remote: $REMOTECRYPT/" /opt/seedbox/variables/account.yml
@@ -914,19 +1056,12 @@ function install_rclone() {
 		ansible-playbook /opt/seedbox-compose/includes/config/roles/rclone/tasks/main.yml
 
 		clear
-		echo -e " ${BWHITE}* Remote chiffré rclone${NC} --> ${YELLOW}$REMOTECRYPT:${NC}"
+		echo -e " ${BWHITE}* Remote rclone${NC} --> ${YELLOW}$REMOTECRYPT:${NC}"
 		checking_errors $?
 		echo ""
-		echo -e " ${BWHITE}* Remote chiffré plexdrive${NC} --> ${YELLOW}$REMOTEPLEX:${NC}"
+		echo -e " ${BWHITE}* Remote plexdrive${NC} --> ${YELLOW}$REMOTEPLEX:${NC}"
 		checking_errors $?
-		#var="Montage rclone en cours, merci de patienter..."
-		#decompte 15
-		#checking_errors $?
-		echo ""
-	else
-		echo -e " ${YELLOW}* rclone est déjà installé !${NC}"
-	fi
-	echo ""
+	        echo ""
 }
 
 function unionfs_fuse() {
@@ -1212,7 +1347,7 @@ function install_services() {
 			cp "$BASEDIR/includes/dockerapps/$line.yml" "$CONFDIR/conf/$line.yml" > /dev/null 2>&1
 		fi
 
-		if [[ "$line" == "plex" ]] && [[ ! -d "/home/$SEEDUSER/scripts/plex_dupefinder" ]]; then
+		if [[ "$line" == "plex" ]]; then
 		plex_sections
 		fi
 
@@ -1391,19 +1526,7 @@ function plex_sections() {
 					echo -e "	${BWHITE}* $x ${NC}"
 				fi
 			done
-			echo ""
-
-			## Installation plex_autoscan et cloudplow si install plexdrive
-				## installation plex_autoscan
-				plex_autoscan
-				echo ""
-				## installation cloudplow
-				cloudplow	
-			fi
-
-			## installation plex_dupefinder
-			echo ""
-			plex_dupefinder
+                        fi
 }
 
 function manage_apps() {
@@ -1695,8 +1818,8 @@ echo ""
 					fi
 
 					;;
-			esac
-	esac
+			                esac
+	          esac
 }
 
 function resume_seedbox() {
@@ -1717,6 +1840,7 @@ function resume_seedbox() {
 	echo -e "	--> Password: ${YELLOW}$PASSE${NC}"
 	echo ""
 	rm -Rf $SERVICESPERUSER > /dev/null 2>&1
+	ansible-vault encrypt /opt/seedbox/variables/account.yml
 }
 
 function uninstall_seedbox() {
@@ -1734,6 +1858,9 @@ function uninstall_seedbox() {
 
 	USERHOMEDIR="/home/$SEEDUSER"
 	PLEXDRIVE="/usr/bin/plexdrive"
+        PLEXSCAN="$USERHOMEDIR/scripts/plex_autoscan/scan.py"
+        CLOUDPLOW="$USERHOMEDIR/scripts/cloudplow/cloudplow.py"
+        CROP="$USERHOMEDIR/scripts/crop/crop"
 
 	if [[ -e "$PLEXDRIVE" ]]; then
 		echo -e " ${BWHITE}* Suppression Plexdrive${NC}"
@@ -1743,12 +1870,14 @@ function uninstall_seedbox() {
 		rm -rf /root/.plexdrive > /dev/null 2>&1
 		rm /usr/bin/plexdrive > /dev/null 2>&1
 		checking_errors $?
-
+                
+                if [[ -e "$PLEXSCAN" ]]; then
 		echo -e " ${BWHITE}* Suppression plex_autoscan${NC}"
 		systemctl stop plex_autoscan.service > /dev/null 2>&1
 		systemctl disable plex_autoscan.service > /dev/null 2>&1
 		rm /etc/systemd/system/plex_autoscan.service > /dev/null 2>&1
 		checking_errors $?
+                fi
 
 		echo -e " ${BWHITE}* Suppression rclone${NC}"
 		systemctl stop rclone.service > /dev/null 2>&1
@@ -1759,11 +1888,33 @@ function uninstall_seedbox() {
 		rm -rf /root/.config/rclone > /dev/null 2>&1
 		checking_errors $?
 
+                if [[ -e "$CLOUDPLOW" ]]; then
 		echo -e " ${BWHITE}* Suppression cloudplow${NC}"
 		systemctl stop cloudplow.service > /dev/null 2>&1
 		systemctl disable cloudplow.service > /dev/null 2>&1
 		rm /etc/systemd/system/cloudplow.service > /dev/null 2>&1
 		checking_errors $?
+                fi
+
+                if [[ -e "$CROP" ]]; then
+		echo -e " ${BWHITE}* Suppression cloudplow${NC}"
+		systemctl stop crop_upload.service > /dev/null 2>&1
+		systemctl stop crop_sync.service > /dev/null 2>&1
+		systemctl stop crop_upload.timer > /dev/null 2>&1
+		systemctl stop crop_sync.timer > /dev/null 2>&1
+
+		systemctl disable crop_upload.service > /dev/null 2>&1
+		systemctl disable crop_sync.service > /dev/null 2>&1
+		systemctl disable crop_upload.timer > /dev/null 2>&1
+		systemctl disable crop_sync.service > /dev/null 2>&1
+
+		rm /etc/systemd/system/crop_upload.service > /dev/null 2>&1
+		rm /etc/systemd/system/crop_sync.service > /dev/null 2>&1
+		rm /etc/systemd/system/crop_upload.timer > /dev/null 2>&1
+		rm /etc/systemd/system/crop_sync.timer > /dev/null 2>&1
+
+		checking_errors $?
+                fi
 
 		echo -e " ${BWHITE}* Suppression unionfs/mergerfs${NC}"
 		service unionfs stop > /dev/null 2>&1
@@ -1798,7 +1949,6 @@ function uninstall_seedbox() {
 	rm -Rf $CONFDIR
 	checking_errors $?
 	pause
-	ansible-vault encrypt /opt/seedbox/variables/account.yml
 }
 
 function pause() {

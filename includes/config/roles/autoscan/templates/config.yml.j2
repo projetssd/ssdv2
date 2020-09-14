@@ -1,0 +1,40 @@
+# override the minimum age to 30 minutes:
+minimum-age: 5m
+
+port: 3030
+
+anchors:
+  - /home/{{user.name}}/Medias/drive1.anchor
+
+triggers:
+  sonarr:
+    - name: sonarr-docker
+      priority: 0
+
+      rewrite:
+        - from: /home/{{user.name}}/Medias/Series/*
+          to: /home/{{user.name}}/Medias/Series/$1
+
+  radarr:
+    - name: radarr-docker
+      priority: 1
+
+      rewrite:
+        - from: /home/{{user.name}}/Medias/Films/*
+          to: /home/{{user.name}}/Medias/Films/$1
+
+  lidarr:
+    - name: lidarr-docker
+      priority: 2
+
+      rewrite:
+        - from: /home/{{user.name}}/Medias/Musiques/*
+          to: /home/{{user.name}}/Medias/Musiques/$1
+
+targets:
+  plex:
+    - url: https://plex.{{user.domain}}
+      token: {{plex.token}}
+      rewrite:
+        - from: /home/{{user.name}}/Medias/*
+          to: /data/$1

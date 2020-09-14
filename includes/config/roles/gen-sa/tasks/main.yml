@@ -18,9 +18,3 @@
       template:
         src: /opt/seedbox-compose/includes/config/roles/gen-sa/templates/sa-gen.j2
         dest: /opt/gen-sa/sa-gen
-
-    - name: Import default config
-      template:
-        src: /opt/seedbox-compose/includes/config/roles/gen-sa/templates/sasync.conf.j2
-        dest: /opt/sasync/sasync.conf
-        mode: 0644
