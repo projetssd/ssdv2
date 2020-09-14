@@ -12,12 +12,12 @@
 
     - name: Check if drive1.anchor exists
       stat:
-        path: "/home/yohann/Medias/drive1.anchor"
+        path: "/home/{{user.name}}/Medias/drive1.anchor"
       register: anchor_service
 
     - name: delete plex_autoscan folder
       shell: |
-        touch /home/yohann/Medias/drive1.anchor
+        touch /home/{{user.name}}/Medias/drive1.anchor
       when: not anchor_service.stat.exists
 
     - name: Service Tasks
