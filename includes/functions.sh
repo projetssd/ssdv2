@@ -556,9 +556,10 @@ function script_plexdrive() {
 			echo -e "${CGREEN}   2) Utilitaires${CEND}"
 			echo -e "${CGREEN}   3) Outils (autoscan, crop, cloudplow etc..)${CEND}"
 			echo -e "${CGREEN}   4) Comptes de Service${CEND}"
-			echo -e "${CGREEN}   5) Retour menu principal${CEND}"
+			echo -e "${CGREEN}   5) Migration drive classique teamdrive/share drive${CEND}"
+			echo -e "${CGREEN}   6) Retour menu principal${CEND}"
 			echo -e ""
-			read -p "Votre choix [1-5]: " GESTION
+			read -p "Votre choix [1-6]: " GESTION
 
 			case $GESTION in
 
@@ -899,37 +900,39 @@ password2 = PjV8d2CRzb6mPUWSGsIeqNw
 				echo -e "${CGREEN}${CEND}"
 			        echo -e "${CGREEN}   1) Création des SA avec sa_gen${CEND}"
 			        echo -e "${CGREEN}   2) Création des SA avec safire${CEND}"
-				echo -e "${CGREEN}   3) Sasync - upload/copy/sync share drive/teamdrive${CEND}"
-				echo -e "${CGREEN}   4) Retour menu principal${CEND}"
+				echo -e "${CGREEN}   3) Retour menu principal${CEND}"
 				echo -e ""
-				read -p "Votre choix [1-4]: " SERVICES
+				read -p "Votre choix [1-3]: " SERVICES
 				case $SERVICES in
 
-				1) ## Création des SA
+				1) ## Création des SA avec gen-sa
                                 /opt/seedbox-compose/includes/config/scripts/sa-gen.sh
 			        script_plexdrive
 				;;
 
-				2) ## Installation safire
+				2) ## Creation des SA avec safire
                                 /opt/seedbox-compose/includes/config/scripts/safire.sh
 			        script_plexdrive
 				;;
 
-				3) ## Installation sasync
-				sed -i '/chiffre/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
-                                remote=$(grep -iC 1 "type = drive" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
-                                sed -i "/remote/a \ \ \ chiffre: $remote" /opt/seedbox/variables/account.yml > /dev/null 2>&1
-                                /opt/seedbox-compose/includes/config/scripts/sasync.sh
-			        script_plexdrive
-				;;
-
-				4)
+				3)
 				script_plexdrive
 				;;
                                 esac
-                        ;;
-                        esac
-                ;;
+                       ;;
+
+                       5) ## Migration my drive --> teamdrive /share drive
+                             /opt/seedbox-compose/includes/config/scripts/sasync.sh
+                             pause
+			     script_plexdrive
+                             ;;      
+
+                       6) ## retour menu principal
+                             script_plexdrive
+		             ;;
+                             esac            
+                       ;;
+                
 		4)
 		exit
 		;;

@@ -10,7 +10,7 @@ FILTER="$SASDIR/filter"           # Location of your default filter file
 IFS1=$' \t\n'                     # Field separator for set file. Use ',' or '|' if you do not use space
 
 # Flags to control sasync checks and options
-CHECK_REMOTES=true                # Check if remotes are configured in rclone. Faster if set to false
+CHECK_REMOTES=false                # Check if remotes are configured in rclone. Faster if set to false
 CALC_SIZE=false                   # Runs check size ; MUST set to true if using DIFF_LIMIT
 DIFF_LIMIT=90                     # Needs CALC_SIZE=true to work. If src/dest size -le DIFF_LIMIT % then skip pair (def=0, int)
 FILE_COMPARE=false                # Runs hash check against files

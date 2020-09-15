@@ -114,12 +114,10 @@
         chdir: /home/{{user.name}}/scripts/
 
     - name: install gclone latest
-      shell: |
-        wget -P /usr/local/bin https://transfer.cloudbox.media/lJHPE/rclone_gclone_v1.54.0-DEV_1
-        mv rclone_gclone_v1.52.3-DEV_1 gclone
-        chmod +x gclone
-      args:
-        chdir: /usr/local/bin/
+      get_url:
+        url: https://transfer.cloudbox.media/lJHPE/rclone_gclone_v1.54.0-DEV_1
+        dest: /usr/local/bin/gclone
+        mode: 0755
 
     - name: Import default config
       template:
