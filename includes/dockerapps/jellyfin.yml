@@ -1,20 +1,64 @@
 #!/bin/bash
-#
-# Title:      PGBlitz (Reference Title File)
-# Author(s):  Admin9705
-# URL:        https://pgblitz.com - http://github.pgblitz.com
-# GNU:        General Public License v3.0
-################################################################################
+
 ---
 - hosts: localhost
   gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
   tasks:
-  
-    # VARIABLES ############################################################
-    - name: 'Including variables'
-      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
-      
+        
     # FACTS #######################################################################
+    - name: Checking for existing app data
+      stat:
+        path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
+      register: check
+
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
+            (cloudflare.login is undefined)
+            or
+            (cloudflare.login is none)
+            or
+            (cloudflare.login | trim | length == 0)
+            or
+            (cloudflare.api is undefined)
+            or
+            (cloudflare.api is none)
+            or
+            (cloudflare.api | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Variables | Set 'oauth_enabled' variable"
+      set_fact:
+        oauth_enabled: "{{ true if not(
+            (oauth.client is undefined)
+            or
+            (oauth.client is none)
+            or
+            (oauth.client | trim | length == 0)
+            or
+            (oauth.secret is undefined)
+            or
+            (oauth.secret is none)
+            or
+            (oauth.secret | trim | length == 0)
+            or
+            (oauth.account is undefined)
+            or
+            (oauth.account is none)
+            or
+            (oauth.account | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: jellyfin
+      when: cloudflare_enabled
+
     - name: 'Set Known Facts'
       set_fact:
         pgrole: 'jellyfin'
@@ -23,13 +67,13 @@
         image: 'jellyfin/jellyfin:latest'
 
     - name: Creating paths
-      file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
       with_items:
-        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}'
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
 
     - name: 'XML Check'
       stat:
-        path: /opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/config/system.xml
+        path: /opt/seedbox/docker/{{user.name}}/{{pgrole}}/config/system.xml
       register: xmlcheck
 
     # LABELS ######################################################################
@@ -37,41 +81,45 @@
       set_fact:
         pg_labels:
           traefik.enable: 'true'
-          traefik.port: '{{intport}}'
-          traefik.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
-          traefik.frontend.headers.SSLHost: '{{domain.stdout}}'
-          traefik.frontend.headers.SSLRedirect: 'true'
-          traefik.frontend.headers.STSIncludeSubdomains: 'true'
-          traefik.frontend.headers.STSPreload: 'true'
-          traefik.frontend.headers.STSSeconds: '315360000'
-          traefik.frontend.headers.browserXSSFilter: 'true'
-          traefik.frontend.headers.contentTypeNosniff: 'true'
-          traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
-          traefik.frontend.headers.forceSTSHeader: 'true'
+          ## HTTP Routers
+          traefik.http.routers.jellyfin-rtr.entrypoints: 'https'
+          traefik.http.routers.jellyfin-rtr.rule: 'Host(`jellyfin.{{user.domain}}`)'
+          traefik.http.routers.jellyfin-rtr.tls: 'true'
+          ## Middlewares
+          traefik.http.routers.jellyfin-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          ## HTTP Services
+          traefik.http.routers.jellyfin-rtr.service: 'jellyfin-svc'
+          traefik.http.services.jellyfin-svc.loadbalancer.server.port: '8096'
 
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
           - '/etc/localtime:/etc/localtime:ro'
-          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}:/config'
-          - '/home/{{user.stdout}}/Medias:/home/{{user.stdout}}/Medias'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}:/config'
+          - '/home/{{user.name}}/Medias:/home/{{user.name}}/Medias'
           - '/var/run/docker.sock:/var/run/docker.sock'
 
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
-          GIDLIST: '{{groupid.stdout}}'
-          PUID: '{{userid.stdout}}'
-          PGID: '{{groupid.stdout}}'
+          GIDLIST: '{{user.groupid}}'
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
 
     # MAIN DEPLOYMENT #############################################################
+
+    - name: 'Check'
+      stat:
+        path: '/dev/dri'
+      register: dev_dri
 
     - name: 'Deploying {{pgrole}}'
       docker_container:
         name: '{{pgrole}}'
         image: '{{image}}'
         pull: yes
-        user: {{userid.stdout}}:{{groupid.stdout}}
+        user: '{{user.userid}}:{{user.groupid}}'
+        devices: "{{ '/dev/dri:/dev/dri' if dev_dri.stat.exists == True | default(false) else omit }}"
         volumes: '{{pg_volumes}}'
         env: '{{pg_env}}'
         restart_policy: unless-stopped
@@ -87,7 +135,7 @@
 
       - name: 'Pending XML Generation'
         wait_for:
-          path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/config/system.xml'
+          path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config/system.xml'
           state: present
 
       - name: 'Wait 5 Seconds'
@@ -101,7 +149,7 @@
 
       - name: 'Turn Off Reporting'
         xml:
-          path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/config/system.xml'
+          path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config/system.xml'
           xpath: /ServerConfiguration/EnableAnonymousUsageReporting
           value: 'false'
 

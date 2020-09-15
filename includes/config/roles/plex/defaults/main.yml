@@ -1,0 +1,89 @@
+##########################################################################
+# Title:         Cloudbox: Plex | Default Variables                      #
+# Author(s):     desimaniac                                              #
+# URL:           https://github.com/cloudbox/cloudbox                    #
+# --                                                                     #
+#         Part of the Cloudbox project: https://cloudbox.works           #
+##########################################################################
+#                   GNU General Public License v3.0                      #
+##########################################################################
+---
+################################
+# Folders
+################################
+
+plex_folders:
+  - "/opt/seedbox/docker/{{ user.name }}/plex"
+  - "/opt/seedbox/docker/{{ user.name }}/plex/config"
+  - "/opt/seedbox/docker/{{ user.name }}/plex/config/Library"
+  - "/opt/seedbox/docker/{{ user.name }}/plex/config/Library/Application Support"
+  - "/opt/seedbox/docker/{{ user.name }}/plex/config/Library/Application Support/Plex Media Server"
+  - "/opt/seedbox/docker/{{ user.name }}/plex/config/Library/Application Support/Plex Media Server/Plug-ins"
+  - "/opt/seedbox/docker/{{ user.name }}/plex/config/Library/Logs"
+  - "/opt/seedbox/docker/{{ user.name }}/plex/config/Library/Logs/Plex Media Server"
+  - "{{ plex.transcodes }}/plex"
+
+################################
+# Docker Image
+################################
+
+plex_docker_image: "plexinc/pms-docker"
+
+################################
+# Docker Ports
+################################
+
+plex_main_ports:
+  - "32400:32400/tcp"
+
+plex_extra_ports:
+  - "3005:3005/tcp"
+  - "8324:8324/tcp"
+  - "32469:32469/tcp"
+  - "1900:1900/udp"
+  - "32410:32410/udp"
+  - "32412:32412/udp"
+  - "32413:32413/udp"
+  - "32414:32414/udp"
+
+web_tools_ports:
+  - "33400:33400/tcp"
+  - "33443:33443/tcp"
+
+plex_docker_ports: "{{ (web_tools_ports + plex_main_ports) if (plex.open_main_ports and not plex.open_extra_ports)
+  else (web_tools_ports + plex_main_ports + plex_extra_ports) if (plex.open_main_ports and plex.open_extra_ports)
+  else (web_tools_ports + plex_extra_ports) if (not plex.open_main_ports and plex.open_extra_ports)
+  else web_tools_ports }}"
+
+################################
+# Docker Volumes
+################################
+
+plex_docker_volumes:
+  - "/etc/localtime:/etc/localtime:ro"
+  - '/home/{{user.name}}:/home/{{user.name}}'
+  - '/home/{{user.name}}/Medias:/data'
+  - '/opt/seedbox/docker/{{user.name}}/plex/config:/config'
+  - "/tmp:/tmp"
+  - "/dev/shm:/dev/shm"
+  - "{{ plex.transcodes }}/plex:/transcode"
+
+################################
+# Docker Hosts
+################################
+
+localhost_ip: "127.0.0.1"
+
+lazyman_ip: "{{ ( lookup('dig', 'nhl.freegamez.ga', '@8.8.8.8', 'qtype=A') | ipv4 ) | default(false,true) }}"
+
+plex_default_hosts:
+  "metric.plex.tv": "{{ localhost_ip }}"
+  "metrics.plex.tv": "{{ localhost_ip }}"
+  "analytics.plex.tv": "{{ localhost_ip }}"
+
+plex_custom_hosts:
+  "mf.svc.nhl.com": "{{ lazyman_ip | ternary(lazyman_ip, omit) }}"
+  "mlb-ws-mf.media.mlb.com": "{{ lazyman_ip | ternary(lazyman_ip, omit) }}"
+  "playback.svcs.mlb.com": "{{ lazyman_ip | ternary(lazyman_ip, omit) }}"
+
+plex_docker_hosts: "{{ plex_default_hosts | combine(plex_custom_hosts) }}"

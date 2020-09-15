@@ -3,9 +3,9 @@
 docker run -it --rm \
    -v /home/%SEEDUSER%/local/rutorrent:/home/%SEEDUSER%/local/rutorrent \
    -v /run/php:/run/php \
-   magicalex/docker-rtorrent-cleaner
+   magicalex/rtorrent-cleaner
 echo ""
 docker run -it --rm \
    -v /home/%SEEDUSER%/local/rutorrent:/home/%SEEDUSER%/local/rutorrent \
    -v /run/php:/run/php \
-   magicalex/docker-rtorrent-cleaner --scgi=/run/php/.rtorrent.sock $*
+   magicalex/rtorrent-cleaner $*

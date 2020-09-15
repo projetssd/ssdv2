@@ -1,0 +1,11 @@
+[DEFAULT]
+ignoreip = 127.0.0.1 {{ ansible_env['SSH_CLIENT'].split() | first }}
+findtime = 3600
+bantime = 600
+
+[sshd]
+enabled = true
+port = {{ ansible_env['SSH_CLIENT'].split() | last }}
+logpath = /var/log/auth.log
+banaction = iptables-multiport
+maxretry = 5

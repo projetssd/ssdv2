@@ -5,11 +5,11 @@ Description=Plex Autoscan
 After=network-online.target
 
 [Service]
-User={{userid.stdout}}
-Group={{groupid.stdout}}
+User={{user.userid}}
+Group={{user.groupid}}
 Type=simple
-WorkingDirectory=/home/{{user.stdout}}/scripts/plex_autoscan/
-ExecStart=/home/{{user.stdout}}/scripts/plex_autoscan/scan.py server --loglevel=INFO
+WorkingDirectory=/home/{{user.name}}/scripts/plex_autoscan/
+ExecStart=/home/{{user.name}}/scripts/plex_autoscan/scan.py server --loglevel=INFO
 Restart=always
 RestartSec=10
 

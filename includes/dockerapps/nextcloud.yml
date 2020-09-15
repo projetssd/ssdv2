@@ -1,20 +1,64 @@
 #!/bin/bash
-#
-# Title:      PGBlitz (Reference Title File)
-# Author(s):  Admin9705
-# URL:        https://pgblitz.com - http://github.pgblitz.com
-# GNU:        General Public License v3.0
-################################################################################
+
 ---
 - hosts: localhost
   gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
   tasks:
-  
-    # VARIABLES ############################################################
-    - name: 'Including variables'
-      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
-      
+        
     # FACTS #######################################################################
+    - name: Checking for existing app data
+      stat:
+        path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
+      register: check
+
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
+            (cloudflare.login is undefined)
+            or
+            (cloudflare.login is none)
+            or
+            (cloudflare.login | trim | length == 0)
+            or
+            (cloudflare.api is undefined)
+            or
+            (cloudflare.api is none)
+            or
+            (cloudflare.api | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Variables | Set 'oauth_enabled' variable"
+      set_fact:
+        oauth_enabled: "{{ true if not(
+            (oauth.client is undefined)
+            or
+            (oauth.client is none)
+            or
+            (oauth.client | trim | length == 0)
+            or
+            (oauth.secret is undefined)
+            or
+            (oauth.secret is none)
+            or
+            (oauth.secret | trim | length == 0)
+            or
+            (oauth.account is undefined)
+            or
+            (oauth.account is none)
+            or
+            (oauth.account | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: nextcloud
+      when: cloudflare_enabled
+
     - name: 'Set Known Facts'
       set_fact:
         pgrole: 'nextcloud'
@@ -22,57 +66,219 @@
         extport: '4645'
         image: 'linuxserver/nextcloud'
 
+    - name: Create seafile-net network
+      docker_network:
+        name: nextcloud-net
+        state: present
+
     - name: Creating paths
-      file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
       with_items:
-        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}'
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
 
     # LABELS ######################################################################
     - name: 'Adding Traefik'
       set_fact:
         pg_labels:
-          traefik.protocol: 'https'
           traefik.enable: 'true'
-          traefik.https.port: '443'
-          traefik.https.frontend.entryPoints: 'https'
-          traefik.https.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
-          traefik.frontend.headers.SSLHost: '{{domain.stdout}}'
-          traefik.frontend.headers.SSLRedirect: 'true'
-          traefik.frontend.headers.STSIncludeSubdomains: 'true'
-          traefik.frontend.headers.STSPreload: 'true'
-          traefik.frontend.headers.STSSeconds: '315360000'
-          traefik.frontend.headers.browserXSSFilter: 'true'
-          traefik.frontend.headers.contentTypeNosniff: 'true'
-          traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
-          traefik.frontend.headers.forceSTSHeader: 'true'
+          ## TCP Routers
+          traefik.tcp.routers.nextcloud-tcp.entrypoints: 'https'
+          traefik.tcp.routers.nextcloud-tcp.rule: 'HostSNI(`nextcloud.{{user.domain}}`)'
+          traefik.tcp.routers.nextcloud-tcp.tls: 'true'
+          traefik.tcp.routers.nextcloud-tcp.tls.passthrough: 'true'
+          ## Middlewares
+          #traefik.http.routers.nextcloud-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          ## HTTP Services
+          traefik.tcp.routers.nextcloud-tcp.service: 'nextcloud-tcp-svc'
+          traefik.tcp.services.nextcloud-tcp-svc.loadbalancer.server.port: '443'
+
+    - name: 'Deploying db-nextcloud'
+      docker_container:
+        name: 'db-nextcloud'
+        recreate: true
+        image: 'linuxserver/mariadb'
+        pull: yes
+        volumes:
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/db-nextcloud:/config'
+          - '/etc/localtime:/etc/localtime:ro'
+        env:
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
+          MYSQL_ROOT_PASSWORD: 'nextcloud'
+          MYSQL_PASSWORD: 'nextcloud'
+          MYSQL_DATABASE: 'nextcloud'
+          MYSQL_USER: 'nextcloud'
+
+        restart_policy: unless-stopped
+        networks:
+          - name: nextcloud-net
+        state: started
+
+    - name: Wait for 10 seconds before continuing
+      wait_for:
+        timeout: 10
 
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
           - '/etc/localtime:/etc/localtime:ro'
-          - '/opt/seedbox/docker/{{user.stdout}}/nextcloud/data:/data'
-          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/conf:/config'
-          - '/home/{{user.stdout}}:/home/{{user.stdout}}'
+          - '/opt/seedbox/docker/{{user.name}}/nextcloud/data:/data'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/conf:/config'
+          - '/home/{{user.name}}:/home/{{user.name}}'
 
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
-          PUID: '{{userid.stdout}}'
-          PGID: '{{groupid.stdout}}'
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
+          MYSQL_ROOT_PASSWORD: 'nextcloud'
+          MYSQL_PASSWORD: 'nextcloud'
+          MYSQL_DATABASE: 'nextcloud'
+          MYSQL_USER: 'nextcloud'
 
     - name: Create and start nextcloud container
       docker_container:
         name: nextcloud
         image: 'linuxserver/nextcloud'
         pull: yes
-        published_ports:
-          - '127.0.0.1:4645:443'
         env:
-          PUID: '{{userid.stdout}}'
-          PGID: '{{groupid.stdout}}'
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
         volumes: '{{pg_volumes}}'
+        networks:
+          - name: traefik_proxy
+          - name: nextcloud-net
+        restart_policy: unless-stopped
+        state: started
+        labels: '{{pg_labels}}'
+
+######################### Coturn #############################################################
+
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
+      with_items:
+        - '/opt/seedbox/docker/{{user.name}}/coturn'
+
+    - name: 'SECRET'
+      shell: | 
+        openssl rand -hex 16
+      register: secret
+
+    - name: Get Public IP Address
+      shell: dig -4 TXT +short o-o.myaddr.l.google.com @ns1.google.com | awk -F'\"' '{ print $2}'
+      register: public_ip_lookup
+
+    - name: 'Setting PG Volumes'
+      set_fact:
+        coturn_volumes:
+          - '/opt/seedbox/docker/{{user.name}}/coturn:/var/lib/coturn'
+
+    - name: Import default config
+      template:
+        src: /opt/seedbox-compose/includes/dockerapps/templates/nextcloud/turnserver.conf.j2
+        dest: /opt/seedbox/docker/{{user.name}}/coturn/turnserver.conf
+        force: yes
+
+    - name: Create and start coturn container
+      docker_container:
+        name: coturn
+        hostname: coturn
+        image: 'woahbase/alpine-coturn'
+        pull: yes
+        env:
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
+        volumes: '{{coturn_volumes}}'
+        network_mode: host
+        restart_policy: unless-stopped
+        state: started
+
+####################### Collabora #############################################################
+
+    - name: 'domain'
+      shell: | 
+        cat /home/{{user.name}}/resume | tail -1 | cut -d. -f2
+      register: domain
+
+    - name: 'domain'
+      debug:
+        msg: '{{ domain.stdout }}'
+
+    - name: 'com'
+      shell: | 
+        cat /home/{{user.name}}/resume | tail -1 | cut -d. -f3
+      register: com
+
+    - name: 'com'
+      debug:
+        msg: '{{ com.stdout }}'
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: collabora
+      when: cloudflare_enabled
+
+    - name: 'Adding Traefik'
+      set_fact:
+        co_labels:
+          traefik.enable: 'true'
+          traefik.http.routers.collabora-rtr.entrypoints: 'https'
+          traefik.http.routers.collabora-rtr.rule: 'Host(`collabora.{{user.domain}}`)'
+          traefik.http.routers.collabora-rtr.tls: 'true'
+          ## Middlewares
+          #traefik.http.routers.collabora-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          ## HTTP Services
+          traefik.http.routers.collabora-rtr.service: 'collabora-svc'
+          traefik.http.services.collabora-svc.loadbalancer.server.port: '9980'
+
+    - name: Create and start Collabora container
+      docker_container:
+        name: collabora
+        image: 'collabora/code'
+        pull: yes
+        env:
+          extra_params: '--o:ssl.enable=false --o:ssl.termination=true'
+          domain: 'nextcloud\\.{{domain.stdout}}\\.{{com.stdout}}'
+          username: '{{user.name}}'
+          password: '{{user.pass}}'
+          DONT_GEN_SSL_CERT: 'true'
         networks:
           - name: traefik_proxy
         restart_policy: unless-stopped
         state: started
-        labels: '{{pg_labels}}'
+        labels: '{{co_labels}}'
+
+#####################OnllyOffice###############################################################
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: office
+      when: cloudflare_enabled
+
+    - name: 'Adding Traefik'
+      set_fact:
+        off_labels:
+          traefik.enable: 'true'
+          traefik.http.routers.office-rtr.entrypoints: 'https'
+          traefik.http.routers.office-rtr.rule: 'Host(`office.{{user.domain}}`)'
+          traefik.http.routers.office-rtr.tls: 'true'
+          traefik.http.routers.office-rtr.service: 'office-svc'
+          traefik.http.services.office-svc.loadbalancer.server.port: '80'
+          traefik.http.services.office-svc.loadbalancer.passhostheader: 'true'
+          traefik.http.routers.office-rtr.middlewares: 'office-sslheaders'
+          traefik.http.middlewares.office-sslheaders.headers.customrequestheaders.X-Forwarded-Proto: 'https'
+
+    - name: Create and start office container
+      docker_container:
+        name: office
+        image: 'onlyoffice/documentserver:latest'
+        pull: yes
+        interactive: True
+        tty: true
+        networks:
+          - name: traefik_proxy
+        restart_policy: unless-stopped
+        state: started
+        labels: '{{off_labels}}'

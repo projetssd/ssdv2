@@ -20,8 +20,8 @@ ExecStart=/usr/bin/mergerfs \
   -o category.create=ff,async_read=false,cache.files=partial \
   -o dropcacheonclose=true,use_ino,minfreespace=0 \
   -o xattr=nosys,statfs_ignore=ro,allow_other,umask=002,noatime \
-  /home/{{ user.stdout }}/local=RW:/mnt/rclone/{{ user.stdout }}=NC /home/{{ user.stdout }}/Medias
-ExecStop=/bin/fusermount -u /home/{{ user.stdout }}/Medias
+  /home/{{ user.name }}/local=RW:/mnt/rclone/{{ user.name }}=NC /home/{{ user.name }}/Medias
+ExecStop=/bin/fusermount -u /home/{{ user.name }}/Medias
 
 [Install]
 WantedBy=default.target

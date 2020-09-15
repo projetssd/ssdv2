@@ -1,0 +1,14 @@
+---
+- hosts: localhost
+  gather_facts: true
+  vars_prompt:
+    - name: "ssh"
+      prompt: "Choisir un port ssh"
+      private: no
+  vars_files:
+    - defaults/main.yml
+  roles:
+    - geerlingguy.security
+  tasks:
+    - name: Set SSH variable
+      shell: echo "{{ security_ssh_port }}" > /opt/seedbox/variables/ssh

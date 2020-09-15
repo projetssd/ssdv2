@@ -1,76 +1,117 @@
 #!/bin/bash
-#
-# Title:      PGBlitz (Reference Title File)
-# Author(s):  Admin9705
-# URL:        https://pgblitz.com - http://github.pgblitz.com
-# GNU:        General Public License v3.0
-################################################################################
+
 ---
 - hosts: localhost
   gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
   tasks:
-  
-    # VARIABLES ############################################################
-    - name: 'Including variables'
-      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
-      
+        
     # FACTS #######################################################################
+    - name: Checking for existing app data
+      stat:
+        path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
+      register: check
+
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
+            (cloudflare.login is undefined)
+            or
+            (cloudflare.login is none)
+            or
+            (cloudflare.login | trim | length == 0)
+            or
+            (cloudflare.api is undefined)
+            or
+            (cloudflare.api is none)
+            or
+            (cloudflare.api | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Variables | Set 'oauth_enabled' variable"
+      set_fact:
+        oauth_enabled: "{{ true if not(
+            (oauth.client is undefined)
+            or
+            (oauth.client is none)
+            or
+            (oauth.client | trim | length == 0)
+            or
+            (oauth.secret is undefined)
+            or
+            (oauth.secret is none)
+            or
+            (oauth.secret | trim | length == 0)
+            or
+            (oauth.account is undefined)
+            or
+            (oauth.account is none)
+            or
+            (oauth.account | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: ombi
+      when: cloudflare_enabled
+
     - name: 'Set Known Facts'
       set_fact:
         pgrole: 'ombi'
         intport: '3579'
         image: 'linuxserver/ombi'
 
-    # PRETASKS ####################################################################
-    - name: Creating scripts and plugins paths
-      file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
       with_items:
-        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}'
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
 
     - name: Check JSON exists
       stat:
-        path: '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/appsettings.json'
+        path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/appsettings.json'
       register: jsonfile
 
     - name: 'Download {{pgrole}} appsettings.json config file'
       get_url:
         url: https://raw.githubusercontent.com/tidusjar/Ombi/master/src/Ombi/appsettings.json
-        dest: /opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/appsettings.json
-        owner: '{{userid.stdout}}'
-        group: '{{groupid.stdout}}'
+        dest: /opt/seedbox/docker/{{user.name}}/{{pgrole}}/appsettings.json
+        owner: '{{user.userid}}'
+        group: '{{user.groupid}}'
         force: no
       ignore_errors: True
       when: jsonfile.stat.exists == False
 
     # LABELS ######################################################################
-    - name: 'Adding Traefik'
+    - name: 'Ajout label traefik'
       set_fact:
         pg_labels:
           traefik.enable: 'true'
-          traefik.port: '{{intport}}'
-          traefik.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
-          traefik.frontend.headers.SSLHost: '{{domain.stdout}}'
-          traefik.frontend.headers.SSLRedirect: 'true'
-          traefik.frontend.headers.STSIncludeSubdomains: 'true'
-          traefik.frontend.headers.STSPreload: 'true'
-          traefik.frontend.headers.STSSeconds: '315360000'
-          traefik.frontend.headers.browserXSSFilter: 'true'
-          traefik.frontend.headers.contentTypeNosniff: 'true'
-          traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
-          traefik.frontend.headers.forceSTSHeader: 'true'
+          ## HTTP Routers
+          traefik.http.routers.ombi-rtr.entrypoints: 'https'
+          traefik.http.routers.ombi-rtr.rule: 'Host(`ombi.{{user.domain}}`)'
+          traefik.http.routers.ombi-rtr.tls: 'true'
+          ## Middlewares
+          #traefik.http.routers.ombi-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          ## HTTP Services
+          traefik.http.routers.ombi-rtr.service: 'ombi-svc'
+          traefik.http.services.ombi-svc.loadbalancer.server.port: '3579'
 
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
-          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}:/config'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}:/config'
           - '/etc/localtime:/etc/localtime:ro'
-          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/appsettings.json:/opt/{{pgrole}}/appsettings.json'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/appsettings.json:/opt/{{pgrole}}/appsettings.json'
 
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
-          PUID: '{{userid.stdout}}'
-          PGID: '{{groupid.stdout}}'
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
 
     # MAIN DEPLOYMENT #############################################################
 

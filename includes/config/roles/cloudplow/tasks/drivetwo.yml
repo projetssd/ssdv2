@@ -1,0 +1,30 @@
+---
+
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
+  tasks:
+
+    - name: Check cloudplow service exists
+      stat:
+        path: "/etc/systemd/system/cloudplow.service"
+      register: cloudplow_service
+
+    - name: Stop existing cloudplow service
+      systemd: state=stopped name=cloudplow
+      when: cloudplow_service.stat.exists
+
+    - name: Stop existing cloudplow service
+      shell: rm /home/{{user.name}}/scripts/cloudplow/config.json
+      when: cloudplow_service.stat.exists
+
+    - name: Import default config
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/cloudplow/templates/config-drive.json.j2
+        dest: /home/{{user.name}}/scripts/cloudplow/config.json
+
+    - name: Start cloudplow service
+      systemd: state=started name=cloudplow daemon_reload=yes enabled=yes
+
+

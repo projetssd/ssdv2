@@ -1,0 +1,46 @@
+---
+- name: "Set DNS Record on CloudFlare"
+  include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+  vars:
+    subdomain: oauth
+  when: cloudflare_enabled
+
+- name: 'Setting PG ENV'
+  set_fact:
+    oauth_env:
+      PROVIDERS_GOOGLE_CLIENT_ID: '{{oauth.client}}'
+      PROVIDERS_GOOGLE_CLIENT_SECRET: '{{oauth.secret}}'
+      SECRET: '{{oauth.openssl}}'
+      COOKIE_DOMAIN: '{{user.domain}}'
+      INSECURE_COOKIE: 'false'
+      AUTH_HOST: 'oauth.{{user.domain}}'
+      URL_PATH: '/_oauth'
+      WHITELIST: '{{oauth.account}}'
+      LOG_LEVEL: 'trace'
+      LOG_FORMAT: 'text'
+      LIFETIME: '2592000' # 30 days
+
+- name: 'Ajout label oauth'
+  set_fact:
+    oauth_labels:
+      traefik.enable: 'true'
+      traefik.http.routers.oauth-rtr.entrypoints: 'https'
+      traefik.http.routers.oauth-rtr.rule: 'Host(`oauth.{{user.domain}}`)'
+      traefik.http.routers.oauth-rtr.tls: 'true'
+      traefik.http.routers.oauth-rtr.tls.certresolver: 'letsencrypt' 
+      traefik.http.routers.oauth-rtr.service: 'oauth-svc'
+      traefik.http.services.oauth-svc.loadbalancer.server.port: '4181'   
+      traefik.http.routers.oauth-rtr.middlewares: 'chain-oauth@file'
+
+- name: Deploy oauth
+  docker_container:
+    name: 'oauth'
+    hostname: 'oauth'
+    image: 'thomseddon/traefik-forward-auth'
+    pull: yes
+    env: '{{oauth_env}}'
+    restart_policy: unless-stopped
+    state: started
+    labels: '{{oauth_labels}}'
+    networks:
+      - name: traefik_proxy

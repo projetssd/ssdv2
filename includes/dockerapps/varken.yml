@@ -1,0 +1,357 @@
+#!/bin/bash
+
+---
+- hosts: localhost
+  gather_facts: false
+  vars_prompt:
+
+    - name: maxmind
+      prompt: "Saisir la licence Maxmind"
+      private: no
+  vars_files:
+    - /opt/seedbox/variables/account.yml
+  tasks:
+
+    - name: Check config Ombi exists
+      stat:
+        path: "/opt/seedbox/docker/{{user.name}}/ombi/OmbiSettings.db"
+      register: ombi_config
+
+    - name: Check config sonarr exists
+      stat:
+        path: "/opt/seedbox/docker/{{user.name}}/sonarr/config/config.xml"
+      register: sonarr_config
+
+    - name: Check config radarr exists
+      stat:
+        path: "/opt/seedbox/docker/{{user.name}}/radarr/config/config.xml"
+      register: radarr_config
+
+    - name: Check config lidarr exists
+      stat:
+        path: "/opt/seedbox/docker/{{user.name}}/lidarr/config.xml"
+      register: lidarr_config
+
+    - name: Check config Tautulli exists
+      stat:
+        path: "/opt/seedbox/docker/{{user.name}}/tautulli/config.ini"
+      register: tautulli_config
+
+    - name: 'ApiKey Ombi'
+      shell: | 
+        sqlite3 /opt/seedbox/docker/{{user.name}}/ombi/OmbiSettings.db 'select Content from "GlobalSettings" where id = 1' > /opt/seedbox/docker/{{user.name}}/ombi/key.txt
+        grep -Po '(?<=ApiKey)\W*\K[^ ]*' /opt/seedbox/docker/{{user.name}}/ombi/key.txt | cut -d',' -f1 | sed 's/.$//'
+      register: ombi
+      when: ombi_config.stat.exists
+
+    - name: 'ApiKey Ombi'
+      debug:
+        msg: '{{ ombi.stdout }}'
+      when: ombi_config.stat.exists
+
+    - name: 'ApiKey Sonarr'
+      shell: |
+        sed -n 's:.*<ApiKey>\(.*\)</ApiKey>.*:\1:p' /opt/seedbox/docker/{{user.name}}/sonarr/config/config.xml
+      register: sonarr
+      when: sonarr_config.stat.exists
+
+    - name: 'ApiKey Sonarr'
+      debug:
+        msg: '{{ sonarr.stdout }}'
+      when: sonarr_config.stat.exists
+
+    - name: 'ApiKey Radarr'
+      shell: |
+        sed -n 's:.*<ApiKey>\(.*\)</ApiKey>.*:\1:p' /opt/seedbox/docker/{{user.name}}/radarr/config/config.xml
+      register: radarr
+      when: radarr_config.stat.exists
+
+    - name: 'ApiKey Radarr'
+      debug:
+        msg: '{{ radarr.stdout }}'
+      when: radarr_config.stat.exists
+
+    - name: 'ApiKey Lidarr'
+      shell: |
+        sed -n 's:.*<ApiKey>\(.*\)</ApiKey>.*:\1:p' /opt/seedbox/docker/{{user.name}}/lidarr/config.xml
+      register: lidarr
+      when: lidarr_config.stat.exists
+
+    - name: 'ApiKey lidarr'
+      debug:
+        msg: '{{ lidarr.stdout }}'
+      when: lidarr_config.stat.exists
+
+    - name: 'ApiKey Tautulli'
+      shell: |
+        grep "api_key" /opt/seedbox/docker/{{user.name}}/tautulli/config.ini | cut -d '=' -f2 | sed 's/ //g' | head -1
+      register: tautulli
+      when: tautulli_config.stat.exists
+
+    - name: 'ApiKey Tautulli'
+      debug:
+        msg: '{{ tautulli.stdout }}'
+      when: tautulli_config.stat.exists
+
+
+    # FACTS #######################################################################
+
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
+            (cloudflare.login is undefined)
+            or
+            (cloudflare.login is none)
+            or
+            (cloudflare.login | trim | length == 0)
+            or
+            (cloudflare.api is undefined)
+            or
+            (cloudflare.api is none)
+            or
+            (cloudflare.api | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Variables | Set 'oauth_enabled' variable"
+      set_fact:
+        oauth_enabled: "{{ true if not(
+            (oauth.client is undefined)
+            or
+            (oauth.client is none)
+            or
+            (oauth.client | trim | length == 0)
+            or
+            (oauth.secret is undefined)
+            or
+            (oauth.secret is none)
+            or
+            (oauth.secret | trim | length == 0)
+            or
+            (oauth.account is undefined)
+            or
+            (oauth.account is none)
+            or
+            (oauth.account | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: grafana
+      when: cloudflare_enabled
+
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'grafana'
+        intport: '3000'
+        image: 'grafana/grafana'
+
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775 owner=472 group=104'
+      with_items:
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
+
+    # LABELS ######################################################################
+    - name: 'Ajout label traefik'
+      set_fact:
+        grafana_labels:
+          traefik.enable: 'true'
+          ## HTTP Routers
+          traefik.http.routers.grafana-rtr.entrypoints: 'https'
+          traefik.http.routers.grafana-rtr.rule: 'Host(`grafana.{{user.domain}}`)'
+          traefik.http.routers.grafana-rtr.tls: 'true'
+          ## Middlewares
+          #traefik.http.routers.grafana-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          ## HTTP Services
+          traefik.http.routers.grafana-rtr.service: 'grafana-svc'
+          traefik.http.services.grafana-svc.loadbalancer.server.port: '3000'
+
+    # Influxdb #############################################################
+
+    - name: 'Setting Influxdb ENV'
+      set_fact:
+        influxdb_env:
+          INFLUXDB_USER: 'varken'
+          INFLUXDB_USER_PASSWORD: 'test'
+
+    - name: 'Setting Volumes influxdb'
+      set_fact:
+        influxdb_volumes:
+          - '/opt/seedbox/docker/{{user.name}}/influxdb/config:/var/lib/influxdb'
+
+    - name: 'Deploying influxdb'
+      docker_container:
+        name: 'influxdb'
+        hostname: 'influxdb'
+        image: 'influxdb:1.5.4-alpine'
+        pull: yes
+        volumes: '{{influxdb_volumes}}'
+        env: '{{influxdb_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+        state: started
+
+    # telegraf #############################################################
+
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775'
+      with_items:
+        - '/opt/seedbox/docker/{{user.name}}/telegraf'
+
+    - name: Wait for 10 seconds before continuing
+      wait_for:
+        timeout: 10
+
+    - name: 'Setting telegraf ENV'
+      set_fact:
+        telegraf_env:
+          HOST_PROC: '/host/proc'
+
+    - name: 'Setting Volumes telegraf'
+      set_fact:
+        telegraf_volumes:
+          - '/var/run/docker.sock:/var/run/docker.sock'
+          - '/opt/seedbox/docker/{{user.name}}/telegraf:/etc/telegraf'
+          - '/proc:/host/proc:ro'
+
+    - name: 'Deploying telegraf'
+      docker_container:
+        name: 'telegraf'
+        hostname: 'telegraf'
+        image: 'telegraf'
+        pull: yes
+        volumes: '{{telegraf_volumes}}'
+        env: '{{telegraf_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+        state: started
+
+    - name: Import telegraf config
+      template:
+        src: /opt/seedbox-compose/includes/dockerapps/templates/varken/telegraf.conf.j2
+        dest: /opt/seedbox/docker/{{user.name}}/telegraf/telegraf.conf
+
+    # Varken #############################################################
+
+    - name: 'Setting Varken ENV'
+      set_fact:
+        varken_env:
+          TZ: 'Europe/Paris'
+          VRKN_GLOBAL_SONARR_SERVER_IDS: '1'
+          VRKN_GLOBAL_RADARR_SERVER_IDS: '1'
+          VRKN_GLOBAL_LIDARR_SERVER_IDS: '1'
+          VRKN_GLOBAL_TAUTULLI_SERVER_IDS: '1'
+          VRKN_GLOBAL_OMBI_SERVER_IDS: '1'
+          VRKN_GLOBAL_MAXMIND_LICENSE_KEY: '{{ maxmind }}'
+          VRKN_INFLUXDB_URL: 'influxdb'  
+          VRKN_INFLUXDB_PORT: '8086'
+          VRKN_INFLUXDB_SSL: 'false'
+          VRKN_INFLUXDB_VERIFY_SSL: 'false'
+          VRKN_INFLUXDB_USERNAME: 'root'
+          VRKN_INFLUXDB_PASSWORD: 'root'
+          VRKN_TAUTULLI_1_URL: 'tautulli:8181'
+          VRKN_TAUTULLI_1_FALLBACK_IP: '1.1.1.1'
+          VRKN_TAUTULLI_1_APIKEY: '{{ tautulli.stdout if (tautulli_config.stat.exists) | default(false) else omit }}'
+          VRKN_TAUTULLI_1_SSL: 'false'
+          VRKN_TAUTULLI_1_VERIFY_SSL: 'false'
+          VRKN_TAUTULLI_1_GET_ACTIVITY: 'true'
+          VRKN_TAUTULLI_1_GET_ACTIVITY_RUN_SECONDS: '30'
+          VRKN_TAUTULLI_1_GET_STATS: 'true'
+          VRKN_TAUTULLI_1_GET_STATS_RUN_SECONDS: '3600'
+          VRKN_SONARR_1_URL: 'sonarr:8989'
+          VRKN_SONARR_1_APIKEY: '{{ sonarr.stdout if (sonarr_config.stat.exists) | default(false) else omit }}'
+          VRKN_SONARR_1_SSL: 'false'
+          VRKN_SONARR_1_VERIFY_SSL: 'false'
+          VRKN_SONARR_1_MISSING_DAYS: '7'
+          VRKN_SONARR_1_MISSING_DAYS_RUN_SECONDS: '300'
+          VRKN_SONARR_1_FUTURE_DAYS: '1'
+          VRKN_SONARR_1_FUTURE_DAYS_RUN_SECONDS: '300'
+          VRKN_SONARR_1_QUEUE: 'true'
+          VRKN_SONARR_1_QUEUE_RUN_SECONDS: '300'
+          VRKN_RADARR_1_URL: 'radarr:7878'
+          VRKN_RADARR_1_APIKEY: '{{ radarr.stdout if (radarr_config.stat.exists) | default(false) else omit }}'
+          VRKN_RADARR_1_SSL: 'false'
+          VRKN_RADARR_1_VERIFY_SSL: 'false'
+          VRKN_RADARR_1_QUEUE: 'true'
+          VRKN_RADARR_1_QUEUE_RUN_SECONDS: '300'
+          VRKN_RADARR_1_GET_MISSING: 'true'
+          VRKN_RADARR_1_GET_MISSING_RUN_SECONDS: '300'
+          VRKN_LIDARR_1_URL: 'lidarr:8686'
+          VRKN_LIDARR_1_APIKEY: '{{ lidarr.stdout if (lidarr_config.stat.exists) | default(false) else omit }}'
+          VRKN_LIDARR_1_SSL: 'false'
+          VRKN_LIDARR_1_VERIFY_SSL: 'false'
+          VRKN_LIDARR_1_MISSING_DAYS: '30'
+          VRKN_LIDARR_1_MISSING_DAYS_RUN_SECONDS: '300'
+          VRKN_LIDARR_1_FUTURE_DAYS: '30'
+          VRKN_LIDARR_1_FUTURE_DAYS_RUN_SECONDS: '300'
+          VRKN_LIDARR_1_QUEUE: 'true'
+          VRKN_LIDARR_1_QUEUE_RUN_SECONDS: '300'
+          VRKN_OMBI_1_URL: 'ombi.{{ user.domain }}'
+          VRKN_OMBI_1_APIKEY: '{{ ombi.stdout if (ombi_config.stat.exists) | default(false) else omit }}'
+          VRKN_OMBI_1_SSL: 'false'
+          VRKN_OMBI_1_VERIFY_SSL: 'false'
+          VRKN_OMBI_1_GET_REQUEST_TYPE_COUNTS: 'true'
+          VRKN_OMBI_1_REQUEST_TYPE_RUN_SECONDS: '300'
+          VRKN_OMBI_1_GET_REQUEST_TOTAL_COUNTS: 'true'
+          VRKN_OMBI_1_REQUEST_TOTAL_RUN_SECONDS: '300'
+          VRKN_OMBI_1_GET_ISSUE_STATUS_COUNTS: 'true'
+          VRKN_OMBI_1_ISSUE_STATUS_RUN_SECONDS: '300'
+
+    - name: 'Setting Volumes Varken'
+      set_fact:
+        varken_volumes:
+          - '/opt/seedbox/docker/{{user.name}}/varken/config:/config'
+
+    - name: 'Deploying Varken'
+      docker_container:
+        name: 'varken'
+        hostname: 'varken'
+        image: 'boerderij/varken'
+        pull: yes
+        volumes: '{{varken_volumes}}'
+        env: '{{varken_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+        state: started
+
+    # Granana #############################################################
+
+    - name: Import defaults.ini
+      template:
+        src: /opt/seedbox-compose/includes/dockerapps/templates/varken/defaults.ini
+        dest: /opt/seedbox/docker/{{user.name}}/{{pgrole}}/defaults.ini
+
+    - name: 'Setting Volumes Grafana'
+      set_fact:
+        grafana_volumes:
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}:/config'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/defaults.ini:/usr/share/grafana/conf/defaults.ini'
+
+    - name: 'Setting Grafana ENV'
+      set_fact:
+        grafana_env:
+          GF_SECURITY_ADMIN_PASSWORD: 'grafana'
+          GF_PATHS_DATA: '/config/data'
+          GF_PATHS_LOGS: '/config/logs'
+          GF_PATHS_PLUGINS: '/config/plugins'
+          GF_INSTALL_PLUGINS: 'grafana-clock-panel,grafana-simple-json-datasource,grafana-worldmap-panel,grafana-piechart-panel'
+
+    - name: 'Deploying {{pgrole}}'
+      docker_container:
+        name: '{{pgrole}}'
+        image: '{{image}}'
+        user: '472'
+        pull: yes
+        volumes: '{{grafana_volumes}}'
+        env: '{{grafana_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+        state: started
+        labels: '{{grafana_labels}}'
+

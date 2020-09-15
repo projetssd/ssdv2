@@ -1,0 +1,73 @@
+#########################################################################
+# Title:         Cloudbox: System | CPU Frequency Tasks                 #
+# Author(s):     l3uddz, EnorMOZ, desimaniac                            #
+# URL:           https://github.com/cloudbox/cloudbox                   #
+# --                                                                    #
+#         Part of the Cloudbox project: https://cloudbox.works          #
+#########################################################################
+#                   GNU General Public License v3.0                     #
+#########################################################################
+---
+- name: CPU Frequency | Install 'cpufrequtils'
+  apt:
+    name: cpufrequtils
+    state: present
+
+- name: CPU Frequency | Install 'linux-tools' for Ubuntu
+  apt:
+    state: present
+    name:
+      - linux-tools-common
+      - linux-tools-generic
+  when: ansible_distribution == 'Ubuntu'
+
+- name: CPU Frequency | Install 'linux-perf' for Debian
+  apt:
+    name: linux-perf
+    state: present
+  when: ansible_distribution == 'Debian'
+
+- name: "CPU Frequency | Install 'linux-tools-{{ ansible_kernel }}'"
+  shell: "apt-get install -qq $(apt-cache search -n linux-tools-{{ ansible_kernel }} | awk '{print $1}' | tail -n 1)"
+  args:
+    warn: false
+  ignore_errors: yes
+  when: ansible_distribution == 'Ubuntu'
+
+- name: "CPU Frequency | Install 'linux-perf-{{ ansible_kernel }}'"
+  shell: "apt-get install -qq $(apt-cache search -n linux-perf-{{ ansible_kernel }} | awk '{print $1}' | tail -n 1)"
+  args:
+    warn: false
+  ignore_errors: yes
+  when: ansible_distribution == 'Debian'
+
+- name: CPU Frequency | Ensure 'cpufrequtils' is enabled
+  ini_file:
+    path: "/etc/default/cpufrequtils"
+    section: null
+    option: 'ENABLE'
+    value: '"true"'
+    state: present
+    create: yes
+    no_extra_spaces: yes
+
+- name: CPU Frequency | Set 'GOVERNOR' to performance
+  ini_file:
+    path: "/etc/default/cpufrequtils"
+    section: null
+    option: 'GOVERNOR'
+    value: '"performance"'
+    state: present
+    create: yes
+    no_extra_spaces: yes
+
+- name: CPU Frequency | Remove mispelled 'GOVENOR' entry
+  ini_file:
+    path: "/etc/default/cpufrequtils"
+    section: null
+    option: 'GOVENOR'
+    state: absent
+
+- name: CPU Frequency | Disable “ondemand” CPU scaling daemon
+  shell: "update-rc.d ondemand disable"
+  when: ansible_distribution_version == "16.04"

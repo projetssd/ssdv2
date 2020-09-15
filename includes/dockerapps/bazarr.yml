@@ -1,0 +1,116 @@
+#!/bin/bash
+
+---
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
+  tasks:
+
+    - name: Checking for existing app data
+      stat:
+        path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
+      register: check
+  
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
+            (cloudflare.login is undefined)
+            or
+            (cloudflare.login is none)
+            or
+            (cloudflare.login | trim | length == 0)
+            or
+            (cloudflare.api is undefined)
+            or
+            (cloudflare.api is none)
+            or
+            (cloudflare.api | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Variables | Set 'oauth_enabled' variable"
+      set_fact:
+        oauth_enabled: "{{ true if not(
+            (oauth.client is undefined)
+            or
+            (oauth.client is none)
+            or
+            (oauth.client | trim | length == 0)
+            or
+            (oauth.secret is undefined)
+            or
+            (oauth.secret is none)
+            or
+            (oauth.secret | trim | length == 0)
+            or
+            (oauth.account is undefined)
+            or
+            (oauth.account is none)
+            or
+            (oauth.account | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: bazarr
+      when: cloudflare_enabled
+
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'bazarr'
+        intport: '6767'
+        image: 'linuxserver/bazarr'
+
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
+      with_items:
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
+
+    # LABELS ######################################################################
+    - name: 'Ajout label traefik'
+      set_fact:
+        pg_labels:
+          traefik.enable: 'true'
+          ## HTTP Routers
+          traefik.http.routers.bazarr-rtr.entrypoints: 'https'
+          traefik.http.routers.bazarr-rtr.rule: 'Host(`bazarr.{{user.domain}}`)'
+          traefik.http.routers.bazarr-rtr.tls: 'true'
+          ## Middlewares
+          traefik.http.routers.bazarr-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          ## HTTP Services
+          #traefik.http.routers.bazarr-rtr.tls.certresolver: 'dns-cloudflare' 
+          traefik.http.routers.bazarr-rtr.service: 'bazarr-svc'
+          traefik.http.services.bazarr-svc.loadbalancer.server.port: '6767'
+
+    - name: 'Setting PG Volumes'
+      set_fact:
+        pg_volumes:
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config:/config'
+          - '/home/{{user.name}}/Medias/Films:/movies'
+          - '/home/{{user.name}}/Medias/Series:/tv'
+          - '/home/{{user.name}}/Medias/Animes:/Animes'
+
+    - name: 'Setting PG ENV'
+      set_fact:
+        pg_env:
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
+          TZ: 'Europe/Paris'
+
+    # MAIN DEPLOYMENT #############################################################
+
+    - name: 'Deploying {{pgrole}}'
+      docker_container:
+        name: '{{pgrole}}'
+        image: '{{image}}'
+        pull: yes
+        volumes: '{{pg_volumes}}'
+        env: '{{pg_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+        state: started
+        labels: '{{pg_labels}}'

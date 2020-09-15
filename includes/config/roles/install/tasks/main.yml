@@ -1,0 +1,154 @@
+#########################################################################
+# Title:         Cloudbox: Common Role                                  #
+# Author(s):     l3uddz, desimaniac                                     #
+# URL:           https://github.com/cloudbox/cloudbox                   #
+# --                                                                    #
+#         Part of the Cloudbox project: https://cloudbox.works          #
+#########################################################################
+#                   GNU General Public License v3.0                     #
+#########################################################################
+---
+- hosts: localhost
+  gather_facts: true
+  tasks:
+
+    - name: Install required packages
+      apt:
+        state: present
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - software-properties-common
+
+    - name: Add Ubuntu repositories
+      apt_repository:
+        repo: "{{ item }}"
+        state: present
+        update_cache: yes
+      with_items:
+        - 'deb http://archive.ubuntu.com/ubuntu {{ ansible_distribution_release }} multiverse'
+        - 'deb-src http://archive.ubuntu.com/ubuntu {{ ansible_distribution_release }} multiverse'
+        - 'deb http://archive.ubuntu.com/ubuntu {{ ansible_distribution_release }}-updates multiverse'
+        - 'deb-src http://archive.ubuntu.com/ubuntu {{ ansible_distribution_release }}-updates multiverse'
+      when: ansible_distribution == 'Ubuntu'
+
+    - name: Add Debian repositories
+      apt_repository:
+        repo: "{{ item }}"
+        state: present
+        update_cache: yes
+      with_items:
+        - deb https://deb.debian.org/debian {{ ansible_distribution_release }} main contrib non-free
+        - deb-src https://deb.debian.org/debian {{ ansible_distribution_release }} main contrib non-free
+        - deb https://deb.debian.org/debian-security/ {{ ansible_distribution_release }}/updates main contrib non-free
+        - deb-src https://deb.debian.org/debian-security/ {{ ansible_distribution_release }}/updates main contrib non-free
+        - deb https://deb.debian.org/debian {{ ansible_distribution_release }}-updates main contrib non-free
+        - deb-src https://deb.debian.org/debian {{ ansible_distribution_release }}-updates main contrib non-free
+        - deb https://deb.debian.org/debian {{ ansible_distribution_release }}-backports main contrib non-free
+        - deb-src https://deb.debian.org/debian {{ ansible_distribution_release }}-backports main contrib non-free
+      when: ansible_distribution == 'Debian'
+
+    - name: Install common packages
+      apt:
+        state: present
+        name:
+          - "nano"
+          - "members"
+          - "cpufrequtils"
+          - "unionfs-fuse"
+          - "pigz"
+          - "default-jre"
+          - "zip"
+          - "unzip"
+          - "p7zip"
+          - "curl"
+          - "httpie"
+          - "sqlite3"
+          - "tree"
+          - "lsof"
+          - "man-db"
+          - "ksmtuned"
+          - "git"
+          - "pwgen"
+          - "rsync"
+          - "logrotate"
+          - "htop"
+          - "gawk"
+          - "dialog"
+          - "figlet"
+          - "iotop"
+          - "nload"
+          - "libchromaprint-tools"
+          - "mediainfo"
+          - "ufw"
+          - "lolcat"
+          - "wget"
+          - "ncdu"
+          - "mc"
+          - "speedtest-cli"
+          - "dnsutils"
+          - "screen"
+          - "tmux"
+          - "apache2-utils"
+          - "jq"
+          - "lib32z1"
+          - "moreutils"
+          - "python-pip"
+          - "python3-pip"
+      ignore_errors: yes
+
+    - name: Install unrar
+      apt:
+        name: unrar
+        state: present
+      ignore_errors: yes
+
+    - name: Check to see if unrar installed
+      stat:
+        path: "/usr/bin/unrar"
+      register: unrar_binary
+
+    - name: Install unrar-free if unrar was not installed
+      apt:
+        name: unrar-free
+        state: present
+      ignore_errors: yes
+      when: (not unrar_binary.stat.exists)
+
+    - name: Install common pip modules
+      pip:
+        state: present
+        name:
+          - passlib
+          - ansible-toolbox
+          - ndg-httpsclient
+          - dnspython
+          - yq
+          - lxml
+          - apprise
+          - jmespath
+          - apprise
+          - netaddr
+      ignore_errors: yes
+
+    - name: Uninstall apt glances
+      apt:
+        name: glances
+        state: absent
+      ignore_errors: yes
+      tags: glances
+
+    - name: Install pip glances
+      shell: pip install glances[action,browser,cloud,cpuinfo,docker,folders,gpu,graph,ip,raid,snmp,web]
+      tags: glances
+
+    - name: "Hetzner Tasks"
+      import_tasks: "subtasks/hetzner.yml"
+      tags: kernel-hetzner
+
+  handlers:
+    # https://github.com/debops/ansible-grub
+    - name: Reload GRUB
+      command: grub-mkconfig -o /boot/grub/grub.cfg
+      register: grub_register_update
+      failed_when: ('error' in grub_register_update.stderr)

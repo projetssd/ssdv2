@@ -16,12 +16,12 @@ After=network-online.target
 [Service]
 Type=forking
 GuessMainPID=no
-User={{ user.stdout }}
+User={{ user.name }}
 Group={{ group.stdout }}
 ExecStart=/usr/bin/unionfs-fuse \
   -o cow,allow_other,nonempty \
-  /home/{{ user.stdout }}/local=RW:/mnt/rclone/{{ user.stdout }}=RO /home/{{ user.stdout }}/Medias
-ExecStop=/bin/fusermount -u /home/{{ user.stdout }}/Medias
+  /home/{{ user.name }}/local=RW:/mnt/rclone/{{ user.name }}=RO /home/{{ user.name }}/Medias
+ExecStop=/bin/fusermount -u /home/{{ user.name }}/Medias
 
 [Install]
 WantedBy=default.target

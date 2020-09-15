@@ -1,19 +1,62 @@
 #!/bin/bash
-#
-# Title:      PGBlitz (Reference Title File)
-# Author(s):  Admin9705
-# URL:        https://pgblitz.com - http://github.pgblitz.com
-# GNU:        General Public License v3.0
-################################################################################
+
 ---
 - hosts: localhost
   gather_facts: True
-
+  vars_files:
+    - /opt/seedbox/variables/account.yml
   tasks:
+
+    - name: Checking for existing app data
+      stat:
+        path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
+      register: check
   
-    # VARIABLES ############################################################
-    - name: 'Including variables'
-      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
+            (cloudflare.login is undefined)
+            or
+            (cloudflare.login is none)
+            or
+            (cloudflare.login | trim | length == 0)
+            or
+            (cloudflare.api is undefined)
+            or
+            (cloudflare.api is none)
+            or
+            (cloudflare.api | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Variables | Set 'oauth_enabled' variable"
+      set_fact:
+        oauth_enabled: "{{ true if not(
+            (oauth.client is undefined)
+            or
+            (oauth.client is none)
+            or
+            (oauth.client | trim | length == 0)
+            or
+            (oauth.secret is undefined)
+            or
+            (oauth.secret is none)
+            or
+            (oauth.secret | trim | length == 0)
+            or
+            (oauth.account is undefined)
+            or
+            (oauth.account is none)
+            or
+            (oauth.account | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: traefik
+      when: cloudflare_enabled
       
     - name: Remove Traefik
       docker_container:
@@ -25,17 +68,12 @@
       with_items:
         - /opt/seedbox/docker/traefik
         - /opt/seedbox/docker/traefik/acme
+        - /opt/seedbox/docker/traefik/rules
 
     - name: Check acme.json exists
       stat:
         path: "/opt/seedbox/docker/traefik/acme/acme.json"
       register: acme_json
-
-    - name: 'Setting PG ENV'
-      set_fact:
-        pg_env:
-          PUID: '0'
-          PGID: '0'
 
     - name: Installing ACME
       template:
@@ -47,49 +85,151 @@
         group: '0'
       when: acme_json.stat.exists == False
 
-    - name: Installing Traefik.Toml
+    - name: create an empty file traefik.log
+      file:
+        path: /opt/seedbox/docker/traefik/traefik.log
+        state: touch
+
+    - name: Import middlewares-chains.toml
       template:
-        src: traefik.toml
-        dest: /opt/seedbox/docker/traefik/traefik.toml
-        force: yes
-        owner: '0'
-        group: '0'
+        src: /opt/seedbox-compose/includes/dockerapps/templates/traefik/middlewares-chains.toml.j2
+        dest: /opt/seedbox/docker/traefik/rules/middlewares-chains.toml
 
-    - name: 'Ajout label traefik'
+    - name: Import middlewares.toml
+      template:
+        src: /opt/seedbox-compose/includes/dockerapps/templates/traefik/middlewares.toml.j2
+        dest: /opt/seedbox/docker/traefik/rules/middlewares.toml
+
+    - name: label traefik with cloudflare
       set_fact:
-        pg_labels:
+        labels:
           traefik.enable: 'true'
-          traefik.port: '8080'
-          traefik.frontend.rule: 'Host:traefik.{{domain.stdout}}'
-          traefik.frontend.headers.SSLHost: '{{domain.stdout}}'
-          traefik.frontend.headers.SSLRedirect: 'true'
-          traefik.frontend.headers.STSIncludeSubdomains: 'true'
-          traefik.frontend.headers.STSPreload: 'true'
-          traefik.frontend.headers.STSSeconds: '315360000'
-          traefik.frontend.headers.browserXSSFilter: 'true'
-          traefik.frontend.headers.contentTypeNosniff: 'true'
-          traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
-          traefik.frontend.headers.forceSTSHeader: 'true'
+          ## HTTP-to-HTTPS Redirect
+          traefik.http.routers.http-catchall.entrypoints: 'http'
+          traefik.http.routers.http-catchall.rule: 'HostRegexp(`{host:.+}`)'
+          traefik.http.routers.http-catchall.middlewares: 'redirect-to-https'
+          traefik.http.middlewares.redirect-to-https.redirectscheme.scheme: 'https'
+          ## HTTP Routers
+          traefik.http.routers.traefik-rtr.entrypoints: 'https'
+          traefik.http.routers.traefik-rtr.rule: 'Host(`traefik.{{user.domain}}`)'
+          traefik.http.routers.traefik-rtr.tls: 'true'
+          traefik.http.routers.traefik-rtr.tls.certresolver: 'letsencrypt' 
+          traefik.http.routers.traefik-rtr.tls.domains[0].main: '{{user.domain}}'
+          traefik.http.routers.traefik-rtr.tls.domains[0].sans: '*.{{user.domain}}'
+          ## Services - API
+          traefik.http.routers.traefik-rtr.service: 'api@internal'
+          ## Middlewares
+          traefik.http.routers.traefik-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+      when: cloudflare_enabled
 
-    # MAIN #####################################################################
+    - name: label traefik without cloudflare
+      set_fact:
+        labels:
+          traefik.enable: 'true'
+          ## HTTP-to-HTTPS Redirect
+          traefik.http.routers.http-catchall.entrypoints: 'http'
+          traefik.http.routers.http-catchall.rule: 'HostRegexp(`{host:.+}`)'
+          traefik.http.routers.http-catchall.middlewares: 'redirect-to-https'
+          traefik.http.middlewares.redirect-to-https.redirectscheme.scheme: 'https'
+          ## HTTP Routers
+          traefik.http.routers.traefik-rtr.entrypoints: 'https'
+          traefik.http.routers.traefik-rtr.rule: 'Host(`traefik.{{user.domain}}`)'
+          traefik.http.routers.traefik-rtr.tls: 'true'
+          traefik.http.routers.traefik-rtr.tls.certresolver: 'letsencrypt'
+          ## Services - API
+          traefik.http.routers.traefik-rtr.service: 'api@internal'
+          ## Middlewares
+          traefik.http.routers.traefik-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+      when: not cloudflare_enabled
+
+    - name: command traefik with cloudflare
+      set_fact:
+        command:
+          - --global.checkNewVersion=true
+          - --global.checkNewVersion=true
+          - --global.sendAnonymousUsage=true
+          - --entryPoints.http.address=:80
+          - --entryPoints.https.address=:443
+          - --entrypoints.https.forwardedHeaders.trustedIPs=173.245.48.0/20,103.21.244.0/22,103.22.200.0/22,103.31.4.0/22,141.101.64.0/18,108.162.192.0/18,190.93.240.0/20,188.114.96.0/20,197.234.240.0/22,198.41.128.0/17,162.158.0.0/15,104.16.0.0/12,172.64.0.0/13,131.0.72.0/22
+          - --entryPoints.traefik.address=:8080
+          - --api=true
+          - --log=true
+          - --log.level=DEBUG
+          - --accessLog=true
+          - --accessLog.filePath=/traefik.log
+          - --accessLog.bufferingSize=100
+          - --accessLog.filters.statusCodes=400-499
+          - --providers.docker=true
+          - --providers.docker.endpoint=unix:///var/run/docker.sock
+          - --providers.docker.exposedByDefault=false
+          - --entrypoints.https.http.tls.certresolver=letsencrypt
+          - --providers.docker.network=traefik_proxy
+          - --providers.docker.swarmMode=false
+          - --providers.file.directory=/rules
+          - --providers.file.watch=true
+#          - --certificatesResolvers.letsencrypt.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory
+          - --certificatesResolvers.letsencrypt.acme.email='{{cloudflare.login}}'
+          - --certificatesResolvers.letsencrypt.acme.storage=/acme.json
+          - --certificatesResolvers.letsencrypt.acme.dnsChallenge.provider=cloudflare
+          - --certificatesResolvers.letsencrypt.acme.dnsChallenge.resolvers=1.1.1.1:53,1.0.0.1:53
+      when: cloudflare_enabled
+
+    - name: command traefik without cloudflare
+      set_fact:
+        command:
+          - --global.checkNewVersion=true
+          - --global.checkNewVersion=true
+          - --global.sendAnonymousUsage=true
+          - --entryPoints.http.address=:80
+          - --entryPoints.https.address=:443
+          - --entryPoints.traefik.address=:8080
+          - --api=true
+          - --log=true
+          - --log.level=DEBUG
+          - --accessLog=true
+          - --accessLog.filePath=/traefik.log
+          - --accessLog.bufferingSize=100
+          - --accessLog.filters.statusCodes=400-499
+          - --providers.docker=true
+          - --providers.docker.endpoint=unix:///var/run/docker.sock
+          - --providers.docker.exposedByDefault=false
+          - --providers.docker.network=traefik_proxy
+          - --providers.docker.swarmMode=false
+          - --providers.file.directory=/rules
+          - --providers.file.watch=true
+          - --certificatesResolvers.letsencrypt.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory
+          - --certificatesResolvers.letsencrypt.acme.email='{{user.mail}}'
+          - --certificatesResolvers.letsencrypt.acme.storage=/acme.json
+          - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
+      when: not cloudflare_enabled
+
     - name: Deploy Traefik
       docker_container:
         name: traefik
-        image: traefik:1.7
+        image: traefik:chevrotin
         pull: yes
         published_ports:
           - "443:443"
           - "80:80"
-        command: ["--web", "--accessLog.filePath=/var/log/access.log", "--accessLog.filters.statusCodes=400-499"]
-        env: '{{pg_env}}'
+          - "8080:8080"
+        command: '{{command}}'
+        security_opts:
+          - no-new-privileges:true
+        env:
+          CF_API_EMAIL: '{{cloudflare.login}}'
+          CF_API_KEY: '{{cloudflare.api}}'
         volumes:
           - /var/run/docker.sock:/var/run/docker.sock:ro
           - /etc/localtime:/etc/localtime:ro
-          - /opt/seedbox/docker/traefik/traefik.toml:/etc/traefik/traefik.toml:ro
-          - /opt/seedbox/docker/traefik/acme:/etc/traefik/acme
-          - /var/log/traefik:/var/log
+          - /opt/seedbox/docker/traefik/acme/acme.json:/acme.json
+          - /opt/seedbox/docker/traefik/rules:/rules
+          - /opt/seedbox/docker/traefik/traefik.log:/traefik.log
+        labels: '{{labels}}'
         restart_policy: unless-stopped
         state: started
-        labels: '{{pg_labels}}'
         networks:
           - name: traefik_proxy
+
+    - name: Google OAuth2 tasks
+      include_tasks: 'templates/traefik/oauth.yml'
+      when: oauth_enabled

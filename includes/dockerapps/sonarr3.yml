@@ -3,54 +3,101 @@
 ---
 - hosts: localhost
   gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
   tasks:
-  
-    # VARIABLES ############################################################
-    - name: 'Including variables'
-      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
-      
+        
     # FACTS #######################################################################
+
+    - name: Checking for existing app data
+      stat:
+        path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
+      register: check
+
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
+            (cloudflare.login is undefined)
+            or
+            (cloudflare.login is none)
+            or
+            (cloudflare.login | trim | length == 0)
+            or
+            (cloudflare.api is undefined)
+            or
+            (cloudflare.api is none)
+            or
+            (cloudflare.api | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Variables | Set 'oauth_enabled' variable"
+      set_fact:
+        oauth_enabled: "{{ true if not(
+            (oauth.client is undefined)
+            or
+            (oauth.client is none)
+            or
+            (oauth.client | trim | length == 0)
+            or
+            (oauth.secret is undefined)
+            or
+            (oauth.secret is none)
+            or
+            (oauth.secret | trim | length == 0)
+            or
+            (oauth.account is undefined)
+            or
+            (oauth.account is none)
+            or
+            (oauth.account | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: sonarr
+      when: cloudflare_enabled
+
     - name: 'Set Known Facts'
       set_fact:
-        pgrole: 'sonarr3'
+        pgrole: 'sonarr'
         intport: '8989'
         image: 'linuxserver/sonarr:preview'
 
     - name: Creating paths
-      file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
       with_items:
-        - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}'
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
 
     # LABELS ######################################################################
     - name: 'Ajout label traefik'
       set_fact:
         pg_labels:
           traefik.enable: 'true'
-          traefik.port: '{{intport}}'
-          traefik.frontend.rule: 'Host:{{pgrole}}.{{domain.stdout}}'
-          traefik.frontend.auth.basic: '{{passwd.stdout}}'
-          traefik.frontend.headers.SSLHost: '{{domain.stdout}}'
-          traefik.frontend.headers.SSLRedirect: 'true'
-          traefik.frontend.headers.STSIncludeSubdomains: 'true'
-          traefik.frontend.headers.STSPreload: 'true'
-          traefik.frontend.headers.STSSeconds: '315360000'
-          traefik.frontend.headers.browserXSSFilter: 'true'
-          traefik.frontend.headers.contentTypeNosniff: 'true'
-          traefik.frontend.headers.customResponseHeaders: 'X-Robots-Tag:noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex'
-          traefik.frontend.headers.forceSTSHeader: 'true'
+          ## HTTP Routers
+          traefik.http.routers.sonarr-rtr.entrypoints: 'https'
+          traefik.http.routers.sonarr-rtr.rule: 'Host(`sonarr.{{user.domain}}`)'
+          traefik.http.routers.sonarr-rtr.tls: 'true'
+          ## Middlewares
+          traefik.http.routers.sonarr-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          ## HTTP Services
+          traefik.http.routers.sonarr-rtr.service: 'sonarr-svc'
+          traefik.http.services.sonarr-svc.loadbalancer.server.port: '8989'
 
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
-          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}/config:/config'
-          - '/home/{{user.stdout}}:/home/{{user.stdout}}'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config:/config'
+          - '/home/{{user.name}}:/home/{{user.name}}'
           - '/etc/localtime:/etc/localtime:ro'
 
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
-          PUID: '{{userid.stdout}}'
-          PGID: '{{groupid.stdout}}'
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
 
     # MAIN DEPLOYMENT #############################################################
 
@@ -59,6 +106,8 @@
         name: '{{pgrole}}'
         image: '{{image}}'
         pull: yes
+        published_ports:
+          - '127.0.0.1:8989:8989'
         volumes: '{{pg_volumes}}'
         env: '{{pg_env}}'
         restart_policy: unless-stopped

@@ -5,8 +5,8 @@ After=plexdrive.service
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/rclone mount --config=/root/.config/rclone/rclone.conf --exclude BACKUPS/** --allow-other --gid {{groupid.stdout}} --uid {{userid.stdout}} {{remoteplex.stdout}}:/{{user.stdout}} /mnt/rclone/{{user.stdout}}
-ExecStop=/bin/fusermount -uz /mnt/rclone/{{user.stdout}}
+ExecStart=/usr/bin/rclone mount --config=/root/.config/rclone/rclone.conf --exclude BACKUPS/** --allow-other --gid {{user.groupid}} --uid {{user.userid}} {{rclone.crypt}}:/{{user.name}} /mnt/rclone/{{user.name}}
+ExecStop=/bin/fusermount -uz /mnt/rclone/{{user.name}}
 Restart=on-abort
 
 [Install]

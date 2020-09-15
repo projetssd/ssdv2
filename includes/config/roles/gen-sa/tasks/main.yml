@@ -1,0 +1,20 @@
+
+---
+- hosts: localhost
+  gather_facts: false
+  vars_prompt:
+    - name: group
+      prompt: "nom du groupe créé dans google.group.com"
+      private: no
+    - name: projet
+      prompt: "nom du projet (possibilité de reprendre un projet existant)"
+      private: no
+    - name: prefix
+      prompt: "prefix email (6 lettre minimum)"
+      private: no
+
+  tasks:
+    - name: Import default config
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/gen-sa/templates/sa-gen.j2
+        dest: /opt/gen-sa/sa-gen

@@ -3,11 +3,9 @@
 ---
 - hosts: localhost
   gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
   tasks:
-
-    # VARIABLES ###################################################################
-    - name: 'Including variables'
-      include_tasks: '/opt/seedbox-compose/includes/dockerapps/variables.yml'
 
     # FACTS #######################################################################
     - name: 'Set Known Facts'
@@ -16,14 +14,14 @@
         image: 'mariadb:10.2'
 
     - name: Creating paths
-      file: 'path={{item}} state=directory mode=0775 owner={{userid.stdout}} group={{groupid.stdout}}'
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
       with_items:
-        - '/opt/seedbox/docker/%USER%/{{pgrole}}'
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
 
     - name: 'Setting Volumes'
       set_fact:
         pg_volumes:
-          - '/opt/seedbox/docker/{{user.stdout}}/{{pgrole}}:/var/lib/mysql'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}:/var/lib/mysql'
           - '/etc/localtime:/etc/localtime:ro'
 
     - name: 'Setting ENV'
@@ -48,7 +46,10 @@
 
     # POST DEPLOYMENT ##############################################################
 
+    - name: 'Populate /home/{{user.name}}/resume'
+      shell: 'echo {{ pgrole }} >> /opt/seedbox/docker/{{user.name}}/webserver/resume'
+
     - name: 'Post Deployment Notes'
       debug:
         msg: |-
-          * Login Information * root:mysql * Le mot de passe doit être changé *
+          * Login Information * root:mysql * Le mot de passe peut être changé *

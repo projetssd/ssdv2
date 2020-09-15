@@ -2,7 +2,7 @@
 	
 SAVEIFS=$IFS
 IFS=$(echo -en "\n\b")
-FILES=$(find /home/{{user.stdout}}/local \( -path /home/{{user.stdout}}/local/rutorrent -o -path /home/{{user.stdout}}/local/.unionfs-fuse \) -prune -o -name '*.*' -print)
+FILES=$(find /home/{{user.name}}/local \( -path /home/{{user.name}}/local/rutorrent -o -path /home/{{user.name}}/local/.unionfs-fuse \) -prune -o -name '*.*' -print)
 
 for f in $FILES
 do

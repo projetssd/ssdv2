@@ -1,0 +1,202 @@
+---
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
+  tasks:
+
+    - name: "Variables | Set 'teamdrive1_enabled' variable"
+      set_fact:
+        teamdrive1_enabled: "{{ true if not(
+            (rclone.share_source is undefined)
+            or
+            (rclone.share_source is none)
+            or
+            (rclone.share_source | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Variables | Set 'teamdrive2_enabled' variable"
+      set_fact:
+        teamdrive2_enabled: "{{ true if not(
+            (rclone.share_dest is undefined)
+            or
+            (rclone.share_dest is none)
+            or
+            (rclone.share_dest | trim | length == 0)
+          )
+            else false }}"
+
+    - name: Check if cloudplow.service exists
+      stat:
+        path: "/etc/systemd/system/cloudplow.service"
+      register: cloudplow_service
+
+    - name: Service Tasks
+      block:
+
+      - name: Populate Service Facts
+        service_facts:
+
+      - name: Get cloudplow service state
+        set_fact:
+          cloudplow_service_running: "{{ (services['cloudplow.service'] is defined) and (services['cloudplow.service']['state'] == 'running') }}"
+
+      - name: Stop cloudplow service
+        systemd:
+          name: cloudplow
+          state: stopped
+          enabled: no
+        when: cloudplow_service_running
+
+      - name: delete cloudplow folder
+        shell: |
+          rm /etc/systemd/system/cloudplow.service
+          rm -rf /home/{{user.name}}/scripts/cloudplow 
+        when: cloudplow_service_running
+
+      when: cloudplow_service.stat.exists
+
+    - name: Check if crop.service exists
+      stat:
+        path: "/etc/systemd/system/crop_upload.service"
+      register: crop_upload_service
+
+    - name: Service Tasks
+      block:
+
+      - name: Populate Service Facts
+        service_facts:
+
+      - name: stopped Systemd Unit
+        systemd:
+          name: '{{ item }}.service'
+          state: stopped
+          enabled: no
+        with_items:
+          - crop_upload
+          - crop_sync
+
+      - name: stopped Systemd Unit
+        systemd:
+          name: '{{ item }}.timer'
+          state: stopped
+          enabled: no
+        with_items:
+          - crop_upload
+          - crop_sync
+
+      - name: delete crop folder
+        shell: |
+          rm /etc/systemd/system/crop_upload.service
+          rm /etc/systemd/system/crop_sync.service
+          rm /etc/systemd/system/crop_upload.timer
+          rm /etc/systemd/system/crop_sync.timer
+          rm -rf /home/{{user.name}}/scripts/crop
+
+      when: crop_upload_service.stat.exists
+
+    - name: Create Basic Directories
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}} recurse=yes'
+      with_items:
+        - '/home/{{user.name}}/scripts/crop'
+
+    - name: install crop latest
+      shell: |
+        wget -P /home/{{user.name}}/scripts/ https://github.com/$(wget https://github.com/l3uddz/crop/releases/latest -O - | egrep '/.*/.*/.*linux_amd64.tar.gz' -o)
+        archive=$(ls *linux_amd64.tar.gz)
+        tar -xvf $archive -C /home/{{user.name}}/scripts/crop       
+        chmod +x crop
+        rm $archive
+      become: yes
+      become_user: "{{user.name}}"
+      args:
+        chdir: /home/{{user.name}}/scripts/
+
+    - name: install gclone latest
+      get_url:
+        url: https://transfer.cloudbox.media/lJHPE/rclone_gclone_v1.54.0-DEV_1
+        dest: /usr/local/bin/gclone
+        mode: 0755
+
+    - name: Import default config
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/crop/templates/config.yaml.j2
+        dest: /home/{{user.name}}/scripts/crop/config.yaml
+        mode: 0600
+        force: yes
+      become: yes
+      become_user: "{{user.name}}"
+
+    - name: Import default crop_sync.service
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/crop/templates/systemd/crop_sync.service.j2
+        dest: /etc/systemd/system/crop_sync.service
+
+    - name: Import default crop_upload.service
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/crop/templates/systemd/crop_upload.service.j2
+        dest: /etc/systemd/system/crop_upload.service
+
+    - name: Import default crop_upload.timer
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/crop/templates/systemd/crop_upload.timer.j2
+        dest: /etc/systemd/system/crop_upload.timer
+
+    - name: Import default crop_sync.timer
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/crop/templates/systemd/crop_sync.timer.j2
+        dest: /etc/systemd/system/crop_sync.timer
+
+    - name: Wait for 5 seconds before continuing
+      wait_for:
+        timeout: 5
+
+    - name: started Systemd crop_upload.timer
+      systemd:
+        state: started
+        daemon_reload: yes
+        enabled: yes      
+        name: crop_upload.timer
+
+    - name: started Systemd crop_sync.time
+      systemd:
+        state: started
+        daemon_reload: yes
+        enabled: yes      
+        name: crop_sync.timer
+
+    - name: started Systemd crop_upload.service
+      systemd:
+        state: started
+        daemon_reload: yes
+        enabled: yes      
+        name: crop_upload.service
+
+    - name: started Systemd crop_sync.service
+      systemd:
+        state: started
+        daemon_reload: yes
+        enabled: yes      
+        name: crop_sync.service
+
+    - name: Import crapper
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/crop/templates/crapper.j2
+        dest: /home/{{user.name}}/scripts/crop/crapper
+        mode: 0755
+        force: yes
+      become: yes
+      become_user: "{{user.name}}"
+
+    - name: Import crapper.env
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/crop/templates/crapper.env.j2
+        dest: /home/{{user.name}}/scripts/crop/crapper.env
+        mode: 0755
+        force: yes
+      become: yes
+      become_user: "{{user.name}}"
+
+
+

@@ -34,12 +34,12 @@
     "*.ts": -1000,
     "*.vob": -5000
   },
-  "PLEX_SECTIONS": {
-    "Films": 1,
-    "Series": 2
-  },
-  "PLEX_SERVER": "https://plex.{{domain.stdout}}",
-  "PLEX_TOKEN": "{{token.stdout}}",
+  "PLEX_LIBRARIES": [
+    "Films",
+    "Series"
+  ],
+  "PLEX_SERVER": "https://plex.{{user.domain}}",
+  "PLEX_TOKEN": "{{plex.token}}",
   "SCORE_FILESIZE": true,
   "SKIP_LIST": [
     "/Plex Versions/"

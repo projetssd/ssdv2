@@ -1,0 +1,95 @@
+---
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
+  tasks:
+
+    - name: Check if plex_autoscan.service exists
+      stat:
+        path: "/etc/systemd/system/plex_autoscan.service"
+      register: plex_autoscan_service
+
+    - name: Check if drive1.anchor exists
+      stat:
+        path: "/home/{{user.name}}/Medias/drive1.anchor"
+      register: anchor_service
+
+    - name: delete plex_autoscan folder
+      shell: |
+        touch /home/{{user.name}}/Medias/drive1.anchor
+      when: not anchor_service.stat.exists
+
+    - name: Service Tasks
+      block:
+
+      - name: Populate Service Facts
+        service_facts:
+
+      - name: Get plex_autoscan service state
+        set_fact:
+          plex_autoscan_service_running: "{{ (services['plex_autoscan.service'] is defined) and (services['plex_autoscan.service']['state'] == 'running') }}"
+
+      - name: Stop plex_autoscan service
+        systemd:
+          name: plex_autoscan
+          state: stopped
+          enabled: no
+        when: plex_autoscan_service_running
+
+      - name: delete plex_autoscan folder
+        shell: |
+          rm /etc/systemd/system/plex_autoscan.service
+          rm -rf /home/{{user.name}}/scripts/plex_autoscan
+        when: plex_autoscan_service_running
+
+      when: plex_autoscan_service.stat.exists
+
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'autoscan'
+        image: 'cloudb0x/autoscan'
+
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
+      with_items:
+        - '/home/{{user.name}}/scripts/{{pgrole}}'
+
+    - name: 'Setting PG Volumes'
+      set_fact:
+        pg_volumes:
+          - '/home/{{user.name}}/scripts/{{pgrole}}:/config'
+          - '/home/{{user.name}}/Medias:/home/{{user.name}}/Medias:ro'
+          - '/etc/localtime:/etc/localtime:ro'
+
+    - name: 'Setting PG ENV'
+      set_fact:
+        pg_env:
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
+          AUTOSCAN_VERBOSITY: '2'
+
+    # MAIN DEPLOYMENT #############################################################
+
+    - name: 'Deploying {{pgrole}}'
+      docker_container:
+        name: '{{pgrole}}'
+        image: '{{image}}'
+        pull: yes
+        ports:
+          - '127.0.0.1:3030:3030'
+        volumes: '{{pg_volumes}}'
+        env: '{{pg_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+        state: started
+
+    - name: Import default config
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/autoscan/templates/config.yml.j2
+        dest: /home/{{user.name}}/scripts/autoscan/config.yml
+        mode: 0600
+        force: yes
+      become: yes
+      become_user: "{{user.name}}"

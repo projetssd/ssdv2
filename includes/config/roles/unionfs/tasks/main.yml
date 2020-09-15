@@ -17,19 +17,8 @@
       private: no
   vars_files:
     - ['settings.yml']
+    - [/opt/seedbox/variables/account.yml]
   tasks:
-
-# Variables
-
-    - name: 'Register user'
-      shell: 'cat /opt/seedbox/variables/users'
-      register: user
-      ignore_errors: True
-
-    - name: 'Register group'
-      shell: 'cat /opt/seedbox/variables/group'
-      register: group
-      ignore_errors: True
 
 # Stop Containers
 
@@ -45,9 +34,6 @@
       loop:
         - "unionfs.service"
         - "mergerfs.service"
-
-    - name: Mount Tasks
-      import_tasks: "subtasks/mounts.yml"
 
 # New Setup
 

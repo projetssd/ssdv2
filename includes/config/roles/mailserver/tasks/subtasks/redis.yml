@@ -1,0 +1,13 @@
+---
+- name: 'Deploying redis'
+  docker_container:
+    name: 'redis'
+    recreate: true
+    image: 'redis:4.0-alpine'
+    hostname: 'mail'
+    pull: yes
+    command: 'redis-server --appendonly yes'
+    volumes:
+      - '/mnt/docker/redis/db:/data'
+    networks:
+      - name: mail_network

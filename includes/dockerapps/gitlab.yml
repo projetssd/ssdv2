@@ -1,0 +1,113 @@
+#!/bin/bash
+
+---
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
+  tasks:
+        
+    # FACTS #######################################################################
+    - name: Checking for existing app data
+      stat:
+        path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
+      register: check
+
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
+            (cloudflare.login is undefined)
+            or
+            (cloudflare.login is none)
+            or
+            (cloudflare.login | trim | length == 0)
+            or
+            (cloudflare.api is undefined)
+            or
+            (cloudflare.api is none)
+            or
+            (cloudflare.api | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Variables | Set 'oauth_enabled' variable"
+      set_fact:
+        oauth_enabled: "{{ true if not(
+            (oauth.client is undefined)
+            or
+            (oauth.client is none)
+            or
+            (oauth.client | trim | length == 0)
+            or
+            (oauth.secret is undefined)
+            or
+            (oauth.secret is none)
+            or
+            (oauth.secret | trim | length == 0)
+            or
+            (oauth.account is undefined)
+            or
+            (oauth.account is none)
+            or
+            (oauth.account | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: gitlab
+      when: cloudflare_enabled
+
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'gitlab'
+        image: 'gitlab/gitlab-ce:latest'
+
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
+      with_items:
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config'
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/logs'
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/data'
+
+    # LABELS ######################################################################
+    - name: 'Ajout label traefik'
+      set_fact:
+        pg_labels:
+          traefik.enable: 'true'
+          ## HTTP Routers
+          traefik.http.routers.gitlab-rtr.entrypoints: 'https'
+          traefik.http.routers.gitlab-rtr.rule: 'Host(`gitlab.{{user.domain}}`)'
+          traefik.http.routers.gitlab-rtr.tls: 'true'
+          ## Middlewares
+          traefik.http.routers.gitlab-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          ## HTTP Services
+          traefik.http.routers.gitlab-rtr.service: 'gitlab-svc'
+          traefik.http.services.gitlab-svc.loadbalancer.server.port: '80'
+
+    - name: 'Setting PG Volumes'
+      set_fact:
+        pg_volumes:
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config:/etc/gitlab'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/logs:/var/log/gitlab'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/data:/var/opt/gitlab'
+          - '/etc/localtime:/etc/localtime:ro'
+
+    # MAIN DEPLOYMENT #############################################################
+
+    - name: 'Deploying {{pgrole}}'
+      docker_container:
+        name: '{{pgrole}}'
+        image: '{{image}}'
+        pull: yes
+        hostname: 'gitlab.{{user.domain}}'
+        published_ports:
+          - '22:22'
+        volumes: '{{pg_volumes}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+        state: started
+        labels: '{{pg_labels}}'

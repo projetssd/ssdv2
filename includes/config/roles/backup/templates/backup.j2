@@ -1,4 +1,4 @@
-# !/bin/bash
+#!/bin/bash
 
 # Définition des variables de couleurs
 CSI="\033["
@@ -9,7 +9,7 @@ CYELLOW="${CSI}1;33m"
 CCYAN="${CSI}0;36m"  
 
 # Variables
-remote={{remote.stdout}}
+remote={{rclone.remote}}
 remote_backups=BACKUPS
 NB_MAX_BACKUP=3
 CDAY=$(date +%d%m%Y-%H%M)
@@ -24,7 +24,7 @@ echo -e "${CRED}-------------------------------------------------------${CEND}"
 
 # Stop Plex
 echo -e "${CCYAN}> Arrêt de docker${CEND}"
-service docker stop
+docker stop `docker ps -q`
 sleep 5
 
 echo ""
@@ -39,7 +39,7 @@ echo ""
 mkdir -p $BACKUP_FOLDER
 
 echo -e "${CCYAN}> Création de l'archive${CEND}"
-tar cf - "/opt" "/home/{{user.stdout}}/scripts" "/home/{{user.stdout}}/resume" "/etc/systemd" -P --warning=none | pigz > "$ARCHIVE"
+tar -I pigz -cf $ARCHIVE -P /opt/seedbox /home/{{user.name}}/scripts /home/{{user.name}}/resume /root/.config /root/.plexdrive /etc/systemd
 sleep 2s
 
 # Si une erreur survient lors de la compression
@@ -51,18 +51,18 @@ fi
 
 # Restart Plex
 echo -e "${CCYAN}> Lancement de docker${CEND}"
-service docker start
+docker start $(docker ps -a -q --filter "status=exited")
 sleep 5
 
 
 echo -e "${CCYAN}> Envoie Archive vers Google Drive${CEND}"
 # Envoie Archive vers Google Drive
-rclone --config "/root/.config/rclone/rclone.conf" copy "$BACKUP_FOLDER" "{{remote.stdout}}:/{{user.stdout}}/$remote_backups/backup-$CDAY" -v --log-file=/var/log/backup.log
+rclone --config "/root/.config/rclone/rclone.conf" copy "$BACKUP_FOLDER" "{{rclone.remote}}:/{{user.name}}/$remote_backups/backup-$CDAY" -v --log-file=/var/log/backup.log
 
 # Nombre de sauvegardes effectuées
 nbBackup=$(find $BACKUP_PARTITION -type d -name 'backup-*' | wc -l)
 
-if [[ "$nbBackup" -gt $NB_MAX_BACKUP ]]; then
+if [[ "$nbBackup" -gt "$NB_MAX_BACKUP" ]]; then
 
     # Archive la plus ancienne
     oldestBackupPath=$(find $BACKUP_PARTITION -type d -name 'backup-*' -printf '%T+ %p\n' | sort | head -n 1 | awk '{print $2}')
@@ -73,7 +73,7 @@ if [[ "$nbBackup" -gt $NB_MAX_BACKUP ]]; then
 
 # Suppression Archive Google Drive
 echo -e "${CCYAN}> Suppression de l'archive la plus ancienne${CEND}"
-rclone --config "/root/.config/rclone/rclone.conf" purge "{{remote.stdout}}:/{{user.stdout}}/$remote_backups/$oldestBackupFile" -v --log-file=/var/log/backup.log
+rclone --config "/root/.config/rclone/rclone.conf" purge "{{rclone.remote}}:/{{user.name}}/$remote_backups/$oldestBackupFile" -v --log-file=/var/log/backup.log
 fi
 echo ""
 echo -e "${CRED}-------------------------------------------------------${CEND}"

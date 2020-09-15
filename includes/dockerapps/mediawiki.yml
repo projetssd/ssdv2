@@ -1,0 +1,128 @@
+#!/bin/bash
+
+---
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
+  tasks:
+        
+    # FACTS #######################################################################
+    - name: Checking for existing app data
+      stat:
+        path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
+      register: check
+
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
+            (cloudflare.login is undefined)
+            or
+            (cloudflare.login is none)
+            or
+            (cloudflare.login | trim | length == 0)
+            or
+            (cloudflare.api is undefined)
+            or
+            (cloudflare.api is none)
+            or
+            (cloudflare.api | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Variables | Set 'oauth_enabled' variable"
+      set_fact:
+        oauth_enabled: "{{ true if not(
+            (oauth.client is undefined)
+            or
+            (oauth.client is none)
+            or
+            (oauth.client | trim | length == 0)
+            or
+            (oauth.secret is undefined)
+            or
+            (oauth.secret is none)
+            or
+            (oauth.secret | trim | length == 0)
+            or
+            (oauth.account is undefined)
+            or
+            (oauth.account is none)
+            or
+            (oauth.account | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: mediawiki
+      when: cloudflare_enabled
+
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'mediawiki'
+        intport: '80'
+        image: 'mediawiki'
+
+    - name: Create mediawiki-net network
+      docker_network:
+        name: mediawiki-net
+        state: present
+
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
+      with_items:
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
+
+    # LABELS ######################################################################
+    - name: 'Ajout label traefik'
+      set_fact:
+        pg_labels:
+          traefik.enable: 'true'
+          ## HTTP Routers
+          traefik.http.routers.mediawiki-rtr.entrypoints: 'https'
+          traefik.http.routers.mediawiki-rtr.rule: 'Host(`mediawiki.{{user.domain}}`)'
+          traefik.http.routers.mediawiki-rtr.tls: 'true'
+          ## Middlewares
+          traefik.http.routers.mediawiki-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          ## HTTP Services
+          traefik.http.routers.mediawiki-rtr.service: 'mediawiki-svc'
+          traefik.http.services.mediawiki-svc.loadbalancer.server.port: '80'
+
+    - name: 'Deploying db-mediawiki'
+      docker_container:
+        name: 'db-mediawiki'
+        recreate: true
+        image: 'linuxserver/mariadb'
+        pull: yes
+        volumes:
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/db-mediawiki:/config'
+          - '/etc/localtime:/etc/localtime:ro'
+        env:
+          MYSQL_DATABASE: 'mediawikidb'
+          MYSQL_USER: 'mediawiki'
+          MYSQL_PASSWORD: 'mediawiki'
+          MYSQL_ROOT_PASSWORD: 'mediawiki'
+        restart_policy: unless-stopped
+        networks:
+          - name: mediawiki-net
+        state: started
+
+    - name: Wait for 10 seconds before continuing
+      wait_for:
+        timeout: 10
+
+    # MAIN DEPLOYMENT #############################################################
+
+    - name: 'Deploying {{pgrole}}'
+      docker_container:
+        name: '{{pgrole}}'
+        image: '{{image}}'
+        pull: yes
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+          - name: mediawiki-net
+        state: started
+        labels: '{{pg_labels}}'

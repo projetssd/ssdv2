@@ -1,0 +1,29 @@
+[DEFAULT]
+ignoreip = 127.0.0.1 {{ ansible_env['SSH_CLIENT'].split() | first }}
+findtime = 3600
+bantime = 600
+
+[traefik-auth]
+enabled = true
+logpath = /opt/seedbox/docker/traefik/traefik.log
+port = http,https
+action = cloudflare-apiv4
+         iptables-allports
+maxretry = 10
+
+[traefik-botsearch]
+enabled = true
+logpath = /opt/seedbox/docker/traefik/traefik.log
+maxretry = 10
+port = http,https
+action = cloudflare-apiv4
+         iptables-allports
+
+[traefik-badbots]
+enabled = true
+filter = apache-badbots
+logpath = /opt/seedbox/docker/traefik/traefik.log
+maxretry = 10
+port = http,https
+action = cloudflare-apiv4
+         iptables-allports

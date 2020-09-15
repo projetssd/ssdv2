@@ -2,6 +2,8 @@
 
 - hosts: localhost
   gather_facts: true
+  vars_files:
+    - /opt/seedbox/variables/account.yml
   tasks:
 
     - name: lauch motd "wazaaaaa"

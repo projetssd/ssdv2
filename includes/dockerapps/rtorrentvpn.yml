@@ -1,0 +1,314 @@
+
+---
+- hosts: localhost
+  gather_facts: false
+  vars_prompt:
+    - name: vpn
+      prompt: "Nom du foursisseur VPN"
+      private: no
+    - name: portforwarded
+      prompt: "Port forwarded proposé par le fournisseur vpn"
+      default: "8181"
+      private: no
+    - name: reseau
+      prompt: "Plage reseau privé (ex: 192.168.1.0/24)"
+      private: no
+  vars_files:
+    - /opt/seedbox/variables/account.yml
+  tasks:
+        
+    # FACTS #######################################################################
+    - name: Checking for existing app data
+      stat:
+        path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
+      register: check
+
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
+            (cloudflare.login is undefined)
+            or
+            (cloudflare.login is none)
+            or
+            (cloudflare.login | trim | length == 0)
+            or
+            (cloudflare.api is undefined)
+            or
+            (cloudflare.api is none)
+            or
+            (cloudflare.api | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Variables | Set 'oauth_enabled' variable"
+      set_fact:
+        oauth_enabled: "{{ true if not(
+            (oauth.client is undefined)
+            or
+            (oauth.client is none)
+            or
+            (oauth.client | trim | length == 0)
+            or
+            (oauth.secret is undefined)
+            or
+            (oauth.secret is none)
+            or
+            (oauth.secret | trim | length == 0)
+            or
+            (oauth.account is undefined)
+            or
+            (oauth.account is none)
+            or
+            (oauth.account | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: rtorrentvpn
+      when: cloudflare_enabled
+
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'rtorrentvpn'
+
+    - name: Checking for existing app data
+      stat:
+        path: '/opt/seedbox/docker/{{user.name}}/rtorrentvpn/rtorrent/config/rtorrent.rc'
+      register: rccheck
+
+    - name: Checking for existing rutorrent-vpn.yml
+      stat:
+        path: '/opt/seedbox/conf/rutorrent-vpn.yml'
+      register: rutorrentvpn
+
+    - name: 'Creating rutorrent folder paths'
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
+      with_items:
+        - '/home/{{user.name}}/local/rutorrent'
+
+    - name: Install docker-compose
+      shell: |
+        curl -L "https://github.com/docker/compose/releases/download/1.26.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        chmod +x /usr/local/bin/docker-compose
+
+    - name: Import docker-compose.yml
+      template:
+        src: /opt/seedbox-compose/includes/dockerapps/templates/rutorrent/rutorrent-vpn.yml.j2
+        dest: /opt/seedbox/conf/rutorrent-vpn.yml
+      when: not rutorrentvpn.stat.exists
+
+    - name: Docker compose
+      command: docker-compose -f /opt/seedbox/conf/rutorrent-vpn.yml up -d
+
+    - debug:
+        msg: Transférer maintenant (via ftp) le fichier opvn fournit par votre VPN dans /opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/openvpn !!
+
+    - name: Environ 2mn d'attente - config vpn et rutorrent en cours...
+      wait_for:
+        path: '/opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/rtorrent/config/rtorrent.rc'
+        state: present
+        msg: Echec création rtorrent.rc
+
+    - name: 'Stopping {{pgrole}}'
+      docker_container:
+        name: '{{pgrole}}'
+        state: stopped
+
+    - name: Set download location
+      lineinfile:
+        path: '/opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/rtorrent/config/rtorrent.rc'
+        regexp: '#*directory\s*=.*'
+        line: 'directory = /home/{{user.name}}/local/{{pgrole}}'
+        state: present
+
+    - name: Set download location
+      lineinfile:
+        path: '/opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/rtorrent/config/rtorrent.rc'
+        regexp: '#*directory.default.set\s*=.*'
+        line: 'directory.default.set = /home/{{user.name}}/local/{{pgrole}}'
+        state: present
+
+
+    # FIRST TIME CONFIGURATION ################################################################
+
+    - name: 'Configuring {{pgrole}} for first time use'
+      block:
+        - name: Upload Rate
+          lineinfile:
+            path: '/opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/rtorrent/config/rtorrent.rc'
+            regexp: '#*upload_rate\s*=.*'
+            line: 'upload_rate = 100000'
+            state: present
+
+        - name: Update Port Range
+          lineinfile:
+            path: '/opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/rtorrent/config/rtorrent.rc'
+            regexp: '#*port_range\s*=.*'
+            line: 'port_range = {{portforwarded}}-{{portforwarded}}'
+            state: present
+
+        - name: Download Rate
+          lineinfile:
+            path: '/opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/rtorrent/config/rtorrent.rc'
+            regexp: '#*download_rate\s*=.*'
+            line: 'download_rate = 100000'
+            state: present
+
+        - name: Low Disk - Set to 5GB
+          lineinfile:
+            path: '/opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/rtorrent/config/rtorrent.rc'
+            regexp: '#*schedule\s*=\s*low_diskspace.*'
+            line: 'schedule = low_diskspace,5,60,close_low_diskspace=5000M'
+            state: present
+
+        - name: max_downloads
+          lineinfile:
+            path: '/opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/rtorrent/config/rtorrent.rc'
+            regexp: '#*throttle.max_downloads.global.set\s*=.*'
+            line: 'throttle.max_downloads.global.set = 500'
+            state: present
+
+        - name: max_uploads
+          lineinfile:
+            path: '/opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/rtorrent/config/rtorrent.rc'
+            regexp: '#*throttle.max_uploads.global.set\s*=.*'
+            line: 'throttle.max_uploads.global.set = 50'
+            state: present
+
+        - name: No File Allocation
+          lineinfile:
+            path: '/opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/rtorrent/config/rtorrent.rc'
+            regexp: '#*system.file.allocate.set\s*=.*'
+            line: 'system.file.allocate.set = 0'
+            state: present
+
+        - name: min_peers
+          lineinfile:
+            path: '/opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/rtorrent/config/rtorrent.rc'
+            regexp: '#*min_peers\s*=.*'
+            line: 'min_peers = 40'
+            state: present
+
+        - name: max_peers
+          lineinfile:
+            path: '/opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/rtorrent/config/rtorrent.rc'
+            regexp: '#*max_peers\s*=.*'
+            line: 'max_peers = 1200'
+            state: present
+
+        - name: max_uploads
+          lineinfile:
+            path: '/opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/rtorrent/config/rtorrent.rc'
+            regexp: '#*max_uploads\s*=.*'
+            line: 'max_uploads = 15'
+            state: present
+
+        - name: max_downloads
+          lineinfile:
+            path: '/opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/rtorrent/config/rtorrent.rc'
+            regexp: '#*max_downloads\s*=.*'
+            line: 'max_downloads = 10'
+            state: present
+
+        - name: Upload Rate
+          lineinfile:
+            path: '/opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/rtorrent/config/rtorrent.rc'
+            regexp: '#*upload_rate\s*=.*'
+            line: 'upload_rate = 30000'
+            state: present
+
+        - name: Download Rate
+          lineinfile:
+            path: '/opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/rtorrent/config/rtorrent.rc'
+            regexp: '#*download_rate\s*=.*'
+            line: 'download_rate = 90000'
+            state: present
+
+        - name: Global Upload to Unlmited
+          lineinfile:
+            path: '/opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/rtorrent/config/rtorrent.rc'
+            regexp: '#*throttle.global_up.max_rate.set_kb\s*=.*'
+            line: 'throttle.global_up.max_rate.set_kb = 0'
+            state: present
+
+        - name: DHT disable
+          lineinfile:
+            path: '/opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/rtorrent/config/rtorrent.rc'
+            regexp: '#*dht\s*=.*'
+            line: '#dht = auto'
+            state: present
+
+        - name: DHT port
+          lineinfile:
+            path: '/opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/rtorrent/config/rtorrent.rc'
+            regexp: '#*dht_port\s*=.*'
+            line: '#dht_port = 6881'
+            state: present
+
+        - name: check Hash
+          lineinfile:
+            path: '/opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/rtorrent/config/rtorrent.rc'
+            regexp: '#*check_hash\s*=.*'
+            line: 'check_hash = no'
+            state: present
+
+        - name: Preload Piece to Host
+          lineinfile:
+            path: '/opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/rtorrent/config/rtorrent.rc'
+            regexp: '#*pieces.preload.type\s*=.*'
+            line: 'pieces.preload.type = 2'
+            state: present
+
+        - name: lower DNS timeout
+          lineinfile:
+            path: '/opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/rtorrent/config/rtorrent.rc'
+            regexp: '#*network.http.dns_cache_timeout.set\s*=.*'
+            line: 'network.http.dns_cache_timeout.set = 25'
+            state: present
+
+        - name: Network Send Buffer Size
+          lineinfile:
+            path: '/opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/rtorrent/config/rtorrent.rc'
+            regexp: '#*network.send_buffer.size.set\s*=.*'
+            line: 'network.send_buffer.size.set = 12M'
+            state: present
+
+        - name: Network Recived Buffer Size
+          lineinfile:
+            path: '/opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/rtorrent/config/rtorrent.rc'
+            regexp: '#*network.receive_buffer.size.set\s*=.*'
+            line: 'network.receive_buffer.size.set = 4M'
+            state: present
+
+        - name: Announce-Interval Min rescan
+          lineinfile:
+            path: '/opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/rtorrent/config/rtorrent.rc'
+            regexp: '#*throttle.min_peers.seed.set\s*=.*'
+            line: 'throttle.min_peers.seed.set = 0'
+            state: present
+
+        - name: Announce-Interval Max rescan
+          lineinfile:
+            path: '/opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/rtorrent/config/rtorrent.rc'
+            regexp: '#*throttle.max_peers.seed.set\s*=.*'
+            line: 'throttle.max_peers.seed.set = -1'
+            state: present
+
+      when: not rccheck.stat.exists
+
+    - name: Restart Docker Container
+      docker_container:
+        name: '{{pgrole}}'
+        state: started
+
+    - debug:
+        msg: 
+          - TRES IMPORTANT - Si le vpn exige une authentification, rajouter ces 2 lignes dans /opt/seedbox/conf/rutorrent-vpn.yml et réinitailiser
+          - VPN_USER=<vpn username>
+          - VPN_PASS=<vpn password>
+
+    - name: Prenez 10s pour lire le message au dessus - Consulter les logs 'docker logs -f rtorrentvpn'
+      wait_for:
+        timeout: 10

@@ -1,0 +1,35 @@
+---
+- name: Create Mariadb network
+  docker_network:
+    name: mail_network
+    state: present
+
+- name: Create required directories
+  file: "path={{ item }} state=directory mode=0775 owner=root group=root"
+  with_items:
+    - /mnt/docker/mysql/db
+
+- name: 'Deploying Mariadb'
+  docker_container:
+    name: 'mariadb'
+    recreate: true
+    image: 'mariadb:10.2'
+    pull: yes
+    published_ports:
+      - "127.0.0.1:3306:3306"
+    volumes:
+      - '/mnt/docker/mysql/db:/var/lib/mysql'
+    env:
+      MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
+      MYSQL_DATABASE: 'postfix'
+      MYSQL_USER: 'postfix'
+      MYSQL_PASSWORD: '{{user.pass}}'
+    restart_policy: unless-stopped
+    networks:
+      - name: mail_network
+    state: started
+
+- name: Wait for 10 seconds before continuing
+  wait_for:
+    timeout: 10
+
