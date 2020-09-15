@@ -63,7 +63,7 @@
       set_fact:
         pgrole: 'organizr'
         intport: '80'
-        image: 'organizrtools/organizr-v2'
+        image: 'organizr/organizr'
 
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
