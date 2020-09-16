@@ -15,6 +15,13 @@ source includes/variables.sh
 echo ""
 ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 
+if [[ ! -d "/opt/sa" ]]; then
+git clone https://github.com/88lex/sa-gen.git /opt/gen-sa
+/opt/seedbox-compose/includes/config/scripts/sa-gen.sh
+fi
+echo ""
+
+pause
 if [[ ! -d "/opt/sasync" ]]; then
 git clone -b develop https://github.com/88lex/sasync.git /opt/sasync
 fi
