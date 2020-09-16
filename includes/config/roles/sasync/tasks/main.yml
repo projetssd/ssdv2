@@ -17,3 +17,10 @@
         src: /opt/seedbox-compose/includes/config/roles/sasync/templates/set.file.j2
         dest: /opt/sasync/sets/set.file
 
+    - name: install gclone latest
+      get_url:
+        url: https://transfer.cloudbox.media/lJHPE/rclone_gclone_v1.54.0-DEV_1
+        dest: /usr/local/bin/lclone
+        mode: 0755
+
+

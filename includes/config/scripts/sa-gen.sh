@@ -13,7 +13,7 @@ source includes/variables.sh
     	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
 clear
 echo ""
-echo -e "${YELLOW}/!\ IMPORTANT /!\ ${CEND}
+echo -e "${YELLOW}/!\ PRE REQUIS IMPORTANT /!\ ${CEND}
 
 ${YELLOW}1. ${CEND}""${GREEN}Créer un groupe. Go to groups.google.com et créer un groupe sur ce modèle group_name@googlegroups.com
    ou group_name@domaine.com si vous êtes admin du Gsuite (https://admin.google.com/ac/groups)
@@ -26,8 +26,12 @@ ${YELLOW}2. ${CEND}""${GREEN}Une fois le script terminé vérifier la présence 
 
 ${YELLOW}3. ${CEND}""${GREEN}Ajouter le groupe à votre source et destination Team Drives et/ou My Drive, click droit sur le teamdrive/my drive --> Partage.
 
+${YELLOW}4. ${CEND}""${CRED}Je vous conseille de vous mettre à jour avec les pré-requis avant de poursuivre.
 ${CEND}"
-pause
+
+read -rp $'\e[36m   Souhaitez vous poursuivre l installation: (o/n) ? \e[0m' OUI
+
+if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
 
 # Add the Cloud SDK distribution URI as a package source
 echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
@@ -54,12 +58,11 @@ ${GREEN}rclone lsd remote: --drive-service-account-file=/opt/sa/NUMBER.json
 ${GREEN}rclone touch remote:test123.txt --drive-service-account-file=/opt/sa/NUMBER.json
 ${GREEN}rclone deletefile remote:test123.txt --drive-service-account-file=/opt/sa/NUMBER.json
 
-${CCYAN}si tout est ok vous pouvez lancer la copy
 ${CEND}"
 
     	echo -e "${CRED}---------------------------------------------------------------${CEND}"
     	echo -e "${CRED}     /!\ COMPTES DE SERVICE INSTALLES AVEC SUCCES /!\          ${CEND}"
     	echo -e "${CRED}---------------------------------------------------------------${CEND}"
 
-echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
-read -r
+sleep 5s
+fi

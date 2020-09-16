@@ -1,6 +1,6 @@
 rclone:
   config: /root/.config/rclone/rclone.conf
-  path: /usr//local/bin/gclone
+  path: /usr//local/bin/lclone
   stats: 30s
   live_rotate: {{ 'true' if teamdrive1_enabled | default(false) else 'false' }}
   service_account_remotes:

@@ -116,7 +116,7 @@
     - name: install gclone latest
       get_url:
         url: https://transfer.cloudbox.media/lJHPE/rclone_gclone_v1.54.0-DEV_1
-        dest: /usr/local/bin/gclone
+        dest: /usr/local/bin/lclone
         mode: 0755
 
     - name: Import default config

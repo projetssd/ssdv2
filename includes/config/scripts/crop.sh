@@ -43,7 +43,7 @@ fi
   echo -e "${CCYAN}   Source : ${CGREEN}$teamdrive_sce --> $teamdrive_a${CEND}"
   id=$(sed -n "$i"p /tmp/crop.txt)
   echo -e "#Debut team source\n[$teamdrive_sce$source] \ntype = drive\nscope = drive\nserver_side_across_configs = true\nservice_account_file_path = /opt/sa/\nservice_account_file = /opt/sa/1.json\n$id\n#Fin team source\n" >> /root/.config/rclone/rclone.conf
-  sed -i "/plexdrive/a \ \ \ share_source: $teamdrive_sce$source" /opt/seedbox/variables/account.yml
+  sed -i "/remote/a \ \ \ share_source: $teamdrive_sce$source" /opt/seedbox/variables/account.yml
   echo ""
 
   read -rp read -rp $'\e[36m   Choisir le backup: \e[0m' DEST
@@ -62,7 +62,7 @@ fi
   echo -e "${CCYAN}   Backup : ${CGREEN}$teamdrive_dest --> $teamdrive_b${CEND}"
   id=$(sed -n "$j"p /tmp/crop.txt)
   echo -e "#Debut team backup\n[$teamdrive_dest$dest] \ntype = drive\nscope = drive\nserver_side_across_configs = true\nservice_account_file_path = /opt/sa/\nservice_account_file = /opt/sa/1.json\n$id\n#Fin team backup\n" >> /root/.config/rclone/rclone.conf
-  sed -i "/plexdrive/a \ \ \ share_dest: $teamdrive_dest$dest" /opt/seedbox/variables/account.yml
+  sed -i "/remote/a \ \ \ share_dest: $teamdrive_dest$dest" /opt/seedbox/variables/account.yml
   rm /tmp/team.txt /tmp/crop.txt
 
 ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1

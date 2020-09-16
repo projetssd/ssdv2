@@ -4,7 +4,7 @@ source includes/functions.sh
 source includes/variables.sh
 
     	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
-    	echo -e "${CCYAN}          /!\ Installation de Sasync /!\                                     ${CEND}"
+    	echo -e "${CCYAN}          /!\ Création des SA-Installation de Sasync /!\                                     ${CEND}"
     	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
 	echo ""
     	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
@@ -12,11 +12,36 @@ source includes/variables.sh
     	echo -e "${CCYAN}           https://github.com/88lex/sasync                                   ${CEND}"
     	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
 
-echo ""
+echo -e "${YELLOW}/!\ PRE REQUIS IMPORTANT: RAPPEL /!\ ${CEND}
+
+${YELLOW}1. ${CEND}""${GREEN}Créer un groupe. Go to groups.google.com et créer un groupe sur ce modèle group_name@googlegroups.com
+   ou group_name@domaine.com si vous êtes admin du Gsuite (https://admin.google.com/ac/groups)
+
+${YELLOW}2. ${CEND}""${GREEN}Une fois le script terminé vérifier la présence des fichiers jsons dans le dossier /opt/sa
+   Servez vous du fichier members.csv pour ajouter les adresses mail au groupe précédemment créé
+
+   Admin: Vous pouvez ajouter en masse les adresses mails.
+   Utilisateurs: Vous Pouvez les ajouter par tranche de 100 à la fois.
+
+${YELLOW}3. ${CEND}""${GREEN}Ajouter le groupe à votre source et destination Team Drives et/ou My Drive, click droit sur le teamdrive/my drive --> Partage.
+
+${YELLOW}4. ${CEND}""${CRED}Je vous conseille de vous mettre à jour avec les pré-requis avant de poursuivre.
+${CEND}"
+
 ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 
+read -rp $'\e[36m   Souhaitez vous poursuivre l installation: (o/n) ? \e[0m' OUI
+
+if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
+echo ""
+
+if [[ ! -d "/opt/sa" ]]; then
+/opt/seedbox-compose/includes/config/scripts/sa-gen.sh
+fi
+echo ""
+
 if [[ ! -d "/opt/sasync" ]]; then
-git clone -b develop https://github.com/88lex/sasync.git /opt/sasync
+https://github.com/88lex/sasync.git /opt/sasync
 fi
 echo ""
 i=1
@@ -40,7 +65,6 @@ echo -e " ${BWHITE}* Aucun Drive perso détecté${NC}"
 echo ""
 exit
 fi
-
 
 ## drive perso
 read -rp $'\e[36m   Choisir le remote Drive perso: \e[0m' RTYPE
@@ -90,7 +114,7 @@ fi
   echo -e "${CCYAN}   Source : ${CGREEN}$teamdrive_sce --> $teamdrive_a${CEND}"
   id=$(sed -n "$i"p /tmp/crop.txt)
   echo -e "#Debut team source\n[$teamdrive_sce$source] \ntype = drive\nscope = drive\nserver_side_across_configs = true\nservice_account_file_path = /opt/sa/\nservice_account_file = /opt/sa/1.json\n$id\n#Fin team source\n" >> /root/.config/rclone/rclone.conf
-  sed -i "/plexdrive/a \ \ \ share_source: $teamdrive_sce$source" /opt/seedbox/variables/account.yml
+  sed -i "/remote/a \ \ \ share_source: $teamdrive_sce$source" /opt/seedbox/variables/account.yml
   echo ""
 
 ansible-playbook /opt/seedbox-compose/includes/config/roles/sasync/tasks/main.yml
@@ -107,4 +131,4 @@ rm /tmp/temp.txt /tmp/drive.txt
 rm /tmp/crop.txt /tmp/team.txt
 ## Lancement de la synchro
 cd /opt/sasync
-./sasync -g set.file
+./sasync -l set.file
