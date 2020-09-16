@@ -33,70 +33,69 @@ ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 read -rp $'\e[36m   Souhaitez vous poursuivre l installation: (o/n) ? \e[0m' OUI
 
 if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
-echo ""
-
-if [[ ! -d "/opt/sa" ]]; then
-/opt/seedbox-compose/includes/config/scripts/sa-gen.sh
-fi
-echo ""
-
-if [[ ! -d "/opt/sasync" ]]; then
-https://github.com/88lex/sasync.git /opt/sasync
-fi
-echo ""
-i=1
-sed -i '/My_drive/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
-grep "root_folder_id" /root/.config/rclone/rclone.conf | uniq > /tmp/temp.txt
-grep "root_folder_id" /root/.config/rclone/rclone.conf > /dev/null 2>&1
-
-if [ $? -eq 0 ]; then
-  echo -e " ${BWHITE}* remotes disponibles${NC}"
   echo ""
-    while read line; do
-      drive=$(grep -iC 6 "$line" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
-      echo "$drive" >> /tmp/drive.txt
-      echo -e "${CGREEN}   $i. $drive${CEND}"
-      let "i+=1"
-    done < /tmp/temp.txt
+
+  if [[ ! -d "/opt/sa" ]]; then
+    /opt/seedbox-compose/includes/config/scripts/sa-gen.sh
+  fi
+
+  if [[ ! -d "/opt/sasync" ]]; then
+    git clone https://github.com/88lex/sasync.git /opt/sasync
+  fi
+
+  echo ""
+  i=1
+  sed -i '/My_drive/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
+  grep "root_folder_id" /root/.config/rclone/rclone.conf | uniq > /tmp/temp.txt
+  grep "root_folder_id" /root/.config/rclone/rclone.conf > /dev/null 2>&1
+
+  if [ $? -eq 0 ]; then
+    echo -e " ${BWHITE}* remotes disponibles${NC}"
     echo ""
-echo ""
-else
-echo -e " ${BWHITE}* Aucun Drive perso détecté${NC}"
-echo ""
-exit
-fi
+      while read line; do
+        drive=$(grep -iC 6 "$line" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
+        echo "$drive" >> /tmp/drive.txt
+        echo -e "${CGREEN}   $i. $drive${CEND}"
+        let "i+=1"
+      done < /tmp/temp.txt
+   echo ""
+  else
+    echo -e " ${BWHITE}* Aucun Drive perso détecté${NC}"
+    echo ""
+    exit
+  fi
 
-## drive perso
-read -rp $'\e[36m   Choisir le remote Drive perso: \e[0m' RTYPE
-## Variables
-i="$RTYPE"
-My_drive=$(sed -n "$i"p /tmp/drive.txt)
+  ## drive perso
+  read -rp $'\e[36m   Choisir le remote Drive perso: \e[0m' RTYPE
+  ## Variables
+  i="$RTYPE"
+  My_drive=$(sed -n "$i"p /tmp/drive.txt)
 
-## drive perso
-echo ""
-sed -i "/remote/a \ \ \ My_drive: $My_drive" /opt/seedbox/variables/account.yml > /dev/null 2>&1
-
-i=1
-sed -i '/#Debut team source/,/#Fin team source/d' /root/.config/rclone/rclone.conf > /dev/null 2>&1
-sed -i '/share_source/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
-grep "team_drive" /root/.config/rclone/rclone.conf | uniq > /tmp/crop.txt
-grep "team_drive" /root/.config/rclone/rclone.conf > /dev/null 2>&1
-
-if [ $? -eq 0 ]; then
-  echo -e " ${BWHITE}* Teamdrives disponibles${NC}"
+  ## drive perso
   echo ""
-    while read line; do
-      team=$(grep -iC 6 "$line" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
-      echo "$team" >> /tmp/team.txt
-      echo -e "${CGREEN}   $i. $team${CEND}"
-      let "i+=1"
+  sed -i "/remote/a \ \ \ My_drive: $My_drive" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+
+  i=1
+  sed -i '/#Debut team source/,/#Fin team source/d' /root/.config/rclone/rclone.conf > /dev/null 2>&1
+  sed -i '/share_source/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
+  grep "team_drive" /root/.config/rclone/rclone.conf | uniq > /tmp/crop.txt
+  grep "team_drive" /root/.config/rclone/rclone.conf > /dev/null 2>&1
+
+  if [ $? -eq 0 ]; then
+    echo -e " ${BWHITE}* Teamdrives disponibles${NC}"
+    echo ""
+      while read line; do
+        team=$(grep -iC 6 "$line" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
+        echo "$team" >> /tmp/team.txt
+        echo -e "${CGREEN}   $i. $team${CEND}"
+        let "i+=1"
       done < /tmp/crop.txt
     echo ""
-else
-echo -e " ${BWHITE}* Aucun teamdrive/share drive détecté${NC}"
-echo ""
-exit
-fi
+  else
+    echo -e " ${BWHITE}* Aucun teamdrive/share drive détecté${NC}"
+    echo ""
+    exit
+  fi
 
   read -rp $'\e[36m   Choisir le stockage principal: \e[0m' RTYPE
 
@@ -117,18 +116,19 @@ fi
   sed -i "/remote/a \ \ \ share_source: $teamdrive_sce$source" /opt/seedbox/variables/account.yml
   echo ""
 
-ansible-playbook /opt/seedbox-compose/includes/config/roles/sasync/tasks/main.yml
-echo ""
+  ansible-playbook /opt/seedbox-compose/includes/config/roles/sasync/tasks/main.yml
+  echo ""
 
     	echo -e "${CRED}---------------------------------------------------------------${CEND}"
     	echo -e "${CRED}     /!\ COMPTES DE SERVICE INSTALLES AVEC SUCCES /!\          ${CEND}"
     	echo -e "${CRED}---------------------------------------------------------------${CEND}"
 
-echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
-read -r
-ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
-rm /tmp/temp.txt /tmp/drive.txt
-rm /tmp/crop.txt /tmp/team.txt
-## Lancement de la synchro
-cd /opt/sasync
-./sasync -l set.file
+  echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+  read -r
+  ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+  rm /tmp/temp.txt /tmp/drive.txt
+  rm /tmp/crop.txt /tmp/team.txt
+  ## Lancement de la synchro
+  cd /opt/sasync
+  ./sasync -l set.file
+fi

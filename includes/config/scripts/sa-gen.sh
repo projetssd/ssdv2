@@ -33,36 +33,35 @@ read -rp $'\e[36m   Souhaitez vous poursuivre l installation: (o/n) ? \e[0m' OUI
 
 if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
 
-# Add the Cloud SDK distribution URI as a package source
-echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+  # Add the Cloud SDK distribution URI as a package source
+  echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
 
-# Import the Google Cloud Platform public key
-curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+  # Import the Google Cloud Platform public key
+  curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
 
-# Update the package list and install the Cloud SDK
-apt update && apt install google-cloud-sdk
-echo ""
-gcloud init
-echo ""
-git clone https://github.com/88lex/sa-gen.git /opt/gen-sa
-echo ""
-ansible-playbook /opt/seedbox-compose/includes/config/roles/gen-sa/tasks/main.yml
-echo ""
-/opt/gen-sa/sa-gen
-echo ""
-echo -e "${YELLOW}/!\ VERIFICATION /!\:${CEND}
+  # Update the package list and install the Cloud SDK
+  apt update && apt install google-cloud-sdk
+  echo ""
+  gcloud init
+  echo ""
+  git clone https://github.com/88lex/sa-gen.git /opt/gen-sa
+  echo ""
+  ansible-playbook /opt/seedbox-compose/includes/config/roles/gen-sa/tasks/main.yml
+  echo ""
+  /opt/gen-sa/sa-gen
+  echo ""
+  echo -e "${YELLOW}/!\ VERIFICATION /!\:${CEND}
 
-${CCYAN}Les 3 commandes ci dessous vont vous permettre de vérifier si les comptes de service sont fonctionnels
+  ${CCYAN}Les 3 commandes ci dessous vont vous permettre de vérifier si les comptes de service sont fonctionnels
 
-${GREEN}rclone lsd remote: --drive-service-account-file=/opt/sa/NUMBER.json
-${GREEN}rclone touch remote:test123.txt --drive-service-account-file=/opt/sa/NUMBER.json
-${GREEN}rclone deletefile remote:test123.txt --drive-service-account-file=/opt/sa/NUMBER.json
-
-${CEND}"
+  ${GREEN}rclone lsd remote: --drive-service-account-file=/opt/sa/NUMBER.json
+  ${GREEN}rclone touch remote:test123.txt --drive-service-account-file=/opt/sa/NUMBER.json
+  ${GREEN}rclone deletefile remote:test123.txt --drive-service-account-file=/opt/sa/NUMBER.json
+  ${CEND}"
 
     	echo -e "${CRED}---------------------------------------------------------------${CEND}"
     	echo -e "${CRED}     /!\ COMPTES DE SERVICE INSTALLES AVEC SUCCES /!\          ${CEND}"
     	echo -e "${CRED}---------------------------------------------------------------${CEND}"
 
-sleep 5s
+  sleep 5s
 fi
