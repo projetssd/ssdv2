@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 source includes/functions.sh
 source includes/variables.sh
