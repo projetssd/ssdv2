@@ -26,6 +26,9 @@ ${YELLOW}2. ${CEND}""${GREEN}Une fois le script terminé vérifier la présence 
 ${YELLOW}3. ${CEND}""${GREEN}Ajouter le groupe à votre source et destination Team Drives et/ou My Drive, click droit sur le teamdrive/my drive --> Partage.
 
 ${YELLOW}4. ${CEND}""${CRED}Je vous conseille de vous mettre à jour avec les pré-requis avant de poursuivre.
+
+${YELLOW}5. ${CEND}""${CRED}rclone.conf doit contenir le nouveau remote sharedrive.
+
 ${CEND}"
 
 ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
