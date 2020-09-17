@@ -1022,49 +1022,10 @@ function install_rclone() {
 	echo -e "${BLUE}### RCLONE ###${NC}"
 	mkdir /mnt/rclone > /dev/null 2>&1
 	mkdir -p /mnt/rclone/$SEEDUSER > /dev/null 2>&1
-	RCLONECONF="/root/.config/rclone/rclone.conf"
-	USERID=$(id -u $SEEDUSER)
-	GRPID=$(id -g $SEEDUSER)
-
-	if [[ ! -f "$RCLONECONF" ]]; then
-		echo -e " ${BWHITE}* Installation rclone${NC}"
-		mkdir -p /root/.config/rclone/ > /dev/null 2>&1
-		clear
-		echo ""
-    		echo -e "${YELLOW}\nColler le contenu de rclone.conf avec le clic droit, appuyer ensuite sur la touche Entrée et Taper ${CPURPLE}STOP${CEND}${YELLOW} pour poursuivre le script.\n${NC}"   				
-		while :
-    		do		
-        	read -p "" EXCLUDEPATH
-        		if [[ "$EXCLUDEPATH" = "STOP" ]] || [[ "$EXCLUDEPATH" = "stop" ]]; then
-            				break
-        		fi
-        	echo "$EXCLUDEPATH" >> /root/.config/rclone/rclone.conf
-    		done
-		echo ""
-	else
-		echo -e " ${CCYAN}* rclone.conf est déjà configuré !${NC}"
-                sleep 2s
-
-	fi
-		sed -n -i '1h; 1!H; ${x; s/\n*$//; p}' /root/.config/rclone/rclone.conf > /dev/null 2>&1
-		echo ""
-
-		## Mise en variables des remotes
-		REMOTE=$(grep -iC 1 "type = drive" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
-		REMOTEPLEX=$(grep -iC 2 "/mnt/plexdrive" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
-		REMOTECRYPT=$(grep -v -e $REMOTEPLEX -e $REMOTE /root/.config/rclone/rclone.conf | grep "\[" | sed "s/\[//g" | sed "s/\]//g" | head -n 1)
-		sed -i "s/remote:/remote: $REMOTECRYPT/" /opt/seedbox/variables/account.yml
-		sed -i "s/crypt:/crypt: $REMOTEPLEX/" /opt/seedbox/variables/account.yml
-
-		ansible-playbook /opt/seedbox-compose/includes/config/roles/rclone/tasks/main.yml
-
-		clear
-		echo -e " ${BWHITE}* Remote rclone${NC} --> ${YELLOW}$REMOTECRYPT:${NC}"
-		checking_errors $?
-		echo ""
-		echo -e " ${BWHITE}* Remote plexdrive${NC} --> ${YELLOW}$REMOTEPLEX:${NC}"
-		checking_errors $?
-	        echo ""
+        /opt/seedbox-compose/includes/config/scripts/rclone.sh
+        /opt/seedbox-compose/includes/config/roles/rclone/tasks/main.yml
+	checking_errors $?
+	echo ""
 }
 
 function unionfs_fuse() {
