@@ -27,7 +27,17 @@ echo ""
 exit
 fi
 
+  nombre=$(wc -l /tmp/team.txt | cut -d ' ' -f1)
+  while :
+  do
   read -rp $'\e[36m   Choisir le stockage principal: \e[0m' RTYPE
+    if [ "$RTYPE" -le "$nombre" -a "$RTYPE" -ge "1"  ]; then
+   break
+  else
+  echo -e " ${CRED}* /!\ erreur de saisie /!\{NC}"
+  echo ""
+  fi
+  done
 
   ## Variables
   i="$RTYPE"
@@ -46,10 +56,22 @@ fi
   sed -i "/remote/a \ \ \ share_source: $teamdrive_sce$source" /opt/seedbox/variables/account.yml
   echo ""
 
-  read -rp read -rp $'\e[36m   Choisir le backup: \e[0m' DEST
+  nombre=$(wc -l /tmp/team.txt | cut -d ' ' -f1)
+
+  while :
+  do
+  read -rp $'\e[36m   Choisir le backup: \e[0m' RTYPE
+    if [ "$RTYPE" -le "$nombre" -a "$RTYPE" -ge "1"  ]; then
+   break
+  else
+  echo -e " ${CRED}* /!\ erreur de saisie /!\{NC}"
+  echo ""
+  fi
+  done
+
 
   ## Variables
-  j="$DEST"
+  j="$RTYPE"
   teamdrive_sce=$(sed -n "$j"p /tmp/team.txt)
   teamdrive_dest=$(sed -n "$j"p /tmp/team.txt)
   teamdrive_a=$(sed -n "$j"p /tmp/crop.txt)

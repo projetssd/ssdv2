@@ -32,6 +32,11 @@ ${YELLOW}5. ${CEND}""${CRED}rclone.conf doit contenir le nouveau remote sharedri
 ${CEND}"
 
 ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+
+sed -i '/#Debut team source/,/#Fin team source/d' /root/.config/rclone/rclone.conf > /dev/null 2>&1
+sed -i '/share_source/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
+sed -i '/My_drive/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
+
 EXIT=0
 read -rp $'\e[36m   Souhaitez vous poursuivre l installation: (o/n) ? \e[0m' OUI
 
@@ -56,7 +61,7 @@ if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
         grep "root_folder_id = ." /root/.config/rclone/rclone.conf > /dev/null 2>&1
         if [ $? -eq 0 ]; then
          drive=$(grep -iC 6 "$line" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
-         echo "$drive" > /tmp/drive.txt
+         echo "$drive" >> /tmp/drive.txt
         fi
         echo -e "${CGREEN}   $i. $drive${CEND}"
         let "i+=1"
@@ -74,7 +79,7 @@ if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
   while :
   do
   read -rp $'\e[36m   Choisir le remote Drive perso: \e[0m' RTYPE
-    if [ $RTYPE -lt $nombre -o $nombre = 1 ]; then
+    if [ "$RTYPE" -le "$nombre" -a "$RTYPE" -ge "1"  ]; then
    break
   else
   echo -e " ${CRED}* /!\ erreur de saisie /!\{NC}"
@@ -98,7 +103,7 @@ if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
     echo ""
       while read line; do
         team=$(grep -iC 6 "$line" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
-        echo "$team" > /tmp/team.txt
+        echo "$team" >> /tmp/team.txt
         echo -e "${CGREEN}   $i. $team${CEND}"
         let "i+=1"
       done < /tmp/crop.txt
@@ -113,7 +118,7 @@ if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
   while :
   do
   read -rp $'\e[36m   Choisir le stockage principal: \e[0m' RTYPE
-    if [ $RTYPE -lt $nombre -o $nombre = 1 ]; then
+    if [ "$RTYPE" -le "$nombre" -a "$RTYPE" -ge "1"  ]; then
    break
   else
   echo -e " ${CRED}* /!\ erreur de saisie /!\{NC}"
