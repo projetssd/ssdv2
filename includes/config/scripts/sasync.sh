@@ -3,6 +3,22 @@
 source includes/functions.sh
 source includes/variables.sh
 
+abort()
+{
+echo -e "${CCYAN}
+********************************************************
+*********************** ERREUR *************************
+********************************************************
+${CEND}"
+       echo -e "${CCYAN}Aucun drive perso n'est configuré dans rclone.conf${CEND}" >&2
+
+
+       exit 1
+}
+
+trap 'abort' 0
+
+set -e
     	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
     	echo -e "${CCYAN}          /!\ Création des SA-Installation de Sasync /!\                                     ${CEND}"
     	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
@@ -62,6 +78,7 @@ if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
         if [ $? -eq 0 ]; then
          drive=$(grep -iC 6 "$line" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
          echo "$drive" >> /tmp/drive.txt
+         exit
         fi
         echo -e "${CGREEN}   $i. $drive${CEND}"
         let "i+=1"
@@ -159,3 +176,10 @@ if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
   cd /opt/sasync
   ./sasync -l set.file
 fi
+trap : 0
+
+echo >&2 '
+************
+*** DONE *** 
+************
+'
