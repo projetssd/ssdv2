@@ -169,8 +169,8 @@ case $CHOICE in
 			cloudflare
                         oauth
 			install_traefik
+
 			install_plexdrive
-			install_rclone
 			install_watchtower
 			install_fail2ban
 			choose_media_folder_plexdrive
@@ -178,11 +178,6 @@ case $CHOICE in
 			pause
 			choose_services
 			install_services
-			CLOUDPLOWFILE="/home/$SEEDUSER/scripts/cloudplow/config.json"
-			if [[ ! -e "$CLOUDPLOWFILE" ]]; then
-				cloudplow
-				sed -i "s/\"enabled\"\: true/\"enabled\"\: false/g" /home/$SEEDUSER/scripts/cloudplow/config.json
-			fi
 			filebot
 			sauve
 			resume_seedbox

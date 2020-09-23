@@ -1,0 +1,14 @@
+[Unit]
+Description=Plexdrive
+AssertPathIsDirectory=/mnt/plexdrive
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/plexdrive mount --drive-id={{ rclone.id_teamdrive}} -v 2 /mnt/plexdrive
+
+ExecStop=/bin/fusermount -uz /mnt/plexdrive
+Restart=on-abort
+
+[Install]
+WantedBy=default.target

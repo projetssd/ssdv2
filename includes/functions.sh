@@ -992,29 +992,7 @@ function install_watchtower() {
 function install_plexdrive() {
 	echo -e "${BLUE}### PLEXDRIVE ###${NC}"
 	mkdir -p /mnt/plexdrive > /dev/null 2>&1
-	PLEXDRIVE="/usr/bin/plexdrive"
-
-	if [[ ! -e "$PLEXDRIVE" ]]; then
-		echo -e " ${BWHITE}* Installation plexdrive${NC}"
-		cd /tmp
-		wget https://github.com/plexdrive/plexdrive/releases/download/5.0.0/plexdrive-linux-amd64 -q -O plexdrive > /dev/null 2>&1
-		chmod -c +x /tmp/plexdrive > /dev/null 2>&1
-		#install plexdrive
-		mv -v /tmp/plexdrive /usr/bin/ > /dev/null 2>&1
-		chown -c root:root /usr/bin/plexdrive > /dev/null 2>&1
-		echo ""
-		echo -e " ${YELLOW}* Dès que le message ${NC}${CPURPLE}"First cache build process finished!"${NC}${YELLOW} apparait à l'écran, taper ${NC}${CPURPLE}CTRL + C${NC}${YELLOW} pour poursuivre le script !${NC}"
-		echo ""
-		/usr/bin/plexdrive mount -v 3 /mnt/plexdrive
-		cp "$BASEDIR/includes/config/systemd/plexdrive.service" "/etc/systemd/system/plexdrive.service" > /dev/null 2>&1
-		systemctl daemon-reload > /dev/null 2>&1
-		systemctl enable plexdrive.service > /dev/null 2>&1
-		systemctl start plexdrive.service > /dev/null 2>&1
-		echo ""
-		echo -e " ${GREEN}* Configuration Plexdrive terminée avec succés !${NC}"
-	else
-		echo -e " ${YELLOW}* Plexdrive est déjà installé !${NC}"
-	fi
+        ansible-playbook /opt/seedbox-compose/includes/config/roles/plexdrive/tasks/main.yml
 	echo ""
 }
 
@@ -1023,7 +1001,7 @@ function install_rclone() {
 	mkdir /mnt/rclone > /dev/null 2>&1
 	mkdir -p /mnt/rclone/$SEEDUSER > /dev/null 2>&1
         /opt/seedbox-compose/includes/config/scripts/rclone.sh
-        /opt/seedbox-compose/includes/config/roles/rclone/tasks/main.yml
+        ansible-playbook /opt/seedbox-compose/includes/config/roles/rclone/tasks/main.yml
 	checking_errors $?
 	echo ""
 }
