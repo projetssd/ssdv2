@@ -169,7 +169,7 @@ case $CHOICE in
 			cloudflare
                         oauth
 			install_traefik
-
+                        install_rclone
 			install_plexdrive
 			install_watchtower
 			install_fail2ban
