@@ -993,6 +993,9 @@ function install_plexdrive() {
 	echo -e "${BLUE}### PLEXDRIVE ###${NC}"
 	mkdir -p /mnt/plexdrive > /dev/null 2>&1
         ansible-playbook /opt/seedbox-compose/includes/config/roles/plexdrive/tasks/main.yml
+        echo ""
+        echo -e " ${BWHITE}* Dès que le message ${NC}${CCYAN}"First cache build process started" apparait à l'écran, taper ${NC}${CCYAN}CTRL + C${NC}${BWHITE} pour poursuivre le script !${NC}"
+        /usr/bin/plexdrive mount -v 3 --refresh-interval=1m --chunk-check-threads=8 --chunk-load-threads=8 --chunk-load-ahead=4 --max-chunks=100 --fuse-options=allow_other,read_only /mnt/plexdrive        
 	echo ""
 }
 
@@ -1010,8 +1013,8 @@ function unionfs_fuse() {
 	echo -e "${BLUE}### Unionfs-Fuse ###${NC}"
 	echo -e " ${BWHITE}* Installation Unionfs${NC}"
 	ansible-playbook /opt/seedbox-compose/includes/config/roles/unionfs/tasks/main.yml
-	checking_errors $?
-	echo ""
+	checking_errors $?	
+echo ""
 }
 
 function install_docker() {

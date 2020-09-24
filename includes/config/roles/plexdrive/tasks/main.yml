@@ -1,6 +1,6 @@
 ---
 - hosts: localhost
-  gather_facts: false
+  gather_facts: yes
   vars_files:
     - /opt/seedbox/variables/account.yml
 
@@ -71,9 +71,3 @@
         daemon_reload: yes
         enabled: yes      
         name: plexdrive.service
-
-
-
-
-
-

@@ -1,10 +1,10 @@
 #!/bin/bash	
 
-source /includes/functions.sh
-source /includes/variables.sh
+source includes/functions.sh
+source includes/variables.sh
 
 sed -i '/remote/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
-sed -i '/cryp/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
+sed -i '/crypt/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
 sed -i '/id_teamdrive/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
 rm drive.txt team.txt > /dev/null 2>&1
 
@@ -102,7 +102,8 @@ conf="/root/.config/rclone/rclone.conf"
 ## pas de rclone.conf
 if [ ! -e "$rclone" ] ; then
  curl https://rclone.org/install.sh | bash
-elif [ ! -e "$conf" ]; then
+fi
+if [ ! -e "$conf" ]; then
  rclone config
 fi
 }
@@ -176,6 +177,9 @@ sed -i "/rclone/a \ \ \ id_teamdrive: $id_teamdrive" /opt/seedbox/variables/acco
 }
 
 function menu() {
+        clear
+        logo
+        echo ""
 	echo -e "${CCYAN}Gestion du rclone.conf${CEND}"
 	echo -e "${CGREEN}${CEND}"
 	echo -e "${CGREEN}   1) Copier/coller un rclone.conf déjà existant ${CEND}"
@@ -187,10 +191,13 @@ function menu() {
 
 	case $CHOICE in
 		1) ## Copier/coller un rclone.conf déjà existant
+                   rclone="/usr/bin/rclone"
+                   if [ ! -e "$rclone" ] ; then
+                   curl https://rclone.org/install.sh | bash
+                   fi
+                   rclone > /dev/null 2>&1
                    paste
-                   clone
                    verif
-                   clear
                    detection
                    create
                    ;;
