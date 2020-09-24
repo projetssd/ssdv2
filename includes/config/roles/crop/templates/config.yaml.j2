@@ -13,6 +13,9 @@ rclone:
         - '--order-by=modtime,ascending'
         - '--transfers=8'
         - '--delete-empty-src-dirs'
+        - '--exclude=/sabnzbd/**'
+        - '--exclude=/rutorrent/**'
+        - '--exclude=/deluge/**'
       sync:
         - '--fast-list'
         - '--tpslimit-burst=50'
@@ -26,37 +29,15 @@ rclone:
         - '--dedupe-mode=newest'
         - '--tpslimit=5'
 uploader:
-  - name: Series
+  - name: Medias
     enabled: true
     check:
       min_free_space: 10995119925676
-      limit: 1440
+      limit: 5
       type: age
-    local_folder: /home/{{user.name}}/local/Series
+    local_folder: /home/{{user.name}}/local
     remotes:
-      move: '{{rclone.remote}}:{{user.name}}/Series'
-    rclone_params:
-      global_move: default
-  - name: Films
-    enabled: true
-    check:
-      min_free_space: 10995119925676
-      limit: 720
-      type: age
-    local_folder: /home/{{user.name}}/local/Films
-    remotes:
-      move: '{{rclone.remote}}:{{user.name}}/Films'
-    rclone_params:
-      global_move: default
-  - name: Musiques
-    enabled: true
-    check:
-      min_free_space: 10995119925676
-      limit: 720
-      type: age
-    local_folder: /home/{{user.name}}/local/Musiques
-    remotes:
-      move: '{{rclone.remote}}:{{user.name}}/Musiques'
+      move: '{{rclone.remote}}:{{user.name}}'
     rclone_params:
       global_move: default
 syncer:
