@@ -63,7 +63,7 @@
       set_fact:
         pgrole: 'radarr'
         intport: '7878'
-        image: 'linuxserver/radarr:preview'
+        image: 'linuxserver/radarr:nightly'
 
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'

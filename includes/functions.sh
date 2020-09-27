@@ -1,5 +1,6 @@
 #!/bin/bash
 ##########
+
 function logo() {
 
 color1='\033[1;31m'    # light red
@@ -203,6 +204,15 @@ function plex_autoscan() {
 			checking_errors $?
 }
 
+function autoscan() {
+			#configuration plex_autoscan avec ansible
+			echo -e "${BLUE}### AUTOSCAN ###${NC}"
+			echo -e " ${BWHITE}* Installation plex_autoscan${NC}"
+			ansible-playbook /opt/seedbox-compose/includes/config/roles/autoscan/tasks/main.yml
+			checking_errors $?
+}
+
+
 function crop() {
 			#configuration crop avec ansible
 			echo -e "${BLUE}### CROP ###${NC}"
@@ -211,19 +221,6 @@ function crop() {
 			ansible-playbook /opt/seedbox-compose/includes/config/roles/crop/tasks/main.yml
 			checking_errors $?
 }
-
-function backupList() {
-
-    echo ""
-    read -rp $'\e[32mSaisir le numéro du teamdrive\e[0m :' n
-
-    if [[ $n -lt 1 ]] || [[ $n -gt $i ]]; then
-        echo -e "\n${CRED}/!\ ERREUR: Numéro invalide !${CEND}"
-        echo ""
-        exit 1
-    fi
-}
-
 
 function cloudplow() {
 			#configuration plex_autoscan avec ansible
@@ -1095,11 +1092,53 @@ function create_user() {
 		sed -i "s/name:/name: $SEEDUSER/" /opt/seedbox/variables/account.yml
 		echo $PASSWORD > ~/.vault_pass
 		echo "vault_password_file = ~/.vault_pass" >> /etc/ansible/ansible.cfg
-		return
+                return
+}
+
+function projects() {
+        ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
+        SEEDUSER=$(cat /tmp/name)
+        DOMAIN=$(cat /tmp/domain)
+        SEEDGROUP=$(cat /tmp/group)
+        rm /tmp/name /tmp/domain /tmp/group
+
+        echo -e "${BLUE}### SERVICES ###${NC}"
+        echo -e " ${BWHITE}--> Services en cours d'installation : ${NC}"
+        PROJECTPERUSER="$PROJECTUSER$SEEDUSER"
+        rm -Rf $PROJECTPERUSER > /dev/null 2>&1
+        projects="/tmp/projects.txt"
+
+        if [[ -e "$projects" ]]; then
+          rm /tmp/projects.txt
+        fi
+        for app in $(cat $PROJECTSAVAILABLE);
+        do
+          service=$(echo $app | cut -d\- -f1)
+          desc=$(echo $app | cut -d\- -f2)
+          echo "$service $desc off" >> /tmp/projects.txt
+        done
+
+        SERVICESTOINSTALL=$(whiptail --title "Gestion des Applications" --checklist \
+        "\nChoisir vos Applications" 18 47 10 \
+        $(cat /tmp/projects.txt) 3>&1 1>&2 2>&3)
+        [[ "$?" = 1 ]] && script_plexdrive && rm /tmp/projects.txt;
+        PROJECTPERUSER="$PROJECTUSER$SEEDUSER"
+        touch $PROJECTPERUSER
+
+        for PROJECTS in $SERVICESTOINSTALL
+        do
+          echo -e "	${GREEN}* $(echo $PROJECTS| tr -d '"')${NC}"
+          echo $(echo ${PROJECTS,,} | tr -d '"') >> $PROJECTPERUSER              
+        done
+
+        for line in $(cat $PROJECTPERUSER);
+        do
+          $line
+        done
 }
 
 function choose_services() {
-	echo -e "${BLUE}### SERVICES ###${NC}"
+        echo -e "${BLUE}### SERVICES ###${NC}"
 	echo -e " ${BWHITE}--> Services en cours d'installation : ${NC}"
 	SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 	rm -Rf $SERVICESPERUSER > /dev/null 2>&1

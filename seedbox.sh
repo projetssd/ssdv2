@@ -178,6 +178,7 @@ case $CHOICE in
 			pause
 			choose_services
 			install_services
+                        projects
 			filebot
 			sauve
 			resume_seedbox
