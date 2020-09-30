@@ -35,7 +35,7 @@ apt update && apt upgrade -y
 
 2. Installation de Git :
 ```
-apt install git
+apt install git -y
 ```
 
 3. Clonage du script : 
