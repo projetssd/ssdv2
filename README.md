@@ -3,18 +3,28 @@
 
 --- 
 ![](https://nextcloud.teamsyno.com/s/cSXRe5X7FyDEEqQ/preview)
+pour plus de détail avant et après installation --> direction le [wiki](https://github.com/laster13/patxav/wiki)
 
 # Introduction
 
-Mise à jour avec Ansible le 10/07/2019
+### Pour se lancer dans l’installation, il faut au préalable avoir suivi les étapes suivantes:
+
+- Avoir une machine (serveur ou NAS) (5000 score passmark minimum)
+- Obtenir un nom de domaine
+- Utiliser un compte Gsuite illimité avec création de dossier partagés disponible 
+- Connexion en root via ssh/ (pas user puis root) [Activer root tuto simple pour debian](https://cloriou.fr/2016/12/05/debian-autoriser-acces-root-via-ssh/)
+- une fois toutes ces étapes validées vous pouvez suivre les Prérequis.
+
+***
 
 # Pré-requis
 
-1. Un serveur Ubuntu 18.04/Debian 10
-2. Un nom de domaine
-3. Connaissances en Linux
-4. Connaissances en Docker
-5. Un compte Google Drive si la seedbox est orienté PlexDrive
+Je vous recommande de suivre les étapes dans l'ordre suivant :
+
+- [Transfert de gestion DNS Cloudflare](https://github.com/laster13/patxav/wiki/Transfert-de-gestion-DNS-Cloudflare)
+- [Création des projets Google](https://github.com/laster13/patxav/wiki/Création-des-projets-Google)
+
+***
 
 # Installation en root
 
