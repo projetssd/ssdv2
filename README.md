@@ -2,7 +2,7 @@
 [![](https://img.shields.io/github/repo-size/laster13/patxav.svg?style=flat)](https://github.com/laster13/patxav)
 
 --- 
-![](https://nextcloud.teamsyno.com/s/cSXRe5X7FyDEEqQ/preview)
+
 pour plus de détail avant et après installation --> direction le [wiki](https://github.com/laster13/patxav/wiki)
 
 # Introduction
