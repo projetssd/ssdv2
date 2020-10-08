@@ -2,6 +2,7 @@
 
 source includes/functions.sh
 source includes/variables.sh
+
 ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 rm /tmp/team.txt /tmp/crop.txt > /dev/null 2>&1
 i=1

@@ -43,9 +43,8 @@ checking_errors $?
 
 echo ""
 echo -e "${BLUE}### INSTALLATION TRAEFIK 2.2 ET PORTAINER ###${NC}"
-## reinstallation traefik, portainer
+## reinstallation traefik
 install_traefik
-install_portainer
 checking_errors $?
 
 echo ""

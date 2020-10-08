@@ -28,9 +28,8 @@ ansible-playbook /opt/seedbox-compose/includes/config/roles/docker/tasks/main.ym
 ## suppression des yml dans /opt/seedbox/conf
 rm /opt/seedbox/conf/* > /dev/null 2>&1
 
-## reinstallation traefik, portainer
+## reinstallation traefik
 install_traefik
-install_portainer
 
 echo ""
 ## reinstallation watchtower
