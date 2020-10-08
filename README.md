@@ -55,5 +55,11 @@ cd /opt/seedbox-compose
 ```
 ./seedbox.sh
 ```
+
+***
+# Suite de l'installation [suite du tuto](https://github.com/laster13/patxav/wiki/Installation)
+
+***
+
 Ce script est proposé à des fins d'expérimentation uniquement, le téléchargement d’oeuvre copyrightées est illégal.
 Merci de vous conformer à la législation en vigueur en fonction de vos pays respectifs en faisant vos tests sur des fichiers libres de droits
