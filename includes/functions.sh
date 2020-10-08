@@ -1834,7 +1834,6 @@ function resume_seedbox() {
 	echo -e "	--> Password: ${YELLOW}$PASSE${NC}"
 	echo ""
 	rm -Rf $SERVICESPERUSER > /dev/null 2>&1
-	ansible-vault encrypt /opt/seedbox/variables/account.yml
 }
 
 function uninstall_seedbox() {

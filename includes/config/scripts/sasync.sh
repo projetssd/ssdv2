@@ -169,7 +169,7 @@ if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
   
   rm /tmp/temp.txt /tmp/drive.txt
   rm /tmp/crop.txt /tmp/team.txt
-  echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+  echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour revenir au menu principal..."
   read -r
   ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
   ## Lancement de la synchro
