@@ -12,7 +12,7 @@ ExecStart=/usr/bin/plexdrive mount \
   --chunk-load-ahead=4 \
   --chunk-size=10M \
   --max-chunks={{ ((ansible_memory_mb.real.total/1024)|round(0,'ceil')|int >= 16) | ternary(250,150) }} \
-  --fuse-options=allow_other,read_only \
+  --fuse-options=allow_other \
   --config=/root/.plexdrive \
   --cache-file=/root/.plexdrive/cache.bolt \
   --drive-id={{ rclone.id_teamdrive }} \

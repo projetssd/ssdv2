@@ -994,13 +994,13 @@ function install_plexdrive() {
         echo ""
         clear
         echo -e " ${BWHITE}* Dès que le message ${NC}${CCYAN}"First cache build process started" apparait à l'écran, taper ${NC}${CCYAN}CTRL + C${NC}${BWHITE} pour poursuivre le script !${NC}"
-        grep "id_teamdrive" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+        grep "team_drive" /root/.config/rclone/rclone.conf > /dev/null 2>&1
         if [ $? -eq 0 ]; then
           team=$(grep "id_teamdrive" /opt/seedbox/variables/account.yml | cut -d':' -f2 |  sed 's/ //g') > /dev/null 2>&1
-          /usr/bin/plexdrive mount -v 3 --drive-id=$team --refresh-interval=1m --chunk-check-threads=8 --chunk-load-threads=8 --chunk-load-ahead=4 --max-chunks=100 --fuse-options=allow_other,read_only /mnt/plexdrive
+          /usr/bin/plexdrive mount -v 3 --drive-id=$team --refresh-interval=1m --chunk-check-threads=8 --chunk-load-threads=8 --chunk-load-ahead=4 --max-chunks=100 --fuse-options=allow_other /mnt/plexdrive
           systemctl start plexdrive > /dev/null 2>&1        
         else
-          /usr/bin/plexdrive mount -v 3 --refresh-interval=1m --chunk-check-threads=8 --chunk-load-threads=8 --chunk-load-ahead=4 --max-chunks=100 --fuse-options=allow_other,read_only /mnt/plexdrive
+          /usr/bin/plexdrive mount -v 3 --refresh-interval=1m --chunk-check-threads=8 --chunk-load-threads=8 --chunk-load-ahead=4 --max-chunks=100 --fuse-options=allow_other /mnt/plexdrive
           systemctl start plexdrive > /dev/null 2>&1        
         fi
 	echo ""
@@ -1428,7 +1428,55 @@ do
 		echo -e "${BLUE}### CONFIG POST COMPOSE AUTHELIA ###${NC}"
 		echo -e " ${BWHITE}* Configuration Apllications avec Authelia...${NC}"
 		echo ""
-		/opt/seedbox-compose/includes/config/scripts/authelia.sh
+                ## Variable
+                ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
+                SEEDUSER=$(cat /tmp/name)
+                DOMAIN=$(cat /tmp/domain)
+                SEEDGROUP=$(cat /tmp/group)
+                rm /tmp/name /tmp/domain /tmp/group
+                INSTALLEDFILE="/home/$SEEDUSER/resume"
+                SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
+
+    	               echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
+    	               echo -e "${CCYAN}   /!\ Authelia avec Traefik – Secure SSO pour les services Docker /!\       ${CEND}"
+    	               echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
+	               echo ""
+    	               echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
+    	               echo -e "${CRED}    IMPORTANT: 	https://github.com/laster13/patxav/wiki			      ${CEND}"
+    	               echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
+	               echo ""
+
+                ## suppression des yml dans /opt/seedbox/conf
+                rm /opt/seedbox/conf/* > /dev/null 2>&1
+
+                ## reinstall traefik
+                docker rm -f traefik > /dev/null 2>&1
+                rm -rf /opt/seedbox/docker/traefik/rules > /dev/null 2>&1
+                install_traefik
+
+                echo ""
+
+                ## reinstallation application
+                echo -e "${BLUE}### REINITIALISATION DES APPLICATIONS ###${NC}"
+                echo -e " ${BWHITE}* Les fichiers de configuration ne seront pas effacés${NC}"
+                while read line; do echo $line | cut -d'.' -f1 | sed '/authelia/d'; done < /home/$SEEDUSER/resume > $SERVICESPERUSER
+                mv /home/$SEEDUSER/resume /tmp
+                install_services
+                echo "authelia.$DOMAIN" >> $INSTALLEDFILE
+                rm $SERVICESUSER$SEEDUSER
+
+    	               echo -e "${CRED}---------------------------------------------------------------${CEND}"
+    	               echo -e "${CRED}     /!\ MISE A JOUR DU SERVEUR EFFECTUEE AVEC SUCCES /!\      ${CEND}"
+    	               echo -e "${CRED}---------------------------------------------------------------${CEND}"
+	               echo ""
+    	               echo -e "${CRED}---------------------------------------------------------------${CEND}"
+    	               echo -e "${CCYAN}    IMPORTANT:	Avant la 1ere connexion			       ${CEND}"
+    	               echo -e "${CCYAN}    		- Nettoyer l'historique de votre navigateur    ${CEND}"
+    	               echo -e "${CRED}---------------------------------------------------------------${CEND}"
+	               echo ""
+
+                echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+                read -r
 		echo ""
 		echo -e "\nNoter les ${CCYAN}informations du dessus${CEND} et appuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
 		read -r
