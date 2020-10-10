@@ -3,24 +3,8 @@
 source includes/functions.sh
 source includes/variables.sh
 
-abort()
-{
-echo -e "${CCYAN}
-********************************************************
-*********************** ERREUR *************************
-********************************************************
-${CEND}"
-       echo -e "${CCYAN}Aucun drive perso n'est configuré dans rclone.conf${CEND}" >&2
-
-
-       exit 1
-}
-
-trap 'abort' 0
-
-set -e
     	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
-    	echo -e "${CCYAN}          /!\ Création des SA-Installation de Sasync /!\                                     ${CEND}"
+    	echo -e "${CCYAN}          /!\ Création des SA-Installation de Sasync /!\                     ${CEND}"
     	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
 	echo ""
     	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
@@ -53,7 +37,6 @@ sed -i '/#Debut team source/,/#Fin team source/d' /root/.config/rclone/rclone.co
 sed -i '/share_source/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
 sed -i '/My_drive/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
 
-EXIT=0
 read -rp $'\e[36m   Souhaitez vous poursuivre l installation: (o/n) ? \e[0m' OUI
 
 if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
@@ -69,16 +52,15 @@ if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
 
   i=1
   sed -i '/My_drive/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
-  echo -e " ${BWHITE}* remotes Drive perso disponibles${NC}"
+  echo -e " ${BWHITE}* Liste des remotes disponibles${NC}"
 
-  grep "root_folder_id = ." /root/.config/rclone/rclone.conf | uniq > /tmp/temp.txt
+  grep "token" /root/.config/rclone/rclone.conf | uniq > /tmp/temp.txt
   if [ $? -eq 0 ]; then
       while read line; do
-        grep "root_folder_id = ." /root/.config/rclone/rclone.conf > /dev/null 2>&1
+        grep "token" /root/.config/rclone/rclone.conf > /dev/null 2>&1
         if [ $? -eq 0 ]; then
-         drive=$(grep -iC 6 "$line" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
+         drive=$(grep -iC 5 "$line" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
          echo "$drive" >> /tmp/drive.txt
-         exit
         fi
         echo -e "${CGREEN}   $i. $drive${CEND}"
         let "i+=1"
@@ -95,7 +77,7 @@ if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
 
   while :
   do
-  read -rp $'\e[36m   Choisir le remote Drive perso: \e[0m' RTYPE
+  read -rp $'\e[36m   Choisir le Gdrive source: \e[0m' RTYPE
     if [ "$RTYPE" -le "$nombre" -a "$RTYPE" -ge "1"  ]; then
    break
   else
@@ -134,7 +116,7 @@ if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
   nombre=$(wc -l /tmp/team.txt | cut -d ' ' -f1)
   while :
   do
-  read -rp $'\e[36m   Choisir le stockage principal: \e[0m' RTYPE
+  read -rp $'\e[36m   Choisir le Share Drive de destination: \e[0m' RTYPE
     if [ "$RTYPE" -le "$nombre" -a "$RTYPE" -ge "1"  ]; then
    break
   else
@@ -154,7 +136,7 @@ if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
   
   ## Stockage principal
   echo ""
-  echo -e "${CCYAN}   Source : ${CGREEN}$teamdrive_sce --> $teamdrive_a${CEND}"
+  echo -e "${CCYAN}   Destination : ${CGREEN}$teamdrive_sce --> $teamdrive_a${CEND}"
   id=$(sed -n "$i"p /tmp/crop.txt)
   echo -e "#Debut team source\n[$teamdrive_sce$source] \ntype = drive\nscope = drive\nserver_side_across_configs = true\nservice_account_file_path = /opt/sa/\nservice_account_file = /opt/sa/1.json\n$id\n#Fin team source\n" >> /root/.config/rclone/rclone.conf
   sed -i "/remote/a \ \ \ share_source: $teamdrive_sce$source" /opt/seedbox/variables/account.yml
@@ -176,10 +158,3 @@ if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
   cd /opt/sasync
   ./sasync -l set.file
 fi
-trap : 0
-
-echo >&2 '
-************
-*** DONE *** 
-************
-'
