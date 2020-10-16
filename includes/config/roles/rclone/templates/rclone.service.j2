@@ -1,13 +1,23 @@
 [Unit]
-Description=Google Drive (rclone)
+Description=Google Drive (rclone-cache)
 AssertPathIsDirectory=/mnt/rclone
-After=plexdrive.service
+After=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/rclone mount --config=/root/.config/rclone/rclone.conf --exclude BACKUPS/** --allow-other --gid {{user.groupid}} --uid {{user.userid}} {{rclone.crypt}}:/{{user.name}} /mnt/rclone/{{user.name}}
-ExecStop=/bin/fusermount -uz /mnt/rclone/{{user.name}}
-Restart=on-abort
+ExecStart=/usr/bin/rclone mount -vv \
+  --config=/root/.config/rclone/rclone.conf \
+  --allow-other --gid {{user.groupid}} --uid {{user.userid}} \
+  --allow-other \
+  --allow-non-empty \
+  --vfs-cache-mode full \
+  --vfs-cache-max-size 150G \
+  --cache-dir=/root/.config/rclone/cache \
+  remote_crypt:{{user.name}} \
+  /mnt/rclone/
+ExecStop=/bin/fusermount -uz /mnt/rclone/
+Restart=always
+RestartSec=5
 
 [Install]
 WantedBy=default.target

@@ -1,0 +1,13 @@
+[Unit]
+Description=Google Drive (rclone)
+AssertPathIsDirectory=/mnt/rclone
+After=plexdrive.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/rclone mount --config=/root/.config/rclone/rclone.conf --exclude BACKUPS/** --allow-other --gid {{user.groupid}} --uid {{user.userid}} {{rclone.crypt}}:/{{user.name}} /mnt/rclone/{{user.name}}
+ExecStop=/bin/fusermount -uz /mnt/rclone/{{user.name}}
+Restart=on-abort
+
+[Install]
+WantedBy=default.target

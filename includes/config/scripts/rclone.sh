@@ -2,6 +2,7 @@
 
 source includes/functions.sh
 source includes/variables.sh
+source includes/config/scripts/createrclone.sh
 
 sed -i '/remote/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
 sed -i '/crypt/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
@@ -104,7 +105,7 @@ if [ ! -e "$rclone" ] ; then
  curl https://rclone.org/install.sh | bash
 fi
 if [ ! -e "$conf" ]; then
- rclone config
+ . createrclone.sh
 fi
 }
 
@@ -184,7 +185,7 @@ function menu() {
 	echo -e "${CGREEN}${CEND}"
 	echo -e "${CGREEN}   1) Copier/coller un rclone.conf déjà existant ${CEND}"
 	echo -e "${CGREEN}   2) Création rclone.conf${CEND}"
-	echo -e "${CGREEN}   3) rclone.conf déjà existant sur le serveur --> (/root/.config./rclone/rclone.conf${CEND}"
+	echo -e "${CGREEN}   3) rclone.conf déjà existant sur le serveur --> /root/.config./rclone/rclone.conf${CEND}"
 
 	echo -e ""
 	read -p "Votre choix [1-3]: " CHOICE

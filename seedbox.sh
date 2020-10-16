@@ -170,7 +170,7 @@ case $CHOICE in
                         oauth
 			install_traefik
                         install_rclone
-			install_plexdrive
+			#install_plexdrive
 			install_watchtower
 			install_fail2ban
 			choose_media_folder_plexdrive
