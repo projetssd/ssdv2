@@ -919,7 +919,7 @@ password2 = PjV8d2CRzb6mPUWSGsIeqNw
                        ;;
 
                        5) ## Migration my drive --> teamdrive /share drive
-                             /opt/seedbox-compose/includes/config/scripts/sasync.sh
+                             /opt/seedbox-compose/includes/config/scripts/migration.sh
                              pause
 			     script_plexdrive
                              ;;      
