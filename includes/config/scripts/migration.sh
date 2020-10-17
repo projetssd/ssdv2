@@ -24,8 +24,6 @@ Pour des contraintes liées aux quotas Google il est préconisé de créer un Sh
 Il est primordial de monter le rclone.conf du Share Drive avec le même projet et identifiants que ceux qui ont servi 
 pour Gdrive${CEND}"
 
-ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
-
 echo ""
 
 read -rp $'\e[36m   Souhaitez vous poursuivre l installation: (o/n) ? \e[0m' OUI
