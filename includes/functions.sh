@@ -553,7 +553,7 @@ function script_plexdrive() {
 			echo -e "${CGREEN}   2) Utilitaires${CEND}"
 			echo -e "${CGREEN}   3) Outils (autoscan, crop, cloudplow etc..)${CEND}"
 			echo -e "${CGREEN}   4) Comptes de Service${CEND}"
-			echo -e "${CGREEN}   5) Migration drive classique teamdrive/share drive${CEND}"
+			echo -e "${CGREEN}   5) Migration Gdrive vers Share drive${CEND}"
 			echo -e "${CGREEN}   6) Retour menu principal${CEND}"
 			echo -e ""
 			read -p "Votre choix [1-6]: " GESTION
