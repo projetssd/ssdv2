@@ -105,6 +105,5 @@ echo ""
 rclone move $drive: $sharedrive: -v \
 --delete-empty-src-dirs --fast-list --drive-stop-on-upload-limit \
 --drive-server-side-across-configs \
---dry-run \
 --config /root/.config/rclone/rclone.conf
 fi
