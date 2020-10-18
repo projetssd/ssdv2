@@ -2,7 +2,6 @@
 
 source includes/functions.sh
 source includes/variables.sh
-source includes/config/scripts/createrclone.sh
 
 sed -i '/remote/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
 sed -i '/crypt/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
@@ -74,7 +73,7 @@ fi
 while :
 do
 echo ""
-read -rp $'\e[36m   Choisir le stockage principal associé à plexdrive: \e[0m' RTYPE
+read -rp $'\e[36m   Choisir le stockage principal associé à la Seedbox: \e[0m' RTYPE
 echo ""
   if [ "$RTYPE" -le "$nombre" -a "$RTYPE" -ge "1"  ]; then
     i="$RTYPE"
@@ -103,9 +102,6 @@ conf="/root/.config/rclone/rclone.conf"
 ## pas de rclone.conf
 if [ ! -e "$rclone" ] ; then
  curl https://rclone.org/install.sh | bash
-fi
-if [ ! -e "$conf" ]; then
- . createrclone.sh
 fi
 }
 
@@ -204,6 +200,8 @@ function menu() {
                    ;;
                 2) ## Création rclone.conf
                    clone
+                   clear
+                   /opt/seedbox-compose/includes/config/scripts/createrclone.sh
                    verif
                    clear
                    detection
