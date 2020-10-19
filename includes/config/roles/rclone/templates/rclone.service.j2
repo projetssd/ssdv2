@@ -13,7 +13,7 @@ ExecStart=/usr/bin/rclone mount -vv \
   --vfs-cache-mode full \
   --vfs-cache-max-size 150G \
   --cache-dir=/root/.config/rclone/cache \
-  {{rclone.remote}}:{{user.name}} \
+  {{rclone.remote}}: \
   /mnt/rclone/
 ExecStop=/bin/fusermount -uz /mnt/rclone/
 Restart=always

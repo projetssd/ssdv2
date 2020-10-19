@@ -1,10 +1,11 @@
 #!/bin/bash
 
-source includes/functions.sh
-source includes/variables.sh
+source /opt/seedbox-compose/includes/variables.sh
 
 mkdir -p /var/rclone > /dev/null 2>&1
 rm /var/rclone/* > /dev/null 2>&1
+mkdir -p /root/.config/rclone > /dev/null 2>&1
+touch /root/.config/rclone/rclone.conf
 
 echo ""
 

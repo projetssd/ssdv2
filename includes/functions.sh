@@ -1904,7 +1904,6 @@ function uninstall_seedbox() {
         CROP="$USERHOMEDIR/scripts/crop/crop"
 
 	if [[ -e "$PLEXDRIVE" ]]; then
-		echo -e " ${BWHITE}* Suppression Plexdrive${NC}"
 		systemctl stop plexdrive.service > /dev/null 2>&1
 		systemctl disable plexdrive.service > /dev/null 2>&1
 		rm /etc/systemd/system/plexdrive.service > /dev/null 2>&1
