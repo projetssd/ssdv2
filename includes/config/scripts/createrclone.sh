@@ -178,9 +178,10 @@ PASSWORD=`cat /var/rclone/pgclone.password`
 SALT=`cat /var/rclone/pgclone.salt`
 ENC_PASSWORD=`rclone obscure "$PASSWORD"`
 ENC_SALT=`rclone obscure "$SALT"`
+crypt="_crypt"
 
 echo "" >> /root/.config/rclone/rclone.conf
-echo "[$name-crypt]" >> /root/.config/rclone/rclone.conf
+echo "[$name$crypt]" >> /root/.config/rclone/rclone.conf
 echo "type = crypt" >> /root/.config/rclone/rclone.conf
 echo "remote = $nom:/Medias" >> /root/.config/rclone/rclone.conf
 echo "filename_encryption = standard" >> /root/.config/rclone/rclone.conf

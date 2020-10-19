@@ -120,7 +120,7 @@ logo
 echo -e "${CCYAN}INSTALLATION SEEDBOX DOCKER${CEND}"
 echo -e "${CGREEN}${CEND}"
 echo -e "${CGREEN}   1) Installation Seedbox Classique ${CEND}"
-echo -e "${CGREEN}   2) Installation Seedbox Plexdrive${CEND}"
+echo -e "${CGREEN}   2) Installation Seedbox Rclone${CEND}"
 echo -e "${CGREEN}   3) Restauration Seedbox${CEND}"
 echo -e ""
 read -p "Votre choix [1-3]: " CHOICE
@@ -267,7 +267,7 @@ case $CHOICE in
 esac
 
 else
-	PLEXDRIVE="/usr/bin/plexdrive"
+	PLEXDRIVE="/usr/bin/rclone"
 	if [[ -e "$PLEXDRIVE" ]]; then
 		script_plexdrive
 	else

@@ -1543,7 +1543,7 @@ function plex_sections() {
 			##compteur
 			replace_media_compose
 			var="Sections en cours de création, patientez..."
-			PLEXDRIVE="/usr/bin/plexdrive"
+			PLEXDRIVE="/usr/bin/rclone"
 			if [[ -e "$PLEXDRIVE" ]]; then
 			echo -e "${BLUE}### CREATION DES BIBLIOTHEQUES PLEX ###${NC}"
 			decompte 15
@@ -1898,19 +1898,19 @@ function uninstall_seedbox() {
         rm /tmp/name /tmp/domain /tmp/group
 
 	USERHOMEDIR="/home/$SEEDUSER"
-	PLEXDRIVE="/usr/bin/plexdrive"
+	PLEXDRIVE="/usr/bin/rclone"
         PLEXSCAN="$USERHOMEDIR/scripts/plex_autoscan/scan.py"
         CLOUDPLOW="$USERHOMEDIR/scripts/cloudplow/cloudplow.py"
         CROP="$USERHOMEDIR/scripts/crop/crop"
 
 	if [[ -e "$PLEXDRIVE" ]]; then
 		echo -e " ${BWHITE}* Suppression Plexdrive${NC}"
-		service plexdrive stop > /dev/null 2>&1
+		systemctl stop plexdrive.service > /dev/null 2>&1
+		systemctl disable plexdrive.service > /dev/null 2>&1
 		rm /etc/systemd/system/plexdrive.service > /dev/null 2>&1
 		rm -rf /mnt/plexdrive > /dev/null 2>&1
 		rm -rf /root/.plexdrive > /dev/null 2>&1
 		rm /usr/bin/plexdrive > /dev/null 2>&1
-		checking_errors $?
                 
                 if [[ -e "$PLEXSCAN" ]]; then
 		echo -e " ${BWHITE}* Suppression plex_autoscan${NC}"
@@ -1938,7 +1938,7 @@ function uninstall_seedbox() {
                 fi
 
                 if [[ -e "$CROP" ]]; then
-		echo -e " ${BWHITE}* Suppression cloudplow${NC}"
+		echo -e " ${BWHITE}* Suppression crop${NC}"
 		systemctl stop crop_upload.service > /dev/null 2>&1
 		systemctl stop crop_sync.service > /dev/null 2>&1
 		systemctl stop crop_upload.timer > /dev/null 2>&1
