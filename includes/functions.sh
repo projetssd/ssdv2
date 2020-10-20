@@ -549,11 +549,11 @@ function script_plexdrive() {
 			echo ""
 			echo -e "${CCYAN}GESTION${CEND}"
 			echo -e "${CGREEN}${CEND}"
-			echo -e "${CGREEN}   1) Sécurisation Syteme${CEND}"
+			echo -e "${CGREEN}   1) Sécurisation Systeme${CEND}"
 			echo -e "${CGREEN}   2) Utilitaires${CEND}"
-			echo -e "${CGREEN}   3) Outils (autoscan, crop, cloudplow etc..)${CEND}"
+			echo -e "${CGREEN}   3) Outils (autoscan, crop, cloudplow, plex-autoscan, plex_dupefinder)${CEND}"
 			echo -e "${CGREEN}   4) Comptes de Service${CEND}"
-			echo -e "${CGREEN}   5) Migration Gdrive vers Share Drive${CEND}"
+			echo -e "${CGREEN}   5) Migration Gdrive/Share Drive ==> Share Drive${CEND}"
 			echo -e "${CGREEN}   6) Retour menu principal${CEND}"
 			echo -e ""
 			read -p "Votre choix [1-6]: " GESTION
@@ -819,10 +819,9 @@ function script_plexdrive() {
 				echo -e "${CGREEN}${CEND}"
 			        echo -e "${CGREEN}   1) Création des SA avec sa_gen${CEND}"
 			        echo -e "${CGREEN}   2) Création des SA avec safire${CEND}"
-			        echo -e "${CGREEN}   3) Synchro 2 shares Drives avec Sasync${CEND}"
-				echo -e "${CGREEN}   4) Retour menu principal${CEND}"
+				echo -e "${CGREEN}   3) Retour menu principal${CEND}"
 				echo -e ""
-				read -p "Votre choix [1-4]: " SERVICES
+				read -p "Votre choix [1-3]: " SERVICES
 				case $SERVICES in
 
 				1) ## Création des SA avec gen-sa
@@ -835,27 +834,47 @@ function script_plexdrive() {
 			        script_plexdrive
 				;;
 
-				3) ## Creation des SA avec sasync
-                                /opt/seedbox-compose/includes/config/scripts/sasync.sh
-			        script_plexdrive
-                                ;;
-
-				4)
+				3)
 				script_plexdrive
 				;;
                                 esac
                        ;;
 
                        5) ## Migration my drive --> teamdrive /share drive
-                             /opt/seedbox-compose/includes/config/scripts/migration.sh
-                             pause
-			     script_plexdrive
-                             ;;      
+				clear
+				logo
+				echo ""
+				echo -e "${CCYAN}MIGRATION${CEND}"
+				echo -e "${CGREEN}${CEND}"
+			        echo -e "${CGREEN}   1) Gdrive => Share Drive${CEND}"
+			        echo -e "${CGREEN}   2) Share Drive => Share Drive${CEND}"
+			        echo -e "${CGREEN}   3) Retour menu principal${CEND}"
+				echo -e ""
+				read -p "Votre choix [1-3]: " MIGRATION
+				case $MIGRATION in
+
+				1) ## migration gdrive -> share drive
+                                /opt/seedbox-compose/includes/config/scripts/migration.sh
+                                pause
+			        script_plexdrive
+				;;
+
+				2) ## migration share drive -> share drive
+                                /opt/seedbox-compose/includes/config/scripts/sasync.sh
+                                pause
+			        script_plexdrive
+				;;
+
+				3)
+				script_plexdrive
+				;;
+                                esac 
+                       ;;
 
                        6) ## retour menu principal
-                             script_plexdrive
-		             ;;
-                             esac            
+                                script_plexdrive
+		                ;;
+                                esac            
                        ;;
                 
 		4)

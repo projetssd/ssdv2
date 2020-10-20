@@ -107,8 +107,10 @@ if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
 echo ""
 echo -e "${CGREEN}Déplacement des données de Gdrive: $drive vers Share Drive: $sharedrive${CEND}"
 echo ""
+docker stop plex > /dev/null 2>&1
 rclone move $drive: $sharedrive: -v \
 --delete-empty-src-dirs --fast-list --drive-stop-on-upload-limit \
 --drive-server-side-across-configs \
 --config /root/.config/rclone/rclone.conf
+docker restart plex > /dev/null 2>&1
 fi
