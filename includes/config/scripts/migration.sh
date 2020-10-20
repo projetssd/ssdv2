@@ -26,6 +26,13 @@ pour Gdrive${CEND}"
 
 echo ""
 
+read -rp $'\e[36m   Souhaitez vous créer un Share Drive?: (o/n) ? \e[0m' OUI
+
+if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
+/opt/seedbox-compose/includes/config/scripts/createrclone.sh
+fi
+echo
+
 read -rp $'\e[36m   Souhaitez vous poursuivre l installation: (o/n) ? \e[0m' OUI
 
 if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then

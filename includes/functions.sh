@@ -781,90 +781,12 @@ function script_plexdrive() {
 			        ;;
 
 			        3) ## Installation Cloudplow
-				        clear
-				        logo
-				        echo ""
-				        echo -e "${CCYAN}OUTILS${CEND}"
-				        echo -e "${CGREEN}${CEND}"
-			                echo -e "${CGREEN}   1) Cloudplow${CEND}"
-			                echo -e "${CGREEN}   2) Configuration Drive backup${CEND}"
-				        echo -e "${CGREEN}   3) Retour menu principal${CEND}"
-
-				        echo -e ""
-				        read -p "Votre choix [1-3]: " CLOUDPLOW
-				        case $CLOUDPLOW in
-
-                                           1) ## Cloudplow
-			                   clear
-			                   echo ""
-                                           cloudplow
-			                   pause
-			                   script_plexdrive
-                                           ;;
-
-                                           2) ## Configuration Drive backup
-			                   clear
-                                           echo "" 
-                                           echo -e "${CCYAN}----------------------------------------------------------------------------------------${CEND}"
-                                           echo -e "${CCYAN} 💬  Avant de poursuivre, veillez à ce que votre rclone.conf soit correctement configuré${CEND}"
-                                           echo -e "${CCYAN} 💬  Il doit contenir en tout 5 remotes et ressembler à la structure ci dessous         ${CEND}"
-                                           echo -e "${CCYAN} 💬  Sinon CTRL^C, préparer le rclone.conf et revenez ensuite sur ce menu               ${CEND}"
-                                           echo -e "${CCYAN}----------------------------------------------------------------------------------------${CEND}"
-                                           echo ""
-                                           echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
-                                           read -r
-
-tee <<-EOF
-🚀 Cloudplow                           📓 Reference: https://github.com/laster13/patxav
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-[exemple]
-type = drive
-client_id = 950647425050-9s3pd2c1opjch0h1h4mhtrq3fv9jj0gq.apps.googleusercontent.com
-client_secret = Gf_3WSMRDDz_fVk3iKYsHs6o
-token = {"access_token":"ya29.a0Adw1xeWBiGqEWmZj3ISD5btrRxJDJQ","token_type":"Bearer","refresh_token":"1/Hb8be1u5Dq835U_xDChOIJhs-U9jla6d8kZpO7IYvY0","expiry":"2020-03-13T09:13:49.149678054+01:00"}
-root_folder_id = 0AAFkVZtnmiPJUk9PVA
-
-[google]
-type = crypt
-remote = exemple:Medias
-filename_encryption = standard
-password = t8zQONXIsAAh0BSbHosblYbCkdDQ
-password2 = PjV8d2CRzb6mPUWSGsIeqNw
-
-[plexdrive]
-type = crypt
-remote = /mnt/plexdrive/Medias
-filename_encryption = standard
-password = t8zQONXIsAAh0BSbHosblYbCkdDQ
-password2 = PjV8d2CRzb6mPUWSGsIeqNw
-
-[toto]
-type = drive
-client_id = 739487169629-ujunsbvecsi0hmnp1udsd2eb1hj6u3ap.apps.googleusercontent.com
-client_secret = Wubh3N7TTt4CEQGmjyUJTJJK
-token = {"access_token":"ya29.ImG8BxU8sBZYUIQotF_wt9dhZNGP_T8XQp1v","token_type":"Bearer","refresh_token":"1//03cd7KQXCkky2CgYIARAAGAMSNwF-L9Ira3666CB0VPKSH9XFUivr9z4jTvDOK0wUY5BOWC9wCKK3lGpTWvoiSntZIop7d3p5NFI","expiry":"2020-02-04T07:14:36.525324142+01:00"}
-root_folder_id = 0AMF4ckdiP8suUk9PVA
-
-[yohann]
-type = crypt
-remote = toto:Medias
-filename_encryption = standard
-password = t8zQONXIsAAh0BSbHosblYbCkdDQ
-password2 = PjV8d2CRzb6mPUWSGsIeqNw
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🚀 Cloudplow                           📓 Reference: https://github.com/laster13/patxav
-					EOF
-
-                                         echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer ou CTRL^C pour stopper..."
-                                         read -r
-                                         /opt/seedbox-compose/includes/config/scripts/syncdrive.sh
-                                         script_plexdrive
-                                         ;;
-
-                                         3) ## Menu principal
-				         script_plexdrive
-				         ;;
-                                         esac
+				clear
+				logo
+				echo ""
+                                cloudplow
+                                pause
+			        script_plexdrive
                                 ;;
 
 			        4) ## Installation Crop
@@ -897,9 +819,10 @@ password2 = PjV8d2CRzb6mPUWSGsIeqNw
 				echo -e "${CGREEN}${CEND}"
 			        echo -e "${CGREEN}   1) Création des SA avec sa_gen${CEND}"
 			        echo -e "${CGREEN}   2) Création des SA avec safire${CEND}"
-				echo -e "${CGREEN}   3) Retour menu principal${CEND}"
+			        echo -e "${CGREEN}   3) Synchro 2 shares Drives avec Sasync${CEND}"
+				echo -e "${CGREEN}   4) Retour menu principal${CEND}"
 				echo -e ""
-				read -p "Votre choix [1-3]: " SERVICES
+				read -p "Votre choix [1-4]: " SERVICES
 				case $SERVICES in
 
 				1) ## Création des SA avec gen-sa
@@ -912,7 +835,12 @@ password2 = PjV8d2CRzb6mPUWSGsIeqNw
 			        script_plexdrive
 				;;
 
-				3)
+				3) ## Creation des SA avec sasync
+                                /opt/seedbox-compose/includes/config/scripts/sasync.sh
+			        script_plexdrive
+                                ;;
+
+				4)
 				script_plexdrive
 				;;
                                 esac

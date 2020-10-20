@@ -18,7 +18,6 @@ oauth:
    openssl:
 rclone:
    remote:
-   crypt:
 plex:
    token:
    ident:
