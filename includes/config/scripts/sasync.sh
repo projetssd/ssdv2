@@ -54,7 +54,7 @@ if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
   echo ""
 
   if [[ ! -d "/opt/sasync" ]]; then
-    git clone -b develop https://github.com/88lex/sasync.git /opt/sasync > /dev/null 2>&1
+    git clone https://github.com/88lex/sasync.git /opt/sasync > /dev/null 2>&1
   fi
 
 i=1
@@ -146,6 +146,6 @@ read -rp $'\e[36m   Souhaitez vous lancer la synchro maintenant?: (o/n) ? \e[0m'
   if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
     echo ""
     cd /opt/sasync
-    ./sasync -l set.file 
+    ./sasync set.file 
   fi
 fi
