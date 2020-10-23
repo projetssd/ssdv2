@@ -1,0 +1,5 @@
+# set.video.sample
+# Note: rclone_flags are optional and will override global flags
+#synccopymove 1source        2destination   3rclone_flags
+sync {{rclone.share_source}}: {{rclone.share_dest}}: --dry-run
+#end-of-file

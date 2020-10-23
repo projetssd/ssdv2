@@ -93,6 +93,7 @@ python -m pip install --disable-pip-version-check --upgrade --force-reinstall \
     requests \
     netaddr \
     jmespath \
+    cryptography==2.9.2 \
     ansible==${1-$ANSIBLE}
 
 # Configuration ansible
@@ -119,7 +120,7 @@ logo
 echo -e "${CCYAN}INSTALLATION SEEDBOX DOCKER${CEND}"
 echo -e "${CGREEN}${CEND}"
 echo -e "${CGREEN}   1) Installation Seedbox Classique ${CEND}"
-echo -e "${CGREEN}   2) Installation Seedbox Plexdrive${CEND}"
+echo -e "${CGREEN}   2) Installation Seedbox Rclone${CEND}"
 echo -e "${CGREEN}   3) Restauration Seedbox${CEND}"
 echo -e ""
 read -p "Votre choix [1-3]: " CHOICE
@@ -138,7 +139,6 @@ case $CHOICE in
 			cloudflare
 			oauth
 			install_traefik
-			install_portainer
 			install_watchtower
 			install_fail2ban
 			choose_media_folder_classique
@@ -169,9 +169,8 @@ case $CHOICE in
 			cloudflare
                         oauth
 			install_traefik
-			install_plexdrive
-			install_rclone
-			install_portainer
+                        install_rclone
+			#install_plexdrive
 			install_watchtower
 			install_fail2ban
 			choose_media_folder_plexdrive
@@ -179,11 +178,7 @@ case $CHOICE in
 			pause
 			choose_services
 			install_services
-			CLOUDPLOWFILE="/home/$SEEDUSER/scripts/cloudplow/config.json"
-			if [[ ! -e "$CLOUDPLOWFILE" ]]; then
-				cloudplow
-				sed -i "s/\"enabled\"\: true/\"enabled\"\: false/g" /home/$SEEDUSER/scripts/cloudplow/config.json
-			fi
+                        projects
 			filebot
 			sauve
 			resume_seedbox
@@ -221,7 +216,6 @@ case $CHOICE in
 			unionfs_fuse
 			cloudflare
 			install_traefik
-			install_portainer
 			install_watchtower
 			SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 			while read line; do echo $line | cut -d'.' -f1; done < /home/$SEEDUSER/resume > $SERVICESUSER$SEEDUSER
@@ -273,7 +267,7 @@ case $CHOICE in
 esac
 
 else
-	PLEXDRIVE="/usr/bin/plexdrive"
+	PLEXDRIVE="/usr/bin/rclone"
 	if [[ -e "$PLEXDRIVE" ]]; then
 		script_plexdrive
 	else

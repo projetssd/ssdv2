@@ -1,0 +1,73 @@
+---
+- hosts: localhost
+  gather_facts: yes
+  vars_files:
+    - /opt/seedbox/variables/account.yml
+
+  tasks:
+
+    - name: "Variables | Set 'teamdrive_enabled' variable"
+      set_fact:
+        teamdrive_enabled: "{{ true if not(
+            (rclone.id_teamdrive is undefined)
+            or
+            (rclone.id_teamdrive is none)
+            or
+            (rclone.id_teamdrive| trim | length == 0)
+          )
+            else false }}"
+
+    - name: Check if plexdrive.service exists
+      stat:
+        path: "/etc/systemd/system/plexdrive.service"
+      register: plexdrive_service
+
+    - name: Service Tasks
+      block:
+
+      - name: Populate Service Facts
+        service_facts:
+
+      - name: Get plexdrive service state
+        set_fact:
+          plexdrive_service_running: "{{ (services['plexdrive.service'] is defined) and (services['plexdrive.service']['state'] == 'running') }}"
+
+      - name: Stop plexdrive service
+        systemd:
+          name: plexdrive
+          state: stopped
+          enabled: no
+        when: plexdrive_service_running
+
+      - name: delete plexdrive.service
+        shell: |
+          rm /etc/systemd/system/plexdrive.service
+        when: plexdrive_service_running
+
+      when: plexdrive_service.stat.exists
+
+    - name: install plexdrive latest
+      shell: |
+        version=$(curl https://github.com/plexdrive/plexdrive/releases/latest -s -L -I -o /dev/null -w '%{url_effective}'| grep -o '[0-9.].[0-9.].[0-9.]')
+        wget -P /usr/bin https://github.com/plexdrive/plexdrive/releases/download/$version/plexdrive-linux-amd64
+        mv /usr/bin/plexdrive-linux-amd64 /usr/bin/plexdrive
+        chmod +x /usr/bin/plexdrive
+
+    - name: Import systemd
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/plexdrive/templates/teamdrive.plexdrive.service.j2
+        dest: /etc/systemd/system/plexdrive.service
+      when: teamdrive_enabled
+
+    - name: Import systemd
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/plexdrive/templates/gdrive.plexdrive.service.j2
+        dest: /etc/systemd/system/plexdrive.service
+      when: not teamdrive_enabled
+
+    - name: started Systemd plexdrive.service
+      systemd:
+        state: started
+        daemon_reload: yes
+        enabled: yes      
+        name: plexdrive.service

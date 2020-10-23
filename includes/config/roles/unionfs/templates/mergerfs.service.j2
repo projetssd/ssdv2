@@ -1,27 +1,15 @@
-#########################################################################
-# Title:         Cloudbox: MergerFS Mount                               #
-# Location:      /etc/systemd/system/mergerfs.service                   #
-# Author(s):     EnorMOZ                                                #
-# URL:           https://github.com/cloudbox/cloudbox                   #
-# --                                                                    #
-#         Part of the Cloudbox project: https://cloudbox.works          #
-#########################################################################
-#                   GNU General Public License v3.0                     #
-#########################################################################
-
 [Unit]
-Description=MergerFS Mount
-After=network-online.target
+Description=gmedia mergerfs mount
+Requires=rclone.service
+After=rclone.service
 
 [Service]
 Type=forking
-GuessMainPID=no
-ExecStart=/usr/bin/mergerfs \
-  -o category.create=ff,async_read=false,cache.files=partial \
-  -o dropcacheonclose=true,use_ino,minfreespace=0 \
-  -o xattr=nosys,statfs_ignore=ro,allow_other,umask=002,noatime \
-  /home/{{ user.name }}/local=RW:/mnt/rclone/{{ user.name }}=NC /home/{{ user.name }}/Medias
-ExecStop=/bin/fusermount -u /home/{{ user.name }}/Medias
+ExecStart=/usr/bin/mergerfs /home/{{user.name}}/local:/mnt/rclone/{{user.name}} /home/{{user.name}}/Medias -o rw,use_ino,allow_other,func.getattr=newest,category.action=all,category.create=ff,cache.files=auto-full
+ExecStop=/bin/fusermount -u /home/{{user.name}}/Medias
+KillMode=process
+Restart=on-failure
 
 [Install]
-WantedBy=default.target
+WantedBy=multi-user.target
+

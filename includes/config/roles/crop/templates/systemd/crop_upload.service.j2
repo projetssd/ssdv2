@@ -1,0 +1,14 @@
+# /etc/systemd/system/crop_upload.service
+[Unit]
+Description=crop upload
+After=network-online.target
+
+[Service]
+User=0
+Group=0
+Type=exec
+ExecStart=/home/{{user.name}}/scripts/crop/crop upload
+ExecStopPost=/bin/rm -rf /home/{{user.name}}/scripts/crop/crop.lock
+
+[Install]
+WantedBy=default.target

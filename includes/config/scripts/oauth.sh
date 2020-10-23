@@ -58,10 +58,9 @@ rm -rf /opt/seedbox/docker/$SEEDUSER/authelia > /dev/null 2>&1
 rm /opt/seedbox/conf/authelia.yml > /dev/null 2>&1
 sed -i '/authelia/d' /home/$SEEDUSER/resume > /dev/null 2>&1
 
-## reinstallation traefik, portainer
+## reinstallation traefik
 echo ""
 install_traefik
-install_portainer
 
 echo ""
 ## reinstallation watchtower

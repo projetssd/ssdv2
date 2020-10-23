@@ -15,6 +15,28 @@
     - /opt/seedbox/variables/account.yml
   tasks:
 
+    - name: Check if autoscan.service exists
+      stat:
+        path: "/home/{{user.name}}/scripts/autoscan/config.yml"
+      register: autoscan_service
+
+    - name: Stop autoscan
+      docker_container:
+        name: autoscan
+        state: stopped
+      when: autoscan_service.stat.exists
+
+    - name: remove container Autoscan
+      docker_container:
+        name: autoscan
+        state: absent
+      when: autoscan_service.stat.exists
+
+    - name: delete autoscan folder
+      shell: |
+        rm -rf  /home/{{user.name}}/scripts/autoscan
+      when: autoscan_service.stat.exists
+
     - name: Check if plex_autoscan.service exists
       stat:
         path: "/etc/systemd/system/plex_autoscan.service"
@@ -55,7 +77,7 @@
     - name: Install pip requirements
       pip:
         requirements: /home/{{user.name}}/scripts/plex_autoscan/requirements.txt
-        executable: pip2
+        executable: pip
 
     - name: Check config exists
       stat:

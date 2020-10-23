@@ -29,9 +29,8 @@ rm -rf /opt/seedbox/docker/traefik
 echo ""
 cloudflare
 
-## reinstallation traefik, portainer
+## reinstallation traefik
 install_traefik
-install_portainer
 
 echo ""
 ## reinstallation watchtower

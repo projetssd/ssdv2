@@ -1,0 +1,54 @@
+rclone:
+  config: /root/.config/rclone/rclone.conf
+  path: /usr/local/bin/lclone
+  stats: 30s
+  live_rotate: {{ 'true' if teamdrive1_enabled | default(false) else 'false' }}
+  service_account_remotes:
+    '/opt/sa':
+       - {{ rclone.share_source if teamdrive1_enabled | default(false) }}
+       - {{ rclone.share_dest if teamdrive2_enabled | default(false) }}
+  global_params:
+    default:
+      move:
+        - '--order-by=modtime,ascending'
+        - '--transfers=8'
+        - '--delete-empty-src-dirs'
+        - '--exclude=/sabnzbd/**'
+        - '--exclude=/rutorrent/**'
+        - '--exclude=/deluge/**'
+      sync:
+        - '--fast-list'
+        - '--tpslimit-burst=50'
+        - '--max-backlog=2000000'
+        - '--track-renames'
+        - '--use-mmap'
+        - '--no-update-modtime'
+        - '--drive-chunk-size=128M'
+        - '--drive-use-trash=false'
+      dedupe:
+        - '--dedupe-mode=newest'
+        - '--tpslimit=5'
+uploader:
+  - name: Medias
+    enabled: true
+    check:
+      min_free_space: 10995119925676
+      limit: 5
+      type: age
+    local_folder: /home/{{user.name}}/local
+    remotes:
+      move: '{{rclone.remote}}:{{user.name}}'
+    rclone_params:
+      global_move: default
+syncer:
+  - name: backup
+    enabled: {{ 'true' if teamdrive2_enabled | default(false) else 'false' }}
+    source_remote: '{{ rclone.share_source if teamdrive1_enabled | default(false) }}:/'
+    remotes:
+      sync:
+        - '{{ rclone.share_dest if teamdrive2_enabled | default(false) }}:/'
+      dedupe:
+        - '{{ rclone.share_dest if teamdrive2_enabled | default(false) }}:/'
+    rclone_params:
+      global_sync: default
+      global_dedupe: default

@@ -29,9 +29,8 @@ rm -rf /opt/seedbox/docker/traefik > /dev/null 2>&1
 ## supression portainer
 rm -rf /opt/seedbox/docker/portainer
 
-## reinstallation traefik, portainer
+## reinstallation traefik
 install_traefik
-install_portainer
 install_watchtower
 
 ## reinstallation application

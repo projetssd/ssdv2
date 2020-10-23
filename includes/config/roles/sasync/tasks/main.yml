@@ -1,0 +1,26 @@
+
+---
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
+  tasks:
+
+    - name: Import default config
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/sasync/templates/sasync.conf.j2
+        dest: /opt/sasync/sasync.conf
+        mode: 0644
+
+    - name: Import set.file config
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/sasync/templates/set.file.j2
+        dest: /opt/sasync/sets/set.file
+
+    - name: install gclone latest
+      get_url:
+        url: https://transfer.cloudbox.media/lJHPE/rclone_gclone_v1.54.0-DEV_1
+        dest: /usr/local/bin/lclone
+        mode: 0755
+
+

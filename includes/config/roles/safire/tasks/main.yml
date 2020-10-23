@@ -1,0 +1,16 @@
+
+---
+- hosts: localhost
+  vars_files:
+    - /opt/seedbox/variables/account.yml
+  gather_facts: false
+  vars_prompt:
+    - name: group
+      prompt: "nom du groupe créé dans google.group.com"
+      private: no
+
+  tasks:
+    - name: Import default config
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/safire/templates/default_config.py.j2
+        dest: /opt/safire/safire/default_config.py

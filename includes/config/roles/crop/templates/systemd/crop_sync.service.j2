@@ -1,0 +1,14 @@
+# /etc/systemd/system/crop_sync.service
+[Unit]
+Description=crop sync
+After=network-online.target
+
+[Service]
+User=0
+Group=0
+Type=exec
+ExecStart=/home/{{user.name}}/scripts/crop/crop sync
+ExecStopPost=/bin/rm -rf /home/{{user.name}}/scripts/crop/crop.lock
+
+[Install]
+WantedBy=default.target
