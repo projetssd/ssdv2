@@ -1,4 +1,4 @@
-Mise à jour du 23/10/2020
+Mise à jour du 23/10/2020  
 Parmis les nouveautés, crop, autoscan, un menu personnalisé pour les migrations Gdrive/Share Drive => Share Drive.
 Création auto des services de comptes, possibilité de créer le rclone.conf dans le déroulé du script. Le script est clairement orienté vers le Share Drive en prévision des nouvelles dispositions de google.
 Un menu spécifique est désormais dispo pour installer plex_autoscan, crop, cloudplow, autoscan avec possibilité de changer comme bon bon vous semble.
