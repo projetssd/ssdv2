@@ -5,7 +5,6 @@ Un menu spécifique est désormais dispo pour installer plex_autoscan, crop, clo
 Par defaut, rclone vfs remplace plexdrive. Enfin quelques applis supplémentaires pour agrémenter le tout.
 
 Pour vous accompagner dans la phase de migration -> https://wiki.kesurof.fr/shelves/4-migration-gdrive-vers-sharedrive
---- 
 
 pour plus de détail avant et après installation --> direction le [wiki](https://github.com/laster13/patxav/wiki)
 
