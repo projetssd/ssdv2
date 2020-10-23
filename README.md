@@ -1,16 +1,10 @@
-Une modification du tuto et pré-requis est imminente afin d'apporter quelques améliorations importantes à sa compréhension.
+Mise à jour du 23/10/2020
+Parmis les nouveautés, crop, autoscan, un menu personnalisé pour les migrations Gdrive/Share Drive => Share Drive.
+Création auto des services de comptes, possibilité de créer le rclone.conf dans le déroulé du script. Le script est clairement orienté vers le Share Drive en prévision des nouvelles dispositions de google.
+Un menu spécifique est désormais dispo pour installer plex_autoscan, crop, cloudplow, autoscan avec possibilité de changer comme bon bon vous semble.
+Par defaut, rclone vfs remplace plexdrive. Enfin quelques applis supplémentaires pour agrémenter le tout.
 
-Dans un premier temps, une chronologie sera détaillée, telle une feuille de route à partir du point de départ.
-
-Nous insistons sur le fait qu'une base Linux est absolument nécessaire et peut s'apprendre (très) rapidement. 
-Commencez par ici si vous pensez avoir besoin de voir/revoir les bases: https://www.sitedetout.com/tutoriels/commandes-linux-de-base/
-
-D'autres actions seront mises en place pour rendre l'accès au script encore plus "friendly to use", mais terminons déjà la première étape de la refonte !
-
-Yeaah! :0)
-
-[![](https://img.shields.io/github/repo-size/laster13/patxav.svg?style=flat)](https://github.com/laster13/patxav)
-
+Pour vous accompagner dans la phase de migration -> https://wiki.kesurof.fr/shelves/4-migration-gdrive-vers-sharedrive
 --- 
 
 pour plus de détail avant et après installation --> direction le [wiki](https://github.com/laster13/patxav/wiki)
