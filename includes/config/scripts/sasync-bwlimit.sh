@@ -23,7 +23,7 @@ ${YELLOW}2. ${CEND}""${GREEN}Une fois le script terminé vérifier la présence 
    Admin: Vous pouvez ajouter en masse les adresses mails.
    Utilisateurs: Vous Pouvez les ajouter par tranche de 100 à la fois.
 
-${YELLOW}3. ${CEND}""${GREEN}Ajouter le groupe à votre source et destination Share Drive et/ou GDrive, click droit sur le Share Drive/Gdrive --> Partage.
+${YELLOW}3. ${CEND}""${GREEN}Ajouter le groupe à votre source et destination Team Drives et/ou My Drive, click droit sur le teamdrive/my drive --> Partage.
 
 ${YELLOW}4. ${CEND}""${CRED}Je vous conseille de vous mettre à jour avec les pré-requis avant de poursuivre.
 
@@ -32,7 +32,8 @@ ${YELLOW}5. ${CEND}""${CRED}rclone.conf doit contenir le nouveau remote sharedri
 ${CEND}"
 
 echo -e "${YELLOW} 
-/!\ LA MIGRATION D'UN GDRIVE VERS UN SHARE DRIVE DE MEME COMPTE EST SOUMISE A UN QUOTA DE 10 TERA PAR JOUR /!\ 
+/!\ LA MIGRATION D'UN GDRIVE VERS UN SHARE DRIVE DE COMPTE DIFFERENT EST SOUMISE A UN QUOTA DE 1.8 TERA PAR JOUR /!\ 
+/!\ EN CONSEQUENCE UN FLAG RCLONE BWLIMIT DE 20M A ETE MIS EN PLACE POUR NE PAS DEPASSER CE QUOTA /!\
 ${CEND}"
 echo ""
 
@@ -66,7 +67,6 @@ if [[ ! -d "/opt/sa" ]]; then
   fi
 echo ""
 fi
-
 
 ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 rm /tmp/team.txt /tmp/crop.txt > /dev/null 2>&1
@@ -160,6 +160,7 @@ id=$(sed -n "$j"p /tmp/crop.txt)
 echo -e "#Debut team backup\n[$teamdrive_dest$dest] \ntype = drive\nscope = drive\nserver_side_across_configs = true\nservice_account_file_path = /opt/sa/\nservice_account_file = /opt/sa/1.json\n$id\n#Fin team backup\n" >> /root/.config/rclone/rclone.conf
 sed -i "/remote/a \ \ \ share_dest: $teamdrive_dest$dest" /opt/seedbox/variables/account.yml
 ansible-playbook /opt/seedbox-compose/includes/config/roles/sasync/tasks/main.yml
+cp /opt/seedbox-compose/includes/config/roles/sasync/templates/sasync-bwlimit.conf.j2 /opt/sasync/sasync.conf
 rm /tmp/team.txt /tmp/crop.txt > /dev/null 2>&1
 ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 echo ""

@@ -475,10 +475,8 @@ function script_classique() {
 			11)
 			script_classique
 			;;
-
 			esac
                 ;;
-
 		4)
 		exit
 		;;
@@ -840,43 +838,212 @@ function script_plexdrive() {
                                 esac
                        ;;
 
-                       5) ## Migration my drive --> teamdrive /share drive
+                       5) ## Migration Gdrive - Share Drive --> share drive
 				clear
 				logo
 				echo ""
 				echo -e "${CCYAN}MIGRATION${CEND}"
 				echo -e "${CGREEN}${CEND}"
-			        echo -e "${CGREEN}   1) Gdrive => Share Drive${CEND}"
+			        echo -e "${CGREEN}   1) GDrive => Share Drive${CEND}"
 			        echo -e "${CGREEN}   2) Share Drive => Share Drive${CEND}"
 			        echo -e "${CGREEN}   3) Retour menu principal${CEND}"
 				echo -e ""
-				read -p "Votre choix [1-3]: " MIGRATION
-				case $MIGRATION in
+				read -p "Votre choix [1-3]: " MIGRE
+				case $MIGRE in
 
-				1) ## migration gdrive -> share drive
-                                /opt/seedbox-compose/includes/config/scripts/migration.sh
-                                pause
-			        script_plexdrive
-				;;
+                                         1) ## migration gdrive -> share drive
+				         clear
+				         logo
+				         echo ""
+                                         echo -e "${CCYAN}MIGRATION GDRIVE ==> SHARE DRIVE${CEND}"
+				         echo -e "${CGREEN}${CEND}"
+			                 echo -e "${CGREEN}   1) GDrive et Share Drive font partis du même compte Google ${CEND}"
+			                 echo -e "${CGREEN}   2) GDrive et Share Drive sont sur deux comptes Google Différents ${CEND}"
+			                 echo -e "${CGREEN}   3) Retour menu principal${CEND}"
+                                         echo ""
+				         read -p "Votre choix [1-3]: " MVEA
+				         case $MVEA in
+				                 1)
+                                                 clear
+				                 logo
+				                 echo ""
+                                                 echo -e "${CCYAN}MIGRATION GDRIVE ==> SHARE DRIVE$ => MEME COMPTE GOOGLE{CEND}"
+				                 echo -e "${CGREEN}${CEND}"
+			                         echo -e "${CGREEN}   1) Déplacer les données => Pas de limite ${CEND}"
+			                         echo -e "${CGREEN}   2) Copier les données => 10 Tera par jour ${CEND}"
+			                         echo -e "${CGREEN}   3) Retour menu principal${CEND}"
+                                                 echo ""
+				                 read -p "Votre choix [1-3]: " MVEB
+				                 case $MVEB in
 
-				2) ## migration share drive -> share drive
-                                /opt/seedbox-compose/includes/config/scripts/sasync.sh
-                                pause
-			        script_plexdrive
-				;;
+                                                          1) # Déplacer les données (Pas de limite)
+                                                          clear
+                                                          /opt/seedbox-compose/includes/config/scripts/migration.sh
+                                                          pause
+			                                  script_plexdrive
+				                          ;;
 
-				3)
-				script_plexdrive
-				;;
-                                esac 
+                                                          2) # Copier les données (10 Tera par jour)
+                                                          clear
+                                                          /opt/seedbox-compose/includes/config/scripts/sasync.sh
+                                                          pause
+			                                  script_plexdrive
+				                          ;;
+
+				                          3)
+                                                          script_plexdrive 
+				                          ;;
+                                                          esac
+                                                 ;;
+                                                 2)
+                                                 clear
+				                 logo
+				                 echo ""
+                                                 echo -e "${CCYAN}MIGRATION GDRIVE ==> SHARE DRIVE => COMPTES GOOGLE DIFFERENTS${CEND}"
+				                 echo -e "${CGREEN}${CEND}"
+			                         echo -e "${CGREEN}   1) Déplacer les données => Pas de limite ${CEND}"
+			                         echo -e "${CGREEN}   2) Copier les données => 1,8 Tera par jour ${CEND}"
+			                         echo -e "${CGREEN}   3) Retour menu principal${CEND}"
+                                                 echo ""
+				                 read -p "Votre choix [1-3]: " MVEBC
+				                 case $MVEBC in
+
+                                                          1) # Déplacer les données (Pas de limite)
+                                                          clear
+                                                          /opt/seedbox-compose/includes/config/scripts/migration.sh
+                                                          pause
+			                                  script_plexdrive
+				                          ;;
+
+                                                          2) # Copier les données (1,8 Tera par jour)
+                                                          clear
+                                                          /opt/seedbox-compose/includes/config/scripts/sasync-bwlimit.sh
+                                                          pause
+			                                  script_plexdrive
+				                          ;;
+
+				                          3)
+				                          script_plexdrive
+				                          ;;
+                                                          esac
+                                                ;;
+                                                3)
+                                                ;;
+                                                esac                                                
+                                         ;;
+
+                                         2) ## migration share drive -> share drive
+                                         clear
+                                         logo
+				         echo ""
+                                         echo -e "${CCYAN}Share Drive => Share Drive${CEND}"
+				         echo -e "${CGREEN}${CEND}"
+			                 echo -e "${CGREEN}   1) Share Drive et Share Drive font partis du même compte Google${CEND}"
+			                 echo -e "${CGREEN}   2) Share Drive et Share Drive sont sur deux comptes Google Différents${CEND}"
+			                 echo -e "${CGREEN}   3) Retour menu principal${CEND}"
+                                         echo ""
+				         read -p "Votre choix [1-3]: " SHARE
+				         case $SHARE in
+
+                                                1) ## migration share drive -> share drive
+                                                clear
+				                logo
+				                echo ""
+                                                echo -e "${CCYAN}Share Drive => Share Drive ==> Même compte Google${CEND}"
+			                        echo -e "${CGREEN}${CEND}"
+	    	                                echo -e "${CGREEN}   1) Déplacer les données => Vous pouvez directement le faire à partir de l'interface UI${CEND}"
+			                        echo -e "${CGREEN}   2) Copier les données =>10 Tera par jour ${CEND}"
+			                        echo -e "${CGREEN}   3) Retour menu principal${CEND}"
+                                                echo ""
+				                read -p "Votre choix [1-3]: " MVEC
+				                case $MVEC in
+
+
+                                                        1) # Déplacer les données (Pas de limite)
+                                                        clear
+                                                        logo
+				                        echo ""
+                                                        echo -e "${CGREEN} /!\ Vous pouvez directement le faire à partir de l'interface UI /!\ ${CEND}"
+                                                        echo ""
+                                                        read -rp $'\e[36m   Poursuivre malgré tout avec rclone: (o/n) ? \e[0m' OUI
+
+                                                        if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
+                                                          echo ""
+                                                          /opt/seedbox-compose/includes/config/scripts/sasync-share.sh
+                                                        fi
+                                                        pause
+			                                script_plexdrive
+				                        ;;
+
+                                                        2) # Copier les données (10 Tera par jour)
+                                                        /opt/seedbox-compose/includes/config/scripts/sasync-share.sh
+                                                        pause
+			                                script_plexdrive
+				                        ;;
+
+				                        3)
+				                        script_plexdrive
+				                        ;;
+                                                        esac
+                                               ;;
+
+				               2) ## migration gdrive -> share drive
+                                               clear
+				               logo
+				               echo ""
+                                               echo -e "${CCYAN}Share Drive => Share Drive => Compte Google Différents${CEND}"
+				               echo -e "${CGREEN}${CEND}"
+			                       echo -e "${CGREEN}   1) Déplacer les données => Vous pouvez directement le faire à partir de l'interface UI${CEND}"
+			                       echo -e "${CGREEN}   2) Copier les données => 10 Tera par jour${CEND}"
+			                       echo -e "${CGREEN}   3) Retour menu principal${CEND}"
+                                               echo ""
+				               read -p "Votre choix [1-3]: " MVED
+				               case $MVED in
+
+                                                       1) # Déplacer les données (Pas de limite)
+                                                       clear
+                                                       logo
+				                       echo ""
+                                                       echo -e "${CGREEN} /!\ Vous pouvez directement le faire à partir de l'interface UI /!\ ${CEND}"
+                                                       echo ""
+                                                       read -rp $'\e[36m   Poursuivre malgré tout avec rclone: (o/n) ? \e[0m' OUI
+                                                       if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
+                                                         echo ""
+                                                         /opt/seedbox-compose/includes/config/scripts/sasync-share.sh
+                                                       fi
+                                                       pause
+			                               script_plexdrive
+				                       ;;
+
+                                                       2) # Copier les données (10 Tera par jour)
+                                                       /opt/seedbox-compose/includes/config/scripts/sasync-share.sh
+                                                       pause
+			                               script_plexdrive
+				                       ;;
+
+				                       3)
+				                       script_plexdrive
+				                       ;;
+                                                       esac
+                                              ;;
+                                              3)
+                                              script_plexdrive
+                                              ;;
+                                              esac
+
+                                    ;;
+                                    3)
+                                    script_plexdrive
+                                    ;;
+                                    esac
+
                        ;;
-
                        6) ## retour menu principal
-                                script_plexdrive
-		                ;;
-                                esac            
-                       ;;
-                
+                       script_plexdrive
+		       ;;
+                       esac  
+
+                ;;
 		4)
 		exit
 		;;

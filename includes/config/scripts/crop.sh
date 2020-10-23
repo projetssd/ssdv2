@@ -13,7 +13,7 @@ grep "team_drive" /root/.config/rclone/rclone.conf | uniq > /tmp/crop.txt
 grep "team_drive" /root/.config/rclone/rclone.conf > /dev/null 2>&1
 
 if [ $? -eq 0 ]; then
-  echo -e " ${BWHITE}* Teamdrives disponibles${NC}"
+  echo -e " ${BWHITE}* Share Drive disponibles${NC}"
   echo ""
     while read line; do
       team=$(grep -iC 6 "$line" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
@@ -23,7 +23,7 @@ if [ $? -eq 0 ]; then
       done < /tmp/crop.txt
     echo ""
 else
-  echo -e " ${BWHITE}* Aucun teamdrive/share drive détecté${NC}"
+  echo -e " ${BWHITE}* Aucun Share Drive détecté${NC}"
   echo ""
 exit
 fi

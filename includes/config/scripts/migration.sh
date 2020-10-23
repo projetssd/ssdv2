@@ -25,23 +25,34 @@ Il est primordial de monter le rclone.conf du Share Drive avec le même projet e
 pour Gdrive${CEND}"
 
 echo ""
+sed -i '/#Debut team source/,/#Fin team source/d' /root/.config/rclone/rclone.conf > /dev/null 2>&1
+sed -i '/#Debut team backup/,/#Fin team backup/d' /root/.config/rclone/rclone.conf > /dev/null 2>&1
 
 read -rp $'\e[36m   Souhaitez vous créer un Share Drive?: (o/n) ? \e[0m' OUI
 
 if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
 /opt/seedbox-compose/includes/config/scripts/createrclone.sh
 fi
-echo
+echo ""
+
+if [[ ! -d "/opt/sa" ]]; then
+  read -rp $'\e[36m   Souhaitez vous créer des comptes de services: (o/n) ? \e[0m' OUI
+  if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
+    /opt/seedbox-compose/includes/config/scripts/sa-gen.sh
+  fi
+echo ""
+fi
 
 read -rp $'\e[36m   Souhaitez vous poursuivre l installation: (o/n) ? \e[0m' OUI
 
 if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
   echo ""
-  i=1
+i=1
   grep "root_folder_id = ." /root/.config/rclone/rclone.conf | uniq > /tmp/temp.txt
   grep "root_folder_id = ." /root/.config/rclone/rclone.conf > /dev/null 2>&1
   if [ $? -eq 0 ]; then
     echo -e " ${BWHITE}* Gdrive disponibles${NC}"
+    echo ""
       while read line; do
         grep "root_folder_id = ." /root/.config/rclone/rclone.conf > /dev/null 2>&1
         if [ $? -eq 0 ]; then
@@ -63,6 +74,8 @@ if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
   do
   read -rp $'\e[36m   Choisir le Gdrive parmis la liste des remotes: \e[0m' RTYPE
     if [ "$RTYPE" -le "$nombre" -a "$RTYPE" -ge "1"  ]; then
+    echo ""
+    echo -e "${CCYAN}   Source : ${CGREEN}$drive${CEND}"
    break
   else
   echo -e " ${CRED}* /!\ erreur de saisie /!\{NC}"
@@ -79,6 +92,7 @@ if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
   if [ $? -eq 0 ]; then
     echo ""
     echo -e " ${BWHITE}* Share Drive disponibles${NC}"
+    echo ""
       while read line; do
         team=$(grep -iC 6 "$line" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
         echo "$team" >> /tmp/team.txt
@@ -97,6 +111,8 @@ if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
   do
   read -rp $'\e[36m   Choisir le Share Drive de destination: \e[0m' RTYPE
     if [ "$RTYPE" -le "$nombre" -a "$RTYPE" -ge "1"  ]; then
+    echo ""
+    echo -e "${CCYAN}   Destination : ${CGREEN}$team${CEND}"
    break
     else
       echo -e " ${CRED}* /!\ erreur de saisie /!\{NC}"
@@ -105,7 +121,7 @@ if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
   done
   sharedrive=$(sed -n "$RTYPE"p /tmp/team.txt)
 echo ""
-echo -e "${CGREEN}Déplacement des données de Gdrive: $drive vers Share Drive: $sharedrive${CEND}"
+echo -e "${BWHITE}Déplacement des données de Gdrive:${CEND}${CCYAN} $drive${CEND}${BWHITE} vers Share Drive:${CEND}${CCYAN} $sharedrive${CEND}${BWHITE} en cours ...${CEND}"
 echo ""
 docker stop plex > /dev/null 2>&1
 rclone move $drive: $sharedrive: -v \

@@ -126,6 +126,7 @@
           DB_USER: 'bookstack'
           DB_PASS: 'bookstack'
           DB_DATABASE: 'bookstackapp'
+          APP_URL: 'https://bookstack.{{user.domain}}'
 
     - name: 'Setting Volumes'
       set_fact:
