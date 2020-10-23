@@ -149,7 +149,7 @@ read -rp $'\e[36m   Souhaitez vous lancer la synchro maintenant?: (o/n) ? \e[0m'
     docker stop plex
     echo ""
     cd /opt/sasync
-    ./sasync set.file
+    ./sasync -t set.file
     docker start plex
   fi
 fi

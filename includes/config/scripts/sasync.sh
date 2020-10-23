@@ -71,23 +71,19 @@ fi
 ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 rm /tmp/team.txt /tmp/crop.txt > /dev/null 2>&1
 i=1
-grep "root_folder_id = ." /root/.config/rclone/rclone.conf | uniq > /tmp/crop.txt
-grep "root_folder_id = ." /root/.config/rclone/rclone.conf > /dev/null 2>&1
+grep "token" /root/.config/rclone/rclone.conf | uniq > /tmp/crop.txt
+grep "token" /root/.config/rclone/rclone.conf > /dev/null 2>&1
 
 if [ $? -eq 0 ]; then
-  echo -e " ${BWHITE}* GDrives disponibles${NC}"
+  echo -e " ${BWHITE}* Remotes disponibles${NC}"
   echo ""
     while read line; do
-      team=$(grep -iC 6 "$line" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
+      team=$(grep -iC 5 "$line" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
       echo "$team" >> /tmp/team.txt
       echo -e "${CGREEN}   $i. $team${CEND}"
       let "i+=1"
       done < /tmp/crop.txt
     echo ""
-else
-  echo -e " ${BWHITE}* Aucun GDrive détecté${NC}"
-  echo ""
-exit
 fi
 
 nombre=$(wc -l /tmp/team.txt | cut -d ' ' -f1)
@@ -169,7 +165,7 @@ read -rp $'\e[36m   Souhaitez vous lancer la synchro maintenant?: (o/n) ? \e[0m'
     docker stop plex
     echo ""
     cd /opt/sasync
-    ./sasync set.file
+    ./sasync -t set.file
     docker start plex 
   fi
 fi

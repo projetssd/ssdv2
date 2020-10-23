@@ -40,23 +40,20 @@ read -rp $'\e[36m   Souhaitez vous poursuivre l installation: (o/n) ? \e[0m' OUI
 if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
   echo ""
 i=1
-  grep "root_folder_id = ." /root/.config/rclone/rclone.conf | uniq > /tmp/temp.txt
-  grep "root_folder_id = ." /root/.config/rclone/rclone.conf > /dev/null 2>&1
+  grep "token" /root/.config/rclone/rclone.conf | uniq > /tmp/temp.txt
+  grep "token" /root/.config/rclone/rclone.conf > /dev/null 2>&1
   if [ $? -eq 0 ]; then
-    echo -e " ${BWHITE}* Gdrive disponibles${NC}"
+    echo -e " ${BWHITE}* Remotes disponibles${NC}"
     echo ""
       while read line; do
-        grep "root_folder_id = ." /root/.config/rclone/rclone.conf > /dev/null 2>&1
+        grep "token" /root/.config/rclone/rclone.conf > /dev/null 2>&1
         if [ $? -eq 0 ]; then
-         drive=$(grep -iC 6 "$line" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
+         drive=$(grep -iC 5  "$line" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
          echo "$drive" >> /tmp/drive.txt
         fi
         echo -e "${CGREEN}   $i. $drive${CEND}"
         let "i+=1"
       done < /tmp/temp.txt
-  else
-    echo -e " ${BWHITE}* Aucun Gdrive détecté${NC}"
-    exit 1
   fi
 
 ## Gdrive
