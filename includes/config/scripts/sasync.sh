@@ -166,8 +166,10 @@ echo ""
 
 read -rp $'\e[36m   Souhaitez vous lancer la synchro maintenant?: (o/n) ? \e[0m' OUI
   if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
+    docker stop plex
     echo ""
     cd /opt/sasync
-    ./sasync set.file 
+    ./sasync set.file
+    docker start plex 
   fi
 fi

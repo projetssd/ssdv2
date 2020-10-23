@@ -35,14 +35,6 @@ if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
 fi
 echo ""
 
-if [[ ! -d "/opt/sa" ]]; then
-  read -rp $'\e[36m   Souhaitez vous créer des comptes de services: (o/n) ? \e[0m' OUI
-  if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
-    /opt/seedbox-compose/includes/config/scripts/sa-gen.sh
-  fi
-echo ""
-fi
-
 read -rp $'\e[36m   Souhaitez vous poursuivre l installation: (o/n) ? \e[0m' OUI
 
 if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
@@ -128,5 +120,5 @@ rclone move $drive: $sharedrive: -v \
 --delete-empty-src-dirs --fast-list --drive-stop-on-upload-limit \
 --drive-server-side-across-configs \
 --config /root/.config/rclone/rclone.conf
-docker restart plex > /dev/null 2>&1
+docker start plex > /dev/null 2>&1
 fi
