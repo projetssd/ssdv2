@@ -549,12 +549,13 @@ function script_plexdrive() {
 			echo -e "${CGREEN}${CEND}"
 			echo -e "${CGREEN}   1) Sécurisation Systeme${CEND}"
 			echo -e "${CGREEN}   2) Utilitaires${CEND}"
-			echo -e "${CGREEN}   3) Outils (autoscan, crop, cloudplow, plex-autoscan, plex_dupefinder)${CEND}"
-			echo -e "${CGREEN}   4) Comptes de Service${CEND}"
-			echo -e "${CGREEN}   5) Migration Gdrive/Share Drive ==> Share Drive${CEND}"
-			echo -e "${CGREEN}   6) Retour menu principal${CEND}"
+			echo -e "${CGREEN}   3) Création Share Drive && rclone${CEND}"
+			echo -e "${CGREEN}   4) Outils (autoscan, crop, cloudplow, plex-autoscan, plex_dupefinder)${CEND}"
+			echo -e "${CGREEN}   5) Comptes de Service${CEND}"
+			echo -e "${CGREEN}   6) Migration Gdrive/Share Drive ==> Share Drive${CEND}"
+			echo -e "${CGREEN}   7) Retour menu principal${CEND}"
 			echo -e ""
-			read -p "Votre choix [1-6]: " GESTION
+			read -p "Votre choix [1-7]: " GESTION
 
 			case $GESTION in
 
@@ -745,7 +746,13 @@ function script_plexdrive() {
 			        esac
                         ;;
 
-			3) ## Outils
+                        3) ### creation share drive + rclone.conf
+		        clear
+			echo ""
+                        /opt/seedbox-compose/includes/config/scripts/createrclone.sh
+                        ;;
+
+			4) ## Outils
 				clear
 				logo
 				echo ""
@@ -809,7 +816,7 @@ function script_plexdrive() {
                                 esac
                         ;;
 
-			4) ## Comptes de Services
+			5) ## Comptes de Services
 				clear
 				logo
 				echo ""
@@ -838,7 +845,7 @@ function script_plexdrive() {
                                 esac
                        ;;
 
-                       5) ## Migration Gdrive - Share Drive --> share drive
+                       6) ## Migration Gdrive - Share Drive --> share drive
 				clear
 				logo
 				echo ""
@@ -928,6 +935,7 @@ function script_plexdrive() {
                                                           esac
                                                 ;;
                                                 3)
+                                                script_plexdrive
                                                 ;;
                                                 esac                                                
                                          ;;
@@ -1038,7 +1046,7 @@ function script_plexdrive() {
                                     esac
 
                        ;;
-                       6) ## retour menu principal
+                       7) ## retour menu principal
                        script_plexdrive
 		       ;;
                        esac  
