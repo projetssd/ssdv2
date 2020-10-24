@@ -17,10 +17,14 @@
         src: /opt/seedbox-compose/includes/config/roles/sasync/templates/set.file.j2
         dest: /opt/sasync/sets/set.file
 
-    - name: install gclone latest
-      get_url:
-        url: https://transfer.cloudbox.media/lJHPE/rclone_gclone_v1.54.0-DEV_1
-        dest: /usr/local/bin/lclone
-        mode: 0755
-
+    - name: install fclone latest
+      shell: |
+        wget -P /tmp https://github.com/$(wget https://github.com/mawaya/rclone/releases -O - | egrep '/.*/.*/.*linux-amd64.zip' -o)
+        cd /tmp
+        archive=$(ls *linux-amd64.zip)
+        unzip $archive
+        rm $archive
+        cd fclone*
+        mv fclone /usr/local/bin/fclone
+        chmod +x /usr/local/bin/fclone
 

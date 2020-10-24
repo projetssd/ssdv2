@@ -207,7 +207,7 @@ function plex_autoscan() {
 function autoscan() {
 			#configuration plex_autoscan avec ansible
 			echo -e "${BLUE}### AUTOSCAN ###${NC}"
-			echo -e " ${BWHITE}* Installation plex_autoscan${NC}"
+			echo -e " ${BWHITE}* Installation autoscan${NC}"
 			ansible-playbook /opt/seedbox-compose/includes/config/roles/autoscan/tasks/main.yml
 			checking_errors $?
 }
@@ -553,9 +553,10 @@ function script_plexdrive() {
 			echo -e "${CGREEN}   4) Outils (autoscan, crop, cloudplow, plex-autoscan, plex_dupefinder)${CEND}"
 			echo -e "${CGREEN}   5) Comptes de Service${CEND}"
 			echo -e "${CGREEN}   6) Migration Gdrive/Share Drive ==> Share Drive${CEND}"
-			echo -e "${CGREEN}   7) Retour menu principal${CEND}"
+			echo -e "${CGREEN}   7) Migration plexdrive ==> rclone vfs${CEND}"
+			echo -e "${CGREEN}   8) Retour menu principal${CEND}"
 			echo -e ""
-			read -p "Votre choix [1-7]: " GESTION
+			read -p "Votre choix [1-8]: " GESTION
 
 			case $GESTION in
 
@@ -761,7 +762,7 @@ function script_plexdrive() {
 			        echo -e "${CGREEN}   1) Plex_autoscan${CEND}"
 			        echo -e "${CGREEN}   2) Autoscan (Nouvelle version de Plex_autoscan)${CEND}"
 			        echo -e "${CGREEN}   3) Cloudplow${CEND}"
-			        echo -e "${CGREEN}   4) Crop (Nouvelle version de Cloudplow)${CEND}"
+			        echo -e "${CGREEN}   4) Crop (Nouvelle version de Cloudplow) => Experimental${CEND}"
 			        echo -e "${CGREEN}   5) Plex_dupefinder${CEND}"
 				echo -e "${CGREEN}   6) Retour menu principal${CEND}"
 
@@ -1046,11 +1047,16 @@ function script_plexdrive() {
                                     esac
 
                        ;;
-                       7) ## retour menu principal
+                       7) ## Migration plexdrive => rclone vfs
+                       /opt/seedbox-compose/includes/config/scripts/rclonevfs
+                       pause
+		       script_plexdrive
+		       ;;
+
+                       8) ## retour menu principal
                        script_plexdrive
 		       ;;
-                       esac  
-
+                       esac
                 ;;
 		4)
 		exit

@@ -4,11 +4,13 @@ source includes/functions.sh
 source includes/variables.sh
 
 ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+
 rm /tmp/team.txt /tmp/crop.txt > /dev/null 2>&1
-i=1
 sed -i '/#Debut team source/,/#Fin team source/d' /root/.config/rclone/rclone.conf > /dev/null 2>&1
 sed -i '/#Debut team backup/,/#Fin team backup/d' /root/.config/rclone/rclone.conf > /dev/null 2>&1
 sed -i '/share*/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
+
+i=1
 grep "team_drive" /root/.config/rclone/rclone.conf | uniq > /tmp/crop.txt
 grep "team_drive" /root/.config/rclone/rclone.conf > /dev/null 2>&1
 

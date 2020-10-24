@@ -91,6 +91,8 @@ while :
 do
   read -rp $'\e[36m   Choisir le Gdrive parmis la liste des remotes: \e[0m' RTYPE
   if [ "$RTYPE" -le "$nombre" -a "$RTYPE" -ge "1"  ]; then
+    echo
+    gdrive=$(sed -n "$RTYPE"p /tmp/team.txt)
     break
   else
     echo -e " ${CRED}* /!\ erreur de saisie /!\{NC}"
@@ -98,8 +100,7 @@ do
   fi
 done
 ## Variables
-i="$RTYPE"
-gdrive=$(sed -n "$i"p /tmp/team.txt)
+i=1
   
 ## Stockage principal
 echo ""

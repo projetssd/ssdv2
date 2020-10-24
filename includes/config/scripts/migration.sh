@@ -64,6 +64,7 @@ i=1
   read -rp $'\e[36m   Choisir le Gdrive parmis la liste des remotes: \e[0m' RTYPE
     if [ "$RTYPE" -le "$nombre" -a "$RTYPE" -ge "1"  ]; then
     echo ""
+    drive=$(sed -n "$RTYPE"p /tmp/drive.txt)
     echo -e "${CCYAN}   Source : ${CGREEN}$drive${CEND}"
    break
   else
