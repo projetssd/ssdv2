@@ -53,10 +53,21 @@
           )
             else false }}"
 
+    - name: "Variables | Set 'sub' variable"
+      set_fact:
+        sub_enabled: "{{ true if not(
+            (sub.syncthing is undefined)
+            or
+            (sub.syncthing is none)
+            or
+            (sub.syncthing | trim | length == 0)
+          )
+            else false }}"
+
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: syncthing
+        subdomain: "{{sub.syncthing if sub_enabled else 'syncthing'}}"
       when: cloudflare_enabled
 
     - name: 'Set Known Facts'
@@ -85,7 +96,7 @@
           traefik.enable: 'true'
           ## HTTP Routers
           traefik.http.routers.syncthing-rtr.entrypoints: 'https'
-          traefik.http.routers.syncthing-rtr.rule: 'Host(`syncthing.{{user.domain}}`)'
+          traefik.http.routers.syncthing-rtr.rule: 'Host(`{{sub.syncthing if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.syncthing-rtr.tls: 'true'
           ## Middlewares
           traefik.http.routers.syncthing-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
@@ -143,3 +154,8 @@
             replace: '<defaultFolderPath>/sync</defaultFolderPath>'
 
       when: not xmlcheck.stat.exists
+
+    - name: add resume file
+      shell: |
+        echo "{{pgrole}}-{{sub.syncthing if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+

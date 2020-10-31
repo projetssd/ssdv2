@@ -1,5 +1,4 @@
 #!/bin/bash
-
 ---
 - hosts: localhost
   gather_facts: false
@@ -8,6 +7,7 @@
   tasks:
         
     # FACTS #######################################################################
+
     - name: Checking for existing app data
       stat:
         path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
@@ -53,17 +53,28 @@
           )
             else false }}"
 
+    - name: "Variables | Set 'sub' variable"
+      set_fact:
+        sub_enabled: "{{ true if not(
+            (sub.radarr is undefined)
+            or
+            (sub.radarr is none)
+            or
+            (sub.radarr | trim | length == 0)
+          )
+            else false }}"
+
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: radarr
+        subdomain: "{{sub.radarr if sub_enabled else 'radarr'}}"
       when: cloudflare_enabled
 
     - name: 'Set Known Facts'
       set_fact:
         pgrole: 'radarr'
         intport: '7878'
-        image: 'linuxserver/radarr'
+        image: 'linuxserver/radarr:nightly'
 
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
@@ -77,11 +88,12 @@
           traefik.enable: 'true'
           ## HTTP Routers
           traefik.http.routers.radarr-rtr.entrypoints: 'https'
-          traefik.http.routers.radarr-rtr.rule: 'Host(`radarr.{{user.domain}}`)'
+          traefik.http.routers.radarr-rtr.rule: 'Host(`{{sub.radarr if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.radarr-rtr.tls: 'true'
           ## Middlewares
           traefik.http.routers.radarr-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
           ## HTTP Services
+          #traefik.http.routers.radarr-rtr.tls.certresolver: 'dns-cloudflare' 
           traefik.http.routers.radarr-rtr.service: 'radarr-svc'
           traefik.http.services.radarr-svc.loadbalancer.server.port: '7878'
 
@@ -114,3 +126,8 @@
           - name: traefik_proxy
         state: started
         labels: '{{pg_labels}}'
+
+    - name: add resume file
+      shell: |
+        echo "{{pgrole}}-{{sub.radarr if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+

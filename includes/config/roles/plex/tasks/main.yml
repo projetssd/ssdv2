@@ -1,12 +1,3 @@
-#########################################################################
-# Title:         Cloudbox: Plex Role                                    #
-# Author(s):     l3uddz, desimaniac                                     #
-# URL:           https://github.com/cloudbox/cloudbox                   #
-# --                                                                    #
-#         Part of the Cloudbox project: https://cloudbox.works          #
-#########################################################################
-#                   GNU General Public License v3.0                     #
-#########################################################################
 ---
 - hosts: localhost
   gather_facts: true
@@ -33,12 +24,6 @@
           )
             else false }}"
 
-    - name: "Set DNS Record on CloudFlare"
-      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
-      vars:
-        subdomain: plex
-      when: cloudflare_enabled
-
     - name: "Variables | Set 'plex_account_enabled' variable"
       set_fact:
         plex_account_enabled: "{{ true if not(
@@ -50,9 +35,30 @@
           )
           else false }}"
 
+    - name: "Variables | Set 'sub' variable"
+      set_fact:
+        sub_enabled: "{{ true if not(
+            (sub.media is undefined)
+            or
+            (sub.media is none)
+            or
+            (sub.media | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: "{{sub.media if sub_enabled else 'plex'}}"
+      when: cloudflare_enabled
+
     - name: "Create Plex directories"
       file: "path={{ item }} state=directory mode=0775 owner={{ user.name }} group={{ user.group}}"
       with_items: "{{ plex_folders }}"
+
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'plex'
 
     - name: "Stop and remove any existing container"
       docker_container:
@@ -126,7 +132,7 @@
           traefik.enable: 'true'
           ## HTTP Routers
           traefik.http.routers.plex-rtr.entrypoints: 'https'
-          traefik.http.routers.plex-rtr.rule: 'Host(`plex.{{user.domain}}`)'
+          traefik.http.routers.plex-rtr.rule: 'Host(`{{sub.media if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.plex-rtr.tls: 'true'
           ## HTTP Services
           traefik.http.routers.plex-rtr.service: 'plex-svc'
@@ -164,3 +170,8 @@
     - name: Extra Tasks
       import_tasks: "subtasks/extra.yml"
       ignore_errors: yes
+
+    - name: add resume file
+      shell: |
+        echo "{{pgrole}}-{{sub.media if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+

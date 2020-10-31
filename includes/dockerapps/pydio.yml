@@ -53,10 +53,21 @@
           )
             else false }}"
 
+    - name: "Variables | Set 'sub' variable"
+      set_fact:
+        sub_enabled: "{{ true if not(
+            (sub.pydio is undefined)
+            or
+            (sub.pydio is none)
+            or
+            (sub.pydio | trim | length == 0)
+          )
+            else false }}"
+
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: 'pydio'
+        subdomain: "{{sub.pydio if sub_enabled else 'pydio'}}"
       when: cloudflare_enabled
 
     - name: Create pydio-net network
@@ -80,7 +91,7 @@
           traefik.enable: 'true'
           ## HTTP Routers
           traefik.http.routers.pydio-rtr.entrypoints: 'https'
-          traefik.http.routers.pydio-rtr.rule: 'Host(`pydio.{{user.domain}}`)'
+          traefik.http.routers.pydio-rtr.rule: 'Host(`{{sub.pydio if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.pydio-rtr.tls: 'true'
           ## Middlewares
           traefik.http.routers.pydio-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
@@ -136,3 +147,8 @@
           - name: 'pydio-net'
         state: started
         labels: '{{pg_labels}}'
+
+    - name: add resume file
+      shell: |
+        echo "{{pgrole}}-{{sub.pydio if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+

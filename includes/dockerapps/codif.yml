@@ -8,7 +8,6 @@
   tasks:
         
     # FACTS #######################################################################
-
     - name: Checking for existing app data
       stat:
         path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
@@ -54,17 +53,27 @@
           )
             else false }}"
 
+    - name: "Variables | Set 'sub' variable"
+      set_fact:
+        sub_enabled: "{{ true if not(
+            (sub.codif is undefined)
+            or
+            (sub.codif is none)
+            or
+            (sub.codif | trim | length == 0)
+          )
+            else false }}"
+
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: sonarr
+        subdomain: "{{sub.codif if sub_enabled else 'codif '}}"
       when: cloudflare_enabled
 
     - name: 'Set Known Facts'
       set_fact:
-        pgrole: 'sonarr'
-        intport: '8989'
-        image: 'linuxserver/sonarr:preview'
+        pgrole: 'codif'
+        image: 'linuxserver/codif-server'
 
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
@@ -77,27 +86,26 @@
         pg_labels:
           traefik.enable: 'true'
           ## HTTP Routers
-          traefik.http.routers.sonarr-rtr.entrypoints: 'https'
-          traefik.http.routers.sonarr-rtr.rule: 'Host(`sonarr.{{user.domain}}`)'
-          traefik.http.routers.sonarr-rtr.tls: 'true'
+          traefik.http.routers.codif-rtr.entrypoints: 'https'
+          traefik.http.routers.codif-rtr.rule: 'Host(`{{sub.codif if sub_enabled else pgrole}}.{{user.domain}}`)'
+          traefik.http.routers.codif-rtr.tls: 'true'
           ## Middlewares
-          traefik.http.routers.sonarr-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          traefik.http.routers.codif-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
           ## HTTP Services
-          traefik.http.routers.sonarr-rtr.service: 'sonarr-svc'
-          traefik.http.services.sonarr-svc.loadbalancer.server.port: '8989'
+          traefik.http.routers.codif-rtr.service: 'codif-svc'
+          traefik.http.services.codif-svc.loadbalancer.server.port: '8443'
 
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
           - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config:/config'
-          - '/home/{{user.name}}:/home/{{user.name}}'
-          - '/etc/localtime:/etc/localtime:ro'
 
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
           PUID: '{{user.userid}}'
           PGID: '{{user.groupid}}'
+          TZ: 'Europe/Paris'
 
     # MAIN DEPLOYMENT #############################################################
 
@@ -106,8 +114,6 @@
         name: '{{pgrole}}'
         image: '{{image}}'
         pull: yes
-        published_ports:
-          - '127.0.0.1:8989:8989'
         volumes: '{{pg_volumes}}'
         env: '{{pg_env}}'
         restart_policy: unless-stopped
@@ -115,3 +121,8 @@
           - name: traefik_proxy
         state: started
         labels: '{{pg_labels}}'
+
+    - name: add resume file
+      shell: |
+        echo "{{pgrole}}-{{sub.codif if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+

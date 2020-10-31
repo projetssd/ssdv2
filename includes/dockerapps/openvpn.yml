@@ -53,10 +53,21 @@
           )
             else false }}"
 
+    - name: "Variables | Set 'sub' variable"
+      set_fact:
+        sub_enabled: "{{ true if not(
+            (sub.openvpn is undefined)
+            or
+            (sub.openvpn is none)
+            or
+            (sub.openvpn | trim | length == 0)
+          )
+            else false }}"
+
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: openvpn
+        subdomain: "{{sub.openvpn if sub_enabled else 'openvpn'}}"
       when: cloudflare_enabled
 
     - name: 'Set Known Facts'
@@ -76,7 +87,7 @@
         pg_labels:
           traefik.enable: 'true'
           traefik.tcp.routers.openvpn-tcp.entrypoints: 'https'
-          traefik.tcp.routers.openvpn-tcp.rule: 'HostSNI(`openvpn.{{user.domain}}`)'
+          traefik.tcp.routers.openvpn-tcp.rule: 'HostSNI(`{{sub.openvpn if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.tcp.routers.openvpn-tcp.tls: 'true'
           traefik.tcp.routers.openvpn-tcp.tls.passthrough: 'true'
           traefik.tcp.routers.openvpn-tcp.service: 'openvpn-tcp-svc'
@@ -109,3 +120,8 @@
           - name: traefik_proxy
         state: started
         labels: '{{pg_labels}}'
+
+    - name: add resume file
+      shell: |
+        echo "{{pgrole}}-{{sub.openvpn if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+

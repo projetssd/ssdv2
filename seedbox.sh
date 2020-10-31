@@ -143,6 +143,7 @@ case $CHOICE in
 			install_fail2ban
 			choose_media_folder_classique
 			choose_services
+                        subdomain
 			install_services
 			filebot
 			resume_seedbox
@@ -170,13 +171,13 @@ case $CHOICE in
                         oauth
 			install_traefik
                         install_rclone
-			#install_plexdrive
 			install_watchtower
 			install_fail2ban
 			choose_media_folder_plexdrive
 			unionfs_fuse
 			pause
 			choose_services
+                        subdomain
 			install_services
                         projects
 			filebot

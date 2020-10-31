@@ -53,10 +53,21 @@
           )
             else false }}"
 
+    - name: "Variables | Set 'sub' variable"
+      set_fact:
+        sub_enabled: "{{ true if not(
+            (sub.sickchill is undefined)
+            or
+            (sub.sickchill is none)
+            or
+            (sub.sickchill | trim | length == 0)
+          )
+            else false }}"
+
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: sickchill
+        subdomain: "{{sub.sickchill if sub_enabled else 'sickchill'}}"
       when: cloudflare_enabled
 
     - name: 'Set Known Facts'
@@ -76,7 +87,7 @@
           traefik.enable: 'true'
           ## HTTP Routers
           traefik.http.routers.sickchill-rtr.entrypoints: 'https'
-          traefik.http.routers.sickchill-rtr.rule: 'Host(`sickchill.{{user.domain}}`)'
+          traefik.http.routers.sickchill-rtr.rule: 'Host(`{{sub.sickchill if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.sickchill-rtr.tls: 'true'
           ## Middlewares
           traefik.http.routers.sickchill-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
@@ -114,3 +125,8 @@
           - name: traefik_proxy
         state: started
         labels: '{{pg_labels}}'
+
+    - name: add resume file
+      shell: |
+        echo "{{pgrole}}-{{sub.sickchill if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+

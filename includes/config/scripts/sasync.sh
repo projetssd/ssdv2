@@ -39,7 +39,7 @@ echo ""
 ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 sed -i '/#Debut team source/,/#Fin team source/d' /root/.config/rclone/rclone.conf > /dev/null 2>&1
 sed -i '/#Debut team backup/,/#Fin team backup/d' /root/.config/rclone/rclone.conf > /dev/null 2>&1
-sed -i '/share*/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
+sed -i '/support*/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
 rm /tmp/team.txt /tmp/crop.txt > /dev/null 2>&1
 
 read -rp $'\e[36m   Souhaitez vous poursuivre l installation: (o/n) ? \e[0m' OUI
@@ -105,7 +105,7 @@ i=1
 ## Stockage principal
 echo ""
 echo -e "${CCYAN}   Source : ${CGREEN}$gdrive${CEND}"
-sed -i "/remote/a \ \ \ share_source: $gdrive" /opt/seedbox/variables/account.yml
+sed -i "/remote/a \ \ \ support_source: $gdrive" /opt/seedbox/variables/account.yml
 echo ""
 rm /tmp/team.txt /tmp/crop.txt > /dev/null 2>&1
 grep "team_drive" /root/.config/rclone/rclone.conf | uniq > /tmp/crop.txt
@@ -155,7 +155,7 @@ echo ""
 echo -e "${CCYAN}   Backup : ${CGREEN}$teamdrive_dest --> $teamdrive_b${CEND}"
 id=$(sed -n "$j"p /tmp/crop.txt)
 echo -e "#Debut team backup\n[$teamdrive_dest$dest] \ntype = drive\nscope = drive\nserver_side_across_configs = true\nservice_account_file_path = /opt/sa/\nservice_account_file = /opt/sa/1.json\n$id\n#Fin team backup\n" >> /root/.config/rclone/rclone.conf
-sed -i "/remote/a \ \ \ share_dest: $teamdrive_dest$dest" /opt/seedbox/variables/account.yml
+sed -i "/remote/a \ \ \ support_dest: $teamdrive_dest$dest" /opt/seedbox/variables/account.yml
 ansible-playbook /opt/seedbox-compose/includes/config/roles/sasync/tasks/main.yml
 rm /tmp/team.txt /tmp/crop.txt > /dev/null 2>&1
 ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1

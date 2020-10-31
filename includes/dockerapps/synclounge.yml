@@ -53,10 +53,21 @@
             )
               else false }}"
 
+    - name: "Variables | Set 'sub' variable"
+      set_fact:
+        sub_enabled: "{{ true if not(
+            (sub.synclounge is undefined)
+            or
+            (sub.synclounge is none)
+            or
+            (sub.synclounge | trim | length == 0)
+          )
+            else false }}"
+
       - name: "Set DNS Record on CloudFlare"
         include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
         vars:
-          subdomain: synclounge
+        subdomain: "{{sub.synclounge if sub_enabled else 'synclounge'}}"
         when: cloudflare_enabled
   
       - name: 'Set Known Facts'
@@ -77,7 +88,7 @@
             traefik.enable: 'true'
             ## HTTP Routers
             traefik.http.routers.synclounge-webui-rtr.entrypoints: 'https'
-            traefik.http.routers.synclounge-webui-rtr.rule: 'Host(`synclounge.{{user.domain}}`)'
+          traefik.http.routers.synclounge-rtr.rule: 'Host(`{{sub.synclounge if sub_enabled else pgrole}}.{{user.domain}}`)'
             traefik.http.routers.synclounge-webui-rtr.tls: 'true'
             traefik.http.routers.synclounge-slserver-rtr.entrypoints: 'https'
             traefik.http.routers.synclounge-slserver-rtr.rule: 'Host(`synclounge.{{user.domain}}`) && PathPrefix(`/slserver`)'
@@ -117,4 +128,9 @@
             - name: traefik_proxy
           state: started
           labels: '{{pg_labels}}'
+
+    - name: add resume file
+      shell: |
+        echo "{{pgrole}}-{{sub.synclounge if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+
   

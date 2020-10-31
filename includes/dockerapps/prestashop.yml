@@ -53,10 +53,21 @@
           )
             else false }}"
 
+    - name: "Variables | Set 'sub' variable"
+      set_fact:
+        sub_enabled: "{{ true if not(
+            (sub.prestashop is undefined)
+            or
+            (sub.prestashop is none)
+            or
+            (sub.prestashop | trim | length == 0)
+          )
+            else false }}"
+
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: prestashop
+        subdomain: "{{sub.prestashop if sub_enabled else 'prestashop'}}"
       when: cloudflare_enabled
 
     - name: 'Set Known Facts'
@@ -77,7 +88,7 @@
           traefik.enable: 'true'
           ## HTTP Routers
           traefik.http.routers.prestashop-rtr.entrypoints: 'https'
-          traefik.http.routers.prestashop-rtr.rule: 'Host(`prestashop.{{user.domain}}`)'
+          traefik.http.routers.prestashop-rtr.rule: 'Host(`{{sub.prestashop if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.prestashop-rtr.tls: 'true'
           ## Middlewares
           traefik.http.routers.prestashop-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
@@ -131,3 +142,8 @@
         restart_policy: unless-stopped
         state: started
         labels: '{{pg_labels}}'
+
+    - name: add resume file
+      shell: |
+        echo "{{pgrole}}-{{sub.prestashop if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+

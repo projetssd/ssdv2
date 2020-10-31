@@ -5,8 +5,8 @@ rclone:
   live_rotate: {{ 'true' if teamdrive1_enabled | default(false) else 'false' }}
   service_account_remotes:
     '/opt/sa':
-       - {{ rclone.share_source if teamdrive1_enabled | default(false) }}
-       - {{ rclone.share_dest if teamdrive2_enabled | default(false) }}
+       - {{ rclone.support_source if teamdrive1_enabled | default(false) }}
+       - {{ rclone.support_dest if teamdrive2_enabled | default(false) }}
   global_params:
     default:
       move:
@@ -43,12 +43,12 @@ uploader:
 syncer:
   - name: backup
     enabled: {{ 'true' if teamdrive2_enabled | default(false) else 'false' }}
-    source_remote: '{{ rclone.share_source if teamdrive1_enabled | default(false) }}:/'
+    source_remote: '{{ rclone.support_source if teamdrive1_enabled | default(false) }}:/'
     remotes:
       sync:
-        - '{{ rclone.share_dest if teamdrive2_enabled | default(false) }}:/'
+        - '{{ rclone.support_dest if teamdrive2_enabled | default(false) }}:/'
       dedupe:
-        - '{{ rclone.share_dest if teamdrive2_enabled | default(false) }}:/'
+        - '{{ rclone.support_dest if teamdrive2_enabled | default(false) }}:/'
     rclone_params:
       global_sync: default
       global_dedupe: default

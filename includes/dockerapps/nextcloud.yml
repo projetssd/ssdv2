@@ -53,10 +53,21 @@
           )
             else false }}"
 
+    - name: "Variables | Set 'sub' variable"
+      set_fact:
+        sub_enabled: "{{ true if not(
+            (sub.nextcloud is undefined)
+            or
+            (sub.nextcloud is none)
+            or
+            (sub.nextcloud | trim | length == 0)
+          )
+            else false }}"
+
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: nextcloud
+        subdomain: "{{sub.nextcloud if sub_enabled else 'nextcloud'}}"
       when: cloudflare_enabled
 
     - name: 'Set Known Facts'
@@ -83,7 +94,7 @@
           traefik.enable: 'true'
           ## TCP Routers
           traefik.tcp.routers.nextcloud-tcp.entrypoints: 'https'
-          traefik.tcp.routers.nextcloud-tcp.rule: 'HostSNI(`nextcloud.{{user.domain}}`)'
+          traefik.tcp.routers.nextcloud-tcp.rule: 'HostSNI(`{{sub.nextcloud if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.tcp.routers.nextcloud-tcp.tls: 'true'
           traefik.tcp.routers.nextcloud-tcp.tls.passthrough: 'true'
           ## Middlewares
@@ -282,3 +293,7 @@
         restart_policy: unless-stopped
         state: started
         labels: '{{off_labels}}'
+
+    - name: add resume file
+      shell: |
+        echo "{{pgrole}}-{{sub.nextcloud if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt

@@ -27,6 +27,9 @@
 
     - name: Set cron
       shell: |
-        (crontab -l | grep . ; echo "0 3 * * 6 bash /usr/local/bin/backup") | crontab -
+        (crontab -l | grep . ; echo "0 3 * * 6 bash /usr/local/bin/backup > /dev/null") | crontab -
+        cp /var/spool/cron/crontabs/root /tmp/root
+        sort -u /tmp/root > /var/spool/cron/crontabs/root
+
 
 

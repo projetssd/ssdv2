@@ -53,10 +53,21 @@
           )
             else false }}"
 
+    - name: "Variables | Set 'sub' variable"
+      set_fact:
+        sub_enabled: "{{ true if not(
+            (sub.dozzle is undefined)
+            or
+            (sub.dozzle is none)
+            or
+            (sub.dozzle | trim | length == 0)
+          )
+            else false }}"
+
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: dozzle
+        subdomain: "{{sub.dozzle if sub_enabled else 'dozzle'}}"
       when: cloudflare_enabled
 
     - name: 'Set Known Facts'
@@ -77,7 +88,7 @@
           traefik.enable: 'true'
           ## HTTP Routers
           traefik.http.routers.dozzle-rtr.entrypoints: 'https'
-          traefik.http.routers.dozzle-rtr.rule: 'Host(`dozzle.{{user.domain}}`)'
+          traefik.http.routers.dozzle-rtr.rule: 'Host(`{{sub.dozzle if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.dozzle-rtr.tls: 'true'
           ## Middlewares
           traefik.http.routers.dozzle-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
@@ -113,3 +124,8 @@
           - name: traefik_proxy
         state: started
         labels: '{{pg_labels}}'
+
+    - name: add resume file
+      shell: |
+        echo "{{pgrole}}-{{sub.dozzle if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+

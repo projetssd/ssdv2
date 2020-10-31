@@ -53,6 +53,17 @@
           )
             else false }}"
 
+    - name: "Variables | Set 'sub' variable"
+      set_fact:
+        sub_enabled: "{{ true if not(
+            (sub.wetty is undefined)
+            or
+            (sub.wetty is none)
+            or
+            (sub.wetty | trim | length == 0)
+          )
+            else false }}"
+
     - name: Get Public IP Address
       shell: dig -4 TXT +short o-o.myaddr.l.google.com @ns1.google.com | awk -F'\"' '{ print $2}'
       register: public_ip_lookup
@@ -60,7 +71,7 @@
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: wetty
+        subdomain: "{{sub.wetty if sub_enabled else 'wetty'}}"
       when: cloudflare_enabled
 
     - name: 'Set Known Facts'
@@ -81,7 +92,7 @@
           traefik.enable: 'true'
           ## HTTP Routers
           traefik.http.routers.wetty-rtr.entrypoints: 'https'
-          traefik.http.routers.wetty-rtr.rule: 'Host(`wetty.{{user.domain}}`)'
+          traefik.http.routers.wetty-rtr.rule: 'Host(`{{sub.wetty if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.wetty-rtr.tls: 'true'
           ## Middlewares
           traefik.http.routers.wetty-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
@@ -117,3 +128,8 @@
           - name: traefik_proxy
         state: started
         labels: '{{pg_labels}}'
+
+    - name: add resume file
+      shell: |
+        echo "{{pgrole}}-{{sub.wetty if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+

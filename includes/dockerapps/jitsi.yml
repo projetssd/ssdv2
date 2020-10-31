@@ -82,11 +82,22 @@
               (oauth.account | trim | length == 0)
             )
               else false }}"
+
+      - name: "Variables | Set 'sub' variable"
+        set_fact:
+          sub_enabled: "{{ true if not(
+              (sub.jitsi is undefined)
+              or
+              (sub.jitsi is none)
+              or
+              (sub.jitsi | trim | length == 0)
+            )
+              else false }}"
   
       - name: "Set DNS Record on CloudFlare"
         include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
         vars:
-          subdomain: jitsi
+          subdomain: "{{sub.jitsi if sub_enabled else 'jitsi'}}"
         when: cloudflare_enabled
   
       - name: 'Set Known Facts'
@@ -106,7 +117,7 @@
             traefik.enable: 'true'
             ## HTTP Routers
             traefik.http.routers.jitsi-rtr.entrypoints: 'https'
-            traefik.http.routers.jitsi-rtr.rule: 'Host(`jitsi.{{user.domain}}`)'
+          traefik.http.routers.jitsi-rtr.rule: 'Host(`{{sub.jitsi if sub_enabled else pgrole}}.{{user.domain}}`)'
             traefik.http.routers.jitsi-rtr.tls: 'true'
             ## Middlewares
             #traefik.http.routers.jitsi-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
@@ -297,4 +308,9 @@
   
       - name: "Containers | Restart Jitsi"
         shell: docker restart jitsi
+
+      - name: add resume file
+        shell: |
+          echo "{{pgrole}}-{{sub.jitsi if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+
   

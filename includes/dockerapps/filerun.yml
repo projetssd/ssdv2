@@ -53,10 +53,21 @@
           )
             else false }}"
 
+    - name: "Variables | Set 'sub' variable"
+      set_fact:
+        sub_enabled: "{{ true if not(
+            (sub.filerun is undefined)
+            or
+            (sub.filerun is none)
+            or
+            (sub.filerun | trim | length == 0)
+          )
+            else false }}"
+
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: filerun
+        subdomain: "{{sub.filerun if sub_enabled else 'filerun'}}"
       when: cloudflare_enabled
 
     - name: 'Set Known Facts'
@@ -81,7 +92,7 @@
           traefik.enable: 'true'
           ## HTTP Routers
           traefik.http.routers.filerun-rtr.entrypoints: 'https'
-          traefik.http.routers.filerun-rtr.rule: 'Host(`filerun.{{user.domain}}`)'
+          traefik.http.routers.filerun-rtr.rule: 'Host(`{{sub.filerun if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.filerun-rtr.tls: 'true'
           ## Middlewares
           traefik.http.routers.filerun-seafapp-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
@@ -144,3 +155,7 @@
           - name: filerun-net
         state: started
         labels: '{{pg_labels}}'
+
+    - name: add resume file
+      shell: |
+        echo "{{pgrole}}-{{sub.filerun if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt

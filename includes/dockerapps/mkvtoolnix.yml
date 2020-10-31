@@ -53,10 +53,21 @@
           )
             else false }}"
 
+    - name: "Variables | Set 'sub' variable"
+      set_fact:
+        sub_enabled: "{{ true if not(
+            (sub.mkvtoolnix is undefined)
+            or
+            (sub.mkvtoolnix is none)
+            or
+            (sub.mkvtoolnix | trim | length == 0)
+          )
+            else false }}"
+
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: mkvtoolnix
+        subdomain: "{{sub.mkvtoolnix if sub_enabled else 'mkvtoolnix'}}"
       when: cloudflare_enabled
 
     - name: 'Set Known Facts'
@@ -77,7 +88,7 @@
           traefik.enable: 'true'
           ## HTTP Routers
           traefik.http.routers.mkvtoolnix-rtr.entrypoints: 'https'
-          traefik.http.routers.mkvtoolnix-rtr.rule: 'Host(`mkvtoolnix.{{user.domain}}`)'
+          traefik.http.routers.mkvtoolnix-rtr.rule: 'Host(`{{sub.mkvtoolnix if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.mkvtoolnix-rtr.tls: 'true'
           ## Middlewares
           traefik.http.routers.mkvtoolnix-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
@@ -104,3 +115,8 @@
           - name: traefik_proxy
         state: started
         labels: '{{pg_labels}}'
+
+    - name: add resume file
+      shell: |
+        echo "{{pgrole}}-{{sub.mkvtoolnix if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+

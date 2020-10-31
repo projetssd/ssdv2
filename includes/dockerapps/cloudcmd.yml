@@ -52,10 +52,21 @@
           )
             else false }}"
 
+    - name: "Variables | Set 'sub' variable"
+      set_fact:
+        sub_enabled: "{{ true if not(
+            (sub.cloudcmd is undefined)
+            or
+            (sub.cloudcmd is none)
+            or
+            (sub.cloudcmd | trim | length == 0)
+          )
+            else false }}"
+
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: cloudcmd
+        subdomain: "{{sub.cloudcmd if sub_enabled else 'cloudcmd'}}"
       when: cloudflare_enabled
 
     - name: 'Set Known Facts'
@@ -77,7 +88,7 @@
           traefik.enable: 'true'
           ## HTTP Routers
           traefik.http.routers.cloudcmd-rtr.entrypoints: 'https'
-          traefik.http.routers.cloudcmd-rtr.rule: 'Host(`cloudcmd.{{user.domain}}`)'
+          traefik.http.routers.cloudcmd-rtr.rule: 'Host(`{{sub.cloudcmd if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.cloudcmd-rtr.tls: 'true'
           ## Middlewares
           traefik.http.routers.cloudcmd-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
@@ -110,3 +121,8 @@
           - name: traefik_proxy
         state: started
         labels: '{{pg_labels}}'
+
+    - name: add resume file
+      shell: |
+        echo "{{pgrole}}-{{sub.cloudcmd if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+

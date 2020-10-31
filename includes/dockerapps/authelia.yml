@@ -39,10 +39,21 @@
           )
             else false }}"
 
+    - name: "Variables | Set 'sub' variable"
+      set_fact:
+        sub_enabled: "{{ true if not(
+            (sub.authelia is undefined)
+            or
+            (sub.authelia is none)
+            or
+            (sub.authelia | trim | length == 0)
+          )
+            else false }}"
+
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: authelia
+        subdomain: "{{sub.authelia if sub_enabled else 'authelia'}}"
       when: cloudflare_enabled
 
     - name: 'Set Known Facts'
@@ -82,7 +93,7 @@
           traefik.enable: 'true'
           ## HTTP Routers
           traefik.http.routers.authelia-rtr.entrypoints: 'https'
-          traefik.http.routers.authelia-rtr.rule: 'Host(`authelia.{{user.domain}}`)'
+          traefik.http.routers.authelia-rtr.rule: 'Host(`{{sub.authelia if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.authelia-rtr.tls: 'true'
           ## Middlewares
           traefik.http.routers.radarr-rtr.middlewares: 'chain-authelia@file'
@@ -148,3 +159,7 @@
           - name: authelia-net
         state: started
         labels: '{{pg_labels}}'
+
+    - name: add resume file
+      shell: |
+        echo "{{pgrole}}-{{sub.authelia if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt

@@ -53,10 +53,21 @@
           )
             else false }}"
 
+    - name: "Variables | Set 'sub' variable"
+      set_fact:
+        sub_enabled: "{{ true if not(
+            (sub.heimdall is undefined)
+            or
+            (sub.heimdall is none)
+            or
+            (sub.heimdall | trim | length == 0)
+          )
+            else false }}"
+
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: heimdall
+        subdomain: "{{sub.heimdall if sub_enabled else 'heimdall'}}"
       when: cloudflare_enabled
 
     - name: 'Set Known Facts'
@@ -76,7 +87,7 @@
           traefik.enable: 'true'
           ## HTTP Routers
           traefik.http.routers.heimdall-rtr.entrypoints: 'https'
-          traefik.http.routers.heimdall-rtr.rule: 'Host(`heimdall.{{user.domain}}`)'
+          traefik.http.routers.heimdall-rtr.rule: 'Host(`{{sub.heimdall if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.heimdall-rtr.tls: 'true'
           ## Middlewares
           traefik.http.routers.heimdall-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
@@ -109,3 +120,8 @@
           - name: traefik_proxy
         state: started
         labels: '{{labels}}'
+
+    - name: add resume file
+      shell: |
+        echo "{{pgrole}}-{{sub.heimdall if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+

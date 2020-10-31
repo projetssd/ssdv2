@@ -54,10 +54,21 @@
           )
             else false }}"
 
+    - name: "Variables | Set 'sub' variable"
+      set_fact:
+        sub_enabled: "{{ true if not(
+            (sub.sabnzbd is undefined)
+            or
+            (sub.sabnzbd is none)
+            or
+            (sub.sabnzbd | trim | length == 0)
+          )
+            else false }}"
+
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: sabnzbd
+        subdomain: "{{sub.sabnzbd if sub_enabled else 'sabnzbd'}}"
       when: cloudflare_enabled
 
     - name: 'Set Known Facts'
@@ -83,7 +94,7 @@
           traefik.enable: 'true'
           ## HTTP Routers
           traefik.http.routers.sabnzbd-rtr.entrypoints: 'https'
-          traefik.http.routers.sabnzbd-rtr.rule: 'Host(`sabnzbd.{{user.domain}}`)'
+          traefik.http.routers.sabnzbd-rtr.rule: 'Host(`{{sub.sabnzbd if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.sabnzbd-rtr.tls: 'true'
           ## Middlewares
           traefik.http.routers.sabnzbd-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
@@ -219,3 +230,8 @@
       docker_container:
         name: '{{pgrole}}'
         state: started
+
+    - name: add resume file
+      shell: |
+        echo "{{pgrole}}-{{sub.sabnzbd if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+

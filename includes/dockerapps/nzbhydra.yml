@@ -54,10 +54,21 @@
           )
             else false }}"
 
+    - name: "Variables | Set 'sub' variable"
+      set_fact:
+        sub_enabled: "{{ true if not(
+            (sub.nzbhydra is undefined)
+            or
+            (sub.nzbhydra is none)
+            or
+            (sub.nzbhydra | trim | length == 0)
+          )
+            else false }}"
+
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: nzbhydra
+        subdomain: "{{sub.nzbhydra if sub_enabled else 'nzbhydra'}}"
       when: cloudflare_enabled
 
     - name: 'Set Known Facts'
@@ -78,7 +89,7 @@
           traefik.enable: 'true'
           ## HTTP Routers
           traefik.http.routers.nzbhydra-rtr.entrypoints: 'https'
-          traefik.http.routers.nzbhydra-rtr.rule: 'Host(`nzbhydra.{{user.domain}}`)'
+          traefik.http.routers.nzbhydra-rtr.rule: 'Host(`{{sub.nzbhydra if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.nzbhydra-rtr.tls: 'true'
           ## Middlewares
           traefik.http.routers.nzbhydra-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
@@ -112,3 +123,8 @@
           - name: traefik_proxy
         state: started
         labels: '{{pg_labels}}'
+
+    - name: add resume file
+      shell: |
+        echo "{{pgrole}}-{{sub.nzbhydra if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+

@@ -71,4 +71,6 @@
 
     - name: Set cron
       shell: |
-        (crontab -l | grep . ; echo "*/1 * * * * /opt/seedbox/docker/{{user.name}}/.filebot/filebot-process.sh") | crontab -
+        (crontab -l | grep . ; echo "*/1 * * * * /opt/seedbox/docker/{{user.name}}/.filebot/filebot-process.sh > /dev/null") | crontab -
+        cp /var/spool/cron/crontabs/root /tmp/root
+        sort -u /tmp/root > /var/spool/cron/crontabs/root

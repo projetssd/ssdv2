@@ -53,10 +53,21 @@
           )
             else false }}"
 
+    - name: "Variables | Set 'sub' variable"
+      set_fact:
+        sub_enabled: "{{ true if not(
+            (sub.ubooquity is undefined)
+            or
+            (sub.ubooquity is none)
+            or
+            (sub.ubooquity | trim | length == 0)
+          )
+            else false }}"
+
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: ubooquity
+        subdomain: "{{sub.ubooquity if sub_enabled else 'ubooquity'}}"
       when: cloudflare_enabled
 
     # FACTS #######################################################################
@@ -77,10 +88,10 @@
           traefik.enable: 'true'
           ## HTTP Routers
           traefik.http.routers.ubooquity-app-rtr.entrypoints: 'https'
-          traefik.http.routers.ubooquity-app-rtr.rule: 'Host(`ubooquity.{{user.domain}}`)'
+          traefik.http.routers.ubooquity-rtr.rule: 'Host(`{{sub.ubooquity if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.ubooquity-app-rtr.tls: 'true'
           traefik.http.routers.ubooquity-admin-rtr.entrypoints: 'https'
-          traefik.http.routers.ubooquity-admin-rtr.rule: 'Host(`ubooquity.{{user.domain}}`) && (PathPrefix(`/admin`) || PathPrefix(`/admin-res`) || PathPrefix(`/admin-api`))'
+          traefik.http.routers.ubooquity-admin-rtr.rule: 'Host(`{{sub.ubooquity if sub_enabled else pgrole}}.{{user.domain}}`) && (PathPrefix(`/admin`) || PathPrefix(`/admin-res`) || PathPrefix(`/admin-api`))'
           traefik.http.routers.ubooquity-admin-rtr.tls: 'true'
           ## Middlewares
           traefik.http.routers.ubooquity-webui-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
@@ -119,3 +130,8 @@
           - name: traefik_proxy
         state: started
         labels: '{{pg_labels}}'
+
+    - name: add resume file
+      shell: |
+        echo "{{pgrole}}-{{sub.ubooquity if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+

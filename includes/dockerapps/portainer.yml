@@ -53,10 +53,21 @@
           )
             else false }}"
 
+    - name: "Variables | Set 'sub' variable"
+      set_fact:
+        sub_enabled: "{{ true if not(
+            (sub.portainer is undefined)
+            or
+            (sub.portainer is none)
+            or
+            (sub.portainer | trim | length == 0)
+          )
+            else false }}"
+
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: portainer
+        subdomain: "{{sub.portainer if sub_enabled else 'portainer'}}"
       when: cloudflare_enabled
 
     - name: 'Set Known Facts'
@@ -72,7 +83,7 @@
           traefik.enable: 'true'
           ## HTTP Routers
           traefik.http.routers.portainer-rtr.entrypoints: 'https'
-          traefik.http.routers.portainer-rtr.rule: 'Host(`portainer.{{user.domain}}`)'
+          traefik.http.routers.portainer-rtr.rule: 'Host(`{{sub.portainer if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.portainer-rtr.tls: 'true'
           ## Middlewares
           #traefik.http.routers.portainer-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
@@ -105,3 +116,8 @@
           - name: traefik_proxy
         state: started
         labels: '{{labels}}'
+
+    - name: add resume file
+      shell: |
+        echo "{{pgrole}}-{{sub.portainer if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+

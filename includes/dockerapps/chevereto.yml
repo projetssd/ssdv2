@@ -53,10 +53,21 @@
           )
             else false }}"
 
+    - name: "Variables | Set 'sub' variable"
+      set_fact:
+        sub_enabled: "{{ true if not(
+            (sub.chevereto is undefined)
+            or
+            (sub.chevereto is none)
+            or
+            (sub.chevereto | trim | length == 0)
+          )
+            else false }}"
+
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: chevereto
+        subdomain: "{{sub.chevereto if sub_enabled else 'chevereto'}}"
       when: cloudflare_enabled
 
     - name: 'Set Known Facts'
@@ -97,7 +108,7 @@
           traefik.enable: 'true'
           ## HTTP Routers
           traefik.http.routers.chevereto-rtr.entrypoints: 'https'
-          traefik.http.routers.chevereto-rtr.rule: 'Host(`chevereto.{{user.domain}}`)'
+          traefik.http.routers.chevereto-rtr.rule: 'Host(`{{sub.chevereto if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.chevereto-rtr.tls: 'true'
           ## Middlewares
           traefik.http.routers.chevereto-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
@@ -158,3 +169,7 @@
       shell: | 
         chmod -R 766 /home/{{user.name}}/local/images
         chown -R 33:33 /home/{{user.name}}/local/images
+
+    - name: add resume file
+      shell: |
+        echo "{{pgrole}}-{{sub.chevereto if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt

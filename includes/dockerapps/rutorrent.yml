@@ -54,10 +54,21 @@
           )
             else false }}"
 
+    - name: "Variables | Set 'sub' variable"
+      set_fact:
+        sub_enabled: "{{ true if not(
+            (sub.rutorrent is undefined)
+            or
+            (sub.rutorrent is none)
+            or
+            (sub.rutorrent | trim | length == 0)
+          )
+            else false }}"
+
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: rutorrent
+        subdomain: "{{sub.rutorrent if sub_enabled else 'rutorrent'}}"
       when: cloudflare_enabled
 
     - name: 'Set Known Facts'
@@ -76,7 +87,7 @@
           traefik.enable: 'true'
           ## HTTP Routers
           traefik.http.routers.rutorrent-rtr.entrypoints: 'https'
-          traefik.http.routers.rutorrent-rtr.rule: 'Host(`rutorrent.{{user.domain}}`)'
+          traefik.http.routers.rutorrent-rtr.rule: 'Host(`{{sub.rutorrent if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.rutorrent-rtr.tls: 'true'
           ## Middlewares
           traefik.http.routers.rutorrent-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
@@ -145,3 +156,8 @@
       docker_container:
         name: '{{pgrole}}'
         state: started
+
+    - name: add resume file
+      shell: |
+        echo "{{pgrole}}-{{sub.rutorrent if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+

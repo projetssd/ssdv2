@@ -8,22 +8,22 @@
     - name: "Variables | Set 'teamdrive1_enabled' variable"
       set_fact:
         teamdrive1_enabled: "{{ true if not(
-            (rclone.share_source is undefined)
+            (rclone.support_source is undefined)
             or
-            (rclone.share_source is none)
+            (rclone.support_source is none)
             or
-            (rclone.share_source | trim | length == 0)
+            (rclone.support_source | trim | length == 0)
           )
             else false }}"
 
     - name: "Variables | Set 'teamdrive2_enabled' variable"
       set_fact:
         teamdrive2_enabled: "{{ true if not(
-            (rclone.share_dest is undefined)
+            (rclone.support_dest is undefined)
             or
-            (rclone.share_dest is none)
+            (rclone.support_dest is none)
             or
-            (rclone.share_dest | trim | length == 0)
+            (rclone.support_dest | trim | length == 0)
           )
             else false }}"
 

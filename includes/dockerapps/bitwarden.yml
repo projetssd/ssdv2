@@ -53,6 +53,17 @@
           )
             else false }}"
 
+    - name: "Variables | Set 'sub' variable"
+      set_fact:
+        sub_enabled: "{{ true if not(
+            (sub.bitwarden is undefined)
+            or
+            (sub.bitwarden is none)
+            or
+            (sub.bitwarden | trim | length == 0)
+          )
+            else false }}"
+
     - name: Create bw-net network
       docker_network:
         name: bw-net
@@ -61,7 +72,7 @@
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: bitwarden
+        subdomain: "{{sub.bitwarden if sub_enabled else 'bitwarden'}}"
       when: cloudflare_enabled
 
     - name: 'Set Known Facts'
@@ -81,7 +92,7 @@
           traefik.enable: 'true'
           ## HTTP Routers
           traefik.http.routers.bitwarden-rtr.entrypoints: 'https'
-          traefik.http.routers.bitwarden-rtr.rule: 'Host(`bitwarden.{{user.domain}}`)'
+          traefik.http.routers.bitwarden-rtr.rule: 'Host(`{{sub.bitwarden if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.bitwarden-rtr.priority: '1'
           traefik.http.routers.bitwarden-rtr.tls: 'true'
           ## HTTP Services
@@ -89,14 +100,14 @@
           traefik.http.services.bitwarden-svc.loadbalancer.server.port: '80'
           ## Bitwarden WebSocket
           traefik.http.routers.bitwardenHub-rtr.entrypoints: 'https'
-          traefik.http.routers.bitwardenHub-rtr.rule: '(Host(`bitwarden.{{user.domain}}`) && Path(`/notifications/hub`))'
+          traefik.http.routers.bitwardenHub-rtr.rule: '(Host(`{{sub.bitwarden if sub_enabled else pgrole}}.{{user.domain}}`) && Path(`/notifications/hub`))'
           traefik.http.routers.bitwardenHub-rtr.priority: '2'
           traefik.http.routers.bitwardenHub-rtr.tls: 'true'
           traefik.http.routers.bitwardenHub-rtr.service: 'bitwardenHub-svc'
           traefik.http.services.bitwardenHub-svc.loadbalancer.server.port: '3012'
 #         ## Admin Page - Used when DISABLE_ADMIN_TOKEN=true above
           traefik.http.routers.bitwardenAdmin-rtr.entrypoints: 'https'
-          traefik.http.routers.bitwardenAdmin-rtr.rule: '(Host(`bitwarden.{{user.domain}}`) && Path(`/admin`))'
+          traefik.http.routers.bitwardenAdmin-rtr.rule: '(Host(`{{sub.bitwarden if sub_enabled else pgrole}}.{{user.domain}}`) && Path(`/admin`))'
           traefik.http.routers.bitwardenAdmin-rtr.priority: '3'
           traefik.http.routers.bitwardenAdmin-rtr.tls: 'true'
           traefik.http.routers.bitwardenAdmin-rtr.service: 'bitwarden-svc'
@@ -177,3 +188,7 @@
         networks:
           - name: bw-net
         state: started
+
+    - name: add resume file
+      shell: |
+        echo "{{pgrole}}-{{sub.bitwarden if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
