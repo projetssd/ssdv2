@@ -117,8 +117,10 @@ if [[ ! -d "$CONFDIR" ]]; then
 
   # Configuration ansible
   mkdir -p /etc/ansible/inventories/ 1>/dev/null 2>&1
-  echo "[local]" >/etc/ansible/inventories/local
-  echo "127.0.0.1 ansible_connection=local" >>/etc/ansible/inventories/local
+  cat <<EOF > /etc/ansible/inventories/local
+[local]
+127.0.0.1 ansible_connection=local
+EOF
 
   ### Reference: https://docs.ansible.com/ansible/2.4/intro_configuration.html
 
