@@ -4,7 +4,7 @@ Création auto des services de comptes, possibilité de créer le rclone.conf da
 Un menu spécifique est désormais dispo pour installer plex_autoscan, crop, cloudplow, autoscan avec possibilité de changer comme bon bon vous semble.
 Par defaut, rclone vfs remplace plexdrive. Enfin quelques applis supplémentaires pour agrémenter le tout.
 
-Pour vous accompagner dans la phase de migration -> https://wiki.kesurof.fr/shelves/4-migration-gdrive-vers-sharedrive
+Pour vous accompagner dans la phase de migration -> https://wiki.scriptseedboxdocker.com
 
 pour plus de détail avant et après installation --> direction le [wiki](https://github.com/laster13/patxav/wiki)
 
