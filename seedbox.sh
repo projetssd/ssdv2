@@ -117,7 +117,7 @@ if [[ ! -d "$CONFDIR" ]]; then
 
   # Configuration ansible
   mkdir -p /etc/ansible/inventories/ 1>/dev/null 2>&1
-  cat <<EOF > /etc/ansible/inventories/local
+  cat <<EOF >/etc/ansible/inventories/local
 [local]
 127.0.0.1 ansible_connection=local
 EOF
@@ -135,7 +135,6 @@ EOF
   ## Copy pip to /usr/bin
   cp /usr/local/bin/pip /usr/bin/pip
   cp /usr/local/bin/pip3 /usr/bin/pip3
-
 
   clear
   logo
@@ -293,10 +292,9 @@ EOF
   esac
 
 fi
-  PLEXDRIVE="/usr/bin/rclone"
-  if [[ -e "$PLEXDRIVE" ]]; then
-    script_plexdrive
-  else
-    script_classique
-  fi
+PLEXDRIVE="/usr/bin/rclone"
+if [[ -e "$PLEXDRIVE" ]]; then
+  script_plexdrive
+else
+  script_classique
 fi
