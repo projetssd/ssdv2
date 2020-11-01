@@ -56,111 +56,73 @@
     - name: "Variables | Set 'sub' variable"
       set_fact:
         sub_enabled: "{{ true if not(
-            (sub.bookstack is undefined)
+            (sub.autoindex is undefined)
             or
-            (sub.bookstack is none)
+            (sub.autoindex is none)
             or
-            (sub.bookstack | trim | length == 0)
+            (sub.autoindex | trim | length == 0)
           )
             else false }}"
 
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: "{{sub.bookstack if sub_enabled else 'bookstack'}}"
+        subdomain: "{{sub.autoindex if sub_enabled else 'autoindex'}}"
       when: cloudflare_enabled
 
     - name: 'Set Known Facts'
       set_fact:
-        pgrole: 'bookstack'
-        image: 'linuxserver/bookstack'
-
-    - name: Create bookstack-net network
-      docker_network:
-        name: bookstack-net
-        state: present
+        pgrole: 'autoindex'
+        intport: '8080'
+        image: 'dceoy/nginx-autoindex:latest'
 
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
       with_items:
         - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
 
-    # LABELS ######################################################################
-    - name: 'Ajout label traefik'
+    # LABELS #### KEEPS BOTTOM CLEAN ###############################################
+    - name: 'Adding Traefik'
       set_fact:
         pg_labels:
           traefik.enable: 'true'
           ## HTTP Routers
-          traefik.http.routers.bookstack-rtr.entrypoints: 'https'
-          traefik.http.routers.bookstack-rtr.rule: 'Host(`{{sub.bookstack if sub_enabled else pgrole}}.{{user.domain}}`)'
-          traefik.http.routers.bookstack-rtr.tls: 'true'
+          traefik.http.routers.autoindex-rtr.entrypoints: 'https'
+          traefik.http.routers.autoindex-rtr.rule: 'Host(`{{sub.autoindex if sub_enabled else pgrole}}.{{user.domain}}`)'
+          traefik.http.routers.autoindex-rtr.tls: 'true'
           ## Middlewares
-          traefik.http.routers.bookstack-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          #traefik.http.routers.autoindex-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
           ## HTTP Services
-          traefik.http.routers.bookstack-rtr.service: 'bookstack-svc'
-          traefik.http.services.bookstack-svc.loadbalancer.server.port: '80'
+          traefik.http.routers.autoindex-rtr.service: 'autoindex-svc'
+          traefik.http.services.autoindex-svc.loadbalancer.server.port: '80'
 
-    - name: 'Deploying db-bookstack'
-      docker_container:
-        name: 'db-bookstack'
-        recreate: true
-        image: 'linuxserver/mariadb'
-        pull: yes
-        volumes:
-          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/db-bookstack:/config'
-          - '/etc/localtime:/etc/localtime:ro'
-        env:
+    - name: 'Setting PG Volumes'
+      set_fact:
+        pg_volumes:
+          - '/opt/seedbox/docker/yohann/autoindex:/var/lib/nginx/html:ro'
+
+    - name: 'Setting PG ENV'
+      set_fact:
+        pg_env:
           PUID: '{{user.userid}}'
           PGID: '{{user.groupid}}'
-          MYSQL_DATABASE: 'bookstackapp'
-          MYSQL_USER: 'bookstack'
-          MYSQL_PASSWORD: 'bookstack'
-          MYSQL_ROOT_PASSWORD: 'bookstack'
-          TZ: 'Europe/Paris'
-        restart_policy: unless-stopped
-        networks:
-          - name: bookstack-net
-        state: started
 
-    - name: Wait for 10 seconds before continuing
-      wait_for:
-        timeout: 10
-
-   # bookstack environnement #####################################################
-
-    - name: 'Setting ENV'
-      set_fact:
-        bookstack_env:
-          PUID: '{{user.userid}}'
-          PGID: '{{user.groupid}}'
-          DB_HOST: 'db-bookstack'
-          DB_USER: 'bookstack'
-          DB_PASS: 'bookstack'
-          DB_DATABASE: 'bookstackapp'
-          APP_URL: '{{sub.bookstack if sub_enabled else pgrole}} '
-
-    - name: 'Setting Volumes'
-      set_fact:
-        bookstack_volumes:
-          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config:/config'
-
-    # MAIN DEPLOYMENT #############################################################
+    # MAIN SCRIPT ##############################################################
 
     - name: 'Deploying {{pgrole}}'
       docker_container:
         name: '{{pgrole}}'
         image: '{{image}}'
-        volumes: '{{bookstack_volumes}}'
-        env: '{{bookstack_env}}'
         pull: yes
+        volumes: '{{pg_volumes}}'
+        env: '{{pg_env}}'
         restart_policy: unless-stopped
         networks:
           - name: traefik_proxy
-          - name: bookstack-net
         state: started
         labels: '{{pg_labels}}'
 
     - name: add resume file
       shell: |
-        echo "{{pgrole}}-{{sub.bookstack if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+        echo "{{pgrole}}-{{sub.autoindex if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
 
