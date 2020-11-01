@@ -1,7 +1,12 @@
 #!/bin/bash
 
-source includes/functions.sh
-source includes/variables.sh
+# Absolute path to this script.
+CURRENT_SCRIPT=$(readlink -f $0)
+# Absolute path this script is in.
+SCRIPTPATH=`dirname $CURRENT_SCRIPT`
+
+source ${SCRIPTPATH}/includes/functions.sh
+source ${SCRIPTPATH}/includes/variables.sh
 clear
 if [[ ! -d "$CONFDIR" ]]; then
 echo -e "${CCYAN}
