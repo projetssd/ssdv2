@@ -1,7 +1,7 @@
 #!/bin/bash
 
-source includes/functions.sh
-source includes/variables.sh
+source /opt/seedbox-compose/includes/functions.sh
+source /opt/seedbox-compose/includes/variables.sh
 
 ## Variable
 ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml

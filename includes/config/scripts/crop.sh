@@ -1,7 +1,7 @@
 #!/bin/bash
 
-source includes/functions.sh
-source includes/variables.sh
+source /opt/seedbox-compose/includes/functions.sh
+source /opt/seedbox-compose/includes/variables.sh
 
 ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 

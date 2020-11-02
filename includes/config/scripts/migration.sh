@@ -1,7 +1,7 @@
 #!/bin/bash
 
-source includes/functions.sh
-source includes/variables.sh
+source /opt/seedbox-compose/includes/functions.sh
+source /opt/seedbox-compose/includes/variables.sh
 
 rm /tmp/temp.txt /tmp/drive.txt > /dev/null 2>&1
 rm /tmp/crop.txt /tmp/team.txt > /dev/null 2>&1
