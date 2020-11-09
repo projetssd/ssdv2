@@ -12,7 +12,7 @@ pour plus de détail avant et après installation --> direction le [wiki](https:
 
 ### Pour se lancer dans l’installation, il faut au préalable avoir suivi les étapes suivantes:
 
-- Avoir une machine (serveur ou NAS) (5000 score passmark minimum)
+- Avoir une machine (serveur ou NAS) (5000 score passmark minimum), installée en Debian 10 (conseillé), Debian 9, ou Ubuntu 18.04 (non compatible Ubuntu 20.04 ou plus)
 - Obtenir un nom de domaine
 - Utiliser un compte Gsuite illimité avec création de dossier partagés disponible 
 - Connexion en root via ssh/ (pas user puis root) [Activer root tuto simple pour debian](https://cloriou.fr/2016/12/05/debian-autoriser-acces-root-via-ssh/)
