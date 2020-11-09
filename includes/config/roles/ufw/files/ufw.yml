@@ -27,9 +27,9 @@
         msg:
           - "{{ ansible_env['SSH_CLIENT'].split() | last }}"
     - name: 'recuperation ip connection'
-        debug:
-          msg:
-            - "{{ ansible_env['SSH_CLIENT'].split() | first }}"
+      debug:
+        msg:
+          - "{{ ansible_env['SSH_CLIENT'].split() | first }}"
 
     - name: Enable ufw
       ufw:
