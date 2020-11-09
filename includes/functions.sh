@@ -707,6 +707,15 @@ function script_plexdrive() {
         ;;
 
         7)
+          clear
+          echo -e "${CRED}---------------------------------------------------------------${CEND}"
+          echo -e "${CRED} UFW sera installé avec les valeurs par défaut uniquement ${CEND}"
+          echo -e "${CRED} et permettra les accès suivants : ${CEND}"
+          echo -e "${CRED} ssh, http, https, plex ${CEND}"
+          echo -e "${CRED} Vous pourrez le modifier en éditant le fichier /opt/seedbox/conf/ufw.yml ${CEND}"
+          echo -e "${CRED} pour ajouter des ports/ip supplémentaires ${CEND}"
+          echo -e "${CRED} avant de relancer ce script ${CEND}"
+          echo -e "${CRED}---------------------------------------------------------------${CEND}"
           install_ufw
         ;;
 

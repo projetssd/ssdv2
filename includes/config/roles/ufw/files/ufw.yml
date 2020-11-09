@@ -7,9 +7,14 @@
       - 443
       - 8080
       - 45000
+      # Ajoutez les ports nécessaires ici :
+      # - 25 # smtp
     allow_ips:
       - 172.17.0.1/12 # réseau docker, ne pas supprimer !
       - 127.0.0.1
+      # ajoutez des ip ou des plages supplémentaires ici
+      # - 123.456.789.123
+      # - fe20:abcd::
   tasks:
     - name: Install UFW
       apt:
@@ -21,6 +26,10 @@
       debug:
         msg:
           - "{{ ansible_env['SSH_CLIENT'].split() | last }}"
+    - name: 'recuperation ip connection'
+        debug:
+          msg:
+            - "{{ ansible_env['SSH_CLIENT'].split() | first }}"
 
     - name: Enable ufw
       ufw:
@@ -29,6 +38,10 @@
       ufw:
         rule: allow
         port: "{{ ansible_env['SSH_CLIENT'].split() | last }}"
+    - name: Open Current IP
+        ufw:
+          rule: allow
+          from_ip: "{{ ansible_env['SSH_CLIENT'].split() | first }}"
     - name: Open for authorized IPs
       ufw:
         rule: allow
