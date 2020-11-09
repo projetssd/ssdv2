@@ -1,5 +1,4 @@
 #!/bin/bash
-
 docker run -it --rm \
    -v /home/%SEEDUSER%/local/rutorrent:/home/%SEEDUSER%/local/rutorrent \
    -v /opt/seedbox/docker/%SEEDUSER%/rutorrent/sock:/run/php \
@@ -8,4 +7,4 @@ echo ""
 docker run -it --rm \
    -v /home/%SEEDUSER%/local/rutorrent:/home/%SEEDUSER%/local/rutorrent \
    -v /opt/seedbox/docker/%SEEDUSER%/rutorrent/sock:/run/php \
-   magicalex/rtorrent-cleaner $*
+   magicalex/rtorrent-cleaner $* /run/php/rtorrent.sock
