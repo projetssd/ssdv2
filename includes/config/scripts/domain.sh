@@ -1,7 +1,7 @@
 #!/bin/bash
 clear
-source includes/functions.sh
-source includes/variables.sh
+source /opt/seedbox-compose/includes/functions.sh
+source /opt/seedbox-compose/includes/variables.sh
 
     	echo -e "${CRED}----------------------------------------------${CEND}"
     	echo -e "${CRED}     /!\ Changement du nom de Domaine /!\     ${CEND}"

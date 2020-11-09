@@ -1,7 +1,7 @@
 #!/bin/bash	
 
-source includes/functions.sh
-source includes/variables.sh
+source /opt/seedbox-compose/includes/functions.sh
+source /opt/seedbox-compose/includes/variables.sh
 
 sed -i '/remote/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
 sed -i '/id_teamdrive/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-source includes/functions.sh
-source includes/variables.sh
+source /opt/seedbox-compose/includes/functions.sh
+source /opt/seedbox-compose/includes/variables.sh
 
 if [[ ! -d "/opt/seedbox/docker/geerlingguy.security" ]]; then
 
