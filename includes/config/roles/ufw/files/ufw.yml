@@ -39,9 +39,9 @@
         rule: allow
         port: "{{ ansible_env['SSH_CLIENT'].split() | last }}"
     - name: Open Current IP
-        ufw:
-          rule: allow
-          from_ip: "{{ ansible_env['SSH_CLIENT'].split() | first }}"
+      ufw:
+        rule: allow
+        from_ip: "{{ ansible_env['SSH_CLIENT'].split() | first }}"
     - name: Open for authorized IPs
       ufw:
         rule: allow
