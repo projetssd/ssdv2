@@ -591,12 +591,13 @@ function script_plexdrive() {
 				echo -e "${CGREEN}   2) Sécuriser avec Authentification Classique${CEND}"
 				echo -e "${CGREEN}   3) Ajout / Supression adresses mail autorisées pour Google OAuth2${CEND}"
 				echo -e "${CGREEN}   4) Modification port SSH, mise à jour fail2ban, installation Iptables${CEND}"
-			        echo -e "${CGREEN}   5) Mise à jour Seedbox avec Cloudflare${CEND}"
-			        echo -e "${CGREEN}   6) Changement de Domaine && Modification des sous domaines${CEND}"
-				echo -e "${CGREEN}   7) Retour menu principal${CEND}"
+			  echo -e "${CGREEN}   5) Mise à jour Seedbox avec Cloudflare${CEND}"
+			  echo -e "${CGREEN}   6) Changement de Domaine && Modification des sous domaines${CEND}"
+			  echo -e "${CGREEN}   7) Bloquer les ports non vitaux avec UFW${CEND}"
+				echo -e "${CGREEN}   8) Retour menu principal${CEND}"
 
 				echo -e ""
-				read -p "Votre choix [1-7]: " OAUTH
+				read -p "Votre choix [1-8]: " OAUTH
 				case $OAUTH in
 
 				1)
@@ -647,66 +648,70 @@ function script_plexdrive() {
 				script_plexdrive
 				;;
 
-			        5) ## Mise à jour Cloudflare
-			        /opt/seedbox-compose/includes/config/scripts/cloudflare.sh
-			        script_plexdrive
-			        ;;
+        5) ## Mise à jour Cloudflare
+        /opt/seedbox-compose/includes/config/scripts/cloudflare.sh
+        script_plexdrive
+        ;;
 
-			        6) ## Changement du nom de domaine
-                                clear
-				logo
-                                echo ""
-                                echo -e "${CCYAN}CHANGEMENT DOMAINE && SOUS DOMAINES${CEND}"
-                                echo -e "${CGREEN}${CEND}"
-                                echo -e "${CGREEN}   1) Changement du nom de domaine ${CEND}"
-                                echo -e "${CGREEN}   2) Modifier les sous domaines${CEND}"
-                                echo -e "${CGREEN}   3) Retour Menu principal${CEND}"
+        6) ## Changement du nom de domaine
+            clear
+            logo
+            echo ""
+            echo -e "${CCYAN}CHANGEMENT DOMAINE && SOUS DOMAINES${CEND}"
+            echo -e "${CGREEN}${CEND}"
+            echo -e "${CGREEN}   1) Changement du nom de domaine ${CEND}"
+            echo -e "${CGREEN}   2) Modifier les sous domaines${CEND}"
+            echo -e "${CGREEN}   3) Retour Menu principal${CEND}"
 
-				    echo -e ""
-				    read -p "Votre choix [1-3]: " DOMAIN
+            echo -e ""
+            read -p "Votre choix [1-3]: " DOMAIN
 				    case $DOMAIN in
 
 				    1) ## Changement nom de domaine
-				    clear
-				    echo ""
-                                    /opt/seedbox-compose/includes/config/scripts/domain.sh
-                                    ;;
+              clear
+              echo ""
+              /opt/seedbox-compose/includes/config/scripts/domain.sh
+              ;;
 
-                                    2) ## Modifier les sous domaines
-                                    ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
-                                    SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
-                                    SEEDUSER=$(cat /tmp/name)
-                                    rm /tmp/name
-                                    ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
-                                    rm /opt/seedbox/conf/* > /dev/null 2>&1
+            2) ## Modifier les sous domaines
+              ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
+              SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
+              SEEDUSER=$(cat /tmp/name)
+              rm /tmp/name
+              ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+              rm /opt/seedbox/conf/* > /dev/null 2>&1
 
-                                    while read line
-                                    do
-                                      echo $line | cut -d'.' -f1
-                                    done < /home/$SEEDUSER/resume > $SERVICESUSER$SEEDUSER
-                                    mv /home/$SEEDUSER/resume /opt/seedbox/resume > /dev/null 2>&1
-                                    subdomain
+              while read line
+              do
+                echo $line | cut -d'.' -f1
+              done < /home/$SEEDUSER/resume > $SERVICESUSER$SEEDUSER
+              mv /home/$SEEDUSER/resume /opt/seedbox/resume > /dev/null 2>&1
+              subdomain
 
-                                    grep "plex" $SERVICESPERUSER > /dev/null 2>&1
-                                    if [ $? -eq 0 ]; then
-                                      ansible-playbook /opt/seedbox-compose/includes/config/roles/plex/tasks/main.yml
-                                      sed -i "/plex/d" $SERVICESPERUSER > /dev/null 2>&1
-                                    fi
+              grep "plex" $SERVICESPERUSER > /dev/null 2>&1
+              if [ $? -eq 0 ]; then
+                ansible-playbook /opt/seedbox-compose/includes/config/roles/plex/tasks/main.yml
+                sed -i "/plex/d" $SERVICESPERUSER > /dev/null 2>&1
+              fi
 
-                                    install_services
-                                    mv /opt/seedbox/resume /home/$SEEDUSER/resume > /dev/null 2>&1
-                                    resume_seedbox
-                                    script_plexdrive
+              install_services
+              mv /opt/seedbox/resume /home/$SEEDUSER/resume > /dev/null 2>&1
+              resume_seedbox
+              script_plexdrive
 
-                                    ;;
-                                    3) Retour menu principal
-			            script_plexdrive
-                                    ;;
-                                    esac
-			        ;;
+              ;;
+            3) Retour menu principal
+              script_plexdrive
+              ;;
+              esac
+        ;;
 
-				7)
-				script_plexdrive
+        7)
+          install_ufw
+        ;;
+
+				8)
+				  script_plexdrive
 				;;
 				esac
 			;;
@@ -1163,7 +1168,15 @@ function install_fail2ban() {
 	ansible-playbook /opt/seedbox-compose/includes/config/roles/fail2ban/tasks/main.yml
 	checking_errors $?
 	echo ""
-}	
+}
+
+function install_ufw() {
+  echo -e "${BLUE}### UFW ###${NC}"
+	ansible-playbook /opt/seedbox-compose/includes/config/roles/ufw/tasks/main.yml
+	ansible-playbook /opt/seedbox/conf/ufw.yml
+	checking_errors $?
+	echo ""
+}
 
 function install_traefik() {
 	oauth

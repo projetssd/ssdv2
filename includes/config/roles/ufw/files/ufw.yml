@@ -1,0 +1,51 @@
+---
+- hosts: localhost
+  gather_facts: true
+  vars:
+    opened_ports:
+      - 80
+      - 443
+      - 8080
+      - 45000
+    allow_ips:
+      - 172.17.0.1/12 # réseau docker, ne pas supprimer !
+      - 127.0.0.1
+  tasks:
+    - name: Install UFW
+      apt:
+        state: present
+        name:
+          ufw
+      ignore_errors: yes
+    - name: 'recuperation port ssh'
+      debug:
+        msg:
+          - "{{ ansible_env['SSH_CLIENT'].split() | last }}"
+
+    - name: Enable ufw
+      ufw:
+        state: enabled
+    - name: Open ssh
+      ufw:
+        rule: allow
+        port: "{{ ansible_env['SSH_CLIENT'].split() | last }}"
+    - name: Open for authorized IPs
+      ufw:
+        rule: allow
+        from_ip: "{{ item }}"
+      loop: "{{ allow_ips }}"
+    - name: Apply specific port rules
+      ufw:
+        rule: allow
+        port: "{{ item }}"
+      loop: "{{ opened_ports }}"
+
+    - name: Apply plex rules
+      ufw:
+        name: plexmediaserver-all
+        rule: allow
+    - name: block all
+      ufw:
+        policy: reject
+
+

@@ -1,0 +1,19 @@
+---
+- hosts: localhost
+  gather_facts: true
+  tasks:
+
+    - name: copy plex ufw rules
+      copy:
+        src: /opt/seedbox-compose/includes/config/roles/ufw/files/plexmediaserver
+        dest: /etc/ufw/applications.d/plexmediaserver
+        owner: root
+        mode: 0755
+    - name: copy yml file
+      copy:
+        src: /opt/seedbox-compose/includes/config/roles/ufw/files/ufw.yml
+        dest: /opt/seedbox/conf/ufw.yml
+        force: no
+
+          
+
