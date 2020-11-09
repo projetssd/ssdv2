@@ -89,6 +89,7 @@
         pg_volumes:
           - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config:/config'
           - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/data:/data'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/sock:/run/rtorrent'
           - '/home/{{user.name}}:/home/{{user.name}}'
 
     - name: 'Setting PG ENV'
