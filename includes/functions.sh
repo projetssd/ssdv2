@@ -311,7 +311,8 @@ function script_classique() {
 			echo -e "${CGREEN}   8) Webtools${CEND}"
 			echo -e "${CGREEN}   9) rtorrent-cleaner de ${CCYAN}@Magicalex-Mondedie.fr${CEND}${NC}"
 			echo -e "${CGREEN}   10) Plex_Patrol${CEND}"
-			echo -e "${CGREEN}   11) Retour menu principal${CEND}"
+			echo -e "${CGREEN}   11) Bloquer les ports non vitaux avec UFW${CEND}"
+			echo -e "${CGREEN}   12) Retour menu principal${CEND}"
 			echo -e ""
 			read -p "Votre choix [1-12]: " OUTILS
 
@@ -493,7 +494,12 @@ function script_classique() {
 			script_classique
 			;;
 
-			11)
+	    11)
+	      clear
+	      install_ufw
+	      ;;
+
+			12)
 			script_classique
 			;;
 			esac
@@ -593,8 +599,8 @@ function script_plexdrive() {
 				echo -e "${CGREEN}   4) Modification port SSH, mise à jour fail2ban, installation Iptables${CEND}"
 			  echo -e "${CGREEN}   5) Mise à jour Seedbox avec Cloudflare${CEND}"
 			  echo -e "${CGREEN}   6) Changement de Domaine && Modification des sous domaines${CEND}"
-			  echo -e "${CGREEN}   7) Bloquer les ports non vitaux avec UFW${CEND}"
-				echo -e "${CGREEN}   8) Retour menu principal${CEND}"
+
+				echo -e "${CGREEN}   7) Retour menu principal${CEND}"
 
 				echo -e ""
 				read -p "Votre choix [1-8]: " OAUTH
@@ -706,20 +712,8 @@ function script_plexdrive() {
               esac
         ;;
 
-        7)
-          clear
-          echo -e "${CRED}---------------------------------------------------------------${CEND}"
-          echo -e "${CRED} UFW sera installé avec les valeurs par défaut uniquement ${CEND}"
-          echo -e "${CRED} et permettra les accès suivants : ${CEND}"
-          echo -e "${CRED} ssh, http, https, plex ${CEND}"
-          echo -e "${CRED} Vous pourrez le modifier en éditant le fichier /opt/seedbox/conf/ufw.yml ${CEND}"
-          echo -e "${CRED} pour ajouter des ports/ip supplémentaires ${CEND}"
-          echo -e "${CRED} avant de relancer ce script ${CEND}"
-          echo -e "${CRED}---------------------------------------------------------------${CEND}"
-          install_ufw
-        ;;
 
-				8)
+				7)
 				  script_plexdrive
 				;;
 				esac
@@ -741,7 +735,8 @@ function script_plexdrive() {
 			        else
 			        echo -e "${CGREEN}   7) Installer Mailserver ${CCYAN}@Hardware-Mondedie.fr${CEND}${NC}"
 			        fi
-				echo -e "${CGREEN}   8) Retour menu principal${CEND}"
+			        echo -e "${CGREEN}   8) Bloquer les ports non vitaux avec UFW${CEND}"
+				echo -e "${CGREEN}   9) Retour menu principal${CEND}"
 
 
 				echo -e ""
@@ -824,7 +819,12 @@ function script_plexdrive() {
 			        script_plexdrive
 			        ;;
 
-				8)
+			      8)
+			        clear
+			        install_ufw
+			        ;;
+
+				9)
 				script_plexdrive
 				;;
 			        esac
@@ -1180,6 +1180,17 @@ function install_fail2ban() {
 }
 
 function install_ufw() {
+  clear
+  echo -e "${RED}---------------------------------------------------------------${CEND}"
+  echo -e "${RED} UFW sera installé avec les valeurs par défaut uniquement ${CEND}"
+  echo -e "${RED} et permettra les accès suivants : ${CEND}"
+  echo -e "${RED} ssh, http, https, plex ${CEND}"
+  echo -e "${RED} Vous pourrez le modifier en éditant le fichier /opt/seedbox/conf/ufw.yml ${CEND}"
+  echo -e "${RED} pour ajouter des ports/ip supplémentaires ${CEND}"
+  echo -e "${RED} avant de relancer ce script ${CEND}"
+  echo -e "${RED}---------------------------------------------------------------${CEND}"
+  echo -e "${RED} Appuyez sur [Entrée] pour continer ${CEND}"
+  read -r
   echo -e "${BLUE}### UFW ###${NC}"
 	ansible-playbook /opt/seedbox-compose/includes/config/roles/ufw/tasks/main.yml
 	ansible-playbook /opt/seedbox/conf/ufw.yml
