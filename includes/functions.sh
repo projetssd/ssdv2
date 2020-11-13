@@ -1615,10 +1615,6 @@ function install_services() {
 			cp "$BASEDIR/includes/dockerapps/$line.yml" "$CONFDIR/conf/$line.yml" > /dev/null 2>&1
 		fi
 
-		if [[ "$line" == "plex" ]]; then
-		plex_sections
-		fi
-
 		FQDNTMP="$line.$DOMAIN"
 		echo "$FQDNTMP" >> $INSTALLEDFILE
 		FQDNTMP=""
@@ -1885,6 +1881,11 @@ function manage_apps() {
 			                  choose_services
                                           subdomain
 			                  install_services
+                                          for i in $(docker ps --format "{{.Names}}")
+                                          do
+                                            if [[ "$i" == "plex" ]]; then
+                                            plex_sections
+                                          fi
 			                  resume_seedbox
 			                  pause
 			                  if [[ -e "$PLEXDRIVE" ]]; then
