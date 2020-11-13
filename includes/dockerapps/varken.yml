@@ -12,6 +12,10 @@
     - /opt/seedbox/variables/account.yml
   tasks:
 
+    - name: create varken state
+      shell: |
+        echo "1" > /opt/seedbox/status/varken
+
     - name: Check config Ombi exists
       stat:
         path: "/opt/seedbox/docker/{{user.name}}/ombi/OmbiSettings.db"
@@ -370,4 +374,7 @@
       shell: |
         echo "{{pgrole}}-{{sub.grafana if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
 
+    - name: create varken state
+      shell: |
+        echo "2" > /opt/seedbox/status/varken
 

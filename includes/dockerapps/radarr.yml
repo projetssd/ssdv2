@@ -8,6 +8,10 @@
         
     # FACTS #######################################################################
 
+    - name: create radarr state
+      shell: |
+        echo "1" > /opt/seedbox/status/radarr
+
     - name: Checking for existing app data
       stat:
         path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
@@ -130,4 +134,9 @@
     - name: add resume file
       shell: |
         echo "{{pgrole}}-{{sub.radarr if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+
+    - name: create radarr state
+      shell: |
+        echo "2" > /opt/seedbox/status/radarr
+
 

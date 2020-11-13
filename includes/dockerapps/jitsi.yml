@@ -6,8 +6,11 @@
     vars_files:
       - /opt/seedbox/variables/account.yml
     tasks:
-    
-  
+
+      - name: create jistsi state
+        shell: |
+          echo "1" > /opt/seedbox/status/jitsi
+
       - name: 'JICOFO_COMPONENT_SECRET'
         shell: | 
           openssl rand -hex 16
@@ -312,5 +315,10 @@
       - name: add resume file
         shell: |
           echo "{{pgrole}}-{{sub.jitsi if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+
+      - name: create jistsi state
+        shell: |
+          echo "2" > /opt/seedbox/status/jitsi
+
 
   

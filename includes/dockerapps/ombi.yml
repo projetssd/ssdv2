@@ -8,6 +8,11 @@
   tasks:
         
     # FACTS #######################################################################
+
+    - name: create ombi state
+      shell: |
+        echo "1" > /opt/seedbox/status/ombi
+
     - name: Checking for existing app data
       stat:
         path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
@@ -142,4 +147,9 @@
     - name: add resume file
       shell: |
         echo "{{pgrole}}-{{sub.ombi if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+
+    - name: create ombi state
+      shell: |
+        echo "2" > /opt/seedbox/status/ombi
+
 

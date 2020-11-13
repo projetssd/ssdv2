@@ -36,6 +36,22 @@ function update_system() {
 			checking_errors $?
 }
 
+function status() {
+if [[ ! -d "/opt/seedbox/status" ]]; then
+  mkdir -p /opt/seedbox/status
+  for app in $(cat /opt/seedbox-compose/includes/config/services-available)
+  do
+   service=$(echo $app | tr '[:upper:]' '[:lower:]' | cut -d\- -f1)
+   echo "0" >> /opt/seedbox/status/$service
+   done
+   for app in $(cat /opt/seedbox-compose/includes/config/other-services-available)
+   do
+   service=$(echo $app | tr '[:upper:]' '[:lower:]' | cut -d\- -f1)
+   echo "0" >> /opt/seedbox/status/$service
+   done
+   fi
+}
+
 function cloudflare() {
 		echo -e "${BLUE}### Gestion des DNS ###${NC}"
 		echo ""
@@ -1151,6 +1167,7 @@ function script_plexdrive() {
 function conf_dir() {
 	if [[ ! -d "$CONFDIR" ]]; then
 		mkdir $CONFDIR > /dev/null 2>&1
+                status
 	fi
 }
 
@@ -1840,6 +1857,7 @@ function manage_apps() {
         SEEDGROUP=$(cat /tmp/group)
         rm /tmp/name /tmp/domain /tmp/group
 	USERRESUMEFILE="/home/$SEEDUSER/resume"
+        status
 	echo ""
 	echo -e "${GREEN}### Gestion des Applis pour: $SEEDUSER ###${NC}"
 	## CHOOSE AN ACTION FOR APPS
@@ -1854,6 +1872,7 @@ function manage_apps() {
 
 	case $ACTIONONAPP in
 		"1" ) ## Ajout APP
+
 	                APPLISEEDBOX=$(whiptail --title "App Manager" --menu \
 	                                "Selectionner une action :" 12 50 4 \
 	                                "1" "Applications Seedbox"  \
