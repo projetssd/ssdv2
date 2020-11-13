@@ -254,6 +254,7 @@ EOF
       if [[ "$i" == "plex" ]]; then
         plex_sections
       fi
+      done
 
       ## restauration plex_dupefinder
       PLEXDUPE=/home/$SEEDUSER/scripts/plex_dupefinder/plex_dupefinder.py
