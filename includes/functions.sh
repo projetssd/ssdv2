@@ -1613,10 +1613,18 @@ function install_services() {
 			ansible-playbook "$BASEDIR/includes/dockerapps/$line.yml"
 			cp "$BASEDIR/includes/dockerapps/$line.yml" "$CONFDIR/conf/$line.yml" > /dev/null 2>&1
 		fi
-
-		FQDNTMP="$line.$DOMAIN"
-		echo "$FQDNTMP" >> $INSTALLEDFILE
+                   
+                grep $line /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                if [ $? -eq 0 ]; then
+                  line=$(grep $line /opt/seedbox/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
+		  FQDNTMP="$line.$DOMAIN"
+		  echo "$FQDNTMP" >> $INSTALLEDFILE
+                else
+		  FQDNTMP="$line.$DOMAIN"
+		  echo "$FQDNTMP" >> $INSTALLEDFILE
+                fi
 		FQDNTMP=""
+                
 	done
 	config_post_compose
 }
@@ -1880,12 +1888,6 @@ function manage_apps() {
 			                  choose_services
                                           subdomain
 			                  install_services
-                                          for i in $(docker ps --format "{{.Names}}")
-                                          do
-                                            if [[ "$i" == "plex" ]]; then
-                                            plex_sections
-                                          fi
-                                          done
 			                  resume_seedbox
 			                  pause
 			                  if [[ -e "$PLEXDRIVE" ]]; then
@@ -1930,7 +1932,7 @@ function manage_apps() {
 
 			echo -e " ${BWHITE}* Application en cours de suppression${NC}"
 			TABSERVICES=()
-			for SERVICEACTIVATED in $(cat $USERRESUMEFILE)
+			for SERVICEACTIVATED in $(docker ps --format "{{.Names}}")
 			do
 			        SERVICE=$(echo $SERVICEACTIVATED | cut -d\. -f1)
 			        TABSERVICES+=( ${SERVICE//\"} " " )
@@ -1940,10 +1942,11 @@ function manage_apps() {
 			              "${TABSERVICES[@]}"  3>&1 1>&2 2>&3)
 			[[ "$?" = 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi;
 			echo -e " ${GREEN}   * $APPSELECTED${NC}"
-                        sed -i "/$APPSELECTED/d" /opt/seedbox/variables/account.yml > /dev/null 2>&1
 
+                        subdomain=$(grep "$APPSELECTED" /opt/seedbox/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
+                        sed -i "/$APPSELECTED/d" /opt/seedbox/variables/account.yml > /dev/null 2>&1
 			docker rm -f "$APPSELECTED" > /dev/null 2>&1
-			sed -i "/$APPSELECTED/d" /home/$SEEDUSER/resume
+			sed -i "/$subdomain/d" /home/$SEEDUSER/resume
 			rm -rf /opt/seedbox/docker/$SEEDUSER/$APPSELECTED
 
 			if [[ "$APPSELECTED" != "plex" ]]; then
@@ -2004,7 +2007,7 @@ function manage_apps() {
 			touch $SERVICESPERUSER
 			echo -e " ${BWHITE}* Les fichiers de configuration ne seront pas effacés${NC}"
 			TABSERVICES=()
-			for SERVICEACTIVATED in $(cat $USERRESUMEFILE)
+			for SERVICEACTIVATED in $(docker ps --format "{{.Names}}")
 			do
 			        SERVICE=$(echo $SERVICEACTIVATED | cut -d\. -f1)
 			        TABSERVICES+=( ${SERVICE//\"} " " )
@@ -2014,6 +2017,7 @@ function manage_apps() {
 			              "${TABSERVICES[@]}"  3>&1 1>&2 2>&3)
 			[[ "$?" = 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi;
 			echo -e " ${GREEN}   * $line${NC}"
+                        subdomain=$(grep "$line" /opt/seedbox/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
 
 			if [ $line = "php5" ] || [ $line = "php7" ]; then
 				image=$(docker images | grep "php" | awk '{print $3}')
@@ -2027,7 +2031,7 @@ function manage_apps() {
 			docker system prune -af > /dev/null 2>&1
 			docker volume rm $(docker volume ls -qf "dangling=true") > /dev/null 2>&1
 			echo ""
-			sed -i "/$line/d" /home/$SEEDUSER/resume
+			sed -i "/$subdomain/d" /home/$SEEDUSER/resume
 			echo $line >> $SERVICESPERUSER
 
 			install_services
