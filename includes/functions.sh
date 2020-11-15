@@ -43,13 +43,13 @@ if [[ ! -d "/opt/seedbox/status" ]]; then
   do
    service=$(echo $app | tr '[:upper:]' '[:lower:]' | cut -d\- -f1)
    echo "0" >> /opt/seedbox/status/$service
-   done
-   for app in $(cat /opt/seedbox-compose/includes/config/other-services-available)
-   do
+  done
+  for app in $(cat /opt/seedbox-compose/includes/config/other-services-available)
+  do
    service=$(echo $app | tr '[:upper:]' '[:lower:]' | cut -d\- -f1)
    echo "0" >> /opt/seedbox/status/$service
-   done
-   fi
+  done
+fi
 }
 
 function cloudflare() {
@@ -615,7 +615,6 @@ function script_plexdrive() {
 				echo -e "${CGREEN}   4) Modification port SSH, mise à jour fail2ban, installation Iptables${CEND}"
 			        echo -e "${CGREEN}   5) Mise à jour Seedbox avec Cloudflare${CEND}"
 			        echo -e "${CGREEN}   6) Changement de Domaine && Modification des sous domaines${CEND}"
-
 				echo -e "${CGREEN}   7) Retour menu principal${CEND}"
 
 				echo -e ""
@@ -1137,7 +1136,6 @@ function script_plexdrive() {
                                               script_plexdrive
                                               ;;
                                               esac
-
                                     ;;
                                     3)
                                     script_plexdrive
@@ -1232,26 +1230,6 @@ function install_watchtower() {
 	echo ""
 }
 
-function install_plexdrive() {
-	echo -e "${BLUE}### PLEXDRIVE ###${NC}"
-	mkdir -p /mnt/plexdrive > /dev/null 2>&1
-        ansible-playbook /opt/seedbox-compose/includes/config/roles/plexdrive/tasks/main.yml
-        systemctl stop plexdrive > /dev/null 2>&1
-        echo ""
-        clear
-        echo -e " ${BWHITE}* Dès que le message ${NC}${CCYAN}"First cache build process started" apparait à l'écran, taper ${NC}${CCYAN}CTRL + C${NC}${BWHITE} pour poursuivre le script !${NC}"
-        grep "team_drive" /root/.config/rclone/rclone.conf > /dev/null 2>&1
-        if [ $? -eq 0 ]; then
-          team=$(grep "id_teamdrive" /opt/seedbox/variables/account.yml | cut -d':' -f2 |  sed 's/ //g') > /dev/null 2>&1
-          /usr/bin/plexdrive mount -v 3 --drive-id=$team --refresh-interval=1m --chunk-check-threads=8 --chunk-load-threads=8 --chunk-load-ahead=4 --max-chunks=100 --fuse-options=allow_other /mnt/plexdrive
-          systemctl start plexdrive > /dev/null 2>&1        
-        else
-          /usr/bin/plexdrive mount -v 3 --refresh-interval=1m --chunk-check-threads=8 --chunk-load-threads=8 --chunk-load-ahead=4 --max-chunks=100 --fuse-options=allow_other /mnt/plexdrive
-          systemctl start plexdrive > /dev/null 2>&1        
-        fi
-	echo ""
-}
-
 function install_rclone() {
 	echo -e "${BLUE}### RCLONE ###${NC}"
 	mkdir /mnt/rclone > /dev/null 2>&1
@@ -1287,14 +1265,14 @@ function subdomain() {
 SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 grep "sub" /opt/seedbox/variables/account.yml > /dev/null 2>&1
 if [ $? -eq 1 ]; then
-sed -i '/transcodes/a sub:' /opt/seedbox/variables/account.yml 
+ sed -i '/transcodes/a sub:' /opt/seedbox/variables/account.yml 
 fi
 echo ""
 read -rp $'\e[36m --> Souhaitez personnaliser les sous domaines: (o/n) ? \e[0m' OUI
 echo ""
 if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
-echo -e " ${CRED}--> NE PAS SAISIR LE NOM DE DOMAINE - LES POINTS NE SONT PAS ACCEPTES${NC}"
-echo ""
+  echo -e " ${CRED}--> NE PAS SAISIR LE NOM DE DOMAINE - LES POINTS NE SONT PAS ACCEPTES${NC}"
+  echo ""
 for line in $(cat $SERVICESPERUSER);
 do
   read -rp $'\e[32m        * Sous domaine pour\e[0m '$line': ' subdomain
@@ -1932,7 +1910,7 @@ function manage_apps() {
 
 			echo -e " ${BWHITE}* Application en cours de suppression${NC}"
 			TABSERVICES=()
-			for SERVICEACTIVATED in $(docker ps --format "{{.Names}}")
+			for SERVICEACTIVATED in $(docker ps --format "{{.Names}}" | cut -d'-' -f2 | sort -u)
 			do
 			        SERVICE=$(echo $SERVICEACTIVATED | cut -d\. -f1)
 			        TABSERVICES+=( ${SERVICE//\"} " " )
@@ -1943,10 +1921,16 @@ function manage_apps() {
 			[[ "$?" = 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi;
 			echo -e " ${GREEN}   * $APPSELECTED${NC}"
 
-                        subdomain=$(grep "$APPSELECTED" /opt/seedbox/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
-                        sed -i "/$APPSELECTED/d" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                        grep "$APPSELECTED" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                        if [ $? -eq 0 ]; then
+                          subdomain=$(grep "$APPSELECTED" /opt/seedbox/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
+                          sed -i "/$subdomain/d" /home/$SEEDUSER/resume
+                          sed -i "/$subdomain/d" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                        else
+			  sed -i "/$APPSELECTED/d" /home/$SEEDUSER/resume
+                        fi
+
 			docker rm -f "$APPSELECTED" > /dev/null 2>&1
-			sed -i "/$subdomain/d" /home/$SEEDUSER/resume
 			rm -rf /opt/seedbox/docker/$SEEDUSER/$APPSELECTED
 
 			if [[ "$APPSELECTED" != "plex" ]]; then
