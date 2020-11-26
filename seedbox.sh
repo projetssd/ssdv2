@@ -200,6 +200,12 @@ EOF
       choose_services
       subdomain
       install_services
+      for i in $(docker ps --format "{{.Names}}")
+      do
+      if [[ "$i" == "plex" ]]; then
+        plex_sections
+      fi
+      done
       projects
       filebot
       sauve
