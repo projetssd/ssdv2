@@ -40,4 +40,3 @@
     - name: create watchtower state
       shell: |
         echo "2" > /opt/seedbox/status/watchtower
-
