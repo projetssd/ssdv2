@@ -8,6 +8,11 @@
   tasks:
         
     # FACTS #######################################################################
+
+    - name: create piwigo state
+      shell: |
+        echo "1" > /opt/seedbox/status/piwigo
+
     - name: Checking for existing app data
       stat:
         path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
@@ -157,3 +162,8 @@
     - name: add resume file
       shell: |
         echo "{{pgrole}}-{{sub.piwigo if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+
+    - name: create piwigo state
+      shell: |
+        echo "2" > /opt/seedbox/status/piwigo
+

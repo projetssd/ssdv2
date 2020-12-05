@@ -8,6 +8,11 @@
   tasks:
         
     # FACTS #######################################################################
+
+    - name: create heimdall state
+      shell: |
+        echo "1" > /opt/seedbox/status/heimdall
+
     - name: Checking for existing app data
       stat:
         path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
@@ -124,4 +129,9 @@
     - name: add resume file
       shell: |
         echo "{{pgrole}}-{{sub.heimdall if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+
+    - name: create heimdall state
+      shell: |
+        echo "2" > /opt/seedbox/status/heimdall
+
 

@@ -36,6 +36,22 @@ function update_system() {
 			checking_errors $?
 }
 
+function status() {
+if [[ ! -d "/opt/seedbox/status" ]]; then
+  mkdir -p /opt/seedbox/status
+  for app in $(cat /opt/seedbox-compose/includes/config/services-available)
+  do
+   service=$(echo $app | tr '[:upper:]' '[:lower:]' | cut -d\- -f1)
+   echo "0" >> /opt/seedbox/status/$service
+  done
+  for app in $(cat /opt/seedbox-compose/includes/config/other-services-available)
+  do
+   service=$(echo $app | tr '[:upper:]' '[:lower:]' | cut -d\- -f1)
+   echo "0" >> /opt/seedbox/status/$service
+  done
+fi
+}
+
 function cloudflare() {
 		echo -e "${BLUE}### Gestion des DNS ###${NC}"
 		echo ""
@@ -597,9 +613,8 @@ function script_plexdrive() {
 				echo -e "${CGREEN}   2) Sécuriser avec Authentification Classique${CEND}"
 				echo -e "${CGREEN}   3) Ajout / Supression adresses mail autorisées pour Google OAuth2${CEND}"
 				echo -e "${CGREEN}   4) Modification port SSH, mise à jour fail2ban, installation Iptables${CEND}"
-			  echo -e "${CGREEN}   5) Mise à jour Seedbox avec Cloudflare${CEND}"
-			  echo -e "${CGREEN}   6) Changement de Domaine && Modification des sous domaines${CEND}"
-
+			        echo -e "${CGREEN}   5) Mise à jour Seedbox avec Cloudflare${CEND}"
+			        echo -e "${CGREEN}   6) Changement de Domaine && Modification des sous domaines${CEND}"
 				echo -e "${CGREEN}   7) Retour menu principal${CEND}"
 
 				echo -e ""
@@ -654,64 +669,63 @@ function script_plexdrive() {
 				script_plexdrive
 				;;
 
-        5) ## Mise à jour Cloudflare
-        /opt/seedbox-compose/includes/config/scripts/cloudflare.sh
-        script_plexdrive
-        ;;
+                                5) ## Mise à jour Cloudflare
+                                /opt/seedbox-compose/includes/config/scripts/cloudflare.sh
+                                script_plexdrive
+                                ;;
 
-        6) ## Changement du nom de domaine
-            clear
-            logo
-            echo ""
-            echo -e "${CCYAN}CHANGEMENT DOMAINE && SOUS DOMAINES${CEND}"
-            echo -e "${CGREEN}${CEND}"
-            echo -e "${CGREEN}   1) Changement du nom de domaine ${CEND}"
-            echo -e "${CGREEN}   2) Modifier les sous domaines${CEND}"
-            echo -e "${CGREEN}   3) Retour Menu principal${CEND}"
+                                6) ## Changement du nom de domaine
+                                clear
+                                logo
+                                echo ""
+                                echo -e "${CCYAN}CHANGEMENT DOMAINE && SOUS DOMAINES${CEND}"
+                                echo -e "${CGREEN}${CEND}"
+                                echo -e "${CGREEN}   1) Changement du nom de domaine ${CEND}"
+                                echo -e "${CGREEN}   2) Modifier les sous domaines${CEND}"
+                                echo -e "${CGREEN}   3) Retour Menu principal${CEND}"
 
-            echo -e ""
-            read -p "Votre choix [1-3]: " DOMAIN
+                                echo -e ""
+                                read -p "Votre choix [1-3]: " DOMAIN
 				    case $DOMAIN in
 
 				    1) ## Changement nom de domaine
-              clear
-              echo ""
-              /opt/seedbox-compose/includes/config/scripts/domain.sh
-              ;;
+                                    clear
+                                    echo ""
+                                    /opt/seedbox-compose/includes/config/scripts/domain.sh
+                                    ;;
 
-            2) ## Modifier les sous domaines
-              ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
-              SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
-              SEEDUSER=$(cat /tmp/name)
-              rm /tmp/name
-              ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
-              rm /opt/seedbox/conf/* > /dev/null 2>&1
+                                    2) ## Modifier les sous domaines
+                                    ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
+                                    SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
+                                    SEEDUSER=$(cat /tmp/name)
+                                    rm /tmp/name
+                                    ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                                    rm /opt/seedbox/conf/* > /dev/null 2>&1
 
-              while read line
-              do
-                echo $line | cut -d'.' -f1
-              done < /home/$SEEDUSER/resume > $SERVICESUSER$SEEDUSER
-              mv /home/$SEEDUSER/resume /opt/seedbox/resume > /dev/null 2>&1
-              subdomain
+                                    while read line
+                                    do
+                                      echo $line | cut -d'.' -f1
+                                    done < /home/$SEEDUSER/resume > $SERVICESUSER$SEEDUSER
+                                    mv /home/$SEEDUSER/resume /opt/seedbox/resume > /dev/null 2>&1
+                                    subdomain
 
-              grep "plex" $SERVICESPERUSER > /dev/null 2>&1
-              if [ $? -eq 0 ]; then
-                ansible-playbook /opt/seedbox-compose/includes/config/roles/plex/tasks/main.yml
-                sed -i "/plex/d" $SERVICESPERUSER > /dev/null 2>&1
-              fi
+                                    grep "plex" $SERVICESPERUSER > /dev/null 2>&1
+                                    if [ $? -eq 0 ]; then
+                                    ansible-playbook /opt/seedbox-compose/includes/config/roles/plex/tasks/main.yml
+                                    sed -i "/plex/d" $SERVICESPERUSER > /dev/null 2>&1
+                                    fi
 
-              install_services
-              mv /opt/seedbox/resume /home/$SEEDUSER/resume > /dev/null 2>&1
-              resume_seedbox
-              script_plexdrive
+                                    install_services
+                                    mv /opt/seedbox/resume /home/$SEEDUSER/resume > /dev/null 2>&1
+                                    resume_seedbox
+                                    script_plexdrive
+                                    ;;
 
-              ;;
-            3) Retour menu principal
-              script_plexdrive
-              ;;
-              esac
-        ;;
-
+                                    3) Retour menu principal
+                                    script_plexdrive
+                                    ;;
+                                    esac
+                                ;;
 
 				7)
 				  script_plexdrive
@@ -819,7 +833,7 @@ function script_plexdrive() {
 			        script_plexdrive
 			        ;;
 
-			      8)
+			        8)
 			        clear
 			        install_ufw
 			        ;;
@@ -1122,7 +1136,6 @@ function script_plexdrive() {
                                               script_plexdrive
                                               ;;
                                               esac
-
                                     ;;
                                     3)
                                     script_plexdrive
@@ -1151,6 +1164,7 @@ function script_plexdrive() {
 function conf_dir() {
 	if [[ ! -d "$CONFDIR" ]]; then
 		mkdir $CONFDIR > /dev/null 2>&1
+                status
 	fi
 }
 
@@ -1216,26 +1230,6 @@ function install_watchtower() {
 	echo ""
 }
 
-function install_plexdrive() {
-	echo -e "${BLUE}### PLEXDRIVE ###${NC}"
-	mkdir -p /mnt/plexdrive > /dev/null 2>&1
-        ansible-playbook /opt/seedbox-compose/includes/config/roles/plexdrive/tasks/main.yml
-        systemctl stop plexdrive > /dev/null 2>&1
-        echo ""
-        clear
-        echo -e " ${BWHITE}* Dès que le message ${NC}${CCYAN}"First cache build process started" apparait à l'écran, taper ${NC}${CCYAN}CTRL + C${NC}${BWHITE} pour poursuivre le script !${NC}"
-        grep "team_drive" /root/.config/rclone/rclone.conf > /dev/null 2>&1
-        if [ $? -eq 0 ]; then
-          team=$(grep "id_teamdrive" /opt/seedbox/variables/account.yml | cut -d':' -f2 |  sed 's/ //g') > /dev/null 2>&1
-          /usr/bin/plexdrive mount -v 3 --drive-id=$team --refresh-interval=1m --chunk-check-threads=8 --chunk-load-threads=8 --chunk-load-ahead=4 --max-chunks=100 --fuse-options=allow_other /mnt/plexdrive
-          systemctl start plexdrive > /dev/null 2>&1        
-        else
-          /usr/bin/plexdrive mount -v 3 --refresh-interval=1m --chunk-check-threads=8 --chunk-load-threads=8 --chunk-load-ahead=4 --max-chunks=100 --fuse-options=allow_other /mnt/plexdrive
-          systemctl start plexdrive > /dev/null 2>&1        
-        fi
-	echo ""
-}
-
 function install_rclone() {
 	echo -e "${BLUE}### RCLONE ###${NC}"
 	mkdir /mnt/rclone > /dev/null 2>&1
@@ -1271,14 +1265,14 @@ function subdomain() {
 SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 grep "sub" /opt/seedbox/variables/account.yml > /dev/null 2>&1
 if [ $? -eq 1 ]; then
-sed -i '/transcodes/a sub:' /opt/seedbox/variables/account.yml 
+ sed -i '/transcodes/a sub:' /opt/seedbox/variables/account.yml 
 fi
 echo ""
 read -rp $'\e[36m --> Souhaitez personnaliser les sous domaines: (o/n) ? \e[0m' OUI
 echo ""
 if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
-echo -e " ${CRED}--> NE PAS SAISIR LE NOM DE DOMAINE - LES POINTS NE SONT PAS ACCEPTES${NC}"
-echo ""
+  echo -e " ${CRED}--> NE PAS SAISIR LE NOM DE DOMAINE - LES POINTS NE SONT PAS ACCEPTES${NC}"
+  echo ""
 for line in $(cat $SERVICESPERUSER);
 do
   read -rp $'\e[32m        * Sous domaine pour\e[0m '$line': ' subdomain
@@ -1597,14 +1591,18 @@ function install_services() {
 			ansible-playbook "$BASEDIR/includes/dockerapps/$line.yml"
 			cp "$BASEDIR/includes/dockerapps/$line.yml" "$CONFDIR/conf/$line.yml" > /dev/null 2>&1
 		fi
-
-		if [[ "$line" == "plex" ]]; then
-		plex_sections
-		fi
-
-		FQDNTMP="$line.$DOMAIN"
-		echo "$FQDNTMP" >> $INSTALLEDFILE
+                   
+                grep $line /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                if [ $? -eq 0 ]; then
+                  line=$(grep $line /opt/seedbox/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
+		  FQDNTMP="$line.$DOMAIN"
+		  echo "$FQDNTMP" >> $INSTALLEDFILE
+                else
+		  FQDNTMP="$line.$DOMAIN"
+		  echo "$FQDNTMP" >> $INSTALLEDFILE
+                fi
 		FQDNTMP=""
+                
 	done
 	config_post_compose
 }
@@ -1840,6 +1838,7 @@ function manage_apps() {
         SEEDGROUP=$(cat /tmp/group)
         rm /tmp/name /tmp/domain /tmp/group
 	USERRESUMEFILE="/home/$SEEDUSER/resume"
+        status
 	echo ""
 	echo -e "${GREEN}### Gestion des Applis pour: $SEEDUSER ###${NC}"
 	## CHOOSE AN ACTION FOR APPS
@@ -1854,6 +1853,7 @@ function manage_apps() {
 
 	case $ACTIONONAPP in
 		"1" ) ## Ajout APP
+
 	                APPLISEEDBOX=$(whiptail --title "App Manager" --menu \
 	                                "Selectionner une action :" 12 50 4 \
 	                                "1" "Applications Seedbox"  \
@@ -1910,7 +1910,7 @@ function manage_apps() {
 
 			echo -e " ${BWHITE}* Application en cours de suppression${NC}"
 			TABSERVICES=()
-			for SERVICEACTIVATED in $(cat $USERRESUMEFILE)
+			for SERVICEACTIVATED in $(docker ps --format "{{.Names}}" | cut -d'-' -f2 | sort -u)
 			do
 			        SERVICE=$(echo $SERVICEACTIVATED | cut -d\. -f1)
 			        TABSERVICES+=( ${SERVICE//\"} " " )
@@ -1920,10 +1920,17 @@ function manage_apps() {
 			              "${TABSERVICES[@]}"  3>&1 1>&2 2>&3)
 			[[ "$?" = 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi;
 			echo -e " ${GREEN}   * $APPSELECTED${NC}"
-                        sed -i "/$APPSELECTED/d" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+
+                        grep "$APPSELECTED" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                        if [ $? -eq 0 ]; then
+                          subdomain=$(grep "$APPSELECTED" /opt/seedbox/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
+                          sed -i "/$subdomain/d" /home/$SEEDUSER/resume
+                          sed -i "/$subdomain/d" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                        else
+			  sed -i "/$APPSELECTED/d" /home/$SEEDUSER/resume
+                        fi
 
 			docker rm -f "$APPSELECTED" > /dev/null 2>&1
-			sed -i "/$APPSELECTED/d" /home/$SEEDUSER/resume
 			rm -rf /opt/seedbox/docker/$SEEDUSER/$APPSELECTED
 
 			if [[ "$APPSELECTED" != "plex" ]]; then
@@ -1984,7 +1991,7 @@ function manage_apps() {
 			touch $SERVICESPERUSER
 			echo -e " ${BWHITE}* Les fichiers de configuration ne seront pas effacés${NC}"
 			TABSERVICES=()
-			for SERVICEACTIVATED in $(cat $USERRESUMEFILE)
+			for SERVICEACTIVATED in $(docker ps --format "{{.Names}}")
 			do
 			        SERVICE=$(echo $SERVICEACTIVATED | cut -d\. -f1)
 			        TABSERVICES+=( ${SERVICE//\"} " " )
@@ -1994,6 +2001,7 @@ function manage_apps() {
 			              "${TABSERVICES[@]}"  3>&1 1>&2 2>&3)
 			[[ "$?" = 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi;
 			echo -e " ${GREEN}   * $line${NC}"
+                        subdomain=$(grep "$line" /opt/seedbox/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
 
 			if [ $line = "php5" ] || [ $line = "php7" ]; then
 				image=$(docker images | grep "php" | awk '{print $3}')
@@ -2007,7 +2015,7 @@ function manage_apps() {
 			docker system prune -af > /dev/null 2>&1
 			docker volume rm $(docker volume ls -qf "dangling=true") > /dev/null 2>&1
 			echo ""
-			sed -i "/$line/d" /home/$SEEDUSER/resume
+			sed -i "/$subdomain/d" /home/$SEEDUSER/resume
 			echo $line >> $SERVICESPERUSER
 
 			install_services

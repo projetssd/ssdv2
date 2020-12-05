@@ -22,6 +22,10 @@
         
     # FACTS #######################################################################
 
+    - name: create authelia state
+      shell: |
+        echo "1" > /opt/seedbox/status/authelia
+
     - name: "Variables | Set 'cloudflare_enabled' variable"
       set_fact:
         cloudflare_enabled: "{{ true if not(
@@ -163,3 +167,8 @@
     - name: add resume file
       shell: |
         echo "{{pgrole}}-{{sub.authelia if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+
+    - name: create authelia state
+      shell: |
+        echo "2" > /opt/seedbox/status/authelia
+

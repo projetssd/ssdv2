@@ -200,6 +200,12 @@ EOF
       choose_services
       subdomain
       install_services
+      for i in $(docker ps --format "{{.Names}}")
+      do
+      if [[ "$i" == "plex" ]]; then
+        plex_sections
+      fi
+      done
       projects
       filebot
       sauve
@@ -292,6 +298,14 @@ EOF
   esac
 
 fi
+if [ ! -d "/opt/seedbox/status" ]
+then
+  mkdir -p /opt/seedbox/status
+fi
+for i in $(docker ps --format "{{.Names}}")
+do
+  echo "2" > /opt/seedbox/status/${i}
+done
 PLEXDRIVE="/usr/bin/rclone"
 if [[ -e "$PLEXDRIVE" ]]; then
   script_plexdrive

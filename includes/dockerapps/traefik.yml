@@ -7,6 +7,10 @@
     - /opt/seedbox/variables/account.yml
   tasks:
 
+    - name: create traefik state
+      shell: |
+        echo "1" > /opt/seedbox/status/traefik
+
     - name: Checking for existing app data
       stat:
         path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
@@ -233,3 +237,8 @@
     - name: Google OAuth2 tasks
       include_tasks: 'templates/traefik/oauth.yml'
       when: oauth_enabled
+
+    - name: create traefik state
+      shell: |
+        echo "2" > /opt/seedbox/status/traefik
+

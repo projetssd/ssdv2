@@ -19,6 +19,10 @@
   gather_facts: false
   tasks:
 
+    - name: create watchtower state
+      shell: |
+        echo "1" > /opt/seedbox/status/watchtower
+
     - name: Deploy watchtower
       docker_container:
         name: 'watchtower'
@@ -32,4 +36,8 @@
         restart_policy: unless-stopped
         networks:
           - name: traefik_proxy
+
+    - name: create watchtower state
+      shell: |
+        echo "2" > /opt/seedbox/status/watchtower
 
