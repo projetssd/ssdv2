@@ -32,3 +32,4 @@
         restart_policy: unless-stopped
         networks:
           - name: traefik_proxy
+
