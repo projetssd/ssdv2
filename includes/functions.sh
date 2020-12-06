@@ -1881,6 +1881,7 @@ function manage_apps() {
 			                  choose_other_services
                                           subdomain
 			                  install_services
+			                  pause
 			                  resume_seedbox
 			                  pause
 			                  if [[ -e "$PLEXDRIVE" ]]; then
@@ -2015,10 +2016,11 @@ function manage_apps() {
 			docker system prune -af > /dev/null 2>&1
 			docker volume rm $(docker volume ls -qf "dangling=true") > /dev/null 2>&1
 			echo ""
-			sed -i "/$subdomain/d" /home/$SEEDUSER/resume
+			sed -i "/$subdomain/d" /home/$SEEDUSER/resume > /dev/null 2>&1
 			echo $line >> $SERVICESPERUSER
 
 			install_services
+			pause
 			checking_errors $?
 			echo""
 			echo -e "${BLUE}### Le Container $line a été Réinitialisé ###${NC}"
