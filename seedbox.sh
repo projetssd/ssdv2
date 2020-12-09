@@ -12,9 +12,9 @@ CURRENT_SCRIPT=$(readlink -f "$0")
 # Absolute path this script is in.
 SCRIPTPATH=$(dirname "$CURRENT_SCRIPT")
 
-# shellcheck source=/opt/seedbox/includes/functions.sh
+# shellcheck source=/opt/seedbox-compose/includes/functions.sh
 source "${SCRIPTPATH}/includes/functions.sh"
-# shellcheck source=/opt/seedbox/includes/variables.sh
+# shellcheck source=/opt/seedbox-compose/includes/variables.sh
 source "${SCRIPTPATH}/includes/variables.sh"
 clear
 if [[ ! -d "$CONFDIR" ]]; then
@@ -90,7 +90,13 @@ if [[ ! -d "$CONFDIR" ]]; then
     python3-pip \
     python-dev \
     python-pip \
-    python-apt
+    python-apt \
+    php-curl \
+    php-dom \
+    nginx \
+    php-fpm \
+    composer
+
 
   ## Install pip3 Dependencies
   python3 -m pip install --disable-pip-version-check --upgrade --force-reinstall \
@@ -112,7 +118,6 @@ if [[ ! -d "$CONFDIR" ]]; then
     requests \
     netaddr \
     jmespath \
-    cryptography==2.9.2 \
     ansible==${1-$ANSIBLE}
 
   # Configuration ansible
@@ -121,8 +126,6 @@ if [[ ! -d "$CONFDIR" ]]; then
 [local]
 127.0.0.1 ansible_connection=local
 EOF
-
-  ### Reference: https://docs.ansible.com/ansible/2.4/intro_configuration.html
 
   cat <<EOF >/etc/ansible/ansible.cfg
 [defaults]
@@ -140,43 +143,51 @@ EOF
   logo
   echo -e "${CCYAN}INSTALLATION SEEDBOX DOCKER${CEND}"
   echo -e "${CGREEN}${CEND}"
-  echo -e "${CGREEN}   1) Installation Seedbox Classique ${CEND}"
-  echo -e "${CGREEN}   2) Installation Seedbox Rclone${CEND}"
-  echo -e "${CGREEN}   3) Restauration Seedbox${CEND}"
+  echo -e "${CGREEN}   1) Installation Seedbox via WebUI (En cours de dev)${CEND}"
+  echo -e "${CGREEN}   2) Installation Seedbox rclone && gdrive${CEND}"
+  echo -e "${CGREEN}   3) Installation Seedbox Classique ${CEND}"
+  echo -e "${CGREEN}   4) Restauration Seedbox${CEND}"
+
   echo -e ""
   read -p "Votre choix [1-3]: " CHOICE
   echo ""
   case $CHOICE in
-  1) ## Installation de la seedbox classique
 
-    check_dir "$PWD"
-    if [[ ! -d "$CONFDIR" ]]; then
-      clear
-      conf_dir
+  1) ## Installation seedbox webui
+      mkdir -p /opt/seedbox/variables
+
+      /opt/seedbox-compose/includes/config/scripts/add_user.sh
+      echo ""
+      status
       update_system
       install_base_packages
       install_docker
-      define_parameters
-      cloudflare
-      oauth
       install_traefik
-      install_watchtower
-      install_fail2ban
-      choose_media_folder_classique
-      choose_services
-      subdomain
-      install_services
-      filebot
-      resume_seedbox
-      pause
-      ansible-vault encrypt /opt/seedbox/variables/account.yml >/dev/null 2>&1
-      touch "/opt/seedbox/media-$SEEDUSER"
-      script_classique
-    else
-      script_classique
-    fi
 
-    ;;
+      ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
+      DOMAIN=$(cat /tmp/domain)
+      mkdir /var/www/$DOMAIN > /dev/null 2>&1
+      chown -R www-data:www-data /var/www/$DOMAIN > /dev/null 2>&1
+      cd /var/www/$DOMAIN > /dev/null 2>&1
+      composer install > /dev/null 2>&1
+      echo 'www-data ALL=(ALL) NOPASSWD:/var/www/'$DOMAIN'/scripts/manage_service.sh' | sudo EDITOR='tee -a' visudo > /dev/null 2>&1
+
+      echo -e "${CRED}---------------------------------------------------------------${CEND}"
+      echo -e "${CRED}          /!\ INSTALLATION EFFECTUEE AVEC SUCCES /!\           ${CEND}"
+      echo -e "${CRED}---------------------------------------------------------------${CEND}"
+      echo ""
+      echo -e "${CRED}---------------------------------------------------------------${CEND}"
+      echo -e "${CCYAN}              Adresse de l'interface WebUI                    ${CEND}"
+      echo -e "${CCYAN}              https://$DOMAIN                                 ${CEND}"
+      echo -e "${CRED}---------------------------------------------------------------${CEND}"
+      echo ""
+
+      rm /tmp/domain
+      ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+      echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour sortir du script..."
+      read -r
+      exit 1
+   ;;
 
   2) ## Installation de la seedbox Plexdrive
 
@@ -216,10 +227,39 @@ EOF
     else
       script_plexdrive
     fi
-
     ;;
 
-  3) ## restauration de la seedbox
+  3) ## Installation de la seedbox classique
+
+    check_dir "$PWD"
+    if [[ ! -d "$CONFDIR" ]]; then
+      clear
+      conf_dir
+      update_system
+      install_base_packages
+      install_docker
+      define_parameters
+      cloudflare
+      oauth
+      install_traefik
+      install_watchtower
+      install_fail2ban
+      choose_media_folder_classique
+      choose_services
+      subdomain
+      install_services
+      filebot
+      resume_seedbox
+      pause
+      ansible-vault encrypt /opt/seedbox/variables/account.yml >/dev/null 2>&1
+      touch "/opt/seedbox/media-$SEEDUSER"
+      script_classique
+    else
+      script_classique
+    fi
+    ;;
+
+  4) ## restauration de la seedbox
 
     check_dir "$PWD"
     if [[ ! -d "$CONFDIR" ]]; then
@@ -293,7 +333,6 @@ EOF
     else
       script_plexdrive
     fi
-
     ;;
   esac
 

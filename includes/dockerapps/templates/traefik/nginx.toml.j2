@@ -1,0 +1,15 @@
+[http.routers]
+  [http.routers.nginx-rtr]
+      entryPoints = ["https"]
+      rule = "Host(`{{user.domain}}`)"
+      service = "nginx-svc"
+      #middlewares = ["chain-oauth"]
+      [http.routers.nginx-rtr.tls]
+        certresolver = "letsencrypt"
+
+[http.services]
+  [http.services.nginx-svc]
+    [http.services.nginx-svc.loadBalancer]
+      passHostHeader = true
+      [[http.services.nginx-svc.loadBalancer.servers]]
+        url = "http://{{public_ip}}:81" 
