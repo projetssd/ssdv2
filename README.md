@@ -4,7 +4,7 @@
 
 
 Lien vers le WIKI :   https://wiki.scriptseedboxdocker.com          
-Code d'invitation Discord :  HZNMGjDRhp
+Lien invitation Discord :  https://discordapp.com/invite/HZNMGjDRhp
 
 
 Pour se lancer dans l’installation, il faut au préalable avoir suivi les étapes suivantes:
