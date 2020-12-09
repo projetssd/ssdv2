@@ -3,7 +3,7 @@
 
 
 
-https://wiki.scriptseedboxdocker.com
+https://wiki.scriptseedboxdocker.com          Lien Discord : https://discord.gg/HZNMGjDRhp
 
 
 Pour se lancer dans l’installation, il faut au préalable avoir suivi les étapes suivantes:
