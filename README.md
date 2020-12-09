@@ -1,3 +1,8 @@
+<br /><img src="https://www.scriptseedboxdocker.com/wp-content/uploads/2020/09/ssd.png" width="300">
+<br /><br />
+[![Discord: https://discord.gg/7ePCEU8BQ7](https://img.shields.io/badge/Discord-gray.svg?style=for-the-badge)](https://discord.io/cloudbox)
+
+
 https://wiki.scriptseedboxdocker.com
 
 
