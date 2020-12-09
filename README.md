@@ -4,8 +4,6 @@
 
 
 Lien vers le WIKI :   https://wiki.scriptseedboxdocker.com          
-Lien invitation Discord :  https://discordapp.com/invite/HZNMGjDRhp
-
 [![Discord: https://discordapp.com/invite/HZNMGjDRhp](https://img.shields.io/badge/Discord-gray.svg?style=for-the-badge)](https://discordapp.com/invite/HZNMGjDRhp)
 
 
