@@ -164,12 +164,15 @@ EOF
       install_docker
       install_traefik
 
+      # on refait le usermod après l'install du docker
+      usermod -aG docker $user
+
       ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
       DOMAIN=$(cat /tmp/domain)
       mkdir /var/www/$DOMAIN > /dev/null 2>&1
-      chown -R www-data:www-data /var/www/$DOMAIN > /dev/null 2>&1
       cd /var/www/$DOMAIN > /dev/null 2>&1
       composer install > /dev/null 2>&1
+      chown -R www-data:www-data /var/www/$DOMAIN > /dev/null 2>&1
       echo 'www-data ALL=(ALL) NOPASSWD:/var/www/'$DOMAIN'/scripts/manage_service.sh' | sudo EDITOR='tee -a' visudo > /dev/null 2>&1
 
       echo -e "${CRED}---------------------------------------------------------------${CEND}"
