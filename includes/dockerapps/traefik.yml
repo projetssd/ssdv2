@@ -63,10 +63,10 @@
       when: cloudflare_enabled
 
     - name: "Set GUI DNS Record on CloudFlare"
-        include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
-        vars:
-          subdomain: gui
-        when: cloudflare_enabled
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: gui
+      when: cloudflare_enabled
 
       
     - name: Remove Traefik
