@@ -10,6 +10,8 @@
 ---
 - hosts: localhost
   gather_facts: true
+  vars_files:
+    - /opt/seedbox/variables/account.yml
   tasks:
 
     - name: Install required packages
@@ -96,6 +98,27 @@
           - "python-pip"
           - "python3-pip"
       ignore_errors: yes
+
+    - name: stopped Systemd nginx
+      systemd:
+        name: 'nginx.service'
+        state: stopped
+
+    - name: Import nginx default
+      template:
+        src: /opt/seedbox-compose/includes/dockerapps/templates/nginx/default.j2
+        dest: /etc/nginx/sites-available/default
+        force: yes
+
+    - name: started Systemd nginx
+      systemd:
+        name: 'nginx.service'
+        state: started
+
+    - name: Create www directories
+      file: "path={{ item }} state=directory mode=0775 owner=www-data group=www-data recurse=yes"
+      with_items:
+        - /var/www/{{user.domain}}
 
     - name: Install unrar
       apt:

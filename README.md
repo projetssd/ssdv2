@@ -1,4 +1,11 @@
-https://wiki.scriptseedboxdocker.com
+<br /><img src="https://www.scriptseedboxdocker.com/wp-content/uploads/2020/09/ssd.png" width="300">
+<br /><br />
+
+
+
+Lien vers le WIKI :   https://wiki.scriptseedboxdocker.com 
+<br /><br />
+[![Discord: https://discordapp.com/invite/HZNMGjDRhp](https://img.shields.io/badge/Discord-gray.svg?style=for-the-badge)](https://discordapp.com/invite/HZNMGjDRhp)
 
 
 Pour se lancer dans l’installation, il faut au préalable avoir suivi les étapes suivantes:
