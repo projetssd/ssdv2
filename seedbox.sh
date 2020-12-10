@@ -181,7 +181,7 @@ EOF
       echo ""
       echo -e "${CRED}---------------------------------------------------------------${CEND}"
       echo -e "${CCYAN}              Adresse de l'interface WebUI                    ${CEND}"
-      echo -e "${CCYAN}              https://gui?$DOMAIN                             ${CEND}"
+      echo -e "${CCYAN}              https://gui.${DOMAIN}                           ${CEND}"
       echo -e "${CRED}---------------------------------------------------------------${CEND}"
       echo ""
 
