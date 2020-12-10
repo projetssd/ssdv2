@@ -12,4 +12,4 @@
     [http.services.nginx-svc.loadBalancer]
       passHostHeader = true
       [[http.services.nginx-svc.loadBalancer.servers]]
-        url = "http://{{public_ip}}:81" 
+        url = "http://172.17.0.1:81"

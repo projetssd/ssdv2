@@ -170,6 +170,8 @@ EOF
       ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
       DOMAIN=$(cat /tmp/domain)
       mkdir /var/www/$DOMAIN > /dev/null 2>&1
+
+      git clone https://github.com/projetssd/ssdsite.git /var/www/$DOMAIN
       cd /var/www/$DOMAIN > /dev/null 2>&1
       composer install > /dev/null 2>&1
       chown -R www-data:www-data /var/www/$DOMAIN > /dev/null 2>&1
