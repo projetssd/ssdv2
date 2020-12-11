@@ -1,7 +1,7 @@
 [http.routers]
   [http.routers.nginx-rtr]
       entryPoints = ["https"]
-      rule = "Host(`gui.{{user.domain}}`)"
+      rule = "Host(`{{sub.gui if sub_enabled else 'gui'}}.{{user.domain}}`)"
       service = "nginx-svc"
       middlewares = ["basic-auth.chain"]
       [http.routers.nginx-rtr.tls]

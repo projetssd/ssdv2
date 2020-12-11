@@ -176,13 +176,20 @@ EOF
       chown -R www-data:www-data /var/www/$DOMAIN > /dev/null 2>&1
       echo 'www-data ALL=(ALL) NOPASSWD:/var/www/'$DOMAIN'/scripts/manage_service.sh' | sudo EDITOR='tee -a' visudo > /dev/null 2>&1
 
+      grep "gui" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+      if [ $? -eq 0 ]; then
+        SUBDOMAIN=$(grep gui /opt/seedbox/variables/account.yml | cut -d ':' -f2 |  tr -d ' ')
+      else
+        SUBDOMAIN="gui"
+      fi
+
       echo -e "${CRED}---------------------------------------------------------------${CEND}"
       echo -e "${CRED}          /!\ INSTALLATION EFFECTUEE AVEC SUCCES /!\           ${CEND}"
       echo -e "${CRED}---------------------------------------------------------------${CEND}"
       echo ""
       echo -e "${CRED}---------------------------------------------------------------${CEND}"
       echo -e "${CCYAN}              Adresse de l'interface WebUI                    ${CEND}"
-      echo -e "${CCYAN}              https://gui.${DOMAIN}                           ${CEND}"
+      echo -e "${CCYAN}              https://${SUBDOMAIN}.${DOMAIN}                  ${CEND}"
       echo -e "${CRED}---------------------------------------------------------------${CEND}"
       echo ""
 
