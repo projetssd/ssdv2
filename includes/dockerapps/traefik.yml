@@ -68,7 +68,6 @@
         subdomain: gui
       when: cloudflare_enabled
 
-      
     - name: Remove Traefik
       docker_container:
         name: traefik
@@ -101,18 +100,18 @@
         path: /opt/seedbox/docker/traefik/traefik.log
         state: touch
 
-    - name: Get Public IP Address
-      shell: dig -4 TXT +short o-o.myaddr.l.google.com @ns1.google.com | awk -F'\"' '{ print $2}'
-      register: public_ip_lookup
-
-    - name: Set 'public_ip' variable
-      set_fact:
-        public_ip: "{{ public_ip_lookup.stdout }}"
-
     - name: Import middlewares-chains.toml
       template:
         src: /opt/seedbox-compose/includes/dockerapps/templates/traefik/nginx.toml.j2
         dest: /opt/seedbox/docker/traefik/rules/nginx.toml
+
+    - name: Set middleware
+      lineinfile:
+        path: '/opt/seedbox/docker/traefik/rules/nginx.toml'
+        regexp: '#*middlewares\s*=.*'
+        line: 'middlewares = ["chain-oauth.chain"]'
+        state: present
+      when: oauth_enabled
 
     - name: Import middlewares-chains.toml
       template:

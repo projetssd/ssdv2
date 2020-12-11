@@ -3,7 +3,7 @@
       entryPoints = ["https"]
       rule = "Host(`gui.{{user.domain}}`)"
       service = "nginx-svc"
-      #middlewares = ["chain-oauth"]
+      middlewares = ["basic-auth.chain"]
       [http.routers.nginx-rtr.tls]
         certresolver = "letsencrypt"
 
