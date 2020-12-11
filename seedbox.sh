@@ -164,11 +164,10 @@ EOF
       install_docker
       install_traefik
 
-      # on refait le usermod après l'install du docker
-      usermod -aG docker $user
-
       ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
       DOMAIN=$(cat /tmp/domain)
+      USER=$(cat /tmp/name)
+      usermod -aG docker ${USER}
       mkdir /var/www/$DOMAIN > /dev/null 2>&1
 
       git clone https://github.com/projetssd/ssdsite.git /var/www/$DOMAIN

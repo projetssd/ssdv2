@@ -99,7 +99,10 @@ source /opt/seedbox-compose/includes/variables.sh
   # creation utilisateur
   password=$(perl -e 'print crypt($ARGV[0], "password")' $pass)
   useradd -m $user -p $password -s /bin/bash
-  usermod -aG docker $user
+  if grep -q "^docker:" /etc/group
+  then
+    usermod -aG docker $user
+  fi
   chsh -s /bin/bash $user
   chown -R $user:$user /home/$user
   chmod 755 /home/$user
