@@ -79,7 +79,7 @@
       set_fact:
         pgrole: 'jackett'
         intport: '9117'
-        image: 'linuxserver/jackett'
+        image: 'sclemenceau/docker-jackett:cloudproxy'
 
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
@@ -148,7 +148,20 @@
         state: started
         labels: '{{pg_labels}}'
 
+    # CLOUDPROXY CONFIG ################################################
+
+    - name: 'Deploying cloudproxy'
+      docker_container:
+        name: 'cloudproxy'
+        image: 'noahcardoza/cloudproxy'
+        pull: yes
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+        state: started
+
     # CONFIGURATION ####################################################
+
     - name: 'Waiting for {{pgrole}} to initialize'
       wait_for:
         path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/ServerConfig.json'
