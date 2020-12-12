@@ -68,8 +68,8 @@ source /opt/seedbox-compose/includes/variables.sh
   echo -e "${CRED}    https://github.com/laster13/patxav/wiki /!\ 		   ${CEND}"
   echo -e "${CRED}-------------------------------------------------------------------${CEND}"
   echo ""
-  read -rp $'\e[33mSouhaitez vous sécuriser vos Applis avec Google OAuth2 ? (o/n)\e[0m :' OUI
 
+  read -rp $'\e[33mSouhaitez vous sécuriser vos Applis avec Google OAuth2 ? (o/n)\e[0m :' OUI
   if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
     if [ -z "$oauth_client" ] || [ -z "$oauth_secret" ] || [ -z "$email" ]; then
       oauth_client=$1
@@ -95,6 +95,30 @@ source /opt/seedbox-compose/includes/variables.sh
     openssl=$(openssl rand -hex 16)
     echo ""
   fi
+  echo ""
+  echo -e "${BWHITE}Adresse par défault: https://gui.$domain ${CEND}"
+  echo ""
+  read -rp $'\e[33mSouhaitez vous personnaliser le sous domaine? (o/n)\e[0m :' OUI
+  if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
+    if [ -z "$subdomain" ]; then
+      subdomain=$1
+    fi
+    while [ -z "$subdomain" ]; do
+      >&2 echo -n -e "${BWHITE}Sous Domaine: ${CEND}"
+      read subdomain
+    done
+
+    grep "sub" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+    if [ $? -eq 1 ]; then
+      sed -i '/transcodes/a sub:' /opt/seedbox/variables/account.yml
+    fi
+    if [ ! -z "$subdomain" ]; then
+     sed -i "/gui/d" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+     sed -i "/sub/a \ \ \ gui: $subdomain" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+    fi
+    echo ""
+  fi
+
 
   # creation utilisateur
   password=$(perl -e 'print crypt($ARGV[0], "password")' $pass)
