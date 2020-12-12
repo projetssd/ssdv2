@@ -28,3 +28,4 @@ plex:
    force_high_output_bitrates: no
    db_cache_size: 1000000
    transcodes: /mnt/transcodes
+sub:
