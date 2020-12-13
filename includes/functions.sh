@@ -556,7 +556,7 @@ function script_plexdrive() {
 	echo -e "${CGREEN}   2) Ajout/Supression d'Applis${CEND}"
 	echo -e "${CGREEN}   3) Gestion${CEND}"
 	echo -e "${CGREEN}   4) Quitter${CEND}"
-	echo -e "${CGRED}   10) Désinstaller la seedbox ${CEND}"
+	echo -e "${CRED}   10) Désinstaller la seedbox ${CEND}"
 	
 
 	echo -e ""
