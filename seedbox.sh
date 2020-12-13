@@ -90,12 +90,7 @@ if [[ ! -d "$CONFDIR" ]]; then
     python3-pip \
     python-dev \
     python-pip \
-    python-apt \
-    php-curl \
-    php-dom \
-    nginx \
-    php-fpm \
-    composer
+    python-apt
 
 
   ## Install pip3 Dependencies
@@ -168,6 +163,7 @@ EOF
       DOMAIN=$(cat /tmp/domain)
       USER=$(cat /tmp/name)
       usermod -aG docker ${USER}
+      usermod -aG docker www-data
       mkdir /var/www/$DOMAIN > /dev/null 2>&1
 
       git clone https://github.com/projetssd/ssdsite.git /var/www/$DOMAIN
@@ -348,14 +344,18 @@ EOF
   esac
 
 fi
+
+status
+
 if [ ! -d "/opt/seedbox/status" ]
 then
   mkdir -p /opt/seedbox/status
 fi
-for i in $(docker ps --format "{{.Names}}")
+for i in $(docker ps --format "{{.Names}}" --filter "network=traefik_proxy")
 do
   echo "2" > /opt/seedbox/status/${i}
 done
+
 PLEXDRIVE="/usr/bin/rclone"
 if [[ -e "$PLEXDRIVE" ]]; then
   script_plexdrive

@@ -552,29 +552,86 @@ function script_plexdrive() {
 	echo ""
 	echo -e "${CCYAN}SEEDBOX RCLONE/PLEXDRIVE${CEND}"
 	echo -e "${CGREEN}${CEND}"
-	echo -e "${CGREEN}   1) Désinstaller la seedbox ${CEND}"
+	echo -e "${CGREEN}   1) Accès SSD WebUI (En cours de dev - Non fonctionnel)${CEND}"
 	echo -e "${CGREEN}   2) Ajout/Supression d'Applis${CEND}"
 	echo -e "${CGREEN}   3) Gestion${CEND}"
-	echo -e "${CGREEN}   4) Quitter${CEND}"
+	echo -e "${CGREEN}   4) Désinstaller la seedbox ${CEND}"
+	echo -e "${CGREEN}   5) Quitter${CEND}"
 
 	echo -e ""
 	read -p "Votre choix [1-4]: " PORT_CHOICE
 
 	case $PORT_CHOICE in
-		1) ## Installation de la seedbox
-		clear
-		echo ""
-		echo -e "${YELLOW}### Seedbox-Compose déjà installée !###${NC}"
-		if (whiptail --title "Seedbox-Compose déjà installée" --yesno "Désinstaller complètement la Seedbox ?" 7 50) then
-			if (whiptail --title "ATTENTION" --yesno "Etes vous sur de vouloir désintaller la seedbox ?" 7 55) then
-			    uninstall_seedbox
-			else
-			    script_plexdrive
-			fi
-		else
-			script_plexdrive
-		fi
-		;;
+
+                1) 
+                clear
+                # Accès SSD WebUI
+                echo -e "${CCYAN}INSTALLATION SSD WebUI${CEND}"
+                echo ""
+
+                # definition variables
+                ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
+                DOMAIN=$(cat /tmp/domain)
+
+                # Ajout ligne sub ds account.yml si elle n y est pas deja
+                ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                grep "sub" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                if [ $? -eq 1 ]; then
+                  sed -i '/transcodes/a sub:' /opt/seedbox/variables/account.yml
+                fi
+
+                # sous domaine
+                echo ""
+                echo -e "${BWHITE}Adresse par défault: https://gui.${DOMAIN} ${CEND}"
+                echo ""
+                read -rp $'\e[33mSouhaitez vous personnaliser le sous domaine? (o/n)\e[0m :' OUI
+                if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
+                  if [ -z "$subdomain" ]; then
+                  subdomain=$1
+                  fi
+                  while [ -z "$subdomain" ]; do
+                    >&2 echo -n -e "${BWHITE}Sous Domaine: ${CEND}"
+                    read subdomain
+                  done
+
+                  if [ ! -z "$subdomain" ]; then
+                    sed -i "/gui/d" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                    sed -i "/sub/a \ \ \ gui: $subdomain" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                  fi
+                  echo ""
+                fi
+
+                # reinstall traefik pour nouvelles rules
+                docker rm -f traefik > /dev/null 2>&1
+                ansible-playbook /opt/seedbox-compose/includes/dockerapps/traefik.yml
+                
+                # installation ssd webui
+                ansible-playbook /opt/seedbox-compose/includes/config/roles/nginx/tasks/main.yml
+
+                # gestion sous domaine
+                grep "gui" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                if [ $? -eq 0 ]; then
+                  SUBDOMAIN=$(grep gui /opt/seedbox/variables/account.yml | cut -d ':' -f2 |  tr -d ' ')
+                else
+                  SUBDOMAIN="gui"
+                fi
+
+                echo -e "${CRED}---------------------------------------------------------------${CEND}"
+                echo -e "${CRED}          /!\ INSTALLATION EFFECTUEE AVEC SUCCES /!\           ${CEND}"
+                echo -e "${CRED}---------------------------------------------------------------${CEND}"
+                echo ""
+                echo -e "${CRED}---------------------------------------------------------------${CEND}"
+                echo -e "${CCYAN}              Adresse de l'interface WebUI                    ${CEND}"
+                echo -e "${CCYAN}              https://${SUBDOMAIN}.${DOMAIN}                  ${CEND}"
+                echo -e "${CRED}---------------------------------------------------------------${CEND}"
+                echo ""
+
+                rm /tmp/domain
+                ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour sortir du script..."
+                read -r
+
+                ;;
 
 		2)
 		clear
@@ -1154,7 +1211,23 @@ function script_plexdrive() {
 		       ;;
                        esac
                 ;;
-		4)
+
+		4) ## Désinstalation seedbox
+		clear
+		echo ""
+		echo -e "${YELLOW}### Seedbox-Compose déjà installée !###${NC}"
+		if (whiptail --title "Seedbox-Compose déjà installée" --yesno "Désinstaller complètement la Seedbox ?" 7 50) then
+			if (whiptail --title "ATTENTION" --yesno "Etes vous sur de vouloir désintaller la seedbox ?" 7 55) then
+			    uninstall_seedbox
+			else
+			    script_plexdrive
+			fi
+		else
+			script_plexdrive
+		fi
+		;;
+
+		5)
 		exit
 		;;
 	        esac

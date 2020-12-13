@@ -1,0 +1,65 @@
+
+---
+
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
+
+  tasks:
+
+    - name: Install common packages
+      apt:
+        state: present
+        name:
+          - "nginx"
+          - "php-fpm"
+          - "php-curl"
+          - "php-dom"
+          - "composer"
+
+    - name: Version php-fpm
+      shell: ls /etc/php
+      register: fpm
+
+    - name: stopped Systemd nginx
+      systemd:
+        name: 'nginx.service'
+        state: stopped
+
+    - name: Import nginx default
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/nginx/templates/default.j2
+        dest: /etc/nginx/sites-available/default
+        force: yes
+
+    - name: started Systemd nginx
+      systemd:
+        name: 'nginx.service'
+        state: started
+
+    - name: Create www directories
+      file: "path={{ item }} state=directory mode=0775 owner=www-data group=www-data recurse=yes"
+      with_items:
+        - /var/www/{{user.domain}}
+
+    - name: Clone SSD
+      git:
+        repo: https://github.com/projetssd/ssdsite.git/
+        dest: /var/www/{{user.domain}}
+        version: HEAD
+        force: yes
+
+    - name: Composer install
+      shell: composer install
+      args:
+        chdir: /var/www/{{user.domain}}
+
+    - name: Set visudo
+      shell: |
+        usermod -aG docker {{user.name}}
+        usermod -aG docker www-data
+        chown -R www-data:www-data /var/www
+        echo 'www-data ALL=(ALL) NOPASSWD:/var/www/'$DOMAIN'/scripts/manage_service.sh' | sudo EDITOR='tee -a' visudo > /dev/null 2>&1
+        cp /etc/sudoers /tmp/root
+        sort -u /tmp/root > /etc/sudoers

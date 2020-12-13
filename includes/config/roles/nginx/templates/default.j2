@@ -1,0 +1,35 @@
+server {
+	listen 81 default_server;
+	listen [::]:81 default_server;
+
+	root /var/www/{{user.domain}};
+
+	index index.php index.html index.htm index.nginx-debian.html;
+
+	server_name {{user.domain}};
+
+	location / {
+		try_files $uri $uri/ =404;
+	}
+
+
+        location ~ \.php$ {
+                include snippets/fastcgi-php.conf;
+                fastcgi_pass unix:/var/run/php/php{{ fpm.stdout }}-fpm.sock;
+                fastcgi_buffers 16 16k;
+                fastcgi_buffer_size 32k;
+        }
+
+        location ~* \.(?:jpg|jpeg|gif|png|ico|cur|gz|svg|svgz|mp4|ogg|ogv|webm|htc)$ {
+        expires 1M;
+        access_log off;
+        add_header Cache-Control "public";
+        }
+
+        # CSS and Javascript
+        location ~* \.(?:css|js)$ {
+        expires 1y;
+        access_log off;
+        add_header Cache-Control "public";
+        }
+}
