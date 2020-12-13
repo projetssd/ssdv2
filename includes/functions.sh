@@ -555,8 +555,9 @@ function script_plexdrive() {
 	echo -e "${CGREEN}   1) Accès SSD WebUI (En cours de dev - Non fonctionnel)${CEND}"
 	echo -e "${CGREEN}   2) Ajout/Supression d'Applis${CEND}"
 	echo -e "${CGREEN}   3) Gestion${CEND}"
-	echo -e "${CGREEN}   4) Désinstaller la seedbox ${CEND}"
-	echo -e "${CGREEN}   5) Quitter${CEND}"
+	echo -e "${CGREEN}   4) Quitter${CEND}"
+	echo -e "${CGRED}   10) Désinstaller la seedbox ${CEND}"
+	
 
 	echo -e ""
 	read -p "Votre choix [1-4]: " PORT_CHOICE
