@@ -1213,7 +1213,7 @@ function script_plexdrive() {
                        esac
                 ;;
 
-		4) ## Désinstalation seedbox
+		10) ## Désinstalation seedbox
 		clear
 		echo ""
 		echo -e "${YELLOW}### Seedbox-Compose déjà installée !###${NC}"
@@ -1228,7 +1228,7 @@ function script_plexdrive() {
 		fi
 		;;
 
-		5)
+		4)
 		exit
 		;;
 	        esac
