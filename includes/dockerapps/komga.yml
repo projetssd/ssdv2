@@ -105,7 +105,7 @@
           set_fact:
             pg_volumes:
               - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config:/config'
-              - '/home/{{user.name}}/Medias/books:/books'
+              - '/home/{{user.name}}:/home/{{user.name}}'
               - '/etc/localtime:/etc/localtime:ro'
 
         - name: 'Setting PG ENV'

@@ -90,12 +90,7 @@ if [[ ! -d "$CONFDIR" ]]; then
     python3-pip \
     python-dev \
     python-pip \
-    python-apt \
-    php-curl \
-    php-dom \
-    nginx \
-    php-fpm \
-    composer
+    python-apt
 
 
   ## Install pip3 Dependencies
@@ -138,6 +133,7 @@ EOF
   ## Copy pip to /usr/bin
   cp /usr/local/bin/pip /usr/bin/pip
   cp /usr/local/bin/pip3 /usr/bin/pip3
+  pip uninstall -y cryptography
 
   clear
   logo
@@ -162,20 +158,10 @@ EOF
       update_system
       install_base_packages
       install_docker
+      ansible-playbook /opt/seedbox-compose/includes/config/roles/nginx/tasks/main.yml
       install_traefik
 
-      ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
-      DOMAIN=$(cat /tmp/domain)
-      USER=$(cat /tmp/name)
-      usermod -aG docker ${USER}
-      mkdir /var/www/$DOMAIN > /dev/null 2>&1
-
-      git clone https://github.com/projetssd/ssdsite.git /var/www/$DOMAIN
-      cd /var/www/$DOMAIN > /dev/null 2>&1
-      composer install > /dev/null 2>&1
-      chown -R www-data:www-data /var/www/$DOMAIN > /dev/null 2>&1
-      echo 'www-data ALL=(ALL) NOPASSWD:/var/www/'$DOMAIN'/scripts/manage_service.sh' | sudo EDITOR='tee -a' visudo > /dev/null 2>&1
-
+      DOMAIN=$(grep domain /opt/seedbox/variables/account.yml | cut -d ':' -f2 |  tr -d ' ')
       grep "gui" /opt/seedbox/variables/account.yml > /dev/null 2>&1
       if [ $? -eq 0 ]; then
         SUBDOMAIN=$(grep gui /opt/seedbox/variables/account.yml | cut -d ':' -f2 |  tr -d ' ')
@@ -193,7 +179,6 @@ EOF
       echo -e "${CRED}---------------------------------------------------------------${CEND}"
       echo ""
 
-      rm /tmp/domain
       ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
       echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour sortir du script..."
       read -r
@@ -348,14 +333,18 @@ EOF
   esac
 
 fi
+
+status
+
 if [ ! -d "/opt/seedbox/status" ]
 then
   mkdir -p /opt/seedbox/status
 fi
-for i in $(docker ps --format "{{.Names}}")
+for i in $(docker ps --format "{{.Names}}" --filter "network=traefik_proxy")
 do
   echo "2" > /opt/seedbox/status/${i}
 done
+
 PLEXDRIVE="/usr/bin/rclone"
 if [[ -e "$PLEXDRIVE" ]]; then
   script_plexdrive

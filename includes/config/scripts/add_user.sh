@@ -17,6 +17,11 @@ source /opt/seedbox-compose/includes/variables.sh
   cp /opt/seedbox-compose/includes/config/account.yml /opt/seedbox/variables/account.yml
   ACCOUNT=/opt/seedbox/variables/account.yml
 
+  grep "sub" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+  if [ $? -eq 1 ]; then
+    sed -i '/transcodes/a sub:' /opt/seedbox/variables/account.yml
+  fi
+
   echo ""
   read -p $'\e[32m↘️ Nom d utilisateur | Appuyer sur [Enter]: \e[0m' user < /dev/tty
   read -p $'\e[32m↘️ Mot de passe | Appuyer sur [Enter]: \e[0m' pass < /dev/tty
