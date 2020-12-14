@@ -79,7 +79,7 @@
       set_fact:
         pgrole: 'jackett'
         intport: '9117'
-        image: 'sclemenceau/docker-jackett:cloudproxy'
+        image: 'laster13/jackett:latest'
 
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
