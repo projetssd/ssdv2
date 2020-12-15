@@ -602,12 +602,14 @@ function script_plexdrive() {
                   echo ""
                 fi
 
-                # reinstall traefik pour nouvelles rules
+                # supression container traefik pour nouvelles rules
                 docker rm -f traefik > /dev/null 2>&1
-                ansible-playbook /opt/seedbox-compose/includes/dockerapps/traefik.yml
                 
                 # installation ssd webui
                 ansible-playbook /opt/seedbox-compose/includes/config/roles/nginx/tasks/main.yml
+
+                # reinstallation traefik
+                ansible-playbook /opt/seedbox-compose/includes/dockerapps/traefik.yml
 
                 # gestion sous domaine
                 grep "gui" /opt/seedbox/variables/account.yml > /dev/null 2>&1

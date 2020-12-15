@@ -16,6 +16,7 @@
           - "php-fpm"
           - "php-curl"
           - "php-dom"
+          - "php-gd"
           - "composer"
 
     - name: Version php-fpm
