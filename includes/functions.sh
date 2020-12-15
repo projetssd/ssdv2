@@ -617,6 +617,17 @@ function script_plexdrive() {
                   SUBDOMAIN="gui"
                 fi
 
+                for i in $(docker ps --format "{{.Names}}" --filter "network=traefik_proxy")
+                do
+                  grep "${i}" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                  if [ $? -eq 0 ]; then
+                    j=$(grep ${i} /opt/seedbox/variables/account.yml | cut -d ':' -f2 |  tr -d ' ')
+                    echo "${i} = ${j}.${DOMAIN}" >> /opt/seedbox/resume
+                  else
+                     echo "${i} = ${i}.${DOMAIN}" >> /opt/seedbox/resume
+                  fi
+                done
+
                 echo -e "${CRED}---------------------------------------------------------------${CEND}"
                 echo -e "${CRED}          /!\ INSTALLATION EFFECTUEE AVEC SUCCES /!\           ${CEND}"
                 echo -e "${CRED}---------------------------------------------------------------${CEND}"
