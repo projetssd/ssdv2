@@ -120,7 +120,7 @@
       lineinfile:
         path: '/opt/seedbox/docker/traefik/rules/nginx.toml'
         regexp: '#*middlewares\s*=.*'
-        line: '#middlewares = ["chain-oauth"]'
+        line: 'middlewares = ["chain-oauth"]'
         state: present
       when: oauth_enabled
 

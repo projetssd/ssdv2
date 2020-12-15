@@ -343,6 +343,7 @@ fi
 for i in $(docker ps --format "{{.Names}}" --filter "network=traefik_proxy")
 do
   echo "2" > /opt/seedbox/status/${i}
+
 done
 
 PLEXDRIVE="/usr/bin/rclone"

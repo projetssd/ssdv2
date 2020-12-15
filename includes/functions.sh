@@ -602,12 +602,14 @@ function script_plexdrive() {
                   echo ""
                 fi
 
-                # reinstall traefik pour nouvelles rules
+                # supression container traefik pour nouvelles rules
                 docker rm -f traefik > /dev/null 2>&1
-                ansible-playbook /opt/seedbox-compose/includes/dockerapps/traefik.yml
                 
                 # installation ssd webui
                 ansible-playbook /opt/seedbox-compose/includes/config/roles/nginx/tasks/main.yml
+
+                # reinstallation traefik
+                ansible-playbook /opt/seedbox-compose/includes/dockerapps/traefik.yml
 
                 # gestion sous domaine
                 grep "gui" /opt/seedbox/variables/account.yml > /dev/null 2>&1
@@ -616,6 +618,17 @@ function script_plexdrive() {
                 else
                   SUBDOMAIN="gui"
                 fi
+
+                for i in $(docker ps --format "{{.Names}}" --filter "network=traefik_proxy")
+                do
+                  grep "${i}" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                  if [ $? -eq 0 ]; then
+                    j=$(grep ${i} /opt/seedbox/variables/account.yml | cut -d ':' -f2 |  tr -d ' ')
+                    echo "${i} = ${j}.${DOMAIN}" >> /opt/seedbox/resume
+                  else
+                     echo "${i} = ${i}.${DOMAIN}" >> /opt/seedbox/resume
+                  fi
+                done
 
                 echo -e "${CRED}---------------------------------------------------------------${CEND}"
                 echo -e "${CRED}          /!\ INSTALLATION EFFECTUEE AVEC SUCCES /!\           ${CEND}"
