@@ -28,7 +28,7 @@
         name: 'watchtower'
         image: 'containrrr/watchtower'
         pull: yes
-        command: '--cleanup --interval 600'
+        command: '--cleanup --schedule "0 0 4 * * *"'
         state: started
         volumes:
           - /var/run/docker.sock:/var/run/docker.sock
