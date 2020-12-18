@@ -139,53 +139,17 @@ EOF
   logo
   echo -e "${CCYAN}INSTALLATION SEEDBOX DOCKER${CEND}"
   echo -e "${CGREEN}${CEND}"
-  echo -e "${CGREEN}   1) Installation Seedbox via WebUI (En cours de dev)${CEND}"
-  echo -e "${CGREEN}   2) Installation Seedbox rclone && gdrive${CEND}"
-  echo -e "${CGREEN}   3) Installation Seedbox Classique ${CEND}"
-  echo -e "${CGREEN}   4) Restauration Seedbox${CEND}"
+  echo -e "${CGREEN}   1) Installation Seedbox rclone && gdrive${CEND}"
+  echo -e "${CGREEN}   2) Installation Seedbox Classique ${CEND}"
+  echo -e "${CGREEN}   3) Restauration Seedbox${CEND}"
 
   echo -e ""
   read -p "Votre choix [1-3]: " CHOICE
   echo ""
   case $CHOICE in
 
-  1) ## Installation seedbox webui
-      mkdir -p /opt/seedbox/variables
 
-      /opt/seedbox-compose/includes/config/scripts/add_user.sh
-      echo ""
-      status
-      update_system
-      install_base_packages
-      install_docker
-      ansible-playbook /opt/seedbox-compose/includes/config/roles/nginx/tasks/main.yml
-      install_traefik
-
-      DOMAIN=$(grep domain /opt/seedbox/variables/account.yml | cut -d ':' -f2 |  tr -d ' ')
-      grep "gui" /opt/seedbox/variables/account.yml > /dev/null 2>&1
-      if [ $? -eq 0 ]; then
-        SUBDOMAIN=$(grep gui /opt/seedbox/variables/account.yml | cut -d ':' -f2 |  tr -d ' ')
-      else
-        SUBDOMAIN="gui"
-      fi
-
-      echo -e "${CRED}---------------------------------------------------------------${CEND}"
-      echo -e "${CRED}          /!\ INSTALLATION EFFECTUEE AVEC SUCCES /!\           ${CEND}"
-      echo -e "${CRED}---------------------------------------------------------------${CEND}"
-      echo ""
-      echo -e "${CRED}---------------------------------------------------------------${CEND}"
-      echo -e "${CCYAN}              Adresse de l'interface WebUI                    ${CEND}"
-      echo -e "${CCYAN}              https://${SUBDOMAIN}.${DOMAIN}                  ${CEND}"
-      echo -e "${CRED}---------------------------------------------------------------${CEND}"
-      echo ""
-
-      ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
-      echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour sortir du script..."
-      read -r
-      exit 1
-   ;;
-
-  2) ## Installation de la seedbox Plexdrive
+  1) ## Installation de la seedbox Plexdrive
 
     check_dir "$PWD"
     if [[ ! -d "$CONFDIR" ]]; then
@@ -225,7 +189,7 @@ EOF
     fi
     ;;
 
-  3) ## Installation de la seedbox classique
+  2) ## Installation de la seedbox classique
 
     check_dir "$PWD"
     if [[ ! -d "$CONFDIR" ]]; then
@@ -255,7 +219,7 @@ EOF
     fi
     ;;
 
-  4) ## restauration de la seedbox
+  3) ## restauration de la seedbox
 
     check_dir "$PWD"
     if [[ ! -d "$CONFDIR" ]]; then
@@ -330,6 +294,43 @@ EOF
       script_plexdrive
     fi
     ;;
+
+  999) ## Installation seedbox webui
+      mkdir -p /opt/seedbox/variables
+
+      /opt/seedbox-compose/includes/config/scripts/add_user.sh
+      echo ""
+      status
+      update_system
+      install_base_packages
+      install_docker
+      ansible-playbook /opt/seedbox-compose/includes/config/roles/nginx/tasks/main.yml
+      install_traefik
+
+      DOMAIN=$(grep domain /opt/seedbox/variables/account.yml | cut -d ':' -f2 |  tr -d ' ')
+      grep "gui" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+      if [ $? -eq 0 ]; then
+        SUBDOMAIN=$(grep gui /opt/seedbox/variables/account.yml | cut -d ':' -f2 |  tr -d ' ')
+      else
+        SUBDOMAIN="gui"
+      fi
+
+      echo -e "${CRED}---------------------------------------------------------------${CEND}"
+      echo -e "${CRED}          /!\ INSTALLATION EFFECTUEE AVEC SUCCES /!\           ${CEND}"
+      echo -e "${CRED}---------------------------------------------------------------${CEND}"
+      echo ""
+      echo -e "${CRED}---------------------------------------------------------------${CEND}"
+      echo -e "${CCYAN}              Adresse de l'interface WebUI                    ${CEND}"
+      echo -e "${CCYAN}              https://${SUBDOMAIN}.${DOMAIN}                  ${CEND}"
+      echo -e "${CRED}---------------------------------------------------------------${CEND}"
+      echo ""
+
+      ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+      echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour sortir du script..."
+      read -r
+      exit 1
+   ;;
+
   esac
 
 fi

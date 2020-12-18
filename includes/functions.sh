@@ -552,10 +552,9 @@ function script_plexdrive() {
 	echo ""
 	echo -e "${CCYAN}SEEDBOX RCLONE/PLEXDRIVE${CEND}"
 	echo -e "${CGREEN}${CEND}"
-	echo -e "${CGREEN}   1) Accès SSD WebUI (En cours de dev - Non fonctionnel)${CEND}"
-	echo -e "${CGREEN}   2) Ajout/Supression d'Applis${CEND}"
-	echo -e "${CGREEN}   3) Gestion${CEND}"
-	echo -e "${CGREEN}   4) Quitter${CEND}"
+	echo -e "${CGREEN}   1) Ajout/Supression d'Applis${CEND}"
+	echo -e "${CGREEN}   2) Gestion${CEND}"
+	echo -e "${CGREEN}   3) Quitter${CEND}"
 	echo -e "${CRED}   10) Désinstaller la seedbox ${CEND}"
 	
 
@@ -564,90 +563,8 @@ function script_plexdrive() {
 
 	case $PORT_CHOICE in
 
-                1) 
-                clear
-                # Accès SSD WebUI
-                echo -e "${CCYAN}INSTALLATION SSD WebUI${CEND}"
-                echo ""
 
-                # definition variables
-                ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
-                DOMAIN=$(cat /tmp/domain)
-
-                # Ajout ligne sub ds account.yml si elle n y est pas deja
-                ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
-                grep "sub" /opt/seedbox/variables/account.yml > /dev/null 2>&1
-                if [ $? -eq 1 ]; then
-                  sed -i '/transcodes/a sub:' /opt/seedbox/variables/account.yml
-                fi
-
-                # sous domaine
-                echo ""
-                echo -e "${BWHITE}Adresse par défault: https://gui.${DOMAIN} ${CEND}"
-                echo ""
-                read -rp $'\e[33mSouhaitez vous personnaliser le sous domaine? (o/n)\e[0m :' OUI
-                if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
-                  if [ -z "$subdomain" ]; then
-                  subdomain=$1
-                  fi
-                  while [ -z "$subdomain" ]; do
-                    >&2 echo -n -e "${BWHITE}Sous Domaine: ${CEND}"
-                    read subdomain
-                  done
-
-                  if [ ! -z "$subdomain" ]; then
-                    sed -i "/gui/d" /opt/seedbox/variables/account.yml > /dev/null 2>&1
-                    sed -i "/sub/a \ \ \ gui: $subdomain" /opt/seedbox/variables/account.yml > /dev/null 2>&1
-                  fi
-                  echo ""
-                fi
-
-                # supression container traefik pour nouvelles rules
-                docker rm -f traefik > /dev/null 2>&1
-                
-                # installation ssd webui
-                ansible-playbook /opt/seedbox-compose/includes/config/roles/nginx/tasks/main.yml
-
-                # reinstallation traefik
-                ansible-playbook /opt/seedbox-compose/includes/dockerapps/traefik.yml
-
-                # gestion sous domaine
-                grep "gui" /opt/seedbox/variables/account.yml > /dev/null 2>&1
-                if [ $? -eq 0 ]; then
-                  SUBDOMAIN=$(grep gui /opt/seedbox/variables/account.yml | cut -d ':' -f2 |  tr -d ' ')
-                else
-                  SUBDOMAIN="gui"
-                fi
-
-                for i in $(docker ps --format "{{.Names}}" --filter "network=traefik_proxy")
-                do
-                  grep "${i}" /opt/seedbox/variables/account.yml > /dev/null 2>&1
-                  if [ $? -eq 0 ]; then
-                    j=$(grep ${i} /opt/seedbox/variables/account.yml | cut -d ':' -f2 |  tr -d ' ')
-                    echo "${i} = ${j}.${DOMAIN}" >> /opt/seedbox/resume
-                  else
-                     echo "${i} = ${i}.${DOMAIN}" >> /opt/seedbox/resume
-                  fi
-                done
-
-                echo -e "${CRED}---------------------------------------------------------------${CEND}"
-                echo -e "${CRED}          /!\ INSTALLATION EFFECTUEE AVEC SUCCES /!\           ${CEND}"
-                echo -e "${CRED}---------------------------------------------------------------${CEND}"
-                echo ""
-                echo -e "${CRED}---------------------------------------------------------------${CEND}"
-                echo -e "${CCYAN}              Adresse de l'interface WebUI                    ${CEND}"
-                echo -e "${CCYAN}              https://${SUBDOMAIN}.${DOMAIN}                  ${CEND}"
-                echo -e "${CRED}---------------------------------------------------------------${CEND}"
-                echo ""
-
-                rm /tmp/domain
-                ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
-                echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour sortir du script..."
-                read -r
-
-                ;;
-
-		2)
+		1)
 		clear
 		## Ajout d'Applications
 		echo""
@@ -655,7 +572,7 @@ function script_plexdrive() {
 			manage_apps
 		;;
 
-		3)
+		2)
 			clear
 			logo
 			echo ""
@@ -1240,6 +1157,90 @@ function script_plexdrive() {
 			script_plexdrive
 		fi
 		;;
+
+                999) 
+                clear
+                # Accès SSD WebUI
+                echo -e "${CCYAN}INSTALLATION SSD WebUI${CEND}"
+                echo ""
+
+                # definition variables
+                ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
+                DOMAIN=$(cat /tmp/domain)
+
+                # Ajout ligne sub ds account.yml si elle n y est pas deja
+                ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                grep "sub" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                if [ $? -eq 1 ]; then
+                  sed -i '/transcodes/a sub:' /opt/seedbox/variables/account.yml
+                fi
+
+                # sous domaine
+                echo ""
+                echo -e "${BWHITE}Adresse par défault: https://gui.${DOMAIN} ${CEND}"
+                echo ""
+                read -rp $'\e[33mSouhaitez vous personnaliser le sous domaine? (o/n)\e[0m :' OUI
+                if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
+                  if [ -z "$subdomain" ]; then
+                  subdomain=$1
+                  fi
+                  while [ -z "$subdomain" ]; do
+                    >&2 echo -n -e "${BWHITE}Sous Domaine: ${CEND}"
+                    read subdomain
+                  done
+
+                  if [ ! -z "$subdomain" ]; then
+                    sed -i "/gui/d" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                    sed -i "/sub/a \ \ \ gui: $subdomain" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                  fi
+                  echo ""
+                fi
+
+                # supression container traefik pour nouvelles rules
+                docker rm -f traefik > /dev/null 2>&1
+                
+                # installation ssd webui
+                ansible-playbook /opt/seedbox-compose/includes/config/roles/nginx/tasks/main.yml
+
+                # reinstallation traefik
+                ansible-playbook /opt/seedbox-compose/includes/dockerapps/traefik.yml
+
+                # gestion sous domaine
+                grep "gui" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                if [ $? -eq 0 ]; then
+                  SUBDOMAIN=$(grep gui /opt/seedbox/variables/account.yml | cut -d ':' -f2 |  tr -d ' ')
+                else
+                  SUBDOMAIN="gui"
+                fi
+
+                for i in $(docker ps --format "{{.Names}}" --filter "network=traefik_proxy")
+                do
+                  grep "${i}" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                  if [ $? -eq 0 ]; then
+                    j=$(grep ${i} /opt/seedbox/variables/account.yml | cut -d ':' -f2 |  tr -d ' ')
+                    echo "${i} = ${j}.${DOMAIN}" >> /opt/seedbox/resume
+                  else
+                     echo "${i} = ${i}.${DOMAIN}" >> /opt/seedbox/resume
+                  fi
+                done
+
+                echo -e "${CRED}---------------------------------------------------------------${CEND}"
+                echo -e "${CRED}          /!\ INSTALLATION EFFECTUEE AVEC SUCCES /!\           ${CEND}"
+                echo -e "${CRED}---------------------------------------------------------------${CEND}"
+                echo ""
+                echo -e "${CRED}---------------------------------------------------------------${CEND}"
+                echo -e "${CCYAN}              Adresse de l'interface WebUI                    ${CEND}"
+                echo -e "${CCYAN}              https://${SUBDOMAIN}.${DOMAIN}                  ${CEND}"
+                echo -e "${CRED}---------------------------------------------------------------${CEND}"
+                echo ""
+
+                rm /tmp/domain
+                ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour sortir du script..."
+                read -r
+
+                ;;
+
 
 		4)
 		exit

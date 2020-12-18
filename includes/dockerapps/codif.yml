@@ -78,7 +78,7 @@
     - name: 'Set Known Facts'
       set_fact:
         pgrole: 'codif'
-        image: 'linuxserver/codif-server'
+        image: 'ghcr.io/linuxserver/code-server'
 
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'

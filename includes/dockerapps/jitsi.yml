@@ -120,7 +120,7 @@
             traefik.enable: 'true'
             ## HTTP Routers
             traefik.http.routers.jitsi-rtr.entrypoints: 'https'
-          traefik.http.routers.jitsi-rtr.rule: 'Host(`{{sub.jitsi if sub_enabled else pgrole}}.{{user.domain}}`)'
+            traefik.http.routers.jitsi-rtr.rule: 'Host(`{{sub.jitsi if sub_enabled else pgrole}}.{{user.domain}}`)'
             traefik.http.routers.jitsi-rtr.tls: 'true'
             ## Middlewares
             #traefik.http.routers.jitsi-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
