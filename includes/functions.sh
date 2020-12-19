@@ -559,7 +559,7 @@ function script_plexdrive() {
 	
 
 	echo -e ""
-	read -p "Votre choix [1-4]: " PORT_CHOICE
+	read -p "Votre choix: " PORT_CHOICE
 
 	case $PORT_CHOICE in
 

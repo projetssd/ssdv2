@@ -23,7 +23,7 @@ echo -e "${CRED} /!\ ATTENTION : SAUVEGARDE DU SERVEUR IMMINENTE /!\ ${CEND}"
 echo -e "${CRED}-------------------------------------------------------${CEND}"
 
 # Stop Plex
-echo -e "${CCYAN}> Arrêt de docker${CEND}"
+echo -e "${CCYAN}> Arrêt de Plex${CEND}"
 docker stop plex
 sleep 5
 
@@ -39,7 +39,7 @@ echo ""
 mkdir -p $BACKUP_FOLDER
 
 echo -e "${CCYAN}> Création de l'archive${CEND}"
-tar -I pigz -cf $ARCHIVE -P /opt/seedbox /home/{{user.name}}/scripts /home/{{user.name}}/resume /etc/systemd
+tar -I pigz -cf $ARCHIVE -P /opt/seedbox /home/{{user.name}}/scripts /home/{{user.name}}/resume /root/.config/rclone/rclone.conf /etc/systemd
 sleep 2s
 
 # Si une erreur survient lors de la compression
