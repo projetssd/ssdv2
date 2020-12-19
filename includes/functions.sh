@@ -721,29 +721,29 @@ function script_plexdrive() {
 				esac
 			;;
 			2) ## utilitaires
-				clear
-				logo
-				echo ""
-				echo -e "${CCYAN}UTILITAIRES${CEND}"
-				echo -e "${CGREEN}${CEND}"
-			        echo -e "${CGREEN}   1) Installation du motd${CEND}"
-			        echo -e "${CGREEN}   2) Traktarr${CEND}"
-			        echo -e "${CGREEN}   3) Webtools${CEND}"
-			        echo -e "${CGREEN}   4) rtorrent-cleaner de ${CCYAN}@Magicalex-Mondedie.fr${CEND}${NC}"
-			        echo -e "${CGREEN}   5) Plex_Patrol${CEND}"
-			        echo -e "${CGREEN}   6) Modèle Création Appli Personnalisée Docker${CEND}"
-			        if docker ps | grep -q mailserver; then
+                         clear
+                         logo
+                         echo ""
+                         echo -e "${CCYAN}UTILITAIRES${CEND}"
+                         echo -e "${CGREEN}${CEND}"
+                         echo -e "${CGREEN}   1) Installation du motd${CEND}"
+                         echo -e "${CGREEN}   2) Traktarr${CEND}"
+			      echo -e "${CGREEN}   3) Webtools${CEND}"
+			      echo -e "${CGREEN}   4) rtorrent-cleaner de ${CCYAN}@Magicalex-Mondedie.fr${CEND}${NC}"
+			      echo -e "${CGREEN}   5) Plex_Patrol${CEND}"
+			      echo -e "${CGREEN}   6) Modèle Création Appli Personnalisée Docker${CEND}"
+			      if docker ps | grep -q mailserver; then
 			        echo -e "${YELLOW}   7) Desinstaller Mailserver ${CCYAN}@Hardware-Mondedie.fr${CEND}${NC}"
-			        else
+			      else
 			        echo -e "${CGREEN}   7) Installer Mailserver ${CCYAN}@Hardware-Mondedie.fr${CEND}${NC}"
-			        fi
-			        echo -e "${CGREEN}   8) Bloquer les ports non vitaux avec UFW${CEND}"
-				echo -e "${CGREEN}   9) Retour menu principal${CEND}"
-
-
-				echo -e ""
-				read -p "Votre choix [1-8]: " UTIL
-				case $UTIL in
+			      fi
+			      echo -e "${CGREEN}   8) Bloquer les ports non vitaux avec UFW${CEND}"
+			      echo -e "${CGREEN}   9) Configuration du Backup${CEND}"
+                         echo -e "${CGREEN}   10) Retour menu principal${CEND}"
+                         echo -e ""
+                         
+                         read -p "Votre choix [1-8]: " UTIL
+                         case $UTIL in
 
 
 			        1) ## Installation du motd
@@ -826,10 +826,21 @@ function script_plexdrive() {
 			        install_ufw
 			        ;;
 
-				9)
-				script_plexdrive
-				;;
-			        esac
+			        9)
+			        clear
+                           echo -e " ${BLUE}* Configuration du Backup${NC}"
+                           echo ""
+			        ansible-playbook /opt/seedbox-compose/includes/config/roles/backup/tasks/main.yml
+                           echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+                           read -r
+
+				 script_plexdrive
+			       ;;
+
+				 10)
+				 script_plexdrive
+				 ;;
+			       esac
                         ;;
 
                         3) ### creation share drive + rclone.conf
