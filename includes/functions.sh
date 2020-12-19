@@ -728,18 +728,19 @@ function script_plexdrive() {
                          echo -e "${CGREEN}${CEND}"
                          echo -e "${CGREEN}   1) Installation du motd${CEND}"
                          echo -e "${CGREEN}   2) Traktarr${CEND}"
-			      echo -e "${CGREEN}   3) Webtools${CEND}"
-			      echo -e "${CGREEN}   4) rtorrent-cleaner de ${CCYAN}@Magicalex-Mondedie.fr${CEND}${NC}"
-			      echo -e "${CGREEN}   5) Plex_Patrol${CEND}"
-			      echo -e "${CGREEN}   6) Modèle Création Appli Personnalisée Docker${CEND}"
-			      if docker ps | grep -q mailserver; then
-			        echo -e "${YELLOW}   7) Desinstaller Mailserver ${CCYAN}@Hardware-Mondedie.fr${CEND}${NC}"
-			      else
-			        echo -e "${CGREEN}   7) Installer Mailserver ${CCYAN}@Hardware-Mondedie.fr${CEND}${NC}"
-			      fi
-			      echo -e "${CGREEN}   8) Bloquer les ports non vitaux avec UFW${CEND}"
-			      echo -e "${CGREEN}   9) Configuration du Backup${CEND}"
-                         echo -e "${CGREEN}   10) Retour menu principal${CEND}"
+                         echo -e "${CGREEN}   3) Webtools${CEND}"
+			 echo -e "${CGREEN}   4) rtorrent-cleaner de ${CCYAN}@Magicalex-Mondedie.fr${CEND}${NC}"
+			 echo -e "${CGREEN}   5) Plex_Patrol${CEND}"
+			 echo -e "${CGREEN}   6) Modèle Création Appli Personnalisée Docker${CEND}"
+			 if docker ps | grep -q mailserver; then
+                           echo -e "${YELLOW}   7) Desinstaller Mailserver ${CCYAN}@Hardware-Mondedie.fr${CEND}${NC}"
+                         else
+                           echo -e "${CGREEN}   7) Installer Mailserver ${CCYAN}@Hardware-Mondedie.fr${CEND}${NC}"
+                         fi
+                         echo -e "${CGREEN}   8) Bloquer les ports non vitaux avec UFW${CEND}"
+                         echo -e "${CGREEN}   9) Configuration du Backup${CEND}"
+                         echo -e "${CGREEN}   10) Installation Rclone && Plexdrive${CEND}"
+                         echo -e "${CGREEN}   11) Retour menu principal${CEND}"
                          echo -e ""
                          
                          read -p "Votre choix [1-8]: " UTIL
@@ -828,19 +829,52 @@ function script_plexdrive() {
 
 			        9)
 			        clear
-                           echo -e " ${BLUE}* Configuration du Backup${NC}"
-                           echo ""
+                                echo -e " ${BLUE}* Configuration du Backup${NC}"
+                                echo ""
 			        ansible-playbook /opt/seedbox-compose/includes/config/roles/backup/tasks/main.yml
-                           echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
-                           read -r
+                                echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+                                read -r
 
-				 script_plexdrive
-			       ;;
+                                script_plexdrive
+			        ;;
 
-				 10)
-				 script_plexdrive
-				 ;;
-			       esac
+			        10)
+                                clear
+                                logo
+                                echo ""
+                                echo -e "${CCYAN}RCLONE && PLEXDRIVE${CEND}"
+                                echo ""
+                                echo -e "${BWHITE} /!\ IMPORTANT:${CEND}${CRED} Si rclone est déjà installé, l installation de Plexdrive${CEND}"
+                                echo -e "${CRED} procède à la désinstallation de rclone et vice versa ${BWHITE} /!\ ${CEND}"
+                                echo -e "${CGREEN}${CEND}"
+                                echo -e "${CGREEN}   1) Installation Rclone${CEND}"
+                                echo -e "${CGREEN}   2) Installation plexdrive${CEND}"
+
+                                echo -e ""
+                         
+                                read -p "Votre choix: " RCLONE
+                                case $RCLONE in
+                                   
+                                      1)
+                                      install_rclone
+                                      echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+                                      read -r
+                                      script_plexdrive
+                                      ;;
+              
+                                      2)
+                                      install_plexdrive
+                                      echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+                                      read -r
+                                      script_plexdrive
+                                      ;;
+                                      esac
+			        ;;
+
+                                11)
+                                script_plexdrive
+                                ;;
+			        esac
                         ;;
 
                         3) ### creation share drive + rclone.conf
@@ -1327,6 +1361,27 @@ function install_watchtower() {
 	ansible-playbook watchtower.yml
 	checking_errors $?
 	echo ""
+}
+
+function install_plexdrive() {
+	echo -e "${BLUE}### PLEXDRIVE ###${NC}"
+        echo ""
+	mkdir -p /mnt/plexdrive > /dev/null 2>&1
+        ansible-playbook /opt/seedbox-compose/includes/config/roles/plexdrive/tasks/main.yml
+        systemctl stop plexdrive > /dev/null 2>&1
+        ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+        echo ""
+        clear
+        echo -e " ${BWHITE}* Dès que le message ${NC}${CCYAN}"First cache build process started" apparait à l'écran, taper ${NC}${CCYAN}CTRL + C${NC}${BWHITE} pour poursuivre le script !${NC}"
+        grep "id_teamdrive" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+        if [ $? -eq 0 ]; then
+          team=$(grep "id_teamdrive" /opt/seedbox/variables/account.yml | cut -d':' -f2 |  sed 's/ //g') > /dev/null 2>&1
+          /usr/bin/plexdrive mount -v 3 --drive-id=$team --refresh-interval=1m --chunk-check-threads=8 --chunk-load-threads=8 --chunk-load-ahead=4 --max-chunks=100 --fuse-options=allow_other,read_only /mnt/plexdrive
+          systemctl start plexdrive > /dev/null 2>&1        
+        else
+          /usr/bin/plexdrive mount -v 3 --refresh-interval=1m --chunk-check-threads=8 --chunk-load-threads=8 --chunk-load-ahead=4 --max-chunks=100 --fuse-options=allow_other,read_only /mnt/plexdrive
+          systemctl start plexdrive > /dev/null 2>&1        
+        fi
 }
 
 function install_rclone() {

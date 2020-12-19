@@ -46,6 +46,35 @@
 
       when: plexdrive_service.stat.exists
 
+    - name: Check if rclone.service exists
+      stat:
+        path: "/etc/systemd/system/rclone.service"
+      register: rclone_service
+
+    - name: Service Tasks
+      block:
+
+      - name: Populate Service Facts
+        service_facts:
+
+      - name: Get rclone service state
+        set_fact:
+          rclone_service_running: "{{ (services['rclone.service'] is defined) and (services['rclone.service']['state'] == 'running') }}"
+
+      - name: Stop rclone service
+        systemd:
+          name: rclone
+          state: stopped
+          enabled: no
+        when: rclone_service_running
+
+      - name: delete rclone.service
+        shell: |
+          rm /etc/systemd/system/rclone.service
+        when: rclone_service_running
+
+      when: rclone_service.stat.exists
+
     - name: install plexdrive latest
       shell: |
         version=$(curl https://github.com/plexdrive/plexdrive/releases/latest -s -L -I -o /dev/null -w '%{url_effective}'| grep -o '[0-9.].[0-9.].[0-9.]')

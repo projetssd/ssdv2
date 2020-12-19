@@ -22,6 +22,35 @@
     - name: Install Binary Tasks
       import_tasks: "install_binary.yml"
 
+    - name: Check if plexdrive.service exists
+      stat:
+        path: "/etc/systemd/system/plexdrive.service"
+      register: plexdrive_service
+
+    - name: Service Tasks
+      block:
+
+      - name: Populate Service Facts
+        service_facts:
+
+      - name: Get plexdrive service state
+        set_fact:
+          plexdrive_service_running: "{{ (services['plexdrive.service'] is defined) and (services['plexdrive.service']['state'] == 'running') }}"
+
+      - name: Stop plexdrive service
+        systemd:
+          name: plexdrive
+          state: stopped
+          enabled: no
+        when: plexdrive_service_running
+
+      - name: delete plexdrive.service
+        shell: |
+          rm /etc/systemd/system/plexdrive.service
+        when: plexdrive_service_running
+
+      when: plexdrive_service.stat.exists
+
     - name: Check if rclone.service exists
       stat:
         path: "/etc/systemd/system/rclone.service"
