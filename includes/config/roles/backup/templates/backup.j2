@@ -24,7 +24,7 @@ echo -e "${CRED}-------------------------------------------------------${CEND}"
 
 # Stop Plex
 echo -e "${CCYAN}> Arrêt de docker${CEND}"
-docker stop `docker ps -q`
+docker stop plex
 sleep 5
 
 echo ""
@@ -39,7 +39,7 @@ echo ""
 mkdir -p $BACKUP_FOLDER
 
 echo -e "${CCYAN}> Création de l'archive${CEND}"
-tar -I pigz -cf $ARCHIVE -P /opt/seedbox /home/{{user.name}}/scripts /home/{{user.name}}/resume /root/.config /root/.plexdrive /etc/systemd
+tar -I pigz -cf $ARCHIVE -P /opt/seedbox /home/{{user.name}}/scripts /home/{{user.name}}/resume /etc/systemd
 sleep 2s
 
 # Si une erreur survient lors de la compression
@@ -51,7 +51,7 @@ fi
 
 # Restart Plex
 echo -e "${CCYAN}> Lancement de docker${CEND}"
-docker start $(docker ps -a -q --filter "status=exited")
+docker start plex
 sleep 5
 
 
