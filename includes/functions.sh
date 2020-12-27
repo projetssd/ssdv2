@@ -584,7 +584,7 @@ function script_plexdrive() {
 			echo -e "${CGREEN}   4) Outils (autoscan, crop, cloudplow, plex-autoscan, plex_dupefinder)${CEND}"
 			echo -e "${CGREEN}   5) Comptes de Service${CEND}"
 			echo -e "${CGREEN}   6) Migration Gdrive/Share Drive ==> Share Drive${CEND}"
-			echo -e "${CGREEN}   7) Migration plexdrive ==> rclone vfs${CEND}"
+			echo -e "${CGREEN}   7) Installation Rclone vfs && Plexdrive + cache rclone vfs${CEND}"
 			echo -e "${CGREEN}   8) Retour menu principal${CEND}"
 			echo -e ""
 			read -p "Votre choix [1-8]: " GESTION
@@ -739,8 +739,7 @@ function script_plexdrive() {
                          fi
                          echo -e "${CGREEN}   8) Bloquer les ports non vitaux avec UFW${CEND}"
                          echo -e "${CGREEN}   9) Configuration du Backup${CEND}"
-                         echo -e "${CGREEN}   10) Installation Rclone && Plexdrive${CEND}"
-                         echo -e "${CGREEN}   11) Retour menu principal${CEND}"
+                         echo -e "${CGREEN}   10) Retour menu principal${CEND}"
                          echo -e ""
                          
                          read -p "Votre choix [1-8]: " UTIL
@@ -838,40 +837,7 @@ function script_plexdrive() {
                                 script_plexdrive
 			        ;;
 
-			        10)
-                                clear
-                                logo
-                                echo ""
-                                echo -e "${CCYAN}RCLONE && PLEXDRIVE${CEND}"
-                                echo ""
-                                echo -e "${BWHITE} /!\ IMPORTANT:${CEND}${CRED} Si rclone est déjà installé, l installation de Plexdrive${CEND}"
-                                echo -e "${CRED} procède à la désinstallation de rclone et vice versa ${BWHITE} /!\ ${CEND}"
-                                echo -e "${CGREEN}${CEND}"
-                                echo -e "${CGREEN}   1) Installation Rclone${CEND}"
-                                echo -e "${CGREEN}   2) Installation plexdrive${CEND}"
-
-                                echo -e ""
-                         
-                                read -p "Votre choix: " RCLONE
-                                case $RCLONE in
-                                   
-                                      1)
-                                      install_rclone
-                                      echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
-                                      read -r
-                                      script_plexdrive
-                                      ;;
-              
-                                      2)
-                                      install_plexdrive
-                                      echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
-                                      read -r
-                                      script_plexdrive
-                                      ;;
-                                      esac
-			        ;;
-
-                                11)
+                                10)
                                 script_plexdrive
                                 ;;
 			        esac
@@ -1176,11 +1142,39 @@ function script_plexdrive() {
                                     esac
 
                        ;;
-                       7) ## Migration plexdrive => rclone vfs
-                       /opt/seedbox-compose/includes/config/scripts/rclonevfs
-                       pause
-		       script_plexdrive
-		       ;;
+
+                       7)
+                       clear
+                       logo
+                       echo ""
+                       echo -e "${CCYAN}RCLONE && PLEXDRIVE${CEND}"
+                       echo ""
+                       echo -e "${CGREEN}   1) Installation rclone vfs${CEND}"
+                       echo -e "${CGREEN}   2) Installation plexdrive + cache rclone vfs${CEND}"
+                       echo -e ""
+                         
+                      read -p "Votre choix: " RCLONE
+                      case $RCLONE in
+                                   
+                           1)
+                           install_rclone
+                           unionfs_fuse
+                           echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+                           read -r
+                           script_plexdrive
+                           ;;
+              
+                           2)
+                           clear
+                           /opt/seedbox-compose/includes/config/scripts/plexdrive.sh
+                           install_plexdrive
+                           docker restart plex > /dev/null 2>&1
+                           echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+                           read -r
+                           script_plexdrive
+                           ;;
+                           esac
+                       ;;
 
                        8) ## retour menu principal
                        script_plexdrive
@@ -1396,7 +1390,7 @@ function install_rclone() {
 
 function unionfs_fuse() {
 	echo -e "${BLUE}### Unionfs-Fuse ###${NC}"
-	echo -e " ${BWHITE}* Installation Unionfs${NC}"
+	echo -e " ${BWHITE}* Installation Mergerfs${NC}"
 	ansible-playbook /opt/seedbox-compose/includes/config/roles/unionfs/tasks/main.yml
 	checking_errors $?	
 echo ""

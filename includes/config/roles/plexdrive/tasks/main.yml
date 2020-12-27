@@ -17,10 +17,10 @@
           )
             else false }}"
 
-    - name: Check if plexdrive.service exists
+    - name: Check if mergerfs.service exists
       stat:
-        path: "/etc/systemd/system/plexdrive.service"
-      register: plexdrive_service
+        path: "/etc/systemd/system/mergerfs.service"
+      register: mergerfs_service
 
     - name: Service Tasks
       block:
@@ -28,23 +28,23 @@
       - name: Populate Service Facts
         service_facts:
 
-      - name: Get plexdrive service state
+      - name: Get mergerfs service state
         set_fact:
-          plexdrive_service_running: "{{ (services['plexdrive.service'] is defined) and (services['plexdrive.service']['state'] == 'running') }}"
+          mergerfs_service_running: "{{ (services['rclone.service'] is defined) and (services['rclone.service']['state'] == 'running') }}"
 
-      - name: Stop plexdrive service
+      - name: Stop mergerfs service
         systemd:
-          name: plexdrive
+          name: mergerfs
           state: stopped
           enabled: no
-        when: plexdrive_service_running
+        when: mergerfs_service_running
 
-      - name: delete plexdrive.service
+      - name: delete mergerfs.service
         shell: |
-          rm /etc/systemd/system/plexdrive.service
-        when: plexdrive_service_running
+          rm /etc/systemd/system/mergerfs.service
+        when: mergerfs_service_running
 
-      when: plexdrive_service.stat.exists
+      when: mergerfs_service.stat.exists
 
     - name: Check if rclone.service exists
       stat:
@@ -75,6 +75,35 @@
 
       when: rclone_service.stat.exists
 
+    - name: Check if plexdrive.service exists
+      stat:
+        path: "/etc/systemd/system/plexdrive.service"
+      register: plexdrive_service
+
+    - name: Service Tasks
+      block:
+
+      - name: Populate Service Facts
+        service_facts:
+
+      - name: Get plexdrive service state
+        set_fact:
+          plexdrive_service_running: "{{ (services['plexdrive.service'] is defined) and (services['plexdrive.service']['state'] == 'running') }}"
+
+      - name: Stop plexdrive service
+        systemd:
+          name: plexdrive
+          state: stopped
+          enabled: no
+        when: plexdrive_service_running
+
+      - name: delete plexdrive.service
+        shell: |
+          rm /etc/systemd/system/plexdrive.service
+        when: plexdrive_service_running
+
+      when: plexdrive_service.stat.exists
+
     - name: install plexdrive latest
       shell: |
         version=$(curl https://github.com/plexdrive/plexdrive/releases/latest -s -L -I -o /dev/null -w '%{url_effective}'| grep -o '[0-9.].[0-9.].[0-9.]')
@@ -94,9 +123,33 @@
         dest: /etc/systemd/system/plexdrive.service
       when: not teamdrive_enabled
 
+    - name: Import systemd
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/unionfs/templates/mergerfs.service.j2
+        dest: /etc/systemd/system/mergerfs.service
+
+    - name: Import systemd
+      template:
+        src: /opt/seedbox-compose/includes/config/roles/rclone/templates/rclone_plexdrive.service.j2
+        dest: /etc/systemd/system/rclone.service
+
     - name: started Systemd plexdrive.service
       systemd:
         state: started
         daemon_reload: yes
         enabled: yes      
         name: plexdrive.service
+
+    - name: started Systemd mergerfs.service
+      systemd:
+        state: started
+        daemon_reload: yes
+        enabled: yes      
+        name: mergerfs.service
+
+    - name: started Systemd rclone.service
+      systemd:
+        state: started
+        daemon_reload: yes
+        enabled: yes      
+        name: rclone.service

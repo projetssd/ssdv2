@@ -10,11 +10,8 @@
 ---
 - hosts: localhost
   gather_facts: true
-  vars_prompt:
-    - name: "unionfs"
-      prompt: "Choisir le type de montage souhaité (default --> mergerfs): unionfs ou mergerfs"
-      default: "mergerfs"
-      private: no
+  vars:
+    unionfs: mergerfs
   vars_files:
     - ['settings.yml']
     - [/opt/seedbox/variables/account.yml]
