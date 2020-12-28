@@ -584,7 +584,7 @@ function script_plexdrive() {
 			echo -e "${CGREEN}   4) Outils (autoscan, crop, cloudplow, plex-autoscan, plex_dupefinder)${CEND}"
 			echo -e "${CGREEN}   5) Comptes de Service${CEND}"
 			echo -e "${CGREEN}   6) Migration Gdrive/Share Drive ==> Share Drive${CEND}"
-			echo -e "${CGREEN}   7) Installation Rclone vfs && Plexdrive + cache rclone vfs${CEND}"
+			echo -e "${CGREEN}   7) Installation Rclone vfs && Plexdrive${CEND}"
 			echo -e "${CGREEN}   8) Retour menu principal${CEND}"
 			echo -e ""
 			read -p "Votre choix [1-8]: " GESTION
@@ -1151,6 +1151,7 @@ function script_plexdrive() {
                        echo ""
                        echo -e "${CGREEN}   1) Installation rclone vfs${CEND}"
                        echo -e "${CGREEN}   2) Installation plexdrive + cache rclone vfs${CEND}"
+                       echo -e "${CGREEN}   3) Installation plexdrive sans cache rclone vfs${CEND}"
                        echo -e ""
                          
                       read -p "Votre choix: " RCLONE
@@ -1168,6 +1169,16 @@ function script_plexdrive() {
                            clear
                            /opt/seedbox-compose/includes/config/scripts/plexdrive.sh
                            install_plexdrive
+                           docker restart plex > /dev/null 2>&1
+                           echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+                           read -r
+                           script_plexdrive
+                           ;;
+
+                           3)
+                           clear
+                           /opt/seedbox-compose/includes/config/scripts/plexdrive.sh
+                           plexdrive
                            docker restart plex > /dev/null 2>&1
                            echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
                            read -r
@@ -1362,6 +1373,27 @@ function install_plexdrive() {
         echo ""
 	mkdir -p /mnt/plexdrive > /dev/null 2>&1
         ansible-playbook /opt/seedbox-compose/includes/config/roles/plexdrive/tasks/main.yml
+        systemctl stop plexdrive > /dev/null 2>&1
+        ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+        echo ""
+        clear
+        echo -e " ${BWHITE}* Dès que le message ${NC}${CCYAN}"First cache build process started" apparait à l'écran, taper ${NC}${CCYAN}CTRL + C${NC}${BWHITE} pour poursuivre le script !${NC}"
+        grep "id_teamdrive" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+        if [ $? -eq 0 ]; then
+          team=$(grep "id_teamdrive" /opt/seedbox/variables/account.yml | cut -d':' -f2 |  sed 's/ //g') > /dev/null 2>&1
+          /usr/bin/plexdrive mount -v 3 --drive-id=$team --refresh-interval=1m --chunk-check-threads=8 --chunk-load-threads=8 --chunk-load-ahead=4 --max-chunks=100 --fuse-options=allow_other,read_only /mnt/plexdrive
+          systemctl start plexdrive > /dev/null 2>&1        
+        else
+          /usr/bin/plexdrive mount -v 3 --refresh-interval=1m --chunk-check-threads=8 --chunk-load-threads=8 --chunk-load-ahead=4 --max-chunks=100 --fuse-options=allow_other,read_only /mnt/plexdrive
+          systemctl start plexdrive > /dev/null 2>&1        
+        fi
+}
+
+function plexdrive() {
+	echo -e "${BLUE}### PLEXDRIVE ###${NC}"
+        echo ""
+	mkdir -p /mnt/plexdrive > /dev/null 2>&1
+        ansible-playbook /opt/seedbox-compose/includes/config/roles/plexdrive/tasks/plexdrive.yml
         systemctl stop plexdrive > /dev/null 2>&1
         ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
         echo ""

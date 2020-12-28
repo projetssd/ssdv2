@@ -1,0 +1,16 @@
+[Unit]
+Description=MergerFS Mount
+After=network-online.target
+
+[Service]
+Type=forking
+GuessMainPID=no
+ExecStart=/usr/bin/mergerfs \
+  -o category.create=ff,async_read=false,cache.files=partial \
+  -o dropcacheonclose=true,use_ino,minfreespace=0 \
+  -o xattr=nosys,statfs_ignore=ro,allow_other,umask=002,noatime \
+  /home/{{ user.name }}/local=RW:/mnt/rclone/{{ user.name }}=NC /home/{{ user.name }}/Medias
+ExecStop=/bin/fusermount -u /home/{{ user.name }}/Medias
+
+[Install]
+WantedBy=default.target

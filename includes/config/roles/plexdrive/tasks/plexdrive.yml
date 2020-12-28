@@ -30,7 +30,7 @@
 
       - name: Get mergerfs service state
         set_fact:
-          mergerfs_service_running: "{{ (services['mergerfs.service'] is defined) and (services['mergerfs.service']['state'] == 'running') }}"
+          mergerfs_service_running: "{{ (services['mergers.service'] is defined) and (services['mergers.service']['state'] == 'running') }}"
 
       - name: Stop mergerfs service
         systemd:
@@ -125,12 +125,12 @@
 
     - name: Import systemd
       template:
-        src: /opt/seedbox-compose/includes/config/roles/unionfs/templates/mergerfs.service.j2
+        src: /opt/seedbox-compose/includes/config/roles/unionfs/templates/mergerfs_only_plexdrive.service.j2
         dest: /etc/systemd/system/mergerfs.service
 
     - name: Import systemd
       template:
-        src: /opt/seedbox-compose/includes/config/roles/rclone/templates/rclone_plexdrive.service.j2
+        src: /opt/seedbox-compose/includes/config/roles/rclone/templates/rclone_only_plexdrive.service.j2
         dest: /etc/systemd/system/rclone.service
 
     - name: started Systemd plexdrive.service
