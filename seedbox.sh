@@ -12,12 +12,17 @@ CURRENT_SCRIPT=$(readlink -f "$0")
 # Absolute path this script is in.
 SCRIPTPATH=$(dirname "$CURRENT_SCRIPT")
 
+
 # shellcheck source=/opt/seedbox-compose/includes/functions.sh
 source "${SCRIPTPATH}/includes/functions.sh"
 # shellcheck source=/opt/seedbox-compose/includes/variables.sh
 source "${SCRIPTPATH}/includes/variables.sh"
 clear
-if [[ ! -d "$CONFDIR" ]]; then
+if test -f "${SCRIPTPATH}/ssddb";
+  # le fichier de conf existe
+  IS_INSTALLED=select_seedbox_param "installed"
+else
+  # Aucun fichier de conf
   echo -e "${CCYAN}
    ___  ____  ____  ____  ____  _____  _  _
   / __)( ___)(  _ \(  _ \(  _ \(  _  )( \/ )
@@ -31,109 +36,18 @@ if [[ ! -d "$CONFDIR" ]]; then
   echo -e "${CCYAN}[  INSTALLATION DES PRÉ-REQUIS  ]${CEND}"
   echo -e "${CCYAN}---------------------------------${CEND}"
   echo ""
-  echo -e "\n${CGREEN}Appuyer sur ${CEND}${CCYAN}[ENTREE]${CEND}${CGREEN} pour lancer le script${CEND}"
-  read -r
-
-  ## Constants
-  readonly PIP="9.0.3"
-  readonly ANSIBLE="2.5.14"
-
-  ## Environmental Variables
-  export DEBIAN_FRONTEND=noninteractive
-
-  ## Disable IPv6
-  if [ -f /etc/sysctl.d/99-sysctl.conf ]; then
-    grep -q -F 'net.ipv6.conf.all.disable_ipv6 = 1' /etc/sysctl.d/99-sysctl.conf ||
-      echo 'net.ipv6.conf.all.disable_ipv6 = 1' >>/etc/sysctl.d/99-sysctl.conf
-    grep -q -F 'net.ipv6.conf.default.disable_ipv6 = 1' /etc/sysctl.d/99-sysctl.conf ||
-      echo 'net.ipv6.conf.default.disable_ipv6 = 1' >>/etc/sysctl.d/99-sysctl.conf
-    grep -q -F 'net.ipv6.conf.lo.disable_ipv6 = 1' /etc/sysctl.d/99-sysctl.conf ||
-      echo 'net.ipv6.conf.lo.disable_ipv6 = 1' >>/etc/sysctl.d/99-sysctl.conf
-    sysctl -p
-  fi
-
-  ## Install Pre-Dependencies
-  apt-get install -y --reinstall \
-    software-properties-common \
-    apt-transport-https \
-    lsb-release
-  apt-get update
-
-  ## Add apt repos
-  osname=$(lsb_release -si)
-
-  if echo "$osname" "Debian" &>/dev/null; then
-    {
-      add-apt-repository main
-      add-apt-repository non-free
-      add-apt-repository contrib
-    } >>/dev/null 2>&1
-  elif echo "$osname" "Ubuntu" &>/dev/null; then
-    {
-      add-apt-repository main
-      add-apt-repository universe
-      add-apt-repository restricted
-      add-apt-repository multiverse
-    } >>/dev/null 2>&1
-
-  fi
-  apt-get update
-
-  ## Install apt Dependencies
-  apt-get install -y --reinstall \
-    nano \
-    git \
-    build-essential \
-    libssl-dev \
-    libffi-dev \
-    python3-dev \
-    python3-pip \
-    python-dev \
-    python-pip \
-    python-apt
+  echo -e "${CCYAN}Les prérequis ne sont pas installés. Merci de le faire en tapant${CEND}"
+  echo -e "${CYAN}sudo ./prerequis.sh${CEND}"
+  echo -e "${CYAN}avant de continuer${CEND}"
+  exit 1
+fi
 
 
-  ## Install pip3 Dependencies
-  python3 -m pip install --disable-pip-version-check --upgrade --force-reinstall \
-    pip==${PIP}
-  python3 -m pip install --disable-pip-version-check --upgrade --force-reinstall \
-    setuptools
-  python3 -m pip install --disable-pip-version-check --upgrade --force-reinstall \
-    pyOpenSSL \
-    requests \
-    netaddr
 
-  ## Install pip2 Dependencies
-  python -m pip install --disable-pip-version-check --upgrade --force-reinstall \
-    pip==${PIP}
-  python -m pip install --disable-pip-version-check --upgrade --force-reinstall \
-    setuptools
-  python -m pip install --disable-pip-version-check --upgrade --force-reinstall \
-    pyOpenSSL \
-    requests \
-    netaddr \
-    jmespath \
-    ansible==${1-$ANSIBLE}
 
-  # Configuration ansible
-  mkdir -p /etc/ansible/inventories/ 1>/dev/null 2>&1
-  cat <<EOF >/etc/ansible/inventories/local
-[local]
-127.0.0.1 ansible_connection=local
-EOF
+if [[ ${IS_INSTALLED} -eq 0 ]]; then
 
-  cat <<EOF >/etc/ansible/ansible.cfg
-[defaults]
-command_warnings = False
-callback_whitelist = profile_tasks
-deprecation_warnings=False
-inventory = /etc/ansible/inventories/local
-interpreter_python=/usr/bin/python
-EOF
-  ## Copy pip to /usr/bin
-  cp /usr/local/bin/pip /usr/bin/pip
-  cp /usr/local/bin/pip3 /usr/bin/pip3
-  pip uninstall -y cryptography
+
 
   clear
   logo
@@ -332,6 +246,7 @@ EOF
    ;;
 
   esac
+
 
 fi
 

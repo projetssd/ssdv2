@@ -2475,3 +2475,8 @@ function pause() {
 	read
 	echo ""
 }
+
+function select_seedbox_param() {
+  request="select value from seedbox_params where param ='"${1}"'"
+  sqlite3 ${SCRIPTPATH}/ssddb "${request}";
+}
