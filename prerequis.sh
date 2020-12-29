@@ -78,7 +78,7 @@ requests \
 netaddr \
 jmespath \
 ansible \
-docker-py
+docker
 
 # Configuration ansible
 mkdir -p /etc/ansible/inventories/ 1>/dev/null 2>&1
