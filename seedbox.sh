@@ -234,7 +234,6 @@ EOF
       install_base_packages
       install_docker
       define_parameters
-      install_plexdrive
       install_rclone
       install_fail2ban
       sauve
