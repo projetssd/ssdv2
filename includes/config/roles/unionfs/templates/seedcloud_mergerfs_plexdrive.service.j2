@@ -9,8 +9,8 @@ ExecStart=/usr/bin/mergerfs \
   -o category.create=ff,async_read=false,cache.files=partial \
   -o dropcacheonclose=true,use_ino,minfreespace=0 \
   -o xattr=nosys,statfs_ignore=ro,allow_other,umask=002,noatime \
-  /home/{{ user.name }}/local=RW:/mnt/rclone/{{ user.name }}=NC /home/{{ user.name }}/Medias
-ExecStop=/bin/fusermount -uz /home/{{ user.name }}/Medias
+  /home/{{ user.name }}/local=RW:/mnt/rcloneSeed/{{ user.name }}=NC /home/{{ user.name }}/SeedCloud
+ExecStop=/bin/fusermount -uz /home/{{ user.name }}/SeedCloud
 
 [Install]
 WantedBy=default.target

@@ -17,63 +17,25 @@
           )
             else false }}"
 
-    - name: Check if mergerfs.service exists
-      stat:
-        path: "/etc/systemd/system/mergerfs.service"
-      register: mergerfs_service
+    - name: "Containers | Gather list of running Docker containers"
+      shell: "docker ps --format '{{ '{{' }} .Names{{ '}}' }}' | xargs echo -n"
+      register: ssd_managed_containers
+      ignore_errors: yes
 
-    - name: Service Tasks
-      block:
+    - name: "Containers | Set 'containers_list' variable"
+      set_fact:
+        containers_list: "{{ ssd_managed_containers.stdout }}"
 
-      - name: Populate Service Facts
-        service_facts:
+    - name: "Containers | Stop all running Docker containers"
+      shell: "docker stop {{ containers_list }}"
+      ignore_errors: yes
+      when: (containers_list | trim | length > 0)
 
-      - name: Get mergerfs service state
-        set_fact:
-          mergerfs_service_running: "{{ (services['mergers.service'] is defined) and (services['mergers.service']['state'] == 'running') }}"
-
-      - name: Stop mergerfs service
-        systemd:
-          name: mergerfs
-          state: stopped
-          enabled: no
-        when: mergerfs_service_running
-
-      - name: delete mergerfs.service
-        shell: |
-          rm /etc/systemd/system/mergerfs.service
-        when: mergerfs_service_running
-
-      when: mergerfs_service.stat.exists
-
-    - name: Check if rclone.service exists
-      stat:
-        path: "/etc/systemd/system/rclone.service"
-      register: rclone_service
-
-    - name: Service Tasks
-      block:
-
-      - name: Populate Service Facts
-        service_facts:
-
-      - name: Get rclone service state
-        set_fact:
-          rclone_service_running: "{{ (services['rclone.service'] is defined) and (services['rclone.service']['state'] == 'running') }}"
-
-      - name: Stop rclone service
-        systemd:
-          name: rclone
-          state: stopped
-          enabled: no
-        when: rclone_service_running
-
-      - name: delete rclone.service
-        shell: |
-          rm /etc/systemd/system/rclone.service
-        when: rclone_service_running
-
-      when: rclone_service.stat.exists
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775'
+      with_items:
+        - '/mnt/rcloneSeed'
+        - '/home/{{user.name}}/SeedCloud'
 
     - name: Check if plexdrive.service exists
       stat:
@@ -125,13 +87,13 @@
 
     - name: Import systemd
       template:
-        src: /opt/seedbox-compose/includes/config/roles/unionfs/templates/mergerfs_only_plexdrive.service.j2
-        dest: /etc/systemd/system/mergerfs.service
+        src: /opt/seedbox-compose/includes/config/roles/unionfs/templates/seedcloud_mergerfs_plexdrive.service.j2
+        dest: /etc/systemd/system/mergerfs_plexdrive.service
 
     - name: Import systemd
       template:
-        src: /opt/seedbox-compose/includes/config/roles/rclone/templates/rclone_only_plexdrive.service.j2
-        dest: /etc/systemd/system/rclone.service
+        src: /opt/seedbox-compose/includes/config/roles/rclone/templates/rclone_rcloneSeed_plexdrive.j2
+        dest: /etc/systemd/system/rclone_plexdrive.service
 
     - name: started Systemd plexdrive.service
       systemd:
@@ -145,11 +107,17 @@
         state: started
         daemon_reload: yes
         enabled: yes      
-        name: mergerfs.service
+        name: mergerfs_plexdrive.service
 
     - name: started Systemd rclone.service
       systemd:
         state: started
         daemon_reload: yes
         enabled: yes      
-        name: rclone.service
+        name: rclone_plexdrive.service
+
+    - name: "Containers | Start all previously running Docker containers"
+      shell: "docker start {{ containers_list }}"
+      ignore_errors: yes
+      when: (containers_list | trim | length > 0)
+

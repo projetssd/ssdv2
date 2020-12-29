@@ -1150,8 +1150,8 @@ function script_plexdrive() {
                        echo -e "${CCYAN}RCLONE && PLEXDRIVE${CEND}"
                        echo ""
                        echo -e "${CGREEN}   1) Installation rclone vfs${CEND}"
-                       echo -e "${CGREEN}   2) Installation plexdrive + cache rclone vfs${CEND}"
-                       echo -e "${CGREEN}   3) Installation plexdrive sans cache rclone vfs${CEND}"
+                       echo -e "${CGREEN}   2) Installation plexdrive${CEND}"
+                       echo -e "${CGREEN}   3) Installation plexdrive + rclone vfs${CEND}"
                        echo -e ""
                          
                       read -p "Votre choix: " RCLONE
@@ -1169,7 +1169,6 @@ function script_plexdrive() {
                            clear
                            /opt/seedbox-compose/includes/config/scripts/plexdrive.sh
                            install_plexdrive
-                           docker restart plex > /dev/null 2>&1
                            echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
                            read -r
                            script_plexdrive
@@ -1177,9 +1176,10 @@ function script_plexdrive() {
 
                            3)
                            clear
+                           install_rclone
+                           unionfs_fuse
                            /opt/seedbox-compose/includes/config/scripts/plexdrive.sh
                            plexdrive
-                           docker restart plex > /dev/null 2>&1
                            echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
                            read -r
                            script_plexdrive
