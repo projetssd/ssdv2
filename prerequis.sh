@@ -6,6 +6,11 @@
 # il ne sera pas touché                                       #
 ###############################################################
 
+if [ "$USER" != "root" ]; then
+  echo "Ce script doit être lancé par root ou en sudo"
+  exit 1
+fi
+
 # Absolute path to this script.
 CURRENT_SCRIPT=$(readlink -f "$0")
 # Absolute path this script is in.
@@ -53,9 +58,14 @@ libssl-dev \
 libffi-dev \
 python3-dev \
 python3-pip \
+pyton3-docker \
 python-dev \
 python-apt \
 sqlite3
+
+apt-get remove -y  python2
+
+ln -s /usr/bin/python3 /usr/bin/python
 
 ## Install pip3 Dependencies
 python3 -m pip install --disable-pip-version-check --upgrade --force-reinstall \
@@ -65,7 +75,10 @@ setuptools
 python3 -m pip install --disable-pip-version-check --upgrade --force-reinstall \
 pyOpenSSL \
 requests \
-netaddr
+netaddr \
+jmespath \
+ansible \
+docker-py
 
 # Configuration ansible
 mkdir -p /etc/ansible/inventories/ 1>/dev/null 2>&1
@@ -81,6 +94,7 @@ callback_whitelist = profile_tasks
 deprecation_warnings=False
 inventory = /etc/ansible/inventories/local
 interpreter_python=/usr/bin/python
+vault_password_file = ~/.vault_pass
 EOF
 ## Copy pip to /usr/bin
 cp /usr/local/bin/pip /usr/bin/pip
@@ -93,7 +107,9 @@ else
   echo "Création de la configuration en cours"
   # On créé la database
   sqlite3 ${SCRIPTPATH}/ssddb <<EOF
-    create table seedbox_params(param varchar(50), value varchar(50));
-    insert into seedbox_params (param,value) values ('installed',0);
+    create table seedbox_params(param varchar(50) PRIMARY KEY, value varchar(50));
+    replace into seedbox_params (param,value) values ('installed',0);
+    replace into seedbox_params (param,value) values ('seedbox_path','/opt/seedbox');
+    
 EOF
 fi

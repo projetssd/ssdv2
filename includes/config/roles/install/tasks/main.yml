@@ -10,6 +10,7 @@
 ---
 - hosts: localhost
   gather_facts: true
+  become: yes
   tasks:
 
     - name: Install required packages
@@ -93,12 +94,7 @@
           - "jq"
           - "lib32z1"
           - "moreutils"
-      ignore_errors: yes
-
-    - name: Install unrar
-      apt:
-        name: unrar
-        state: present
+          - "unrar"
       ignore_errors: yes
 
     - name: Check to see if unrar installed

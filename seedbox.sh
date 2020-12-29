@@ -1,26 +1,33 @@
 #!/bin/bash
 
-#####################################
-# TEST ROOT USER
-if [ "$USER" != "root" ]; then
-  echo "Ce script doit être lancé par root"
-  exit 1
-fi
-
 # Absolute path to this script.
 CURRENT_SCRIPT=$(readlink -f "$0")
 # Absolute path this script is in.
-SCRIPTPATH=$(dirname "$CURRENT_SCRIPT")
+export SCRIPTPATH=$(dirname "$CURRENT_SCRIPT")
 
 
-# shellcheck source=/opt/seedbox-compose/includes/functions.sh
+# shellcheck source=${BASEDIR}/includes/functions.sh
 source "${SCRIPTPATH}/includes/functions.sh"
-# shellcheck source=/opt/seedbox-compose/includes/variables.sh
+# shellcheck source=${BASEDIR}/includes/variables.sh
 source "${SCRIPTPATH}/includes/variables.sh"
+
+
+
+#####################################
+# TEST ROOT USER
+if [ "$USER" == "root" ]; then
+  echo -e "${CCYAN}-----------------------${CEND}"
+  echo -e "${CCYAN}[  Lancement en root  ]${CEND}"
+  echo -e "${CCYAN}-----------------------${CEND}"
+  echo -e "${CCYAN}Pour des raisons de sécurité, il n'est pas conseillé de lancer ce script en root${CEND}"
+  read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
+fi
+
+
 clear
-if test -f "${SCRIPTPATH}/ssddb";
+if [ -f"${SCRIPTPATH}/ssddb" ]; then
   # le fichier de conf existe
-  IS_INSTALLED=select_seedbox_param "installed"
+  IS_INSTALLED=$(select_seedbox_param "installed")
 else
   # Aucun fichier de conf
   echo -e "${CCYAN}
@@ -43,12 +50,9 @@ else
 fi
 
 
-
-
 if [[ ${IS_INSTALLED} -eq 0 ]]; then
-
-
-
+  # Si on est là, c'est que le prérequis sont installés, mais c'est tout
+  # On propose donc l'install de la seedbox
   clear
   logo
   echo -e "${CCYAN}INSTALLATION SEEDBOX DOCKER${CEND}"
@@ -56,14 +60,15 @@ if [[ ${IS_INSTALLED} -eq 0 ]]; then
   echo -e "${CGREEN}   1) Installation Seedbox rclone && gdrive${CEND}"
   echo -e "${CGREEN}   2) Installation Seedbox Classique ${CEND}"
   echo -e "${CGREEN}   3) Restauration Seedbox${CEND}"
+  echo -e "${CGREEN}   9) Sortir du script${CEND}"
 
   echo -e ""
-  read -p "Votre choix [1-3]: " CHOICE
+  read -p "Votre choix : " CHOICE
   echo ""
   case $CHOICE in
 
 
-  1) ## Installation de la seedbox Plexdrive
+  1) ## Installation de la seedbox Rclone et Gdrive
 
     check_dir "$PWD"
     if [[ ! -d "$CONFDIR" ]]; then
@@ -96,7 +101,7 @@ if [[ ${IS_INSTALLED} -eq 0 ]]; then
       sauve
       resume_seedbox
       pause
-      ansible-vault encrypt /opt/seedbox/variables/account.yml >/dev/null 2>&1
+      ansible-vault encrypt ${CONFDIR}/variables/account.yml >/dev/null 2>&1
       script_plexdrive
     else
       script_plexdrive
@@ -125,8 +130,8 @@ if [[ ${IS_INSTALLED} -eq 0 ]]; then
       filebot
       resume_seedbox
       pause
-      ansible-vault encrypt /opt/seedbox/variables/account.yml >/dev/null 2>&1
-      touch "/opt/seedbox/media-$SEEDUSER"
+      ansible-vault encrypt ${CONFDIR}/variables/account.yml >/dev/null 2>&1
+      touch "${CONFDIR}/media-$SEEDUSER"
       script_classique
     else
       script_classique
@@ -191,7 +196,7 @@ if [[ ${IS_INSTALLED} -eq 0 ]]; then
       ## restauration des crons
       (
         crontab -l | grep .
-        echo "*/1 * * * * /opt/seedbox/docker/$SEEDUSER/.filebot/filebot-process.sh"
+        echo "*/1 * * * * ${CONFDIR}/docker/$SEEDUSER/.filebot/filebot-process.sh"
       ) | crontab -
       ln -s "/home/$SEEDUSER/scripts/plex_dupefinder/plex_dupefinder.py" /usr/local/bin/plexdupes
       rm $SERVICESUSER$SEEDUSER
@@ -202,32 +207,37 @@ if [[ ${IS_INSTALLED} -eq 0 ]]; then
       echo -e "${CRED}---------------------------------------------------------------${CEND}"
       echo ""
       pause
-      ansible-vault encrypt /opt/seedbox/variables/account.yml >/dev/null 2>&1
+      ansible-vault encrypt ${CONFDIR}/variables/account.yml >/dev/null 2>&1
       script_plexdrive
     else
       script_plexdrive
     fi
     ;;
+  9)
+    exit 0
+    ;;
 
   999) ## Installation seedbox webui
-      mkdir -p /opt/seedbox/variables
-
-      /opt/seedbox-compose/includes/config/scripts/add_user.sh
+      #mkdir -p ${CONFDIR}/variables
+      conf_dir
+      ${BASEDIR}/includes/config/scripts/get_infos.sh
       echo ""
       status
       update_system
       install_base_packages
       install_docker
-      ansible-playbook /opt/seedbox-compose/includes/config/roles/nginx/tasks/main.yml
+      ansible-playbook ${BASEDIR}/includes/config/roles/users/tasks/main.yml
+      ansible-playbook ${BASEDIR}/includes/config/roles/nginx/tasks/main.yml
       install_traefik
 
-      DOMAIN=$(grep domain /opt/seedbox/variables/account.yml | cut -d ':' -f2 |  tr -d ' ')
-      grep "gui" /opt/seedbox/variables/account.yml > /dev/null 2>&1
-      if [ $? -eq 0 ]; then
-        SUBDOMAIN=$(grep gui /opt/seedbox/variables/account.yml | cut -d ':' -f2 |  tr -d ' ')
-      else
-        SUBDOMAIN="gui"
-      fi
+      DOMAIN=$(select_seedbox_param "domain")
+      #DOMAIN=$(grep domain ${CONFDIR}/variables/account.yml | cut -d ':' -f2 |  tr -d ' ')
+      #grep "gui" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+      #if [ $? -eq 0 ]; then
+        #SUBDOMAIN=$(grep gui ${CONFDIR}/variables/account.yml | cut -d ':' -f2 |  tr -d ' ')
+      #else
+        #SUBDOMAIN="gui"
+      #fi
 
       echo -e "${CRED}---------------------------------------------------------------${CEND}"
       echo -e "${CRED}          /!\ INSTALLATION EFFECTUEE AVEC SUCCES /!\           ${CEND}"
@@ -239,7 +249,7 @@ if [[ ${IS_INSTALLED} -eq 0 ]]; then
       echo -e "${CRED}---------------------------------------------------------------${CEND}"
       echo ""
 
-      ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+      ansible-vault encrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
       echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour sortir du script..."
       read -r
       exit 1
@@ -252,13 +262,13 @@ fi
 
 status
 
-if [ ! -d "/opt/seedbox/status" ]
+if [ ! -d "${CONFDIR}/status" ]
 then
-  mkdir -p /opt/seedbox/status
+  mkdir -p ${CONFDIR}/status
 fi
 for i in $(docker ps --format "{{.Names}}" --filter "network=traefik_proxy")
 do
-  echo "2" > /opt/seedbox/status/${i}
+  echo "2" > ${CONFDIR}/status/${i}
 
 done
 

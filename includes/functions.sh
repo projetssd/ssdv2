@@ -30,26 +30,24 @@ echo ""
 }
 
 function update_system() {
-		#Mise à jour systeme
-			echo -e "${BLUE}### MISE A JOUR DU SYTEME ###${NC}"
-			ansible-playbook /opt/seedbox-compose/includes/config/roles/system/tasks/main.yml
-			checking_errors $?
+	#Mise à jour systeme
+	echo -e "${BLUE}### MISE A JOUR DU SYTEME ###${NC}"
+	ansible-playbook ${BASEDIR}/includes/config/roles/system/tasks/main.yml
+	checking_errors $?
 }
 
 function status() {
-if [[ ! -d "/opt/seedbox/status" ]]; then
-  mkdir -p /opt/seedbox/status
-  for app in $(cat /opt/seedbox-compose/includes/config/services-available)
-  do
-   service=$(echo $app | tr '[:upper:]' '[:lower:]' | cut -d\- -f1)
-   echo "0" >> /opt/seedbox/status/$service
-  done
-  for app in $(cat /opt/seedbox-compose/includes/config/other-services-available)
-  do
-   service=$(echo $app | tr '[:upper:]' '[:lower:]' | cut -d\- -f1)
-   echo "0" >> /opt/seedbox/status/$service
-  done
-fi
+	create_dir ${CONFDIR}/status
+	for app in $(cat ${BASEDIR}/includes/config/services-available)
+	do
+		service=$(echo $app | tr '[:upper:]' '[:lower:]' | cut -d\- -f1)
+		echo "0" >> ${CONFDIR}/status/$service
+	done
+	for app in $(cat ${BASEDIR}/includes/config/other-services-available)
+	do
+		service=$(echo $app | tr '[:upper:]' '[:lower:]' | cut -d\- -f1)
+		echo "0" >> ${CONFDIR}/status/$service
+	done
 }
 
 function cloudflare() {
@@ -67,7 +65,7 @@ function cloudflare() {
 			read -rp $'\e[33mSouhaitez vous utiliser les DNS Cloudflare ? (o/n)\e[0m :' OUI
 
 			if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
-				ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+				ansible-vault decrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 				if [ -z "$cloud_email" ] || [ -z "$cloud_api" ]; then
     				cloud_email=$1
     				cloud_api=$2
@@ -76,20 +74,20 @@ function cloudflare() {
 				while [ -z "$cloud_email" ]; do
     				>&2 echo -n -e "${BWHITE}Votre Email Cloudflare: ${CEND}"
     				read cloud_email
-				sed -i "/login:/c\   login: $cloud_email" /opt/seedbox/variables/account.yml
+				sed -i "/login:/c\   login: $cloud_email" ${CONFDIR}/variables/account.yml
 				done
 
 				while [ -z "$cloud_api" ]; do
     				>&2 echo -n -e "${BWHITE}Votre API Cloudflare: ${CEND}"
     				read cloud_api
-				sed -i "/api:/c\   api: $cloud_api" /opt/seedbox/variables/account.yml
+				sed -i "/api:/c\   api: $cloud_api" ${CONFDIR}/variables/account.yml
 				done
 			fi
 		echo ""
 }
 
 function oauth() {
-		grep -w "client" /opt/seedbox/variables/account.yml | cut -d: -f2 | tr -d ' ' > /dev/null 2>&1
+		grep -w "client" ${CONFDIR}/variables/account.yml | cut -d: -f2 | tr -d ' ' > /dev/null 2>&1
 		if [[ "$?" != "0" ]]; then
 		echo -e "${BLUE}### Google OAuth2 avec Traefik – Secure SSO pour les services Docker ###${NC}"
 		echo ""
@@ -115,23 +113,23 @@ function oauth() {
 				while [ -z "$oauth_client" ]; do
     				>&2 echo -n -e "${BWHITE}Oauth_client: ${CEND}"
     				read oauth_client
-				sed -i "s/client:/client: $oauth_client/" /opt/seedbox/variables/account.yml
+				sed -i "s/client:/client: $oauth_client/" ${CONFDIR}/variables/account.yml
 				done
 
 				while [ -z "$oauth_secret" ]; do
     				>&2 echo -n -e "${BWHITE}Oauth_secret: ${CEND}"
     				read oauth_secret
-				sed -i "s/secret:/secret: $oauth_secret/" /opt/seedbox/variables/account.yml
+				sed -i "s/secret:/secret: $oauth_secret/" ${CONFDIR}/variables/account.yml
 				done
 
 				while [ -z "$email" ]; do
     				>&2 echo -n -e "${BWHITE}Compte Gmail utilisé(s), séparés d'une virgule si plusieurs: ${CEND}"
     				read email
-				sed -i "s/account:/account: $email/" /opt/seedbox/variables/account.yml
+				sed -i "s/account:/account: $email/" ${CONFDIR}/variables/account.yml
 				done
 
 				openssl=$(openssl rand -hex 16)
-				sed -i "s/openssl:/openssl: $openssl/" /opt/seedbox/variables/account.yml
+				sed -i "s/openssl:/openssl: $openssl/" ${CONFDIR}/variables/account.yml
 
 				echo ""
     				echo -e "${CRED}---------------------------------------------------------------${CEND}"
@@ -154,7 +152,7 @@ function rtorrent-cleaner() {
 			echo -e " ${BWHITE}* Installation RTORRENT-CLEANER${NC}"
 
 			## choix de l'utilisateur
-			SEEDUSER=$(ls /opt/seedbox/media* | cut -d '-' -f2)
+			SEEDUSER=$(ls ${CONFDIR}/media* | cut -d '-' -f2)
 			cp -r $BASEDIR/includes/config/rtorrent-cleaner/rtorrent-cleaner /usr/local/bin
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /usr/local/bin/rtorrent-cleaner
 }
@@ -163,7 +161,7 @@ function motd() {
 			#configuration d'un motd avec ansible
 			echo -e "${BLUE}### MOTD ###${NC}"
 			echo -e " ${BWHITE}* Installation MOTD${NC}"
-			ansible-playbook /opt/seedbox-compose/includes/config/roles/motd/tasks/start.yml
+			ansible-playbook ${BASEDIR}/includes/config/roles/motd/tasks/start.yml
 			checking_errors $?
 			echo ""
 }
@@ -182,7 +180,7 @@ function sauve() {
 			#configuration Sauvegarde
 			echo -e "${BLUE}### BACKUP ###${NC}"
 			echo -e " ${BWHITE}* Mise en place Sauvegarde${NC}"
-			ansible-playbook /opt/seedbox-compose/includes/config/roles/backup/tasks/main.yml
+			ansible-playbook ${BASEDIR}/includes/config/roles/backup/tasks/main.yml
 			checking_errors $?
 			echo ""
 }
@@ -191,7 +189,7 @@ function plex_dupefinder() {
 			#configuration plex_dupefinder avec ansible
 			echo -e "${BLUE}### PLEX_DUPEFINDER ###${NC}"
 			echo -e " ${BWHITE}* Installation plex_dupefinder${NC}"
-			ansible-playbook /opt/seedbox-compose/includes/config/roles/plex_dupefinder/tasks/main.yml
+			ansible-playbook ${BASEDIR}/includes/config/roles/plex_dupefinder/tasks/main.yml
 			checking_errors $?
 }
 
@@ -199,7 +197,7 @@ function traktarr() {
 			##configuration traktarr avec ansible
 			echo -e "${BLUE}### TRAKTARR ###${NC}"
 			echo -e " ${BWHITE}* Installation traktarr${NC}"
-			ansible-playbook /opt/seedbox-compose/includes/config/roles/traktarr/tasks/main.yml
+			ansible-playbook ${BASEDIR}/includes/config/roles/traktarr/tasks/main.yml
 			checking_errors $?
 }
 
@@ -207,7 +205,7 @@ function webtools() {
 			##configuration Webtools avec ansible
 			echo -e "${BLUE}### WEBTOOLS ###${NC}"
 			echo -e " ${BWHITE}* Installation Webtools${NC}"
-			ansible-playbook /opt/seedbox-compose/includes/config/roles/webtools/tasks/main.yml
+			ansible-playbook ${BASEDIR}/includes/config/roles/webtools/tasks/main.yml
 			docker restart plex
 			checking_errors $?
 }
@@ -216,7 +214,7 @@ function plex_autoscan() {
 			#configuration plex_autoscan avec ansible
 			echo -e "${BLUE}### PLEX_AUTOSCAN ###${NC}"
 			echo -e " ${BWHITE}* Installation plex_autoscan${NC}"
-			ansible-playbook /opt/seedbox-compose/includes/config/roles/plex_autoscan/tasks/main.yml
+			ansible-playbook ${BASEDIR}/includes/config/roles/plex_autoscan/tasks/main.yml
 			checking_errors $?
 }
 
@@ -224,7 +222,7 @@ function autoscan() {
 			#configuration plex_autoscan avec ansible
 			echo -e "${BLUE}### AUTOSCAN ###${NC}"
 			echo -e " ${BWHITE}* Installation autoscan${NC}"
-			ansible-playbook /opt/seedbox-compose/includes/config/roles/autoscan/tasks/main.yml
+			ansible-playbook ${BASEDIR}/includes/config/roles/autoscan/tasks/main.yml
 			checking_errors $?
 }
 
@@ -232,9 +230,9 @@ function autoscan() {
 function crop() {
 			#configuration crop avec ansible
 			echo -e "${BLUE}### CROP ###${NC}"
-                        /opt/seedbox-compose/includes/config/scripts/crop.sh
+                        ${BASEDIR}/includes/config/scripts/crop.sh
 			echo -e " ${BWHITE}* Installation crop${NC}"
-			ansible-playbook /opt/seedbox-compose/includes/config/roles/crop/tasks/main.yml
+			ansible-playbook ${BASEDIR}/includes/config/roles/crop/tasks/main.yml
 			checking_errors $?
 }
 
@@ -242,7 +240,7 @@ function cloudplow() {
 			#configuration plex_autoscan avec ansible
 			echo -e "${BLUE}### CLOUDPLOW ###${NC}"
 			echo -e " ${BWHITE}* Installation cloudplow${NC}"			
-			ansible-playbook /opt/seedbox-compose/includes/config/roles/cloudplow/tasks/main.yml
+			ansible-playbook ${BASEDIR}/includes/config/roles/cloudplow/tasks/main.yml
 			checking_errors $?
 }
 
@@ -251,7 +249,7 @@ function filebot() {
 			echo ""
 			echo -e "${BLUE}### FILEBOT ###${NC}"
 			echo -e " ${BWHITE}* Installation filebot${NC}"
-			ansible-playbook /opt/seedbox-compose/includes/config/roles/filebot/tasks/main.yml
+			ansible-playbook ${BASEDIR}/includes/config/roles/filebot/tasks/main.yml
 			checking_errors $?
 			echo ""
 }
@@ -353,19 +351,19 @@ function script_classique() {
 				1)
 				clear
 				echo ""
-				/opt/seedbox-compose/includes/config/scripts/oauth.sh
+				${BASEDIR}/includes/config/scripts/oauth.sh
 				script_classique
 				;;
 
 				2)
 				clear
 				echo ""
-				ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
-				sed -i "/client:/c\   client: " /opt/seedbox/variables/account.yml
-				sed -i "/secret:/c\   secret: " /opt/seedbox/variables/account.yml
-				sed -i "/account:/c\   account: " /opt/seedbox/variables/account.yml
-				sed -i "/openssl:/c\   openssl: " /opt/seedbox/variables/account.yml
-				/opt/seedbox-compose/includes/config/scripts/basique.sh
+				ansible-vault decrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+				sed -i "/client:/c\   client: " ${CONFDIR}/variables/account.yml
+				sed -i "/secret:/c\   secret: " ${CONFDIR}/variables/account.yml
+				sed -i "/account:/c\   account: " ${CONFDIR}/variables/account.yml
+				sed -i "/openssl:/c\   openssl: " ${CONFDIR}/variables/account.yml
+				${BASEDIR}/includes/config/scripts/basique.sh
 				script_classique
 				;;
 
@@ -373,12 +371,12 @@ function script_classique() {
 				clear
 				logo
 				echo ""
-				ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+				ansible-vault decrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
     				>&2 echo -n -e "${BWHITE}Compte(s) Gmail utilisé(s), séparés d'une virgule si plusieurs: ${CEND}"
     				read email
-				sed -i "/account:/c\   account: $email" /opt/seedbox/variables/account.yml
-				ansible-playbook /opt/seedbox-compose/includes/dockerapps/traefik.yml
-				ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+				sed -i "/account:/c\   account: $email" ${CONFDIR}/variables/account.yml
+				ansible-playbook ${BASEDIR}/includes/dockerapps/traefik.yml
+				ansible-vault encrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 
 				echo -e "${CRED}---------------------------------------------------------------${CEND}"
     				echo -e "${CRED}     /!\ MISE A JOUR EFFECTUEE AVEC SUCCES /!\      ${CEND}"
@@ -393,7 +391,7 @@ function script_classique() {
 				4)
 				clear
 				echo ""
-				/opt/seedbox-compose/includes/config/scripts/iptables.sh
+				${BASEDIR}/includes/config/scripts/iptables.sh
 				script_classique
 				;;
 
@@ -405,7 +403,7 @@ function script_classique() {
 			;;
 
 			2) ## Mise à jour Cloudflare
-			/opt/seedbox-compose/includes/config/scripts/cloudflare.sh
+			${BASEDIR}/includes/config/scripts/cloudflare.sh
 			script_classique
 			;;
 
@@ -424,7 +422,7 @@ function script_classique() {
 				1) ## Changement nom de domaine
 				clear
 				echo ""
-                                /opt/seedbox-compose/includes/config/scripts/domain.sh
+                                ${BASEDIR}/includes/config/scripts/domain.sh
                                 ;;
                                 2) ## Modifier les sous domaines
                                 subdomain
@@ -450,7 +448,7 @@ function script_classique() {
 			    echo -e "${BLUE}### INSTALLATION DU MAILSERVER ###${NC}"
 			    echo ""
 			    echo -e " ${BWHITE}* Installation mailserver @Hardware${NC}"
-			    ansible-playbook /opt/seedbox-compose/includes/config/roles/mailserver/tasks/main.yml
+			    ansible-playbook ${BASEDIR}/includes/config/roles/mailserver/tasks/main.yml
 			    echo ""
 			    echo -e " ${CCYAN}* https://github.com/laster13/patxav/wiki/Configuration-Mailserver-@Hardware${NC}"
 			fi
@@ -461,7 +459,7 @@ function script_classique() {
 			5) ## Modèle création appli docker
 			clear
 			echo ""
-			/opt/seedbox-compose/includes/config/scripts/docker_create.sh
+			${BASEDIR}/includes/config/scripts/docker_create.sh
 			script_classique
 			;;
 
@@ -499,12 +497,12 @@ function script_classique() {
 			;;
 
 			10) ## Installation Plex_Patrol
-			ansible-playbook /opt/seedbox-compose/includes/config/roles/plex_patrol/tasks/main.yml
-			SEEDUSER=$(ls /opt/seedbox/media* | cut -d '-' -f2)
+			ansible-playbook ${BASEDIR}/includes/config/roles/plex_patrol/tasks/main.yml
+			SEEDUSER=$(ls ${CONFDIR}/media* | cut -d '-' -f2)
 			DOMAIN=$(cat /home/$SEEDUSER/resume | tail -1 | cut -d. -f2-3)
 			FQDNTMP="plex_patrol.$DOMAIN"
 			echo "$FQDNTMP" >> /home/$SEEDUSER/resume
-			cp "/opt/seedbox-compose/includes/config/roles/plex_patrol/tasks/main.yml" "$CONFDIR/conf/plex_patrol.yml" > /dev/null 2>&1
+			cp "${BASEDIR}/includes/config/roles/plex_patrol/tasks/main.yml" "$CONFDIR/conf/plex_patrol.yml" > /dev/null 2>&1
     			echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour revenir au menu principal..."
     			read -r
 			script_classique
@@ -612,20 +610,20 @@ function script_plexdrive() {
 				1)
 				clear
 				echo ""
-				/opt/seedbox-compose/includes/config/scripts/oauth.sh
+				${BASEDIR}/includes/config/scripts/oauth.sh
 				script_plexdrive
 				;;
 
 				2)
 				clear
 				echo ""
-				ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
-				sed -i "/client:/c\   client: " /opt/seedbox/variables/account.yml
-				sed -i "/secret:/c\   secret: " /opt/seedbox/variables/account.yml
-				sed -i "/openssl:/c\   openssl: " /opt/seedbox/variables/account.yml
-				sed -i "/account:/c\   account: " /opt/seedbox/variables/account.yml
+				ansible-vault decrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+				sed -i "/client:/c\   client: " ${CONFDIR}/variables/account.yml
+				sed -i "/secret:/c\   secret: " ${CONFDIR}/variables/account.yml
+				sed -i "/openssl:/c\   openssl: " ${CONFDIR}/variables/account.yml
+				sed -i "/account:/c\   account: " ${CONFDIR}/variables/account.yml
 
-				/opt/seedbox-compose/includes/config/scripts/basique.sh
+				${BASEDIR}/includes/config/scripts/basique.sh
 				script_plexdrive
 				;;
 
@@ -633,12 +631,12 @@ function script_plexdrive() {
 				clear
 				logo
 				echo ""
-				ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+				ansible-vault decrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
     				>&2 echo -n -e "${BWHITE}Compte(s) Gmail utilisé(s), séparés d'une virgule si plusieurs: ${CEND}"
     				read email
-				sed -i "/account:/c\   account: $email" /opt/seedbox/variables/account.yml
-				ansible-playbook /opt/seedbox-compose/includes/dockerapps/traefik.yml
-				ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+				sed -i "/account:/c\   account: $email" ${CONFDIR}/variables/account.yml
+				ansible-playbook ${BASEDIR}/includes/dockerapps/traefik.yml
+				ansible-vault encrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 
 				echo -e "${CRED}---------------------------------------------------------------${CEND}"
     				echo -e "${CRED}     /!\ MISE A JOUR EFFECTUEE AVEC SUCCES /!\      ${CEND}"
@@ -653,12 +651,12 @@ function script_plexdrive() {
 				4)
 				clear
 				echo ""
-				/opt/seedbox-compose/includes/config/scripts/iptables.sh
+				${BASEDIR}/includes/config/scripts/iptables.sh
 				script_plexdrive
 				;;
 
                                 5) ## Mise à jour Cloudflare
-                                /opt/seedbox-compose/includes/config/scripts/cloudflare.sh
+                                ${BASEDIR}/includes/config/scripts/cloudflare.sh
                                 script_plexdrive
                                 ;;
 
@@ -679,32 +677,32 @@ function script_plexdrive() {
 				    1) ## Changement nom de domaine
                                     clear
                                     echo ""
-                                    /opt/seedbox-compose/includes/config/scripts/domain.sh
+                                    ${BASEDIR}/includes/config/scripts/domain.sh
                                     ;;
 
                                     2) ## Modifier les sous domaines
-                                    ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
+                                    ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
                                     SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
                                     SEEDUSER=$(cat /tmp/name)
                                     rm /tmp/name
-                                    ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
-                                    rm /opt/seedbox/conf/* > /dev/null 2>&1
+                                    ansible-vault decrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+                                    rm ${CONFDIR}/conf/* > /dev/null 2>&1
 
                                     while read line
                                     do
                                       echo $line | cut -d'.' -f1
                                     done < /home/$SEEDUSER/resume > $SERVICESUSER$SEEDUSER
-                                    mv /home/$SEEDUSER/resume /opt/seedbox/resume > /dev/null 2>&1
+                                    mv /home/$SEEDUSER/resume ${CONFDIR}/resume > /dev/null 2>&1
                                     subdomain
 
                                     grep "plex" $SERVICESPERUSER > /dev/null 2>&1
                                     if [ $? -eq 0 ]; then
-                                    ansible-playbook /opt/seedbox-compose/includes/config/roles/plex/tasks/main.yml
+                                    ansible-playbook ${BASEDIR}/includes/config/roles/plex/tasks/main.yml
                                     sed -i "/plex/d" $SERVICESPERUSER > /dev/null 2>&1
                                     fi
 
                                     install_services
-                                    mv /opt/seedbox/resume /home/$SEEDUSER/resume > /dev/null 2>&1
+                                    mv ${CONFDIR}/resume /home/$SEEDUSER/resume > /dev/null 2>&1
                                     resume_seedbox
                                     script_plexdrive
                                     ;;
@@ -780,12 +778,12 @@ function script_plexdrive() {
 			        ;;
 
 			        5) ## Installation Plex_Patrol
-			        ansible-playbook /opt/seedbox-compose/includes/config/roles/plex_patrol/tasks/main.yml
-			        SEEDUSER=$(ls /opt/seedbox/media* | cut -d '-' -f2)
+			        ansible-playbook ${BASEDIR}/includes/config/roles/plex_patrol/tasks/main.yml
+			        SEEDUSER=$(ls ${CONFDIR}/media* | cut -d '-' -f2)
 			        DOMAIN=$(cat /home/$SEEDUSER/resume | tail -1 | cut -d. -f2-3)
 			        FQDNTMP="plex_patrol.$DOMAIN"
 			        echo "$FQDNTMP" >> /home/$SEEDUSER/resume
-			        cp "/opt/seedbox-compose/includes/config/roles/plex_patrol/tasks/main.yml" "$CONFDIR/conf/plex_patrol.yml" > /dev/null 2>&1
+			        cp "${BASEDIR}/includes/config/roles/plex_patrol/tasks/main.yml" "$CONFDIR/conf/plex_patrol.yml" > /dev/null 2>&1
     			        echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour revenir au menu principal..."
     			        read -r
 			        script_plexdrive
@@ -794,7 +792,7 @@ function script_plexdrive() {
 			        6) ## Modèle création appli docker
 			        clear
 			        echo ""
-			        /opt/seedbox-compose/includes/config/scripts/docker_create.sh
+			        ${BASEDIR}/includes/config/scripts/docker_create.sh
 			        script_plexdrive
 			        ;;
 
@@ -813,7 +811,7 @@ function script_plexdrive() {
 			            echo -e "${BLUE}### INSTALLATION DU MAILSERVER ###${NC}"
 			            echo ""
 			            echo -e " ${BWHITE}* Installation mailserver @Hardware${NC}"
-			            ansible-playbook /opt/seedbox-compose/includes/config/roles/mailserver/tasks/main.yml
+			            ansible-playbook ${BASEDIR}/includes/config/roles/mailserver/tasks/main.yml
 			            echo ""
 			            echo -e " ${CCYAN}* https://github.com/laster13/patxav/wiki/Configuration-Mailserver-@Hardware${NC}"
 			        fi
@@ -830,7 +828,7 @@ function script_plexdrive() {
 			        clear
                                 echo -e " ${BLUE}* Configuration du Backup${NC}"
                                 echo ""
-			        ansible-playbook /opt/seedbox-compose/includes/config/roles/backup/tasks/main.yml
+			        ansible-playbook ${BASEDIR}/includes/config/roles/backup/tasks/main.yml
                                 echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
                                 read -r
 
@@ -846,7 +844,7 @@ function script_plexdrive() {
                         3) ### creation share drive + rclone.conf
 		        clear
 			echo ""
-                        /opt/seedbox-compose/includes/config/scripts/createrclone.sh
+                        ${BASEDIR}/includes/config/scripts/createrclone.sh
                         ;;
 
 			4) ## Outils
@@ -877,7 +875,7 @@ function script_plexdrive() {
 			        2) ## Installation Autoscan
 			        clear
 			        echo ""
-		                ansible-playbook /opt/seedbox-compose/includes/config/roles/autoscan/tasks/main.yml
+		                ansible-playbook ${BASEDIR}/includes/config/roles/autoscan/tasks/main.yml
 			        pause
 			        script_plexdrive
 			        ;;
@@ -927,12 +925,12 @@ function script_plexdrive() {
 				case $SERVICES in
 
 				1) ## Création des SA avec gen-sa
-                                /opt/seedbox-compose/includes/config/scripts/sa-gen.sh
+                                ${BASEDIR}/includes/config/scripts/sa-gen.sh
 			        script_plexdrive
 				;;
 
 				2) ## Creation des SA avec safire
-                                /opt/seedbox-compose/includes/config/scripts/safire.sh
+                                ${BASEDIR}/includes/config/scripts/safire.sh
 			        script_plexdrive
 				;;
 
@@ -982,14 +980,14 @@ function script_plexdrive() {
 
                                                           1) # Déplacer les données (Pas de limite)
                                                           clear
-                                                          /opt/seedbox-compose/includes/config/scripts/migration.sh
+                                                          ${BASEDIR}/includes/config/scripts/migration.sh
                                                           pause
 			                                  script_plexdrive
 				                          ;;
 
                                                           2) # Copier les données (10 Tera par jour)
                                                           clear
-                                                          /opt/seedbox-compose/includes/config/scripts/sasync.sh
+                                                          ${BASEDIR}/includes/config/scripts/sasync.sh
                                                           pause
 			                                  script_plexdrive
 				                          ;;
@@ -1014,14 +1012,14 @@ function script_plexdrive() {
 
                                                           1) # Déplacer les données (Pas de limite)
                                                           clear
-                                                          /opt/seedbox-compose/includes/config/scripts/migration.sh
+                                                          ${BASEDIR}/includes/config/scripts/migration.sh
                                                           pause
 			                                  script_plexdrive
 				                          ;;
 
                                                           2) # Copier les données (1,8 Tera par jour)
                                                           clear
-                                                          /opt/seedbox-compose/includes/config/scripts/sasync-bwlimit.sh
+                                                          ${BASEDIR}/includes/config/scripts/sasync-bwlimit.sh
                                                           pause
 			                                  script_plexdrive
 				                          ;;
@@ -1074,14 +1072,14 @@ function script_plexdrive() {
 
                                                         if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
                                                           echo ""
-                                                          /opt/seedbox-compose/includes/config/scripts/sasync-share.sh
+                                                          ${BASEDIR}/includes/config/scripts/sasync-share.sh
                                                         fi
                                                         pause
 			                                script_plexdrive
 				                        ;;
 
                                                         2) # Copier les données (10 Tera par jour)
-                                                        /opt/seedbox-compose/includes/config/scripts/sasync-share.sh
+                                                        ${BASEDIR}/includes/config/scripts/sasync-share.sh
                                                         pause
 			                                script_plexdrive
 				                        ;;
@@ -1114,14 +1112,14 @@ function script_plexdrive() {
                                                        read -rp $'\e[36m   Poursuivre malgré tout avec rclone: (o/n) ? \e[0m' OUI
                                                        if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
                                                          echo ""
-                                                         /opt/seedbox-compose/includes/config/scripts/sasync-share.sh
+                                                         ${BASEDIR}/includes/config/scripts/sasync-share.sh
                                                        fi
                                                        pause
 			                               script_plexdrive
 				                       ;;
 
                                                        2) # Copier les données (10 Tera par jour)
-                                                       /opt/seedbox-compose/includes/config/scripts/sasync-share.sh
+                                                       ${BASEDIR}/includes/config/scripts/sasync-share.sh
                                                        pause
 			                               script_plexdrive
 				                       ;;
@@ -1167,7 +1165,7 @@ function script_plexdrive() {
               
                            2)
                            clear
-                           /opt/seedbox-compose/includes/config/scripts/plexdrive.sh
+                           ${BASEDIR}/includes/config/scripts/plexdrive.sh
                            install_plexdrive
                            docker restart plex > /dev/null 2>&1
                            echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
@@ -1177,7 +1175,7 @@ function script_plexdrive() {
 
                            3)
                            clear
-                           /opt/seedbox-compose/includes/config/scripts/plexdrive.sh
+                           ${BASEDIR}/includes/config/scripts/plexdrive.sh
                            plexdrive
                            docker restart plex > /dev/null 2>&1
                            echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
@@ -1215,14 +1213,14 @@ function script_plexdrive() {
                 echo ""
 
                 # definition variables
-                ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
+                ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
                 DOMAIN=$(cat /tmp/domain)
 
                 # Ajout ligne sub ds account.yml si elle n y est pas deja
-                ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
-                grep "sub" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                ansible-vault decrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+                grep "sub" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
                 if [ $? -eq 1 ]; then
-                  sed -i '/transcodes/a sub:' /opt/seedbox/variables/account.yml
+                  sed -i '/transcodes/a sub:' ${CONFDIR}/variables/account.yml
                 fi
 
                 # sous domaine
@@ -1240,8 +1238,8 @@ function script_plexdrive() {
                   done
 
                   if [ ! -z "$subdomain" ]; then
-                    sed -i "/gui/d" /opt/seedbox/variables/account.yml > /dev/null 2>&1
-                    sed -i "/sub/a \ \ \ gui: $subdomain" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                    sed -i "/gui/d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+                    sed -i "/sub/a \ \ \ gui: $subdomain" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
                   fi
                   echo ""
                 fi
@@ -1250,27 +1248,27 @@ function script_plexdrive() {
                 docker rm -f traefik > /dev/null 2>&1
                 
                 # installation ssd webui
-                ansible-playbook /opt/seedbox-compose/includes/config/roles/nginx/tasks/main.yml
+                ansible-playbook ${BASEDIR}/includes/config/roles/nginx/tasks/main.yml
 
                 # reinstallation traefik
-                ansible-playbook /opt/seedbox-compose/includes/dockerapps/traefik.yml
+                ansible-playbook ${BASEDIR}/includes/dockerapps/traefik.yml
 
                 # gestion sous domaine
-                grep "gui" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                grep "gui" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
                 if [ $? -eq 0 ]; then
-                  SUBDOMAIN=$(grep gui /opt/seedbox/variables/account.yml | cut -d ':' -f2 |  tr -d ' ')
+                  SUBDOMAIN=$(grep gui ${CONFDIR}/variables/account.yml | cut -d ':' -f2 |  tr -d ' ')
                 else
                   SUBDOMAIN="gui"
                 fi
 
                 for i in $(docker ps --format "{{.Names}}" --filter "network=traefik_proxy")
                 do
-                  grep "${i}" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                  grep "${i}" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
                   if [ $? -eq 0 ]; then
-                    j=$(grep ${i} /opt/seedbox/variables/account.yml | cut -d ':' -f2 |  tr -d ' ')
-                    echo "${i} = ${j}.${DOMAIN}" >> /opt/seedbox/resume
+                    j=$(grep ${i} ${CONFDIR}/variables/account.yml | cut -d ':' -f2 |  tr -d ' ')
+                    echo "${i} = ${j}.${DOMAIN}" >> ${CONFDIR}/resume
                   else
-                     echo "${i} = ${i}.${DOMAIN}" >> /opt/seedbox/resume
+                     echo "${i} = ${i}.${DOMAIN}" >> ${CONFDIR}/resume
                   fi
                 done
 
@@ -1285,7 +1283,7 @@ function script_plexdrive() {
                 echo ""
 
                 rm /tmp/domain
-                ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                ansible-vault encrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
                 echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour sortir du script..."
                 read -r
 
@@ -1299,19 +1297,25 @@ function script_plexdrive() {
 	fi
 }
 
-function conf_dir() {
-	if [[ ! -d "$CONFDIR" ]]; then
-		mkdir $CONFDIR > /dev/null 2>&1
-                status
-	fi
+function create_dir() {
+	MYUID=$(whoami)
+	MYGID=$(id -g)
+	ansible-playbook ${BASEDIR}/includes/config/playbooks/create_directory.yml \
+	--extra-vars '{"DIRECTORY":"'${1}'","UID":"'${MYUID}'","GID":"'${MYGID}'"}'
 }
+
+function conf_dir() {
+	create_dir ${CONFDIR}
+}
+
+
 
 function install_base_packages() {
 	echo ""
 	echo -e "${BLUE}### INSTALLATION DES PACKAGES ###${NC}"
 	echo ""
 	echo -e " ${BWHITE}* Installation apache2-utils, unzip, git, curl ...${NC}"
-	ansible-playbook /opt/seedbox-compose/includes/config/roles/install/tasks/main.yml
+	ansible-playbook ${BASEDIR}/includes/config/roles/install/tasks/main.yml
 	checking_errors $?
 	echo ""
 }
@@ -1326,7 +1330,7 @@ function checking_errors() {
 
 function install_fail2ban() {
 	echo -e "${BLUE}### FAIL2BAN ###${NC}"
-	ansible-playbook /opt/seedbox-compose/includes/config/roles/fail2ban/tasks/main.yml
+	ansible-playbook ${BASEDIR}/includes/config/roles/fail2ban/tasks/main.yml
 	checking_errors $?
 	echo ""
 }
@@ -1337,15 +1341,15 @@ function install_ufw() {
   echo -e "${RED} UFW sera installé avec les valeurs par défaut uniquement ${CEND}"
   echo -e "${RED} et permettra les accès suivants : ${CEND}"
   echo -e "${RED} ssh, http, https, plex ${CEND}"
-  echo -e "${RED} Vous pourrez le modifier en éditant le fichier /opt/seedbox/conf/ufw.yml ${CEND}"
+  echo -e "${RED} Vous pourrez le modifier en éditant le fichier ${CONFDIR}/conf/ufw.yml ${CEND}"
   echo -e "${RED} pour ajouter des ports/ip supplémentaires ${CEND}"
   echo -e "${RED} avant de relancer ce script ${CEND}"
   echo -e "${RED}---------------------------------------------------------------${CEND}"
   echo -e "${RED} Appuyez sur [Entrée] pour continer ${CEND}"
   read -r
   echo -e "${BLUE}### UFW ###${NC}"
-	ansible-playbook /opt/seedbox-compose/includes/config/roles/ufw/tasks/main.yml
-	ansible-playbook /opt/seedbox/conf/ufw.yml
+	ansible-playbook ${BASEDIR}/includes/config/roles/ufw/tasks/main.yml
+	ansible-playbook ${CONFDIR}/conf/ufw.yml
 	checking_errors $?
 	echo ""
 }
@@ -1354,7 +1358,7 @@ function install_traefik() {
 	oauth
 	echo -e "${BLUE}### TRAEFIK ###${NC}"
 		echo -e " ${BWHITE}* Installation Traefik${NC}"
-		ansible-playbook /opt/seedbox-compose/includes/dockerapps/traefik.yml
+		ansible-playbook ${BASEDIR}/includes/dockerapps/traefik.yml
 		checking_errors $?		
 	echo ""
 }
@@ -1362,7 +1366,7 @@ function install_traefik() {
 function install_watchtower() {
 	echo -e "${BLUE}### WATCHTOWER ###${NC}"
 	echo -e " ${BWHITE}* Installation Watchtower${NC}"
-	cd /opt/seedbox-compose/includes/dockerapps
+	cd ${BASEDIR}/includes/dockerapps
 	ansible-playbook watchtower.yml
 	checking_errors $?
 	echo ""
@@ -1372,15 +1376,15 @@ function install_plexdrive() {
 	echo -e "${BLUE}### PLEXDRIVE ###${NC}"
         echo ""
 	mkdir -p /mnt/plexdrive > /dev/null 2>&1
-        ansible-playbook /opt/seedbox-compose/includes/config/roles/plexdrive/tasks/main.yml
+        ansible-playbook ${BASEDIR}/includes/config/roles/plexdrive/tasks/main.yml
         systemctl stop plexdrive > /dev/null 2>&1
-        ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+        ansible-vault decrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
         echo ""
         clear
         echo -e " ${BWHITE}* Dès que le message ${NC}${CCYAN}"First cache build process started" apparait à l'écran, taper ${NC}${CCYAN}CTRL + C${NC}${BWHITE} pour poursuivre le script !${NC}"
-        grep "id_teamdrive" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+        grep "id_teamdrive" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
         if [ $? -eq 0 ]; then
-          team=$(grep "id_teamdrive" /opt/seedbox/variables/account.yml | cut -d':' -f2 |  sed 's/ //g') > /dev/null 2>&1
+          team=$(grep "id_teamdrive" ${CONFDIR}/variables/account.yml | cut -d':' -f2 |  sed 's/ //g') > /dev/null 2>&1
           /usr/bin/plexdrive mount -v 3 --drive-id=$team --refresh-interval=1m --chunk-check-threads=8 --chunk-load-threads=8 --chunk-load-ahead=4 --max-chunks=100 --fuse-options=allow_other,read_only /mnt/plexdrive
           systemctl start plexdrive > /dev/null 2>&1        
         else
@@ -1393,15 +1397,15 @@ function plexdrive() {
 	echo -e "${BLUE}### PLEXDRIVE ###${NC}"
         echo ""
 	mkdir -p /mnt/plexdrive > /dev/null 2>&1
-        ansible-playbook /opt/seedbox-compose/includes/config/roles/plexdrive/tasks/plexdrive.yml
+        ansible-playbook ${BASEDIR}/includes/config/roles/plexdrive/tasks/plexdrive.yml
         systemctl stop plexdrive > /dev/null 2>&1
-        ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+        ansible-vault decrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
         echo ""
         clear
         echo -e " ${BWHITE}* Dès que le message ${NC}${CCYAN}"First cache build process started" apparait à l'écran, taper ${NC}${CCYAN}CTRL + C${NC}${BWHITE} pour poursuivre le script !${NC}"
-        grep "id_teamdrive" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+        grep "id_teamdrive" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
         if [ $? -eq 0 ]; then
-          team=$(grep "id_teamdrive" /opt/seedbox/variables/account.yml | cut -d':' -f2 |  sed 's/ //g') > /dev/null 2>&1
+          team=$(grep "id_teamdrive" ${CONFDIR}/variables/account.yml | cut -d':' -f2 |  sed 's/ //g') > /dev/null 2>&1
           /usr/bin/plexdrive mount -v 3 --drive-id=$team --refresh-interval=1m --chunk-check-threads=8 --chunk-load-threads=8 --chunk-load-ahead=4 --max-chunks=100 --fuse-options=allow_other,read_only /mnt/plexdrive
           systemctl start plexdrive > /dev/null 2>&1        
         else
@@ -1414,8 +1418,8 @@ function install_rclone() {
 	echo -e "${BLUE}### RCLONE ###${NC}"
 	mkdir /mnt/rclone > /dev/null 2>&1
 	mkdir -p /mnt/rclone/$SEEDUSER > /dev/null 2>&1
-        /opt/seedbox-compose/includes/config/scripts/rclone.sh
-        ansible-playbook /opt/seedbox-compose/includes/config/roles/rclone/tasks/main.yml
+        ${BASEDIR}/includes/config/scripts/rclone.sh
+        ansible-playbook ${BASEDIR}/includes/config/roles/rclone/tasks/main.yml
 	checking_errors $?
 	echo ""
 }
@@ -1423,7 +1427,7 @@ function install_rclone() {
 function unionfs_fuse() {
 	echo -e "${BLUE}### Unionfs-Fuse ###${NC}"
 	echo -e " ${BWHITE}* Installation Mergerfs${NC}"
-	ansible-playbook /opt/seedbox-compose/includes/config/roles/unionfs/tasks/main.yml
+	ansible-playbook ${BASEDIR}/includes/config/roles/unionfs/tasks/main.yml
 	checking_errors $?	
 echo ""
 }
@@ -1434,7 +1438,7 @@ function install_docker() {
 	file="/usr/bin/docker"
 	if [ ! -e "$file" ]; then
 		cp -r /usr/local/lib/python2.7/dist-packages/backports/ssl_match_hostname/ /usr/lib/python2.7/dist-packages/backports
-		ansible-playbook /opt/seedbox-compose/includes/config/roles/docker/tasks/main.yml
+		ansible-playbook ${BASEDIR}/includes/config/roles/docker/tasks/main.yml
 	else
 		echo -e " ${YELLOW}* docker est déjà installé !${NC}"
 	fi
@@ -1443,9 +1447,9 @@ function install_docker() {
 
 function subdomain() {
 SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
-grep "sub" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+grep "sub" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 if [ $? -eq 1 ]; then
- sed -i '/transcodes/a sub:' /opt/seedbox/variables/account.yml 
+ sed -i '/transcodes/a sub:' ${CONFDIR}/variables/account.yml 
 fi
 echo ""
 read -rp $'\e[36m --> Souhaitez personnaliser les sous domaines: (o/n) ? \e[0m' OUI
@@ -1458,11 +1462,11 @@ do
   read -rp $'\e[32m        * Sous domaine pour\e[0m '$line': ' subdomain
 
   if [[ "$line" != "plex" ]]; then
-    sed -i "/$line/d" /opt/seedbox/variables/account.yml > /dev/null 2>&1
-    sed -i "/sub/a \ \ \ $line: $subdomain" /opt/seedbox/variables/account.yml
+    sed -i "/$line/d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+    sed -i "/sub/a \ \ \ $line: $subdomain" ${CONFDIR}/variables/account.yml
   else
-    sed -i "/media/d" /opt/seedbox/variables/account.yml > /dev/null 2>&1
-    sed -i "/sub/a \ \ \ media: $subdomain" /opt/seedbox/variables/account.yml
+    sed -i "/media/d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+    sed -i "/sub/a \ \ \ media: $subdomain" ${CONFDIR}/variables/account.yml
   fi
 done
 fi
@@ -1471,15 +1475,15 @@ fi
 function define_parameters() {
 	echo -e "${BLUE}### INFORMATIONS UTILISATEURS ###${NC}"
 	mkdir -p $CONFDIR/variables
-	cp /opt/seedbox-compose/includes/config/account.yml /opt/seedbox/variables/account.yml
+	cp ${BASEDIR}/includes/config/account.yml ${CONFDIR}/variables/account.yml
 	create_user
 	CONTACTEMAIL=$(whiptail --title "Adresse Email" --inputbox \
 	"Merci de taper votre adresse Email :" 7 50 3>&1 1>&2 2>&3)
-	sed -i "s/mail:/mail: $CONTACTEMAIL/" /opt/seedbox/variables/account.yml
+	sed -i "s/mail:/mail: $CONTACTEMAIL/" ${CONFDIR}/variables/account.yml
 
 	DOMAIN=$(whiptail --title "Votre nom de Domaine" --inputbox \
 	"Merci de taper votre nom de Domaine (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3)
-	sed -i "s/domain:/domain: $DOMAIN/" /opt/seedbox/variables/account.yml
+	sed -i "s/domain:/domain: $DOMAIN/" ${CONFDIR}/variables/account.yml
 	echo ""
 }
 
@@ -1494,21 +1498,21 @@ function create_user() {
 		else
 	    	echo -e " ${YELLOW}* Le groupe $SEEDGROUP existe déjà.${NC}"
 		fi
-		sed -i "s/group:/group: $SEEDGROUP/" /opt/seedbox/variables/account.yml
+		sed -i "s/group:/group: $SEEDGROUP/" ${CONFDIR}/variables/account.yml
 
 		SEEDUSER=$(whiptail --title "Administrateur" --inputbox \
 			"Nom d'Administrateur de la Seedbox :" 7 50 3>&1 1>&2 2>&3)
 		[[ "$?" = 1 ]] && script_plexdrive;
 		PASSWORD=$(whiptail --title "Password" --passwordbox \
 			"Mot de passe :" 7 50 3>&1 1>&2 2>&3)
-		sed -i "s/pass:/pass: $PASSWORD/" /opt/seedbox/variables/account.yml
+		sed -i "s/pass:/pass: $PASSWORD/" ${CONFDIR}/variables/account.yml
 		egrep "^$SEEDUSER" /etc/passwd >/dev/null
 		if [ $? -eq 0 ]; then
 			echo -e " ${YELLOW}* L'utilisateur existe déjà !${NC}"
 			USERID=$(id -u $SEEDUSER)
 			GRPID=$(id -g $SEEDUSER)
-			sed -i "s/userid:/userid: $USERID/" /opt/seedbox/variables/account.yml
-			sed -i "s/groupid:/groupid: $GRPID/" /opt/seedbox/variables/account.yml
+			sed -i "s/userid:/userid: $USERID/" ${CONFDIR}/variables/account.yml
+			sed -i "s/groupid:/groupid: $GRPID/" ${CONFDIR}/variables/account.yml
 			usermod -a -G docker $SEEDUSER > /dev/null 2>&1
 			echo -e " ${BWHITE}* Ajout de $SEEDUSER à $SEEDGROUP"
 			usermod -a -G $SEEDGROUP $SEEDUSER
@@ -1524,20 +1528,20 @@ function create_user() {
 			checking_errors $?
 			USERID=$(id -u $SEEDUSER)
 			GRPID=$(id -g $SEEDUSER)
-			sed -i "s/userid:/userid: $USERID/" /opt/seedbox/variables/account.yml
-			sed -i "s/groupid:/groupid: $GRPID/" /opt/seedbox/variables/account.yml
+			sed -i "s/userid:/userid: $USERID/" ${CONFDIR}/variables/account.yml
+			sed -i "s/groupid:/groupid: $GRPID/" ${CONFDIR}/variables/account.yml
 		fi
 		htpasswd -c -b /tmp/.htpasswd $SEEDUSER $PASSWORD > /dev/null 2>&1
 		htpwd=$(cat /tmp/.htpasswd)
-		sed -i "/htpwd:/c\   htpwd: $htpwd" /opt/seedbox/variables/account.yml
-		sed -i "s/name:/name: $SEEDUSER/" /opt/seedbox/variables/account.yml
+		sed -i "/htpwd:/c\   htpwd: $htpwd" ${CONFDIR}/variables/account.yml
+		sed -i "s/name:/name: $SEEDUSER/" ${CONFDIR}/variables/account.yml
 		echo $PASSWORD > ~/.vault_pass
 		echo "vault_password_file = ~/.vault_pass" >> /etc/ansible/ansible.cfg
                 return
 }
 
 function projects() {
-        ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
+        ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
         SEEDUSER=$(cat /tmp/name)
         DOMAIN=$(cat /tmp/domain)
         SEEDGROUP=$(cat /tmp/group)
@@ -1617,7 +1621,7 @@ function choose_other_services() {
 	rm /tmp/menuservices.txt
 	fi
 
-	for app in $(cat /opt/seedbox-compose/includes/config/other-services-available);
+	for app in $(cat ${BASEDIR}/includes/config/other-services-available);
 	do
 		service=$(echo $app | cut -d\- -f1)
 		desc=$(echo $app | cut -d\- -f2)
@@ -1646,12 +1650,12 @@ function webserver() {
 		desc=$(echo $app | cut -d\- -f2)
 		echo "$service $desc off" >> /tmp/menuservices.txt
 	done
-	grep 'mariadb' /opt/seedbox/docker/$SEEDUSER/webserver/resume > /dev/null 2>&1
+	grep 'mariadb' ${CONFDIR}/docker/$SEEDUSER/webserver/resume > /dev/null 2>&1
 	if [[ "$?" == "0" ]]; then
 	   sed -i "/Mariadb/d" /tmp/menuservices.txt
 	fi
 
-	grep 'phpmyadmin' /opt/seedbox/docker/$SEEDUSER/webserver/resume > /dev/null 2>&1
+	grep 'phpmyadmin' ${CONFDIR}/docker/$SEEDUSER/webserver/resume > /dev/null 2>&1
 	if [[ "$?" == "0" ]]; then
 	   sed -i "/Phpmyadmin/d" /tmp/menuservices.txt
 	fi
@@ -1758,23 +1762,23 @@ function install_services() {
 			echo -e " ${BWHITE}* Processing plex config file...${NC}"
 			echo ""
 			echo -e " ${GREEN}ATTENTION IMPORTANT - NE PAS FAIRE D'ERREUR - SINON DESINSTALLER ET REINSTALLER${NC}"
-			ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
-			token=$(. /opt/seedbox-compose/includes/config/roles/plex_autoscan/plex_token.sh)
-			sed -i "/token:/c\   token: $token" /opt/seedbox/variables/account.yml
-			ansible-playbook /opt/seedbox-compose/includes/config/roles/plex/tasks/main.yml
-			ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+			ansible-vault decrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+			token=$(. ${BASEDIR}/includes/config/roles/plex_autoscan/plex_token.sh)
+			sed -i "/token:/c\   token: $token" ${CONFDIR}/variables/account.yml
+			ansible-playbook ${BASEDIR}/includes/config/roles/plex/tasks/main.yml
+			ansible-vault encrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 
 		elif [[ "$line" == "mattermost" ]]; then
-			/opt/seedbox-compose/includes/dockerapps/templates/mattermost/mattermost.sh
+			${BASEDIR}/includes/dockerapps/templates/mattermost/mattermost.sh
 
 		else
 			ansible-playbook "$BASEDIR/includes/dockerapps/$line.yml"
 			cp "$BASEDIR/includes/dockerapps/$line.yml" "$CONFDIR/conf/$line.yml" > /dev/null 2>&1
 		fi
                    
-                grep $line /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                grep $line ${CONFDIR}/variables/account.yml > /dev/null 2>&1
                 if [ $? -eq 0 ]; then
-                  line=$(grep $line /opt/seedbox/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
+                  line=$(grep $line ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
 		  FQDNTMP="$line.$DOMAIN"
 		  echo "$FQDNTMP" >> $INSTALLEDFILE
                 else
@@ -1864,7 +1868,7 @@ do
 		echo -e " ${BWHITE}* Configuration Apllications avec Authelia...${NC}"
 		echo ""
                 ## Variable
-                ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
+                ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
                 SEEDUSER=$(cat /tmp/name)
                 DOMAIN=$(cat /tmp/domain)
                 SEEDGROUP=$(cat /tmp/group)
@@ -1881,12 +1885,12 @@ do
     	               echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
 	               echo ""
 
-                ## suppression des yml dans /opt/seedbox/conf
-                rm /opt/seedbox/conf/* > /dev/null 2>&1
+                ## suppression des yml dans ${CONFDIR}/conf
+                rm ${CONFDIR}/conf/* > /dev/null 2>&1
 
                 ## reinstall traefik
                 docker rm -f traefik > /dev/null 2>&1
-                rm -rf /opt/seedbox/docker/traefik/rules > /dev/null 2>&1
+                rm -rf ${CONFDIR}/docker/traefik/rules > /dev/null 2>&1
                 install_traefik
 
                 echo ""
@@ -2011,8 +2015,8 @@ function manage_apps() {
 	echo -e "${BLUE}###          GESTION DES APPLIS        ###${NC}"
 	echo -e "${BLUE}##########################################${NC}"
 
-        ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
-        ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+        ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
+        ansible-vault decrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 	SEEDUSER=$(cat /tmp/name)
 	DOMAIN=$(cat /tmp/domain)
         SEEDGROUP=$(cat /tmp/group)
@@ -2081,7 +2085,7 @@ function manage_apps() {
 			if [[ "$?" == "1" ]]; then
 				echo -e " ${BWHITE}* Pas d'Applis à Désinstaller ${NC}"
 				pause
-				ansible-vault encrypt /opt/seedbox/variables/account.yml
+				ansible-vault encrypt ${CONFDIR}/variables/account.yml
 				if [[ -e "$PLEXDRIVE" ]]; then
 					script_plexdrive
 				else
@@ -2102,17 +2106,17 @@ function manage_apps() {
 			[[ "$?" = 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi;
 			echo -e " ${GREEN}   * $APPSELECTED${NC}"
 
-                        grep "$APPSELECTED" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                        grep "$APPSELECTED" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
                         if [ $? -eq 0 ]; then
-                          subdomain=$(grep "$APPSELECTED" /opt/seedbox/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
+                          subdomain=$(grep "$APPSELECTED" ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
                           sed -i "/$subdomain/d" /home/$SEEDUSER/resume
-                          sed -i "/$subdomain/d" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                          sed -i "/$subdomain/d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
                         else
 			  sed -i "/$APPSELECTED/d" /home/$SEEDUSER/resume
                         fi
 
 			docker rm -f "$APPSELECTED" > /dev/null 2>&1
-			rm -rf /opt/seedbox/docker/$SEEDUSER/$APPSELECTED
+			rm -rf ${CONFDIR}/docker/$SEEDUSER/$APPSELECTED
 
 			if [[ "$APPSELECTED" != "plex" ]]; then
 			rm $CONFDIR/conf/$APPSELECTED.yml > /dev/null 2>&1
@@ -2128,27 +2132,27 @@ function manage_apps() {
 
 			if [[ "$APPSELECTED" = "varken" ]]; then
 			docker rm -f influxdb telegraf grafana > /dev/null 2>&1
-			rm -rf /opt/seedbox/docker/$SEEDUSER/telegraf
-			rm -rf /opt/seedbox/docker/$SEEDUSER/grafana
-			rm -rf /opt/seedbox/docker/$SEEDUSER/influxdb
+			rm -rf ${CONFDIR}/docker/$SEEDUSER/telegraf
+			rm -rf ${CONFDIR}/docker/$SEEDUSER/grafana
+			rm -rf ${CONFDIR}/docker/$SEEDUSER/influxdb
 			fi
 
 			if [[ "$APPSELECTED" = "jitsi" ]]; then
 			docker rm -f prosody jicofo jvb
-			rm -rf /opt/seedbox/docker/$SEEDUSER/.jitsi-meet-cfg
+			rm -rf ${CONFDIR}/docker/$SEEDUSER/.jitsi-meet-cfg
 			fi
 
 			if [[ "$APPSELECTED" = "nextcloud" ]]; then
 			docker rm -f collabora coturn office
-			rm -rf /opt/seedbox/docker/$SEEDUSER/coturn
+			rm -rf ${CONFDIR}/docker/$SEEDUSER/coturn
 			fi
 
 			if [[ "$APPSELECTED" = "rtorrentvpn" ]]; then
-			rm /opt/seedbox/conf/rutorrent-vpn.yml
+			rm ${CONFDIR}/conf/rutorrent-vpn.yml
 			fi
 
 			if [[ "$APPSELECTED" = "authelia" ]]; then
-			/opt/seedbox-compose/includes/config/scripts/authelia.sh
+			${BASEDIR}/includes/config/scripts/authelia.sh
 			sed -i '/authelia/d' /home/$SEEDUSER/resume > /dev/null 2>&1
 			fi
 
@@ -2159,7 +2163,7 @@ function manage_apps() {
 			echo -e "${BLUE}### $APPSELECTED a été supprimé ###${NC}"
 			echo ""
                         pause
-			ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+			ansible-vault encrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 			if [[ -e "$PLEXDRIVE" ]]; then
 				script_plexdrive
 			else
@@ -2182,7 +2186,7 @@ function manage_apps() {
 			              "${TABSERVICES[@]}"  3>&1 1>&2 2>&3)
 			[[ "$?" = 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi;
 			echo -e " ${GREEN}   * $line${NC}"
-                        subdomain=$(grep "$line" /opt/seedbox/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
+                        subdomain=$(grep "$line" ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
 
 			if [ $line = "php5" ] || [ $line = "php7" ]; then
 				image=$(docker images | grep "php" | awk '{print $3}')
@@ -2214,7 +2218,7 @@ function manage_apps() {
 			fi
 			;;
 		"4" ) 	## Installation webserver
-			INSTALLEDFILE="/opt/seedbox/docker/$SEEDUSER/webserver/resume"
+			INSTALLEDFILE="${CONFDIR}/docker/$SEEDUSER/webserver/resume"
 			touch $INSTALLEDFILE > /dev/null 2>&1
 			echo -e " ${BWHITE}* Resume file: $INSTALLEDFILE ${NC}"
 			echo ""
@@ -2267,7 +2271,7 @@ Ou bien utiliser Phpmyadmin
 echo -e "${CCYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 					fi
-			                ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+			                ansible-vault encrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 
 					if [[ -e "$PLEXDRIVE" ]]; then
 						script_plexdrive
@@ -2278,7 +2282,7 @@ echo ""
 
 				"2" ) ## Suppression APP
 					echo -e " ${BWHITE}* Site Web en cours de suppression${NC}"
-					[ -s /opt/seedbox/docker/$SEEDUSER/webserver/resume ]
+					[ -s ${CONFDIR}/docker/$SEEDUSER/webserver/resume ]
 					if [[ "$?" == "1" ]]; then
 					echo -e " ${BWHITE}* Pas de Sites à Désinstaller ${NC}"
 					pause
@@ -2297,7 +2301,7 @@ echo ""
 
 					docker rm -f "$APPSELECTED"
 					sed -i "/$APPSELECTED/d" $INSTALLEDFILE
-					rm -rf /opt/seedbox/docker/$SEEDUSER/webserver/$APPSELECTED
+					rm -rf ${CONFDIR}/docker/$SEEDUSER/webserver/$APPSELECTED
 					checking_errors $?
  					docker rm -f php7-$APPSELECTED > /dev/null 2>&1
 					docker rm -f php5-$APPSELECTED > /dev/null 2>&1
@@ -2307,7 +2311,7 @@ echo ""
 
 					echo ""
 					echo -e " ${CCYAN}* $APPSELECTED à bien été désinstallé ${NC}"
-			                ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+			                ansible-vault encrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 					pause
 					if [[ -e "$PLEXDRIVE" ]]; then
 						script_plexdrive
@@ -2359,7 +2363,7 @@ function resume_seedbox() {
 
 	rm -Rf $SERVICESPERUSER > /dev/null 2>&1
         rm /opt/temp.txt > /dev/null 2>&1
-        ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+        ansible-vault encrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 }
 
 function uninstall_seedbox() {
@@ -2369,7 +2373,7 @@ function uninstall_seedbox() {
 	echo -e "${BLUE}##########################################${NC}"
 
 	## variables
-        ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
+        ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
 	SEEDUSER=$(cat /tmp/name)
 	DOMAIN=$(cat /tmp/domain)
         SEEDGROUP=$(cat /tmp/group)
@@ -2463,7 +2467,7 @@ function uninstall_seedbox() {
 	groupdel $SEEDGROUP > /dev/null 2>&1
 	checking_errors $?
 
-	echo -e " ${BWHITE}* Supression du dossier /opt/seedbox...${NC}"
+	echo -e " ${BWHITE}* Supression du dossier ${CONFDIR}...${NC}"
 	rm -Rf $CONFDIR
 	checking_errors $?
 	pause
@@ -2478,5 +2482,10 @@ function pause() {
 
 function select_seedbox_param() {
   request="select value from seedbox_params where param ='"${1}"'"
+  sqlite3 ${SCRIPTPATH}/ssddb "${request}";
+}
+
+function update_seedbox_param() {
+	 request="replace into seedbox_params (param,value) values ('"${1}"','"${2}"')"
   sqlite3 ${SCRIPTPATH}/ssddb "${request}";
 }

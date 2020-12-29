@@ -1,0 +1,11 @@
+---
+- hosts: localhost
+  gather_facts: false
+  become: yes
+  tasks:
+  - name: Make sure diretory is present
+    file:
+      path: "{{ DIRECTORY }}"
+      state: directory
+      owner: "{{ UID }}"
+      group: "{{ GID }}"

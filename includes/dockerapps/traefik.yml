@@ -4,16 +4,16 @@
 - hosts: localhost
   gather_facts: True
   vars_files:
-    - /opt/seedbox/variables/account.yml
+    - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
   tasks:
 
     - name: create traefik state
       shell: |
-        echo "1" > /opt/seedbox/status/traefik
+        echo "1" >  {{ lookup('env','CONFDIR') }}/status/traefik
 
     - name: Checking for existing app data
       stat:
-        path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
+        path: "{{ lookup('env','CONFDIR') }}/docker/{{user.name}}/authelia/configuration.yml"
       register: check
   
     - name: "Variables | Set 'cloudflare_enabled' variable"
@@ -68,13 +68,13 @@
             else false }}"
 
     - name: "Set DNS Record on CloudFlare"
-      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
       vars:
         subdomain: traefik
       when: cloudflare_enabled
 
     - name: "Set GUI DNS Record on CloudFlare"
-      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
       vars:
         subdomain: "{{sub.gui if sub_enabled else 'gui'}}"
       when: cloudflare_enabled
@@ -87,19 +87,19 @@
     - name: Create Basic Directories
       file: "path={{item}} state=directory mode=0775 owner=0 group=0"
       with_items:
-        - /opt/seedbox/docker/traefik
-        - /opt/seedbox/docker/traefik/acme
-        - /opt/seedbox/docker/traefik/rules
+        - " {{ lookup('env','CONFDIR') }}/docker/traefik"
+        - " {{ lookup('env','CONFDIR') }}/docker/traefik/acme"
+        - " {{ lookup('env','CONFDIR') }}/docker/traefik/rules"
 
     - name: Check acme.json exists
       stat:
-        path: "/opt/seedbox/docker/traefik/acme/acme.json"
+        path: " {{ lookup('env','CONFDIR') }}/docker/traefik/acme/acme.json"
       register: acme_json
 
     - name: Installing ACME
       template:
         src: acme.json
-        dest: /opt/seedbox/docker/traefik/acme/acme.json
+        dest: " {{ lookup('env','CONFDIR') }}/docker/traefik/acme/acme.json"
         force: yes
         mode: 0600
         owner: '0'
@@ -108,17 +108,17 @@
 
     - name: create an empty file traefik.log
       file:
-        path: /opt/seedbox/docker/traefik/traefik.log
+        path: " {{ lookup('env','CONFDIR') }}/docker/traefik/traefik.log"
         state: touch
 
     - name: Import middlewares-chains.toml
       template:
-        src: /opt/seedbox-compose/includes/dockerapps/templates/traefik/nginx.toml.j2
-        dest: /opt/seedbox/docker/traefik/rules/nginx.toml
+        src: " {{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/traefik/nginx.toml.j2"
+        dest: " {{ lookup('env','CONFDIR') }}/docker/traefik/rules/nginx.toml"
 
     - name: Set middleware
       lineinfile:
-        path: '/opt/seedbox/docker/traefik/rules/nginx.toml'
+        path: "{{ lookup('env','CONFDIR') }}/docker/traefik/rules/nginx.toml"
         regexp: '#*middlewares\s*=.*'
         line: 'middlewares = ["chain-oauth"]'
         state: present
@@ -126,13 +126,13 @@
 
     - name: Import middlewares-chains.toml
       template:
-        src: /opt/seedbox-compose/includes/dockerapps/templates/traefik/middlewares-chains.toml.j2
-        dest: /opt/seedbox/docker/traefik/rules/middlewares-chains.toml
+        src: " {{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/traefik/middlewares-chains.toml.j2"
+        dest: " {{ lookup('env','CONFDIR') }}/docker/traefik/rules/middlewares-chains.toml"
 
     - name: Import middlewares.toml
       template:
-        src: /opt/seedbox-compose/includes/dockerapps/templates/traefik/middlewares.toml.j2
-        dest: /opt/seedbox/docker/traefik/rules/middlewares.toml
+        src: " {{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/traefik/middlewares.toml.j2"
+        dest: " {{ lookup('env','CONFDIR') }}/docker/traefik/rules/middlewares.toml"
 
     - name: label traefik with cloudflare
       set_fact:
@@ -255,9 +255,9 @@
         volumes:
           - /var/run/docker.sock:/var/run/docker.sock:ro
           - /etc/localtime:/etc/localtime:ro
-          - /opt/seedbox/docker/traefik/acme/acme.json:/acme.json
-          - /opt/seedbox/docker/traefik/rules:/rules
-          - /opt/seedbox/docker/traefik/traefik.log:/traefik.log
+          - " {{ lookup('env','CONFDIR') }}/docker/traefik/acme/acme.json:/acme.json"
+          - " {{ lookup('env','CONFDIR') }}/docker/traefik/rules:/rules"
+          - " {{ lookup('env','CONFDIR') }}/docker/traefik/traefik.log:/traefik.log"
         labels: '{{labels}}'
         restart_policy: unless-stopped
         state: started
@@ -270,5 +270,5 @@
 
     - name: create traefik state
       shell: |
-        echo "2" > /opt/seedbox/status/traefik
+        echo "2" >  {{ lookup('env','CONFDIR') }}/status/traefik
 

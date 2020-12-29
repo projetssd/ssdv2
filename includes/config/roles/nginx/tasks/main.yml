@@ -3,6 +3,7 @@
 
 - hosts: localhost
   gather_facts: false
+  become: yes
   vars_files:
     - /opt/seedbox/variables/account.yml
 
@@ -56,11 +57,11 @@
       args:
         chdir: /var/www/{{user.domain}}
 
-    - name: Set visudo
-      shell: |
-        usermod -aG docker {{user.name}}
-        usermod -aG docker www-data
-        chown -R www-data:www-data /var/www
-        echo 'www-data ALL=(ALL) NOPASSWD:/var/www/{{user.domain}}/scripts/manage_service.sh' | sudo EDITOR='tee -a' visudo > /dev/null 2>&1
-        cp /etc/sudoers /tmp/root
-        sort -u /tmp/root > /etc/sudoers
+    #- name: Set visudo
+    #  lineinfile: |
+      #  usermod -aG docker {{user.name}}
+      #  usermod -aG docker www-data
+      #  chown -R www-data:www-data /var/www
+      #  echo 'www-data ALL=(ALL) NOPASSWD:/var/www/{{user.domain}}/scripts/manage_service.sh' | sudo EDITOR='tee -a' visudo > /dev/null 2>&1
+      #  cp /etc/sudoers /tmp/root
+      #  sort -u /tmp/root > /etc/sudoers

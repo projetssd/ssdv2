@@ -1,6 +1,7 @@
 ---
 - hosts: localhost
   gather_facts: false
+  become: yes
   vars_files:
     - /opt/seedbox/variables/account.yml
   tasks:
