@@ -54,7 +54,6 @@ libffi-dev \
 python3-dev \
 python3-pip \
 python-dev \
-python-pip \
 python-apt \
 sqlite3
 
