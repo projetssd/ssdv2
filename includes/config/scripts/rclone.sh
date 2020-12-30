@@ -1,7 +1,9 @@
 #!/bin/bash	
 
-source /opt/seedbox-compose/includes/functions.sh
-source /opt/seedbox-compose/includes/variables.sh
+# shellcheck source=${BASEDIR}/includes/functions.sh
+source "${SCRIPTPATH}/includes/functions.sh"
+# shellcheck source=${BASEDIR}/includes/variables.sh
+source "${SCRIPTPATH}/includes/variables.sh"
 
 sed -i '/remote/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
 sed -i '/id_teamdrive/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1

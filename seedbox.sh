@@ -99,9 +99,9 @@ if [[ ${IS_INSTALLED} -eq 0 ]]; then
       install_services
       for i in $(docker ps --format "{{.Names}}")
       do
-      if [[ "$i" == "plex" ]]; then
-        plex_sections
-      fi
+        if [[ "$i" == "plex" ]]; then
+          plex_sections
+        fi
       done
       projects
       filebot

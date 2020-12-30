@@ -1440,10 +1440,10 @@ function plexdrive() {
 
 function install_rclone() {
 	echo -e "${BLUE}### RCLONE ###${NC}"
-	mkdir /mnt/rclone > /dev/null 2>&1
-	mkdir -p /mnt/rclone/$SEEDUSER > /dev/null 2>&1
-        ${BASEDIR}/includes/config/scripts/rclone.sh
-        ansible-playbook ${BASEDIR}/includes/config/roles/rclone/tasks/main.yml
+	create_directory /mnt/rclone
+	create_directory /mnt/rclone/${USER}
+    ${BASEDIR}/includes/config/scripts/rclone.sh
+    ansible-playbook ${BASEDIR}/includes/config/roles/rclone/tasks/main.yml
 	checking_errors $?
 	echo ""
 }
@@ -1757,25 +1757,25 @@ function choose_media_folder_classique() {
 }
 
 function choose_media_folder_plexdrive() {
+	# Attention, là on ne va pas créer de /home/$SEEDUSER, on reste sur le user qui a lancé l'install
 	echo -e "${BLUE}### DOSSIERS MEDIAS ###${NC}"
 	FOLDER="/mnt/rclone/$SEEDUSER"
 	MEDIASPERUSER="$MEDIASUSER$SEEDUSER"
 	
 	# si le dossier /mnt/rclone/user n'est pas vide
-	if [ "$(ls -A /mnt/rclone/$SEEDUSER)" ]; then
-		cd /mnt/rclone/$SEEDUSER
+	mkdir -p ${HOME}/Medias
+	if [ "$(ls -A /mnt/rclone/${USER})" ]; then
+		cd /mnt/rclone/${USER}
 		ls -Ad */ | sed 's,/$,,g' > $MEDIASPERUSER
-		mkdir -p /home/$SEEDUSER/Medias
+		
 		echo -e " ${BWHITE}--> Récupération des dossiers Utilisateur à partir de Gdrive... : ${NC}"
 		for line in $(cat $MEDIASPERUSER);
 		do
-		mkdir -p /home/$SEEDUSER/local/$line
-		echo -e "	${GREEN}--> Le dossier ${NC}${YELLOW}$line${NC}${GREEN} a été ajouté avec succès !${NC}"
+			mkdir -p ${HOME}/local/$line
+			echo -e "	${GREEN}--> Le dossier ${NC}${YELLOW}$line${NC}${GREEN} a été ajouté avec succès !${NC}"
 		done
-		mkdir -p /home/$SEEDUSER/filebot
-		chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER
+		
 	else
-		mkdir -p /home/$SEEDUSER/Medias
 		echo -e " ${BWHITE}--> Création des dossiers Medias ${NC}"
 		echo ""
 		echo -e " ${YELLOW}--> ### Veuillez patienter, création en cours des dossiers sur Gdrive ### ${NC}"
@@ -1797,17 +1797,13 @@ function choose_media_folder_plexdrive() {
 		done
 		for line in $(cat $MEDIASPERUSER);
 		do
-		line=$(echo $line | sed 's/\(.\)/\U\1/')
-		mkdir -p /home/$SEEDUSER/local/$line
-		mkdir -p /mnt/rclone/$SEEDUSER/$line 
+			line=$(echo $line | sed 's/\(.\)/\U\1/')
+			mkdir -p ${HOME}/local/$line
+			mkdir -p /mnt/rclone/${USER}/$line 
 		done
-		mkdir -p /home/$SEEDUSER/filebot
-		chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/filebot
-		chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER/local
-		chmod -R 755 /home/$SEEDUSER/local
-		chmod -R 755 /home/$SEEDUSER/filebot
 		rm /tmp/menumedia.txt
 	fi
+	mkdir -p ${HOME}/filebot
 	echo ""
 }
 
