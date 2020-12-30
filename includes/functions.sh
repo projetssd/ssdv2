@@ -52,7 +52,25 @@ function status() {
 	done
 }
 
+function update_status() {
+	#
+	# TODO : ajouter la base de données
+	#
+	for i in $(docker ps --format "{{.Names}}" --filter "network=traefik_proxy")
+	do
+	  echo "2" > ${CONFDIR}/status/${i}
+
+	done
+	
+}
+
 function cloudflare() {
+	#####################################
+	# Récupère les infos de cloudflare
+	# Pour utilisation ultérieure
+	# TODO : ne pas poser la question si
+	# variables positionnées
+	######################################
 	echo -e "${BLUE}### Gestion des DNS ###${NC}"
 	echo ""
 	echo -e "${CCYAN}------------------------------------------------------------------${CEND}"
@@ -90,6 +108,11 @@ function cloudflare() {
 }
 
 function oauth() {
+	#######################################
+	# Récupère les infos oauth
+	# TODO : ne pas poser les questions
+	# Si variables déjà passées
+	#######################################
 		grep -w "client" ${CONFDIR}/variables/account.yml | cut -d: -f2 | tr -d ' ' > /dev/null 2>&1
 		if [[ "$?" != "0" ]]; then
 		echo -e "${BLUE}### Google OAuth2 avec Traefik – Secure SSO pour les services Docker ###${NC}"
@@ -1535,8 +1558,7 @@ function create_user_non_systeme() {
 	PASSWORD=$(whiptail --title "Password" --passwordbox \
 		"Mot de passe :" 7 50 3>&1 1>&2 2>&3)
 	
-	ansible-playbook ${BASEDIR}/includes/config/roles/users/tasks/main.yml
-	ansible-playbook ${BASEDIR}/includes/config/roles/users/tasks/chggroup.yml
+
 	
 	htpasswd -c -b /tmp/.htpasswd $SEEDUSER $PASSWORD > /dev/null 2>&1
 	htpwd=$(cat /tmp/.htpasswd)

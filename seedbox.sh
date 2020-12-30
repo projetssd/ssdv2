@@ -73,19 +73,33 @@ if [[ ${IS_INSTALLED} -eq 0 ]]; then
 
   1) ## Installation de la seedbox Rclone et Gdrive
 
-    check_dir "$PWD"
-    if [[ ! -d "$CONFDIR" ]]; then
+    #check_dir "$PWD"
+    if [[ ${IS_INSTALLED} -eq 0 ]]; then
       clear
+      # Dépendances pour ansible (permet de créer le docker network)
       ansible-galaxy collection install community.general
+      # on vérifie les droits sur répertoire et bdd
       make_dir_writable ${BASEDIR}
       change_file_owner ${BASEDIR}/ssddb
+      # On crée le conf dir (par défaut /opt/seedbox) s'il n'existe pas
       conf_dir
+      # Maj du système
       update_system
+      # Install des packages de base
       install_base_packages
+      # Install de docker
       install_docker
+      # on met le user dans le bon groupe
+      ansible-playbook ${BASEDIR}/includes/config/roles/users/tasks/main.yml
+	    ansible-playbook ${BASEDIR}/includes/config/roles/users/tasks/chggroup.yml
+      # On part à la pêche aux infos
       create_user_non_systeme
+      # récup infos cloudflare
       cloudflare
+      # récup infos oauth
       oauth
+      # Install de traefik
+      # BLOQUANT si erreur
       install_traefik
       install_rclone
       install_watchtower
@@ -110,6 +124,8 @@ if [[ ${IS_INSTALLED} -eq 0 ]]; then
       pause
       ansible-vault encrypt ${CONFDIR}/variables/account.yml >/dev/null 2>&1
       script_plexdrive
+      # on marque la seedbox comme installée
+      update_seedbox_param "installed" 1
     else
       script_plexdrive
     fi
@@ -274,17 +290,8 @@ if [[ ${IS_INSTALLED} -eq 0 ]]; then
 
 fi
 
-status
 
-if [ ! -d "${CONFDIR}/status" ]
-then
-  mkdir -p ${CONFDIR}/status
-fi
-for i in $(docker ps --format "{{.Names}}" --filter "network=traefik_proxy")
-do
-  echo "2" > ${CONFDIR}/status/${i}
-
-done
+update_status
 
 PLEXDRIVE="/usr/bin/rclone"
 if [[ -e "$PLEXDRIVE" ]]; then
