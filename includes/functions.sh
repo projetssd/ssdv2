@@ -51,39 +51,40 @@ function status() {
 }
 
 function cloudflare() {
-		echo -e "${BLUE}### Gestion des DNS ###${NC}"
-		echo ""
-			echo -e "${CCYAN}------------------------------------------------------------------${CEND}"
-			echo -e "${CCYAN}   CloudFlare protège et accélère les sites internet.             ${CEND}"
-			echo -e "${CCYAN}   CloudFlare optimise automatiquement la déliverabilité          ${CEND}"
- 			echo -e "${CCYAN}   de vos pages web afin de diminuer le temps de chargement       ${CEND}"
-			echo -e "${CCYAN}   et d’améliorer les performances. CloudFlare bloque aussi       ${CEND}"
-			echo -e "${CCYAN}   les menaces et empêche certains robots illégitimes de          ${CEND}"
-			echo -e "${CCYAN}   consommer votre bande passante et les ressources serveur.      ${CEND}"
-			echo -e "${CCYAN}------------------------------------------------------------------${CEND}"
-		echo ""
-			read -rp $'\e[33mSouhaitez vous utiliser les DNS Cloudflare ? (o/n)\e[0m :' OUI
-
-			if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
-				ansible-vault decrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-				if [ -z "$cloud_email" ] || [ -z "$cloud_api" ]; then
-    				cloud_email=$1
-    				cloud_api=$2
-				fi
-
-				while [ -z "$cloud_email" ]; do
-    				>&2 echo -n -e "${BWHITE}Votre Email Cloudflare: ${CEND}"
-    				read cloud_email
-				sed -i "/login:/c\   login: $cloud_email" ${CONFDIR}/variables/account.yml
-				done
-
-				while [ -z "$cloud_api" ]; do
-    				>&2 echo -n -e "${BWHITE}Votre API Cloudflare: ${CEND}"
-    				read cloud_api
-				sed -i "/api:/c\   api: $cloud_api" ${CONFDIR}/variables/account.yml
-				done
-			fi
-		echo ""
+	echo -e "${BLUE}### Gestion des DNS ###${NC}"
+	echo ""
+	echo -e "${CCYAN}------------------------------------------------------------------${CEND}"
+	echo -e "${CCYAN}   CloudFlare protège et accélère les sites internet.             ${CEND}"
+	echo -e "${CCYAN}   CloudFlare optimise automatiquement la déliverabilité          ${CEND}"
+	echo -e "${CCYAN}   de vos pages web afin de diminuer le temps de chargement       ${CEND}"
+	echo -e "${CCYAN}   et d’améliorer les performances. CloudFlare bloque aussi       ${CEND}"
+	echo -e "${CCYAN}   les menaces et empêche certains robots illégitimes de          ${CEND}"
+	echo -e "${CCYAN}   consommer votre bande passante et les ressources serveur.      ${CEND}"
+	echo -e "${CCYAN}------------------------------------------------------------------${CEND}"
+	echo ""
+	read -rp $'\e[33mSouhaitez vous utiliser les DNS Cloudflare ? (o/n)\e[0m :' OUI
+	
+	if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
+		ansible-vault decrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+		if [ -z "$cloud_email" ] || [ -z "$cloud_api" ]; then
+			cloud_email=$1
+			cloud_api=$2
+		fi
+		
+		while [ -z "$cloud_email" ]; do
+			>&2 echo -n -e "${BWHITE}Votre Email Cloudflare: ${CEND}"
+			read cloud_email
+			sed -i "/login:/c\   login: $cloud_email" ${CONFDIR}/variables/account.yml
+			update_seedbox_param "cf_login" $cloud_email
+		done
+		
+		while [ -z "$cloud_api" ]; do
+			>&2 echo -n -e "${BWHITE}Votre API Cloudflare: ${CEND}"
+			read cloud_api
+			sed -i "/api:/c\   api: $cloud_api" ${CONFDIR}/variables/account.yml
+		done
+	fi
+	echo ""
 }
 
 function oauth() {
@@ -1390,8 +1391,7 @@ function install_traefik() {
 function install_watchtower() {
 	echo -e "${BLUE}### WATCHTOWER ###${NC}"
 	echo -e " ${BWHITE}* Installation Watchtower${NC}"
-	cd ${BASEDIR}/includes/dockerapps
-	ansible-playbook watchtower.yml
+	ansible-playbook ${BASEDIR}/includes/dockerapps/watchtower.yml
 	checking_errors $?
 	echo ""
 }
@@ -1510,6 +1510,50 @@ function define_parameters() {
 	sed -i "s/domain:/domain: $DOMAIN/" ${CONFDIR}/variables/account.yml
 	echo ""
 }
+
+function create_user_non_systeme() {
+	# nouvelle version de define_parameters()
+	echo -e "${BLUE}### INFORMATIONS UTILISATEURS ###${NC}"
+	
+	create_dir ${CONFDIR}/variables
+	cp ${BASEDIR}/includes/config/account.yml ${CONFDIR}/variables/account.yml
+
+	SEEDUSER=$(whiptail --title "Administrateur" --inputbox \
+		"Nom d'Administrateur de la Seedbox :" 7 50 3>&1 1>&2 2>&3)
+	[[ "$?" = 1 ]] && script_plexdrive;
+	PASSWORD=$(whiptail --title "Password" --passwordbox \
+		"Mot de passe :" 7 50 3>&1 1>&2 2>&3)
+	
+	ansible-playbook ${BASEDIR}/includes/config/roles/users/tasks/main.yml
+	ansible-playbook ${BASEDIR}/includes/config/roles/users/tasks/chggroup.yml
+	
+	htpasswd -c -b /tmp/.htpasswd $SEEDUSER $PASSWORD > /dev/null 2>&1
+	htpwd=$(cat /tmp/.htpasswd)
+	sed -i "/htpwd:/c\   htpwd: $htpwd" ${CONFDIR}/variables/account.yml
+	sed -i "s/name:/name: $SEEDUSER/" ${CONFDIR}/variables/account.yml
+	sed -i "s/pass:/pass: $PASSWORD/" ${CONFDIR}/variables/account.yml
+	sed -i "s/userid:/userid: $(id -u)/" ${CONFDIR}/variables/account.yml
+	sed -i "s/groupid:/groupid: $(id -g)/" ${CONFDIR}/variables/account.yml
+	echo $PASSWORD > ~/.vault_pass
+	
+	update_seedbox_param "name" $user
+	update_seedbox_param "userid" $(id -u)
+	update_seedbox_param "groupid" $(id -g)
+	update_seedbox_param "htpwd" $htpwd
+	
+	CONTACTEMAIL=$(whiptail --title "Adresse Email" --inputbox \
+	"Merci de taper votre adresse Email :" 7 50 3>&1 1>&2 2>&3)
+	sed -i "s/mail:/mail: $CONTACTEMAIL/" ${CONFDIR}/variables/account.yml
+	update_seedbox_param "mail" $CONTACTEMAIL
+	
+	DOMAIN=$(whiptail --title "Votre nom de Domaine" --inputbox \
+	"Merci de taper votre nom de Domaine (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3)
+	sed -i "s/domain:/domain: $DOMAIN/" ${CONFDIR}/variables/account.yml
+	update_seedbox_param "domain" $DOMAIN
+	echo ""
+	return
+}
+
 
 function create_user() {
 		SEEDGROUP=$(whiptail --title "Group" --inputbox \

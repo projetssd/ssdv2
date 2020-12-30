@@ -76,16 +76,20 @@ if [[ ${IS_INSTALLED} -eq 0 ]]; then
     check_dir "$PWD"
     if [[ ! -d "$CONFDIR" ]]; then
       clear
+      ansible-galaxy collection install community.general
+      make_dir_writable ${BASEDIR}
+      change_file_owner ${BASEDIR}/ssddb
       conf_dir
       update_system
       install_base_packages
       install_docker
-      define_parameters
+      create_user_non_systeme
       cloudflare
       oauth
       install_traefik
       install_rclone
       install_watchtower
+
       install_fail2ban
       choose_media_folder_plexdrive
       unionfs_fuse
@@ -237,13 +241,6 @@ if [[ ${IS_INSTALLED} -eq 0 ]]; then
       install_traefik
 
       DOMAIN=$(select_seedbox_param "domain")
-      #DOMAIN=$(grep domain ${CONFDIR}/variables/account.yml | cut -d ':' -f2 |  tr -d ' ')
-      #grep "gui" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-      #if [ $? -eq 0 ]; then
-        #SUBDOMAIN=$(grep gui ${CONFDIR}/variables/account.yml | cut -d ':' -f2 |  tr -d ' ')
-      #else
-        #SUBDOMAIN="gui"
-      #fi
 
       echo -e "${CRED}---------------------------------------------------------------${CEND}"
       echo -e "${CRED}          /!\ INSTALLATION EFFECTUEE AVEC SUCCES /!\           ${CEND}"

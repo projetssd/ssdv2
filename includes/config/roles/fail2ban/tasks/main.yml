@@ -2,7 +2,7 @@
 - hosts: localhost
   gather_facts: true
   vars_files:
-    - /opt/seedbox/variables/account.yml
+    - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
   tasks:
         
     # FACTS #######################################################################
@@ -48,19 +48,19 @@
 
     - name: Import customs.conf 
       template:
-        src: /opt/seedbox-compose/includes/config/roles/fail2ban/templates/custom.conf.j2
+        src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/fail2ban/templates/custom.conf.j2"
         dest: /etc/fail2ban/jail.d/custom.conf
         force: yes
 
     - name: Import traefik-auth.conf
       template:
-        src: /opt/seedbox-compose/includes/config/roles/fail2ban/templates/traefik-auth.conf.j2
+        src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/fail2ban/templates/traefik-auth.conf.j2"
         dest: /etc/fail2ban/filter.d/traefik-auth.conf
         force: yes
 
     - name: Import traefik-botsearch.conf
       template:
-        src: /opt/seedbox-compose/includes/config/roles/fail2ban/templates/traefik-botsearch.conf.j2
+        src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/fail2ban/templates/traefik-botsearch.conf.j2"
         dest: /etc/fail2ban/filter.d/traefik-botsearch.conf
         force: yes
 
@@ -69,13 +69,13 @@
 
       - name: Import traefik.conf
         template:
-          src: /opt/seedbox-compose/includes/config/roles/fail2ban/templates/traefik.conf.j2
+          src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/fail2ban/templates/traefik.conf.j2"
           dest: /etc/fail2ban/jail.d/traefik.conf
           force: yes
 
       - name: Import docker-action.conf
         template:
-          src: /opt/seedbox-compose/includes/config/roles/fail2ban/templates/docker-action.conf.j2
+          src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/fail2ban/templates/docker-action.conf.j2"
           dest: /etc/fail2ban/action.d/docker-action.conf
           force: yes
       when: not cloudflare_enabled
@@ -86,13 +86,13 @@
 
       - name: Import cloudflare-apiv4.conf
         template:
-          src: /opt/seedbox-compose/includes/config/roles/fail2ban/templates/cloudflare-apiv4.conf.j2
+          src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/fail2ban/templates/cloudflare-apiv4.conf.j2"
           dest: /etc/fail2ban/action.d/cloudflare-apiv4.conf
           force: yes
 
       - name: Import traefik_clouflare.conf
         template:
-          src: /opt/seedbox-compose/includes/config/roles/fail2ban/templates/traefik_clouflare.conf.j2
+          src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/fail2ban/templates/traefik_clouflare.conf.j2"
           dest: /etc/fail2ban/jail.d/traefik_clouflare.conf
           force: yes
 

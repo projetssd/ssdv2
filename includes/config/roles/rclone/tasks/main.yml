@@ -13,7 +13,7 @@
   gather_facts: false
   vars_files:
     - ['settings.yml']
-    - [/opt/seedbox/variables/account.yml]
+    - ["{{ lookup('env','CONFDIR') }}/variables/account.yml"]
   tasks:
 
     - name: Build URL Tasks
@@ -132,7 +132,7 @@
 
     - name: Import systemd rclone.service
       template:
-        src: /opt/seedbox-compose/includes/config/roles/rclone/templates/rclone.service.j2
+        src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/rclone/templates/rclone.service.j2"
         dest: /etc/systemd/system/rclone.service
         owner: "root"
         group: "root"

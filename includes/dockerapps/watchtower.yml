@@ -21,7 +21,7 @@
 
     - name: create watchtower state
       shell: |
-        echo "1" > /opt/seedbox/status/watchtower
+        echo "1" > "{{ lookup('env','CONFDIR') }}/status/watchtower"
 
     - name: Deploy watchtower
       docker_container:
@@ -39,4 +39,13 @@
 
     - name: create watchtower state
       shell: |
-        echo "2" > /opt/seedbox/status/watchtower
+        echo "2" > "{{ lookup('env','CONFDIR') }}/status/watchtower"
+    
+    - name: Insert traefik into database
+      shell : 
+        cmd: |
+          sqlite3 {{  lookup('env','BASEDIR') }}/ssddb << EOF
+              replace into applications (name,status,subdomain,port)
+              values
+              ('watchtower',2,'',0);
+          EOF
