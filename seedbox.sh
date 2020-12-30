@@ -231,6 +231,7 @@ if [[ ${IS_INSTALLED} -eq 0 ]]; then
       install_base_packages
       install_docker
       ansible-playbook ${BASEDIR}/includes/config/roles/users/tasks/main.yml
+      ansible-playbook ${BASEDIR}/includes/config/roles/users/tasks/chggroup.yml
       ansible-playbook ${BASEDIR}/includes/config/roles/nginx/tasks/main.yml
       create_dir ${CONFDIR}/docker/traefik/acme/
       install_traefik
