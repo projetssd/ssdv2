@@ -79,7 +79,7 @@
       set_fact:
         pgrole: 'portainer'
         intport: '9000'
-        image: 'portainer/portainer'
+        image: 'portainer/portainer-ce'
 
     # LABELS ######################################################################
     - name: 'Ajout label traefik'

@@ -1148,8 +1148,8 @@ function script_plexdrive() {
                        echo -e "${CCYAN}RCLONE && PLEXDRIVE${CEND}"
                        echo ""
                        echo -e "${CGREEN}   1) Installation rclone vfs${CEND}"
-                       echo -e "${CGREEN}   2) Installation plexdrive + cache rclone vfs${CEND}"
-                       echo -e "${CGREEN}   3) Installation plexdrive sans cache rclone vfs${CEND}"
+                       echo -e "${CGREEN}   2) Installation plexdrive${CEND}"
+                       echo -e "${CGREEN}   3) Installation plexdrive + rclone vfs${CEND}"
                        echo -e ""
                          
                       read -p "Votre choix: " RCLONE
@@ -1167,7 +1167,6 @@ function script_plexdrive() {
                            clear
                            ${BASEDIR}/includes/config/scripts/plexdrive.sh
                            install_plexdrive
-                           docker restart plex > /dev/null 2>&1
                            echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
                            read -r
                            script_plexdrive
@@ -1175,9 +1174,11 @@ function script_plexdrive() {
 
                            3)
                            clear
+                           install_rclone
+                           unionfs_fuse
                            ${BASEDIR}/includes/config/scripts/plexdrive.sh
+
                            plexdrive
-                           docker restart plex > /dev/null 2>&1
                            echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
                            read -r
                            script_plexdrive
@@ -1449,7 +1450,7 @@ function subdomain() {
 SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 grep "sub" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 if [ $? -eq 1 ]; then
- sed -i '/transcodes/a sub:' ${CONFDIR}/variables/account.yml 
+ sed -i '/transcodes/a sub:' ${CONFDIR}/variables/account.yml
 fi
 echo ""
 read -rp $'\e[36m --> Souhaitez personnaliser les sous domaines: (o/n) ? \e[0m' OUI

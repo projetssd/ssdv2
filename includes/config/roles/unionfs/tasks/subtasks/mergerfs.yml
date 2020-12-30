@@ -33,7 +33,6 @@
   template:
     src: /opt/seedbox-compose/includes/config/roles/unionfs/templates/mergerfs.service.j2
     dest: /etc/systemd/system/mergerfs.service
-    force: "{{ 'yes' if ('mounts_override' in ansible_run_tags) else 'no' }}"
 
 - name: "MergerFS | Start 'mergerfs.service'"
   systemd: name=mergerfs.service state=started enabled=yes daemon_reload=yes

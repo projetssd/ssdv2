@@ -153,7 +153,6 @@ if [[ ${IS_INSTALLED} -eq 0 ]]; then
       install_base_packages
       install_docker
       define_parameters
-      install_plexdrive
       install_rclone
       install_fail2ban
       sauve
