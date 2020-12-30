@@ -19,15 +19,37 @@
           - "php-dom"
           - "php-gd"
           - "composer"
-
-    - name: Version php-fpm
-      shell: ls /etc/php
-      register: fpm
-
+          
     - name: stopped Systemd nginx
       systemd:
         name: 'nginx.service'
         state: stopped
+
+    - name: Version php-fpm
+      shell: ls /etc/php
+      register: fpm
+      
+    - name: Chown php-fpm
+      shell: chown "{{ lookup('env','USER') }}"  /var/run/php/php7*sock
+      
+    - name: change user in php
+      lineinfile:
+        path: "/etc/php/{{ fpm.stdout }}/fpm/pool.d/www.conf"
+        line: "{{ item }} = {{ lookup('env','USER') }}"
+        regexp: "^{{ item }} ="
+      with_items:
+        - user
+        - group
+        - listen.owner
+        - listen.group
+        
+    - name: restart php-fpm service
+      service:
+        name: "php{{ fpm.stdout }}-fpm"
+        state: restarted
+
+
+
 
     - name: Import nginx default
       template:
@@ -39,7 +61,7 @@
       lineinfile:
         path: /etc/nginx/nginx.conf
         regexp: '^user '
-        line: "^user {{ lookup('env','USER') }}"
+        line: "user {{ lookup('env','USER') }};"
         
     - name: Change log file owner
       file:

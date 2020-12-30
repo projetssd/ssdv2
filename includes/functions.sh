@@ -1309,6 +1309,29 @@ function conf_dir() {
 	create_dir ${CONFDIR}
 }
 
+function create_file() {
+		MYUID=$(whoami)
+	MYGID=$(id -g)
+	ansible-playbook ${BASEDIR}/includes/config/playbooks/create_file.yml \
+	--extra-vars '{"FILE":"'${1}'","UID":"'${MYUID}'","GID":"'${MYGID}'"}'
+}
+
+function change_file_owner() {
+	MYUID=$(whoami)
+	MYGID=$(id -g)
+	ansible-playbook ${BASEDIR}/includes/config/playbooks/chown_file.yml \
+	--extra-vars '{"FILE":"'${1}'","UID":"'${MYUID}'","GID":"'${MYGID}'"}'
+	
+}
+
+function make_dir_writable() {
+	MYUID=$(whoami)
+	MYGID=$(id -g)
+	ansible-playbook ${BASEDIR}/includes/config/playbooks/change_rights.yml \
+	--extra-vars '{"DIRECTORY":"'${1}'"}'
+	
+}
+
 
 
 function install_base_packages() {

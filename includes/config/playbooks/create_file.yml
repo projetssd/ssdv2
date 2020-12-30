@@ -3,9 +3,9 @@
   gather_facts: false
   become: yes
   tasks:
-  - name: Make sure directory is present
+  - name: Make sure file is present
     file:
-      path: "{{ DIRECTORY }}"
-      state: directory
+      path: "{{ FILE }}"
+      state: touch
       owner: "{{ UID }}"
       group: "{{ GID }}"

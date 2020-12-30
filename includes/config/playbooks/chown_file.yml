@@ -3,9 +3,9 @@
   gather_facts: false
   become: yes
   tasks:
-  - name: Make sure directory is present
+  - name: Change owner of the file
     file:
-      path: "{{ DIRECTORY }}"
-      state: directory
+      path: "{{ FILE }}"
+      state: file
       owner: "{{ UID }}"
       group: "{{ GID }}"

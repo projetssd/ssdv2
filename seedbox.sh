@@ -11,7 +11,10 @@ source "${SCRIPTPATH}/includes/functions.sh"
 # shellcheck source=${BASEDIR}/includes/variables.sh
 source "${SCRIPTPATH}/includes/variables.sh"
 
-
+# on créé un vault pass vide pour commencer
+if [ ! -f "${HOME}/.vault_pass" ]; then
+  echo "0" >  ${HOME}/.vault_pass
+fi
 
 #####################################
 # TEST ROOT USER
@@ -217,7 +220,9 @@ if [[ ${IS_INSTALLED} -eq 0 ]]; then
     ;;
 
   999) ## Installation seedbox webui
-      #mkdir -p ${CONFDIR}/variables
+      ansible-galaxy collection install community.general
+      make_dir_writable ${BASEDIR}
+      change_file_owner ${BASEDIR}/ssddb
       conf_dir
       ${BASEDIR}/includes/config/scripts/get_infos.sh
       echo ""
@@ -227,6 +232,7 @@ if [[ ${IS_INSTALLED} -eq 0 ]]; then
       install_docker
       ansible-playbook ${BASEDIR}/includes/config/roles/users/tasks/main.yml
       ansible-playbook ${BASEDIR}/includes/config/roles/nginx/tasks/main.yml
+      create_dir ${CONFDIR}/docker/traefik/acme/
       install_traefik
 
       DOMAIN=$(select_seedbox_param "domain")

@@ -9,7 +9,7 @@
 #########################################################################
 ---
 - hosts: localhost
-  gather_facts: true
+  gather_facts: yes
   become: yes
   tasks:
 

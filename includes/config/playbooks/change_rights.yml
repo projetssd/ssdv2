@@ -3,9 +3,8 @@
   gather_facts: false
   become: yes
   tasks:
-  - name: Make sure directory is present
+  - name: Change directory rights
     file:
       path: "{{ DIRECTORY }}"
       state: directory
-      owner: "{{ UID }}"
-      group: "{{ GID }}"
+      mode: 0777

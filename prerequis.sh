@@ -18,7 +18,7 @@ SCRIPTPATH=$(dirname "$CURRENT_SCRIPT")
 
 ## Constants
 readonly PIP="9.0.3"
-readonly ANSIBLE="2.5.14"
+readonly ANSIBLE="2.9"
 
 ## Environmental Variables
 export DEBIAN_FRONTEND=noninteractive
@@ -58,11 +58,12 @@ libssl-dev \
 libffi-dev \
 python3-dev \
 python3-pip \
-pyton3-docker \
 python-dev \
 python-apt \
 sqlite3 \
 apache2-utils
+
+rm -f /usr/bin/python
 
 ln -s /usr/bin/python3 /usr/bin/python
 
