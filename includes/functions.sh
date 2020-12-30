@@ -1414,8 +1414,10 @@ function install_rclone() {
 	echo -e "${BLUE}### RCLONE ###${NC}"
 	mkdir /mnt/rclone > /dev/null 2>&1
 	mkdir -p /mnt/rclone/$SEEDUSER > /dev/null 2>&1
+        ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
         /opt/seedbox-compose/includes/config/scripts/rclone.sh
         ansible-playbook /opt/seedbox-compose/includes/config/roles/rclone/tasks/main.yml
+        ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 	checking_errors $?
 	echo ""
 }
