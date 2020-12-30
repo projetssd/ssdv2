@@ -1,0 +1,8 @@
+30/12/2020
+
+- passage à python3 pour Ansible
+- Logs dans ${SCRIPTPATH}/logs/ansible.log avec logrotate
+- Prerequis.sh à lancer en root, tout le reste passe en user normal
+- variabilisation dans les scripts pour éviter les chemins en dur
+- add_user devient get_infos : même chose mais sans création user système
+- apache2-utils installé dès les prérequis

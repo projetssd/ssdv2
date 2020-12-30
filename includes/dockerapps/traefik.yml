@@ -85,7 +85,7 @@
         state: absent
 
     - name: Create Basic Directories
-      file: "path={{item}} state=directory mode=0775 owner=0 group=0"
+      file: "path={{item}} state=directory mode=0775"
       with_items:
         - " {{ lookup('env','CONFDIR') }}/docker/traefik"
         - " {{ lookup('env','CONFDIR') }}/docker/traefik/acme"
@@ -99,22 +99,28 @@
     - name: Installing ACME
       template:
         src: acme.json
-        dest: " {{ lookup('env','CONFDIR') }}/docker/traefik/acme/acme.json"
+        dest: "{{ lookup('env','CONFDIR') }}/docker/traefik/acme/acme.json"
         force: yes
         mode: 0600
-        owner: '0'
-        group: '0'
       when: acme_json.stat.exists == False
+      
+    - name: Create directory
+      file:
+        path: "{{ item }}"
+        state: directory
+      with_items:
+        - "{{ lookup('env','CONFDIR') }}/docker/traefik/"
+        - "{{ lookup('env','CONFDIR') }}/docker/traefik/rules"
 
     - name: create an empty file traefik.log
       file:
-        path: " {{ lookup('env','CONFDIR') }}/docker/traefik/traefik.log"
+        path: "{{ lookup('env','CONFDIR') }}/docker/traefik/traefik.log"
         state: touch
 
     - name: Import middlewares-chains.toml
       template:
-        src: " {{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/traefik/nginx.toml.j2"
-        dest: " {{ lookup('env','CONFDIR') }}/docker/traefik/rules/nginx.toml"
+        src: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/traefik/nginx.toml.j2"
+        dest: "{{ lookup('env','CONFDIR') }}/docker/traefik/rules/nginx.toml"
 
     - name: Set middleware
       lineinfile:
@@ -126,13 +132,13 @@
 
     - name: Import middlewares-chains.toml
       template:
-        src: " {{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/traefik/middlewares-chains.toml.j2"
-        dest: " {{ lookup('env','CONFDIR') }}/docker/traefik/rules/middlewares-chains.toml"
+        src: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/traefik/middlewares-chains.toml.j2"
+        dest: "{{ lookup('env','CONFDIR') }}/docker/traefik/rules/middlewares-chains.toml"
 
     - name: Import middlewares.toml
       template:
-        src: " {{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/traefik/middlewares.toml.j2"
-        dest: " {{ lookup('env','CONFDIR') }}/docker/traefik/rules/middlewares.toml"
+        src: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/traefik/middlewares.toml.j2"
+        dest: "{{ lookup('env','CONFDIR') }}/docker/traefik/rules/middlewares.toml"
 
     - name: label traefik with cloudflare
       set_fact:
@@ -236,6 +242,10 @@
           - --certificatesResolvers.letsencrypt.acme.storage=/acme.json
           - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
       when: not cloudflare_enabled
+      
+    - name: Create a network
+      community.general.docker_network:
+        name: traefik_proxy
 
     - name: Deploy Traefik
       docker_container:
@@ -255,9 +265,9 @@
         volumes:
           - /var/run/docker.sock:/var/run/docker.sock:ro
           - /etc/localtime:/etc/localtime:ro
-          - " {{ lookup('env','CONFDIR') }}/docker/traefik/acme/acme.json:/acme.json"
-          - " {{ lookup('env','CONFDIR') }}/docker/traefik/rules:/rules"
-          - " {{ lookup('env','CONFDIR') }}/docker/traefik/traefik.log:/traefik.log"
+          - "{{ lookup('env','CONFDIR') }}/docker/traefik/acme/acme.json:/acme.json"
+          - "{{ lookup('env','CONFDIR') }}/docker/traefik/rules:/rules"
+          - "{{ lookup('env','CONFDIR') }}/docker/traefik/traefik.log:/traefik.log"
         labels: '{{labels}}'
         restart_policy: unless-stopped
         state: started

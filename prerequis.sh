@@ -61,9 +61,8 @@ python3-pip \
 pyton3-docker \
 python-dev \
 python-apt \
-sqlite3
-
-apt-get remove -y  python2
+sqlite3 \
+apache2-utils
 
 ln -s /usr/bin/python3 /usr/bin/python
 
@@ -77,7 +76,7 @@ pyOpenSSL \
 requests \
 netaddr \
 jmespath \
-ansible \
+ansible==${1-$ANSIBLE} \
 docker
 
 # Configuration ansible
@@ -87,15 +86,28 @@ cat <<EOF >/etc/ansible/inventories/local
 127.0.0.1 ansible_connection=local
 EOF
 
+chmod 777 ${SCRIPTPATH}/logs
+
 cat <<EOF >/etc/ansible/ansible.cfg
 [defaults]
 command_warnings = False
 callback_whitelist = profile_tasks
 deprecation_warnings=False
 inventory = /etc/ansible/inventories/local
-interpreter_python=/usr/bin/python
+interpreter_python=/usr/bin/python3
 vault_password_file = ~/.vault_pass
+log_path=${SCRIPTPATH}/logs/ansible.log
 EOF
+
+cat << EOF > /etc/logrotate.d/ansible
+${SCRIPTPATH}/logs/ansible.log {
+  rotate 7
+  daily
+  compress
+  missingok
+}
+EOF
+
 ## Copy pip to /usr/bin
 cp /usr/local/bin/pip /usr/bin/pip
 cp /usr/local/bin/pip3 /usr/bin/pip3
