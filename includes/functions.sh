@@ -1158,8 +1158,10 @@ function script_plexdrive() {
                       case $RCLONE in
                                    
                            1)
+                           /opt/seedbox-compose/includes/config/scripts/fusermount.sh
                            install_rclone
                            unionfs_fuse
+                           rm -rf /mnt/plexdrive
                            echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
                            read -r
                            script_plexdrive
@@ -1167,6 +1169,8 @@ function script_plexdrive() {
               
                            2)
                            clear
+                           /opt/seedbox-compose/includes/config/scripts/fusermount.sh
+                           /opt/seedbox-compose/includes/config/scripts/rclone.sh
                            /opt/seedbox-compose/includes/config/scripts/plexdrive.sh
                            install_plexdrive
                            echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
@@ -1176,6 +1180,7 @@ function script_plexdrive() {
 
                            3)
                            clear
+                           /opt/seedbox-compose/includes/config/scripts/fusermount.sh
                            install_rclone
                            unionfs_fuse
                            /opt/seedbox-compose/includes/config/scripts/plexdrive.sh

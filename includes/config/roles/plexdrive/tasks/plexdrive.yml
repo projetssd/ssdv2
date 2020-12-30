@@ -34,8 +34,8 @@
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775'
       with_items:
-        - '/mnt/rcloneSeed'
-        - '/home/{{user.name}}/SeedCloud'
+        - '/mnt/PlexdriveSeed'
+        - '/home/{{user.name}}/PlexdriveSeed'
 
     - name: Check if plexdrive.service exists
       stat:
