@@ -17,7 +17,7 @@ Pour se lancer dans l’installation, il faut au préalable avoir suivi les éta
 - Une partition pour le boot, d'une taille conseillée de 3000Mo.
 - Obtenir un nom de domaine que vous pouvez administrer
 - Utiliser un compte Gsuite illimité avec création de dossier partagés disponible
-- Connexion directe en root via ssh (pas de connexion en user suivi de root)
+- Un user qui peut faire du sudo sans mot de passe
 
 Une fois toutes ces étapes validées vous pouvez suivre les Prérequis.
 

@@ -6,3 +6,6 @@
 - variabilisation dans les scripts pour éviter les chemins en dur
 - add_user devient get_infos : même chose mais sans création user système
 - apache2-utils installé dès les prérequis
+- install de la gui ok : le user est maintenant celui qui installe et non plus www-data
+- plusieurs playbooks ajoutés pour gérer les fichier/répertoires et droits
+- Installation de traefik => ajout d'une ligne dans la db

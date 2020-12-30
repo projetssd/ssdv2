@@ -123,6 +123,14 @@ else
     create table seedbox_params(param varchar(50) PRIMARY KEY, value varchar(50));
     replace into seedbox_params (param,value) values ('installed',0);
     replace into seedbox_params (param,value) values ('seedbox_path','/opt/seedbox');
+    create table applications(name varchar(50) PRIMARY KEY,
+      status integer,
+      subdomain varchar(50),
+      port integer);
+    create table applications_params (appname varchar(50),
+      param varachar(50),
+      value varchar(50),
+      FOREIGN KEY(appname) REFERENCES applications(name));
     
 EOF
 fi

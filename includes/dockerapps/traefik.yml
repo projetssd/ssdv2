@@ -281,4 +281,13 @@
     - name: create traefik state
       shell: |
         echo "2" >  {{ lookup('env','CONFDIR') }}/status/traefik
+        
+    - name: Insert traefik into database
+      shell : 
+        cmd: |
+          sqlite3 {{  lookup('env','BASEDIR') }}/ssddb << EOF
+              replace into applications (name,status,subdomain,port)
+              values
+              ('traefik',2,'traefik',443);
+          EOF
 
