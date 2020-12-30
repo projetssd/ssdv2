@@ -37,6 +37,8 @@ function update_system() {
 }
 
 function status() {
+	# Créé les fichiers de service, comme quoi rien n'est encore installé
+	# TODO : est-ce utile ?
 	create_dir ${CONFDIR}/status
 	for app in $(cat ${BASEDIR}/includes/config/services-available)
 	do
@@ -1348,8 +1350,10 @@ function install_base_packages() {
 function checking_errors() {
 	if [[ "$1" == "0" ]]; then
 		echo -e "	${GREEN}--> Operation success !${NC}"
+		CURRENT_ERROR=0
 	else
 		echo -e "	${RED}--> Operation failed !${NC}"
+		CURRENT_ERROR=1
 	fi
 }
 
@@ -1380,11 +1384,18 @@ function install_ufw() {
 }
 
 function install_traefik() {
+	create_dir ${CONFDIR}/docker/traefik/acme/
 	oauth
 	echo -e "${BLUE}### TRAEFIK ###${NC}"
-		echo -e " ${BWHITE}* Installation Traefik${NC}"
-		ansible-playbook ${BASEDIR}/includes/dockerapps/traefik.yml
-		checking_errors $?		
+	echo -e " ${BWHITE}* Installation Traefik${NC}"
+	ansible-playbook ${BASEDIR}/includes/dockerapps/traefik.yml
+	checking_errors $?		
+	if [[ ${CURRENT_ERROR} -eq 1 ]]; then
+		echo "${RED}Cette étape peut ne pas aboutir lors d'une première installation${CEND}"
+		echo "${RED}Suite à l'installation de docker, il faut se déloguer/reloguer pour que cela fonctionne${CEND}"
+		echo "${RED}Cette erreur est bloquante, impossible de continuer${CEND}"
+		exit 1
+	fi
 	echo ""
 }
 
