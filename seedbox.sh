@@ -6,17 +6,91 @@ CURRENT_SCRIPT=$(readlink -f "$0")
 export SCRIPTPATH=$(dirname "$CURRENT_SCRIPT")
 
 
+
+
+if [ ! -f "${SCRIPTPATH}/ssddb" ]; then
+   echo "Les prérequis ne sont pas installés"
+  read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
+  ## Constants
+  readonly PIP="9.0.3"
+  readonly ANSIBLE="2.9"
+  ##########################################
+  # Pas de configuration existante
+  # On installe les prérequis
+  ##########################################
+ 
+  echo "Installation en cours ...."
+  sudo ${SCRIPTPATH}/includes/config/scripts/prerequis_root.sh ${SCRIPTPATH}
+  
+  ## Install pip3 Dependencies
+  python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
+  pip==${PIP}
+  python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
+  setuptools
+  python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
+  pyOpenSSL \
+  requests \
+  netaddr \
+  jmespath \
+  ansible==${1-$ANSIBLE} \
+  docker
+  
+  mkdir -p ~/.ansible/inventories
+  
+  ###################################
+  # Configuration ansible
+  # Pour le user courant uniquement
+  ###################################
+  mkdir -p /etc/ansible/inventories/ 1>/dev/null 2>&1
+  cat <<EOF > ~/.ansible/inventories/local
+  [local]
+  127.0.0.1 ansible_connection=local
+EOF
+
+  cat <<EOF > ~/.ansible.cfg
+  [defaults]
+  command_warnings = False
+  callback_whitelist = profile_tasks
+  deprecation_warnings=False
+  inventory = ~/.ansible/inventories/local
+  interpreter_python=/usr/bin/python3
+  vault_password_file = ~/.vault_pass
+  log_path=${SCRIPTPATH}/logs/ansible.log
+EOF
+
+  echo "Création de la configuration en cours"
+  # On créé la database
+  sqlite3 ${SCRIPTPATH}/ssddb <<EOF
+    create table seedbox_params(param varchar(50) PRIMARY KEY, value varchar(50));
+    replace into seedbox_params (param,value) values ('installed',0);
+    replace into seedbox_params (param,value) values ('seedbox_path','/opt/seedbox');
+    create table applications(name varchar(50) PRIMARY KEY,
+      status integer,
+      subdomain varchar(50),
+      port integer);
+    create table applications_params (appname varchar(50),
+      param varachar(50),
+      value varchar(50),
+      FOREIGN KEY(appname) REFERENCES applications(name));
+EOF
+  read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
+
+fi
+
 # shellcheck source=${BASEDIR}/includes/functions.sh
 source "${SCRIPTPATH}/includes/functions.sh"
 # shellcheck source=${BASEDIR}/includes/variables.sh
 source "${SCRIPTPATH}/includes/variables.sh"
 
-# on créé un vault pass vide pour commencer
+################################################
+# on vérifie qu'il y ait un vault pass existant
+# Sinon ansible va râler au lancement
+# Le password sera bien sur écrasé plus tard
 if [ ! -f "${HOME}/.vault_pass" ]; then
   echo "0" >  ${HOME}/.vault_pass
 fi
 
-#####################################
+################################################
 # TEST ROOT USER
 if [ "$USER" == "root" ]; then
   echo -e "${CCYAN}-----------------------${CEND}"
@@ -28,29 +102,8 @@ fi
 
 
 clear
-if [ -f"${SCRIPTPATH}/ssddb" ]; then
-  # le fichier de conf existe
-  IS_INSTALLED=$(select_seedbox_param "installed")
-else
-  # Aucun fichier de conf
-  echo -e "${CCYAN}
-   ___  ____  ____  ____  ____  _____  _  _
-  / __)( ___)(  _ \(  _ \(  _ \(  _  )( \/ )
-  \__ \ )__)  )(_) ))(_) )) _ < )(_)(  )  (
-  (___/(____)(____/(____/(____/(_____)(_/\_)
 
-  ${CEND}"
-
-  echo ""
-  echo -e "${CCYAN}---------------------------------${CEND}"
-  echo -e "${CCYAN}[  INSTALLATION DES PRÉ-REQUIS  ]${CEND}"
-  echo -e "${CCYAN}---------------------------------${CEND}"
-  echo ""
-  echo -e "${CCYAN}Les prérequis ne sont pas installés. Merci de le faire en tapant${CEND}"
-  echo -e "${CYAN}sudo ./prerequis.sh${CEND}"
-  echo -e "${CYAN}avant de continuer${CEND}"
-  exit 1
-fi
+IS_INSTALLED=$(select_seedbox_param "installed")
 
 
 if [[ ${IS_INSTALLED} -eq 0 ]]; then
@@ -286,8 +339,6 @@ if [[ ${IS_INSTALLED} -eq 0 ]]; then
    ;;
 
   esac
-
-
 fi
 
 

@@ -9,3 +9,8 @@
 - install de la gui ok : le user est maintenant celui qui installe et non plus www-data
 - plusieurs playbooks ajoutés pour gérer les fichier/répertoires et droits
 - Installation de traefik => ajout d'une ligne dans la db
+
+31/12/2020
+
+- installation des modules pip uniquement pour le user seedbox (système général intouché)
+- conf de ansible uniquement pour le user seedbox (système général intouché)
