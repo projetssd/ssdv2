@@ -77,10 +77,29 @@ EOF
 
 fi
 
+
+
 # shellcheck source=${BASEDIR}/includes/functions.sh
 source "${SCRIPTPATH}/includes/functions.sh"
 # shellcheck source=${BASEDIR}/includes/variables.sh
 source "${SCRIPTPATH}/includes/variables.sh"
+
+#######################################
+# On regarde si le user est dans
+# le groupe docker
+if getent group docker | grep -q "\b${USER}\b"; then
+    # A voir si un réutilise par la suite
+    DOCKER_OK=1
+else
+    ansible-playbook ${BASEDIR}/includes/config/roles/users/tasks/main.yml
+    
+    echo -e "${RED}-----------------------${CEND}"
+    echo -e "${RED}ATTENTION ! ${CEND}"
+    echo -e "${RED}Votre utilisateur n'était pas dans le groupe docker${CEND}"
+    echo -e "${RED}Il a été ajouté, mais vous devez vous déloguer/reloguer${CEND}"
+    echo -e "${RED}avant de relancer le script${CEND}"
+    exit 1
+fi
 
 ################################################
 # on vérifie qu'il y ait un vault pass existant
@@ -154,10 +173,13 @@ if [[ ${IS_INSTALLED} -eq 0 ]]; then
       # Install de traefik
       # BLOQUANT si erreur
       install_traefik
+      # Installation et configuration de rclone
       install_rclone
+      # Install de watchtower
       install_watchtower
-
+      # Install fail2ban
       install_fail2ban
+      exit 0
       choose_media_folder_plexdrive
       unionfs_fuse
       pause

@@ -1,8 +1,12 @@
 ---
 - hosts: localhost
   gather_facts: true
+
   vars_files:
     - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
+  vars:
+    - local_ip: "{{ ansible_env['SSH_CLIENT'].split() | first }}"
+    - ssh_port: "{{ ansible_env['SSH_CLIENT'].split() | last }}"
   tasks:
         
     # FACTS #######################################################################
@@ -25,6 +29,7 @@
             else false }}"
 
     - name: Install Fail2ban
+      become: yes
       apt:
         state: present
         name:
@@ -32,39 +37,35 @@
       ignore_errors: yes
 
     - name: Stop Fail2ban service
+      become: yes
       systemd:
         name: fail2ban
         state: stopped
 
-    - name: 'recuperation ip connection'
-      debug:
-        msg:
-        - "{{ ansible_env['SSH_CLIENT'].split() | first }}"
-
-    - name: 'recuperation port ssh'
-      debug:
-        msg:
-        - "{{ ansible_env['SSH_CLIENT'].split() | last }}"
-
+    
     - name: Import customs.conf 
+      become: yes
       template:
         src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/fail2ban/templates/custom.conf.j2"
         dest: /etc/fail2ban/jail.d/custom.conf
         force: yes
 
     - name: Import traefik-auth.conf
+      become: yes
       template:
         src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/fail2ban/templates/traefik-auth.conf.j2"
         dest: /etc/fail2ban/filter.d/traefik-auth.conf
         force: yes
 
     - name: Import traefik-botsearch.conf
+      become: yes
       template:
         src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/fail2ban/templates/traefik-botsearch.conf.j2"
         dest: /etc/fail2ban/filter.d/traefik-botsearch.conf
         force: yes
 
     - name: "'files.conf when not Cloudflare exist' Tasks"
+      become: yes
       block:
 
       - name: Import traefik.conf
@@ -82,6 +83,7 @@
 
 
     - name: "'files.conf when Cloudflare exist' Tasks"
+      become: yes
       block:
 
       - name: Import cloudflare-apiv4.conf
@@ -99,6 +101,7 @@
       when: cloudflare_enabled
 
     - name: Sart Fail2ban service
+      become: yes
       systemd:
         name: fail2ban
         state: started

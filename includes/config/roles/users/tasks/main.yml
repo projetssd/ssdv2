@@ -3,6 +3,10 @@
   gather_facts: true
   become: yes
   tasks:
+  - name: Check that group exists
+    group:
+      name: docker
+      state: present
   - name: Add the user to docker group
     user: 
       name: "{{ ansible_user }}"

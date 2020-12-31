@@ -9,6 +9,7 @@
 #########################################################################
 ---
 - name: Install Binary | Install common packages
+  become: yes
   apt:
     state: present
     name:
@@ -16,22 +17,25 @@
       - man-db
 
 - name: Install Binary | Create rclone directories
-  file: "path={{ item }} state=directory mode=0775 owner=root group=root recurse=yes"
+  file: "path={{ item }} state=directory mode=0775 owner={{ lookup('env','USER') }} group={{ lookup('env','USER') }} recurse=yes"
   with_items:
-    - "/root/.config"
-    - "/root/.config/rclone"
+    - "{{ lookup('env','HOME') }}/.config"
+    - "{{ lookup('env','HOME') }}/.config/rclone"
 
 - name: Install Binary | Cleanup rclone tmp path
+  become: yes
   shell: rm -rf /tmp/rclone-*-linux-amd64
   args:
     warn: no
 
 - name: Install Binary | Display rclone version being installed
+  become: yes
   debug:
     msg: "Installing Rclone version: {{ rclone.version }}"
   when: rclone_version_is_specified
 
 - name: "Install Binary | Download and unarchive rclone"
+  become: yes
   unarchive:
     src: "{{ rclone_download_url }}"
     dest: /tmp
@@ -43,6 +47,7 @@
   register: rclone_tmp_dir
 
 - name: Install Binary | Copy binary to /usr/bin/rclone
+  become: yes
   copy:
     src: "{{ rclone_tmp_dir.stdout }}/rclone"
     dest: "/usr/bin/rclone"
@@ -52,6 +57,7 @@
     force: yes
 
 - name: Install Binary | Make dir for local manpages
+  become: yes
   file:
     path: '/usr/local/share/man/man1'
     state: directory
@@ -60,6 +66,7 @@
     group: root
 
 - name: Install Binary | Copy manpage
+  become: yes
   copy:
     src: "{{ rclone_tmp_dir.stdout }}/rclone.1"
     dest: /usr/local/share/man/man1/rclone.1
@@ -68,10 +75,12 @@
     group: root
 
 - name: Install Binary | Install manpage
+  become: yes
   shell: mandb
   changed_when: false
 
 - name: Install Binary | Get rclone version
+  become: yes
   shell: rclone --version | head -n 1 | awk '{ print substr($2, 2) }'
   register: rclone_version
   ignore_errors: yes

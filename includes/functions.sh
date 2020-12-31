@@ -1474,8 +1474,8 @@ function plexdrive() {
 
 function install_rclone() {
 	echo -e "${BLUE}### RCLONE ###${NC}"
-	create_directory /mnt/rclone
-	create_directory /mnt/rclone/${USER}
+	create_dir /mnt/rclone
+	create_dir /mnt/rclone/${USER}
     ${BASEDIR}/includes/config/scripts/rclone.sh
     ansible-playbook ${BASEDIR}/includes/config/roles/rclone/tasks/main.yml
 	checking_errors $?

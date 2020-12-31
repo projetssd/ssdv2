@@ -10,6 +10,7 @@
 ---
 
 - hosts: localhost
+  become: yes
   gather_facts: false
   vars_files:
     - ['settings.yml']

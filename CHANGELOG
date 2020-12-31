@@ -2,7 +2,7 @@
 
 - passage à python3 pour Ansible
 - Logs dans ${SCRIPTPATH}/logs/ansible.log avec logrotate
-- Prerequis.sh à lancer en root, tout le reste passe en user normal
+- Prerequis.sh à lancer en root, tout le reste passe en user normal ==> Annulé le 31/12/2020
 - variabilisation dans les scripts pour éviter les chemins en dur
 - add_user devient get_infos : même chose mais sans création user système
 - apache2-utils installé dès les prérequis
@@ -14,3 +14,5 @@
 
 - installation des modules pip uniquement pour le user seedbox (système général intouché)
 - conf de ansible uniquement pour le user seedbox (système général intouché)
+- verification que le user est dans un groupe docker (même si docker n'est pas encore installé). Si non, création du groupe, ajout du user, et alerte sur le script pour inviter le user à se déloguer/reloguer
+- install de fail2ban : recup des variables ip / ssh avant le become

@@ -6,7 +6,7 @@ After=network-online.target
 [Service]
 Type=simple
 ExecStart=/usr/bin/rclone mount -vv \
-  --config=/root/.config/rclone/rclone.conf \
+  --config={{ lookup('env','HOME') }}/.config/rclone/rclone.conf \
   --allow-other --gid {{user.groupid}} --uid {{user.userid}} \
   --allow-non-empty \
   --vfs-cache-mode full \
