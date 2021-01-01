@@ -1,8 +1,28 @@
+#
+# A lancer avec un fichier vars
+# Ex :
+# ansible-playbook ${CONFDIR}/includes/dockerapps/generique.yml --extra-vars "@${CONFDIR}/includes/dockerapps/vars/calibre.yml"
+#
+# TODO: le lancer dans un fichier temp
+
 ---
 - hosts: localhost
-  gather_facts: false
+  gather_facts: true
   vars_files:
-    - {{ lookup('env','CONFDIR') }}/variables/account.yml
+    - "{{ lookup('env','CONFDIR') }}/variables/account.yml" 
+  vars:
+    # - "traefik.enable": 'true'
+    #       ## HTTP Routers
+    # - "traefik.http.routers.{{ pgrole }}-rtr.entrypoints": 'https'
+    # # traefik.http.routers.{{ pgrole }}-rtr.rule: 'Host(`{{sub[pgrole]  if sub_enabled else pgrole}}.{{user.domain}}`)'
+    # # traefik.http.routers.{{ pgrole }}-rtr.tls: 'true'
+    # #       ## Middlewares
+    # # traefik.http.routers.{{ pgrole }}-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+    # #       ## HTTP Services
+    # # traefik.http.routers.{{ pgrole }}-rtr.service: '{{ pgrole }}-svc'
+    # # traefik.http.services.{{ pgrole }}-svc.loadbalancer.server.port: "{{ intport }}"
+
+
   tasks:
         
     # FACTS #######################################################################
@@ -13,7 +33,7 @@
 
     - name: Checking for existing app data
       stat:
-        path: '{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/authelia/configuration.yml'
+        path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/authelia/configuration.yml"
       register: check
 
     - name: "Variables | Set 'cloudflare_enabled' variable"
@@ -84,7 +104,7 @@
         pg_labels:
           traefik.enable: 'true'
           ## HTTP Routers
-          traefik.http.routers.{{ pgrole }}-rtr.entrypoints: 'https'
+          "traefik.http.routers.{{ pgrole }}-rtr.entrypoints": 'https'
           traefik.http.routers.{{ pgrole }}-rtr.rule: 'Host(`{{sub[pgrole]  if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.{{ pgrole }}-rtr.tls: 'true'
           ## Middlewares
@@ -106,16 +126,24 @@
       docker_container:
         name: '{{pgrole}}'
         image: '{{image}}'
-        pull: yes
-        volumes: '{{pg_volumes}}'
-        env: '{{pg_env}}'
-        restart_policy: unless-stopped
+        #pull: yes
+        volumes: 
+          - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config:rw"
+          - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+        #  - "/etc/localtime:/etc/localtime:ro"
+        #env: '{{pg_env}}'
+        #restart_policy: unless-stopped
         networks:
           - name: traefik_proxy
         state: started
+        #volumes:
+        #  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config:rw"
+        #  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+        #  - '/etc/localtime:/etc/localtime:ro'
         labels: '{{pg_labels}}'
 
     - name: add resume file
+      become: true
       shell: |
         echo "{{pgrole}}-{{sub[pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
 
