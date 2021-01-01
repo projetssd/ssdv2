@@ -1504,30 +1504,30 @@ function install_docker() {
 }
 
 function subdomain() {
-SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
-grep "sub" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-if [ $? -eq 1 ]; then
- sed -i '/transcodes/a sub:' ${CONFDIR}/variables/account.yml
-fi
-echo ""
-read -rp $'\e[36m --> Souhaitez personnaliser les sous domaines: (o/n) ? \e[0m' OUI
-echo ""
-if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
-  echo -e " ${CRED}--> NE PAS SAISIR LE NOM DE DOMAINE - LES POINTS NE SONT PAS ACCEPTES${NC}"
-  echo ""
-for line in $(cat $SERVICESPERUSER);
-do
-  read -rp $'\e[32m        * Sous domaine pour\e[0m '$line': ' subdomain
-
-  if [[ "$line" != "plex" ]]; then
-    sed -i "/$line/d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-    sed -i "/sub/a \ \ \ $line: $subdomain" ${CONFDIR}/variables/account.yml
-  else
-    sed -i "/media/d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-    sed -i "/sub/a \ \ \ media: $subdomain" ${CONFDIR}/variables/account.yml
-  fi
-done
-fi
+	SERVICESPERUSER="${SERVICESUSER}${USER}"
+	grep "sub" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+	if [ $? -eq 1 ]; then
+	 sed -i '/transcodes/a sub:' ${CONFDIR}/variables/account.yml
+	fi
+	echo ""
+	read -rp $'\e[36m --> Souhaitez personnaliser les sous domaines: (o/n) ? \e[0m' OUI
+	echo ""
+	if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
+	  echo -e " ${CRED}--> NE PAS SAISIR LE NOM DE DOMAINE - LES POINTS NE SONT PAS ACCEPTES${NC}"
+	  echo ""
+	for line in $(cat $SERVICESPERUSER);
+	do
+	  read -rp $'\e[32m        * Sous domaine pour\e[0m '$line': ' subdomain
+	
+	  if [[ "$line" != "plex" ]]; then
+	    sed -i "/$line/d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+	    sed -i "/sub/a \ \ \ $line: $subdomain" ${CONFDIR}/variables/account.yml
+	  else
+	    sed -i "/media/d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+	    sed -i "/sub/a \ \ \ media: $subdomain" ${CONFDIR}/variables/account.yml
+	  fi
+	done
+	fi
 }
 
 function define_parameters() {
@@ -1684,13 +1684,13 @@ function projects() {
 }
 
 function choose_services() {
-        echo -e "${BLUE}### SERVICES ###${NC}"
+    echo -e "${BLUE}### SERVICES ###${NC}"
 	echo -e " ${BWHITE}--> Services en cours d'installation : ${NC}"
-	SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
+	SERVICESPERUSER="${SERVICESUSER}${USER}"
 	rm -Rf $SERVICESPERUSER > /dev/null 2>&1
 	menuservices="/tmp/menuservices.txt"
 	if [[ -e "$menuservices" ]]; then
-	rm /tmp/menuservices.txt
+		rm $menuservices
 	fi
 
 	for app in $(cat $SERVICESAVAILABLE);
@@ -1781,10 +1781,8 @@ function webserver() {
 function choose_media_folder_classique() {
 	echo -e "${BLUE}### DOSSIERS MEDIAS ###${NC}"
 	echo -e " ${BWHITE}--> Création des dossiers Medias : ${NC}"
-	mkdir -p /home/$SEEDUSER/filebot
-	mkdir -p /home/$SEEDUSER/local/{Films,Series,Musiques,Animes}
-	chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER
-	chmod -R 755 /home/$SEEDUSER
+	mkdir -p ${HOME}/filebot
+	mkdir -p ${HOME}/local/{Films,Series,Musiques,Animes}
 	checking_errors $?
 	echo ""
 }
@@ -1792,8 +1790,8 @@ function choose_media_folder_classique() {
 function choose_media_folder_plexdrive() {
 	# Attention, là on ne va pas créer de /home/$SEEDUSER, on reste sur le user qui a lancé l'install
 	echo -e "${BLUE}### DOSSIERS MEDIAS ###${NC}"
-	FOLDER="/mnt/rclone/$SEEDUSER"
-	MEDIASPERUSER="$MEDIASUSER$SEEDUSER"
+	FOLDER="/mnt/rclone/${USER}"
+	MEDIASPERUSER="$MEDIASUSER${USER}"
 	
 	# si le dossier /mnt/rclone/user n'est pas vide
 	mkdir -p ${HOME}/Medias
@@ -1821,7 +1819,7 @@ function choose_media_folder_plexdrive() {
 		MEDIASTOINSTALL=$(whiptail --title "Gestion des dossiers Medias" --checklist \
 		"Medias à ajouter pour $SEEDUSER (Barre espace pour la sélection)" 28 60 17 \
 		$(cat /tmp/menumedia.txt) 3>&1 1>&2 2>&3)
-		MEDIASPERUSER="$MEDIASUSER$SEEDUSER"
+		MEDIASPERUSER="$MEDIASUSER${USER}"
 		touch $MEDIASPERUSER
 		for MEDDOCKER in $MEDIASTOINSTALL
 		do
@@ -1841,7 +1839,7 @@ function choose_media_folder_plexdrive() {
 }
 
 function install_services() {
-	INSTALLEDFILE="/home/$SEEDUSER/resume"
+	INSTALLEDFILE="${HOME}/resume"
 	touch $INSTALLEDFILE > /dev/null 2>&1
 
 	if [[ ! -d "$CONFDIR/conf" ]]; then

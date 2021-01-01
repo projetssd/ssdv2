@@ -9,20 +9,23 @@
 #########################################################################
 ---
 - name: "Docker | Create override directory"
+  become: yes
   file:
     path: /etc/systemd/system/docker.service.d
     state: directory
     mode: 0775
 
 - name: "Docker | Import override file"
+  become: yes
   template:
-    src: /opt/seedbox-compose/includes/config/roles/unionfs/templates/override.conf.j2
+    src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/unionfs/templates/override.conf.j2"
     dest: /etc/systemd/system/docker.service.d/override.conf
     mode: 0775
     force: no
-  register: import
+  register: myimport
 
 - name: "Docker | Edit override file"
+  become: yes
   ini_file:
     path: /etc/systemd/system/docker.service.d/override.conf
     section: Unit
@@ -30,9 +33,10 @@
     value: "{{ 'mergerfs' if (mounts.unionfs|lower) == 'mergerfs' else 'unionfs' }}.service"
     state: present
     no_extra_spaces: yes
-  register: edit
+  register: myedit
 
 - name: Restart Docker Service
+  become: yes
   block:
 
   - name: "Docker | Systemd daemon-reload"
@@ -45,4 +49,4 @@
     wait_for:
       timeout: 30
 
-  when: import.changed or edit.changed
+  when: myimport.changed or myedit.changed

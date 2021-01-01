@@ -17,12 +17,14 @@
   block:
 
   - name: "Services | Stop and disable existing '{{ outer_item }}'"
+    become: yes
     systemd:
       name: "{{ outer_item }}"
       state: stopped
       enabled: no
 
   - name: "Services | Update ownership in existing '{{ outer_item }}'"
+    become: yes
     ini_file:
       path: "/etc/systemd/system/{{ outer_item }}"
       section: Service
@@ -36,6 +38,7 @@
     when: outer_item != "mergerfs.service"
 
   - name: "Services | Remove ownership in existing '{{ outer_item }}'"
+    become: yes
     ini_file:
       path: "/etc/systemd/system/{{ outer_item }}"
       section: Service
@@ -48,12 +51,14 @@
 
   # if applicable
   - name: "Services | Replace '/mnt/plexdrive' with '/mnt/rclone' in '{{ outer_item }}'"
+    become: yes
     replace:
       path: "/etc/systemd/system/{{ outer_item }}"
       regexp: "\\/mnt\\/plexdrive"
       replace: '/mnt/rclone'
 
   - name: "Services | Systemd daemon-reload"
+    become: yes
     systemd: daemon_reload=yes
 
   when: (service_file.stat.exists)

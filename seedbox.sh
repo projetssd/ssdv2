@@ -179,11 +179,17 @@ if [[ ${IS_INSTALLED} -eq 0 ]]; then
       install_watchtower
       # Install fail2ban
       install_fail2ban
-      exit 0
+      # Choix des dossiers et création de l'arborescence
       choose_media_folder_plexdrive
+      # Installation de mergerfs
+      # Cette install a une incidence sur docker (dépendances dans systemd)
       unionfs_fuse
       pause
+      # Choix des services à installer
+      # Jusque là, on ne fait que les choisir, et les stocker dans un fichier texte
       choose_services
+      # On choisit les sous domaines pour les services installés précédemment
+      # stocké dans ccount.yml
       subdomain
       install_services
       for i in $(docker ps --format "{{.Names}}")

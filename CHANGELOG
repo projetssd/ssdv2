@@ -16,3 +16,4 @@
 - conf de ansible uniquement pour le user seedbox (système général intouché)
 - verification que le user est dans un groupe docker (même si docker n'est pas encore installé). Si non, création du groupe, ajout du user, et alerte sur le script pour inviter le user à se déloguer/reloguer
 - install de fail2ban : recup des variables ip / ssh avant le become
+- Install de rclone : le fichier de conf est maintenant dans le $HOME du user

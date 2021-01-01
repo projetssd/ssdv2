@@ -25,14 +25,18 @@
      }}-{{ ansible_distribution_release|lower }}_amd64.deb
 
 - name: "MergerFS | Install mergerfs"
+  become: yes
   apt:
+  
     deb: "{{ mergerfs_download_url.stdout | default('{{ mergerfs_download_url_backup }}') }}"
     state: present
 
 - name: "MergerFS | Import 'mergerfs.service'"
+  become: yes
   template:
-    src: /opt/seedbox-compose/includes/config/roles/unionfs/templates/mergerfs.service.j2
+    src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/unionfs/templates/mergerfs.service.j2"
     dest: /etc/systemd/system/mergerfs.service
 
 - name: "MergerFS | Start 'mergerfs.service'"
+  become: yes
   systemd: name=mergerfs.service state=started enabled=yes daemon_reload=yes
