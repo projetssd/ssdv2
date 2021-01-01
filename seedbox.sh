@@ -5,7 +5,9 @@ CURRENT_SCRIPT=$(readlink -f "$0")
 # Absolute path this script is in.
 export SCRIPTPATH=$(dirname "$CURRENT_SCRIPT")
 
-
+# On disque d'avoir besoin de ces variables d'environnement par la suite
+export MYUID=$(id -u)
+export MYGID=$(id -g)
 
 
 if [ ! -f "${SCRIPTPATH}/ssddb" ]; then
