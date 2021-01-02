@@ -1867,21 +1867,38 @@ function install_services() {
 			${BASEDIR}/includes/dockerapps/templates/mattermost/mattermost.sh
 
 		else
-			ansible-playbook "$BASEDIR/includes/dockerapps/$line.yml"
-			cp "$BASEDIR/includes/dockerapps/$line.yml" "$CONFDIR/conf/$line.yml" > /dev/null 2>&1
+			# On est dans le cas générique
+			# on regarde s'i y a un playbook existant
+			if [ -e "$CONFDIR/seedbox/conf/$line.yml" ]; then
+				# il y a déjà un playbook "perso", on le lance
+				ansible-playbook "$CONFDIR/seedbox/conf/$line.yml"
+			elif [ -e "$CONFDIR/seedbox/vars/$line.yml" ]; then
+				# il y a des variables persos, on les lance
+				ansible-playbook "$BASEDIR/includes/dockerapps/generique.yml" --extra-vars "@$CONFDIR/seedbox/vars/$line.yml"
+			elif [ -e "$BASEDIR/includes/dockerapps/$line.yml" ]; then
+				# pas de playbook perso ni de vars perso
+				# Il y a un playbook spécifique pour cette appli, on le lance
+				ansible-playbook "$BASEDIR/includes/dockerapps/$line.yml"
+				# puis on le copie pour le user
+				cp "$BASEDIR/includes/dockerapps/$line.yml" "$CONFDIR/conf/$line.yml" > /dev/null 2>&1
+			else
+				# on lance le playbook generique
+				ansible-playbook "$BASEDIR/includes/dockerapps/generique.yml" --extra-vars "@${BASEDIR}/includes/dockerapps/vars/${line}.yml"
+				# et on copie les variables pour le user
+				cp "$BASEDIR/includes/dockerapps/vars/${line}.yml" "$CONFDIR/vars/$line.yml" > /dev/null 2>&1
+			fi
 		fi
                    
-                grep $line ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-                if [ $? -eq 0 ]; then
-                  line=$(grep $line ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
-		  FQDNTMP="$line.$DOMAIN"
-		  echo "$FQDNTMP" >> $INSTALLEDFILE
-                else
-		  FQDNTMP="$line.$DOMAIN"
-		  echo "$FQDNTMP" >> $INSTALLEDFILE
-                fi
+		grep $line ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+		if [ $? -eq 0 ]; then
+			line=$(grep $line ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
+			FQDNTMP="$line.$DOMAIN"
+			echo "$FQDNTMP" >> $INSTALLEDFILE
+		else
+			FQDNTMP="$line.$DOMAIN"
+			echo "$FQDNTMP" >> $INSTALLEDFILE
+		fi
 		FQDNTMP=""
-                
 	done
 	config_post_compose
 }
