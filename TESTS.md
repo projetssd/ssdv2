@@ -22,6 +22,7 @@ chown -R user: /opt/seedbox-compose # changer user par votre username
 puis avec le user
 ```
 cd /opt/seedbox-compose
+sudo ./prerequis.sh
 ./seedbox.sh
 ```
 

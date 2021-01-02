@@ -5,3 +5,4 @@ if [ "$USER" != "root" ]; then
   exit 1
 fi
 ansible-playbook includes/config/playbooks/sudoers.yml
+echo "Opération terminée, vous pouvez continuer en tapant ./seedbox.sh"
