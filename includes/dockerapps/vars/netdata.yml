@@ -1,0 +1,12 @@
+---
+pgrole: 'netdata'
+intport: '19999'
+image: 'netdata/netdata'
+pg_volumes:
+  - '/etc/localtime:/etc/localtime:ro'
+  - '/sys:/host/sys:ro'
+  - '/proc:/host/proc:ro'
+  - '/var/run/docker.sock:/var/run/docker.sock:ro'
+
+pg_env:
+  -PGID="999"

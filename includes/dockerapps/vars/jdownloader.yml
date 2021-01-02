@@ -1,0 +1,11 @@
+---
+pgrole: 'jdownloader'
+intport: '5800'
+image: 'jlesage/jdownloader-2'
+pg_volumes:
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config:rw"
+  - "{{ lookup('env','USER') }}/filebot:/output:rw"
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  -PUID="{{ lookup('env','MYUID') }}"
+  -PGID="{{ lookup('env','MYGID') }}"

@@ -1,0 +1,12 @@
+---
+pgrole: 'portainer'
+intport: '9000'
+image: 'portainer/portainer-ce'
+pg_volumes:
+  - '/etc/localtime:/etc/localtime:ro'
+  - '/opt/seedbox/docker/{{pgrole}}:/data'
+  - '/var/run/docker.sock:/var/run/docker.sock'
+
+pg_env:
+  -PUID="{{ lookup('env','MYUID') }}"
+  -PGID="{{ lookup('env','MYGID') }}"
