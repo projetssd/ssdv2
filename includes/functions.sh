@@ -1182,7 +1182,7 @@ function script_plexdrive() {
                       case $RCLONE in
                                    
                            1)
-                           /opt/seedbox-compose/includes/config/scripts/fusermount.sh
+                           ${BASEDIR}/includes/config/scripts/fusermount.sh
                            install_rclone
                            unionfs_fuse
                            rm -rf /mnt/plexdrive
@@ -1204,7 +1204,7 @@ function script_plexdrive() {
 
                            3)
                            clear
-                           /opt/seedbox-compose/includes/config/scripts/fusermount.sh
+                           ${BASEDIR}/includes/config/scripts/fusermount.sh
                            install_rclone
                            unionfs_fuse
                            ${BASEDIR}/includes/config/scripts/plexdrive.sh
@@ -1481,10 +1481,10 @@ function install_rclone() {
 	echo -e "${BLUE}### RCLONE ###${NC}"
 	create_dir /mnt/rclone
 	create_dir /mnt/rclone/${USER}
-	ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+	ansible-vault decrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
     ${BASEDIR}/includes/config/scripts/rclone.sh
     ansible-playbook ${BASEDIR}/includes/config/roles/rclone/tasks/main.yml
-	ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+	ansible-vault encrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 	checking_errors $?
 	echo ""
 }
@@ -1512,9 +1512,9 @@ function install_docker() {
 
 function subdomain() {
 SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
-grep "sub" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+grep "sub" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 if [ $? -eq 1 ]; then
- sed -i '/transcodes/a sub:' /opt/seedbox/variables/account.yml 
+ sed -i '/transcodes/a sub:' ${CONFDIR}/variables/account.yml 
 fi
 echo ""
 read -rp $'\e[36m --> Souhaitez personnaliser les sous domaines: (o/n) ? \e[0m' OUI
@@ -1525,8 +1525,8 @@ if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
 for line in $(cat $SERVICESPERUSER);
 do
   read -rp $'\e[32m        * Sous domaine pour\e[0m '$line': ' subdomain
-  sed -i "/$line: ./d" /opt/seedbox/variables/account.yml > /dev/null 2>&1
-  sed -i "/sub/a \ \ \ $line: $subdomain" /opt/seedbox/variables/account.yml
+  sed -i "/$line: ./d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+  sed -i "/sub/a \ \ \ $line: $subdomain" ${CONFDIR}/variables/account.yml
 done
 fi
 }
@@ -1861,9 +1861,9 @@ function install_services() {
 			sed -i "/token:/c\   token: $token" ${CONFDIR}/variables/account.yml
 			ansible-playbook ${BASEDIR}/includes/config/roles/plex/tasks/main.yml
 			ansible-vault encrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-			token=$(. /opt/seedbox-compose/includes/config/roles/plex_autoscan/plex_token.sh)
-			sed -i "/token:/c\   token: $token" /opt/seedbox/variables/account.yml
-			ansible-playbook /opt/seedbox-compose/includes/dockerapps/plex.yml
+			token=$(. ${BASEDIR}/includes/config/roles/plex_autoscan/plex_token.sh)
+			sed -i "/token:/c\   token: $token" ${CONFDIR}/variables/account.yml
+			ansible-playbook ${BASEDIR}/includes/dockerapps/plex.yml
 			cp "$BASEDIR/includes/dockerapps/plex.yml" "$CONFDIR/conf/plex.yml" > /dev/null 2>&1
       cp "$BASEDIR/includes/dockerapps/plex.yml" "$CONFDIR/conf/plex.yml" > /dev/null 2>&1
 		elif [[ "$line" == "mattermost" ]]; then
@@ -1901,16 +1901,16 @@ function install_services() {
 			FQDNTMP="$line.$DOMAIN"
 			echo "$FQDNTMP" >> $INSTALLEDFILE
 		fi
-                grep "$line: ." /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                grep "$line: ." ${CONFDIR}/variables/account.yml > /dev/null 2>&1
                 if [ $? -eq 0 ]; then
-                  result=$(grep "$line: ." /opt/seedbox/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
+                  result=$(grep "$line: ." ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
 		  FQDNTMP="$result.$DOMAIN"
-                  echo "$line = $FQDNTMP" | tee -a /opt/seedbox/resume  > /dev/null
+                  echo "$line = $FQDNTMP" | tee -a ${CONFDIR}/resume  > /dev/null
 		  echo "$line.$DOMAIN" >> $INSTALLEDFILE
                 else
 		  FQDNTMP="$line.$DOMAIN"
 		  echo "$FQDNTMP" >> $INSTALLEDFILE
-                  echo "$line = $FQDNTMP" | tee -a /opt/seedbox/resume  > /dev/null
+                  echo "$line = $FQDNTMP" | tee -a ${CONFDIR}/resume  > /dev/null
                 fi
 		FQDNTMP=""
 	done
@@ -2238,12 +2238,12 @@ function manage_apps() {
                           sed -i "/$SUBDOMAIN/d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
                         fi
 
-                        sed -i "/$APPSELECTED/d" /opt/seedbox/resume > /dev/null 2>&1
+                        sed -i "/$APPSELECTED/d" ${CONFDIR}/resume > /dev/null 2>&1
                         sed -i "/$APPSELECTED/d" /home/$SEEDUSER/resume > /dev/null 2>&1
 			docker rm -f "$APPSELECTED" > /dev/null 2>&1
 			rm -rf ${CONFDIR}/docker/$SEEDUSER/$APPSELECTED
 			rm $CONFDIR/conf/$APPSELECTED.yml > /dev/null 2>&1
-                        echo "0" > /opt/seedbox/status/$APPSELECTED
+                        echo "0" > ${CONFDIR}/status/$APPSELECTED
 
                         case $APPSELECTED in
                             seafile)
@@ -2315,7 +2315,7 @@ function manage_apps() {
 				image=$(docker images | grep "$line" | awk '{print $3}')
 			fi
 
-                        sed -i "/$line/d" /opt/seedbox/resume > /dev/null 2>&1
+                        sed -i "/$line/d" ${CONFDIR}/resume > /dev/null 2>&1
                         sed -i "/$line/d" /home/$SEEDUSER/resume > /dev/null 2>&1
 			docker rm -f "$line" > /dev/null 2>&1
 			docker system prune -af > /dev/null 2>&1
