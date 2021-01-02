@@ -1502,7 +1502,7 @@ function install_docker() {
 	echo -e " ${BWHITE}* Installation Docker${NC}"
 	file="/usr/bin/docker"
 	if [ ! -e "$file" ]; then
-		cp -r /usr/local/lib/python2.7/dist-packages/backports/ssl_match_hostname/ /usr/lib/python2.7/dist-packages/backports
+		# cp -r /usr/local/lib/python2.7/dist-packages/backports/ssl_match_hostname/ /usr/lib/python2.7/dist-packages/backports
 		ansible-playbook ${BASEDIR}/includes/config/roles/docker/tasks/main.yml
 	else
 		echo -e " ${YELLOW}* docker est déjà installé !${NC}"
