@@ -86,6 +86,14 @@ source "${SCRIPTPATH}/includes/functions.sh"
 # shellcheck source=${BASEDIR}/includes/variables.sh
 source "${SCRIPTPATH}/includes/variables.sh"
 
+################################################
+# on vérifie qu'il y ait un vault pass existant
+# Sinon ansible va râler au lancement
+# Le password sera bien sur écrasé plus tard
+if [ ! -f "${HOME}/.vault_pass" ]; then
+  echo "0" >  ${HOME}/.vault_pass
+fi
+
 #######################################
 # On regarde si le user est dans
 # le groupe docker
@@ -103,13 +111,7 @@ else
     exit 1
 fi
 
-################################################
-# on vérifie qu'il y ait un vault pass existant
-# Sinon ansible va râler au lancement
-# Le password sera bien sur écrasé plus tard
-if [ ! -f "${HOME}/.vault_pass" ]; then
-  echo "0" >  ${HOME}/.vault_pass
-fi
+
 
 ################################################
 # TEST ROOT USER
@@ -119,6 +121,7 @@ if [ "$USER" == "root" ]; then
   echo -e "${CCYAN}-----------------------${CEND}"
   echo -e "${CCYAN}Pour des raisons de sécurité, il n'est pas conseillé de lancer ce script en root${CEND}"
   read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
+  # TODO : proposer de créer un utilisateur
 fi
 
 
