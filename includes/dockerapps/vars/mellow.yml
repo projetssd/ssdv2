@@ -1,0 +1,10 @@
+---
+pgrole: 'mellow'
+intport: '5060'
+image: 'voidp/mellow'
+pg_volumes:
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/usr/src/app/data/"
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  -PUID="{{ lookup('env','MYUID') }}"
+  -PGID="{{ lookup('env','MYGID') }}"
