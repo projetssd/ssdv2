@@ -80,7 +80,7 @@
         pgrole: 'netdata'
         intport: '19999'
         extport: '19999'
-        image: 'titpetric/netdata'
+        image: 'netdata/netdata'
 
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
@@ -105,16 +105,14 @@
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
-          - '/etc/localtime:/etc/localtime:ro'
           - '/sys:/host/sys:ro'
           - '/proc:/host/proc:ro'
-          - '/var/run/docker.sock:/var/run/docker.sock'
+          - '/var/run/docker.sock:/var/run/docker.sock:ro'
 
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
-          PUID: '{{user.userid}}'
-          PGID: '{{user.groupid}}'
+          PGID: '999'
 
     # MAIN DEPLOYMENT #############################################################
     - name: 'Deploying {{pgrole}}'
