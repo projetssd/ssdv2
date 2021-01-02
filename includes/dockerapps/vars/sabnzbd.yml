@@ -1,7 +1,7 @@
 ---
-pgrole: 'bazarr'
-intport: '6767'
-image: 'linuxserver/bazarr'
+pgrole: 'sabnzbd'
+intport: '8080'
+image: 'linuxserver/sabnzbd'
 pg_volumes:
   - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config:rw"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
