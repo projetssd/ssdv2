@@ -1,0 +1,12 @@
+---
+pgrole: 'bazarr'
+intport: '6767'
+image: 'linuxserver/bazarr'
+pg_volumes:
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
+  - "{{ lookup('env','CONFDIR') }}/Medias/Films:/movies"
+  - "{{ lookup('env','CONFDIR') }}/Medias/Series:/tv"
+  - "{{ lookup('env','CONFDIR') }}/Medias/Animes:/Animes"
+pg_env:
+  -PUID="{{ lookup('env','MYUID') }}"
+  -PGID="{{ lookup('env','MYGID') }}"

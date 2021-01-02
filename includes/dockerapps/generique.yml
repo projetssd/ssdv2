@@ -79,7 +79,7 @@
     - name: "Set DNS Record on CloudFlare"
       include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
       vars:
-        subdomain: "{{sub.pgrole if sub_enabled else pgrole}}"
+        subdomain: "{{sub[pgrole] if sub_enabled else pgrole}}"
       when: cloudflare_enabled
 
     - name: Creating paths
@@ -132,5 +132,14 @@
     - name: "create {{ pgrole }} state"
       shell: |
         echo "2" > {{ lookup('env','CONFDIR') }}/status/{{ pgrole }}
+        
+    - name: "Insert {{ pgrole}} into database"
+      shell : 
+        cmd: |
+          sqlite3 {{  lookup('env','BASEDIR') }}/ssddb << EOF
+              replace into applications (name,status,subdomain,port)
+              values
+              ('{{ pgrole }}',2,'{{sub[pgrole] if sub_enabled else pgrole}}',{{ intport }});
+          EOF
 
 

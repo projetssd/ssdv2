@@ -7,8 +7,8 @@ Tous les tests sont à faire sur
 
 
 Prérequis : 
-- un user qui puisse faire du sudo sans password
-- - si possible une vm neuve
+- un user "normal" (non root), qui puisse faire du sudo. 
+- si possible une vm neuve
 
 
 
@@ -30,5 +30,5 @@ et se laisser guider
 
 ## Tests à faire :
 
-une fois la seedbox lancée, installer la gui (choix 999 caché) et vérifier que tout est ok.
+lancer seedbox.sh, puis installer la gui (choix 999 caché) et vérifier que tout est ok.
 

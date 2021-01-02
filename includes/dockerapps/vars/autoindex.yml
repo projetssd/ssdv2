@@ -1,0 +1,9 @@
+---
+pgrole: 'autoindex'
+intport: '80'
+image: 'dceoy/nginx-autoindex:latest'
+pg_volumes:
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/autoindex:/var/lib/nginx/html:ro"
+pg_env:
+  - PUID: "{{ lookup('env','MYUID') }}"
+  - PGID: "{{ lookup('env','MYGID') }}"
