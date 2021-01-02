@@ -103,6 +103,11 @@
       include_vars: 
         file: "{{ tempfile_1.path }}"
         name: pg_labels
+        
+    - name: Delete temp file
+      file:
+        path: "{{ tempfile_1.path }}"
+        state: absent
     
 
     # MAIN DEPLOYMENT #############################################################

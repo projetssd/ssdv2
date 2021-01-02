@@ -1849,10 +1849,8 @@ function install_services() {
 	## préparation installation
 	for line in $(cat $SERVICESPERUSER);
 	do
-		if [ -e "$CONFDIR/conf/$line.yml" ]; then
-			ansible-playbook "$CONFDIR/conf/$line.yml"
 
-		elif [[ "$line" == "plex" ]]; then
+		if [[ "$line" == "plex" ]]; then
 			echo -e "${BLUE}### CONFIG POST COMPOSE PLEX ###${NC}"
 			echo -e " ${BWHITE}* Processing plex config file...${NC}"
 			echo ""
