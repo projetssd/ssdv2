@@ -9,12 +9,6 @@ USER=$(cat /tmp/name)
 ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 sed -i '/plexdrive*/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
 mkdir /mnt/rclone > /dev/null 2>&1
-fusermount -uz /mnt/rclone > /dev/null 2>&1
-fusermount -uz /mnt/rcloneSeed > /dev/null 2>&1
-fusermount -uz /mnt/plexdrive > /dev/null 2>&1
-fusermount -uz /home/$USER/Medias > /dev/null 2>&1
-fusermount -uz /home/$USER/SeedCloud > /dev/null 2>&1
-
 
 ## detection remote plexdrive ##
 grep "plexdrive" /root/.config/rclone/rclone.conf > /dev/null 2>&1

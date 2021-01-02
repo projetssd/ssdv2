@@ -2,8 +2,8 @@
 - hosts: localhost
   gather_facts: true
   vars_files:
-    - ['settings.yml']
-    - ['../defaults/main.yml']
+    - ['/opt/seedbox-compose/includes/dockerapps/templates/plex/tasks/settings.yml']
+    - ['/opt/seedbox-compose/includes/dockerapps/templates/plex/defaults/main.yml']
     - [/opt/seedbox/variables/account.yml]
   tasks:
 
@@ -27,29 +27,29 @@
     - name: "Variables | Set 'plex_account_enabled' variable"
       set_fact:
         plex_account_enabled: "{{ true if not(
-            (plex is undefined)
+            (plex.token is undefined)
             or
-            (plex is none)
+            (plex.token is none)
             or
-            (plex | trim | length == 0)
+            (plex.token | trim | length == 0)
           )
           else false }}"
 
     - name: "Variables | Set 'sub' variable"
       set_fact:
         sub_enabled: "{{ true if not(
-            (sub.media is undefined)
+            (sub.plex is undefined)
             or
-            (sub.media is none)
+            (sub.plex is none)
             or
-            (sub.media | trim | length == 0)
+            (sub.plex | trim | length == 0)
           )
             else false }}"
 
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: "{{sub.media if sub_enabled else 'plex'}}"
+        subdomain: "{{sub.plex if sub_enabled else 'plex'}}"
       when: cloudflare_enabled
 
     - name: "Create Plex directories"
@@ -122,7 +122,7 @@
         - (preferences_xml.stat.exists)
 
     - name: Claim Plex Server
-      import_tasks: subtasks/claim_server.yml
+      import_tasks: /opt/seedbox-compose/includes/dockerapps/templates/plex/tasks/subtasks/claim_server.yml
       when:
         - (not preferences_xml.stat.exists) or (preferences_xml.stat.exists and not plex_server_claimed)
 
@@ -132,7 +132,7 @@
           traefik.enable: 'true'
           ## HTTP Routers
           traefik.http.routers.plex-rtr.entrypoints: 'https'
-          traefik.http.routers.plex-rtr.rule: 'Host(`{{sub.media if sub_enabled else pgrole}}.{{user.domain}}`)'
+          traefik.http.routers.plex-rtr.rule: 'Host(`{{sub.plex if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.plex-rtr.tls: 'true'
           ## HTTP Services
           traefik.http.routers.plex-rtr.service: 'plex-svc'
@@ -168,10 +168,15 @@
         recurse: yes
 
     - name: Extra Tasks
-      import_tasks: "subtasks/extra.yml"
+      import_tasks: "/opt/seedbox-compose/includes/dockerapps/templates/plex/tasks/subtasks/extra.yml"
       ignore_errors: yes
 
     - name: add resume file
       shell: |
-        echo "{{pgrole}}-{{sub.media if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+        echo "{{pgrole}}-{{sub.plex if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+
+    - name: create traefik state
+      shell: |
+        echo "2" > /opt/seedbox/status/plex
+
 

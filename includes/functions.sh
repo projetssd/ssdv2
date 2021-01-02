@@ -61,7 +61,7 @@ function update_status() {
 	  echo "2" > ${CONFDIR}/status/${i}
 
 	done
-	
+
 }
 
 function cloudflare() {
@@ -83,21 +83,21 @@ function cloudflare() {
 	echo -e "${CCYAN}------------------------------------------------------------------${CEND}"
 	echo ""
 	read -rp $'\e[33mSouhaitez vous utiliser les DNS Cloudflare ? (o/n)\e[0m :' OUI
-	
+
 	if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
 		ansible-vault decrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 		if [ -z "$cloud_email" ] || [ -z "$cloud_api" ]; then
 			cloud_email=$1
 			cloud_api=$2
 		fi
-		
+
 		while [ -z "$cloud_email" ]; do
 			>&2 echo -n -e "${BWHITE}Votre Email Cloudflare: ${CEND}"
 			read cloud_email
 			sed -i "/login:/c\   login: $cloud_email" ${CONFDIR}/variables/account.yml
 			update_seedbox_param "cf_login" $cloud_email
 		done
-		
+
 		while [ -z "$cloud_api" ]; do
 			>&2 echo -n -e "${BWHITE}Votre API Cloudflare: ${CEND}"
 			read cloud_api
@@ -1182,8 +1182,10 @@ function script_plexdrive() {
                       case $RCLONE in
                                    
                            1)
+                           /opt/seedbox-compose/includes/config/scripts/fusermount.sh
                            install_rclone
                            unionfs_fuse
+                           rm -rf /mnt/plexdrive
                            echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
                            read -r
                            script_plexdrive
@@ -1191,6 +1193,8 @@ function script_plexdrive() {
               
                            2)
                            clear
+                            ${BASEDIR}/includes/config/scripts/fusermount.sh
+                           ${BASEDIR}/includes/config/scripts/rclone.sh
                            ${BASEDIR}/includes/config/scripts/plexdrive.sh
                            install_plexdrive
                            echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
@@ -1200,6 +1204,7 @@ function script_plexdrive() {
 
                            3)
                            clear
+                           /opt/seedbox-compose/includes/config/scripts/fusermount.sh
                            install_rclone
                            unionfs_fuse
                            ${BASEDIR}/includes/config/scripts/plexdrive.sh
@@ -1347,7 +1352,7 @@ function change_file_owner() {
 	MYGID=$(id -g)
 	ansible-playbook ${BASEDIR}/includes/config/playbooks/chown_file.yml \
 	--extra-vars '{"FILE":"'${1}'","UID":"'${MYUID}'","GID":"'${MYGID}'"}'
-	
+
 }
 
 function make_dir_writable() {
@@ -1355,7 +1360,7 @@ function make_dir_writable() {
 	MYGID=$(id -g)
 	ansible-playbook ${BASEDIR}/includes/config/playbooks/change_rights.yml \
 	--extra-vars '{"DIRECTORY":"'${1}'"}'
-	
+
 }
 
 
@@ -1412,7 +1417,7 @@ function install_traefik() {
 	echo -e "${BLUE}### TRAEFIK ###${NC}"
 	echo -e " ${BWHITE}* Installation Traefik${NC}"
 	ansible-playbook ${BASEDIR}/includes/dockerapps/traefik.yml
-	checking_errors $?		
+	checking_errors $?
 	if [[ ${CURRENT_ERROR} -eq 1 ]]; then
 		echo "${RED}Cette étape peut ne pas aboutir lors d'une première installation${CEND}"
 		echo "${RED}Suite à l'installation de docker, il faut se déloguer/reloguer pour que cela fonctionne${CEND}"
@@ -1476,8 +1481,10 @@ function install_rclone() {
 	echo -e "${BLUE}### RCLONE ###${NC}"
 	create_dir /mnt/rclone
 	create_dir /mnt/rclone/${USER}
+	ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
     ${BASEDIR}/includes/config/scripts/rclone.sh
     ansible-playbook ${BASEDIR}/includes/config/roles/rclone/tasks/main.yml
+	ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 	checking_errors $?
 	echo ""
 }
@@ -1504,30 +1511,24 @@ function install_docker() {
 }
 
 function subdomain() {
-	SERVICESPERUSER="${SERVICESUSER}${USER}"
-	grep "sub" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-	if [ $? -eq 1 ]; then
-	 sed -i '/transcodes/a sub:' ${CONFDIR}/variables/account.yml
-	fi
-	echo ""
-	read -rp $'\e[36m --> Souhaitez personnaliser les sous domaines: (o/n) ? \e[0m' OUI
-	echo ""
-	if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
-	  echo -e " ${CRED}--> NE PAS SAISIR LE NOM DE DOMAINE - LES POINTS NE SONT PAS ACCEPTES${NC}"
-	  echo ""
-	for line in $(cat $SERVICESPERUSER);
-	do
-	  read -rp $'\e[32m        * Sous domaine pour\e[0m '$line': ' subdomain
-	
-	  if [[ "$line" != "plex" ]]; then
-	    sed -i "/$line/d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-	    sed -i "/sub/a \ \ \ $line: $subdomain" ${CONFDIR}/variables/account.yml
-	  else
-	    sed -i "/media/d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-	    sed -i "/sub/a \ \ \ media: $subdomain" ${CONFDIR}/variables/account.yml
-	  fi
-	done
-	fi
+SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
+grep "sub" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+if [ $? -eq 1 ]; then
+ sed -i '/transcodes/a sub:' /opt/seedbox/variables/account.yml 
+fi
+echo ""
+read -rp $'\e[36m --> Souhaitez personnaliser les sous domaines: (o/n) ? \e[0m' OUI
+echo ""
+if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
+  echo -e " ${CRED}--> NE PAS SAISIR LE NOM DE DOMAINE - LES POINTS NE SONT PAS ACCEPTES${NC}"
+  echo ""
+for line in $(cat $SERVICESPERUSER);
+do
+  read -rp $'\e[32m        * Sous domaine pour\e[0m '$line': ' subdomain
+  sed -i "/$line: ./d" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+  sed -i "/sub/a \ \ \ $line: $subdomain" /opt/seedbox/variables/account.yml
+done
+fi
 }
 
 function define_parameters() {
@@ -1548,7 +1549,7 @@ function define_parameters() {
 function create_user_non_systeme() {
 	# nouvelle version de define_parameters()
 	echo -e "${BLUE}### INFORMATIONS UTILISATEURS ###${NC}"
-	
+
 	create_dir ${CONFDIR}/variables
 	cp ${BASEDIR}/includes/config/account.yml ${CONFDIR}/variables/account.yml
 
@@ -1557,9 +1558,9 @@ function create_user_non_systeme() {
 	[[ "$?" = 1 ]] && script_plexdrive;
 	PASSWORD=$(whiptail --title "Password" --passwordbox \
 		"Mot de passe :" 7 50 3>&1 1>&2 2>&3)
-	
 
-	
+
+
 	htpasswd -c -b /tmp/.htpasswd $SEEDUSER $PASSWORD > /dev/null 2>&1
 	htpwd=$(cat /tmp/.htpasswd)
 	sed -i "/htpwd:/c\   htpwd: $htpwd" ${CONFDIR}/variables/account.yml
@@ -1568,17 +1569,17 @@ function create_user_non_systeme() {
 	sed -i "s/userid:/userid: $(id -u)/" ${CONFDIR}/variables/account.yml
 	sed -i "s/groupid:/groupid: $(id -g)/" ${CONFDIR}/variables/account.yml
 	echo $PASSWORD > ~/.vault_pass
-	
+
 	update_seedbox_param "name" $user
 	update_seedbox_param "userid" $(id -u)
 	update_seedbox_param "groupid" $(id -g)
 	update_seedbox_param "htpwd" $htpwd
-	
+
 	CONTACTEMAIL=$(whiptail --title "Adresse Email" --inputbox \
 	"Merci de taper votre adresse Email :" 7 50 3>&1 1>&2 2>&3)
 	sed -i "s/mail:/mail: $CONTACTEMAIL/" ${CONFDIR}/variables/account.yml
 	update_seedbox_param "mail" $CONTACTEMAIL
-	
+
 	DOMAIN=$(whiptail --title "Votre nom de Domaine" --inputbox \
 	"Merci de taper votre nom de Domaine (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3)
 	sed -i "s/domain:/domain: $DOMAIN/" ${CONFDIR}/variables/account.yml
@@ -1798,14 +1799,14 @@ function choose_media_folder_plexdrive() {
 	if [ "$(ls -A /mnt/rclone/${USER})" ]; then
 		cd /mnt/rclone/${USER}
 		ls -Ad */ | sed 's,/$,,g' > $MEDIASPERUSER
-		
+
 		echo -e " ${BWHITE}--> Récupération des dossiers Utilisateur à partir de Gdrive... : ${NC}"
 		for line in $(cat $MEDIASPERUSER);
 		do
 			mkdir -p ${HOME}/local/$line
 			echo -e "	${GREEN}--> Le dossier ${NC}${YELLOW}$line${NC}${GREEN} a été ajouté avec succès !${NC}"
 		done
-		
+
 	else
 		echo -e " ${BWHITE}--> Création des dossiers Medias ${NC}"
 		echo ""
@@ -1830,7 +1831,7 @@ function choose_media_folder_plexdrive() {
 		do
 			line=$(echo $line | sed 's/\(.\)/\U\1/')
 			mkdir -p ${HOME}/local/$line
-			mkdir -p /mnt/rclone/${USER}/$line 
+			mkdir -p /mnt/rclone/${USER}/$line
 		done
 		rm /tmp/menumedia.txt
 	fi
@@ -1860,7 +1861,11 @@ function install_services() {
 			sed -i "/token:/c\   token: $token" ${CONFDIR}/variables/account.yml
 			ansible-playbook ${BASEDIR}/includes/config/roles/plex/tasks/main.yml
 			ansible-vault encrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-
+			token=$(. /opt/seedbox-compose/includes/config/roles/plex_autoscan/plex_token.sh)
+			sed -i "/token:/c\   token: $token" /opt/seedbox/variables/account.yml
+			ansible-playbook /opt/seedbox-compose/includes/dockerapps/plex.yml
+			cp "$BASEDIR/includes/dockerapps/plex.yml" "$CONFDIR/conf/plex.yml" > /dev/null 2>&1
+      cp "$BASEDIR/includes/dockerapps/plex.yml" "$CONFDIR/conf/plex.yml" > /dev/null 2>&1
 		elif [[ "$line" == "mattermost" ]]; then
 			${BASEDIR}/includes/dockerapps/templates/mattermost/mattermost.sh
 
@@ -1896,6 +1901,17 @@ function install_services() {
 			FQDNTMP="$line.$DOMAIN"
 			echo "$FQDNTMP" >> $INSTALLEDFILE
 		fi
+                grep "$line: ." /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                if [ $? -eq 0 ]; then
+                  result=$(grep "$line: ." /opt/seedbox/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
+		  FQDNTMP="$result.$DOMAIN"
+                  echo "$line = $FQDNTMP" | tee -a /opt/seedbox/resume  > /dev/null
+		  echo "$line.$DOMAIN" >> $INSTALLEDFILE
+                else
+		  FQDNTMP="$line.$DOMAIN"
+		  echo "$FQDNTMP" >> $INSTALLEDFILE
+                  echo "$line = $FQDNTMP" | tee -a /opt/seedbox/resume  > /dev/null
+                fi
 		FQDNTMP=""
 	done
 	config_post_compose
@@ -2216,59 +2232,52 @@ function manage_apps() {
 			[[ "$?" = 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi;
 			echo -e " ${GREEN}   * $APPSELECTED${NC}"
 
-                        grep "$APPSELECTED" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+                        grep "$APPSELECTED: ." ${CONFDIR}/variables/account.yml > /dev/null 2>&1
                         if [ $? -eq 0 ]; then
-                          subdomain=$(grep "$APPSELECTED" ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
-                          sed -i "/$subdomain/d" /home/$SEEDUSER/resume
-                          sed -i "/$subdomain/d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-                        else
-			  sed -i "/$APPSELECTED/d" /home/$SEEDUSER/resume
+                          SUBDOMAIN=$(grep "$APPSELECTED: ." ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
+                          sed -i "/$SUBDOMAIN/d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
                         fi
 
+                        sed -i "/$APPSELECTED/d" /opt/seedbox/resume > /dev/null 2>&1
+                        sed -i "/$APPSELECTED/d" /home/$SEEDUSER/resume > /dev/null 2>&1
 			docker rm -f "$APPSELECTED" > /dev/null 2>&1
 			rm -rf ${CONFDIR}/docker/$SEEDUSER/$APPSELECTED
-
-			if [[ "$APPSELECTED" != "plex" ]]; then
 			rm $CONFDIR/conf/$APPSELECTED.yml > /dev/null 2>&1
-			fi
+                        echo "0" > /opt/seedbox/status/$APPSELECTED
 
-			if [[ "$APPSELECTED" = "seafile" ]]; then
-			docker rm -f db-seafile memcached > /dev/null 2>&1
-			fi
+                        case $APPSELECTED in
+                            seafile)
+                            docker rm -f db-seafile memcached > /dev/null 2>&1
+                            ;;
+                            varken)
+                            docker rm -f influxdb telegraf grafana > /dev/null 2>&1
+                            rm -rf ${CONFDIR}/docker/$SEEDUSER/telegraf
+                            rm -rf ${CONFDIR}/docker/$SEEDUSER/grafana
+                            rm -rf ${CONFDIR}/docker/$SEEDUSER/influxdb
+                            ;;
+                            jitsi)
+                            docker rm -f prosody jicofo jvb
+                            rm -rf ${CONFDIR}/docker/$SEEDUSER/.jitsi-meet-cfg
+                            ;;
+                            nextcloud)
+                            docker rm -f collabora coturn office
+                            rm -rf ${CONFDIR}/docker/$SEEDUSER/coturn
+                            ;;
+                            rtorrentvpn)
+                            rm ${CONFDIR}/conf/rutorrent-vpn.yml
+                            ;;
+                            authelia)
+			    ${BASEDIR}/includes/config/scripts/authelia.sh
+			    sed -i '/authelia/d' /home/$SEEDUSER/resume > /dev/null 2>&1
+                            ;;
+                        esac
 
 			if docker ps | grep -q db-$APPSELECTED; then
 			docker rm -f db-$APPSELECTED > /dev/null 2>&1
 			fi
 
-			if [[ "$APPSELECTED" = "varken" ]]; then
-			docker rm -f influxdb telegraf grafana > /dev/null 2>&1
-			rm -rf ${CONFDIR}/docker/$SEEDUSER/telegraf
-			rm -rf ${CONFDIR}/docker/$SEEDUSER/grafana
-			rm -rf ${CONFDIR}/docker/$SEEDUSER/influxdb
-			fi
-
-			if [[ "$APPSELECTED" = "jitsi" ]]; then
-			docker rm -f prosody jicofo jvb
-			rm -rf ${CONFDIR}/docker/$SEEDUSER/.jitsi-meet-cfg
-			fi
-
-			if [[ "$APPSELECTED" = "nextcloud" ]]; then
-			docker rm -f collabora coturn office
-			rm -rf ${CONFDIR}/docker/$SEEDUSER/coturn
-			fi
-
-			if [[ "$APPSELECTED" = "rtorrentvpn" ]]; then
-			rm ${CONFDIR}/conf/rutorrent-vpn.yml
-			fi
-
-			if [[ "$APPSELECTED" = "authelia" ]]; then
-			${BASEDIR}/includes/config/scripts/authelia.sh
-			sed -i '/authelia/d' /home/$SEEDUSER/resume > /dev/null 2>&1
-			fi
-
 			docker system prune -af > /dev/null 2>&1
 			checking_errors $?
-			docker volume rm $(docker volume ls -qf "dangling=true") > /dev/null 2>&1
 			echo""
 			echo -e "${BLUE}### $APPSELECTED a été supprimé ###${NC}"
 			echo ""
@@ -2306,11 +2315,12 @@ function manage_apps() {
 				image=$(docker images | grep "$line" | awk '{print $3}')
 			fi
 
+                        sed -i "/$line/d" /opt/seedbox/resume > /dev/null 2>&1
+                        sed -i "/$line/d" /home/$SEEDUSER/resume > /dev/null 2>&1
 			docker rm -f "$line" > /dev/null 2>&1
 			docker system prune -af > /dev/null 2>&1
 			docker volume rm $(docker volume ls -qf "dangling=true") > /dev/null 2>&1
 			echo ""
-			sed -i "/$subdomain/d" /home/$SEEDUSER/resume > /dev/null 2>&1
 			echo $line >> $SERVICESPERUSER
 
 			install_services
