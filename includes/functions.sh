@@ -2182,7 +2182,6 @@ function manage_apps() {
 			              "${TABSERVICES[@]}"  3>&1 1>&2 2>&3)
 			[[ "$?" = 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi;
 			echo -e " ${GREEN}   * $line${NC}"
-                        subdomain=$(grep "$line" /opt/seedbox/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
 
 			if [ $line = "php5" ] || [ $line = "php7" ]; then
 				image=$(docker images | grep "php" | awk '{print $3}')
@@ -2192,11 +2191,12 @@ function manage_apps() {
 				image=$(docker images | grep "$line" | awk '{print $3}')
 			fi
 
+                        sed -i "/$line/d" /opt/seedbox/resume > /dev/null 2>&1
+                        sed -i "/$line/d" /home/$SEEDUSER/resume > /dev/null 2>&1
 			docker rm -f "$line" > /dev/null 2>&1
 			docker system prune -af > /dev/null 2>&1
 			docker volume rm $(docker volume ls -qf "dangling=true") > /dev/null 2>&1
 			echo ""
-			sed -i "/$subdomain/d" /home/$SEEDUSER/resume > /dev/null 2>&1
 			echo $line >> $SERVICESPERUSER
 
 			install_services
