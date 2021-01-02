@@ -124,6 +124,8 @@ fi
 
 clear
 
+# on met la timezone
+
 IS_INSTALLED=$(select_seedbox_param "installed")
 
 

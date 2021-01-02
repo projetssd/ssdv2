@@ -1,0 +1,13 @@
+---
+- hosts: localhost
+  gather_facts: false
+  become: yes
+  tasks:
+  - name: set timezone 
+    timezone:
+      name: Europe/Paris
+  - name: create /etc/localtime
+    file:
+      path: /etc/localtime
+      state: link
+      src: /usr/share/zoneinfo/Europe/Paris
