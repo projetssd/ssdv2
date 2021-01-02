@@ -1,0 +1,10 @@
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Allow specified groups to sudo
+      template: 
+        src: "/opt/seedbox-compose/includes/config/playbooks/templates/sudoers.j2"
+        dest: "/etc/sudoers.d/{{ lookup('env','SUDO_USER') }}"
+        validate: 'visudo -cf %s'
+        mode: 0440
