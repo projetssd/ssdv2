@@ -23,7 +23,6 @@
     set_fact:
       plex_claim_code: "{{ plex_claim.json.token }}"
 
-  when: (plex_account_enabled)
 
 - name: Claim Server | Get Plex Media Server claim code via prompts
   block:

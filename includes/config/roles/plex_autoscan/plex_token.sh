@@ -14,13 +14,13 @@ if [ -z "$PLEX_LOGIN" ] || [ -z "$PLEX_PASSWORD" ]; then
 fi
 
 while [ -z "$PLEX_LOGIN" ]; do
-    >&2 echo -n 'Your Plex login (e-mail or username): '
+    >&2 echo -n 'Votre login Plex (e-mail or username): '
     read PLEX_LOGIN
     sed -i "/ident:/c\   ident: $PLEX_LOGIN" /opt/seedbox/variables/account.yml
 done
 
 while [ -z "$PLEX_PASSWORD" ]; do
-    >&2 echo -n 'Your Plex password: '
+    >&2 echo -n 'Votre password Plex: '
     read PLEX_PASSWORD
     sed -i "/sesame:/c\   sesame: $PLEX_PASSWORD" /opt/seedbox/variables/account.yml
 done
@@ -43,8 +43,7 @@ if [ -z "$X_PLEX_TOKEN" ]; then
     >&2 echo 'Failed to retrieve the X-Plex-Token.'
     exit 0
 fi
-rm -f /tmp/plex_sign_in
 
-#>&2 echo "Your X_PLEX_TOKEN:"
+rm -f /tmp/plex_sign_in
 
 echo $X_PLEX_TOKEN

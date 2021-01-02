@@ -1463,14 +1463,8 @@ if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
 for line in $(cat $SERVICESPERUSER);
 do
   read -rp $'\e[32m        * Sous domaine pour\e[0m '$line': ' subdomain
-
-  if [[ "$line" != "plex" ]]; then
-    sed -i "/$line/d" /opt/seedbox/variables/account.yml > /dev/null 2>&1
-    sed -i "/sub/a \ \ \ $line: $subdomain" /opt/seedbox/variables/account.yml
-  else
-    sed -i "/media/d" /opt/seedbox/variables/account.yml > /dev/null 2>&1
-    sed -i "/sub/a \ \ \ media: $subdomain" /opt/seedbox/variables/account.yml
-  fi
+  sed -i "/$line: ./d" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+  sed -i "/sub/a \ \ \ $line: $subdomain" /opt/seedbox/variables/account.yml
 done
 fi
 }
@@ -1761,15 +1755,15 @@ function install_services() {
 			ansible-playbook "$CONFDIR/conf/$line.yml"
 
 		elif [[ "$line" == "plex" ]]; then
+                        echo ""
 			echo -e "${BLUE}### CONFIG POST COMPOSE PLEX ###${NC}"
 			echo -e " ${BWHITE}* Processing plex config file...${NC}"
 			echo ""
 			echo -e " ${GREEN}ATTENTION IMPORTANT - NE PAS FAIRE D'ERREUR - SINON DESINSTALLER ET REINSTALLER${NC}"
-			ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 			token=$(. /opt/seedbox-compose/includes/config/roles/plex_autoscan/plex_token.sh)
 			sed -i "/token:/c\   token: $token" /opt/seedbox/variables/account.yml
-			ansible-playbook /opt/seedbox-compose/includes/config/roles/plex/tasks/main.yml
-			ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+			ansible-playbook /opt/seedbox-compose/includes/dockerapps/plex.yml
+			cp "$BASEDIR/includes/dockerapps/plex.yml" "$CONFDIR/conf/plex.yml" > /dev/null 2>&1
 
 		elif [[ "$line" == "mattermost" ]]; then
 			/opt/seedbox-compose/includes/dockerapps/templates/mattermost/mattermost.sh
@@ -1779,14 +1773,16 @@ function install_services() {
 			cp "$BASEDIR/includes/dockerapps/$line.yml" "$CONFDIR/conf/$line.yml" > /dev/null 2>&1
 		fi
                    
-                grep $line /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                grep "$line: ." /opt/seedbox/variables/account.yml > /dev/null 2>&1
                 if [ $? -eq 0 ]; then
-                  line=$(grep $line /opt/seedbox/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
-		  FQDNTMP="$line.$DOMAIN"
-		  echo "$FQDNTMP" >> $INSTALLEDFILE
+                  result=$(grep "$line: ." /opt/seedbox/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
+		  FQDNTMP="$result.$DOMAIN"
+                  echo "$line = $FQDNTMP" | tee -a /opt/seedbox/resume  > /dev/null
+		  echo "$line.$DOMAIN" >> $INSTALLEDFILE
                 else
 		  FQDNTMP="$line.$DOMAIN"
 		  echo "$FQDNTMP" >> $INSTALLEDFILE
+                  echo "$line = $FQDNTMP" | tee -a /opt/seedbox/resume  > /dev/null
                 fi
 		FQDNTMP=""
                 
@@ -2109,21 +2105,18 @@ function manage_apps() {
 			[[ "$?" = 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi;
 			echo -e " ${GREEN}   * $APPSELECTED${NC}"
 
-                        grep "$APPSELECTED" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                        grep "$APPSELECTED: ." /opt/seedbox/variables/account.yml > /dev/null 2>&1
                         if [ $? -eq 0 ]; then
-                          subdomain=$(grep "$APPSELECTED" /opt/seedbox/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
-                          sed -i "/$subdomain/d" /home/$SEEDUSER/resume
-                          sed -i "/$subdomain/d" /opt/seedbox/variables/account.yml > /dev/null 2>&1
-                        else
-			  sed -i "/$APPSELECTED/d" /home/$SEEDUSER/resume
+                          SUBDOMAIN=$(grep "$APPSELECTED: ." /opt/seedbox/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
+                          sed -i "/$SUBDOMAIN/d" /opt/seedbox/variables/account.yml > /dev/null 2>&1
                         fi
 
+                        sed -i "/$APPSELECTED/d" /opt/seedbox/resume > /dev/null 2>&1
+                        sed -i "/$APPSELECTED/d" /home/$SEEDUSER/resume > /dev/null 2>&1
 			docker rm -f "$APPSELECTED" > /dev/null 2>&1
 			rm -rf /opt/seedbox/docker/$SEEDUSER/$APPSELECTED
-
-			if [[ "$APPSELECTED" != "plex" ]]; then
 			rm $CONFDIR/conf/$APPSELECTED.yml > /dev/null 2>&1
-			fi
+                        echo "0" > /opt/seedbox/status/$APPSELECTED
 
 			if [[ "$APPSELECTED" = "seafile" ]]; then
 			docker rm -f db-seafile memcached > /dev/null 2>&1
