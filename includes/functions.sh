@@ -2118,43 +2118,39 @@ function manage_apps() {
 			rm $CONFDIR/conf/$APPSELECTED.yml > /dev/null 2>&1
                         echo "0" > /opt/seedbox/status/$APPSELECTED
 
-			if [[ "$APPSELECTED" = "seafile" ]]; then
-			docker rm -f db-seafile memcached > /dev/null 2>&1
-			fi
+                        case $APPSELECTED in
+                            seafile)
+                            docker rm -f db-seafile memcached > /dev/null 2>&1
+                            ;;
+                            varken)
+                            docker rm -f influxdb telegraf grafana > /dev/null 2>&1
+                            rm -rf /opt/seedbox/docker/$SEEDUSER/telegraf
+                            rm -rf /opt/seedbox/docker/$SEEDUSER/grafana
+                            rm -rf /opt/seedbox/docker/$SEEDUSER/influxdb
+                            ;;
+                            jitsi)
+                            docker rm -f prosody jicofo jvb
+                            rm -rf /opt/seedbox/docker/$SEEDUSER/.jitsi-meet-cfg
+                            ;;
+                            nextcloud)
+                            docker rm -f collabora coturn office
+                            rm -rf /opt/seedbox/docker/$SEEDUSER/coturn
+                            ;;
+                            rtorrentvpn)
+                            rm /opt/seedbox/conf/rutorrent-vpn.yml
+                            ;;
+                            authelia)
+			    /opt/seedbox-compose/includes/config/scripts/authelia.sh
+			    sed -i '/authelia/d' /home/$SEEDUSER/resume > /dev/null 2>&1
+                            ;;
+                        esac
 
 			if docker ps | grep -q db-$APPSELECTED; then
 			docker rm -f db-$APPSELECTED > /dev/null 2>&1
 			fi
 
-			if [[ "$APPSELECTED" = "varken" ]]; then
-			docker rm -f influxdb telegraf grafana > /dev/null 2>&1
-			rm -rf /opt/seedbox/docker/$SEEDUSER/telegraf
-			rm -rf /opt/seedbox/docker/$SEEDUSER/grafana
-			rm -rf /opt/seedbox/docker/$SEEDUSER/influxdb
-			fi
-
-			if [[ "$APPSELECTED" = "jitsi" ]]; then
-			docker rm -f prosody jicofo jvb
-			rm -rf /opt/seedbox/docker/$SEEDUSER/.jitsi-meet-cfg
-			fi
-
-			if [[ "$APPSELECTED" = "nextcloud" ]]; then
-			docker rm -f collabora coturn office
-			rm -rf /opt/seedbox/docker/$SEEDUSER/coturn
-			fi
-
-			if [[ "$APPSELECTED" = "rtorrentvpn" ]]; then
-			rm /opt/seedbox/conf/rutorrent-vpn.yml
-			fi
-
-			if [[ "$APPSELECTED" = "authelia" ]]; then
-			/opt/seedbox-compose/includes/config/scripts/authelia.sh
-			sed -i '/authelia/d' /home/$SEEDUSER/resume > /dev/null 2>&1
-			fi
-
 			docker system prune -af > /dev/null 2>&1
 			checking_errors $?
-			docker volume rm $(docker volume ls -qf "dangling=true") > /dev/null 2>&1
 			echo""
 			echo -e "${BLUE}### $APPSELECTED a été supprimé ###${NC}"
 			echo ""
