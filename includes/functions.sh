@@ -1511,30 +1511,24 @@ function install_docker() {
 }
 
 function subdomain() {
-	SERVICESPERUSER="${SERVICESUSER}${USER}"
-	grep "sub" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-	if [ $? -eq 1 ]; then
-	 sed -i '/transcodes/a sub:' ${CONFDIR}/variables/account.yml
-	fi
-	echo ""
-	read -rp $'\e[36m --> Souhaitez personnaliser les sous domaines: (o/n) ? \e[0m' OUI
-	echo ""
-	if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
-	  echo -e " ${CRED}--> NE PAS SAISIR LE NOM DE DOMAINE - LES POINTS NE SONT PAS ACCEPTES${NC}"
-	  echo ""
-	for line in $(cat $SERVICESPERUSER);
-	do
-	  read -rp $'\e[32m        * Sous domaine pour\e[0m '$line': ' subdomain
-
-	  if [[ "$line" != "plex" ]]; then
-	    sed -i "/$line/d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-	    sed -i "/sub/a \ \ \ $line: $subdomain" ${CONFDIR}/variables/account.yml
-	  else
-	    sed -i "/media/d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-	    sed -i "/sub/a \ \ \ media: $subdomain" ${CONFDIR}/variables/account.yml
-	  fi
-	done
-	fi
+SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
+grep "sub" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+if [ $? -eq 1 ]; then
+ sed -i '/transcodes/a sub:' /opt/seedbox/variables/account.yml 
+fi
+echo ""
+read -rp $'\e[36m --> Souhaitez personnaliser les sous domaines: (o/n) ? \e[0m' OUI
+echo ""
+if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
+  echo -e " ${CRED}--> NE PAS SAISIR LE NOM DE DOMAINE - LES POINTS NE SONT PAS ACCEPTES${NC}"
+  echo ""
+for line in $(cat $SERVICESPERUSER);
+do
+  read -rp $'\e[32m        * Sous domaine pour\e[0m '$line': ' subdomain
+  sed -i "/$line: ./d" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+  sed -i "/sub/a \ \ \ $line: $subdomain" /opt/seedbox/variables/account.yml
+done
+fi
 }
 
 function define_parameters() {
@@ -1860,6 +1854,7 @@ function install_services() {
 			ansible-playbook "$CONFDIR/conf/$line.yml"
 
 		elif [[ "$line" == "plex" ]]; then
+                        echo ""
 			echo -e "${BLUE}### CONFIG POST COMPOSE PLEX ###${NC}"
 			echo -e " ${BWHITE}* Processing plex config file...${NC}"
 			echo ""
@@ -1869,7 +1864,11 @@ function install_services() {
 			sed -i "/token:/c\   token: $token" ${CONFDIR}/variables/account.yml
 			ansible-playbook ${BASEDIR}/includes/config/roles/plex/tasks/main.yml
 			ansible-vault encrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-
+			token=$(. /opt/seedbox-compose/includes/config/roles/plex_autoscan/plex_token.sh)
+			sed -i "/token:/c\   token: $token" /opt/seedbox/variables/account.yml
+			ansible-playbook /opt/seedbox-compose/includes/dockerapps/plex.yml
+			cp "$BASEDIR/includes/dockerapps/plex.yml" "$CONFDIR/conf/plex.yml" > /dev/null 2>&1
+      cp "$BASEDIR/includes/dockerapps/plex.yml" "$CONFDIR/conf/plex.yml" > /dev/null 2>&1
 		elif [[ "$line" == "mattermost" ]]; then
 			${BASEDIR}/includes/dockerapps/templates/mattermost/mattermost.sh
 
@@ -1905,6 +1904,17 @@ function install_services() {
 			FQDNTMP="$line.$DOMAIN"
 			echo "$FQDNTMP" >> $INSTALLEDFILE
 		fi
+                grep "$line: ." /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                if [ $? -eq 0 ]; then
+                  result=$(grep "$line: ." /opt/seedbox/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
+		  FQDNTMP="$result.$DOMAIN"
+                  echo "$line = $FQDNTMP" | tee -a /opt/seedbox/resume  > /dev/null
+		  echo "$line.$DOMAIN" >> $INSTALLEDFILE
+                else
+		  FQDNTMP="$line.$DOMAIN"
+		  echo "$FQDNTMP" >> $INSTALLEDFILE
+                  echo "$line = $FQDNTMP" | tee -a /opt/seedbox/resume  > /dev/null
+                fi
 		FQDNTMP=""
 	done
 	config_post_compose
@@ -2225,59 +2235,52 @@ function manage_apps() {
 			[[ "$?" = 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi;
 			echo -e " ${GREEN}   * $APPSELECTED${NC}"
 
-                        grep "$APPSELECTED" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+                        grep "$APPSELECTED: ." ${CONFDIR}/variables/account.yml > /dev/null 2>&1
                         if [ $? -eq 0 ]; then
-                          subdomain=$(grep "$APPSELECTED" ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
-                          sed -i "/$subdomain/d" /home/$SEEDUSER/resume
-                          sed -i "/$subdomain/d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-                        else
-			  sed -i "/$APPSELECTED/d" /home/$SEEDUSER/resume
+                          SUBDOMAIN=$(grep "$APPSELECTED: ." ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
+                          sed -i "/$SUBDOMAIN/d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
                         fi
 
+                        sed -i "/$APPSELECTED/d" /opt/seedbox/resume > /dev/null 2>&1
+                        sed -i "/$APPSELECTED/d" /home/$SEEDUSER/resume > /dev/null 2>&1
 			docker rm -f "$APPSELECTED" > /dev/null 2>&1
 			rm -rf ${CONFDIR}/docker/$SEEDUSER/$APPSELECTED
-
-			if [[ "$APPSELECTED" != "plex" ]]; then
 			rm $CONFDIR/conf/$APPSELECTED.yml > /dev/null 2>&1
-			fi
+                        echo "0" > /opt/seedbox/status/$APPSELECTED
 
-			if [[ "$APPSELECTED" = "seafile" ]]; then
-			docker rm -f db-seafile memcached > /dev/null 2>&1
-			fi
+                        case $APPSELECTED in
+                            seafile)
+                            docker rm -f db-seafile memcached > /dev/null 2>&1
+                            ;;
+                            varken)
+                            docker rm -f influxdb telegraf grafana > /dev/null 2>&1
+                            rm -rf ${CONFDIR}/docker/$SEEDUSER/telegraf
+                            rm -rf ${CONFDIR}/docker/$SEEDUSER/grafana
+                            rm -rf ${CONFDIR}/docker/$SEEDUSER/influxdb
+                            ;;
+                            jitsi)
+                            docker rm -f prosody jicofo jvb
+                            rm -rf ${CONFDIR}/docker/$SEEDUSER/.jitsi-meet-cfg
+                            ;;
+                            nextcloud)
+                            docker rm -f collabora coturn office
+                            rm -rf ${CONFDIR}/docker/$SEEDUSER/coturn
+                            ;;
+                            rtorrentvpn)
+                            rm ${CONFDIR}/conf/rutorrent-vpn.yml
+                            ;;
+                            authelia)
+			    ${BASEDIR}/includes/config/scripts/authelia.sh
+			    sed -i '/authelia/d' /home/$SEEDUSER/resume > /dev/null 2>&1
+                            ;;
+                        esac
 
 			if docker ps | grep -q db-$APPSELECTED; then
 			docker rm -f db-$APPSELECTED > /dev/null 2>&1
 			fi
 
-			if [[ "$APPSELECTED" = "varken" ]]; then
-			docker rm -f influxdb telegraf grafana > /dev/null 2>&1
-			rm -rf ${CONFDIR}/docker/$SEEDUSER/telegraf
-			rm -rf ${CONFDIR}/docker/$SEEDUSER/grafana
-			rm -rf ${CONFDIR}/docker/$SEEDUSER/influxdb
-			fi
-
-			if [[ "$APPSELECTED" = "jitsi" ]]; then
-			docker rm -f prosody jicofo jvb
-			rm -rf ${CONFDIR}/docker/$SEEDUSER/.jitsi-meet-cfg
-			fi
-
-			if [[ "$APPSELECTED" = "nextcloud" ]]; then
-			docker rm -f collabora coturn office
-			rm -rf ${CONFDIR}/docker/$SEEDUSER/coturn
-			fi
-
-			if [[ "$APPSELECTED" = "rtorrentvpn" ]]; then
-			rm ${CONFDIR}/conf/rutorrent-vpn.yml
-			fi
-
-			if [[ "$APPSELECTED" = "authelia" ]]; then
-			${BASEDIR}/includes/config/scripts/authelia.sh
-			sed -i '/authelia/d' /home/$SEEDUSER/resume > /dev/null 2>&1
-			fi
-
 			docker system prune -af > /dev/null 2>&1
 			checking_errors $?
-			docker volume rm $(docker volume ls -qf "dangling=true") > /dev/null 2>&1
 			echo""
 			echo -e "${BLUE}### $APPSELECTED a été supprimé ###${NC}"
 			echo ""
@@ -2315,11 +2318,12 @@ function manage_apps() {
 				image=$(docker images | grep "$line" | awk '{print $3}')
 			fi
 
+                        sed -i "/$line/d" /opt/seedbox/resume > /dev/null 2>&1
+                        sed -i "/$line/d" /home/$SEEDUSER/resume > /dev/null 2>&1
 			docker rm -f "$line" > /dev/null 2>&1
 			docker system prune -af > /dev/null 2>&1
 			docker volume rm $(docker volume ls -qf "dangling=true") > /dev/null 2>&1
 			echo ""
-			sed -i "/$subdomain/d" /home/$SEEDUSER/resume > /dev/null 2>&1
 			echo $line >> $SERVICESPERUSER
 
 			install_services

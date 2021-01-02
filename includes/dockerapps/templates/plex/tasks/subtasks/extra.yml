@@ -32,11 +32,11 @@
     state: stopped
 
 - name: "Extra | DB Cache Size Settings"
-  import_tasks: "subtasks/settings/db_cache_size.yml"
+  import_tasks: "settings/db_cache_size.yml"
   tags: plex_db_cache_size
 
 - name: "Extra | Forced Automatic Quality Settings"
-  import_tasks: "subtasks/settings/forced_quality.yml"
+  import_tasks: "settings/forced_quality.yml"
   tags: plex_forced_quality
 
 - name: Extra | Start Plex Container
