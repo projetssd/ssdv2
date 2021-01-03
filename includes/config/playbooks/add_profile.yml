@@ -1,0 +1,11 @@
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: set path 
+    lineinfile:
+      path: "{{ lookup('env','HOME') }}/.bashrc"
+      line: "{{ item }}"
+    with_items:
+    - alias seedbox='/opt/seedbox-compose/seedbox.sh'
+    - source /opt/seedbox-compose/profile.sh
