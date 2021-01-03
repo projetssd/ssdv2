@@ -30,3 +30,9 @@
     mode: 0644
     force: yes
   notify: Handers | Update 'tzdata'
+  
+- name: create /etc/localtime
+  file:
+    path: /etc/localtime
+    state: link
+    src: /usr/share/zoneinfo/Europe/Paris

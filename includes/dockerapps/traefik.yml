@@ -87,9 +87,9 @@
     - name: Create Basic Directories
       file: "path={{item}} state=directory mode=0775"
       with_items:
-        - " {{ lookup('env','CONFDIR') }}/docker/traefik"
-        - " {{ lookup('env','CONFDIR') }}/docker/traefik/acme"
-        - " {{ lookup('env','CONFDIR') }}/docker/traefik/rules"
+        - "{{ lookup('env','CONFDIR') }}/docker/traefik"
+        - "{{ lookup('env','CONFDIR') }}/docker/traefik/acme"
+        - "{{ lookup('env','CONFDIR') }}/docker/traefik/rules"
 
     - name: Check acme.json exists
       stat:
