@@ -34,4 +34,5 @@ export SCRIPTPATH=$(dirname "$CURRENT_SCRIPT")
 
 
 /usr/local/bin/ansible-playbook includes/config/playbooks/sudoers.yml
+/usr/local/bin/ansible-playbook includes/config/roles/users/tasks/main.yml
 echo "Opération terminée, vous pouvez continuer en tapant ./seedbox.sh"
