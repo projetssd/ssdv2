@@ -1861,8 +1861,7 @@ function install_services() {
 			sed -i "/token:/c\   token: $token" ${CONFDIR}/variables/account.yml
 			ansible-playbook ${BASEDIR}/includes/config/roles/plex/tasks/main.yml
 			ansible-vault encrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-			token=$(. ${BASEDIR}/includes/config/roles/plex_autoscan/plex_token.sh)
-			sed -i "/token:/c\   token: $token" ${CONFDIR}/variables/account.yml
+			
 			ansible-playbook ${BASEDIR}/includes/dockerapps/plex.yml
 			cp "$BASEDIR/includes/dockerapps/plex.yml" "$CONFDIR/conf/plex.yml" > /dev/null 2>&1
       cp "$BASEDIR/includes/dockerapps/plex.yml" "$CONFDIR/conf/plex.yml" > /dev/null 2>&1

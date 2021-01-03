@@ -128,6 +128,7 @@ fi
 clear
 
 # on met la timezone
+ansible-playbook ${BASEDIR}/includes/config/playbooks/timezone.yml
 
 IS_INSTALLED=$(select_seedbox_param "installed")
 
