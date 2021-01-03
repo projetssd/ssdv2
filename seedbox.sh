@@ -80,25 +80,7 @@ if [ ! -f "${HOME}/.vault_pass" ]; then
   echo "0" >  ${HOME}/.vault_pass
 fi
 
-#######################################
-# On regarde si le user est dans
-# le groupe docker
-if getent group docker | grep -q "\b${USER}\b"; then
-    # A voir si un réutilise par la suite
-    DOCKER_OK=1
-else
-    ansible-playbook ${BASEDIR}/includes/config/roles/users/tasks/main.yml
-    
-    echo -e "${RED}-----------------------${CEND}"
-    echo -e "${RED}ATTENTION ! ${CEND}"
-    echo -e "${RED}Votre utilisateur n'était pas dans le groupe docker${CEND}"
-    echo -e "${RED}Il a été ajouté, mais vous devez vous déloguer/reloguer${CEND}"
-    echo -e "${RED}avant de relancer le script${CEND}"
-    exit 1
-fi
-
 IS_INSTALLED=$(select_seedbox_param "installed")
-
 
 ################################################
 # TEST ROOT USER
