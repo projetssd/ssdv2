@@ -4,6 +4,9 @@ if [ "$USER" != "root" ]; then
  echo "Ce script doit être lancé en sudo ou par root !"
   exit 1
 fi
+
+  readonly PIP="9.0.3"
+  readonly ANSIBLE="2.9"
   sudo ${SCRIPTPATH}/includes/config/scripts/prerequis_root.sh ${SCRIPTPATH}
   
   ## Install pip3 Dependencies
