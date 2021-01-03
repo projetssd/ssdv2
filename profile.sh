@@ -7,5 +7,4 @@ if [ -f "${SCRIPTPATH}/ssddb" ]; then
     
     source ${SCRIPTPATH}/includes/functions.sh
     source ${SCRIPTPATH}/includes/variables.sh
-    source ${SCRIPTPATH}/includes/functions.sh
 fi
