@@ -1851,23 +1851,16 @@ function install_services() {
 	for line in $(cat $SERVICESPERUSER);
 	do
 
-		if [[ "$line" == "plex" ]]; then
+		elif [[ "$line" == "plex" ]]; then
+                        echo ""
 			echo -e "${BLUE}### CONFIG POST COMPOSE PLEX ###${NC}"
 			echo -e " ${BWHITE}* Processing plex config file...${NC}"
 			echo ""
 			echo -e " ${GREEN}ATTENTION IMPORTANT - NE PAS FAIRE D'ERREUR - SINON DESINSTALLER ET REINSTALLER${NC}"
-			ansible-vault decrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-			token=$(. ${BASEDIR}/includes/config/roles/plex_autoscan/plex_token.sh)
-			sed -i "/token:/c\   token: $token" ${CONFDIR}/variables/account.yml
-			ansible-playbook ${BASEDIR}/includes/config/roles/plex/tasks/main.yml
-			ansible-vault encrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-			
-			ansible-playbook ${BASEDIR}/includes/dockerapps/plex.yml
+			token=$(. /opt/seedbox-compose/includes/config/roles/plex_autoscan/plex_token.sh)
+			sed -i "/token:/c\   token: $token" /opt/seedbox/variables/account.yml
+			ansible-playbook /opt/seedbox-compose/includes/dockerapps/plex.yml
 			cp "$BASEDIR/includes/dockerapps/plex.yml" "$CONFDIR/conf/plex.yml" > /dev/null 2>&1
-      cp "$BASEDIR/includes/dockerapps/plex.yml" "$CONFDIR/conf/plex.yml" > /dev/null 2>&1
-		elif [[ "$line" == "mattermost" ]]; then
-			${BASEDIR}/includes/dockerapps/templates/mattermost/mattermost.sh
-
 		else
 			# On est dans le cas générique
 			# on regarde s'i y a un playbook existant
@@ -1891,15 +1884,6 @@ function install_services() {
 			fi
 		fi
                    
-		grep $line ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-		if [ $? -eq 0 ]; then
-			line=$(grep $line ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
-			FQDNTMP="$line.$DOMAIN"
-			echo "$FQDNTMP" >> $INSTALLEDFILE
-		else
-			FQDNTMP="$line.$DOMAIN"
-			echo "$FQDNTMP" >> $INSTALLEDFILE
-		fi
                 grep "$line: ." ${CONFDIR}/variables/account.yml > /dev/null 2>&1
                 if [ $? -eq 0 ]; then
                   result=$(grep "$line: ." ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
@@ -1912,6 +1896,7 @@ function install_services() {
                   echo "$line = $FQDNTMP" | tee -a ${CONFDIR}/resume  > /dev/null
                 fi
 		FQDNTMP=""
+
 	done
 	config_post_compose
 }
