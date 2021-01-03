@@ -22,20 +22,6 @@ if [ ! -f "${SCRIPTPATH}/ssddb" ]; then
   ##########################################
  
   echo "Installation en cours ...."
-  sudo ${SCRIPTPATH}/includes/config/scripts/prerequis_root.sh ${SCRIPTPATH}
-  
-  ## Install pip3 Dependencies
-  python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
-  pip==${PIP}
-  python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
-  setuptools
-  python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
-  pyOpenSSL \
-  requests \
-  netaddr \
-  jmespath \
-  ansible==${1-$ANSIBLE} \
-  docker
   
   mkdir -p ~/.ansible/inventories
   
@@ -168,9 +154,9 @@ if [[ ${IS_INSTALLED} -eq 0 ]]; then
     if [[ ${IS_INSTALLED} -eq 0 ]]; then
       clear
       # on met la timezone
-      ansible-playbook ${BASEDIR}/includes/config/playbooks/timezone.yml
+      #ansible-playbook ${BASEDIR}/includes/config/playbooks/timezone.yml
       # Dépendances pour ansible (permet de créer le docker network)
-      ansible-galaxy collection install community.general
+      ansible-galaxy  collection install community.general
       # on vérifie les droits sur répertoire et bdd
       make_dir_writable ${BASEDIR}
       change_file_owner ${BASEDIR}/ssddb
