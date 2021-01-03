@@ -5,9 +5,14 @@ if [ "$USER" != "root" ]; then
   exit 1
 fi
 
+# Absolute path to this script.
+CURRENT_SCRIPT=$(readlink -f "$0")
+# Absolute path this script is in.
+export SCRIPTPATH=$(dirname "$CURRENT_SCRIPT")
+
   readonly PIP="9.0.3"
   readonly ANSIBLE="2.9"
-  sudo ${SCRIPTPATH}/includes/config/scripts/prerequis_root.sh ${SCRIPTPATH}
+  ${SCRIPTPATH}/includes/config/scripts/prerequis_root.sh ${SCRIPTPATH}
   
   ## Install pip3 Dependencies
   python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
