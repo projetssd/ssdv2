@@ -2,9 +2,9 @@
 - hosts: localhost
   gather_facts: true
   vars_files:
-    - ["{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/plex/tasks/settings.yml"]
-    - ["{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/plex/defaults/main.yml"]
-    - ["{{ lookup('env','CONFDIR') }}/variables/account.yml"]
+    - ['settings.yml']
+    - ['../defaults/main.yml']
+    - [/opt/seedbox/variables/account.yml]
   tasks:
 
     - name: "Variables | Set 'cloudflare_enabled' variable"
@@ -27,34 +27,33 @@
     - name: "Variables | Set 'plex_account_enabled' variable"
       set_fact:
         plex_account_enabled: "{{ true if not(
-            (plex.token is undefined)
+            (plex is undefined)
             or
-            (plex.token is none)
+            (plex is none)
             or
-            (plex.token | trim | length == 0)
+            (plex | trim | length == 0)
           )
           else false }}"
 
     - name: "Variables | Set 'sub' variable"
       set_fact:
         sub_enabled: "{{ true if not(
-            (sub.plex is undefined)
+            (sub.media is undefined)
             or
-            (sub.plex is none)
+            (sub.media is none)
             or
-            (sub.plex | trim | length == 0)
+            (sub.media | trim | length == 0)
           )
             else false }}"
 
     - name: "Set DNS Record on CloudFlare"
-      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: "{{sub.plex if sub_enabled else 'plex'}}"
+        subdomain: "{{sub.media if sub_enabled else 'plex'}}"
       when: cloudflare_enabled
 
     - name: "Create Plex directories"
-      become: yes
-      file: "path={{ item }} state=directory mode=0775 owner={{ lookup('env','USER') }} group={{ lookup('env','MYGID')}}"
+      file: "path={{ item }} state=directory mode=0775 owner={{lookup('env','USER')}} group={{lookup('env','MYGID')}}"
       with_items: "{{ plex_folders }}"
 
     - name: 'Set Known Facts'
@@ -77,7 +76,7 @@
 
     - name: "Check if 'Preferences.xml' exists"
       stat:
-        path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
+        path: "/opt/seedbox/docker/{{ user.name }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
       register: preferences_xml
 
     - name: "'Preferences.xml' Tasks"
@@ -85,7 +84,7 @@
 
       - name: Get 'Preferences.xml' XML data
         xml:
-          path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
+          path: "/opt/seedbox/docker/{{ user.name }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
           xpath: /Preferences
           content: attribute
         register: preferences_xml_resp
@@ -93,7 +92,7 @@
 
       - name: "Remove 'Preferences.xml' if malformed"
         file:
-          path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
+          path: "/opt/seedbox/docker/{{ user.name }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
           state: absent
         when: (preferences_xml_resp is failed)
 
@@ -105,7 +104,7 @@
 
       - name: "Fix 'TranscoderTempDirectory'"
         xml:
-          path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
+          path: "/opt/seedbox/docker/{{ user.name }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
           xpath: /Preferences
           attribute: TranscoderTempDirectory
           value: "/transcode"
@@ -123,7 +122,7 @@
         - (preferences_xml.stat.exists)
 
     - name: Claim Plex Server
-      import_tasks: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/plex/tasks/subtasks/claim_server.yml"
+      import_tasks: subtasks/claim_server.yml
       when:
         - (not preferences_xml.stat.exists) or (preferences_xml.stat.exists and not plex_server_claimed)
 
@@ -133,7 +132,7 @@
           traefik.enable: 'true'
           ## HTTP Routers
           traefik.http.routers.plex-rtr.entrypoints: 'https'
-          traefik.http.routers.plex-rtr.rule: 'Host(`{{sub.plex if sub_enabled else pgrole}}.{{user.domain}}`)'
+          traefik.http.routers.plex-rtr.rule: 'Host(`{{sub.media if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.plex-rtr.tls: 'true'
           ## HTTP Services
           traefik.http.routers.plex-rtr.service: 'plex-svc'
@@ -164,20 +163,15 @@
       file:
         path: "{{ plex.transcodes }}"
         owner: "{{ user.userid }}"
-        group: "{{ lookup('env','MYGID')id }}"
+        group: "{{ user.groupid }}"
         mode: 0775
         recurse: yes
 
     - name: Extra Tasks
-      import_tasks: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/plex/tasks/subtasks/extra.yml"
+      import_tasks: "subtasks/extra.yml"
       ignore_errors: yes
 
     - name: add resume file
       shell: |
-        echo "{{pgrole}}-{{sub.plex if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
-
-    - name: create traefik state
-      shell: |
-        echo "2" > {{ lookup('env','CONFDIR') }}/status/plex
-
+        echo "{{pgrole}}-{{sub.media if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
 

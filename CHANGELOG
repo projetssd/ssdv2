@@ -28,3 +28,5 @@
 - bugfilx lignes en double sur install_appli
 - ajout du profile
 - si lancement en root, proposition de créer un nouveau utilisateur
+- changement sur filebot avec utilisation de la commande cron ansible
+- changement sur backup avec utilisation de la commande cron ansible

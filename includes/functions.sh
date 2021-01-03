@@ -203,12 +203,12 @@ function openvpn() {
 }
 
 function sauve() {
-			#configuration Sauvegarde
-			echo -e "${BLUE}### BACKUP ###${NC}"
-			echo -e " ${BWHITE}* Mise en place Sauvegarde${NC}"
-			ansible-playbook ${BASEDIR}/includes/config/roles/backup/tasks/main.yml
-			checking_errors $?
-			echo ""
+	#configuration Sauvegarde
+	echo -e "${BLUE}### BACKUP ###${NC}"
+	echo -e " ${BWHITE}* Mise en place Sauvegarde${NC}"
+	ansible-playbook ${BASEDIR}/includes/config/roles/backup/tasks/main.yml
+	checking_errors $?
+	echo ""
 }
 
 function plex_dupefinder() {
@@ -271,13 +271,13 @@ function cloudplow() {
 }
 
 function filebot() {
-			#configuration filebot avec ansible
-			echo ""
-			echo -e "${BLUE}### FILEBOT ###${NC}"
-			echo -e " ${BWHITE}* Installation filebot${NC}"
-			ansible-playbook ${BASEDIR}/includes/config/roles/filebot/tasks/main.yml
-			checking_errors $?
-			echo ""
+	#configuration filebot avec ansible
+	echo ""
+	echo -e "${BLUE}### FILEBOT ###${NC}"
+	echo -e " ${BWHITE}* Installation filebot${NC}"
+	ansible-playbook ${BASEDIR}/includes/config/roles/filebot/tasks/main.yml
+	checking_errors $?
+	echo ""
 }
 
 function check_dir() {
@@ -1643,45 +1643,45 @@ function create_user() {
 }
 
 function projects() {
-        ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
-        SEEDUSER=$(cat /tmp/name)
-        DOMAIN=$(cat /tmp/domain)
-        SEEDGROUP=$(cat /tmp/group)
-        rm /tmp/name /tmp/domain /tmp/group
-
-        echo -e "${BLUE}### SERVICES ###${NC}"
-        echo -e " ${BWHITE}--> Services en cours d'installation : ${NC}"
-        PROJECTPERUSER="$PROJECTUSER$SEEDUSER"
-        rm -Rf $PROJECTPERUSER > /dev/null 2>&1
-        projects="/tmp/projects.txt"
-
-        if [[ -e "$projects" ]]; then
-          rm /tmp/projects.txt
-        fi
-        for app in $(cat $PROJECTSAVAILABLE);
-        do
-          service=$(echo $app | cut -d\- -f1)
-          desc=$(echo $app | cut -d\- -f2)
-          echo "$service $desc off" >> /tmp/projects.txt
-        done
-
-        SERVICESTOINSTALL=$(whiptail --title "Gestion des Applications" --checklist \
-        "\nChoisir vos Applications" 18 47 10 \
-        $(cat /tmp/projects.txt) 3>&1 1>&2 2>&3)
-        [[ "$?" = 1 ]] && script_plexdrive && rm /tmp/projects.txt;
-        PROJECTPERUSER="$PROJECTUSER$SEEDUSER"
-        touch $PROJECTPERUSER
-
-        for PROJECTS in $SERVICESTOINSTALL
-        do
-          echo -e "	${GREEN}* $(echo $PROJECTS| tr -d '"')${NC}"
-          echo $(echo ${PROJECTS,,} | tr -d '"') >> $PROJECTPERUSER              
-        done
-
-        for line in $(cat $PROJECTPERUSER);
-        do
-          $line
-        done
+	ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
+	SEEDUSER=${USER}
+	DOMAIN=$(cat /tmp/domain)
+	SEEDGROUP=$(cat /tmp/group)
+	rm /tmp/name /tmp/domain /tmp/group
+	
+	echo -e "${BLUE}### SERVICES ###${NC}"
+	echo -e " ${BWHITE}--> Services en cours d'installation : ${NC}"
+	PROJECTPERUSER="$PROJECTUSER$SEEDUSER"
+	rm -Rf $PROJECTPERUSER > /dev/null 2>&1
+	projects="/tmp/projects.txt"
+	
+	if [[ -e "$projects" ]]; then
+		rm ${projects}
+	fi
+	for app in $(cat $PROJECTSAVAILABLE);
+	do
+		service=$(echo $app | cut -d\- -f1)
+		desc=$(echo $app | cut -d\- -f2)
+		echo "$service $desc off" >> /tmp/projects.txt
+	done
+	
+	SERVICESTOINSTALL=$(whiptail --title "Gestion des Applications" --checklist \
+	"\nChoisir vos Applications" 18 47 10 \
+	$(cat /tmp/projects.txt) 3>&1 1>&2 2>&3)
+	[[ "$?" = 1 ]] && script_plexdrive && rm /tmp/projects.txt;
+	PROJECTPERUSER="$PROJECTUSER$SEEDUSER"
+	touch $PROJECTPERUSER
+	
+	for PROJECTS in $SERVICESTOINSTALL
+	do
+		echo -e "	${GREEN}* $(echo $PROJECTS| tr -d '"')${NC}"
+		echo $(echo ${PROJECTS,,} | tr -d '"') >> $PROJECTPERUSER              
+	done
+	
+	for line in $(cat $PROJECTPERUSER);
+	do
+		$line
+	done
 }
 
 function choose_services() {
@@ -2103,36 +2103,36 @@ function replace_media_compose() {
 }
 
 function plex_sections() {
-			echo ""
-			##compteur
-			replace_media_compose
-			var="Sections en cours de création, patientez..."
-			PLEXDRIVE="/usr/bin/rclone"
-			if [[ -e "$PLEXDRIVE" ]]; then
-			echo -e "${BLUE}### CREATION DES BIBLIOTHEQUES PLEX ###${NC}"
-			decompte 15
-
-			## création des bibliothèques plex
-
-			for x in $(cat $MEDIASPERUSER);
-			do
-				if [[ "$x" == "$ANIMES" ]]; then
-					docker exec plex /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section $x --type 2 --location /data/$x --lang fr
-					echo -e "	${BWHITE}* $x ${NC}"
-				
-				elif [[ "$x" == "$SERIES" ]]; then
-					docker exec plex /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section $x --type 2 --location /data/$x --lang fr
-					echo -e "	${BWHITE}* $x ${NC}"
-
-				elif [[ "$x" == "$MUSIC" ]]; then
-					docker exec plex /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section $x --type 8 --location /data/$x --lang fr
-					echo -e "	${BWHITE}* $x ${NC}"
-				else
-					docker exec plex /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section $x --type 1 --location /data/$x --lang fr
-					echo -e "	${BWHITE}* $x ${NC}"
-				fi
-			done
-                        fi
+	echo ""
+	##compteur
+	replace_media_compose
+	var="Sections en cours de création, patientez..."
+	PLEXDRIVE="/usr/bin/rclone"
+	if [[ -e "$PLEXDRIVE" ]]; then
+		echo -e "${BLUE}### CREATION DES BIBLIOTHEQUES PLEX ###${NC}"
+		decompte 15
+		
+		## création des bibliothèques plex
+		
+		for x in $(cat $MEDIASPERUSER);
+		do
+			if [[ "$x" == "$ANIMES" ]]; then
+				docker exec plex /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section $x --type 2 --location /data/$x --lang fr
+				echo -e "	${BWHITE}* $x ${NC}"
+			
+			elif [[ "$x" == "$SERIES" ]]; then
+				docker exec plex /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section $x --type 2 --location /data/$x --lang fr
+				echo -e "	${BWHITE}* $x ${NC}"
+			
+			elif [[ "$x" == "$MUSIC" ]]; then
+				docker exec plex /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section $x --type 8 --location /data/$x --lang fr
+				echo -e "	${BWHITE}* $x ${NC}"
+			else
+				docker exec plex /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section $x --type 1 --location /data/$x --lang fr
+				echo -e "	${BWHITE}* $x ${NC}"
+			fi
+		done
+	fi
 }
 
 function manage_apps() {
@@ -2444,45 +2444,46 @@ echo ""
 }
 
 function resume_seedbox() {
-        clear
+	clear
 	echo -e "${BLUE}##########################################${NC}"
 	echo -e "${BLUE}###     INFORMATION SEEDBOX INSTALL    ###${NC}"
 	echo -e "${BLUE}##########################################${NC}"
-        echo ""
+	echo ""
 	echo -e " ${BWHITE}* Accès Applis à partir de URL :${NC}"
-        PASSE=$(cat ~/.vault_pass)
-        
-        if [[ -e /opt/temp.txt ]]; then
-          while read line
-          do
-            for word in $line
-            do
-	      ACCESSDOMAIN=$(echo $line | cut -d "-" -f 2-4)
-	      DOCKERAPP=$(echo $word | cut -d "-" -f1)
-	      echo -e "	--> ${BWHITE}$DOCKERAPP${NC} --> ${YELLOW}$ACCESSDOMAIN${NC}"
-            done
-          done < "/opt/temp.txt"
-        else
-          while read line
-          do
-            for word in $line
-            do
-	      ACCESSDOMAIN=$(echo $line)
-	      DOCKERAPP=$(echo $word | cut -d "." -f1)
-	      echo -e "	--> ${BWHITE}$DOCKERAPP${NC} --> ${YELLOW}$ACCESSDOMAIN${NC}"
-            done
-          done < "/home/$SEEDUSER/resume"
-        fi
-
+	PASSE=$(cat ~/.vault_pass)
+	
+	if [[ -e /opt/temp.txt ]]; then
+		while read line
+		do
+			for word in $line
+			do
+				ACCESSDOMAIN=$(echo $line | cut -d "-" -f 2-4)
+				DOCKERAPP=$(echo $word | cut -d "-" -f1)
+				echo -e "	--> ${BWHITE}$DOCKERAPP${NC} --> ${YELLOW}$ACCESSDOMAIN${NC}"
+			done
+		done < "/opt/temp.txt"
+	else
+		while read line
+		do
+			for word in $line
+			do
+				ACCESSDOMAIN=$(echo $line)
+				DOCKERAPP=$(echo $word | cut -d "." -f1)
+				echo -e "	--> ${BWHITE}$DOCKERAPP${NC} --> ${YELLOW}$ACCESSDOMAIN${NC}"
+			done
+		done < "/home/$SEEDUSER/resume"
+	fi
+	
+	# TODO : à garder ?
 	echo ""
 	echo -e " ${BWHITE}* Vos IDs :${NC}"
 	echo -e "	--> ${BWHITE}Utilisateur:${NC} ${YELLOW}$SEEDUSER${NC}"
 	echo -e "	--> ${BWHITE}Password:${NC} ${YELLOW}$PASSE${NC}"
 	echo ""
-
+	
 	rm -Rf $SERVICESPERUSER > /dev/null 2>&1
-        rm /opt/temp.txt > /dev/null 2>&1
-        ansible-vault encrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+	rm /opt/temp.txt > /dev/null 2>&1
+	ansible-vault encrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 }
 
 function uninstall_seedbox() {

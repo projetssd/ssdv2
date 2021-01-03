@@ -16,15 +16,17 @@
     path: "/mnt/rclone"
   register: mnt_remote
 
-- name: "Basics | Check to see if '/home/{{ user.name }}/Medias' exists"
+- name: "Basics | Check to see if '/home/{{ lookup('env','USER') }}/Medias' exists"
   stat:
-    path: "/home/{{ user.name }}/Medias"
+    path: "/home/{{ lookup('env','USER') }}/Medias"
   register: home_medias
 
 - name: "Basics | Create '/mnt/rclone' directory"
-  file: "path=/mnt/rclone state=directory mode=0775 owner={{ user.name }} group={{ user.group }} recurse=yes"
+  become: yes
+  file: "path=/mnt/rclone state=directory mode=0775 owner={{ lookup('env','USER') }} group={{ lookup('env','MYGID') }} recurse=yes"
   when: (not mnt_remote.stat.exists)
 
-- name: "Basics | Create '/home/{{ user.name }}/Medias' directory"
-  file: "path=/mnt/unionfs state=directory mode=0775 owner={{ user.name }} group={{ user.group }} recurse=yes"
+- name: "Basics | Create '/home/{{ lookup('env','USER') }}/Medias' directory"
+  become: yes
+  file: "path=/mnt/unionfs state=directory mode=0775 owner={{ lookup('env','USER') }} group={{ lookup('env','MYGID') }} recurse=yes"
   when: (not home_medias.stat.exists)

@@ -121,7 +121,6 @@ if [ "$USER" == "root" ]; then
   echo -e "${CCYAN}[  Lancement en root  ]${CEND}"
   echo -e "${CCYAN}-----------------------${CEND}"
   echo -e "${CCYAN}Pour des raisons de sécurité, il n'est pas conseillé de lancer ce script en root${CEND}"
-  # TODO : proposer de créer un utilisateur
   read -rp $'\e[33mSouhaitez vous créer un utilisateur dédié (c), continuer en root (r) ou quitter le script (q) ? (c/r/Q)\e[0m :' CREEUSER
   if [[ "${CREEUSER}" = "r" ]] || [[ "${CREEUSER}" = "R" ]]; then
     # on ne fait rien et on continue
@@ -211,18 +210,25 @@ if [[ ${IS_INSTALLED} -eq 0 ]]; then
       # Jusque là, on ne fait que les choisir, et les stocker dans un fichier texte
       choose_services
       # On choisit les sous domaines pour les services installés précédemment
-      # stocké dans ccount.yml
+      # stocké dans account.yml
       subdomain
+      # Installation de tous les services
       install_services
+      # Mise à jour de plex, ajout des librairies
       for i in $(docker ps --format "{{.Names}}")
       do
         if [[ "$i" == "plex" ]]; then
           plex_sections
         fi
       done
+      # choix des applis à installer
       projects
+      # Installation de filebot
+      # TODO : à laisser ? Ou à mettre dans les applis ?
       filebot
+      # mise en place de la sauvegarde
       sauve
+      # Affichage du résumé
       resume_seedbox
       pause
       ansible-vault encrypt ${CONFDIR}/variables/account.yml >/dev/null 2>&1
