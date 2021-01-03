@@ -1864,12 +1864,12 @@ function install_services() {
 		else
 			# On est dans le cas générique
 			# on regarde s'i y a un playbook existant
-			if [ -e "$CONFDIR/seedbox/conf/$line.yml" ]; then
+			if [ -e "$CONFDIR/conf/$line.yml" ]; then
 				# il y a déjà un playbook "perso", on le lance
-				ansible-playbook "$CONFDIR/seedbox/conf/$line.yml"
-			elif [ -e "$CONFDIR/seedbox/vars/$line.yml" ]; then
+				ansible-playbook "$CONFDIR/conf/$line.yml"
+			elif [ -e "$CONFDIR/vars/$line.yml" ]; then
 				# il y a des variables persos, on les lance
-				ansible-playbook "$BASEDIR/includes/dockerapps/generique.yml" --extra-vars "@$CONFDIR/seedbox/vars/$line.yml"
+				ansible-playbook "$BASEDIR/includes/dockerapps/generique.yml" --extra-vars "@$CONFDIR/vars/$line.yml"
 			elif [ -e "$BASEDIR/includes/dockerapps/$line.yml" ]; then
 				# pas de playbook perso ni de vars perso
 				# Il y a un playbook spécifique pour cette appli, on le lance
