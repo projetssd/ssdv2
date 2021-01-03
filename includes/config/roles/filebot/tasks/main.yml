@@ -9,19 +9,19 @@
 - hosts: localhost
   gather_facts: false
   vars_files:
-    - /opt/seedbox/variables/account.yml
+    - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
   tasks:
 
     # FILEBOT ##############################################################
     - name: Check filebot
       stat:
-        path: '/opt/seedbox/docker/{{user.name}}/.filebot'
+        path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.filebot"
       register: filebot
 
     - name: Create Basic Directories
-      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
+      file: "path={{item}} state=directory mode=0775 owner={{user.userid}} group={{lookup('env','MYGID')}}"
       with_items:
-        - '/opt/seedbox/docker/{{user.name}}/.filebot'
+        - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.filebot"
       when:
         - filebot.stat.exists == False
 
@@ -36,16 +36,16 @@
     - name: Execute the zsh-installer.sh
       shell: /tmp/tar.sh
       args:
-        chdir: /opt/seedbox/docker/{{user.name}}/.filebot
+        chdir: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.filebot"
       when:
         - filebot.stat.exists == False
 
     - name: Import default filebot-process.sh
       template:
-        src: /opt/seedbox-compose/includes/config/roles/filebot/templates/filebot-process.sh.j2
-        dest: /opt/seedbox/docker/{{user.name}}/.filebot/filebot-process.sh
+        src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/filebot/templates/filebot-process.sh.j2"
+        dest: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.filebot/filebot-process.sh"
         owner: "{{user.userid}}"
-        group: "{{user.groupid}}"
+        group: "{{lookup('env','MYGID')}}"
         mode: 0755
         force: yes
       when:
@@ -53,24 +53,26 @@
 
     - name: Set filebot.sh as executable
       file:
-        path: /opt/seedbox/docker/{{user.name}}/.filebot/filebot.sh
-        owner: "{{user.name}}"
-        group: "{{user.groupid}}"
+        path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.filebot/filebot.sh"
+        owner: "{{ lookup('env','USER') }}"
+        group: "{{lookup('env','MYGID')}}"
         mode: a+x
       when:
         - filebot.stat.exists == False
 
     - name: Set update-filebot.sh as executable
       file:
-        path: /opt/seedbox/docker/{{user.name}}/.filebot/update-filebot.sh 
-        owner: "{{user.name}}"
-        group: "{{user.groupid}}"
+        path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.filebot/update-filebot.sh "
+        owner: "{{ lookup('env','USER') }}"
+        group: "{{lookup('env','MYGID')}}"
         mode: a+x
       when:
         - filebot.stat.exists == False
 
     - name: Set cron
-      shell: |
-        (crontab -l | grep . ; echo "*/1 * * * * /opt/seedbox/docker/{{user.name}}/.filebot/filebot-process.sh > /dev/null") | crontab -
-        cp /var/spool/cron/crontabs/root /tmp/root
-        sort -u /tmp/root > /var/spool/cron/crontabs/root
+      cron: 
+        name: "filebot"
+        minute: "*"
+        job: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.filebot/filebot-process.sh > /dev/null"
+          
+

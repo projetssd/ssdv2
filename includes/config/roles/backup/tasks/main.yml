@@ -8,6 +8,7 @@
   tasks:
 
     - name: 'Import backup config'
+      become: yes
       template:
         src: /opt/seedbox-compose/includes/config/roles/backup/templates/backup.j2
         dest: /usr/local/bin/backup
@@ -17,6 +18,7 @@
         force: yes
 
     - name: 'Import restore config'
+      become: yes
       template:
         src: /opt/seedbox-compose/includes/config/roles/backup/templates/restore.j2
         dest: /usr/local/bin/restore
@@ -24,12 +26,15 @@
         group: "root"
         mode: 0755
         force: yes
-
+    
     - name: Set cron
-      shell: |
-        (crontab -l | grep . ; echo "0 3 * * 6 bash /usr/local/bin/backup > /dev/null") | crontab -
-        cp /var/spool/cron/crontabs/root /tmp/root
-        sort -u /tmp/root > /var/spool/cron/crontabs/root
+      cron: 
+        name: "backup"
+        minute: "0"
+        hour: "3"
+        weekday: "6"
+        job: "/usr/local/bin/backup"
+
 
 
 

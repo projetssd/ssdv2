@@ -1,0 +1,17 @@
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Create user
+      user: 
+        groups: docker
+        name: "{{ CREEUSER_USERNAME}}"
+        password: "{{ CREEUSER_PASSWORD | password_hash('sha512', 'mysecretsalt') }}"
+        shell: /bin/bash
+        state: present
+    - name: Allow specified groups to sudo
+      template: 
+        src: "/opt/seedbox-compose/includes/config/playbooks/templates/sudoers_autre.j2"
+        dest: "/etc/sudoers.d/{{ CREEUSER_USERNAME }}"
+        validate: 'visudo -cf %s'
+        mode: 0440

@@ -18,3 +18,15 @@
 - install de fail2ban : recup des variables ip / ssh avant le become
 - Install de rclone : le fichier de conf est maintenant dans le $HOME du user
 
+02/01/2020
+
+- variabilisation des applis pour un lancement générique
+- ajoute de la timezone et /etc/localtime si manquant (par défaut Europe/Paris)
+
+03/01/2020
+
+- bugfilx lignes en double sur install_appli
+- ajout du profile
+- si lancement en root, proposition de créer un nouveau utilisateur
+- changement sur filebot avec utilisation de la commande cron ansible
+- changement sur backup avec utilisation de la commande cron ansible

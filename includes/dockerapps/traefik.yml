@@ -263,8 +263,8 @@
           CF_API_EMAIL: '{{cloudflare.login}}'
           CF_API_KEY: '{{cloudflare.api}}'
         volumes:
-          - /var/run/docker.sock:/var/run/docker.sock:ro
-          - /etc/localtime:/etc/localtime:ro
+          - "/var/run/docker.sock:/var/run/docker.sock:ro"
+          - "/etc/localtime:/etc/localtime:ro"
           - "{{ lookup('env','CONFDIR') }}/docker/traefik/acme/acme.json:/acme.json"
           - "{{ lookup('env','CONFDIR') }}/docker/traefik/rules:/rules"
           - "{{ lookup('env','CONFDIR') }}/docker/traefik/traefik.log:/traefik.log"
