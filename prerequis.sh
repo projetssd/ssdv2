@@ -26,7 +26,12 @@ export SCRIPTPATH=$(dirname "$CURRENT_SCRIPT")
   jmespath \
   ansible==${1-$ANSIBLE} \
   docker
+  
+  
+  # Install ansible niveau système
+  python3 -m pip install --disable-pip-version-check --upgrade --force-reinstall \
+  ansible==${1-$ANSIBLE}
 
 
-ansible-playbook includes/config/playbooks/sudoers.yml
+${HOME}/.local/bin/ansible-playbook includes/config/playbooks/sudoers.yml
 echo "Opération terminée, vous pouvez continuer en tapant ./seedbox.sh"
