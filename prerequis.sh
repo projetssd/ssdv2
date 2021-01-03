@@ -15,11 +15,11 @@ export SCRIPTPATH=$(dirname "$CURRENT_SCRIPT")
   ${SCRIPTPATH}/includes/config/scripts/prerequis_root.sh ${SCRIPTPATH}
   
   ## Install pip3 Dependencies
-  python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
+  python3 -m pip install --user --disable-pip-version-check --upgrade  \
   pip==${PIP}
-  python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
+  python3 -m pip install --user --disable-pip-version-check --upgrade  \
   setuptools
-  python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
+  python3 -m pip install --user --disable-pip-version-check --upgrade  \
   pyOpenSSL \
   requests \
   netaddr \
@@ -29,7 +29,7 @@ export SCRIPTPATH=$(dirname "$CURRENT_SCRIPT")
   
   
   # Install ansible niveau système
-  python3 -m pip install --disable-pip-version-check --upgrade --force-reinstall \
+  python3 -m pip install --disable-pip-version-check --upgrade \
   ansible==${1-$ANSIBLE}
 
 
