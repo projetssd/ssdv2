@@ -72,7 +72,7 @@
 
     - name: Create new hashed
       shell: |
-        docker run --rm authelia/authelia:latest authelia hash-password {{user.pass}} | cut -d: -f2
+        docker run --rm authelia/authelia:latest authelia hash-password {{user.pass}} | cut -d: -f2 | sed 's/ //g'
       register: password
 
     - name: Creating paths
@@ -85,7 +85,7 @@
         src: /opt/seedbox-compose/includes/dockerapps/templates/authelia/configuration.yml.j2
         dest: /opt/seedbox/docker/{{user.name}}/{{pgrole}}/configuration.yml
 
-    - name: Import configuration.yml
+    - name: Import users_database.yml
       template:
         src: /opt/seedbox-compose/includes/dockerapps/templates/authelia/users_database.yml.j2
         dest: /opt/seedbox/docker/{{user.name}}/{{pgrole}}/users_database.yml

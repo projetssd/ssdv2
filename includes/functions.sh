@@ -1884,14 +1884,8 @@ do
     	               echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
 	               echo ""
 
-                ## suppression des yml dans /opt/seedbox/conf
-                rm /opt/seedbox/conf/* > /dev/null 2>&1
-
                 ## reinstall traefik
-                docker rm -f traefik > /dev/null 2>&1
-                rm -rf /opt/seedbox/docker/traefik/rules > /dev/null 2>&1
                 install_traefik
-
                 echo ""
 
                 ## reinstallation application

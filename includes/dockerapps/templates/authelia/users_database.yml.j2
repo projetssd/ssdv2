@@ -8,9 +8,10 @@
 
 # List of users
 users:
-  {{user.name}}:
-    password: "{{password.stdout}}"
-    email: {{user.mail}}
+  '{{user.name}}':
+    displayname: '{{user.name}}'
+    password: '{{password.stdout}}'
+    email: '{{user.mail}}'
     groups:
       - admins
       - dev
