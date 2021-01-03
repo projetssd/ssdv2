@@ -1852,31 +1852,24 @@ function install_services() {
 	do
 
 		if [[ "$line" == "plex" ]]; then
+                        echo ""
 			echo -e "${BLUE}### CONFIG POST COMPOSE PLEX ###${NC}"
 			echo -e " ${BWHITE}* Processing plex config file...${NC}"
 			echo ""
 			echo -e " ${GREEN}ATTENTION IMPORTANT - NE PAS FAIRE D'ERREUR - SINON DESINSTALLER ET REINSTALLER${NC}"
-			ansible-vault decrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-			token=$(. ${BASEDIR}/includes/config/roles/plex_autoscan/plex_token.sh)
-			sed -i "/token:/c\   token: $token" ${CONFDIR}/variables/account.yml
-			ansible-playbook ${BASEDIR}/includes/config/roles/plex/tasks/main.yml
-			ansible-vault encrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-			
-			ansible-playbook ${BASEDIR}/includes/dockerapps/plex.yml
+			token=$(. $BASEDIR/includes/config/roles/plex_autoscan/plex_token.sh)
+			sed -i "/token:/c\   token: $token" $CONFDIR/variables/account.yml
+			ansible-playbook $BASEDIR/includes/dockerapps/plex.yml
 			cp "$BASEDIR/includes/dockerapps/plex.yml" "$CONFDIR/conf/plex.yml" > /dev/null 2>&1
-      cp "$BASEDIR/includes/dockerapps/plex.yml" "$CONFDIR/conf/plex.yml" > /dev/null 2>&1
-		elif [[ "$line" == "mattermost" ]]; then
-			${BASEDIR}/includes/dockerapps/templates/mattermost/mattermost.sh
-
 		else
 			# On est dans le cas générique
 			# on regarde s'i y a un playbook existant
-			if [ -e "$CONFDIR/seedbox/conf/$line.yml" ]; then
+			if [ -e "$CONFDIR/conf/$line.yml" ]; then
 				# il y a déjà un playbook "perso", on le lance
-				ansible-playbook "$CONFDIR/seedbox/conf/$line.yml"
-			elif [ -e "$CONFDIR/seedbox/vars/$line.yml" ]; then
+				ansible-playbook "$CONFDIR/conf/$line.yml"
+			elif [ -e "$CONFDIR/vars/$line.yml" ]; then
 				# il y a des variables persos, on les lance
-				ansible-playbook "$BASEDIR/includes/dockerapps/generique.yml" --extra-vars "@$CONFDIR/seedbox/vars/$line.yml"
+				ansible-playbook "$BASEDIR/includes/dockerapps/generique.yml" --extra-vars "@$CONFDIR/vars/$line.yml"
 			elif [ -e "$BASEDIR/includes/dockerapps/$line.yml" ]; then
 				# pas de playbook perso ni de vars perso
 				# Il y a un playbook spécifique pour cette appli, on le lance
@@ -1891,15 +1884,6 @@ function install_services() {
 			fi
 		fi
                    
-		grep $line ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-		if [ $? -eq 0 ]; then
-			line=$(grep $line ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
-			FQDNTMP="$line.$DOMAIN"
-			echo "$FQDNTMP" >> $INSTALLEDFILE
-		else
-			FQDNTMP="$line.$DOMAIN"
-			echo "$FQDNTMP" >> $INSTALLEDFILE
-		fi
                 grep "$line: ." ${CONFDIR}/variables/account.yml > /dev/null 2>&1
                 if [ $? -eq 0 ]; then
                   result=$(grep "$line: ." ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
@@ -1912,6 +1896,7 @@ function install_services() {
                   echo "$line = $FQDNTMP" | tee -a ${CONFDIR}/resume  > /dev/null
                 fi
 		FQDNTMP=""
+
 	done
 	config_post_compose
 }
