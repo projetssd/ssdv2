@@ -164,7 +164,7 @@
       file:
         path: "{{ plex.transcodes }}"
         owner: "{{ user.userid }}"
-        group: "{{ lookup('env','MYGID')id }}"
+        group: "{{ lookup('env','MYGID') }}"
         mode: 0775
         recurse: yes
 
@@ -173,6 +173,7 @@
       ignore_errors: yes
 
     - name: add resume file
+      become: yes
       shell: |
         echo "{{pgrole}}-{{sub.plex if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
 
