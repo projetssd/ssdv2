@@ -111,6 +111,7 @@ else
     exit 1
 fi
 
+IS_INSTALLED=$(select_seedbox_param "installed")
 
 
 ################################################
@@ -120,17 +121,28 @@ if [ "$USER" == "root" ]; then
   echo -e "${CCYAN}[  Lancement en root  ]${CEND}"
   echo -e "${CCYAN}-----------------------${CEND}"
   echo -e "${CCYAN}Pour des raisons de sécurité, il n'est pas conseillé de lancer ce script en root${CEND}"
-  read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
   # TODO : proposer de créer un utilisateur
+  read -rp $'\e[33mSouhaitez vous créer un utilisateur dédié (c), continuer en root (r) ou quitter le script (q) ? (c/r/Q)\e[0m :' CREEUSER
+  if [[ "${CREEUSER}" = "r" ]] || [[ "${CREEUSER}" = "R" ]]; then
+    # on ne fait rien et on continue
+    :
+  elif [[ "${CREEUSER}" = "c" ]] || [[ "${CREEUSER}" = "C" ]]; then
+    read -rp $'\e[33mTapez le nom d utilisateur\e[0m :' CREEUSER_USERNAME
+    read -rp $'\e[33mTapez le password (pas de \ ni apostrophe dans le password) \e[0m :' CREEUSER_PASSWORD
+    ansible-playbook ${BASEDIR}/includes/config/playbooks/cree_user.yml --extra-vars '{"CREEUSER_USERNAME":"'${CREEUSER_USERNAME}'","CREEUSER_PASSWORD":"'${CREEUSER_PASSWORD}'"}'
+    echo -e "${CCYAN}L'utilisateur ${CREEUSER_USERNAME} a été créé, merci de vous déloguer et reloguer avec ce user pour continer${CEND}"
+    exit 0
+  else
+    exit 0
+  fi
 fi
 
 
 clear
 
-# on met la timezone
-ansible-playbook ${BASEDIR}/includes/config/playbooks/timezone.yml
 
-IS_INSTALLED=$(select_seedbox_param "installed")
+
+
 
 
 if [[ ${IS_INSTALLED} -eq 0 ]]; then
@@ -156,6 +168,8 @@ if [[ ${IS_INSTALLED} -eq 0 ]]; then
     #check_dir "$PWD"
     if [[ ${IS_INSTALLED} -eq 0 ]]; then
       clear
+      # on met la timezone
+      ansible-playbook ${BASEDIR}/includes/config/playbooks/timezone.yml
       # Dépendances pour ansible (permet de créer le docker network)
       ansible-galaxy collection install community.general
       # on vérifie les droits sur répertoire et bdd

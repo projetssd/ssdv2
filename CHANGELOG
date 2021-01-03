@@ -26,4 +26,5 @@
 03/01/2020
 
 - bugfilx lignes en double sur install_appli
-
+- ajout du profile
+- si lancement en root, proposition de créer un nouveau utilisateur
