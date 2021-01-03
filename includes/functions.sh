@@ -1851,15 +1851,15 @@ function install_services() {
 	for line in $(cat $SERVICESPERUSER);
 	do
 
-		elif [[ "$line" == "plex" ]]; then
+		if [[ "$line" == "plex" ]]; then
                         echo ""
 			echo -e "${BLUE}### CONFIG POST COMPOSE PLEX ###${NC}"
 			echo -e " ${BWHITE}* Processing plex config file...${NC}"
 			echo ""
 			echo -e " ${GREEN}ATTENTION IMPORTANT - NE PAS FAIRE D'ERREUR - SINON DESINSTALLER ET REINSTALLER${NC}"
-			token=$(. /opt/seedbox-compose/includes/config/roles/plex_autoscan/plex_token.sh)
-			sed -i "/token:/c\   token: $token" /opt/seedbox/variables/account.yml
-			ansible-playbook /opt/seedbox-compose/includes/dockerapps/plex.yml
+			token=$(. $BASEDIR/includes/config/roles/plex_autoscan/plex_token.sh)
+			sed -i "/token:/c\   token: $token" $CONFDIR/variables/account.yml
+			ansible-playbook $BASEDIR/includes/dockerapps/plex.yml
 			cp "$BASEDIR/includes/dockerapps/plex.yml" "$CONFDIR/conf/plex.yml" > /dev/null 2>&1
 		else
 			# On est dans le cas générique
