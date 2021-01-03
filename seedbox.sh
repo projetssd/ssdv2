@@ -178,6 +178,8 @@ if [[ ${IS_INSTALLED} -eq 0 ]]; then
       conf_dir
       # Maj du système
       update_system
+      # On crée le dossier status
+      status
       # Install des packages de base
       install_base_packages
       # Install de docker
