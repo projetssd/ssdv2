@@ -26,6 +26,8 @@ if [ $? -eq 1 ]; then
 fi
 
 echo ""
+echo -e "${BLUE}L'utilisateur et mot de passe deamndés${NC}"
+echo -e "${BLUE}serviront à vous authentifier sur les différents services en mode web${NC}"
 read -p $'\e[32m↘️ Nom d utilisateur | Appuyer sur [Enter]: \e[0m' user < /dev/tty
 read -p $'\e[32m↘️ Mot de passe | Appuyer sur [Enter]: \e[0m' pass < /dev/tty
 read -p $'\e[32m↘️ Mail | Appuyer sur [Enter]: \e[0m' mail < /dev/tty

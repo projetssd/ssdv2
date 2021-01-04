@@ -11,14 +11,15 @@ export MYGID=$(id -g)
 
 
 if [ ! -f "${SCRIPTPATH}/ssddb" ]; then
-   echo "Les prérequis ne sont pas installés"
+   echo "Certains composants doivent encore être installés/réglés"
   read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
   
   ## Constants
   readonly PIP="9.0.3"
   readonly ANSIBLE="2.9"
   python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
-  pip==${PIP}
+  pip==${PIP} \
+  ansible==${1-$ANSIBLE}
   python3 -m pip install --user --disable-pip-version-check docker
   ##########################################
   # Pas de configuration existante
