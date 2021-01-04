@@ -37,5 +37,8 @@ ln -s ${HOME}/.local/bin/pip3 /usr/bin/pip
 ${HOME}/.local/bin/ansible-playbook includes/config/playbooks/sudoers.yml
 ${HOME}/.local/bin/ansible-playbook includes/config/roles/users/tasks/main.yml
 echo "---------------------------------------"
-echo "Si c'est la première fois que vous lancez ce script, vous devez vous déconnecter/reconnecter pour continuer"
-echo "Vous pourrez ensuite lancer ./seedbox.sh pour isntaller la seedbox"
+echo "Si c'est la première fois que vous lancez ce script, il est TRES FORTEMENT conseillé de redémmarer le serveur avant de continuer"
+echo "Vous pourrez ensuite lancer "
+echo "cd /opt/seedbox-compose"
+echo "./seedbox.sh "
+echo "pour installer la seedbox"
