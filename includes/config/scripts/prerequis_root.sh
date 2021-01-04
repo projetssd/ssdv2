@@ -52,6 +52,7 @@ git \
 build-essential \
 libssl-dev \
 libffi-dev \
+python-pip \
 python3-dev \
 python3-pip \
 python-dev \
@@ -77,29 +78,10 @@ ${SCRIPTPATH}/logs/ansible.log {
 EOF
 
 ## Copy pip to /usr/bin
-#cp /usr/local/bin/pip /usr/bin/pip
-#cp /usr/local/bin/pip3 /usr/bin/pip3
+cp /usr/local/bin/pip /usr/bin/pip
+cp /usr/local/bin/pip3 /usr/bin/pip3
 python3 -m pip uninstall -y cryptography
 
-if test -f "${SCRIPTPATH}/ssddb"; then
-  echo "Une configuration de seedbox existe déjà, elle ne sera pas écrasée"
-else
-  echo "Création de la configuration en cours"
-  # On créé la database
-  sqlite3 ${SCRIPTPATH}/ssddb <<EOF
-    create table seedbox_params(param varchar(50) PRIMARY KEY, value varchar(50));
-    replace into seedbox_params (param,value) values ('installed',0);
-    replace into seedbox_params (param,value) values ('seedbox_path','/opt/seedbox');
-    create table applications(name varchar(50) PRIMARY KEY,
-      status integer,
-      subdomain varchar(50),
-      port integer);
-    create table applications_params (appname varchar(50),
-      param varachar(50),
-      value varchar(50),
-      FOREIGN KEY(appname) REFERENCES applications(name));
-    
-EOF
-fi
+
 
 
