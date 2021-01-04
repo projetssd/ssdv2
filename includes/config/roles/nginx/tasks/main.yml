@@ -3,13 +3,14 @@
 
 - hosts: localhost
   gather_facts: false
-  become: yes
+  
   vars_files:
     - /opt/seedbox/variables/account.yml
 
   tasks:
 
     - name: Install common packages
+      become: yes
       apt:
         state: present
         name:
@@ -21,18 +22,22 @@
           - "composer"
           
     - name: stopped Systemd nginx
+      become: yes
       systemd:
         name: 'nginx.service'
         state: stopped
 
     - name: Version php-fpm
+      become: yes
       shell: ls /etc/php
       register: fpm
       
     - name: Chown php-fpm
+      become: yes
       shell: chown "{{ lookup('env','USER') }}"  /var/run/php/php*sock
       
     - name: change user in php
+      become: yes
       lineinfile:
         path: "/etc/php/{{ fpm.stdout }}/fpm/pool.d/www.conf"
         line: "{{ item }} = {{ lookup('env','USER') }}"
@@ -44,6 +49,7 @@
         - listen.group
         
     - name: restart php-fpm service
+      become: yes
       service:
         name: "php{{ fpm.stdout }}-fpm"
         state: restarted
@@ -52,29 +58,34 @@
 
 
     - name: Import nginx default
+      become: yes
       template:
         src: /opt/seedbox-compose/includes/config/roles/nginx/templates/default.j2
         dest: /etc/nginx/sites-available/default
         force: yes
         
     - name: Change user
+      become: yes
       lineinfile:
         path: /etc/nginx/nginx.conf
         regexp: '^user '
         line: "user {{ lookup('env','USER') }};"
         
     - name: Change log file owner
+      become: yes
       file:
         path: /var/log/nginx
         state: directory
         owner: "{{ lookup('env','USER') }}"
 
     - name: started Systemd nginx
+      become: yes
       systemd:
         name: 'nginx.service'
         state: started
 
     - name: Create www directories
+      become: yes
       file: "path={{ item }} state=directory mode=0775 owner={{ lookup('env','USER') }} group={{ lookup('env','USER') }} recurse=yes"
       with_items:
         - /var/www/{{user.domain}}
