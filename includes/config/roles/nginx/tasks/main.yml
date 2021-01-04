@@ -30,7 +30,7 @@
       register: fpm
       
     - name: Chown php-fpm
-      shell: chown "{{ lookup('env','USER') }}"  /var/run/php/php7*sock
+      shell: chown "{{ lookup('env','USER') }}"  /var/run/php/php*sock
       
     - name: change user in php
       lineinfile:
@@ -91,11 +91,4 @@
       args:
         chdir: /var/www/{{user.domain}}
 
-    #- name: Set visudo
-    #  lineinfile: |
-      #  usermod -aG docker {{user.name}}
-      #  usermod -aG docker www-data
-      #  chown -R www-data:www-data /var/www
-      #  echo 'www-data ALL=(ALL) NOPASSWD:/var/www/{{user.domain}}/scripts/manage_service.sh' | sudo EDITOR='tee -a' visudo > /dev/null 2>&1
-      #  cp /etc/sudoers /tmp/root
-      #  sort -u /tmp/root > /etc/sudoers
+
