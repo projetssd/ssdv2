@@ -16,7 +16,7 @@ Cloner le dépot :
 
 ```
 sudo git clone https://github.com/projetssd/ssdv2.git /opt/seedbox-compose
-sudo chown -R ${USER}: /opt/seedbox-compose  # changer user par votre username
+sudo chown -R ${USER}: /opt/seedbox-compose  
 ```
 
 puis avec le user

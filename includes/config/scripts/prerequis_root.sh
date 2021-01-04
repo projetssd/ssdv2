@@ -77,9 +77,9 @@ ${SCRIPTPATH}/logs/ansible.log {
 EOF
 
 ## Copy pip to /usr/bin
-cp /usr/local/bin/pip /usr/bin/pip
-cp /usr/local/bin/pip3 /usr/bin/pip3
-pip uninstall -y cryptography
+#cp /usr/local/bin/pip /usr/bin/pip
+#cp /usr/local/bin/pip3 /usr/bin/pip3
+python3 -m pip uninstall -y cryptography
 
 if test -f "${SCRIPTPATH}/ssddb"; then
   echo "Une configuration de seedbox existe déjà, elle ne sera pas écrasée"

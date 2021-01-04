@@ -6,5 +6,5 @@
     lineinfile:
       path: "{{ lookup('env','HOME') }}/.bashrc"
       line: "{{ item }}"
-    with_items:
-    - alias seedbox='/opt/seedbox-compose/seedbox.sh'
+  with_items:
+  - alias seedbox='/opt/seedbox-compose/seedbox.sh'

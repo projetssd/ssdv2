@@ -33,8 +33,8 @@ export SCRIPTPATH=$(dirname "$CURRENT_SCRIPT")
   ansible==${1-$ANSIBLE}
 
 
-/usr/local/bin/ansible-playbook includes/config/playbooks/sudoers.yml
-/usr/local/bin/ansible-playbook includes/config/roles/users/tasks/main.yml
+$(which ansible-playbook) includes/config/playbooks/sudoers.yml
+$(which ansible-playbook) includes/config/roles/users/tasks/main.yml
 echo -e "${RED}-----------------------${CEND}"
 echo "Si c'est la première fois que vous lancez ce script, vous devez vous déconnecter/reconnecter pour continuer"
 echo "Vous pourrez ensuite lancer ./seedbox.sh pour isntaller la seedbox"

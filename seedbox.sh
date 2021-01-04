@@ -185,18 +185,22 @@ if [[ ${IS_INSTALLED} -eq 0 ]]; then
       # Installation de tous les services
       install_services
       # Mise à jour de plex, ajout des librairies
+      read -p "Installation des applis"
       for i in $(docker ps --format "{{.Names}}")
       do
         if [[ "$i" == "plex" ]]; then
           plex_sections
         fi
       done
+      read -p "lancement de projets"
       # choix des applis à installer
       projects
       # Installation de filebot
       # TODO : à laisser ? Ou à mettre dans les applis ?
+       read -p "lancement de filebot"
       filebot
       # mise en place de la sauvegarde
+       read -p "mise en place de la sauvegarde"
       sauve
       # Affichage du résumé
       resume_seedbox
