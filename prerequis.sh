@@ -34,8 +34,9 @@ export SCRIPTPATH=$(dirname "$CURRENT_SCRIPT")
   pip==${PIP}
   
 ## Copy pip to /usr/bin
-ln -s $(which pip3) /usr/bin/pip3
-ln -s $(which pip3) /usr/bin/pip
+rm -f /usr/bin/pip3
+ln -s ${HOME}/.local/bin/pip3 /usr/bin/pip3
+ln -s ${HOME}/.local/bin/pip3 /usr/bin/pip
 
 $(which ansible-playbook) includes/config/playbooks/sudoers.yml
 $(which ansible-playbook) includes/config/roles/users/tasks/main.yml
