@@ -9,7 +9,7 @@ Tous les tests sont à faire sur
 Prérequis : 
 - un user "normal" (non root), qui puisse faire du sudo. 
 - si possible une vm neuve
-
+- git installé (apt install git)
 
 
 Cloner le dépot :
@@ -23,6 +23,9 @@ puis avec le user
 ```
 cd /opt/seedbox-compose
 sudo ./prerequis.sh
+```
+Rebooter le serveur ! (ça devrait être le dernier reboot obligatoire)
+```
 ./seedbox.sh
 ```
 
