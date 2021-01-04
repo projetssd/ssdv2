@@ -52,7 +52,6 @@ git \
 build-essential \
 libssl-dev \
 libffi-dev \
-python-pip \
 python3-dev \
 python3-pip \
 python-dev \
@@ -78,8 +77,7 @@ ${SCRIPTPATH}/logs/ansible.log {
 EOF
 
 ## Copy pip to /usr/bin
-cp /usr/local/bin/pip /usr/bin/pip
-cp /usr/local/bin/pip3 /usr/bin/pip3
+ln -s /usr/local/bin/pip3 /usr/bin/pip3
 python3 -m pip uninstall -y cryptography
 
 

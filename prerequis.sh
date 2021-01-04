@@ -15,7 +15,7 @@ export SCRIPTPATH=$(dirname "$CURRENT_SCRIPT")
   ${SCRIPTPATH}/includes/config/scripts/prerequis_root.sh ${SCRIPTPATH}
   
   ## Install pip3 Dependencies
-  python3 -m pip install --user --disable-pip-version-check --upgrade  \
+  python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
   pip==${PIP}
   python3 -m pip install --user --disable-pip-version-check --upgrade  \
   setuptools
@@ -30,7 +30,8 @@ export SCRIPTPATH=$(dirname "$CURRENT_SCRIPT")
   
   # Install ansible niveau système
   python3 -m pip install --disable-pip-version-check --upgrade \
-  ansible==${1-$ANSIBLE}
+  ansible==${1-$ANSIBLE} \
+  pip==${PIP}
 
 
 $(which ansible-playbook) includes/config/playbooks/sudoers.yml
