@@ -76,8 +76,7 @@ ${SCRIPTPATH}/logs/ansible.log {
 }
 EOF
 
-## Copy pip to /usr/bin
-ln -s /usr/local/bin/pip3 /usr/bin/pip3
+
 python3 -m pip uninstall -y cryptography
 
 

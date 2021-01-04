@@ -32,7 +32,9 @@ export SCRIPTPATH=$(dirname "$CURRENT_SCRIPT")
   python3 -m pip install --disable-pip-version-check --upgrade \
   ansible==${1-$ANSIBLE} \
   pip==${PIP}
-
+  
+## Copy pip to /usr/bin
+ln -s $(which pip3) /usr/bin/pip3
 
 $(which ansible-playbook) includes/config/playbooks/sudoers.yml
 $(which ansible-playbook) includes/config/roles/users/tasks/main.yml
