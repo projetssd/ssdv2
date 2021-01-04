@@ -2594,3 +2594,47 @@ function update_seedbox_param() {
 	 request="replace into seedbox_params (param,value) values ('"${1}"','"${2}"')"
   sqlite3 ${SCRIPTPATH}/ssddb "${request}";
 }
+
+function install_gui() {
+    # installation des dépendances, permet de créer les docker network via ansible
+    ansible-galaxy collection install community.general
+    # On vérifie que le user ait bien les droits d'écriture
+    make_dir_writable ${BASEDIR}
+    # on vérifie que le user ait bien les droits d'écriture dans la db
+    change_file_owner ${BASEDIR}/ssddb
+    # On crée le conf dir (par défaut /opt/seedbox) s'il n'existe pas
+    conf_dir
+    # On part à la pêche aux infos....
+    ${BASEDIR}/includes/config/scripts/get_infos.sh
+    echo ""
+    # On crée les fichier de status à 0
+    status
+    # Mise à jour du système
+    update_system
+    # Installation des packages de base
+    install_base_packages
+    # Installation de docker
+    install_docker
+    # On install nginx
+    ansible-playbook ${BASEDIR}/includes/config/roles/nginx/tasks/main.yml
+    # Installation de traefik
+    # TODO : vérifier ou un récupère le subdomain ?
+    install_traefik
+
+    DOMAIN=$(select_seedbox_param "domain")
+
+    echo -e "${CRED}---------------------------------------------------------------${CEND}"
+    echo -e "${CRED}          /!\ INSTALLATION EFFECTUEE AVEC SUCCES /!\           ${CEND}"
+    echo -e "${CRED}---------------------------------------------------------------${CEND}"
+    echo ""
+    echo -e "${CRED}---------------------------------------------------------------${CEND}"
+    echo -e "${CCYAN}              Adresse de l'interface WebUI                    ${CEND}"
+    echo -e "${CCYAN}              https://${SUBDOMAIN}.${DOMAIN}                  ${CEND}"
+    echo -e "${CRED}---------------------------------------------------------------${CEND}"
+    echo ""
+
+    ansible-vault encrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+    echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour sortir du script..."
+    read -r
+    exit 0
+}
