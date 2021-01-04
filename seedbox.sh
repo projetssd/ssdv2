@@ -19,6 +19,7 @@ if [ ! -f "${SCRIPTPATH}/ssddb" ]; then
   readonly ANSIBLE="2.9"
   python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
   pip==${PIP}
+  python3 -m pip install --user --disable-pip-version-check docker
   ##########################################
   # Pas de configuration existante
   # On installe les prérequis
@@ -345,9 +346,6 @@ if [[ ${IS_INSTALLED} -eq 0 ]]; then
       install_base_packages
       # Installation de docker
       install_docker
-      # On ajoute le user courant au groupe docker
-      ansible-playbook ${BASEDIR}/includes/config/roles/users/tasks/main.yml
-      ansible-playbook ${BASEDIR}/includes/config/roles/users/tasks/chggroup.yml
       # On install nginx
       ansible-playbook ${BASEDIR}/includes/config/roles/nginx/tasks/main.yml
       # Installation de traefik

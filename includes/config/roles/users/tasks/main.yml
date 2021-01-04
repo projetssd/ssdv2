@@ -9,11 +9,6 @@
       state: present
   - name: Add the user to docker group
     user: 
-      name: "{{ ansible_user }}"
-      groups: docker
-      append: yes
-  - name: Add the user to docker group
-    user: 
       name: "{{ lookup('env','SUDO_USER') }}"
       groups: docker
       append: yes
