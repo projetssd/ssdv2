@@ -4,10 +4,46 @@
 CURRENT_SCRIPT=$(readlink -f "$0")
 # Absolute path this script is in.
 export SCRIPTPATH=$(dirname "$CURRENT_SCRIPT")
+cd ${SCRIPTPATH}
+
+if [ ! -f ${SCRIPTPATH}/.prerequis.lock ]; then
+    echo "Les prérequis ne sont pas installés"
+    echo "Vous devez les lancer en tapant"
+    echo "./prerequis.sh"
+    exit 1
+fi
+
+################################################
+# TEST ROOT USER
+if [ "$USER" == "root" ]; then
+  echo -e "${CCYAN}-----------------------${CEND}"
+  echo -e "${CCYAN}[  Lancement en root  ]${CEND}"
+  echo -e "${CCYAN}-----------------------${CEND}"
+  echo -e "${CCYAN}Pour des raisons de sécurité, il n'est pas conseillé de lancer ce script en root${CEND}"
+  read -rp $'\e[33mSouhaitez vous créer un utilisateur dédié (c), continuer en root (r) ou quitter le script (q) ? (c/r/Q)\e[0m :' CREEUSER
+  if [[ "${CREEUSER}" = "r" ]] || [[ "${CREEUSER}" = "R" ]]; then
+    # on ne fait rien et on continue
+    :
+  elif [[ "${CREEUSER}" = "c" ]] || [[ "${CREEUSER}" = "C" ]]; then
+    read -rp $'\e[33mTapez le nom d utilisateur\e[0m :' CREEUSER_USERNAME
+    read -rp $'\e[33mTapez le password (pas de \ ni apostrophe dans le password) \e[0m :' CREEUSER_PASSWORD
+    ansible-playbook ${BASEDIR}/includes/config/playbooks/cree_user.yml --extra-vars '{"CREEUSER_USERNAME":"'${CREEUSER_USERNAME}'","CREEUSER_PASSWORD":"'${CREEUSER_PASSWORD}'"}'
+    echo -e "${CCYAN}L'utilisateur ${CREEUSER_USERNAME} a été créé, merci de vous déloguer et reloguer avec ce user pour continer${CEND}"
+    exit 0
+  else
+    exit 0
+  fi
+fi
 
 # On disque d'avoir besoin de ces variables d'environnement par la suite
 export MYUID=$(id -u)
 export MYGID=$(id -g)
+
+# on met les droits comme il faut, au cas où il y ait eu un mauvais lancement
+sudo chown -R ${USER}: ${SCRIPTPATH}
+
+# on ajoute le PATH qui va bien, au cas où il ne soit pas pris en compte par le ~/.profile
+PATH="$HOME/.local/bin:$PATH"
 
 
 if [ ! -f "${SCRIPTPATH}/ssddb" ]; then
@@ -87,27 +123,7 @@ fi
 
 IS_INSTALLED=$(select_seedbox_param "installed")
 
-################################################
-# TEST ROOT USER
-if [ "$USER" == "root" ]; then
-  echo -e "${CCYAN}-----------------------${CEND}"
-  echo -e "${CCYAN}[  Lancement en root  ]${CEND}"
-  echo -e "${CCYAN}-----------------------${CEND}"
-  echo -e "${CCYAN}Pour des raisons de sécurité, il n'est pas conseillé de lancer ce script en root${CEND}"
-  read -rp $'\e[33mSouhaitez vous créer un utilisateur dédié (c), continuer en root (r) ou quitter le script (q) ? (c/r/Q)\e[0m :' CREEUSER
-  if [[ "${CREEUSER}" = "r" ]] || [[ "${CREEUSER}" = "R" ]]; then
-    # on ne fait rien et on continue
-    :
-  elif [[ "${CREEUSER}" = "c" ]] || [[ "${CREEUSER}" = "C" ]]; then
-    read -rp $'\e[33mTapez le nom d utilisateur\e[0m :' CREEUSER_USERNAME
-    read -rp $'\e[33mTapez le password (pas de \ ni apostrophe dans le password) \e[0m :' CREEUSER_PASSWORD
-    ansible-playbook ${BASEDIR}/includes/config/playbooks/cree_user.yml --extra-vars '{"CREEUSER_USERNAME":"'${CREEUSER_USERNAME}'","CREEUSER_PASSWORD":"'${CREEUSER_PASSWORD}'"}'
-    echo -e "${CCYAN}L'utilisateur ${CREEUSER_USERNAME} a été créé, merci de vous déloguer et reloguer avec ce user pour continer${CEND}"
-    exit 0
-  else
-    exit 0
-  fi
-fi
+
 
 
 clear
@@ -188,6 +204,7 @@ if [[ ${IS_INSTALLED} -eq 0 ]]; then
       # stocké dans account.yml
       subdomain
       # Installation de tous les services
+      read -p "Installation des services"
       install_services
       # Mise à jour de plex, ajout des librairies
       read -p "Installation des applis"

@@ -29,6 +29,7 @@ echo ""
 
 }
 
+
 function update_system() {
 	#Mise à jour systeme
 	echo -e "${BLUE}### MISE A JOUR DU SYTEME ###${NC}"
@@ -2586,8 +2587,16 @@ function pause() {
 }
 
 function select_seedbox_param() {
-  request="select value from seedbox_params where param ='"${1}"'"
-  sqlite3 ${SCRIPTPATH}/ssddb "${request}";
+	request="select value from seedbox_params where param ='"${1}"'"
+	RETURN=$(sqlite3 ${SCRIPTPATH}/ssddb "${request}";)
+	if [ $? != 0 ]
+	then
+		echo 0
+	else
+		echo $RETURN
+	fi
+	
+  
 }
 
 function update_seedbox_param() {

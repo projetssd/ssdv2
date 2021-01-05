@@ -9,6 +9,7 @@ fi
 CURRENT_SCRIPT=$(readlink -f "$0")
 # Absolute path this script is in.
 export SCRIPTPATH=$(dirname "$CURRENT_SCRIPT")
+cd ${SCRIPTPATH}
 
 readonly PIP="9.0.3"
 readonly ANSIBLE="2.9"
@@ -42,3 +43,4 @@ echo "Vous pourrez ensuite lancer "
 echo "cd /opt/seedbox-compose"
 echo "./seedbox.sh "
 echo "pour installer la seedbox"
+touch ${SCRIPTPATH}/.prerequis.lock
