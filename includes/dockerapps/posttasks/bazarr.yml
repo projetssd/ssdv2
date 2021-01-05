@@ -1,0 +1,5 @@
+---
+- name: Test de posttask
+  file:
+    path: /tmp/bazarrpost
+    state: touch

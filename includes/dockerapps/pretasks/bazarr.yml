@@ -1,0 +1,5 @@
+---
+- name: Test de pretask
+  file:
+    path: /tmp/bazarrpre
+    state: touch
