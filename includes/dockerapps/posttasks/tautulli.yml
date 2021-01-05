@@ -1,0 +1,19 @@
+---
+- name: 'Configuring {{ pgrole }} for first time use'
+  block:
+    - name: 'Waiting for {{ pgrole }} to start'
+      wait_for:
+        path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config.ini"
+        state: present
+
+    - name: Stop Container
+      docker_container:
+        name: {{ pgrole }}
+        state: stopped
+
+    - name: Restart {{pgrole}}
+      docker_container:
+        name: '{{ pgrole }}'
+        state: started
+
+  when: not confcheck.stat.exists

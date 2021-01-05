@@ -1,0 +1,8 @@
+---
+- name: Creating paths
+  file: 'path={{item}} state=directory mode=0775 owner=999 group=999'
+  with_items:
+    - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config"
+    - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data"
+
+

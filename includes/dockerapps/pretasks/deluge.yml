@@ -1,0 +1,9 @@
+---
+- name: 'Creating deluge folder paths'
+  file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
+  with_items:
+    - "/home/{{ lookup('env','USER') }}/local/{{ pgrole }}"
+    - "/home/{{ lookup('env','USER') }}/{{ pgrole }}/downloads"
+    - "/home/{{ lookup('env','USER') }}/{{ pgrole }}/incomplete"
+    - "/home/{{ lookup('env','USER') }}/{{ pgrole }}/torrent"
+    - "/home/{{ lookup('env','USER') }}/{{ pgrole }}/watch"
