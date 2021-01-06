@@ -291,7 +291,6 @@ if [[ ${IS_INSTALLED} -eq 0 ]]; then
       cloudflare
       install_traefik
       install_watchtower
-      SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
       while read line; do echo $line | cut -d'.' -f1; done <"/home/$SEEDUSER/resume" >"$SERVICESUSER$SEEDUSER"
       rm "/home/$SEEDUSER/resume"
       install_services

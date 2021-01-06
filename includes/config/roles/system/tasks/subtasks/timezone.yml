@@ -31,6 +31,7 @@
     force: yes
   notify: Handers | Update 'tzdata'
   
+# Ajout Merrick, en attendant de trouver mieux
 - name: create /etc/localtime
   file:
     path: /etc/localtime

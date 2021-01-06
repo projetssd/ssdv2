@@ -9,7 +9,6 @@ SEEDUSER=$(cat /tmp/name)
 DOMAIN=$(cat /tmp/domain)
 SEEDGROUP=$(cat /tmp/group)
 rm /tmp/name /tmp/domain /tmp/group
-SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 
     	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
     	echo -e "${CCYAN}    /!\ Auth Basique avec Traefik – Secure pour les services Docker /!\      ${CEND}"

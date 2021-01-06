@@ -32,6 +32,7 @@ docker
   
 ## Copy pip to /usr/bin
 rm -f /usr/bin/pip3
+rm -f /usr/bin/pip
 ln -s ${HOME}/.local/bin/pip3 /usr/bin/pip3
 ln -s ${HOME}/.local/bin/pip3 /usr/bin/pip
 

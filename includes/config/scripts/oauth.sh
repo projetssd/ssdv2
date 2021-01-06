@@ -9,7 +9,6 @@ SEEDUSER=$(cat /tmp/name)
 DOMAIN=$(cat /tmp/domain)
 SEEDGROUP=$(cat /tmp/group)
 rm /tmp/name /tmp/domain /tmp/group
-SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 oauth_client=$1
 oauth_secret=$2
 email=$3

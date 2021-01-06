@@ -709,7 +709,6 @@ function script_plexdrive() {
 
                                     2) ## Modifier les sous domaines
                                     ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
-                                    SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
                                     SEEDUSER=$(cat /tmp/name)
                                     rm /tmp/name
                                     ansible-vault decrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
@@ -1512,7 +1511,6 @@ function install_docker() {
 }
 
 function subdomain() {
-SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 grep "sub" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 if [ $? -eq 1 ]; then
  sed -i '/transcodes/a sub:' ${CONFDIR}/variables/account.yml 
@@ -1688,7 +1686,6 @@ function projects() {
 function choose_services() {
     echo -e "${BLUE}### SERVICES ###${NC}"
 	echo -e " ${BWHITE}--> Services en cours d'installation : ${NC}"
-	SERVICESPERUSER="${SERVICESUSER}${USER}"
 	rm -Rf $SERVICESPERUSER > /dev/null 2>&1
 	menuservices="/tmp/menuservices.txt"
 	if [[ -e "$menuservices" ]]; then
@@ -1705,7 +1702,6 @@ function choose_services() {
 	"Appuyer sur la barre espace pour la sélection" 28 64 21 \
 	$(cat /tmp/menuservices.txt) 3>&1 1>&2 2>&3)
 	[[ "$?" = 1 ]] && script_plexdrive && rm /tmp/menuservices.txt;
-	SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 	touch $SERVICESPERUSER
 	for APPDOCKER in $SERVICESTOINSTALL
 	do
@@ -1717,7 +1713,6 @@ function choose_services() {
 function choose_other_services() {
 	echo -e "${BLUE}### SERVICES ###${NC}"
 	echo -e " ${BWHITE}--> Services en cours d'installation : ${NC}"
-	SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 	rm -Rf $SERVICESPERUSER > /dev/null 2>&1
 	menuservices="/tmp/menuservices.txt"
 	if [[ -e "$menuservices" ]]; then
@@ -1734,7 +1729,6 @@ function choose_other_services() {
 	"Appuyer sur la barre espace pour la sélection" 28 64 21 \
 	$(cat /tmp/menuservices.txt) 3>&1 1>&2 2>&3)
 	[[ "$?" = 1 ]] && script_plexdrive && rm /tmp/menuservices.txt;
-	SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 	touch $SERVICESPERUSER
 	for APPDOCKER in $SERVICESTOINSTALL
 	do
@@ -1768,8 +1762,6 @@ function webserver() {
 	$(cat /tmp/menuservices.txt) 3>&1 1>&2 2>&3)
 	[[ "$?" = 1 ]] && script_plexdrive;
 
-
-	SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 	touch $SERVICESPERUSER
 	for APPDOCKER in $SERVICESTOINSTALL
 	do
@@ -1985,7 +1977,6 @@ do
                 SEEDGROUP=$(cat /tmp/group)
                 rm /tmp/name /tmp/domain /tmp/group
                 INSTALLEDFILE="/home/$SEEDUSER/resume"
-                SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 
     	               echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
     	               echo -e "${CCYAN}   /!\ Authelia avec Traefik – Secure SSO pour les services Docker /!\       ${CEND}"
@@ -2276,7 +2267,6 @@ function manage_apps() {
 			;;
 
 		"3" ) 	## Réinitialisation container
-			SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
 			touch $SERVICESPERUSER
 			echo -e " ${BWHITE}* Les fichiers de configuration ne seront pas effacés${NC}"
 			TABSERVICES=()
