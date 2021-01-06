@@ -1,11 +1,14 @@
 ---
-pgrole: 'codif'
-intport: '8443'
-image: 'ghcr.io/linuxserver/code-server'
+pgrole: 'duplicati '
+intport: '8200'
+image: 'linuxserver/duplicati'
 pg_volumes:
   - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config:rw"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
-  - "/etc/localtime:/etc/localtime:ro"
+  - '/:/source'
+  - '/mnt/backups:/backups'
+
+  - '/etc/localtime:/etc/localtime:ro'
 pg_env:
   -PUID="{{ lookup('env','MYUID') }}"
   -PGID="{{ lookup('env','MYGID') }}"

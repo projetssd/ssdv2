@@ -3,7 +3,7 @@ pgrole: 'monitorr'
 intport: '80'
 image: 'monitorr/monitorr'
 pg_volumes:
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/app"
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/app"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:
   -PUID="{{ lookup('env','MYUID') }}"

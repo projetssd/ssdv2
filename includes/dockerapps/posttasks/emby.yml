@@ -1,0 +1,29 @@
+---
+- name: 'Configuring {{ pgrole }} for first time use'
+  block:
+
+  - name: 'Pending XML Generation'
+    wait_for:
+      path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config/system.xml"
+      state: present
+
+  - name: 'Wait 5 Seconds'
+    wait_for:
+      timeout: 5
+
+  - name: 'Stop {{ pgrole }}'
+    docker_container:
+      name: '{{ pgrole }}'
+      state: stopped
+
+  - name: 'Turn Off Reporting'
+    xml:
+      path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config/system.xml"
+      xpath: /ServerConfiguration/EnableAnonymousUsageReporting
+      value: 'false'
+
+  - name: 'Restart {{ pgrole }}'
+    docker_container:
+      name: '{{ pgrole }}'
+      state: started
+  when: not xmlcheck.stat.exists
