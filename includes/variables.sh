@@ -28,6 +28,7 @@ SERVICESPERUSER="${SERVICESUSER}${USER}"
 PROJECTUSER="$CONFDIR/projects-"
 MEDIASUSER="$CONFDIR/media-"
 PACKAGESFILE="$BASEDIR/includes/config/packages"
+export TMPDOMAIN=${BASEDIR}/tmp/domain
 
 export NEWT_COLORS='
   window=,white

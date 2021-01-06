@@ -6,9 +6,9 @@ source /opt/seedbox-compose/includes/variables.sh
 ## Variable
 ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
 SEEDUSER=$(cat /tmp/name)
-DOMAIN=$(cat /tmp/domain)
+DOMAIN=$(cat ${TMPDOMAIN})
 SEEDGROUP=$(cat /tmp/group)
-rm /tmp/name /tmp/domain /tmp/group
+rm /tmp/name ${TMPDOMAIN} /tmp/group
 
     	echo -e "${CRED}---------------------------------------------------------------${CEND}"
     	echo -e "${CRED}     /!\ MISE A JOUR DU SERVEUR AVEC CLOUDFLARE /!\            ${CEND}"

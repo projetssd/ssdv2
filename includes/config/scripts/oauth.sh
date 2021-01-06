@@ -6,9 +6,9 @@ source /opt/seedbox-compose/includes/variables.sh
 ## Variable
 ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
 SEEDUSER=$(cat /tmp/name)
-DOMAIN=$(cat /tmp/domain)
+DOMAIN=$(cat ${TMPDOMAIN})
 SEEDGROUP=$(cat /tmp/group)
-rm /tmp/name /tmp/domain /tmp/group
+rm /tmp/name ${TMPDOMAIN} /tmp/group
 oauth_client=$1
 oauth_secret=$2
 email=$3

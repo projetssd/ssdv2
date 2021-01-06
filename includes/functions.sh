@@ -1246,7 +1246,7 @@ function script_plexdrive() {
 
                 # definition variables
                 ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
-                DOMAIN=$(cat /tmp/domain)
+                DOMAIN=$(cat ${TMPDOMAIN})
 
                 # Ajout ligne sub ds account.yml si elle n y est pas deja
                 ansible-vault decrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
@@ -1314,7 +1314,7 @@ function script_plexdrive() {
                 echo -e "${CRED}---------------------------------------------------------------${CEND}"
                 echo ""
 
-                rm /tmp/domain
+                rm ${TMPDOMAIN}
                 ansible-vault encrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
                 echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour sortir du script..."
                 read -r
@@ -1644,9 +1644,9 @@ function create_user() {
 function projects() {
 	ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
 	SEEDUSER=${USER}
-	DOMAIN=$(cat /tmp/domain)
+	DOMAIN=$(cat ${TMPDOMAIN})
 	SEEDGROUP=$(cat /tmp/group)
-	rm /tmp/name /tmp/domain /tmp/group
+	rm /tmp/name ${TMPDOMAIN} /tmp/group
 	
 	echo -e "${BLUE}### SERVICES ###${NC}"
 	echo -e " ${BWHITE}--> Services en cours d'installation : ${NC}"
@@ -1973,9 +1973,9 @@ do
                 ## Variable
                 ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
                 SEEDUSER=$(cat /tmp/name)
-                DOMAIN=$(cat /tmp/domain)
+                DOMAIN=$(cat ${TMPDOMAIN})
                 SEEDGROUP=$(cat /tmp/group)
-                rm /tmp/name /tmp/domain /tmp/group
+                rm /tmp/name ${TMPDOMAIN} /tmp/group
                 INSTALLEDFILE="/home/$SEEDUSER/resume"
 
     	               echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
@@ -2120,9 +2120,9 @@ function manage_apps() {
         ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
         ansible-vault decrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 	SEEDUSER=$(cat /tmp/name)
-	DOMAIN=$(cat /tmp/domain)
+	DOMAIN=$(cat ${TMPDOMAIN})
         SEEDGROUP=$(cat /tmp/group)
-        rm /tmp/name /tmp/domain /tmp/group
+        rm /tmp/name ${TMPDOMAIN} /tmp/group
 	USERRESUMEFILE="/home/$SEEDUSER/resume"
         status
 	echo ""
@@ -2471,9 +2471,9 @@ function uninstall_seedbox() {
 	## variables
         ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
 	SEEDUSER=$(cat /tmp/name)
-	DOMAIN=$(cat /tmp/domain)
+	DOMAIN=$(cat ${TMPDOMAIN})
         SEEDGROUP=$(cat /tmp/group)
-        rm /tmp/name /tmp/domain /tmp/group
+        rm /tmp/name ${TMPDOMAIN} /tmp/group
 
 	USERHOMEDIR="/home/$SEEDUSER"
 	PLEXDRIVE="/usr/bin/rclone"

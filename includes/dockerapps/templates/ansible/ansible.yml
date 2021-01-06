@@ -10,5 +10,5 @@
     - name: 
       shell: |
         echo {{user.name}} > /tmp/name
-        echo {{user.domain}} > /tmp/domain
+        echo {{user.domain}} > {{ lookup('env','TMPDOMAIN') }}
         echo {{user.group}} > /tmp/group
