@@ -78,6 +78,7 @@
       pip:
         requirements: /home/{{user.name}}/scripts/plex_autoscan/requirements.txt
         executable: pip
+        extra_args: --user
 
     - name: Check config exists
       stat:
