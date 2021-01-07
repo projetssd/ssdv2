@@ -3,7 +3,7 @@
   gather_facts: false
   become: yes
   vars_files:
-    - /opt/seedbox/variables/account.yml
+    - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
   tasks:
 
     - name: Check if plex_autoscan.service exists
@@ -13,12 +13,12 @@
 
     - name: Check if drive1.anchor exists
       stat:
-        path: "/home/{{user.name}}/Medias/drive1.anchor"
+        path: "/home/{{ lookup('env','USER') }}/Medias/drive1.anchor"
       register: anchor_service
 
     - name: delete plex_autoscan folder
       shell: |
-        touch /home/{{user.name}}/Medias/drive1.anchor
+        touch /home/{{ lookup('env','USER') }}/Medias/drive1.anchor
       when: not anchor_service.stat.exists
 
     - name: Service Tasks
@@ -32,6 +32,7 @@
           plex_autoscan_service_running: "{{ (services['plex_autoscan.service'] is defined) and (services['plex_autoscan.service']['state'] == 'running') }}"
 
       - name: Stop plex_autoscan service
+        become: yes
         systemd:
           name: plex_autoscan
           state: stopped
@@ -39,9 +40,13 @@
         when: plex_autoscan_service_running
 
       - name: delete plex_autoscan folder
-        shell: |
-          rm /etc/systemd/system/plex_autoscan.service
-          rm -rf /home/{{user.name}}/scripts/plex_autoscan
+        become: yes
+        file:
+          path: "{{ item }}"
+          state: absent
+        with_items:
+        - /etc/systemd/system/plex_autoscan.service
+        - "/home/{{ lookup('env','USER') }}/scripts/plex_autoscan"
         when: plex_autoscan_service_running
 
       when: plex_autoscan_service.stat.exists
@@ -52,22 +57,22 @@
         image: 'cloudb0x/autoscan'
 
     - name: Creating paths
-      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
+      file: 'path={{item}} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID') }}'
       with_items:
-        - '/home/{{user.name}}/scripts/{{pgrole}}'
-
+        - "/home/{{ lookup('env','USER') }}/scripts/{{pgrole}}"
+        
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
-          - '/home/{{user.name}}/scripts/{{pgrole}}:/config'
-          - '/home/{{user.name}}/Medias:/home/{{user.name}}/Medias:ro'
+          - "/home/{{ lookup('env','USER') }}/scripts/{{pgrole}}:/config"
+          - "/home/{{ lookup('env','USER') }}/Medias:/home/{{ lookup('env','USER') }}/Medias:ro"
           - '/etc/localtime:/etc/localtime:ro'
 
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
-          PUID: '{{user.userid}}'
-          PGID: '{{user.groupid}}'
+          PUID: "{{ lookup('env','MYUID') }}"
+          PGID: "{{ lookup('env','MYGID') }}"
           AUTOSCAN_VERBOSITY: '2'
 
     # MAIN DEPLOYMENT #############################################################
@@ -88,9 +93,9 @@
 
     - name: Import default config
       template:
-        src: /opt/seedbox-compose/includes/config/roles/autoscan/templates/config.yml.j2
-        dest: /home/{{user.name}}/scripts/autoscan/config.yml
+        src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/autoscan/templates/config.yml.j2"
+        dest: "/home/{{ lookup('env','USER') }}/scripts/autoscan/config.yml"
         mode: 0600
         force: yes
       become: yes
-      become_user: "{{user.name}}"
+      become_user: "{{ lookup('env','USER') }}"

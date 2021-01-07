@@ -5,8 +5,8 @@ Description=Plex Autoscan
 After=network-online.target
 
 [Service]
-User={{user.userid}}
-Group={{user.groupid}}
+User={{ lookup('env','USER') }}
+Group={{ lookup('env','MYGID') }}
 Type=simple
 WorkingDirectory=/home/{{ lookup('env','USER') }}/scripts/plex_autoscan/
 ExecStart=/home/{{ lookup('env','USER') }}/scripts/plex_autoscan/scan.py server --loglevel=INFO
