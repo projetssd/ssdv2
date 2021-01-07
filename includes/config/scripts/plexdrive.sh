@@ -4,7 +4,7 @@ source /opt/seedbox-compose/includes/functions.sh
 source /opt/seedbox-compose/includes/variables.sh
 
 ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
-USER=$(cat /tmp/name)
+USER=$(cat ${TMPNAME})
 
 ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 sed -i '/plexdrive*/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
