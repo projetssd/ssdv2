@@ -1512,94 +1512,78 @@ function install_docker() {
 }
 
 function subdomain() {
-
-        grep "sub" /opt/seedbox/variables/account.yml > /dev/null 2>&1
-        if [ $? -eq 1 ]; then
-          sed -i '/transcodes/a sub:' /opt/seedbox/variables/account.yml
-        fi
-        echo ""
-        read -rp $'\e\033[1;37m --> Personnaliser les sous domaines: (o/n) ? ' OUI
-        echo ""
-        if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
-          echo -e " ${CRED}--> NE PAS SAISIR LE NOM DE DOMAINE - LES POINTS NE SONT PAS ACCEPTES${NC}"
-          echo ""
-          for line in $(cat $SERVICESPERUSER);
-          do
-            read -rp $'\e[32m* Sous domaine pour\e[0m '$line': ' subdomain
-
-            grep "$line: ." /opt/seedbox/variables/account.yml > /dev/null 2>&1
-            if [ $? -eq 0 ]; then
-              sed -i "/$line: ./d" /opt/seedbox/variables/account.yml > /dev/null 2>&1
-            fi
-
-            grep "$line:" /opt/seedbox/variables/account.yml > /dev/null 2>&1
-            if [ $? -eq 1 ]; then
-              sed -i "/sub/a \ \ \ $line:" /opt/seedbox/variables/account.yml
-            fi
-
-            sed -i "/$line:/a \ \ \ \ \ $line: $subdomain" /opt/seedbox/variables/account.yml
-          done
-        fi
+	
+	grep "sub" ${BASEDIR}/variables/account.yml > /dev/null 2>&1
+	if [ $? -eq 1 ]; then
+		sed -i '/transcodes/a sub:' ${BASEDIR}/variables/account.yml
+	fi
+	echo ""
+	read -rp $'\e\033[1;37m --> Personnaliser les sous domaines: (o/n) ? ' OUI
+	echo ""
+	if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
+		echo -e " ${CRED}--> NE PAS SAISIR LE NOM DE DOMAINE - LES POINTS NE SONT PAS ACCEPTES${NC}"
+		echo ""
+		for line in $(cat $SERVICESPERUSER);
+		do
+			read -rp $'\e[32m* Sous domaine pour\e[0m '$line': ' subdomain
+			
+			grep "$line: ." ${BASEDIR}/variables/account.yml > /dev/null 2>&1
+			if [ $? -eq 0 ]; then
+				sed -i "/$line: ./d" ${BASEDIR}/variables/account.yml > /dev/null 2>&1
+			fi
+			
+			grep "$line:" ${BASEDIR}/variables/account.yml > /dev/null 2>&1
+			if [ $? -eq 1 ]; then
+				sed -i "/sub/a \ \ \ $line:" ${BASEDIR}/variables/account.yml
+			fi
+			
+			sed -i "/$line:/a \ \ \ \ \ $line: $subdomain" ${BASEDIR}/variables/account.yml
+		done
+	fi
 }
 
 function auth() {
+	
+	grep "sub" ${BASEDIR}/variables/account.yml > /dev/null 2>&1
+	if [ $? -eq 1 ]; then
+		sed -i '/transcodes/a sub:' ${BASEDIR}/variables/account.yml
+	fi
+	echo ""
+	for line in $(cat $SERVICESPERUSER);
+	do
+	
+		read -rp $'\e\033[1;37m --> Authentification '$line' [ Enter ] 1 => basique | 2 => oauth | 3 => authelia | 4 => aucune: ' AUTH
+		case $AUTH in
+			1)
+				TYPE_AUTH=basique
+				;;
+			
+			2)
+				TYPE_AUTH=oauth
+				;;
+			
+			3)
+				TYPE_AUTH=authelia
 
-        grep "sub" /opt/seedbox/variables/account.yml > /dev/null 2>&1
-        if [ $? -eq 1 ]; then
-          sed -i '/transcodes/a sub:' /opt/seedbox/variables/account.yml
-        fi
-        echo ""
-        for line in $(cat $SERVICESPERUSER);
-        do
-
-          read -rp $'\e\033[1;37m --> Authentification '$line' [ Enter ] 1 => basique | 2 => oauth | 3 => authelia | 4 => aucune: ' AUTH
-          case $AUTH in
-              1)
-                grep "$line:" /opt/seedbox/variables/account.yml > /dev/null 2>&1
-                if [ $? -eq 1 ]; then
-                  sed -i "/sub/a \ \ \ $line:" /opt/seedbox/variables/account.yml
-                  sed -i "/$line:/a \ \ \ \ \ auth: basique" /opt/seedbox/variables/account.yml
-                else
-                  sed -i "/$line: ./a \ \ \ \ \ auth: basique" /opt/seedbox/variables/account.yml
-                fi
-                ;;
-
-              2)
-                grep "$line:" /opt/seedbox/variables/account.yml > /dev/null 2>&1
-                if [ $? -eq 1 ]; then
-                  sed -i "/sub/a \ \ \ $line:" /opt/seedbox/variables/account.yml
-                  sed -i "/$line:/a \ \ \ \ \ auth: oauth" /opt/seedbox/variables/account.yml
-                else
-                  sed -i "/$line: ./a \ \ \ \ \ auth: oauth" /opt/seedbox/variables/account.yml
-                fi
-                ;;
-
-              3)
-                grep "$line:" /opt/seedbox/variables/account.yml > /dev/null 2>&1
-                if [ $? -eq 1 ]; then
-                  sed -i "/sub/a \ \ \ $line:" /opt/seedbox/variables/account.yml
-                  sed -i "/$line:/a \ \ \ \ \ auth: authelia" /opt/seedbox/variables/account.yml
-                else
-                  sed -i "/$line: ./a \ \ \ \ \ auth: authelia" /opt/seedbox/variables/account.yml
-                fi
-                ;;
-
-              4)
-                grep "$line:" /opt/seedbox/variables/account.yml > /dev/null 2>&1
-                if [ $? -eq 1 ]; then
-                  sed -i "/sub/a \ \ \ $line:" /opt/seedbox/variables/account.yml
-                  sed -i "/$line:/a \ \ \ \ \ auth: none" /opt/seedbox/variables/account.yml
-                else
-                  sed -i "/$line: ./a \ \ \ \ \ auth: none" /opt/seedbox/variables/account.yml
-                fi
-                ;;
-
-              *)
-                echo "Action $action inconnue"
-                exit 1
-                ;;
-          esac
-        done
+				;;
+			
+			4)
+				TYPE_AUTH=none
+				;;
+			
+			*)
+				echo "Action $action inconnue"
+				exit 1
+				;;
+		esac
+		grep "$line:" ${BASEDIR}/variables/account.yml > /dev/null 2>&1
+		if [ $? -eq 1 ]; then
+			sed -i "/sub/a \ \ \ $line:" ${BASEDIR}/variables/account.yml
+			sed -i "/$line:/a \ \ \ \ \ auth: ${TYPE_AUTH}" ${BASEDIR}/variables/account.yml
+		else
+			sed -i "/$line: ./a \ \ \ \ \ auth: ${TYPE_AUTH}" ${BASEDIR}/variables/account.yml
+		fi
+	done
 }
 
 
@@ -2278,15 +2262,15 @@ function manage_apps() {
 			[[ "$?" = 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi;
 			echo -e " ${GREEN}   * $APPSELECTED${NC}"
 
-                        grep "$APPSELECTED: ." /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                        grep "$APPSELECTED: ." ${BASEDIR}/variables/account.yml > /dev/null 2>&1
                         if [ $? -eq 0 ]; then
-                          SUBDOMAIN=$(grep "$APPSELECTED: ." /opt/seedbox/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
-                          sed -i "/$SUBDOMAIN/,+2d" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                          SUBDOMAIN=$(grep "$APPSELECTED: ." ${BASEDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
+                          sed -i "/$SUBDOMAIN/,+2d" ${BASEDIR}/variables/account.yml > /dev/null 2>&1
                         fi
 
-                        grep "$APPSELECTED:" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                        grep "$APPSELECTED:" ${BASEDIR}/variables/account.yml > /dev/null 2>&1
                         if [ $? -eq 0 ] || [ "$APPSELECTED" != "plex" ] ; then
-                          sed -i "/$APPSELECTED/,+1d" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                          sed -i "/$APPSELECTED/,+1d" ${BASEDIR}/variables/account.yml > /dev/null 2>&1
                         fi
 
                         sed -i "/$APPSELECTED/d" ${CONFDIR}/resume > /dev/null 2>&1
