@@ -710,8 +710,8 @@ function script_plexdrive() {
                                     2) ## Modifier les sous domaines
                                     ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
                                     SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
-                                    SEEDUSER=$(cat /tmp/name)
-                                    rm /tmp/name
+                                    SEEDUSER=$(cat ${TMPNAME})
+                                    rm ${TMPNAME}
                                     ansible-vault decrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
                                     rm ${CONFDIR}/conf/* > /dev/null 2>&1
 
@@ -1718,8 +1718,8 @@ function projects() {
 	ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
 	SEEDUSER=${USER}
 	DOMAIN=$(cat ${TMPDOMAIN})
-	SEEDGROUP=$(cat /tmp/group)
-	rm /tmp/name ${TMPDOMAIN} /tmp/group
+	SEEDGROUP=$(cat ${TMPGROUP})
+	rm ${TMPNAME} ${TMPDOMAIN} ${TMPGROUP}
 	
 	echo -e "${BLUE}### SERVICES ###${NC}"
 	echo -e " ${BWHITE}--> Services en cours d'installation : ${NC}"
@@ -2045,10 +2045,10 @@ do
 		echo ""
                 ## Variable
                 ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
-                SEEDUSER=$(cat /tmp/name)
+                SEEDUSER=$(cat ${TMPNAME})
                 DOMAIN=$(cat ${TMPDOMAIN})
-                SEEDGROUP=$(cat /tmp/group)
-                rm /tmp/name ${TMPDOMAIN} /tmp/group
+                SEEDGROUP=$(cat ${TMPGROUP})
+                rm ${TMPNAME} ${TMPDOMAIN} ${TMPGROUP}
                 INSTALLEDFILE="/home/$SEEDUSER/resume"
 
     	               echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
@@ -2187,10 +2187,10 @@ function manage_apps() {
 
         ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
         ansible-vault decrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-	SEEDUSER=$(cat /tmp/name)
+	SEEDUSER=$(cat ${TMPNAME})
 	DOMAIN=$(cat ${TMPDOMAIN})
-        SEEDGROUP=$(cat /tmp/group)
-        rm /tmp/name ${TMPDOMAIN} /tmp/group
+        SEEDGROUP=$(cat ${TMPGROUP})
+        rm ${TMPNAME} ${TMPDOMAIN} ${TMPGROUP}
 	USERRESUMEFILE="/home/$SEEDUSER/resume"
         status
 	echo ""
@@ -2545,10 +2545,10 @@ function uninstall_seedbox() {
 
 	## variables
         ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
-	SEEDUSER=$(cat /tmp/name)
+	SEEDUSER=$(cat ${TMPNAME})
 	DOMAIN=$(cat ${TMPDOMAIN})
-        SEEDGROUP=$(cat /tmp/group)
-        rm /tmp/name ${TMPDOMAIN} /tmp/group
+        SEEDGROUP=$(cat ${TMPGROUP})
+        rm ${TMPNAME} ${TMPDOMAIN} ${TMPGROUP}
 
 	USERHOMEDIR="/home/$SEEDUSER"
 	PLEXDRIVE="/usr/bin/rclone"

@@ -145,7 +145,7 @@ echo -e "${BLUE}### Containers en cours de restart, merci de patienter ###${NC}"
 echo ""
 docker start $(docker ps -a -q --filter "status=exited") > /dev/null 2>&1
 ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
-SEEDUSER=$(cat /tmp/name)
+SEEDUSER=$(cat ${TMPNAME})
 
 ######### configuration des services#######################
 echo ""
