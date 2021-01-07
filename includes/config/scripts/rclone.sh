@@ -8,8 +8,6 @@ source "${SCRIPTPATH}/includes/variables.sh"
 mkdir -p ${HOME}/.config/rclone
 RCLONE_CONFIG_FILE=${HOME}/.config/rclone/rclone.conf
 
-sed -i '/remote/d' ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-sed -i '/id_teamdrive/d' ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 sed -i '/plexdrive/d' ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 sed -i '/remote/d' ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 sed -i '/id_teamdrive/d' ${CONFDIR}/variables/account.yml > /dev/null 2>&1

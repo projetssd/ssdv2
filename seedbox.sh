@@ -203,6 +203,9 @@ if [[ ${IS_INSTALLED} -eq 0 ]]; then
       # On choisit les sous domaines pour les services installés précédemment
       # stocké dans account.yml
       subdomain
+      # On choisit le mode d'authentification, basqiue, oauth, authelia
+      # stoké dans account.yml
+      auth
       # Installation de tous les services
       read -p "Installation des services"
       install_services

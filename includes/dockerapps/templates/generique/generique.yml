@@ -1,0 +1,74 @@
+# LABELS TRAEFIK #########################################################################
+pg_labels:
+  traefik.enable: 'true'
+  ## HTTP Routers
+  traefik.http.routers.{{pgrole}}-rtr.entrypoints: 'https'
+  traefik.http.routers.{{pgrole}}-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
+  traefik.http.routers.{{pgrole}}-rtr.tls: 'true'
+  ## Middlewares
+  traefik.http.routers.{{pgrole}}-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
+  else 'chain-basic-auth@file' if auth_enabled and sub[pgrole].auth == 'basique' | default(false)
+  else 'chain-oauth@file' if auth_enabled and sub[pgrole].auth == 'oauth' | default(false) }}"
+  ## HTTP Services
+  traefik.http.routers."{{pgrole}}"-rtr.service: "{{pgrole}}-svc"
+  traefik.http.services."{{pgrole}}-svc".loadbalancer.server.port: "{{ intport }}"
+
+
+# TODO ###################################################################################
+## 2EME BLOC A PREVOIR pour les labels en tcp comme nextcloud, ubooquity etc ..
+
+
+# DECLARATION DES CONDITIONS #############################################################
+cloudflare_enabled: "{{ true if not(
+    (cloudflare.login is undefined)
+    or
+    (cloudflare.login is none)
+    or
+    (cloudflare.login | trim | length == 0)
+    or
+    (cloudflare.api is undefined)
+    or
+    (cloudflare.api is none)
+    or
+    (cloudflare.api | trim | length == 0)
+    )
+    else false }}"
+
+oauth_enabled: "{{ true if not(
+    (oauth.client is undefined)
+    or
+    (oauth.client is none)
+    or
+    (oauth.client | trim | length == 0)
+    or
+    (oauth.secret is undefined)
+    or
+    (oauth.secret is none)
+    or
+    (oauth.secret | trim | length == 0)
+    or
+    (oauth.account is undefined)
+    or
+    (oauth.account is none)
+    or
+    (oauth.account | trim | length == 0)
+    )
+    else false }}"
+
+sub_enabled: "{{ true if not(
+    (sub[pgrole][pgrole] is undefined)
+    or
+    (sub[pgrole][pgrole] is none)
+    or
+    (sub[pgrole][pgrole] | trim | length == 0)
+    )
+    else false }}"
+
+auth_enabled: "{{ true if not(
+    (sub[pgrole].auth is undefined)
+    or
+    (sub[pgrole].auth is none)
+    or
+    (sub[pgrole].auth | trim | length == 0)
+    )
+    else false }}"

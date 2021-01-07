@@ -10,6 +10,7 @@
   gather_facts: true
   vars_files:
     - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
+    - "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/generique.yml"
 
 
   tasks:
@@ -25,92 +26,16 @@
         path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/authelia/configuration.yml"
       register: check
 
-    - name: "Variables | Set 'cloudflare_enabled' variable"
-      set_fact:
-        cloudflare_enabled: "{{ true if not(
-            (cloudflare.login is undefined)
-            or
-            (cloudflare.login is none)
-            or
-            (cloudflare.login | trim | length == 0)
-            or
-            (cloudflare.api is undefined)
-            or
-            (cloudflare.api is none)
-            or
-            (cloudflare.api | trim | length == 0)
-          )
-            else false }}"
-
-    - name: "Variables | Set 'oauth_enabled' variable"
-      set_fact:
-        oauth_enabled: "{{ true if not(
-            (oauth.client is undefined)
-            or
-            (oauth.client is none)
-            or
-            (oauth.client | trim | length == 0)
-            or
-            (oauth.secret is undefined)
-            or
-            (oauth.secret is none)
-            or
-            (oauth.secret | trim | length == 0)
-            or
-            (oauth.account is undefined)
-            or
-            (oauth.account is none)
-            or
-            (oauth.account | trim | length == 0)
-          )
-            else false }}"
-
-    - name: "Variables | Set 'sub' variable"
-      set_fact:
-        sub_enabled: "{{ true if not(
-            (sub.pgrole is undefined)
-            or
-            (sub.pgrole is none)
-            or
-            (sub.pgrole | trim | length == 0)
-          )
-            else false }}"
-
     - name: "Set DNS Record on CloudFlare"
       include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
       vars:
-        subdomain: "{{sub[pgrole] if sub_enabled else pgrole}}"
+        subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
       when: cloudflare_enabled
 
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
       with_items:
-        - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}"
-
-    # LABELS ######################################################################
-    - name: Create temp file
-      tempfile:
-        state: file
-      register: tempfile_1
-      
-    - name: fill temp file with labels
-      template:
-        src: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/traefik_labels.yml.j2"
-        dest: "{{ tempfile_1.path }}"
-        force: yes
-    
-    - name: Import traefik labels
-      include_vars: 
-        file: "{{ tempfile_1.path }}"
-        name: pg_labels
-        
-    - name: Delete temp file
-      file:
-        path: "{{ tempfile_1.path }}"
-        state: absent
-    
-
-    # MAIN DEPLOYMENT #############################################################
+        - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}"    
     
     # PRE TASKS ###################################################################
     - name: Check that pretasks file exists
@@ -151,7 +76,7 @@
     - name: add resume file
       become: true
       shell: |
-        echo "{{pgrole}}-{{sub[pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+        echo "{{pgrole}}-{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
 
     - name: "create {{ pgrole }} state"
       shell: |
@@ -163,7 +88,5 @@
           sqlite3 {{  lookup('env','BASEDIR') }}/ssddb << EOF
               replace into applications (name,status,subdomain,port)
               values
-              ('{{ pgrole }}',2,'{{sub[pgrole] if sub_enabled else pgrole}}',{{ intport }});
+              ('{{ pgrole }}',2,'{{sub[pgrole][pgrole] if sub_enabled else pgrole}}',{{ intport }});
           EOF
-
-
