@@ -12,12 +12,12 @@
 - hosts: localhost
   gather_facts: false
   vars_files:
-    - /opt/seedbox/variables/account.yml
+    - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
   tasks:
 
     - name: Check if autoscan.service exists
       stat:
-        path: "/home/{{user.name}}/scripts/autoscan/config.yml"
+        path: "/home/{{ lookup('env','USER') }}/scripts/autoscan/config.yml"
       register: autoscan_service
 
     - name: Stop autoscan
@@ -34,7 +34,7 @@
 
     - name: delete autoscan folder
       shell: |
-        rm -rf  /home/{{user.name}}/scripts/autoscan
+        "rm -rf  /home/{{ lookup('env','USER') }}/scripts/autoscan"
       when: autoscan_service.stat.exists
 
     - name: Check if plex_autoscan.service exists
@@ -53,6 +53,7 @@
           plex_autoscan_service_running: "{{ (services['plex_autoscan.service'] is defined) and (services['plex_autoscan.service']['state'] == 'running') }}"
 
       - name: Stop plex_autoscan service
+        become: yes
         systemd:
           name: plex_autoscan
           state: stopped
@@ -63,26 +64,26 @@
     - name: Create plex_autoscan directories
       file: "path={{ item }} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}} recurse=yes"
       with_items:
-        - /home/{{user.name}}/scripts/plex_autoscan
+        - "/home/{{ lookup('env','USER') }}/scripts/plex_autoscan"
 
     - name: Clone plex_autoscan
       git:
         repo: https://github.com/l3uddz/plex_autoscan/
-        dest: /home/{{user.name}}/scripts/plex_autoscan
+        dest: "/home/{{ lookup('env','USER') }}/scripts/plex_autoscan"
         version: HEAD
         force: yes
       become: yes
-      become_user: "{{user.name}}"
+      become_user: "{{ lookup('env','USER') }}"
 
     - name: Install pip requirements
       pip:
-        requirements: /home/{{user.name}}/scripts/plex_autoscan/requirements.txt
+        requirements: "/home/{{ lookup('env','USER') }}/scripts/plex_autoscan/requirements.txt"
         executable: pip
         extra_args: --user
 
     - name: Check config exists
       stat:
-        path: "/home/{{user.name}}/scripts/plex_autoscan/config/config.json"
+        path: "/home/{{ lookup('env','USER') }}/scripts/plex_autoscan/config/config.json"
       register: plex_autoscan_config
 
     - name: Do following tasks when config does not exist
@@ -94,10 +95,10 @@
 
       - name: Import default config
         template:
-          src: /opt/seedbox-compose/includes/config/roles/plex_autoscan/templates/config.json.j2
-          dest: /home/{{user.name}}/scripts/plex_autoscan/config/config.json
-          owner: "{{user.userid}}"
-          group: "{{user.groupid}}"
+          src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/plex_autoscan/templates/config.json.j2"
+          dest: "/home/{{ lookup('env','USER') }}/scripts/plex_autoscan/config/config.json"
+          owner: "{{lookup('env','MYUID')}}"
+          group: "{{lookup('env','MYGID')}}"
           mode: 0775
           force: yes
 
@@ -105,38 +106,40 @@
 
     - name: Set 'PLEX_LD_LIBRARY_PATH' in config.json
       shell: |
-        CONFIG_PATH="/home/{{user.name}}/scripts/plex_autoscan/config"
+        CONFIG_PATH="/home/{{ lookup('env','USER') }}/scripts/plex_autoscan/config"
         jq -c '.PLEX_LD_LIBRARY_PATH = "/usr/lib/plexmediaserver/lib"' ${CONFIG_PATH}/config.json >> \
         ${CONFIG_PATH}/tmp.$$.json && mv ${CONFIG_PATH}/tmp.$$.json ${CONFIG_PATH}/config.json
       become: yes
-      become_user: "{{user.name}}"
+      become_user: "{{ lookup('env','USER') }}"
       when: plex_autoscan_config.stat.exists
 
     - name: Set scan.py as executable
       file:
-        path: /home/{{user.name}}/scripts/plex_autoscan/scan.py
-        owner: "{{user.name}}"
-        group: "{{user.groupid}}"
+        path: "/home/{{ lookup('env','USER') }}/scripts/plex_autoscan/scan.py"
+        owner: "{{ lookup('env','USER') }}"
+        group: "{{lookup('env','MYGID') }}"
         mode: a+x
 
     - name: Import plex_autoscan service
+      become: yes
       template:
-        src: /opt/seedbox-compose/includes/config/roles/plex_autoscan/templates/plex_autoscan.service.j2
+        src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/plex_autoscan/templates/plex_autoscan.service.j2"
         dest: /etc/systemd/system/plex_autoscan.service
         force: yes
       when: not plex_autoscan_service.stat.exists
 
     - name: Import plex_autoscan.sh
       template:
-        src: /opt/seedbox-compose/includes/config/roles/plex_autoscan/templates/plex_autoscan.sh.j2
-        dest: /home/{{user.name}}/scripts/plex_autoscan/plex_autoscan.sh
+        src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/plex_autoscan/templates/plex_autoscan.sh.j2"
+        dest: "/home/{{ lookup('env','USER') }}/scripts/plex_autoscan/plex_autoscan.sh"
         force: yes
-        owner: "{{user.name}}"
+        owner: "{{ lookup('env','USER') }}"
         group: "{{user.groupid}}"
         mode: a+x
       when: not plex_autoscan_service.stat.exists
 
     - name: Start plex_autoscan service
+      become: yes
       systemd:
         name: plex_autoscan
         state: started
@@ -144,15 +147,11 @@
         daemon_reload: yes
 
     - name: Update config.json
-      command: "/home/{{user.name}}/scripts/plex_autoscan/scan.py sections"
-      become: yes
-      become_user: "{{user.name}}"
+      command: "/home/{{ lookup('env','USER') }}/scripts/plex_autoscan/scan.py sections"
       ignore_errors: yes
       tags: plex_autoscan_update_sections
 
     - name: Configure PLEX_SECTION_PATH_MAPPINGS
-      command: "/home/{{user.name}}/scripts/plex_autoscan/scan.py update_config"
-      become: yes
-      become_user: "{{user.name}}"
+      command: "/home/{{ lookup('env','USER') }}/scripts/plex_autoscan/scan.py update_config"
       ignore_errors: yes
       tags: plex_autoscan_update_sections
