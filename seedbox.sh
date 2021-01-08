@@ -41,9 +41,10 @@ export MYGID=$(id -g)
 
 # on met les droits comme il faut, au cas où il y ait eu un mauvais lancement
 sudo chown -R ${USER}: ${SCRIPTPATH}
+sudo chown -R ${USER}: ${HOME}/.local
 
 # on ajoute le PATH qui va bien, au cas où il ne soit pas pris en compte par le ~/.profile
-PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
 
 
 if [ ! -f "${SCRIPTPATH}/ssddb" ]; then
