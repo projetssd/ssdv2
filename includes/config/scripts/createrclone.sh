@@ -1,11 +1,11 @@
 #!/bin/bash
-
+RCLONE_CONFIG_FILE=${HOME}/.config/rclone/rclone.conf
 source /opt/seedbox-compose/includes/variables.sh
 
 mkdir -p /var/rclone > /dev/null 2>&1
 rm /var/rclone/* > /dev/null 2>&1
 mkdir -p /root/.config/rclone > /dev/null 2>&1
-touch /root/.config/rclone/rclone.conf
+touch ${RCLONE_CONFIG_FILE}
 
 echo ""
 
@@ -161,16 +161,16 @@ read -p $'\e[36m↘️ Coller le Token | Appuyer sur [Enter]: \e[0m' token < /de
 
 ########################
 
-echo "" >> /root/.config/rclone/rclone.conf
-echo "[$nom]" >> /root/.config/rclone/rclone.conf
-echo "client_id = $pgclonepublic" >> /root/.config/rclone/rclone.conf
-echo "client_secret = $pgclonesecret" >> /root/.config/rclone/rclone.conf
-echo "type = drive" >> /root/.config/rclone/rclone.conf
-echo "scope = drive" >> /root/.config/rclone/rclone.conf
-echo -n "token = {\"access_token\":${accesstoken}\"token_type\":\"Bearer\",\"refresh_token\":${refreshtoken}\"expiry\":\"${final}\"}" >> /root/.config/rclone/rclone.conf
-echo "" >> /root/.config/rclone/rclone.conf
+echo "" >> ${RCLONE_CONFIG_FILE}
+echo "[$nom]" >> ${RCLONE_CONFIG_FILE}
+echo "client_id = $pgclonepublic" >> ${RCLONE_CONFIG_FILE}
+echo "client_secret = $pgclonesecret" >> ${RCLONE_CONFIG_FILE}
+echo "type = drive" >> ${RCLONE_CONFIG_FILE}
+echo "scope = drive" >> ${RCLONE_CONFIG_FILE}
+echo -n "token = {\"access_token\":${accesstoken}\"token_type\":\"Bearer\",\"refresh_token\":${refreshtoken}\"expiry\":\"${final}\"}" >> ${RCLONE_CONFIG_FILE}
+echo "" >> ${RCLONE_CONFIG_FILE}
 teamid=$(cat /var/rclone/pgclone.teamid)
-echo "team_drive = $teamid" >> /root/.config/rclone/rclone.conf
+echo "team_drive = $teamid" >> ${RCLONE_CONFIG_FILE}
 echo ""
 
 ## Ajout du crypt
@@ -181,14 +181,14 @@ ENC_PASSWORD=`rclone obscure "$PASSWORD"`
 ENC_SALT=`rclone obscure "$SALT"`
 crypt="_crypt"
 
-echo "" >> /root/.config/rclone/rclone.conf
-echo "[$name$crypt]" >> /root/.config/rclone/rclone.conf
-echo "type = crypt" >> /root/.config/rclone/rclone.conf
-echo "remote = $nom:/Medias" >> /root/.config/rclone/rclone.conf
-echo "filename_encryption = standard" >> /root/.config/rclone/rclone.conf
-echo "directory_name_encryption = true" >> /root/.config/rclone/rclone.conf
-echo "password = $ENC_PASSWORD" >> /root/.config/rclone/rclone.conf
-echo "password2 = $ENC_SALT" >> /root/.config/rclone/rclone.conf;
+echo "" >> ${RCLONE_CONFIG_FILE}
+echo "[$name$crypt]" >> ${RCLONE_CONFIG_FILE}
+echo "type = crypt" >> ${RCLONE_CONFIG_FILE}
+echo "remote = $nom:/Medias" >> ${RCLONE_CONFIG_FILE}
+echo "filename_encryption = standard" >> ${RCLONE_CONFIG_FILE}
+echo "directory_name_encryption = true" >> ${RCLONE_CONFIG_FILE}
+echo "password = $ENC_PASSWORD" >> ${RCLONE_CONFIG_FILE}
+echo "password2 = $ENC_SALT" >> ${RCLONE_CONFIG_FILE};
 
 echo ""
 

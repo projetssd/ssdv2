@@ -2,7 +2,7 @@
     "core": {
         "dry_run": false,
         "rclone_binary_path": "/usr/bin/rclone",
-        "rclone_config_path": "/root/.config/rclone/rclone.conf"
+        "rclone_config_path": "/home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf"
     },
     "hidden": {
         "/home/{{user.name}}/local/.unionfs-fuse": {

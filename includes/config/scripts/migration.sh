@@ -3,6 +3,8 @@
 source /opt/seedbox-compose/includes/functions.sh
 source /opt/seedbox-compose/includes/variables.sh
 
+RCLONE_CONFIG_FILE=${HOME}/.config/rclone/rclone.conf
+
 rm /tmp/temp.txt /tmp/drive.txt > /dev/null 2>&1
 rm /tmp/crop.txt /tmp/team.txt > /dev/null 2>&1
 
@@ -25,8 +27,8 @@ Il est primordial de monter le rclone.conf du Share Drive avec le même projet e
 pour Gdrive${CEND}"
 
 echo ""
-sed -i '/#Debut team source/,/#Fin team source/d' /root/.config/rclone/rclone.conf > /dev/null 2>&1
-sed -i '/#Debut team backup/,/#Fin team backup/d' /root/.config/rclone/rclone.conf > /dev/null 2>&1
+sed -i '/#Debut team source/,/#Fin team source/d' ${RCLONE_CONFIG_FILE} > /dev/null 2>&1
+sed -i '/#Debut team backup/,/#Fin team backup/d' ${RCLONE_CONFIG_FILE} > /dev/null 2>&1
 
 read -rp $'\e[36m   Souhaitez vous créer un Share Drive?: (o/n) ? \e[0m' OUI
 
@@ -40,15 +42,15 @@ read -rp $'\e[36m   Souhaitez vous poursuivre l installation: (o/n) ? \e[0m' OUI
 if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
   echo ""
 i=1
-  grep "token" /root/.config/rclone/rclone.conf | uniq > /tmp/temp.txt
-  grep "token" /root/.config/rclone/rclone.conf > /dev/null 2>&1
+  grep "token" ${RCLONE_CONFIG_FILE} | uniq > /tmp/temp.txt
+  grep "token" ${RCLONE_CONFIG_FILE} > /dev/null 2>&1
   if [ $? -eq 0 ]; then
     echo -e " ${BWHITE}* Remotes disponibles${NC}"
     echo ""
       while read line; do
-        grep "token" /root/.config/rclone/rclone.conf > /dev/null 2>&1
+        grep "token" ${RCLONE_CONFIG_FILE} > /dev/null 2>&1
         if [ $? -eq 0 ]; then
-         drive=$(grep -iC 5  "$line" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
+         drive=$(grep -iC 5  "$line" ${RCLONE_CONFIG_FILE} | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
          echo "$drive" >> /tmp/drive.txt
         fi
         echo -e "${CGREEN}   $i. $drive${CEND}"
@@ -77,14 +79,14 @@ i=1
   gdrive=$(sed -n "$RTYPE"p /tmp/drive.txt)
   i=1
 
-  grep "team_drive" /root/.config/rclone/rclone.conf | uniq > /tmp/crop.txt
-  grep "team_drive" /root/.config/rclone/rclone.conf > /dev/null 2>&1
+  grep "team_drive" ${RCLONE_CONFIG_FILE} | uniq > /tmp/crop.txt
+  grep "team_drive" ${RCLONE_CONFIG_FILE} > /dev/null 2>&1
   if [ $? -eq 0 ]; then
     echo ""
     echo -e " ${BWHITE}* Share Drive disponibles${NC}"
     echo ""
       while read line; do
-        team=$(grep -iC 6 "$line" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
+        team=$(grep -iC 6 "$line" ${RCLONE_CONFIG_FILE} | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
         echo "$team" >> /tmp/team.txt
         echo -e "${CGREEN}   $i. $team${CEND}"
         let "i+=1"
@@ -117,6 +119,6 @@ docker stop plex > /dev/null 2>&1
 rclone move $drive: $sharedrive: -v \
 --delete-empty-src-dirs --fast-list --drive-stop-on-upload-limit \
 --drive-server-side-across-configs \
---config /root/.config/rclone/rclone.conf
+--config ${RCLONE_CONFIG_FILE}
 docker start plex > /dev/null 2>&1
 fi

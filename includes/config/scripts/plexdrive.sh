@@ -3,6 +3,8 @@
 source /opt/seedbox-compose/includes/functions.sh
 source /opt/seedbox-compose/includes/variables.sh
 
+RCLONE_CONFIG_FILE=${HOME}/.config/rclone/rclone.conf
+
 ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
 USER=$(cat ${TMPNAME})
 
@@ -11,20 +13,20 @@ sed -i '/plexdrive*/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
 mkdir /mnt/rclone > /dev/null 2>&1
 
 ## detection remote plexdrive ##
-grep "plexdrive" /root/.config/rclone/rclone.conf > /dev/null 2>&1
+grep "plexdrive" ${RCLONE_CONFIG_FILE} > /dev/null 2>&1
 if [ $? -eq 0 ]; then
-  REMOTE_PLEXDRIVE=$(grep -iC 2 "/mnt/plexdrive/Medias" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
+  REMOTE_PLEXDRIVE=$(grep -iC 2 "/mnt/plexdrive/Medias" ${RCLONE_CONFIG_FILE} | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
   sed -i "/remote/a \ \ \ plexdrive: $REMOTE_PLEXDRIVE" /opt/seedbox/variables/account.yml
 else
-  PASSWORD=$(grep password /root/.config/rclone/rclone.conf | head -1)
-  PASSWORD2=$(grep password /root/.config/rclone/rclone.conf | head -2 | tail -1)
-  echo "" >> /root/.config/rclone/rclone.conf
-  echo "[plexdrive]" >> /root/.config/rclone/rclone.conf
-  echo "type = crypt" >> /root/.config/rclone/rclone.conf
-  echo "remote = /mnt/plexdrive/Medias" >> /root/.config/rclone/rclone.conf
-  echo "filename_encryption = standard" >> /root/.config/rclone/rclone.conf
-  echo "$PASSWORD" >> /root/.config/rclone/rclone.conf
-  echo "$PASSWORD2" >> /root/.config/rclone/rclone.conf
+  PASSWORD=$(grep password ${RCLONE_CONFIG_FILE} | head -1)
+  PASSWORD2=$(grep password ${RCLONE_CONFIG_FILE} | head -2 | tail -1)
+  echo "" >> ${RCLONE_CONFIG_FILE}
+  echo "[plexdrive]" >> ${RCLONE_CONFIG_FILE}
+  echo "type = crypt" >> ${RCLONE_CONFIG_FILE}
+  echo "remote = /mnt/plexdrive/Medias" >> ${RCLONE_CONFIG_FILE}
+  echo "filename_encryption = standard" >> ${RCLONE_CONFIG_FILE}
+  echo "$PASSWORD" >> ${RCLONE_CONFIG_FILE}
+  echo "$PASSWORD2" >> ${RCLONE_CONFIG_FILE}
   echo ""
   sed -i "/remote/a \ \ \ plexdrive: plexdrive" /opt/seedbox/variables/account.yml
 fi
