@@ -173,9 +173,6 @@ if [[ ${IS_INSTALLED} -eq 0 ]]; then
       install_base_packages
       # Install de docker
       install_docker
-      # on met le user dans le bon groupe
-      ansible-playbook ${BASEDIR}/includes/config/roles/users/tasks/main.yml
-	    ansible-playbook ${BASEDIR}/includes/config/roles/users/tasks/chggroup.yml
       # On part à la pêche aux infos
       create_user_non_systeme
       # récup infos cloudflare
