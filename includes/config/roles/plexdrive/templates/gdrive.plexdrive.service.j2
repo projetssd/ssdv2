@@ -13,8 +13,8 @@ ExecStart=/usr/bin/plexdrive mount \
   --chunk-size=10M \
   --max-chunks={{ ((ansible_memory_mb.real.total/1024)|round(0,'ceil')|int >= 16) | ternary(250,150) }} \
   --fuse-options=allow_other \
-  --config=/root/.plexdrive \
-  --cache-file=/root/.plexdrive/cache.bolt \
+  --config={{ lookup('env','HOME') }}/.plexdrive \
+  --cache-file={{ lookup('env','HOME') }}/.plexdrive/cache.bolt \
   -v 3 \
   /mnt/plexdrive
 ExecStop=/bin/fusermount -uz /mnt/plexdrive

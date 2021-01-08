@@ -2545,7 +2545,7 @@ function uninstall_seedbox() {
 		systemctl disable plexdrive.service > /dev/null 2>&1
 		rm /etc/systemd/system/plexdrive.service > /dev/null 2>&1
 		rm -rf /mnt/plexdrive > /dev/null 2>&1
-		rm -rf /root/.plexdrive > /dev/null 2>&1
+		rm -rf ${HOME}/.plexdrive > /dev/null 2>&1
 		rm /usr/bin/plexdrive > /dev/null 2>&1
                 
                 if [[ -e "$PLEXSCAN" ]]; then
@@ -2562,7 +2562,7 @@ function uninstall_seedbox() {
 		rm /etc/systemd/system/rclone.service > /dev/null 2>&1
 		rm /usr/bin/rclone > /dev/null 2>&1
 		rm -rf /mnt/rclone > /dev/null 2>&1
-		rm -rf /root/.config/rclone > /dev/null 2>&1
+		rm -rf ${HOME}/.config/rclone > /dev/null 2>&1
 		checking_errors $?
 
                 if [[ -e "$CLOUDPLOW" ]]; then

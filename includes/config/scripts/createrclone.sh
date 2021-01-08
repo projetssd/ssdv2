@@ -4,7 +4,7 @@ source /opt/seedbox-compose/includes/variables.sh
 
 mkdir -p /var/rclone > /dev/null 2>&1
 rm /var/rclone/* > /dev/null 2>&1
-mkdir -p /root/.config/rclone > /dev/null 2>&1
+mkdir -p {{ lookup('env','HOME') }}/.config/rclone > /dev/null 2>&1
 touch ${RCLONE_CONFIG_FILE}
 
 echo ""

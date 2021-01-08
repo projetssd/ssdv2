@@ -5,7 +5,7 @@
     state: present
 
 - name: Create required directories
-  file: "path={{ item }} state=directory mode=0775 owner=root group=root"
+  file: "path={{ item }} state=directory mode=0775"
   with_items:
     - /mnt/docker/mysql/db
 
