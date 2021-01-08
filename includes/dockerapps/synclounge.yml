@@ -4,18 +4,18 @@
   - hosts: localhost
     gather_facts: false
     vars_files:
-      - /opt/seedbox/variables/account.yml
+      - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
     tasks:
           
       # FACTS #######################################################################
 
     - name: create subsonic state
       shell: |
-        echo "1" > /opt/seedbox/status/synclounge
+        echo "1" > {{ lookup('env','CONFDIR') }}/status/synclounge
 
       - name: Checking for existing app data
         stat:
-          path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
+          path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/authelia/configuration.yml"
         register: check
 
       - name: "Variables | Set 'cloudflare_enabled' variable"
@@ -70,7 +70,7 @@
             else false }}"
 
       - name: "Set DNS Record on CloudFlare"
-        include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+        include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
         vars:
         subdomain: "{{sub.synclounge if sub_enabled else 'synclounge'}}"
         when: cloudflare_enabled
@@ -82,9 +82,9 @@
           image: 'starbix/synclounge'
   
       - name: Creating paths
-        file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
+        file: "path={{item}} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID') }}"
         with_items:
-          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
+          - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}"
   
       # LABELS ######################################################################
       - name: 'Ajout label traefik'
@@ -109,14 +109,14 @@
       - name: 'Setting PG Volumes'
         set_fact:
           pg_volumes:
-            - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config:/config'
-            - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/sync:/sync'
+            - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
+            - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/sync:/sync"
   
       - name: 'Setting PG ENV'
         set_fact:
           pg_env:
-            UID: '{{user.userid}}'
-            GID: '{{user.groupid}}'
+            UID: "{{ lookup('env','MYUID') }}"
+            GID: "{{ lookup('env','MYGID') }}"
             DOMAIN: '{{pgrole}}.{{user.domain}}'
   
       # MAIN DEPLOYMENT #############################################################
@@ -140,7 +140,7 @@
 
     - name: create subsonic state
       shell: |
-        echo "2" > /opt/seedbox/status/synclounge
+        echo "2" > {{ lookup('env','CONFDIR') }}/status/synclounge
 
 
   
