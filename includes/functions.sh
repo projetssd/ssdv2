@@ -1576,12 +1576,12 @@ function auth() {
 				exit 1
 				;;
 		esac
-		grep "$line:" ${BASEDIR}/variables/account.yml > /dev/null 2>&1
+		grep "$line:" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 		if [ $? -eq 1 ]; then
-			sed -i "/sub/a \ \ \ $line:" ${BASEDIR}/variables/account.yml
-			sed -i "/$line:/a \ \ \ \ \ auth: ${TYPE_AUTH}" ${BASEDIR}/variables/account.yml
+			sed -i "/sub/a \ \ \ $line:" ${CONFDIR}/variables/account.yml
+			sed -i "/$line:/a \ \ \ \ \ auth: ${TYPE_AUTH}" ${CONFDIR}/variables/account.yml
 		else
-			sed -i "/$line: ./a \ \ \ \ \ auth: ${TYPE_AUTH}" ${BASEDIR}/variables/account.yml
+			sed -i "/$line: ./a \ \ \ \ \ auth: ${TYPE_AUTH}" ${CONFDIR}/variables/account.yml
 		fi
 	done
 }
