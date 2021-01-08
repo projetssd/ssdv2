@@ -4,18 +4,18 @@
 - hosts: localhost
   gather_facts: false
   vars_files:
-    - /opt/seedbox/variables/account.yml
+    - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
   tasks:
         
     # FACTS #######################################################################
 
     - name: create ubooquity state
       shell: |
-        echo "1" > /opt/seedbox/status/ubooquity
+        echo "1" > {{ lookup('env','CONFDIR') }}/status/ubooquity
 
     - name: Checking for existing app data
       stat:
-        path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
+        path: "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/authelia/configuration.yml"
       register: check
 
     - name: "Variables | Set 'cloudflare_enabled' variable"
@@ -70,7 +70,7 @@
             else false }}"
 
     - name: "Set DNS Record on CloudFlare"
-      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
       vars:
         subdomain: "{{sub.ubooquity if sub_enabled else 'ubooquity'}}"
       when: cloudflare_enabled
@@ -84,7 +84,7 @@
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775 owner=1042 group=1042'
       with_items:
-        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
+        - "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/{{pgrole}}"
 
     # LABELS ######################################################################
     - name: 'Adding Traefik'
@@ -109,9 +109,9 @@
     - name: 'Setting Volumes'
       set_fact:
         pg_volumes:
-          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}:/config'
-          - '/home/{{user.name}}:/home/{{user.name}}'
-          - '/home/{{user.name}}:/media'
+          - "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/{{pgrole}}:/config"
+          - "/home/{{lookup('env','USER')}}:/home/{{lookup('env','USER')}}"
+          - "/home/{{lookup('env','USER')}}:/media"
           - '/etc/localtime:/etc/localtime:ro'
 
     - name: 'Setting ENV'
@@ -142,6 +142,6 @@
 
     - name: create ubooquity state
       shell: |
-        echo "2" > /opt/seedbox/status/ubooquity
+        echo "2" > {{ lookup('env','CONFDIR') }}/status/ubooquity
 
 
