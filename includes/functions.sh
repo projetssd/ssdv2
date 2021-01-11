@@ -180,7 +180,7 @@ function rtorrent-cleaner() {
 
 			## choix de l'utilisateur
 			SEEDUSER=$(ls ${CONFDIR}/media* | cut -d '-' -f2)
-			cp -r $BASEDIR/includes/config/rtorrent-cleaner/rtorrent-cleaner /usr/local/bin
+			cp -r ${BASEDIR}/includes/config/rtorrent-cleaner/rtorrent-cleaner /usr/local/bin
 			sed -i "s|%SEEDUSER%|$SEEDUSER|g" /usr/local/bin/rtorrent-cleaner
 }
 
@@ -282,13 +282,13 @@ function filebot() {
 }
 
 function check_dir() {
-	if [[ $1 != $BASEDIR ]]; then
-		cd $BASEDIR
+	if [[ $1 != ${BASEDIR} ]]; then
+		cd ${BASEDIR}
 	fi
 }
 
 function script_classique() {
-	if [[ -d "$CONFDIR" ]]; then
+	if [[ -d "${CONFIDR}" ]]; then
 	clear
 
 	# Vérification installation modt
@@ -529,7 +529,7 @@ function script_classique() {
 			DOMAIN=$(cat /home/$SEEDUSER/resume | tail -1 | cut -d. -f2-3)
 			FQDNTMP="plex_patrol.$DOMAIN"
 			echo "$FQDNTMP" >> /home/$SEEDUSER/resume
-			cp "${BASEDIR}/includes/config/roles/plex_patrol/tasks/main.yml" "$CONFDIR/conf/plex_patrol.yml" > /dev/null 2>&1
+			cp "${BASEDIR}/includes/config/roles/plex_patrol/tasks/main.yml" "${CONFIDR}/conf/plex_patrol.yml" > /dev/null 2>&1
     			echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour revenir au menu principal..."
     			read -r
 			script_classique
@@ -563,7 +563,7 @@ function insert_mod() {
 }
 
 function script_plexdrive() {
-	if [[ -d "$CONFDIR" ]]; then
+	if [[ -d "${CONFIDR}" ]]; then
 	clear
 
 	# Vérification installation modt
@@ -717,7 +717,7 @@ function script_plexdrive() {
 
                                     while read line
                                     do
-                                      echo $line | cut -d'.' -f1
+                                      echo ${line} | cut -d'.' -f1
                                     done < /home/$SEEDUSER/resume > $SERVICESUSER$SEEDUSER
                                     mv /home/$SEEDUSER/resume ${CONFDIR}/resume > /dev/null 2>&1
                                     subdomain
@@ -810,7 +810,7 @@ function script_plexdrive() {
 			        DOMAIN=$(cat /home/$SEEDUSER/resume | tail -1 | cut -d. -f2-3)
 			        FQDNTMP="plex_patrol.$DOMAIN"
 			        echo "$FQDNTMP" >> /home/$SEEDUSER/resume
-			        cp "${BASEDIR}/includes/config/roles/plex_patrol/tasks/main.yml" "$CONFDIR/conf/plex_patrol.yml" > /dev/null 2>&1
+			        cp "${BASEDIR}/includes/config/roles/plex_patrol/tasks/main.yml" "${CONFIDR}/conf/plex_patrol.yml" > /dev/null 2>&1
     			        echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour revenir au menu principal..."
     			        read -r
 			        script_plexdrive
@@ -1524,19 +1524,19 @@ function subdomain() {
 		echo ""
 		for line in $(cat $SERVICESPERUSER);
 		do
-			read -rp $'\e[32m* Sous domaine pour\e[0m '$line': ' SUBDOMAIN
+			read -rp $'\e[32m* Sous domaine pour\e[0m '${line}': ' SUBDOMAIN
 			
-			grep "$line: ." ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+			grep "${line}: ." ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 			if [ $? -eq 0 ]; then
-				sed -i "/$line: ./d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+				sed -i "/${line}: ./d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 			fi
 			
-			grep "$line:" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+			grep "${line}:" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 			if [ $? -eq 1 ]; then
-				sed -i "/sub/a \ \ \ $line:" /opt/seedbox/variables/account.yml
+				sed -i "/sub/a \ \ \ ${line}:" /opt/seedbox/variables/account.yml
 			fi
 			
-			sed -i "/$line:/a \ \ \ \ \ $line: $SUBDOMAIN" ${CONFDIR}/variables/account.yml
+			sed -i "/${line}:/a \ \ \ \ \ ${line}: $SUBDOMAIN" ${CONFDIR}/variables/account.yml
 		done
 	fi
 }
@@ -1551,7 +1551,7 @@ function auth() {
 	for line in $(cat $SERVICESPERUSER);
 	do
 	
-		read -rp $'\e\033[1;37m --> Authentification '$line' [ Enter ] 1 => basique | 2 => oauth | 3 => authelia | 4 => aucune: ' AUTH
+		read -rp $'\e\033[1;37m --> Authentification '${line}' [ Enter ] 1 => basique | 2 => oauth | 3 => authelia | 4 => aucune: ' AUTH
 		case $AUTH in
 			1)
 				TYPE_AUTH=basique
@@ -1575,12 +1575,12 @@ function auth() {
 				exit 1
 				;;
 		esac
-		grep "$line:" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+		grep "${line}:" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 		if [ $? -eq 1 ]; then
-			sed -i "/sub/a \ \ \ $line:" ${CONFDIR}/variables/account.yml
-			sed -i "/$line:/a \ \ \ \ \ auth: ${TYPE_AUTH}" ${CONFDIR}/variables/account.yml
+			sed -i "/sub/a \ \ \ ${line}:" ${CONFDIR}/variables/account.yml
+			sed -i "/${line}:/a \ \ \ \ \ auth: ${TYPE_AUTH}" ${CONFDIR}/variables/account.yml
 		else
-			sed -i "/$line: ./a \ \ \ \ \ auth: ${TYPE_AUTH}" ${CONFDIR}/variables/account.yml
+			sed -i "/${line}: ./a \ \ \ \ \ auth: ${TYPE_AUTH}" ${CONFDIR}/variables/account.yml
 		fi
 	done
 }
@@ -1588,7 +1588,7 @@ function auth() {
 
 function define_parameters() {
 	echo -e "${BLUE}### INFORMATIONS UTILISATEURS ###${NC}"
-	mkdir -p $CONFDIR/variables
+	mkdir -p ${CONFIDR}/variables
 	cp ${BASEDIR}/includes/config/account.yml ${CONFDIR}/variables/account.yml
 	create_user
 	CONTACTEMAIL=$(whiptail --title "Adresse Email" --inputbox \
@@ -1735,7 +1735,7 @@ function projects() {
 	
 	for line in $(cat $PROJECTPERUSER);
 	do
-		$line
+		${line}
 	done
 }
 
@@ -1852,8 +1852,8 @@ function choose_media_folder_plexdrive() {
 		echo -e " ${BWHITE}--> Récupération des dossiers Utilisateur à partir de Gdrive... : ${NC}"
 		for line in $(cat $MEDIASPERUSER);
 		do
-			mkdir -p ${HOME}/local/$line
-			echo -e "	${GREEN}--> Le dossier ${NC}${YELLOW}$line${NC}${GREEN} a été ajouté avec succès !${NC}"
+			mkdir -p ${HOME}/local/${line}
+			echo -e "	${GREEN}--> Le dossier ${NC}${YELLOW}${line}${NC}${GREEN} a été ajouté avec succès !${NC}"
 		done
 
 	else
@@ -1878,9 +1878,9 @@ function choose_media_folder_plexdrive() {
 		done
 		for line in $(cat $MEDIASPERUSER);
 		do
-			line=$(echo $line | sed 's/\(.\)/\U\1/')
-			mkdir -p ${HOME}/local/$line
-			mkdir -p /mnt/rclone/${USER}/$line
+			line=$(echo ${line} | sed 's/\(.\)/\U\1/')
+			mkdir -p ${HOME}/local/${line}
+			mkdir -p /mnt/rclone/${USER}/${line}
 		done
 		rm /tmp/menumedia.txt
 	fi
@@ -1904,50 +1904,50 @@ function install_services() {
 	for line in $(cat $SERVICESPERUSER);
 	do
 
-		if [[ "$line" == "plex" ]]; then
+		if [[ "${line}" == "plex" ]]; then
                         echo ""
 			echo -e "${BLUE}### CONFIG POST COMPOSE PLEX ###${NC}"
 			echo -e " ${BWHITE}* Processing plex config file...${NC}"
 			echo ""
 			echo -e " ${GREEN}ATTENTION IMPORTANT - NE PAS FAIRE D'ERREUR - SINON DESINSTALLER ET REINSTALLER${NC}"
-			token=$(. $BASEDIR/includes/config/roles/plex_autoscan/plex_token.sh)
-			sed -i "/token:/c\   token: $token" $CONFDIR/variables/account.yml
-			ansible-playbook $BASEDIR/includes/dockerapps/plex.yml
-			cp "$BASEDIR/includes/dockerapps/plex.yml" "$CONFDIR/conf/plex.yml" > /dev/null 2>&1
+			token=$(. ${BASEDIR}/includes/config/roles/plex_autoscan/plex_token.sh)
+			sed -i "/token:/c\   token: $token" ${CONFIDR}/variables/account.yml
+			ansible-playbook ${BASEDIR}/includes/dockerapps/plex.yml
+			cp "${BASEDIR}/includes/dockerapps/plex.yml" "${CONFDIR}/conf/plex.yml" > /dev/null 2>&1
 		else
 			# On est dans le cas générique
 			# on regarde s'i y a un playbook existant
-			if [ -e "$CONFDIR/conf/$line.yml" ]; then
+			if [ -e "${CONFIDR}/conf/${line}.yml" ]; then
 				# il y a déjà un playbook "perso", on le lance
-				ansible-playbook "$CONFDIR/conf/$line.yml"
-			elif [ -e "$CONFDIR/vars/$line.yml" ]; then
+				ansible-playbook "${CONFIDR}/conf/${line}.yml"
+			elif [ -e "${CONFIDR}/vars/${line}.yml" ]; then
 				# il y a des variables persos, on les lance
-				ansible-playbook "$BASEDIR/includes/dockerapps/generique.yml" --extra-vars "@$CONFDIR/vars/$line.yml"
-			elif [ -e "$BASEDIR/includes/dockerapps/$line.yml" ]; then
+				ansible-playbook "${BASEDIR}/includes/dockerapps/generique.yml" --extra-vars "@${CONFDIR}/vars/${line}.yml"
+			elif [ -e "${BASEDIR}/includes/dockerapps/${line}.yml" ]; then
 				# pas de playbook perso ni de vars perso
 				# Il y a un playbook spécifique pour cette appli, on le copie
-				cp "$BASEDIR/includes/dockerapps/$line.yml" "$CONFDIR/conf/" > /dev/null 2>&1
+				cp "${BASEDIR}/includes/dockerapps/${line}.yml" "${CONFIDR}/conf/" > /dev/null 2>&1
         # puis on le lance
-				ansible-playbook "$CONFDIR/conf/$line.yml"
+				ansible-playbook "${CONFDIR}/conf/${line}.yml"
 			else
 				# on copie les variables pour le user
-				cp "$BASEDIR/includes/dockerapps/vars/${line}.yml" "$CONFDIR/vars/" > /dev/null 2>&1
+				cp "${BASEDIR}/includes/dockerapps/vars/${line}.yml" "${CONFIDR}/vars/" > /dev/null 2>&1
 				# puis on lance le générique avec ce qu'on vient de copier
-				ansible-playbook "$BASEDIR/includes/dockerapps/generique.yml" --extra-vars "@${$CONFDIR}/vars/${line}.yml"
+				ansible-playbook ${BASEDIR}/includes/dockerapps/generique.yml --extra-vars "@${CONFDIR}/vars/${line}.yml"
 
 			fi
 		fi
                    
-    grep "$line: ." ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+    grep "${line}: ." ${CONFDIR}/variables/account.yml > /dev/null 2>&1
     if [ $? -eq 0 ]; then
-      result=$(grep "$line: ." ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
+      result=$(grep "${line}: ." ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
       FQDNTMP="$result.$DOMAIN"
-      echo "$line = $FQDNTMP" | tee -a ${CONFDIR}/resume  > /dev/null
-      echo "$line.$DOMAIN" >> $INSTALLEDFILE
+      echo "${line} = $FQDNTMP" | tee -a ${CONFDIR}/resume  > /dev/null
+      echo "${line}.$DOMAIN" >> $INSTALLEDFILE
     else
-      FQDNTMP="$line.$DOMAIN"
+      FQDNTMP="${line}.$DOMAIN"
       echo "$FQDNTMP" >> $INSTALLEDFILE
-      echo "$line = $FQDNTMP" | tee -a ${CONFDIR}/resume  > /dev/null
+      echo "${line} = $FQDNTMP" | tee -a ${CONFDIR}/resume  > /dev/null
     fi
     FQDNTMP=""
 
@@ -1959,7 +1959,7 @@ function config_post_compose() {
 for line in $(cat $SERVICESPERUSER);
 do
 
-		if [[ "$line" == "subsonic" ]]; then
+		if [[ "${line}" == "subsonic" ]]; then
 		echo -e "${BLUE}### CONFIG POST COMPOSE SUBSONIC ###${NC}"
 		echo -e " ${BWHITE}* Mise à jour subsonic...${NC}"
 		checking_errors $?
@@ -1972,7 +1972,7 @@ do
 		echo ""
 		fi
 
-		if [[ "$line" == "seafile" ]]; then
+		if [[ "${line}" == "seafile" ]]; then
 		echo ""
 		echo -e "${BLUE}### CONFIG POST COMPOSE SEAFILE ###${NC}"
 		echo -e " ${BWHITE}* Configuration seafile...${NC}"
@@ -1992,7 +1992,7 @@ do
 		read -r
 		fi
 
-		if [[ "$line" == "piwigo" ]]; then
+		if [[ "${line}" == "piwigo" ]]; then
 		echo ""
 		echo -e "${BLUE}### CONFIG POST COMPOSE PIWIGO ###${NC}"
 		echo -e " ${BWHITE}* Configuration piwigo...${NC}"
@@ -2009,7 +2009,7 @@ do
 		read -r
 		fi
 
-		if [[ "$line" == "pydio" ]]; then
+		if [[ "${line}" == "pydio" ]]; then
 		echo ""
 		echo -e "${BLUE}### CONFIG POST COMPOSE PYDIO ###${NC}"
 		echo -e " ${BWHITE}* Configuration pydio...${NC}"
@@ -2026,7 +2026,7 @@ do
 		read -r
 		fi
 
-		if [[ "$line" == "authelia" ]]; then
+		if [[ "${line}" == "authelia" ]]; then
 		echo ""
 		echo -e "${BLUE}### CONFIG POST COMPOSE AUTHELIA ###${NC}"
 		echo -e " ${BWHITE}* Configuration Apllications avec Authelia...${NC}"
@@ -2056,7 +2056,7 @@ do
                 ## reinstallation application
                 echo -e "${BLUE}### REINITIALISATION DES APPLICATIONS ###${NC}"
                 echo -e " ${BWHITE}* Les fichiers de configuration ne seront pas effacés${NC}"
-                while read line; do echo $line | cut -d'.' -f1 | sed '/authelia/d'; done < /home/$SEEDUSER/resume > $SERVICESPERUSER
+                while read line; do echo ${line} | cut -d'.' -f1 | sed '/authelia/d'; done < /home/$SEEDUSER/resume > $SERVICESPERUSER
                 mv /home/$SEEDUSER/resume /tmp
                 install_services
                 echo "authelia.$DOMAIN" >> $INSTALLEDFILE
@@ -2079,7 +2079,7 @@ do
 		read -r
 		fi
 
-		if [[ "$line" == "wordpress" ]]; then
+		if [[ "${line}" == "wordpress" ]]; then
 		echo ""
 		echo -e "${BLUE}### CONFIG POST COMPOSE WORDPRESS ###${NC}"
 		echo ""
@@ -2281,7 +2281,7 @@ function manage_apps() {
                         sed -i "/$APPSELECTED/d" /home/$SEEDUSER/resume > /dev/null 2>&1
 			docker rm -f "$APPSELECTED" > /dev/null 2>&1
 			rm -rf ${CONFDIR}/docker/$SEEDUSER/$APPSELECTED
-			rm $CONFDIR/conf/$APPSELECTED.yml > /dev/null 2>&1
+			rm ${CONFIDR}/conf/$APPSELECTED.yml > /dev/null 2>&1
                         echo "0" > ${CONFDIR}/status/$APPSELECTED
 
                         case $APPSELECTED in
@@ -2342,30 +2342,30 @@ function manage_apps() {
 			              "Sélectionner le container à réinitialiser" 19 45 11 \
 			              "${TABSERVICES[@]}"  3>&1 1>&2 2>&3)
 			[[ "$?" = 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi;
-			echo -e " ${GREEN}   * $line${NC}"
-                        subdomain=$(grep "$line" ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
+			echo -e " ${GREEN}   * ${line}${NC}"
+                        subdomain=$(grep "${line}" ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
 
-			if [ $line = "php5" ] || [ $line = "php7" ]; then
+			if [ ${line} = "php5" ] || [ ${line} = "php7" ]; then
 				image=$(docker images | grep "php" | awk '{print $3}')
-			elif [ $line = "sonarr3" ]; then
+			elif [ ${line} = "sonarr3" ]; then
 				image=$(docker images | grep "sonarr" | awk '{print $3}')
 			else
-				image=$(docker images | grep "$line" | awk '{print $3}')
+				image=$(docker images | grep "${line}" | awk '{print $3}')
 			fi
 
-                        sed -i "/$line/d" ${CONFDIR}/resume > /dev/null 2>&1
-                        sed -i "/$line/d" /home/$SEEDUSER/resume > /dev/null 2>&1
-			docker rm -f "$line" > /dev/null 2>&1
+                        sed -i "/${line}/d" ${CONFDIR}/resume > /dev/null 2>&1
+                        sed -i "/${line}/d" /home/$SEEDUSER/resume > /dev/null 2>&1
+			docker rm -f "${line}" > /dev/null 2>&1
 			docker system prune -af > /dev/null 2>&1
 			docker volume rm $(docker volume ls -qf "dangling=true") > /dev/null 2>&1
 			echo ""
-			echo $line >> $SERVICESPERUSER
+			echo ${line} >> $SERVICESPERUSER
 
 			install_services
 			pause
 			checking_errors $?
 			echo""
-			echo -e "${BLUE}### Le Container $line a été Réinitialisé ###${NC}"
+			echo -e "${BLUE}### Le Container ${line} a été Réinitialisé ###${NC}"
 			echo ""
 			resume_seedbox
 			pause
@@ -2397,11 +2397,11 @@ function manage_apps() {
 					webserver
 					for line in $(cat $SERVICESPERUSER);
 					do
-					  ansible-playbook "$BASEDIR/includes/webserver/$line.yml"
+					  ansible-playbook "${BASEDIR}/includes/webserver/${line}.yml"
 					done
 					rm -Rf $SERVICESPERUSER > /dev/null 2>&1
 
-					if [[ "$line" == "mariadb" ]]; then
+					if [[ "${line}" == "mariadb" ]]; then
 					clear
 					echo ""
 echo -e "${CCYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -2494,9 +2494,9 @@ function resume_seedbox() {
 	if [[ -e /opt/temp.txt ]]; then
 		while read line
 		do
-			for word in $line
+			for word in ${line}
 			do
-				ACCESSDOMAIN=$(echo $line | cut -d "-" -f 2-4)
+				ACCESSDOMAIN=$(echo ${line} | cut -d "-" -f 2-4)
 				DOCKERAPP=$(echo $word | cut -d "-" -f1)
 				echo -e "	--> ${BWHITE}$DOCKERAPP${NC} --> ${YELLOW}$ACCESSDOMAIN${NC}"
 			done
@@ -2504,9 +2504,9 @@ function resume_seedbox() {
 	else
 		while read line
 		do
-			for word in $line
+			for word in ${line}
 			do
-				ACCESSDOMAIN=$(echo $line)
+				ACCESSDOMAIN=$(echo ${line})
 				DOCKERAPP=$(echo $word | cut -d "." -f1)
 				echo -e "	--> ${BWHITE}$DOCKERAPP${NC} --> ${YELLOW}$ACCESSDOMAIN${NC}"
 			done
@@ -2627,7 +2627,7 @@ function uninstall_seedbox() {
 	checking_errors $?
 
 	echo -e " ${BWHITE}* Supression du dossier ${CONFDIR}...${NC}"
-	rm -Rf $CONFDIR
+	rm -Rf ${CONFIDR}
 	checking_errors $?
 	pause
 }
