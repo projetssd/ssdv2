@@ -1331,10 +1331,10 @@ function script_plexdrive() {
 }
 
 function create_dir() {
-	MYUID=$(whoami)
+	TMPMYUID=$(whoami)
 	MYGID=$(id -g)
 	ansible-playbook ${BASEDIR}/includes/config/playbooks/create_directory.yml \
-	--extra-vars '{"DIRECTORY":"'${1}'","UID":"'${MYUID}'","GID":"'${MYGID}'"}'
+	--extra-vars '{"DIRECTORY":"'${1}'","UID":"'${TMPMYUID}'","GID":"'${MYGID}'"}'
 }
 
 function conf_dir() {
@@ -1342,22 +1342,21 @@ function conf_dir() {
 }
 
 function create_file() {
-		MYUID=$(whoami)
+	TMPMYUID=$(whoami)
 	MYGID=$(id -g)
 	ansible-playbook ${BASEDIR}/includes/config/playbooks/create_file.yml \
-	--extra-vars '{"FILE":"'${1}'","UID":"'${MYUID}'","GID":"'${MYGID}'"}'
+	--extra-vars '{"FILE":"'${1}'","UID":"'${TMPMYUID}'","GID":"'${MYGID}'"}'
 }
 
 function change_file_owner() {
-	MYUID=$(whoami)
+	TMPMYUIDMYUID=$(whoami)
 	MYGID=$(id -g)
 	ansible-playbook ${BASEDIR}/includes/config/playbooks/chown_file.yml \
-	--extra-vars '{"FILE":"'${1}'","UID":"'${MYUID}'","GID":"'${MYGID}'"}'
+	--extra-vars '{"FILE":"'${1}'","UID":"'${TMPMYUID}'","GID":"'${MYGID}'"}'
 
 }
 
 function make_dir_writable() {
-	MYUID=$(whoami)
 	MYGID=$(id -g)
 	ansible-playbook ${BASEDIR}/includes/config/playbooks/change_rights.yml \
 	--extra-vars '{"DIRECTORY":"'${1}'"}'
@@ -1891,10 +1890,14 @@ function choose_media_folder_plexdrive() {
 
 function install_services() {
 	INSTALLEDFILE="${HOME}/resume"
-	touch $INSTALLEDFILE > /dev/null 2>&1
+	touch ${INSTALLEDFILE} > /dev/null 2>&1
 
-	if [[ ! -d "$CONFDIR/conf" ]]; then
-		mkdir -p $CONFDIR/conf > /dev/null 2>&1
+	if [[ ! -d "${CONFDIR}/conf" ]]; then
+		mkdir -p ${CONFDIR}/conf > /dev/null 2>&1
+	fi
+
+	if [[ ! -d "${CONFDIR}/vars" ]]; then
+		mkdir -p ${CONFDIR}/vars > /dev/null 2>&1
 	fi
 
 	## préparation installation
@@ -1922,30 +1925,31 @@ function install_services() {
 				ansible-playbook "$BASEDIR/includes/dockerapps/generique.yml" --extra-vars "@$CONFDIR/vars/$line.yml"
 			elif [ -e "$BASEDIR/includes/dockerapps/$line.yml" ]; then
 				# pas de playbook perso ni de vars perso
-				# Il y a un playbook spécifique pour cette appli, on le lance
-				ansible-playbook "$BASEDIR/includes/dockerapps/$line.yml"
-				# puis on le copie pour le user
-				cp "$BASEDIR/includes/dockerapps/$line.yml" "$CONFDIR/conf/$line.yml" > /dev/null 2>&1
+				# Il y a un playbook spécifique pour cette appli, on le copie
+				cp "$BASEDIR/includes/dockerapps/$line.yml" "$CONFDIR/conf/" > /dev/null 2>&1
+        # puis on le lance
+				ansible-playbook "$CONFDIR/conf/$line.yml"
 			else
-				# on lance le playbook generique
-				ansible-playbook "$BASEDIR/includes/dockerapps/generique.yml" --extra-vars "@${BASEDIR}/includes/dockerapps/vars/${line}.yml"
-				# et on copie les variables pour le user
-				cp "$BASEDIR/includes/dockerapps/vars/${line}.yml" "$CONFDIR/vars/$line.yml" > /dev/null 2>&1
+				# on copie les variables pour le user
+				cp "$BASEDIR/includes/dockerapps/vars/${line}.yml" "$CONFDIR/vars/" > /dev/null 2>&1
+				# puis on lance le générique avec ce qu'on vient de copier
+				ansible-playbook "$BASEDIR/includes/dockerapps/generique.yml" --extra-vars "@${$CONFDIR}/vars/${line}.yml"
+
 			fi
 		fi
                    
-                grep "$line: ." ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-                if [ $? -eq 0 ]; then
-                  result=$(grep "$line: ." ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
-		  FQDNTMP="$result.$DOMAIN"
-                  echo "$line = $FQDNTMP" | tee -a ${CONFDIR}/resume  > /dev/null
-		  echo "$line.$DOMAIN" >> $INSTALLEDFILE
-                else
-		  FQDNTMP="$line.$DOMAIN"
-		  echo "$FQDNTMP" >> $INSTALLEDFILE
-                  echo "$line = $FQDNTMP" | tee -a ${CONFDIR}/resume  > /dev/null
-                fi
-		FQDNTMP=""
+    grep "$line: ." ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+      result=$(grep "$line: ." ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
+      FQDNTMP="$result.$DOMAIN"
+      echo "$line = $FQDNTMP" | tee -a ${CONFDIR}/resume  > /dev/null
+      echo "$line.$DOMAIN" >> $INSTALLEDFILE
+    else
+      FQDNTMP="$line.$DOMAIN"
+      echo "$FQDNTMP" >> $INSTALLEDFILE
+      echo "$line = $FQDNTMP" | tee -a ${CONFDIR}/resume  > /dev/null
+    fi
+    FQDNTMP=""
 
 	done
 	config_post_compose
