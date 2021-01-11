@@ -1513,9 +1513,9 @@ function install_docker() {
 
 function subdomain() {
 	
-	grep "sub" ${BASEDIR}/variables/account.yml > /dev/null 2>&1
+	grep "sub" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 	if [ $? -eq 1 ]; then
-		sed -i '/transcodes/a sub:' ${BASEDIR}/variables/account.yml
+		sed -i '/transcodes/a sub:' ${CONFDIR}/variables/account.yml
 	fi
 	echo ""
 	read -rp $'\e\033[1;37m --> Personnaliser les sous domaines: (o/n) ? ' OUI
@@ -1525,28 +1525,28 @@ function subdomain() {
 		echo ""
 		for line in $(cat $SERVICESPERUSER);
 		do
-			read -rp $'\e[32m* Sous domaine pour\e[0m '$line': ' subdomain
+			read -rp $'\e[32m* Sous domaine pour\e[0m '$line': ' SUBDOMAIN
 			
-			grep "$line: ." ${BASEDIR}/variables/account.yml > /dev/null 2>&1
+			grep "$line: ." ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 			if [ $? -eq 0 ]; then
-				sed -i "/$line: ./d" ${BASEDIR}/variables/account.yml > /dev/null 2>&1
+				sed -i "/$line: ./d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 			fi
 			
-			grep "$line:" ${BASEDIR}/variables/account.yml > /dev/null 2>&1
+			grep "$line:" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 			if [ $? -eq 1 ]; then
-				sed -i "/sub/a \ \ \ $line:" ${BASEDIR}/variables/account.yml
+				sed -i "/sub/a \ \ \ $line:" /opt/seedbox/variables/account.yml
 			fi
 			
-			sed -i "/$line:/a \ \ \ \ \ $line: $subdomain" ${BASEDIR}/variables/account.yml
+			sed -i "/$line:/a \ \ \ \ \ $line: $SUBDOMAIN" ${CONFDIR}/variables/account.yml
 		done
 	fi
 }
 
 function auth() {
 	
-	grep "sub" ${BASEDIR}/variables/account.yml > /dev/null 2>&1
+	grep "sub" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 	if [ $? -eq 1 ]; then
-		sed -i '/transcodes/a sub:' ${BASEDIR}/variables/account.yml
+		sed -i '/transcodes/a sub:' ${CONFDIR}/variables/account.yml
 	fi
 	echo ""
 	for line in $(cat $SERVICESPERUSER);
