@@ -41,14 +41,18 @@ export MYGID=$(id -g)
 
 # on met les droits comme il faut, au cas où il y ait eu un mauvais lancement
 sudo chown -R ${USER}: ${SCRIPTPATH}
-sudo chown -R ${USER}: ${HOME}/.local
+
+if [[ -d "${HOME}/.local" ]]
+then
+  sudo chown -R ${USER}: ${HOME}/.local
+fi
 
 # on ajoute le PATH qui va bien, au cas où il ne soit pas pris en compte par le ~/.profile
 export PATH="$HOME/.local/bin:$PATH"
 
 
 if [ ! -f "${SCRIPTPATH}/ssddb" ]; then
-   echo "Certains composants doivent encore être installés/réglés"
+  echo "Certains composants doivent encore être installés/réglés"
   read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
   
   ## Constants
@@ -56,8 +60,8 @@ if [ ! -f "${SCRIPTPATH}/ssddb" ]; then
   readonly ANSIBLE="2.9"
   python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
   pip==${PIP} \
-  ansible==${1-$ANSIBLE}
-  python3 -m pip install --user --disable-pip-version-check docker
+  ansible==${1-$ANSIBLE} \
+  docker
   ##########################################
   # Pas de configuration existante
   # On installe les prérequis
@@ -103,6 +107,7 @@ EOF
       value varchar(50),
       FOREIGN KEY(appname) REFERENCES applications(name));
 EOF
+  sudo chown -R ${USER}: ${HOME}/.local
   read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
 
 fi

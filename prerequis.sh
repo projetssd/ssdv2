@@ -20,7 +20,7 @@ python3 -m pip install --user --disable-pip-version-check --upgrade --force-rein
 pip==${PIP}
 python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
 setuptools
-python3 -m pip install --user --disable-pip-version-check --upgrade  --force-reinstall \
+python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
 pyOpenSSL \
 requests \
 netaddr \
