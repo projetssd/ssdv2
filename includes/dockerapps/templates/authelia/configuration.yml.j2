@@ -12,7 +12,7 @@ jwt_secret: {{user.pass}}
 
 
 # https://docs.authelia.com/configuration/miscellaneous.html#default-redirection-url
-default_redirection_url: https://authelia.lastharo.com
+default_redirection_url: https://authelia.{{user.domain}}
 
 totp:
   issuer: authelia.com
@@ -64,7 +64,7 @@ session:
   secret: {{user.pass}}
   expiration: 3600 # 1 hour
   inactivity: 300 # 5 minutes
-  domain: lastharo.com # Should match whatever your root protected domain is
+  domain: {{user.domain}} # Should match whatever your root protected domain is
 
 # Optional. Can improve performance on a busy system. If not enabled, session info is stored in memory.
 #  redis:

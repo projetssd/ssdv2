@@ -1,0 +1,55 @@
+---
+- name: mail
+  pause:
+    prompt: "Entrer votre mail "
+    echo: yes
+  register: mail
+
+- name: Set fact mail
+  set_fact:
+    mail: "{{ mail.user_input }}"
+
+- name: smtp.gmail.com
+  pause:
+    prompt: "Smtp de votre mail ex: smtp.gmail.com"
+    echo: yes
+  register: smtp
+
+- name: Set fact smtp
+  set_fact:
+    smtp: "{{ smtp.user_input }}"
+
+- name: port_smtp
+  pause:
+    prompt: "Entre le port smtp ex: 587 pour gmail"
+    echo: yes
+  register: port_smtp
+
+- name: verif
+  set_fact:
+    port_smtp: "{{ port_smtp.user_input }}"
+
+- name: mot de passe de l'application Google
+  pause:
+    prompt: "Mot de passe de l'application Google"
+    echo: yes
+  register: secret
+
+- name: verif
+  set_fact:
+    secret: "{{ secret.user_input }}"
+
+- name: Create new hashed
+  shell: |
+    docker run --rm authelia/authelia:latest authelia hash-password {{user.pass}} | cut -d: -f2 | sed 's/ //g'
+  register: password
+
+- name: Import configuration.yml
+  template:
+    src: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/authelia/configuration.yml.j2"
+    dest: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/configuration.yml"
+
+- name: Import users_database.yml
+  template:
+    src: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/authelia/users_database.yml.j2"
+    dest: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/users_database.yml"

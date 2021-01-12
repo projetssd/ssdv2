@@ -8,13 +8,14 @@
 
 # List of users
 users:
-  {{user.name}}:
-    displayname: '{{user.name}}'
+  "{{ lookup('env','USER') }}":
+    displayname: "{{ lookup('env','USER') }}"
     password: "{{password.stdout}}"
     email: {{user.mail}}
     groups:
       - admins
       - dev
+
 # EXAMPLE USER
 #  john:
 #    password: "$argon2id$v=19$m=1048576,p=john_strong_hashed_password"

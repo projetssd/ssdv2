@@ -1,0 +1,40 @@
+---
+- name: Create {{pgrole}}-net network
+  docker_network:
+    name: '{{pgrole}}-net'
+    state: present
+
+- name: 'Deploying db-{{pgrole}}'
+  docker_container:
+    name: 'db-{{pgrole}}'
+    recreate: true
+    image: 'linuxserver/mariadb'
+    pull: yes
+    volumes:
+      - "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}:/config"
+      - '/etc/localtime:/etc/localtime:ro'
+    env:
+      MYSQL_ROOT_PASSWORD: "{{user.pass}}"
+      MYSQL_USER: "{{pgrole}}"
+      MYSQL_PASSWORD: "{{pgrole}}"
+      MYSQL_DATABASE: "{{pgrole}}"
+      PUID: "{{ lookup('env','MYGID') }}"
+      PGID: "{{ lookup('env','MYGID') }}"
+    restart_policy: unless-stopped
+    networks:
+      - name: '{{pgrole}}-net'
+    state: started
+
+- name: Wait for 10 seconds before continuing
+  wait_for:
+    timeout: 10
+
+- name: Add '{{pgrole}}-net' to network
+  docker_network:
+    name: '{{pgrole}}-net'
+    connected:
+      - '{{ pgrole }}'
+    appends: yes
+
+
+
