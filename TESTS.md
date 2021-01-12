@@ -33,5 +33,14 @@ et se laisser guider
 
 ## Tests à faire :
 
-Lancer seedbox.sh, puis installer la gui (choix 999 caché) et vérifier que tout est ok.
+- Lancer seedbox.sh, puis installer la gui (choix 999 caché) et vérifier que tout est ok.
+- Faire une install silentieuse de la gui
+```
+cp autoinstall.ini.sample autoinstall.ini
+```
+Editer le fichier autoinstall.ini avec les informations demandées
+```
+./seedbox.sh --action install_gui
+```
+
 
