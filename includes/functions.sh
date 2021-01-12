@@ -1331,10 +1331,8 @@ function script_plexdrive() {
 }
 
 function create_dir() {
-	TMPMYUID=$(whoami)
-	MYGID=$(id -g)
 	ansible-playbook ${BASEDIR}/includes/config/playbooks/create_directory.yml \
-	--extra-vars '{"DIRECTORY":"'${1}'","UID":"'${TMPMYUID}'","GID":"'${MYGID}'"}'
+	--extra-vars '{"DIRECTORY":"'${1}'"}'
 }
 
 function conf_dir() {
@@ -1349,15 +1347,12 @@ function create_file() {
 }
 
 function change_file_owner() {
-	TMPMYUIDMYUID=$(whoami)
-	MYGID=$(id -g)
 	ansible-playbook ${BASEDIR}/includes/config/playbooks/chown_file.yml \
-	--extra-vars '{"FILE":"'${1}'","UID":"'${TMPMYUID}'","GID":"'${MYGID}'"}'
+	--extra-vars '{"FILE":"'${1}'"}'
 
 }
 
 function make_dir_writable() {
-	MYGID=$(id -g)
 	ansible-playbook ${BASEDIR}/includes/config/playbooks/change_rights.yml \
 	--extra-vars '{"DIRECTORY":"'${1}'"}'
 
@@ -2640,6 +2635,13 @@ function pause() {
 }
 
 function select_seedbox_param() {
+	if [ ! -f ${SCRIPTPATH}/ssddb ]
+	then
+		# le fichier de base de données n'est pas là
+		# on sort avant de faire une requête, sinon il va se créer
+		# et les tests ne seront pas bons
+		return 0
+	fi
 	request="select value from seedbox_params where param ='"${1}"'"
 	RETURN=$(sqlite3 ${SCRIPTPATH}/ssddb "${request}";)
 	if [ $? != 0 ]
@@ -2658,6 +2660,7 @@ function update_seedbox_param() {
 }
 
 function install_gui() {
+
     # installation des dépendances, permet de créer les docker network via ansible
     ansible-galaxy collection install community.general
     # On vérifie que le user ait bien les droits d'écriture
@@ -2699,4 +2702,72 @@ function install_gui() {
     echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour sortir du script..."
     read -r
     exit 0
+}
+
+function premier_lancement() 
+{
+
+  echo "Certains composants doivent encore être installés/réglés"
+  if [ $mode_install = "manuel" ]
+  then
+      read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
+  fi
+  ## Constants
+  readonly PIP="9.0.3"
+  readonly ANSIBLE="2.9"
+  python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
+  pip==${PIP} \
+  ansible==${1-$ANSIBLE} \
+  docker
+  ##########################################
+  # Pas de configuration existante
+  # On installe les prérequis
+  ##########################################
+ 
+  echo "Installation en cours ...."
+  
+  mkdir -p ~/.ansible/inventories
+  
+  ###################################
+  # Configuration ansible
+  # Pour le user courant uniquement
+  ###################################
+  mkdir -p /etc/ansible/inventories/ 1>/dev/null 2>&1
+  cat <<EOF > ~/.ansible/inventories/local
+  [local]
+  127.0.0.1 ansible_connection=local
+EOF
+
+  cat <<EOF > ~/.ansible.cfg
+  [defaults]
+  command_warnings = False
+  callback_whitelist = profile_tasks
+  deprecation_warnings=False
+  inventory = ~/.ansible/inventories/local
+  interpreter_python=/usr/bin/python3
+  vault_password_file = ~/.vault_pass
+  log_path=${SCRIPTPATH}/logs/ansible.log
+EOF
+
+  echo "Création de la configuration en cours"
+  # On créé la database
+  sqlite3 ${SCRIPTPATH}/ssddb <<EOF
+    create table seedbox_params(param varchar(50) PRIMARY KEY, value varchar(50));
+    replace into seedbox_params (param,value) values ('installed',0);
+    replace into seedbox_params (param,value) values ('seedbox_path','/opt/seedbox');
+    create table applications(name varchar(50) PRIMARY KEY,
+      status integer,
+      subdomain varchar(50),
+      port integer);
+    create table applications_params (appname varchar(50),
+      param varachar(50),
+      value varchar(50),
+      FOREIGN KEY(appname) REFERENCES applications(name));
+EOF
+  echo "Les composants sont maintenants tous installés/réglés, poursuite de l'installation"
+  if [ $mode_install = "manuel" ]
+  then
+    read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
+  fi
+  sudo chown -R ${USER}: ${HOME}/.local
 }

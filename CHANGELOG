@@ -41,3 +41,8 @@
 - ajout du $HOME/.local/bin dans le path pour les installs neuvs d'ansible
 - tests du root remontés en haut de liste
 - chmod du dossier avant tout lancement
+
+12/01/2020
+
+- silent install de la gui
+- tout est logué dans logs/seedbox.log et logs/ansible.log

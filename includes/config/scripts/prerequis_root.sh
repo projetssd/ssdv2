@@ -68,7 +68,7 @@ chmod 777 ${1}/logs
 
 
 cat << EOF > /etc/logrotate.d/ansible
-${SCRIPTPATH}/logs/ansible.log {
+${SCRIPTPATH}/logs/*.log {
   rotate 7
   daily
   compress

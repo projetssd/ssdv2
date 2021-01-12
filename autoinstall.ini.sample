@@ -1,0 +1,39 @@
+###########################################
+# Parametres pour une install silencieuse
+#
+
+##################################
+# BASIC AUTH
+##################################
+# username pour une auth basique
+export username=login
+# password pour une auth basique
+export password=password
+##################################
+# domaine principal
+export domaine=mondomaine.net
+##################################
+# adresse mail principale
+export adresse_email=moi@mondomaine.net
+##################################
+# CLOUDFLARE
+# utilisation de cloudflare ? (1 pour oui, 0 pour non)
+export use_cf=1
+# adresse mail de login cloudflare (uniquement si use_cf = 1)
+export cf_mail_login=moi@mondomaine.net
+# api cloudflare (uniquement si use_cf = 1)
+export cf_api=xxxxxx
+##################################
+# GOOGLE AUTH
+# utilisation de google auth ? (1 pour oui, 0 pour non)
+export use_goauth =0
+# Google Oauth Client (pris en compte si use_goauth=1)
+export oauth_client=oauth_client
+# Google Secret (pris en compte si use_goauth=1)
+export oauth_secret=oauth_secret
+# Google oauth : mails utilisés, séparés par une virgule si plusieurs (pris en compte si use_goauth=1)
+export oauth_email=moi@domaine.net
+##################################
+# DIVERS
+# sous domaine de la gui (pris en compte si action=install_gui)
+export gui_subdomain=gui

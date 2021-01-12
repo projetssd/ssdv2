@@ -6,6 +6,16 @@ CURRENT_SCRIPT=$(readlink -f "$0")
 export SCRIPTPATH=$(dirname "$CURRENT_SCRIPT")
 cd ${SCRIPTPATH}
 
+# on commence à tout loguer
+exec &> >(tee ${SCRIPTPATH}/logs/seedbox.log)
+
+
+
+# shellcheck source=${BASEDIR}/includes/functions.sh
+source "${SCRIPTPATH}/includes/functions.sh"
+# shellcheck source=${BASEDIR}/includes/variables.sh
+source "${SCRIPTPATH}/includes/variables.sh"
+
 if [ ! -f ${SCRIPTPATH}/.prerequis.lock ]; then
     echo "Les prérequis ne sont pas installés"
     echo "Vous devez les lancer en tapant"
@@ -14,38 +24,106 @@ if [ ! -f ${SCRIPTPATH}/.prerequis.lock ]; then
 fi
 
 ################################################
+# récupération des parametre
+# valeurs par défaut
+FORCE_ROOT=0
+INI_FILE=${SCRIPTPATH}/autoinstall.ini
+action=manuel
+export mode_install=manuel
+# lecture des parametres
+OPTS=`getopt -o vhns: --long \
+    help,action:,ini-file:,force-root \
+    -n 'parse-options' -- "$@"`
+
+if [ $? != 0 ] ; then echo "Failed parsing options." >&2 ; exit 1 ; fi
+
+eval set -- "${OPTS}"
+
+while true; do
+  case "$1" in
+    --action)
+      export action=$2
+      export mode_install=auto
+      shift 2
+      ;;
+
+    --force-root)
+      FORCE_ROOT=1
+      shift
+      ;;
+      
+    --ini-file)
+      INI_FILE=$2
+      shift 2
+      ;;
+
+    --) shift ; break ;;
+    *) echo "Internal error! $2" ; exit 1 ;;
+  esac
+done
+
+#
+# Maintenant, on a toutes les infos
+#
+if [ ! -f "${SCRIPTPATH}/ssddb" ]; then
+  premier_lancement
+fi
+
+ 
+case "$action" in
+  install_gui)
+    if [ ! -f ${INI_FILE} ]
+    then
+      echo "ERREUR, fichier d'autoinstall non trouvé !"
+      exit 1
+    fi
+    source <(grep = ${INI_FILE})
+    install_gui
+
+    exit 0
+    ;;
+  manuel)
+    # pas d'action passée, on sort du case
+    ;;
+  *)
+    echo "Action $action inconnue"
+    exit 1
+    ;;
+esac
+
+
+# Si on est ici, c'est a priori qu'on n'a pas passé d'option
+# ou en tout cas qu'on n'a pas redirigé vers une fonction
+# spécifique
+
+################################################
 # TEST ROOT USER
 if [ "$USER" == "root" ]; then
-  echo -e "${CCYAN}-----------------------${CEND}"
-  echo -e "${CCYAN}[  Lancement en root  ]${CEND}"
-  echo -e "${CCYAN}-----------------------${CEND}"
-  echo -e "${CCYAN}Pour des raisons de sécurité, il n'est pas conseillé de lancer ce script en root${CEND}"
-  read -rp $'\e[33mSouhaitez vous créer un utilisateur dédié (c), continuer en root (r) ou quitter le script (q) ? (c/r/Q)\e[0m :' CREEUSER
-  if [[ "${CREEUSER}" = "r" ]] || [[ "${CREEUSER}" = "R" ]]; then
-    # on ne fait rien et on continue
-    :
-  elif [[ "${CREEUSER}" = "c" ]] || [[ "${CREEUSER}" = "C" ]]; then
-    read -rp $'\e[33mTapez le nom d utilisateur\e[0m :' CREEUSER_USERNAME
-    read -rp $'\e[33mTapez le password (pas de \ ni apostrophe dans le password) \e[0m :' CREEUSER_PASSWORD
-    ansible-playbook ${BASEDIR}/includes/config/playbooks/cree_user.yml --extra-vars '{"CREEUSER_USERNAME":"'${CREEUSER_USERNAME}'","CREEUSER_PASSWORD":"'${CREEUSER_PASSWORD}'"}'
-    echo -e "${CCYAN}L'utilisateur ${CREEUSER_USERNAME} a été créé, merci de vous déloguer et reloguer avec ce user pour continer${CEND}"
-    exit 0
-  else
-    exit 0
+  if [ "$FORCE_ROOT" == 0]
+  then
+    echo -e "${CCYAN}-----------------------${CEND}"
+    echo -e "${CCYAN}[  Lancement en root  ]${CEND}"
+    echo -e "${CCYAN}-----------------------${CEND}"
+    echo -e "${CCYAN}Pour des raisons de sécurité, il n'est pas conseillé de lancer ce script en root${CEND}"
+    echo -e "${CCYAN}-----------------------${CEND}"
+    echo -e "${CCYAN}Vous pouvez continuer en root en passant l'option --force-root en parametre${CEND}"
+    read -rp $'\e[33mSouhaitez vous créer un utilisateur dédié (c), ou quitter le script (q) ? (c/r/Q)\e[0m :' CREEUSER
+    
+    if [[ "${CREEUSER}" = "c" ]] || [[ "${CREEUSER}" = "C" ]]; then
+      read -rp $'\e[33mTapez le nom d utilisateur\e[0m :' CREEUSER_USERNAME
+      read -rp $'\e[33mTapez le password (pas de \ ni apostrophe dans le password) \e[0m :' CREEUSER_PASSWORD
+      ansible-playbook ${BASEDIR}/includes/config/playbooks/cree_user.yml --extra-vars '{"CREEUSER_USERNAME":"'${CREEUSER_USERNAME}'","CREEUSER_PASSWORD":"'${CREEUSER_PASSWORD}'"}'
+      echo -e "${CCYAN}L'utilisateur ${CREEUSER_USERNAME} a été créé, merci de vous déloguer et reloguer avec ce user pour continer${CEND}"
+      exit 0
+    else
+      exit 0
+    fi
   fi
 fi
 
-# On regarde le nombre de parametres
-if [ $# -eq 0 ]
-then
-  export mode_install=manuel
-else
-  export mode_install=auto
-fi
 
-# On disque d'avoir besoin de ces variables d'environnement par la suite
-export MYUID=$(id -u)
-export MYGID=$(id -g)
+
+
 
 # on met les droits comme il faut, au cas où il y ait eu un mauvais lancement
 sudo chown -R ${USER}: ${SCRIPTPATH}
@@ -59,84 +137,7 @@ fi
 export PATH="$HOME/.local/bin:$PATH"
 
 
-if [ ! -f "${SCRIPTPATH}/ssddb" ]; then
-  echo "Certains composants doivent encore être installés/réglés"
-  if [ $mode_install = "manuel" ]
-  then
-      read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
-  fi
 
-
-
-  ## Constants
-  readonly PIP="9.0.3"
-  readonly ANSIBLE="2.9"
-  python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
-  pip==${PIP} \
-  ansible==${1-$ANSIBLE} \
-  docker
-  ##########################################
-  # Pas de configuration existante
-  # On installe les prérequis
-  ##########################################
- 
-  echo "Installation en cours ...."
-  
-  mkdir -p ~/.ansible/inventories
-  
-  ###################################
-  # Configuration ansible
-  # Pour le user courant uniquement
-  ###################################
-  mkdir -p /etc/ansible/inventories/ 1>/dev/null 2>&1
-  cat <<EOF > ~/.ansible/inventories/local
-  [local]
-  127.0.0.1 ansible_connection=local
-EOF
-
-  cat <<EOF > ~/.ansible.cfg
-  [defaults]
-  command_warnings = False
-  callback_whitelist = profile_tasks
-  deprecation_warnings=False
-  inventory = ~/.ansible/inventories/local
-  interpreter_python=/usr/bin/python3
-  vault_password_file = ~/.vault_pass
-  log_path=${SCRIPTPATH}/logs/ansible.log
-EOF
-
-  echo "Création de la configuration en cours"
-  # On créé la database
-  sqlite3 ${SCRIPTPATH}/ssddb <<EOF
-    create table seedbox_params(param varchar(50) PRIMARY KEY, value varchar(50));
-    replace into seedbox_params (param,value) values ('installed',0);
-    replace into seedbox_params (param,value) values ('seedbox_path','/opt/seedbox');
-    create table applications(name varchar(50) PRIMARY KEY,
-      status integer,
-      subdomain varchar(50),
-      port integer);
-    create table applications_params (appname varchar(50),
-      param varachar(50),
-      value varchar(50),
-      FOREIGN KEY(appname) REFERENCES applications(name));
-EOF
-  echo "Les composants sont maintenants tous installés/réglés, poursuite de l'installation"
-  if [ $mode_install = "manuel" ]
-  then
-    read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
-  fi
-  sudo chown -R ${USER}: ${HOME}/.local
-
-fi
-
-fi
-
-
-# Maintenant on peut sourcer les fichiers
-# shellcheck source=${BASEDIR}/includes/functions.sh
-source "${SCRIPTPATH}/includes/functions.sh"
-# shellcheck source=${BASEDIR}/includes/variables.sh
-source "${SCRIPTPATH}/includes/variables.sh"
 
 ################################################
 # on vérifie qu'il y ait un vault pass existant
@@ -151,7 +152,7 @@ IS_INSTALLED=$(select_seedbox_param "installed")
 
 
 
-clear
+#clear
 
 if [ $mode_install = "manuel" ]
 then
@@ -372,6 +373,7 @@ then
 
     esac
   fi
+  
 
 
   update_status
@@ -382,85 +384,4 @@ then
   else
     script_classique
   fi
-
-else
-  # On a passé des parametres, on est en mode automatique
-  # Il va falloir anayser les arguments
-  clear
-  OPTS=`getopt -o vhns: --long \
-      help,action:,username:,adresse_mail:,password:,domaine:,cf_mail_login:,cf_api:,no_cf,no_goauth,gui_subdomain: \
-        -n 'parse-options' -- "$@"`
-
-  if [ $? != 0 ] ; then echo "Failed parsing options." >&2 ; exit 1 ; fi
-
-  eval set -- "${OPTS}"
-
-  while true; do
-    case "$1" in
-      --action)
-        export action=$2
-        shift 2
-        ;;
-      --username)
-        export username=$2
-        shift 2
-        ;;
-      --password)
-        export password=$2
-        shift 2
-        ;;
-      --domaine)
-        export domaine=$2
-        shift 2
-        ;;
-      --cf_mail_login)
-        export cf_mail_login=$2
-        shift 2
-        ;;
-      --cf_api)
-        export cf_api=$2
-        shift 2
-        ;;
-      --adresse_mail)
-        export adresse_mail=$2
-        shift 2
-        ;;
-      --no_cf)
-        export no_cf=1
-        shift
-        ;;
-      --no_goauth)
-        export no_goauth=1
-        shift
-        ;;
-      --gui_subdomain)
-        export gui_subdomain=1
-        shift 2
-        ;;
-
-
-      --) shift ; break ;;
-      *) echo "Internal error! $2" ; exit 1 ;;
-    esac
-  done
-  #
-  # Maintenant, on a toutes les infos
-  #
-  case "$action" in
-    install_gui)
-      echo "Install de la gui avec username $username"
-      echo "Password $password"
-      echo "Domaine" $domaine
-      echo "Mail cf $cf_mail_login"
-      echo "API CF $cf_api"
-      install_gui
-      exit 0
-      ;;
-    *)
-      echo "Action $action inconnue"
-      exit 1
-      ;;
-  esac
-
-
 fi

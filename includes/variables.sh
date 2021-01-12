@@ -36,3 +36,7 @@ export NEWT_COLORS='
   border=green,blue
   textbox=black,white
 '
+# On risque d'avoir besoin de ces variables d'environnement par la suite
+export MYUID=$(id -u)
+export MYGID=$(id -g)
+export MYGIDNAME=$(id -gn)

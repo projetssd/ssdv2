@@ -7,5 +7,5 @@
     file:
       path: "{{ FILE }}"
       state: file
-      owner: "{{ UID }}"
-      group: "{{ GID }}"
+      owner: "{{ lookup('env','USER') }}"
+      group: "{{ lookup('env','MYGIDNAME') }}"
