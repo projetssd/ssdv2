@@ -56,6 +56,12 @@ while true; do
       INI_FILE=$2
       shift 2
       ;;
+      
+    --help)
+      
+      usage
+      shift
+      ;;
 
     --) shift ; break ;;
     *) echo "Internal error! $2" ; exit 1 ;;

@@ -46,3 +46,4 @@
 
 - silent install de la gui
 - tout est logué dans logs/seedbox.log et logs/ansible.log
+- Gestion d'une aide (fonction usage)

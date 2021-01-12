@@ -2771,3 +2771,29 @@ EOF
   fi
   sudo chown -R ${USER}: ${HOME}/.local
 }
+
+function usage() {
+	echo ""
+	echo "########################################"
+	echo "# SSD: Script Seedbox Docker           #"
+	echo "# USAGE                                #"
+	echo "########################################"
+	echo "./seedbox.sh [OPTIONS]"
+	echo ""
+	echo "Si aucune options passée, le script se lance en interactif"
+	echo "----------------------------------------"
+	echo "Options possibles : "
+	echo "--help"
+	echo "  Affiche cette aide"
+	echo "--action <action>"
+	echo "  définit une action à lancer"
+	echo "  Cette option nécessite un fichier autoinstall.ini"
+	echo "  Les actions possibles sont :"
+	echo "     install_gui : Installe la gui"
+	echo "--force-root"
+	echo "  permet d'installer la seedbox en root"
+	echo "--ini-file <fichier>"
+	echo "  Change le chemin par défaut du ini-file (/opt/seedbox-compose/autoinstall.ini)"
+	echo ""
+	exit 0
+}
