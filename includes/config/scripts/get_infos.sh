@@ -126,9 +126,6 @@ then
   is_use_goauth=${use_goauth}
 fi
 
-echo "is_use_goauth est à ${is_use_goauth}"
-read -p "continue"
-
 if [ ${is_use_goauth} = 1 ]
 then
 	if [ -z ${use_goaut} ]
