@@ -5,7 +5,7 @@ After=plexdrive.service
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/rclone mount --config=/root/.config/rclone/rclone.conf --exclude BACKUPS/** --allow-other --gid 1000 --uid 1000 {{rclone.plexdrive}}: /mnt/PlexdriveSeed
+ExecStart=/usr/bin/rclone mount --config={{ lookup('env','HOME') }}/.config/rclone/rclone.conf --exclude BACKUPS/** --allow-other --gid 1000 --uid 1000 {{rclone.plexdrive}}: /mnt/PlexdriveSeed
 ExecStop=/bin/fusermount -uz /mnt/PlexdriveSeed
 Restart=on-abort
 

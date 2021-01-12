@@ -4,6 +4,36 @@
 CURRENT_SCRIPT=$(readlink -f "$0")
 # Absolute path this script is in.
 export SCRIPTPATH=$(dirname "$CURRENT_SCRIPT")
+cd ${SCRIPTPATH}
+
+if [ ! -f ${SCRIPTPATH}/.prerequis.lock ]; then
+    echo "Les prérequis ne sont pas installés"
+    echo "Vous devez les lancer en tapant"
+    echo "./prerequis.sh"
+    exit 1
+fi
+
+################################################
+# TEST ROOT USER
+if [ "$USER" == "root" ]; then
+  echo -e "${CCYAN}-----------------------${CEND}"
+  echo -e "${CCYAN}[  Lancement en root  ]${CEND}"
+  echo -e "${CCYAN}-----------------------${CEND}"
+  echo -e "${CCYAN}Pour des raisons de sécurité, il n'est pas conseillé de lancer ce script en root${CEND}"
+  read -rp $'\e[33mSouhaitez vous créer un utilisateur dédié (c), continuer en root (r) ou quitter le script (q) ? (c/r/Q)\e[0m :' CREEUSER
+  if [[ "${CREEUSER}" = "r" ]] || [[ "${CREEUSER}" = "R" ]]; then
+    # on ne fait rien et on continue
+    :
+  elif [[ "${CREEUSER}" = "c" ]] || [[ "${CREEUSER}" = "C" ]]; then
+    read -rp $'\e[33mTapez le nom d utilisateur\e[0m :' CREEUSER_USERNAME
+    read -rp $'\e[33mTapez le password (pas de \ ni apostrophe dans le password) \e[0m :' CREEUSER_PASSWORD
+    ansible-playbook ${BASEDIR}/includes/config/playbooks/cree_user.yml --extra-vars '{"CREEUSER_USERNAME":"'${CREEUSER_USERNAME}'","CREEUSER_PASSWORD":"'${CREEUSER_PASSWORD}'"}'
+    echo -e "${CCYAN}L'utilisateur ${CREEUSER_USERNAME} a été créé, merci de vous déloguer et reloguer avec ce user pour continer${CEND}"
+    exit 0
+  else
+    exit 0
+  fi
+fi
 
 # On regarde le nombre de parametres
 if [ $# -eq 0 ]
@@ -17,22 +47,34 @@ fi
 export MYUID=$(id -u)
 export MYGID=$(id -g)
 
+# on met les droits comme il faut, au cas où il y ait eu un mauvais lancement
+sudo chown -R ${USER}: ${SCRIPTPATH}
+
+if [[ -d "${HOME}/.local" ]]
+then
+  sudo chown -R ${USER}: ${HOME}/.local
+fi
+
+# on ajoute le PATH qui va bien, au cas où il ne soit pas pris en compte par le ~/.profile
+export PATH="$HOME/.local/bin:$PATH"
+
+
 if [ ! -f "${SCRIPTPATH}/ssddb" ]; then
   echo "Certains composants doivent encore être installés/réglés"
   if [ $mode_install = "manuel" ]
   then
-    read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
+      read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
   fi
- 
-  
-  
+
+
+
   ## Constants
   readonly PIP="9.0.3"
   readonly ANSIBLE="2.9"
   python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
   pip==${PIP} \
-  ansible==${1-$ANSIBLE}
-  python3 -m pip install --user --disable-pip-version-check docker
+  ansible==${1-$ANSIBLE} \
+  docker
   ##########################################
   # Pas de configuration existante
   # On installe les prérequis
@@ -83,6 +125,9 @@ EOF
   then
     read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
   fi
+  sudo chown -R ${USER}: ${HOME}/.local
+
+fi
 
 fi
 
@@ -103,35 +148,15 @@ fi
 
 IS_INSTALLED=$(select_seedbox_param "installed")
 
-################################################
-# TEST ROOT USER
-if [ "$USER" == "root" ]; then
-  echo -e "${CCYAN}-----------------------${CEND}"
-  echo -e "${CCYAN}[  Lancement en root  ]${CEND}"
-  echo -e "${CCYAN}-----------------------${CEND}"
-  echo -e "${CCYAN}Pour des raisons de sécurité, il n'est pas conseillé de lancer ce script en root${CEND}"
-  read -rp $'\e[33mSouhaitez vous créer un utilisateur dédié (c), continuer en root (r) ou quitter le script (q) ? (c/r/Q)\e[0m :' CREEUSER
-  if [[ "${CREEUSER}" = "r" ]] || [[ "${CREEUSER}" = "R" ]]; then
-    # on ne fait rien et on continue
-    :
-  elif [[ "${CREEUSER}" = "c" ]] || [[ "${CREEUSER}" = "C" ]]; then
-    read -rp $'\e[33mTapez le nom d utilisateur\e[0m :' CREEUSER_USERNAME
-    read -rp $'\e[33mTapez le password (pas de \ ni apostrophe dans le password) \e[0m :' CREEUSER_PASSWORD
-    ansible-playbook ${BASEDIR}/includes/config/playbooks/cree_user.yml --extra-vars '{"CREEUSER_USERNAME":"'${CREEUSER_USERNAME}'","CREEUSER_PASSWORD":"'${CREEUSER_PASSWORD}'"}'
-    echo -e "${CCYAN}L'utilisateur ${CREEUSER_USERNAME} a été créé, merci de vous déloguer et reloguer avec ce user pour continer${CEND}"
-    exit 0
-  else
-    exit 0
-  fi
-fi
+
 
 
 clear
 
 if [ $mode_install = "manuel" ]
 then
-      
-  
+
+
   if [[ ${IS_INSTALLED} -eq 0 ]]; then
     # Si on est là, c'est que le prérequis sont installés, mais c'est tout
     # On propose donc l'install de la seedbox
@@ -143,15 +168,15 @@ then
     echo -e "${CGREEN}   2) Installation Seedbox Classique ${CEND}"
     echo -e "${CGREEN}   3) Restauration Seedbox${CEND}"
     echo -e "${CGREEN}   9) Sortir du script${CEND}"
-  
+
     echo -e ""
     read -p "Votre choix : " CHOICE
     echo ""
     case $CHOICE in
-  
-  
+
+
     1) ## Installation de la seedbox Rclone et Gdrive
-  
+
       #check_dir "$PWD"
       if [[ ${IS_INSTALLED} -eq 0 ]]; then
         clear
@@ -172,10 +197,7 @@ then
         install_base_packages
         # Install de docker
         install_docker
-        # on met le user dans le bon groupe
-        ansible-playbook ${BASEDIR}/includes/config/roles/users/tasks/main.yml
-  	    ansible-playbook ${BASEDIR}/includes/config/roles/users/tasks/chggroup.yml
-        # On part à la pêche aux infos
+        #  On part à la pêche aux infos
         create_user_non_systeme
         # récup infos cloudflare
         cloudflare
@@ -202,25 +224,27 @@ then
         # On choisit les sous domaines pour les services installés précédemment
         # stocké dans account.yml
         subdomain
-        # Installation de tous les services
+        # On choisit le mode d'authentification, basqiue, oauth, authelia
+      # stoké dans account.yml
+      auth
+      #Installation de tous les services
         install_services
         # Mise à jour de plex, ajout des librairies
-        read -p "Installation des applis"
+
         for i in $(docker ps --format "{{.Names}}")
         do
           if [[ "$i" == "plex" ]]; then
             plex_sections
           fi
         done
-        read -p "lancement de projets"
+
         # choix des applis à installer
         projects
         # Installation de filebot
         # TODO : à laisser ? Ou à mettre dans les applis ?
-         read -p "lancement de filebot"
+
         filebot
         # mise en place de la sauvegarde
-         read -p "mise en place de la sauvegarde"
         sauve
         # Affichage du résumé
         resume_seedbox
@@ -233,9 +257,9 @@ then
         script_plexdrive
       fi
       ;;
-  
+
     2) ## Installation de la seedbox classique
-  
+
       check_dir "$PWD"
       if [[ ! -d "$CONFDIR" ]]; then
         clear
@@ -263,9 +287,9 @@ then
         script_classique
       fi
       ;;
-  
+
     3) ## restauration de la seedbox
-  
+
       check_dir "$PWD"
       if [[ ! -d "$CONFDIR" ]]; then
         clear
@@ -289,18 +313,18 @@ then
         cloudflare
         install_traefik
         install_watchtower
-        SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
+
         while read line; do echo $line | cut -d'.' -f1; done <"/home/$SEEDUSER/resume" >"$SERVICESUSER$SEEDUSER"
         rm "/home/$SEEDUSER/resume"
         install_services
-  
+
         ## restauration plex_dupefinder
         PLEXDUPE=/home/$SEEDUSER/scripts/plex_dupefinder/plex_dupefinder.py
         if [[ -e "$PLEXDUPE" ]]; then
           cd "/home/$SEEDUSER/scripts/plex_dupefinder"
           python3 -m pip install -r requirements.txt
         fi
-  
+
         ## restauration cloudplow
         CLOUDPLOWSERVICE=/etc/systemd/system/cloudplow.service
         if [[ -e "$CLOUDPLOWSERVICE" ]]; then
@@ -309,7 +333,7 @@ then
           ln -s /home/$SEEDUSER/scripts/cloudplow/cloudplow.py /usr/local/bin/cloudplow
           systemctl start cloudplow.service
         fi
-  
+
         ## restauration plex_autoscan
         PLEXSCANSERVICE=/etc/systemd/system/plex_autoscan.service
         if [[ -e "$PLEXSCANSERVICE" ]]; then
@@ -317,7 +341,7 @@ then
           python -m pip install -r requirements.txt
           systemctl start plex_autoscan.service
         fi
-  
+
         ## restauration des crons
         (
           crontab -l | grep .
@@ -341,24 +365,24 @@ then
     9)
       exit 0
       ;;
-  
+
     999) ## Installation seedbox webui
         install_gui
      ;;
-  
+
     esac
   fi
-  
-  
+
+
   update_status
-  
+
   PLEXDRIVE="/usr/bin/rclone"
   if [[ -e "$PLEXDRIVE" ]]; then
     script_plexdrive
   else
     script_classique
   fi
-  
+
 else
   # On a passé des parametres, on est en mode automatique
   # Il va falloir anayser les arguments
@@ -366,9 +390,9 @@ else
   OPTS=`getopt -o vhns: --long \
       help,action:,username:,adresse_mail:,password:,domaine:,cf_mail_login:,cf_api:,no_cf,no_goauth,gui_subdomain: \
         -n 'parse-options' -- "$@"`
-  
+
   if [ $? != 0 ] ; then echo "Failed parsing options." >&2 ; exit 1 ; fi
-  
+
   eval set -- "${OPTS}"
 
   while true; do
@@ -406,14 +430,14 @@ else
         shift
         ;;
       --no_goauth)
-        export no_goauth=1 
+        export no_goauth=1
         shift
         ;;
       --gui_subdomain)
-        export gui_subdomain=1 
+        export gui_subdomain=1
         shift 2
-        ;;      
-        
+        ;;
+
 
       --) shift ; break ;;
       *) echo "Internal error! $2" ; exit 1 ;;

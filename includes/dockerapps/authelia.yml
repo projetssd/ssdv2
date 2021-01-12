@@ -17,14 +17,14 @@
       prompt: "mot de passe de l'application Google"
       private: no
   vars_files:
-    - /opt/seedbox/variables/account.yml
+    - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
   tasks:
         
     # FACTS #######################################################################
 
     - name: create authelia state
       shell: |
-        echo "1" > /opt/seedbox/status/authelia
+        echo "1" > {{ lookup('env','CONFDIR') }}/status/authelia
 
     - name: "Variables | Set 'cloudflare_enabled' variable"
       set_fact:
@@ -55,7 +55,7 @@
             else false }}"
 
     - name: "Set DNS Record on CloudFlare"
-      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
       vars:
         subdomain: "{{sub.authelia if sub_enabled else 'authelia'}}"
       when: cloudflare_enabled
@@ -72,23 +72,23 @@
 
     - name: Create new hashed
       shell: |
-        docker run --rm authelia/authelia:latest authelia hash-password {{user.pass}} | cut -d: -f2
+        docker run --rm authelia/authelia:latest authelia hash-password {{user.pass}} | cut -d: -f2 | sed 's/ //g'
       register: password
 
     - name: Creating paths
-      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
+      file: "path={{item}} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID') }}"
       with_items:
-        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
+        - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}"
 
     - name: Import configuration.yml
       template:
-        src: /opt/seedbox-compose/includes/dockerapps/templates/authelia/configuration.yml.j2
-        dest: /opt/seedbox/docker/{{user.name}}/{{pgrole}}/configuration.yml
+        src: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/authelia/configuration.yml.j2"
+        dest: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/configuration.yml"
 
-    - name: Import configuration.yml
+    - name: Import users_database.yml
       template:
-        src: /opt/seedbox-compose/includes/dockerapps/templates/authelia/users_database.yml.j2
-        dest: /opt/seedbox/docker/{{user.name}}/{{pgrole}}/users_database.yml
+        src: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/authelia/users_database.yml.j2"
+        dest: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/users_database.yml"
 
     # LABELS ######################################################################
     - name: 'Ajout label traefik'
@@ -114,11 +114,11 @@
         image: 'linuxserver/mariadb'
         pull: yes
         volumes:
-          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/db-authelia:/config'
+          - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-authelia:/config"
           - '/etc/localtime:/etc/localtime:ro'
         env:
-          PUID: '{{user.userid}}'
-          PGID: '{{user.groupid}}'
+          PUID: "{{ lookup('env','MYUID') }}"
+          PGID: "{{ lookup('env','MYGID') }}"
           MYSQL_ROOT_PASSWORD: 'authelia'
           MYSQL_PASSWORD: 'authelia'
           MYSQL_DATABASE: 'authelia'
@@ -137,15 +137,15 @@
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
-          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}:/var/lib/authelia'
-          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/configuration.yml:/config/configuration.yml:ro'
-          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/users_database.yml:/etc/authelia/users_database.yml'
+          - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/var/lib/authelia"
+          - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/configuration.yml:/config/configuration.yml:ro"
+          - {"{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/users_database.yml:/etc/authelia/users_database.yml"
 
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
-          PUID: '{{user.userid}}'
-          PGID: '{{user.groupid}}'
+          PUID: "{{ lookup('env','MYUID') }}"
+          PGID: "{{ lookup('env','MYGID') }}"
           TZ: 'Europe/Paris'
 
     # MAIN DEPLOYMENT #############################################################
@@ -170,5 +170,5 @@
 
     - name: create authelia state
       shell: |
-        echo "2" > /opt/seedbox/status/authelia
+        echo "2" > {{ lookup('env','CONFDIR') }}/status/authelia
 

@@ -1,0 +1,10 @@
+---
+pgrole: 'syncthing'
+intport: '8384'
+image: 'svenihoney/wetty:latest'
+  - "/opt/seedbox/docker/{{lookup('env','USER')}}/{{pgrole}}/config:/config"
+  - "/opt/seedbox/docker/{{lookup('env','USER')}}/{{pgrole}}/sync:/sync"
+  - "/home/{{lookup('env','USER')}}:/home/{{lookup('env','USER')}}"
+pg_env:
+  -PUID: "{{lookup('env','MYUID')}}"
+  -PGID: "{{lookup('env','MYGID')}}"

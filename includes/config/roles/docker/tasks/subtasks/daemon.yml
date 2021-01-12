@@ -8,6 +8,12 @@
 #                   GNU General Public License v3.0                     #
 #########################################################################
 ---
+- name: "Make sure /etc/docker exists"
+  file:
+    path: /etc/docker
+    state: directory
+    mode: 0775
+
 - name: "Daemon | Import 'daemon.json'"
   template:
     src: /opt/seedbox-compose/includes/config/roles/docker/templates/daemon.json.j2

@@ -1,5 +1,5 @@
 rclone:
-  config: /root/.config/rclone/rclone.conf
+  config: /home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf
   path: /usr/local/bin/fclone
   stats: 30s
   live_rotate: {{ 'true' if teamdrive1_enabled | default(false) else 'false' }}

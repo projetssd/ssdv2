@@ -9,42 +9,42 @@
       prompt: "Saisir la licence Maxmind"
       private: no
   vars_files:
-    - /opt/seedbox/variables/account.yml
+    - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
   tasks:
 
     - name: create varken state
       shell: |
-        echo "1" > /opt/seedbox/status/varken
+        echo "1" > {{ lookup('env','CONFDIR') }}/status/varken
 
     - name: Check config Ombi exists
       stat:
-        path: "/opt/seedbox/docker/{{user.name}}/ombi/OmbiSettings.db"
+        path: "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/ombi/OmbiSettings.db"
       register: ombi_config
 
     - name: Check config sonarr exists
       stat:
-        path: "/opt/seedbox/docker/{{user.name}}/sonarr/config/config.xml"
+        path: "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/sonarr/config/config.xml"
       register: sonarr_config
 
     - name: Check config radarr exists
       stat:
-        path: "/opt/seedbox/docker/{{user.name}}/radarr/config/config.xml"
+        path: "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/radarr/config/config.xml"
       register: radarr_config
 
     - name: Check config lidarr exists
       stat:
-        path: "/opt/seedbox/docker/{{user.name}}/lidarr/config.xml"
+        path: "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/lidarr/config.xml"
       register: lidarr_config
 
     - name: Check config Tautulli exists
       stat:
-        path: "/opt/seedbox/docker/{{user.name}}/tautulli/config.ini"
+        path: "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/tautulli/config.ini"
       register: tautulli_config
 
     - name: 'ApiKey Ombi'
       shell: | 
-        sqlite3 /opt/seedbox/docker/{{user.name}}/ombi/OmbiSettings.db 'select Content from "GlobalSettings" where id = 1' > /opt/seedbox/docker/{{user.name}}/ombi/key.txt
-        grep -Po '(?<=ApiKey)\W*\K[^ ]*' /opt/seedbox/docker/{{user.name}}/ombi/key.txt | cut -d',' -f1 | sed 's/.$//'
+        sqlite3 {{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/ombi/OmbiSettings.db 'select Content from "GlobalSettings" where id = 1' > {{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/ombi/key.txt
+        grep -Po '(?<=ApiKey)\W*\K[^ ]*' {{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/ombi/key.txt | cut -d',' -f1 | sed 's/.$//'
       register: ombi
       when: ombi_config.stat.exists
 
@@ -55,7 +55,7 @@
 
     - name: 'ApiKey Sonarr'
       shell: |
-        sed -n 's:.*<ApiKey>\(.*\)</ApiKey>.*:\1:p' /opt/seedbox/docker/{{user.name}}/sonarr/config/config.xml
+        sed -n 's:.*<ApiKey>\(.*\)</ApiKey>.*:\1:p' {{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/sonarr/config/config.xml
       register: sonarr
       when: sonarr_config.stat.exists
 
@@ -66,7 +66,7 @@
 
     - name: 'ApiKey Radarr'
       shell: |
-        sed -n 's:.*<ApiKey>\(.*\)</ApiKey>.*:\1:p' /opt/seedbox/docker/{{user.name}}/radarr/config/config.xml
+        sed -n 's:.*<ApiKey>\(.*\)</ApiKey>.*:\1:p' {{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/radarr/config/config.xml
       register: radarr
       when: radarr_config.stat.exists
 
@@ -77,7 +77,7 @@
 
     - name: 'ApiKey Lidarr'
       shell: |
-        sed -n 's:.*<ApiKey>\(.*\)</ApiKey>.*:\1:p' /opt/seedbox/docker/{{user.name}}/lidarr/config.xml
+        sed -n 's:.*<ApiKey>\(.*\)</ApiKey>.*:\1:p' {{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/lidarr/config.xml
       register: lidarr
       when: lidarr_config.stat.exists
 
@@ -88,7 +88,7 @@
 
     - name: 'ApiKey Tautulli'
       shell: |
-        grep "api_key" /opt/seedbox/docker/{{user.name}}/tautulli/config.ini | cut -d '=' -f2 | sed 's/ //g' | head -1
+        grep "api_key" {{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/tautulli/config.ini | cut -d '=' -f2 | sed 's/ //g' | head -1
       register: tautulli
       when: tautulli_config.stat.exists
 
@@ -152,7 +152,7 @@
             else false }}"
 
     - name: "Set DNS Record on CloudFlare"
-      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      include_tasks:" {{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
       vars:
         subdomain: "{{sub.grafana if sub_enabled else 'grafana'}}"
       when: cloudflare_enabled
@@ -164,9 +164,9 @@
         image: 'grafana/grafana'
 
     - name: Creating paths
-      file: 'path={{item}} state=directory mode=0775 owner=472 group=104'
+      file: "path={{item}} state=directory mode=0775 owner=472 group=104"
       with_items:
-        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
+        - "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/{{pgrole}}"
 
     # LABELS ######################################################################
     - name: 'Ajout label traefik'
@@ -194,7 +194,7 @@
     - name: 'Setting Volumes influxdb'
       set_fact:
         influxdb_volumes:
-          - '/opt/seedbox/docker/{{user.name}}/influxdb/config:/var/lib/influxdb'
+          - "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/influxdb/config:/var/lib/influxdb"
 
     - name: 'Deploying influxdb'
       docker_container:
@@ -214,7 +214,7 @@
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775'
       with_items:
-        - '/opt/seedbox/docker/{{user.name}}/telegraf'
+        - "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/telegraf"
 
     - name: Wait for 10 seconds before continuing
       wait_for:
@@ -229,7 +229,7 @@
       set_fact:
         telegraf_volumes:
           - '/var/run/docker.sock:/var/run/docker.sock'
-          - '/opt/seedbox/docker/{{user.name}}/telegraf:/etc/telegraf'
+          - "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/telegraf:/etc/telegraf"
           - '/proc:/host/proc:ro'
 
     - name: 'Deploying telegraf'
@@ -247,8 +247,8 @@
 
     - name: Import telegraf config
       template:
-        src: /opt/seedbox-compose/includes/dockerapps/templates/varken/telegraf.conf.j2
-        dest: /opt/seedbox/docker/{{user.name}}/telegraf/telegraf.conf
+        src: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/varken/telegraf.conf.j2"
+        dest: "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/telegraf/telegraf.conf"
 
     # Varken #############################################################
 
@@ -319,7 +319,7 @@
     - name: 'Setting Volumes Varken'
       set_fact:
         varken_volumes:
-          - '/opt/seedbox/docker/{{user.name}}/varken/config:/config'
+          - "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/varken/config:/config"
 
     - name: 'Deploying Varken'
       docker_container:
@@ -338,14 +338,14 @@
 
     - name: Import defaults.ini
       template:
-        src: /opt/seedbox-compose/includes/dockerapps/templates/varken/defaults.ini
-        dest: /opt/seedbox/docker/{{user.name}}/{{pgrole}}/defaults.ini
+        src: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/varken/defaults.in"i
+        dest: "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/{{pgrole}}/defaults.ini"
 
     - name: 'Setting Volumes Grafana'
       set_fact:
         grafana_volumes:
-          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}:/config'
-          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/defaults.ini:/usr/share/grafana/conf/defaults.ini'
+          - "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/{{pgrole}}:/config"
+          - "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/{{pgrole}}/defaults.ini:/usr/share/grafana/conf/defaults.ini"
 
     - name: 'Setting Grafana ENV'
       set_fact:
@@ -376,5 +376,5 @@
 
     - name: create varken state
       shell: |
-        echo "2" > /opt/seedbox/status/varken
+        echo "2" > {{ lookup('env','CONFDIR') }}/status/varken
 

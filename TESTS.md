@@ -1,14 +1,14 @@
 Tous les tests sont à faire sur 
 
-- ubuntu 18.04
 - ubuntu 20.04
-- Debian 9
 - Debian 10
 
+(Debian 9 et Ubuntu 18.04 ne sont plus concernés)
 
 Prérequis : 
+- une vm/vps avec connection internet, si possible avec une ip publique (les vm sur un poste de travail risquent de ne pas pouvoir faire tous les tests)
 - un user "normal" (non root), qui puisse faire du sudo. 
-- si possible une vm neuve
+- si possible une vm neuve (non pourrie pas des tests/installs précédentes)
 - git installé (apt install git)
 
 
@@ -33,5 +33,5 @@ et se laisser guider
 
 ## Tests à faire :
 
-lancer seedbox.sh, puis installer la gui (choix 999 caché) et vérifier que tout est ok.
+Lancer seedbox.sh, puis installer la gui (choix 999 caché) et vérifier que tout est ok.
 

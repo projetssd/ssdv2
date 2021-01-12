@@ -4,18 +4,18 @@
 - hosts: localhost
   gather_facts: false
   vars_files:
-    - /opt/seedbox/variables/account.yml
+    - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
   tasks:
         
     # FACTS #######################################################################
 
     - name: create bitwarden state
       shell: |
-        echo "1" > /opt/seedbox/status/bitwarden
+        echo "1" > {{ lookup('env','CONFDIR') }}/status/bitwarden
 
     - name: Checking for existing app data
       stat:
-        path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
+        path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/authelia/configuration.yml"
       register: check
 
     - name: "Variables | Set 'cloudflare_enabled' variable"
@@ -75,7 +75,7 @@
         state: present
 
     - name: "Set DNS Record on CloudFlare"
-      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
       vars:
         subdomain: "{{sub.bitwarden if sub_enabled else 'bitwarden'}}"
       when: cloudflare_enabled
@@ -86,9 +86,9 @@
         image: 'bitwardenrs/server:latest'
 
     - name: Creating paths
-      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
+      file: "path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}"
       with_items:
-        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
+        - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}"
 
     # LABELS ######################################################################
     - name: 'Ajout label traefik'
@@ -120,7 +120,7 @@
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
-          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}:/data'
+          - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/data"
           - '/var/log/docker:/var/log/docker'
           - '/etc/localtime:/etc/localtime:ro'
 
@@ -169,7 +169,7 @@
     - name: 'Setting Volumes'
       set_fact:
         bw_volumes:
-          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}:/data'
+          - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/data"
           - '/etc/localtime:/etc/localtime:ro'
           - /mnt/storage/backup/backup_databases/bitwarden:/dbbackup
 
@@ -200,5 +200,5 @@
 
     - name: create bitwarden state
       shell: |
-        echo "2" > /opt/seedbox/status/bitwarden
+        echo "2" > {{ lookup('env','CONFDIR') }}/status/bitwarden
 

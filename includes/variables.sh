@@ -24,10 +24,13 @@ PROJECTSAVAILABLE="$BASEDIR/includes/config/projects-available"
 MEDIAVAILABLE="$BASEDIR/includes/config/media-available"
 SERVICES="$BASEDIR/includes/config/services"
 SERVICESUSER="$CONFDIR/services-"
+SERVICESPERUSER="${SERVICESUSER}${USER}"
 PROJECTUSER="$CONFDIR/projects-"
 MEDIASUSER="$CONFDIR/media-"
 PACKAGESFILE="$BASEDIR/includes/config/packages"
-
+export TMPDOMAIN=${BASEDIR}/tmp/domain
+export TMPNAME=${BASEDIR}/tmp/name
+export TMPGROUP=${BASEDIR}/tmp/group
 export NEWT_COLORS='
   window=,white
   border=green,blue

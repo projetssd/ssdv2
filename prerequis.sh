@@ -9,6 +9,7 @@ fi
 CURRENT_SCRIPT=$(readlink -f "$0")
 # Absolute path this script is in.
 export SCRIPTPATH=$(dirname "$CURRENT_SCRIPT")
+cd ${SCRIPTPATH}
 
 readonly PIP="9.0.3"
 readonly ANSIBLE="2.9"
@@ -19,7 +20,7 @@ python3 -m pip install --user --disable-pip-version-check --upgrade --force-rein
 pip==${PIP}
 python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
 setuptools
-python3 -m pip install --user --disable-pip-version-check --upgrade  --force-reinstall \
+python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
 pyOpenSSL \
 requests \
 netaddr \
@@ -31,6 +32,7 @@ docker
   
 ## Copy pip to /usr/bin
 rm -f /usr/bin/pip3
+rm -f /usr/bin/pip
 ln -s ${HOME}/.local/bin/pip3 /usr/bin/pip3
 ln -s ${HOME}/.local/bin/pip3 /usr/bin/pip
 
@@ -42,3 +44,4 @@ echo "Vous pourrez ensuite lancer "
 echo "cd /opt/seedbox-compose"
 echo "./seedbox.sh "
 echo "pour installer la seedbox"
+touch ${SCRIPTPATH}/.prerequis.lock

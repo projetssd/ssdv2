@@ -1,0 +1,15 @@
+---
+pgrole: 'jellyfin'
+intport: '8096'
+image: 'jellyfin/jellyfin:latest'
+pg_volumes:
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+  - '/var/run/docker.sock:/var/run/docker.sock'
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  -PUID="{{ lookup('env','MYUID') }}"
+  -PGID="{{ lookup('env','MYGID') }}"
+  -GIDLIST="{{ lookup('env','MYGID') }}"
+
+  

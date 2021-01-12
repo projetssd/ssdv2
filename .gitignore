@@ -1,7 +1,8 @@
 # database
 ssddb
 *retry
-
+.prerequis.lock
+autoinstall.ini
 
 # Created by https://www.toptal.com/developers/gitignore/api/cloud9,phpstorm
 # Edit at https://www.toptal.com/developers/gitignore?templates=cloud9,phpstorm

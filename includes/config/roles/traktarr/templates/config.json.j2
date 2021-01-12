@@ -97,12 +97,12 @@
   "radarr": {
     "api_key": "{{ radarr_api_key | default('',true) }}",
     "url": "http://localhost:7878/",
-    "root_folder": "/home/{{user.name}}/Medias/Films/"
+    "root_folder": "{{ lookup('env','HOME') }}/Medias/Films/"
   },
   "sonarr": {
     "api_key": "{{ sonarr_api_key | default('',true) }}",
     "url": "http://localhost:8989/",
-    "root_folder": "/home/{{user.name}}/Medias/Series/",
+    "root_folder": "{{ lookup('env','HOME') }}/Medias/Series/",
     "tags": {}
   },
   "trakt": {

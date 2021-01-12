@@ -1,0 +1,20 @@
+---
+pgrole: 'filerun'
+intport: '80'
+image: 'afian/filerun'
+pg_volumes:
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/html:/var/www/html"
+  - "/home/{{ lookup('env','USER') }}:/user-files"
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  APACHE_RUN_USER: "{{ lookup('env','USER') }}"
+  FR_DB_HOST: "db-{{pgrole}}"
+  FR_DB_PORT: "3306"
+  FR_DB_NAME: "{{pgrole}}"
+  FR_DB_USER: "{{pgrole}}"
+  FR_DB_PASS: "{{pgrole}}"
+  APACHE_RUN_USER_ID: "{{ lookup('env','MYGID') }}"
+  APACHE_RUN_GROUP: "{{ lookup('env','USER') }}"
+  APACHE_RUN_GROUP_ID: "{{ lookup('env','MYGID') }}"
+
+

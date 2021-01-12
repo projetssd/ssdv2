@@ -1,0 +1,27 @@
+---
+- name: Creating scripts and plugins paths
+  file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
+  with_items:
+    - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/scripts"
+    - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/plugins"
+
+- name: 'Check if Templates Exist for {{pgrole}}'
+  stat:
+    path: './templates/{{ pgrole }}'
+  register: copycheck
+
+- name: 'Copying Scripts & Plugins'
+  copy:
+    src: ./templates/{{ pgrole }}
+    dest: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}"
+    directory_mode: yes
+    force: yes
+    owner: '{{ user.userid }}'
+    group: '{{ user.groupid }}'
+    mode: 0775
+  when: copycheck.stat.exists
+      
+- name: 'Checking for existing app data'
+  stat:
+    path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config.ini"
+  register: confcheck

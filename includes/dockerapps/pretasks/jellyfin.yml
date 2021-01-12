@@ -1,0 +1,10 @@
+---
+- name: 'XML Check'
+  stat:
+    path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config/system.xml"
+  register: xmlcheck
+
+- name: 'Check'
+  stat:
+    path: '/dev/dri'
+  register: dev_dri

@@ -11,7 +11,7 @@ ExecStart=/usr/bin/rclone mount -vv \
   --allow-non-empty \
   --vfs-cache-mode full \
   --vfs-cache-max-size 150G \
-  --cache-dir=/root/.config/rclone/cache \
+  --cache-dir={{ lookup('env','HOME') }}/.config/rclone/cache \
   {{rclone.remote}}: \
   /mnt/rclone/
 ExecStop=/bin/fusermount -uz /mnt/rclone/{{user.name}}

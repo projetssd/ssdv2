@@ -30,3 +30,14 @@
 - si lancement en root, proposition de créer un nouveau utilisateur
 - changement sur filebot avec utilisation de la commande cron ansible
 - changement sur backup avec utilisation de la commande cron ansible
+
+04/01/2020
+
+- tests
+
+05/01/2020
+
+- ajout d'un .prerequis.lock pour vérifier que les prérequis sont installés
+- ajout du $HOME/.local/bin dans le path pour les installs neuvs d'ansible
+- tests du root remontés en haut de liste
+- chmod du dossier avant tout lancement

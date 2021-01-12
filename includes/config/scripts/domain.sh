@@ -37,9 +37,8 @@ install_watchtower
 echo -e "${BLUE}### REINITIALISATION DES APPLICATIONS ###${NC}"
 echo -e " ${BWHITE}* Les fichiers de configuration ne seront pas effacés${NC}"
 ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
-SEEDUSER=$(cat /tmp/name)
-rm /tmp/name
-SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
+SEEDUSER=$(cat ${TMPNAME})
+rm ${TMPNAME}
 while read line; do echo $line | cut -d'.' -f1; done < /home/$SEEDUSER/resume > $SERVICESUSER$SEEDUSER
 rm /home/$SEEDUSER/resume
 install_services

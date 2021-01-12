@@ -1,0 +1,7 @@
+---
+- name: execute command in docker
+  shell: |
+    docker exec sensorr sh -l -c "mv /app/{{ pgrole }}/config.default.json /app/{{ pgrole }}/config/config.json"
+  register: result
+
+- debug: msg="{{ result }}"

@@ -3,6 +3,8 @@
 source /opt/seedbox-compose/includes/functions.sh
 source /opt/seedbox-compose/includes/variables.sh
 
+RCLONE_CONFIG_FILE=${HOME}/.config/rclone/rclone.conf
+
     	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
     	echo -e "${CCYAN}          /!\ Création des SA-Installation de Sasync /!\                     ${CEND}"
     	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
@@ -33,8 +35,8 @@ ${CEND}"
 
 rm /tmp/team.txt /tmp/crop.txt > /dev/null 2>&1
 ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
-sed -i '/#Debut team source/,/#Fin team source/d' /root/.config/rclone/rclone.conf > /dev/null 2>&1
-sed -i '/#Debut team backup/,/#Fin team backup/d' /root/.config/rclone/rclone.conf > /dev/null 2>&1
+sed -i '/#Debut team source/,/#Fin team source/d' ${RCLONE_CONFIG_FILE} > /dev/null 2>&1
+sed -i '/#Debut team backup/,/#Fin team backup/d' ${RCLONE_CONFIG_FILE} > /dev/null 2>&1
 sed -i '/support*/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
 
 read -rp $'\e[36m   Souhaitez vous poursuivre l installation: (o/n) ? \e[0m' OUI
@@ -62,14 +64,14 @@ echo ""
 fi
 
 i=1
-grep "team_drive" /root/.config/rclone/rclone.conf | uniq > /tmp/crop.txt
-grep "team_drive" /root/.config/rclone/rclone.conf > /dev/null 2>&1
+grep "team_drive" ${RCLONE_CONFIG_FILE} | uniq > /tmp/crop.txt
+grep "team_drive" ${RCLONE_CONFIG_FILE} > /dev/null 2>&1
 
 if [ $? -eq 0 ]; then
   echo -e " ${BWHITE}* Share Drives disponibles${NC}"
   echo ""
     while read line; do
-      team=$(grep -iC 6 "$line" /root/.config/rclone/rclone.conf | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
+      team=$(grep -iC 6 "$line" ${RCLONE_CONFIG_FILE} | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
       echo "$team" >> /tmp/team.txt
       echo -e "${CGREEN}   $i. $team${CEND}"
       let "i+=1"
@@ -106,7 +108,7 @@ dest=_backup
 echo ""
 echo -e "${CCYAN}   Source : ${CGREEN}$teamdrive_sce --> $teamdrive_a${CEND}"
 id=$(sed -n "$i"p /tmp/crop.txt)
-echo -e "#Debut team source\n[$teamdrive_sce$source] \ntype = drive\nscope = drive\nserver_side_across_configs = true\nservice_account_file_path = /opt/sa/\nservice_account_file = /opt/sa/1.json\n$id\n#Fin team source\n" >> /root/.config/rclone/rclone.conf
+echo -e "#Debut team source\n[$teamdrive_sce$source] \ntype = drive\nscope = drive\nserver_side_across_configs = true\nservice_account_file_path = /opt/sa/\nservice_account_file = /opt/sa/1.json\n$id\n#Fin team source\n" >> ${RCLONE_CONFIG_FILE}
 sed -i "/remote/a \ \ \ support_source: $teamdrive_sce$source" /opt/seedbox/variables/account.yml
 echo ""
 
@@ -138,7 +140,7 @@ dest=_backup
 echo ""
 echo -e "${CCYAN}   Backup : ${CGREEN}$teamdrive_dest --> $teamdrive_b${CEND}"
 id=$(sed -n "$j"p /tmp/crop.txt)
-echo -e "#Debut team backup\n[$teamdrive_dest$dest] \ntype = drive\nscope = drive\nserver_side_across_configs = true\nservice_account_file_path = /opt/sa/\nservice_account_file = /opt/sa/1.json\n$id\n#Fin team backup\n" >> /root/.config/rclone/rclone.conf
+echo -e "#Debut team backup\n[$teamdrive_dest$dest] \ntype = drive\nscope = drive\nserver_side_across_configs = true\nservice_account_file_path = /opt/sa/\nservice_account_file = /opt/sa/1.json\n$id\n#Fin team backup\n" >> ${RCLONE_CONFIG_FILE}
 sed -i "/remote/a \ \ \ support_dest: $teamdrive_dest$dest" /opt/seedbox/variables/account.yml
 ansible-playbook /opt/seedbox-compose/includes/config/roles/sasync/tasks/main.yml
 rm /tmp/team.txt /tmp/crop.txt > /dev/null 2>&1
