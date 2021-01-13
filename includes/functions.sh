@@ -2772,6 +2772,7 @@ EOF
   sudo chown -R ${USER}: ${HOME}/.local
   # on ajoute le PATH qui va bien, au cas où il ne soit pas pris en compte par le ~/.profile
   export PATH="$HOME/.local/bin:$PATH"
+  export CONFDIR=/opt/seedbox
 }
 
 function usage() {
