@@ -2770,6 +2770,8 @@ EOF
     read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
   fi
   sudo chown -R ${USER}: ${HOME}/.local
+  # on ajoute le PATH qui va bien, au cas où il ne soit pas pris en compte par le ~/.profile
+  export PATH="$HOME/.local/bin:$PATH"
 }
 
 function usage() {
