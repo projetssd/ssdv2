@@ -3,7 +3,7 @@
   gather_facts: false
   become: yes
   tasks:
-  - name: Make sure directory is present
+  - name: "Make sure directory {{ DIRECTORY }} is present"
     file:
       path: "{{ DIRECTORY }}"
       state: directory

@@ -3,7 +3,7 @@
   gather_facts: false
   become: yes
   tasks:
-  - name: Change directory rights
+  - name: "Change directory {{ DIRECTORY }} rights"
     file:
       path: "{{ DIRECTORY }}"
       state: directory

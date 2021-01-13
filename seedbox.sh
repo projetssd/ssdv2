@@ -15,6 +15,8 @@ exec &> >(tee ${SCRIPTPATH}/logs/seedbox.log)
 source "${SCRIPTPATH}/includes/functions.sh"
 # shellcheck source=${BASEDIR}/includes/variables.sh
 source "${SCRIPTPATH}/includes/variables.sh"
+# shellcheck source=${BASEDIR}/includes/functions.sh
+source "${SCRIPTPATH}/includes/functions.sh"
 
 if [ ! -f ${SCRIPTPATH}/.prerequis.lock ]; then
     echo "Les prérequis ne sont pas installés"
@@ -73,6 +75,8 @@ done
 #
 if [ ! -f "${SCRIPTPATH}/ssddb" ]; then
   premier_lancement
+  # on ajoute le PATH qui va bien, au cas où il ne soit pas pris en compte par le ~/.profile
+  export PATH="$HOME/.local/bin:$PATH"
 fi
 
  

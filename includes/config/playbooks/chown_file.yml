@@ -3,7 +3,7 @@
   gather_facts: false
   become: yes
   tasks:
-  - name: Change owner of the file
+  - name: "Change owner of the file {{ FILE }}"
     file:
       path: "{{ FILE }}"
       state: file
