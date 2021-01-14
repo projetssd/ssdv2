@@ -13,8 +13,6 @@ source /opt/seedbox-compose/includes/functions.sh
 source /opt/seedbox-compose/includes/variables.sh
 
   echo -e "${BLUE}### INFORMATIONS UTILISATEURS ###${NC}"
-  mkdir -p $CONFDIR/variables
-  cp /opt/seedbox-compose/includes/config/account.yml /opt/seedbox/variables/account.yml
   ACCOUNT=/opt/seedbox/variables/account.yml
 
   grep "sub" /opt/seedbox/variables/account.yml > /dev/null 2>&1

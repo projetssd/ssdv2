@@ -26,7 +26,7 @@ export cf_api=xxxxxx
 ##################################
 # GOOGLE AUTH
 # utilisation de google auth ? (1 pour oui, 0 pour non)
-export use_goauth =0
+export use_goauth=0
 # Google Oauth Client (pris en compte si use_goauth=1)
 export oauth_client=oauth_client
 # Google Secret (pris en compte si use_goauth=1)

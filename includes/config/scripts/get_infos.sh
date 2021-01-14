@@ -13,9 +13,7 @@ source ${BASEDIR}/includes/functions.sh
 source ${BASEDIR}/includes/variables.sh
 
 echo -e "${BLUE}### INFORMATIONS UTILISATEURS ###${NC}"
-#mkdir -p $CONFDIR/variables
-create_dir ${CONFDIR}/variables
-cp ${BASEDIR}/includes/config/account.yml ${CONFDIR}/variables/account.yml
+
 ACCOUNT=${CONFDIR}/variables/account.yml
 
 grep "sub" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
