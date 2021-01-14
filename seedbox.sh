@@ -6,10 +6,6 @@ CURRENT_SCRIPT=$(readlink -f "$0")
 export SCRIPTPATH=$(dirname "$CURRENT_SCRIPT")
 cd ${SCRIPTPATH}
 
-# on commence à tout loguer
-exec &> >(tee ${SCRIPTPATH}/logs/seedbox.log)
-
-
 
 # shellcheck source=${BASEDIR}/includes/functions.sh
 source "${SCRIPTPATH}/includes/functions.sh"
