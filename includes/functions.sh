@@ -1836,7 +1836,6 @@ function choose_media_folder_plexdrive() {
 	# Attention, là on ne va pas créer de /home/$SEEDUSER, on reste sur le user qui a lancé l'install
 	echo -e "${BLUE}### DOSSIERS MEDIAS ###${NC}"
 	FOLDER="/mnt/rclone/${USER}"
-	MEDIASPERUSER="$MEDIASUSER${USER}"
 	
 	# si le dossier /mnt/rclone/user n'est pas vide
 	mkdir -p ${HOME}/Medias
@@ -1864,7 +1863,6 @@ function choose_media_folder_plexdrive() {
 		MEDIASTOINSTALL=$(whiptail --title "Gestion des dossiers Medias" --checklist \
 		"Medias à ajouter pour $SEEDUSER (Barre espace pour la sélection)" 28 60 17 \
 		$(cat /tmp/menumedia.txt) 3>&1 1>&2 2>&3)
-		MEDIASPERUSER="$MEDIASUSER${USER}"
 		touch $MEDIASPERUSER
 		for MEDDOCKER in $MEDIASTOINSTALL
 		do
@@ -2121,7 +2119,6 @@ decompte() {
 }
 
 function replace_media_compose() {
-	MEDIASPERUSER="$MEDIASUSER$SEEDUSER"
 	if [[ -e "$MEDIASPERUSER" ]]; then
 		FILMS=$(grep -E 'Films' $MEDIASPERUSER)
 		SERIES=$(grep -E 'Series' $MEDIASPERUSER)
