@@ -54,4 +54,9 @@ if [[ -d "${HOME}/.local" ]]
 then
  chown -R ${SUDO_USER}: "${HOME}/.local"
 fi
+if [[ -d "${HOME}/.ansible" ]]
+then
+ chown -R ${SUDO_USER}: "${HOME}/.ansible"
+fi
+chown -R ${SUDO_USER} logs/
 touch ${SCRIPTPATH}/.prerequis.lock
