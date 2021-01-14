@@ -44,4 +44,10 @@ echo "Vous pourrez ensuite lancer "
 echo "cd /opt/seedbox-compose"
 echo "./seedbox.sh "
 echo "pour installer la seedbox"
+
+# On met à jour les droits si besoin
+if [ ! -f ${HOME}/.cache ]
+then
+ chown -R ${SUDO_USER}: ${HOME}/.cache
+fi
 touch ${SCRIPTPATH}/.prerequis.lock
