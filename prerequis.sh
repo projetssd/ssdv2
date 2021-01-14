@@ -46,8 +46,12 @@ echo "./seedbox.sh "
 echo "pour installer la seedbox"
 
 # On met à jour les droits si besoin
-if [ -f ${HOME}/.cache ]
+if [ -d ${HOME}/.cache ]
 then
  chown -R ${SUDO_USER}: ${HOME}/.cache
+fi
+if [ -d ${HOME}/.local ]
+then
+ chown -R ${SUDO_USER}: ${HOME}/.local
 fi
 touch ${SCRIPTPATH}/.prerequis.lock
