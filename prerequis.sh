@@ -46,11 +46,11 @@ echo "./seedbox.sh "
 echo "pour installer la seedbox"
 
 # On met à jour les droits si besoin
-if [[] -d "${HOME}/.cache" ]]
+if [[ -d "${HOME}/.cache" ]]
 then
  chown -R ${SUDO_USER}: "${HOME}/.cache"
 fi
-if [[] -d "${HOME}/.local" ]]
+if [[ -d "${HOME}/.local" ]]
 then
  chown -R ${SUDO_USER}: "${HOME}/.local"
 fi
