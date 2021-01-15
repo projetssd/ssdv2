@@ -2701,6 +2701,9 @@ function premier_lancement()
 {
 
   echo "Certains composants doivent encore être installés/réglés"
+  echo "########################################"
+  echo "# DEBUG : DEBUT DE PREMIER LANCEMENT "
+  echo "########################################"
   if [ $mode_install = "manuel" ]
   then
       read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
@@ -2776,7 +2779,10 @@ EOF
   ##################################################
   # Account.yml
   mkdir -p ${CONFDIR}/variables
-  cp ${BASEDIR}/includes/config/account.yml ${CONFDIR}/variables/account.yml
+  cp /opt/seedbox-compose/includes/config/account.yml ${CONFDIR}/variables/account.yml
+  echo "########################################"
+  echo "# DEBUG : FIN DE PREMIER LANCEMENT "
+  echo "########################################"
   
 }
 
