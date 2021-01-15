@@ -1583,8 +1583,7 @@ function auth() {
 
 function define_parameters() {
 	echo -e "${BLUE}### INFORMATIONS UTILISATEURS ###${NC}"
-	mkdir -p ${CONFDIR}/variables
-	cp ${BASEDIR}/includes/config/account.yml ${CONFDIR}/variables/account.yml
+	
 	create_user
 	CONTACTEMAIL=$(whiptail --title "Adresse Email" --inputbox \
 	"Merci de taper votre adresse Email :" 7 50 3>&1 1>&2 2>&3)
@@ -1599,9 +1598,6 @@ function define_parameters() {
 function create_user_non_systeme() {
 	# nouvelle version de define_parameters()
 	echo -e "${BLUE}### INFORMATIONS UTILISATEURS ###${NC}"
-
-	create_dir ${CONFDIR}/variables
-	cp ${BASEDIR}/includes/config/account.yml ${CONFDIR}/variables/account.yml
 
 	SEEDUSER=$(whiptail --title "Administrateur" --inputbox \
 		"Nom d'Administrateur de la Seedbox :" 7 50 3>&1 1>&2 2>&3)
@@ -2770,6 +2766,18 @@ EOF
   # on ajoute le PATH qui va bien, au cas où il ne soit pas pris en compte par le ~/.profile
   export PATH="$HOME/.local/bin:$PATH"
   export CONFDIR=/opt/seedbox
+  ################################################
+  # on vérifie qu'il y ait un vault pass existant
+  # Sinon ansible va râler au lancement
+  # Le password sera bien sur écrasé plus tard
+  if [ ! -f "${HOME}/.vault_pass" ]; then
+    echo "0" >  ${HOME}/.vault_pass
+  fi
+  ##################################################
+  # Account.yml
+  mkdir -p ${CONFDIR}/variables
+  cp ${BASEDIR}/includes/config/account.yml ${CONFDIR}/variables/account.yml
+  
 }
 
 function usage() {
