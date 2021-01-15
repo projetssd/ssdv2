@@ -288,7 +288,7 @@ function check_dir() {
 }
 
 function script_classique() {
-	if [[ -d "${CONFIDR}" ]]; then
+	if [[ -d "${CONFDIR}" ]]; then
 	clear
 
 	# Vérification installation modt
@@ -563,7 +563,7 @@ function insert_mod() {
 }
 
 function script_plexdrive() {
-	if [[ -d "${CONFIDR}" ]]; then
+	if [[ -d "${CONFDIR}" ]]; then
 	clear
 
 	# Vérification installation modt
@@ -1583,7 +1583,7 @@ function auth() {
 
 function define_parameters() {
 	echo -e "${BLUE}### INFORMATIONS UTILISATEURS ###${NC}"
-	mkdir -p ${CONFIDR}/variables
+	mkdir -p ${CONFDIR}/variables
 	cp ${BASEDIR}/includes/config/account.yml ${CONFDIR}/variables/account.yml
 	create_user
 	CONTACTEMAIL=$(whiptail --title "Adresse Email" --inputbox \
@@ -1910,21 +1910,21 @@ function install_services() {
 		else
 			# On est dans le cas générique
 			# on regarde s'i y a un playbook existant
-			if [[ -f "${CONFIDR}/conf/${line}.yml" ]]; then
+			if [[ -f "${CONFDIR}/conf/${line}.yml" ]]; then
 				# il y a déjà un playbook "perso", on le lance
-				ansible-playbook "${CONFIDR}/conf/${line}.yml"
-			elif [[ -f "${CONFIDR}/vars/${line}.yml" ]]; then
+				ansible-playbook "${CONFDIR}/conf/${line}.yml"
+			elif [[ -f "${CONFDIR}/vars/${line}.yml" ]]; then
 				# il y a des variables persos, on les lance
 				ansible-playbook "${BASEDIR}/includes/dockerapps/generique.yml" --extra-vars "@${CONFDIR}/vars/${line}.yml"
 			elif [[ -f "${BASEDIR}/includes/dockerapps/${line}.yml" ]]; then
 				# pas de playbook perso ni de vars perso
 				# Il y a un playbook spécifique pour cette appli, on le copie
-				cp "${BASEDIR}/includes/dockerapps/${line}.yml" "${CONFIDR}/conf/${line}.yml" 
+				cp "${BASEDIR}/includes/dockerapps/${line}.yml" "${CONFDIR}/conf/${line}.yml" 
         		# puis on le lance
 				ansible-playbook "${CONFDIR}/conf/${line}.yml"
 			else
 				# on copie les variables pour le user
-				cp "${BASEDIR}/includes/dockerapps/vars/${line}.yml" "${CONFIDR}/vars/${line}.yml" 
+				cp "${BASEDIR}/includes/dockerapps/vars/${line}.yml" "${CONFDIR}/vars/${line}.yml" 
 				# puis on lance le générique avec ce qu'on vient de copier
 				ansible-playbook ${BASEDIR}/includes/dockerapps/generique.yml --extra-vars "@${CONFDIR}/vars/${line}.yml"
 
@@ -2273,7 +2273,7 @@ function manage_apps() {
                         sed -i "/$APPSELECTED/d" /home/$SEEDUSER/resume > /dev/null 2>&1
 			docker rm -f "$APPSELECTED" > /dev/null 2>&1
 			rm -rf ${CONFDIR}/docker/$SEEDUSER/$APPSELECTED
-			rm ${CONFIDR}/conf/$APPSELECTED.yml > /dev/null 2>&1
+			rm ${CONFDIR}/conf/$APPSELECTED.yml > /dev/null 2>&1
                         echo "0" > ${CONFDIR}/status/$APPSELECTED
 
                         case $APPSELECTED in
@@ -2619,7 +2619,7 @@ function uninstall_seedbox() {
 	checking_errors $?
 
 	echo -e " ${BWHITE}* Supression du dossier ${CONFDIR}...${NC}"
-	rm -Rf ${CONFIDR}
+	rm -Rf ${CONFDIR}
 	checking_errors $?
 	pause
 }
