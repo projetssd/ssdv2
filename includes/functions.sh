@@ -1910,21 +1910,21 @@ function install_services() {
 		else
 			# On est dans le cas générique
 			# on regarde s'i y a un playbook existant
-			if [ -e "${CONFIDR}/conf/${line}.yml" ]; then
+			if [[ -f "${CONFIDR}/conf/${line}.yml" ]]; then
 				# il y a déjà un playbook "perso", on le lance
 				ansible-playbook "${CONFIDR}/conf/${line}.yml"
-			elif [ -e "${CONFIDR}/vars/${line}.yml" ]; then
+			elif [[ -f "${CONFIDR}/vars/${line}.yml" ]]; then
 				# il y a des variables persos, on les lance
 				ansible-playbook "${BASEDIR}/includes/dockerapps/generique.yml" --extra-vars "@${CONFDIR}/vars/${line}.yml"
-			elif [ -e "${BASEDIR}/includes/dockerapps/${line}.yml" ]; then
+			elif [[ -f "${BASEDIR}/includes/dockerapps/${line}.yml" ]]; then
 				# pas de playbook perso ni de vars perso
 				# Il y a un playbook spécifique pour cette appli, on le copie
-				cp "${BASEDIR}/includes/dockerapps/${line}.yml" "${CONFIDR}/conf/" > /dev/null 2>&1
-        # puis on le lance
+				cp "${BASEDIR}/includes/dockerapps/${line}.yml" "${CONFIDR}/conf/${line}.yml" 
+        		# puis on le lance
 				ansible-playbook "${CONFDIR}/conf/${line}.yml"
 			else
 				# on copie les variables pour le user
-				cp "${BASEDIR}/includes/dockerapps/vars/${line}.yml" "${CONFIDR}/vars/" > /dev/null 2>&1
+				cp "${BASEDIR}/includes/dockerapps/vars/${line}.yml" "${CONFIDR}/vars/${line}.yml" 
 				# puis on lance le générique avec ce qu'on vient de copier
 				ansible-playbook ${BASEDIR}/includes/dockerapps/generique.yml --extra-vars "@${CONFDIR}/vars/${line}.yml"
 
