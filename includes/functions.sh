@@ -2778,7 +2778,8 @@ EOF
   fi
   ##################################################
   # Account.yml
-  mkdir -p ${CONFDIR}/variables
+  create_dir ${CONFDIR}
+  create_dir ${CONFDIR}/variables
   cp /opt/seedbox-compose/includes/config/account.yml ${CONFDIR}/variables/account.yml
   echo "########################################"
   echo "# DEBUG : FIN DE PREMIER LANCEMENT "
