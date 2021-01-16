@@ -150,7 +150,7 @@
 
     # CLOUDPROXY CONFIG ################################################
 
-    - name: 'Deploying cloudproxy'
+    - name: 'Deploying flaresolverr'
       docker_container:
         name: 'cloudproxy'
         image: 'flaresolverr/flaresolverr'
