@@ -1,0 +1,15 @@
+---
+pgrole: 'bookstack'
+intport: '80'
+image: 'linuxserver/bookstack'
+pg_volumes:
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  DB_HOST: "db-{{ pgrole }}"
+  DB_USER: "{{ pgrole }}"
+  DB_PASS: "{{ pgrole }}"
+  DB_DATABASE: "{{ pgrole }}"
+  APP_URL: "http://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{user.domain}}"

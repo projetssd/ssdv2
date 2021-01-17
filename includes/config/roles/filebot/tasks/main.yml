@@ -60,15 +60,6 @@
       when:
         - filebot.stat.exists == False
 
-    - name: Set update-filebot.sh as executable
-      file:
-        path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.filebot/update-filebot.sh "
-        owner: "{{ lookup('env','USER') }}"
-        group: "{{lookup('env','MYGID')}}"
-        mode: a+x
-      when:
-        - filebot.stat.exists == False
-
     - name: Set cron
       cron: 
         name: "filebot"

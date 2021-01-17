@@ -136,10 +136,6 @@
       shell: pip install glances[action,browser,cloud,cpuinfo,docker,folders,gpu,graph,ip,raid,snmp,web]
       tags: glances
 
-    - name: Uninstall cryptography
-      shell: pip uninstall -y cryptography
-      tags: glances
-
     - name: "Hetzner Tasks"
       import_tasks: "subtasks/hetzner.yml"
       tags: kernel-hetzner

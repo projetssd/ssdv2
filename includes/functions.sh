@@ -1335,6 +1335,11 @@ function create_dir() {
 	--extra-vars '{"DIRECTORY":"'${1}'"}'
 }
 
+function create_file() {
+	ansible-playbook ${BASEDIR}/includes/config/playbooks/create_file.yml \
+	--extra-vars '{"DIRECTORY":"'${1}'"}'
+}
+
 function conf_dir() {
 	create_dir ${CONFDIR}
 }
@@ -1889,6 +1894,8 @@ function install_services() {
 		mkdir -p ${CONFDIR}/vars > /dev/null 2>&1
 	fi
 
+      create_file ${CONFDIR}/temp.txt
+
 	## préparation installation
 	for line in $(cat $SERVICESPERUSER);
 	do
@@ -2254,15 +2261,15 @@ function manage_apps() {
 			[[ "$?" = 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi;
 			echo -e " ${GREEN}   * $APPSELECTED${NC}"
 
-                        grep "$APPSELECTED: ." ${BASEDIR}/variables/account.yml > /dev/null 2>&1
+                        grep "$APPSELECTED: ." ${CONFDIR}/variables/account.yml > /dev/null 2>&1
                         if [ $? -eq 0 ]; then
-                          SUBDOMAIN=$(grep "$APPSELECTED: ." ${BASEDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
-                          sed -i "/$SUBDOMAIN/,+2d" ${BASEDIR}/variables/account.yml > /dev/null 2>&1
+                          SUBDOMAIN=$(grep "$APPSELECTED: ." ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
+                          sed -i "/$SUBDOMAIN/,+2d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
                         fi
 
-                        grep "$APPSELECTED:" ${BASEDIR}/variables/account.yml > /dev/null 2>&1
+                        grep "$APPSELECTED:" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
                         if [ $? -eq 0 ] || [ "$APPSELECTED" != "plex" ] ; then
-                          sed -i "/$APPSELECTED/,+1d" ${BASEDIR}/variables/account.yml > /dev/null 2>&1
+                          sed -i "/$APPSELECTED/,+1d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
                         fi
 
                         sed -i "/$APPSELECTED/d" ${CONFDIR}/resume > /dev/null 2>&1
@@ -2270,6 +2277,7 @@ function manage_apps() {
 			docker rm -f "$APPSELECTED" > /dev/null 2>&1
 			rm -rf ${CONFDIR}/docker/$SEEDUSER/$APPSELECTED
 			rm ${CONFDIR}/conf/$APPSELECTED.yml > /dev/null 2>&1
+			rm ${CONFDIR}/vars/$APPSELECTED.yml > /dev/null 2>&1
                         echo "0" > ${CONFDIR}/status/$APPSELECTED
 
                         case $APPSELECTED in
@@ -2478,8 +2486,8 @@ function resume_seedbox() {
 	echo ""
 	echo -e " ${BWHITE}* Accès Applis à partir de URL :${NC}"
 	PASSE=$(cat ~/.vault_pass)
-	
-	if [[ -e /opt/temp.txt ]]; then
+
+	if [[ -s ${CONFDIR}/temp.txt ]]; then
 		while read line
 		do
 			for word in ${line}
@@ -2488,7 +2496,7 @@ function resume_seedbox() {
 				DOCKERAPP=$(echo $word | cut -d "-" -f1)
 				echo -e "	--> ${BWHITE}$DOCKERAPP${NC} --> ${YELLOW}$ACCESSDOMAIN${NC}"
 			done
-		done < "/opt/temp.txt"
+		done < "${CONFDIR}/temp.txt"
 	else
 		while read line
 		do
@@ -2509,7 +2517,7 @@ function resume_seedbox() {
 	echo ""
 	
 	rm -Rf $SERVICESPERUSER > /dev/null 2>&1
-	rm /opt/temp.txt > /dev/null 2>&1
+	rm ${CONFDIR}/temp.txt > /dev/null 2>&1
 	ansible-vault encrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 }
 

@@ -7,6 +7,5 @@ pg_volumes:
   - "{{ lookup('env','HOME') }}}/Medias/Musiques:/music:ro"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:
-  -PUID="{{ lookup('env','MYUID') }}"
-  -PGID="{{ lookup('env','MYGID') }}"
-  -TZ: 'Europe/Paris'
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"

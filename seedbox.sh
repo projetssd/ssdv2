@@ -232,9 +232,9 @@ then
         # stocké dans account.yml
         subdomain
         # On choisit le mode d'authentification, basqiue, oauth, authelia
-      # stoké dans account.yml
-      auth
-      #Installation de tous les services
+        # stoké dans account.yml
+        auth
+        #Installation de tous les services
         install_services
         # Mise à jour de plex, ajout des librairies
 
@@ -245,8 +245,6 @@ then
           fi
         done
 
-        # choix des applis à installer
-        projects
         # Installation de filebot
         # TODO : à laisser ? Ou à mettre dans les applis ?
 

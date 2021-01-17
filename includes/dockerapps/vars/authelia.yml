@@ -8,5 +8,5 @@ pg_volumes:
   - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/users_database.yml:/etc/authelia/users_database.yml"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:
-  PUID: "{{ lookup('env','MYGID') }}"
+  PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
