@@ -227,7 +227,7 @@ then
         pause
         # Choix des services à installer
         # Jusque là, on ne fait que les choisir, et les stocker dans un fichier texte
-        choose_services
+        #choose_services
         # On choisit les sous domaines pour les services installés précédemment
         # stocké dans account.yml
         subdomain
@@ -235,15 +235,15 @@ then
         # stoké dans account.yml
         auth
         #Installation de tous les services
-        install_services
+        #install_services
         # Mise à jour de plex, ajout des librairies
 
-        for i in $(docker ps --format "{{.Names}}")
-        do
-          if [[ "$i" == "plex" ]]; then
-            plex_sections
-          fi
-        done
+        #for i in $(docker ps --format "{{.Names}}")
+        #do
+        #  if [[ "$i" == "plex" ]]; then
+        #    plex_sections
+        #  fi
+        #done
 
         # Installation de filebot
         # TODO : à laisser ? Ou à mettre dans les applis ?
