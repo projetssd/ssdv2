@@ -248,7 +248,7 @@ then
         # Installation de filebot
         # TODO : à laisser ? Ou à mettre dans les applis ?
 
-        filebot
+        #filebot
         # mise en place de la sauvegarde
         sauve
         # Affichage du résumé
