@@ -10,6 +10,8 @@
       private: no
   vars_files:
     - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
+    - "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/generique.yml"
+
   tasks:
 
     - name: create varken state
@@ -97,71 +99,17 @@
         msg: '{{ tautulli.stdout }}'
       when: tautulli_config.stat.exists
 
-
-    # FACTS #######################################################################
-
-    - name: "Variables | Set 'cloudflare_enabled' variable"
-      set_fact:
-        cloudflare_enabled: "{{ true if not(
-            (cloudflare.login is undefined)
-            or
-            (cloudflare.login is none)
-            or
-            (cloudflare.login | trim | length == 0)
-            or
-            (cloudflare.api is undefined)
-            or
-            (cloudflare.api is none)
-            or
-            (cloudflare.api | trim | length == 0)
-          )
-            else false }}"
-
-    - name: "Variables | Set 'oauth_enabled' variable"
-      set_fact:
-        oauth_enabled: "{{ true if not(
-            (oauth.client is undefined)
-            or
-            (oauth.client is none)
-            or
-            (oauth.client | trim | length == 0)
-            or
-            (oauth.secret is undefined)
-            or
-            (oauth.secret is none)
-            or
-            (oauth.secret | trim | length == 0)
-            or
-            (oauth.account is undefined)
-            or
-            (oauth.account is none)
-            or
-            (oauth.account | trim | length == 0)
-          )
-            else false }}"
-
-    - name: "Variables | Set 'sub' variable"
-      set_fact:
-        sub_enabled: "{{ true if not(
-            (sub.grafana is undefined)
-            or
-            (sub.grafana is none)
-            or
-            (sub.grafana | trim | length == 0)
-          )
-            else false }}"
-
-    - name: "Set DNS Record on CloudFlare"
-      include_tasks:" {{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
-      vars:
-        subdomain: "{{sub.grafana if sub_enabled else 'grafana'}}"
-      when: cloudflare_enabled
-
     - name: 'Set Known Facts'
       set_fact:
         pgrole: 'grafana'
         intport: '3000'
         image: 'grafana/grafana'
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
+      vars:
+        subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
+      when: cloudflare_enabled
 
     - name: Creating paths
       file: "path={{item}} state=directory mode=0775 owner=472 group=104"
@@ -175,10 +123,8 @@
           traefik.enable: 'true'
           ## HTTP Routers
           traefik.http.routers.grafana-rtr.entrypoints: 'https'
-          traefik.http.routers.grafana-rtr.rule: 'Host(`{{sub.grafana if sub_enabled else pgrole}}.{{user.domain}}`)'
+          traefik.http.routers.grafana-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.grafana-rtr.tls: 'true'
-          ## Middlewares
-          #traefik.http.routers.grafana-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
           ## HTTP Services
           traefik.http.routers.grafana-rtr.service: 'grafana-svc'
           traefik.http.services.grafana-svc.loadbalancer.server.port: '3000'
@@ -371,8 +317,9 @@
         labels: '{{grafana_labels}}'
 
     - name: add resume file
+      become: true
       shell: |
-        echo "{{pgrole}}-{{sub.grafana if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+        echo "{{pgrole}}-{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> {{ lookup('env','CONFDIR') }}/temp.txt
 
     - name: create varken state
       shell: |

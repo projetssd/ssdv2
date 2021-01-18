@@ -5,6 +5,8 @@
   gather_facts: false
   vars_files:
     - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
+    - "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/generique.yml"
+
   tasks:
         
     # FACTS #######################################################################
@@ -18,72 +20,21 @@
         path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/authelia/configuration.yml"
       register: check
 
-    - name: "Variables | Set 'cloudflare_enabled' variable"
+    - name: 'Set Known Facts'
       set_fact:
-        cloudflare_enabled: "{{ true if not(
-            (cloudflare.login is undefined)
-            or
-            (cloudflare.login is none)
-            or
-            (cloudflare.login | trim | length == 0)
-            or
-            (cloudflare.api is undefined)
-            or
-            (cloudflare.api is none)
-            or
-            (cloudflare.api | trim | length == 0)
-          )
-            else false }}"
+        pgrole: 'bitwarden'
+        image: 'bitwardenrs/server:latest'
 
-    - name: "Variables | Set 'oauth_enabled' variable"
-      set_fact:
-        oauth_enabled: "{{ true if not(
-            (oauth.client is undefined)
-            or
-            (oauth.client is none)
-            or
-            (oauth.client | trim | length == 0)
-            or
-            (oauth.secret is undefined)
-            or
-            (oauth.secret is none)
-            or
-            (oauth.secret | trim | length == 0)
-            or
-            (oauth.account is undefined)
-            or
-            (oauth.account is none)
-            or
-            (oauth.account | trim | length == 0)
-          )
-            else false }}"
-
-    - name: "Variables | Set 'sub' variable"
-      set_fact:
-        sub_enabled: "{{ true if not(
-            (sub.bitwarden is undefined)
-            or
-            (sub.bitwarden is none)
-            or
-            (sub.bitwarden | trim | length == 0)
-          )
-            else false }}"
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
+      vars:
+        subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
+      when: cloudflare_enabled
 
     - name: Create bw-net network
       docker_network:
         name: bw-net
         state: present
-
-    - name: "Set DNS Record on CloudFlare"
-      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
-      vars:
-        subdomain: "{{sub.bitwarden if sub_enabled else 'bitwarden'}}"
-      when: cloudflare_enabled
-
-    - name: 'Set Known Facts'
-      set_fact:
-        pgrole: 'bitwarden'
-        image: 'bitwardenrs/server:latest'
 
     - name: Creating paths
       file: "path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}"
@@ -97,7 +48,7 @@
           traefik.enable: 'true'
           ## HTTP Routers
           traefik.http.routers.bitwarden-rtr.entrypoints: 'https'
-          traefik.http.routers.bitwarden-rtr.rule: 'Host(`{{sub.bitwarden if sub_enabled else pgrole}}.{{user.domain}}`)'
+          traefik.http.routers.bitwarden-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.bitwarden-rtr.priority: '1'
           traefik.http.routers.bitwarden-rtr.tls: 'true'
           ## HTTP Services
@@ -105,14 +56,14 @@
           traefik.http.services.bitwarden-svc.loadbalancer.server.port: '80'
           ## Bitwarden WebSocket
           traefik.http.routers.bitwardenHub-rtr.entrypoints: 'https'
-          traefik.http.routers.bitwardenHub-rtr.rule: '(Host(`{{sub.bitwarden if sub_enabled else pgrole}}.{{user.domain}}`) && Path(`/notifications/hub`))'
+          traefik.http.routers.bitwardenHub-rtr.rule: '(Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`) && Path(`/notifications/hub`))'
           traefik.http.routers.bitwardenHub-rtr.priority: '2'
           traefik.http.routers.bitwardenHub-rtr.tls: 'true'
           traefik.http.routers.bitwardenHub-rtr.service: 'bitwardenHub-svc'
           traefik.http.services.bitwardenHub-svc.loadbalancer.server.port: '3012'
 #         ## Admin Page - Used when DISABLE_ADMIN_TOKEN=true above
           traefik.http.routers.bitwardenAdmin-rtr.entrypoints: 'https'
-          traefik.http.routers.bitwardenAdmin-rtr.rule: '(Host(`{{sub.bitwarden if sub_enabled else pgrole}}.{{user.domain}}`) && Path(`/admin`))'
+          traefik.http.routers.bitwardenAdmin-rtr.rule: '(Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`) && Path(`/admin`))'
           traefik.http.routers.bitwardenAdmin-rtr.priority: '3'
           traefik.http.routers.bitwardenAdmin-rtr.tls: 'true'
           traefik.http.routers.bitwardenAdmin-rtr.service: 'bitwarden-svc'
@@ -195,8 +146,9 @@
         state: started
 
     - name: add resume file
+      become: true
       shell: |
-        echo "{{pgrole}}-{{sub.bitwarden if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+        echo "{{pgrole}}-{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> {{ lookup('env','CONFDIR') }}/temp.txt
 
     - name: create bitwarden state
       shell: |

@@ -1,0 +1,21 @@
+---
+- name: Creating paths
+  file: 
+    path: "/home/{{ lookup('env','USER') }}/local/images"
+    state: directory
+    mode: "0776"
+
+- name: 'Touch php.ini'
+  file:
+    path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/chevereto-php.ini"
+    state: touch
+
+- name: 'Insert php.ini'
+  blockinfile:
+    path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/chevereto-php.ini"
+    block: |
+      file_uploads = On
+      memory_limit = 256M
+      upload_max_filesize = 100M
+      post_max_size = 100M
+      max_execution_time = 600

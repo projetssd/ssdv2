@@ -1,0 +1,14 @@
+---
+pgrole: 'chevereto'
+intport: '80'
+image: 'nmtan/chevereto:latest'
+pg_volumes:
+  - "/home/{{ lookup('env','USER') }}/local/images:/var/www/html/images:rw"
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/chevereto-php.ini:/usr/local/etc/php/conf.d/chevereto-php.ini"
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  CHEVERETO_DB_HOST: "db-{{ pgrole }}"
+  CHEVERETO_DB_USERNAME: "{{ pgrole }}"
+  CHEVERETO_DB_PASSWORD: "{{ pgrole }}"
+  CHEVERETO_DB_NAME: "{{ pgrole }}"
+  CHEVERETO_DB_PREFIX: "chv_"
