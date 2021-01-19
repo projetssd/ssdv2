@@ -3,7 +3,6 @@ RCLONE_CONFIG_FILE=${HOME}/.config/rclone/rclone.conf
 source /opt/seedbox-compose/includes/variables.sh
 
 TMPDIR=$(mktemp -d)
-create_dir ${TMPDIR}
 
 create_dir ${HOME}/.config/rclone
 touch ${RCLONE_CONFIG_FILE}
