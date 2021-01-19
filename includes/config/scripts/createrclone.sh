@@ -2,9 +2,10 @@
 RCLONE_CONFIG_FILE=${HOME}/.config/rclone/rclone.conf
 source /opt/seedbox-compose/includes/variables.sh
 
-mkdir -p /var/rclone > /dev/null 2>&1
-rm /var/rclone/* > /dev/null 2>&1
-mkdir -p {{ lookup('env','HOME') }}/.config/rclone > /dev/null 2>&1
+TMPDIR=$(mktemp -d)
+create_dir ${TMPDIR}
+
+create_dir ${HOME}/.config/rclone
 touch ${RCLONE_CONFIG_FILE}
 
 echo ""
@@ -28,11 +29,11 @@ SECRET ID
 $secretid
 ${CEND}"
 
-echo "$clientid" > /var/rclone/pgclone.public
-echo "$secretid" > /var/rclone/pgclone.secret
+echo "$clientid" > ${TMPDIR}/pgclone.public
+echo "$secretid" > ${TMPDIR}/pgclone.secret
 
-pgclonepublic=$(cat /var/rclone/pgclone.public)
-pgclonesecret=$(cat /var/rclone/pgclone.secret)
+pgclonepublic=$(cat ${TMPDIR}/pgclone.public)
+pgclonesecret=$(cat ${TMPDIR}/pgclone.secret)
 
 echo -e "${BLUE}-------------------------------------------------------------------${CEND}"
 echo -e "${CGREEN} 🚀 Création du Shared Drive ~ https://github.com/laster13/patxav${CEND}"
@@ -40,8 +41,8 @@ echo -e "${BLUE}----------------------------------------------------------------
 
 echo ""
 read -p $'\e[36m↘️ Quel nom souhaitez vous donner à votre Share Drive | Appuyer sur [Enter]? \e[0m' nom < /dev/tty
-echo "$nom" > /var/rclone/pgclone.nom
-nom=$(cat /var/rclone/pgclone.nom)
+echo "$nom" > ${TMPDIR}/pgclone.nom
+nom=$(cat ${TMPDIR}/pgclone.nom)
 
 echo ""
 
@@ -53,11 +54,11 @@ echo ""
 
 read -p $'\e[36m↘️ Coller le Token | Appuyer sur [Enter]: \e[0m' token < /dev/tty
 
-curl --request POST --data "code=$token&client_id=$pgclonepublic&client_secret=$pgclonesecret&redirect_uri=urn:ietf:wg:oauth:2.0:oob&grant_type=authorization_code" https://accounts.google.com/o/oauth2/token > /var/rclone/pgclone.info
+curl --request POST --data "code=$token&client_id=$pgclonepublic&client_secret=$pgclonesecret&redirect_uri=urn:ietf:wg:oauth:2.0:oob&grant_type=authorization_code" https://accounts.google.com/o/oauth2/token > ${TMPDIR}/pgclone.info
 
-accesstoken=$(cat /var/rclone/pgclone.info | grep access_token | awk '{print $2}')
-ramdom=$(head /dev/urandom | tr -dc A-Za-z | head -c 8 > /var/rclone/pgclone.chaine)
-chaine=$(cat /var/rclone/pgclone.chaine)
+accesstoken=$(cat ${TMPDIR}/pgclone.info | grep access_token | awk '{print $2}')
+ramdom=$(head /dev/urandom | tr -dc A-Za-z | head -c 8 > ${TMPDIR}/pgclone.chaine)
+chaine=$(cat ${TMPDIR}/pgclone.chaine)
 
   curl --request POST \
     "https://www.googleapis.com/drive/v3/teamdrives?requestId='$chaine" \
@@ -65,17 +66,17 @@ chaine=$(cat /var/rclone/pgclone.chaine)
     --header 'Accept: application/json' \
     --header 'Content-Type: application/json' \
     --data '{"name":"'$nom'","backgroundImageLink":"https://pgblitz.com/styles/io_dark/images/pgblitz4.png"}' \
-    --compressed > /var/rclone/teamdrive.output
+    --compressed > ${TMPDIR}/teamdrive.output
 
 #####################
-secret=$(cat /var/rclone/pgclone.secret)
-public=$(cat /var/rclone/pgclone.public)
-cat /var/rclone/teamdrive.output | grep "id" | awk '{ print $2 }' | cut -c2- | rev | cut -c3- | rev > /var/rclone/teamdrive.id
-cat /var/rclone/teamdrive.output | grep "name" | awk '{ print $2 }' | cut -c2- | rev | cut -c2- | rev > /var/rclone/teamdrive.name
-name=$(sed -n ${typed}p /var/rclone/teamdrive.name)
-id=$(sed -n ${typed}p /var/rclone/teamdrive.id)
-echo "$name" > /var/rclone/pgclone.teamdrive
-echo "$id" > /var/rclone/pgclone.teamid
+secret=$(cat ${TMPDIR}/pgclone.secret)
+public=$(cat ${TMPDIR}/pgclone.public)
+cat ${TMPDIR}/teamdrive.output | grep "id" | awk '{ print $2 }' | cut -c2- | rev | cut -c3- | rev > ${TMPDIR}/teamdrive.id
+cat ${TMPDIR}/teamdrive.output | grep "name" | awk '{ print $2 }' | cut -c2- | rev | cut -c2- | rev > ${TMPDIR}/teamdrive.name
+name=$(sed -n ${typed}p ${TMPDIR}/teamdrive.name)
+id=$(sed -n ${typed}p ${TMPDIR}/teamdrive.id)
+echo "$name" > ${TMPDIR}/pgclone.teamdrive
+echo "$id" > ${TMPDIR}/pgclone.teamid
 #####################
 
 echo ""
@@ -119,8 +120,8 @@ Primary: $primarypassword
 SALT   : $secondarypassword
 ${CEND}"
 
-echo $primarypassword > /var/rclone/pgclone.password
-echo $secondarypassword > /var/rclone/pgclone.salt
+echo $primarypassword > ${TMPDIR}/pgclone.password
+echo $secondarypassword > ${TMPDIR}/pgclone.salt
 
 echo -e "${BLUE}-------------------------------------------------------------${CEND}"
 echo -e "${CGREEN} 🌎 Procédure Complète ~ https://github.com/laster13/patxav${CEND}"
@@ -130,8 +131,8 @@ echo ""
 echo -e "${BWHITE}
 💬  Password & SALT sont maintenant actifs, ne les oubliez pas!!${CEND}"
 
-pgclonepublic=$(cat /var/rclone/pgclone.public)
-pgclonesecret=$(cat /var/rclone/pgclone.secret)
+pgclonepublic=$(cat ${TMPDIR}/pgclone.public)
+pgclonesecret=$(cat ${TMPDIR}/pgclone.secret)
 
 echo ""
 
@@ -149,15 +150,15 @@ echo ""
 
 read -p $'\e[36m↘️ Coller le Token | Appuyer sur [Enter]: \e[0m' token < /dev/tty
 
-  curl --request POST --data "code=$token&client_id=$pgclonepublic&client_secret=$pgclonesecret&redirect_uri=urn:ietf:wg:oauth:2.0:oob&grant_type=authorization_code" https://accounts.google.com/o/oauth2/token > /var/rclone/pgclone.info
+  curl --request POST --data "code=$token&client_id=$pgclonepublic&client_secret=$pgclonesecret&redirect_uri=urn:ietf:wg:oauth:2.0:oob&grant_type=authorization_code" https://accounts.google.com/o/oauth2/token > ${TMPDIR}/pgclone.info
 
-  accesstoken=$(cat /var/rclone/pgclone.info | grep access_token | awk '{print $2}')
-  refreshtoken=$(cat /var/rclone/pgclone.info | grep refresh_token | awk '{print $2}')
+  accesstoken=$(cat ${TMPDIR}/pgclone.info | grep access_token | awk '{print $2}')
+  refreshtoken=$(cat ${TMPDIR}/pgclone.info | grep refresh_token | awk '{print $2}')
   rcdate=$(date +'%Y-%m-%d')
   rctime=$(date +"%H:%M:%S" --date="$givenDate 60 minutes")
   rczone=$(date +"%:z")
   final=$(echo "${rcdate}T${rctime}${rczone}")
-  nom=$(cat /var/rclone/pgclone.nom)
+  nom=$(cat ${TMPDIR}/pgclone.nom)
 
 ########################
 
@@ -169,14 +170,14 @@ echo "type = drive" >> ${RCLONE_CONFIG_FILE}
 echo "scope = drive" >> ${RCLONE_CONFIG_FILE}
 echo -n "token = {\"access_token\":${accesstoken}\"token_type\":\"Bearer\",\"refresh_token\":${refreshtoken}\"expiry\":\"${final}\"}" >> ${RCLONE_CONFIG_FILE}
 echo "" >> ${RCLONE_CONFIG_FILE}
-teamid=$(cat /var/rclone/pgclone.teamid)
+teamid=$(cat ${TMPDIR}/pgclone.teamid)
 echo "team_drive = $teamid" >> ${RCLONE_CONFIG_FILE}
 echo ""
 
 ## Ajout du crypt
 
-PASSWORD=`cat /var/rclone/pgclone.password`
-SALT=`cat /var/rclone/pgclone.salt`
+PASSWORD=`cat ${TMPDIR}/pgclone.password`
+SALT=`cat ${TMPDIR}/pgclone.salt`
 ENC_PASSWORD=`rclone obscure "$PASSWORD"`
 ENC_SALT=`rclone obscure "$SALT"`
 crypt="_crypt"
@@ -199,4 +200,4 @@ echo -e "${BLUE}-------------------------------------------------------------${C
 echo -e "${BWHITE}
 💬  [sharedrive] est maintenant créé et opérationnel! le rclone.conf également!${CEND}"
 
-
+rm -rf ${TMPDIR}
