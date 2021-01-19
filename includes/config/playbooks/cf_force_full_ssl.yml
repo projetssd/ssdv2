@@ -18,7 +18,7 @@
       return_content: yes
     register: cf_zone_id
       
-  - name: Froce ssl on the zone
+  - name: Force ssl on the zone
     uri:
       url: "https://api.cloudflare.com/client/v4/zones/{{ (cf_zone_id.content| from_json).result[0].id }}/settings/ssl"
       method: PATCH
