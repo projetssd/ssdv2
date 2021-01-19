@@ -105,7 +105,7 @@ esac
 ################################################
 # TEST ROOT USER
 if [ "$USER" == "root" ]; then
-  if [ "$FORCE_ROOT" == 0]
+  if [ "$FORCE_ROOT" == 0 ]
   then
     echo -e "${CCYAN}-----------------------${CEND}"
     echo -e "${CCYAN}[  Lancement en root  ]${CEND}"
