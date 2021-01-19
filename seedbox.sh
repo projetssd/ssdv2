@@ -255,7 +255,7 @@ then
         #resume_seedbox
         #pause
         ansible-vault encrypt ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-        script_plexdrive
+        #script_plexdrive
         # on marque la seedbox comme installée
         update_seedbox_param "installed" 1
       else
@@ -295,78 +295,61 @@ then
 
     3) ## restauration de la seedbox
 
-      check_dir "$PWD"
-      if [[ ! -d "$CONFDIR" ]]; then
+      #check_dir "$PWD"
+      if [[ ${IS_INSTALLED} -eq 0 ]]; then
         clear
-        echo ""
-        echo -e "${CRED}---------------------------------------------------------------${CEND}"
-        echo -e "${CRED} /!\ ATTENTION : PREPARATION DE LA RESTAURATION DU SERVEUR /!\ ${CEND}"
-        echo -e "${CRED}---------------------------------------------------------------${CEND}"
-        echo ""
+        # on met la timezone
+        #ansible-playbook ${BASEDIR}/includes/config/playbooks/timezone.yml
+        # Dépendances pour ansible (permet de créer le docker network)
+        ansible-galaxy  collection install community.general
+        # on vérifie les droits sur répertoire et bdd
+        make_dir_writable ${BASEDIR}
+        change_file_owner ${BASEDIR}/ssddb
+        # On crée le conf dir (par défaut /opt/seedbox) s'il n'existe pas
         conf_dir
+        # Maj du système
         update_system
+        # On crée le dossier status
+        status
+        # Install des packages de base
         install_base_packages
+        # Install de docker
         install_docker
-        define_parameters
+        #  On part à la pêche aux infos
+        create_user_non_systeme
+        # récup infos cloudflare
+        cloudflare
+        # récup infos oauth
+        oauth
+        # Install de traefik
+        install_traefik
+        # Installation et configuration de rclone
         install_rclone
+        # Install de watchtower
+        install_watchtower
+        # Install fail2ban
         install_fail2ban
+        # Choix des dossiers et création de l'arborescence
+        choose_media_folder_plexdrive
+        unionfs_fuse
         sauve
         restore
-        choose_media_folder_plexdrive
-        rm /etc/systemd/system/mergerfs.service >/dev/null 2>&1
-        unionfs_fuse
-        cloudflare
-        install_traefik
-        install_watchtower
 
-        while read line; do echo $line | cut -d'.' -f1; done <"/home/$SEEDUSER/resume" >"$SERVICESUSER$SEEDUSER"
+        while read line; do echo $line | cut -d'.' -f1; done <"/home/$SEEDUSER/resume" > $SERVICESPERUSER
         rm "/home/$SEEDUSER/resume"
+        subdomain
+        auth
         install_services
 
-        ## restauration plex_dupefinder
-        PLEXDUPE=/home/$SEEDUSER/scripts/plex_dupefinder/plex_dupefinder.py
-        if [[ -e "$PLEXDUPE" ]]; then
-          cd "/home/$SEEDUSER/scripts/plex_dupefinder"
-          python3 -m pip install -r requirements.txt
-        fi
-
-        ## restauration cloudplow
-        CLOUDPLOWSERVICE=/etc/systemd/system/cloudplow.service
-        if [[ -e "$CLOUDPLOWSERVICE" ]]; then
-          cd "/home/$SEEDUSER/scripts/cloudplow"
-          python3 -m pip install -r requirements.txt
-          ln -s /home/$SEEDUSER/scripts/cloudplow/cloudplow.py /usr/local/bin/cloudplow
-          systemctl start cloudplow.service
-        fi
-
-        ## restauration plex_autoscan
-        PLEXSCANSERVICE=/etc/systemd/system/plex_autoscan.service
-        if [[ -e "$PLEXSCANSERVICE" ]]; then
-          cd "/home/$SEEDUSER/scripts/plex_autoscan"
-          python -m pip install -r requirements.txt
-          systemctl start plex_autoscan.service
-        fi
-
-        ## restauration des crons
-        (
-          crontab -l | grep .
-          echo "*/1 * * * * ${CONFDIR}/docker/$SEEDUSER/.filebot/filebot-process.sh"
-        ) | crontab -
-        ln -s "/home/$SEEDUSER/scripts/plex_dupefinder/plex_dupefinder.py" /usr/local/bin/plexdupes
-        rm $SERVICESUSER$SEEDUSER
-        checking_errors $?
-        echo ""
-        echo -e "${CRED}---------------------------------------------------------------${CEND}"
-        echo -e "${CRED}     /!\ RESTAURATION DU SERVEUR EFFECTUEE AVEC SUCCES /!\     ${CEND}"
-        echo -e "${CRED}---------------------------------------------------------------${CEND}"
-        echo ""
-        pause
         ansible-vault encrypt ${CONFDIR}/variables/account.yml >/dev/null 2>&1
+        # on marque la seedbox comme installée
+        update_seedbox_param "installed" 1
         script_plexdrive
       else
         script_plexdrive
       fi
       ;;
+
     9)
       exit 0
       ;;
