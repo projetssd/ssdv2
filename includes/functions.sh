@@ -193,16 +193,6 @@ function motd() {
 			echo ""
 }
 
-function openvpn() {
-			#configuration openvpn
-			echo -e "${BLUE}### OPENVPN Angristan ###${NC}"
-			echo -e " ${BWHITE}* Mise en place Openvpn${NC}"
-			curl -O https://raw.githubusercontent.com/Angristan/openvpn-install/master/openvpn-install.sh
-			chmod +x openvpn-install.sh
-			env AUTO_INSTALL=y ./openvpn-install.sh
-			checking_errors $?
-}
-
 function sauve() {
 	#configuration Sauvegarde
 	echo -e "${BLUE}### BACKUP ###${NC}"
@@ -756,14 +746,8 @@ function script_plexdrive() {
                          echo -e "${CGREEN}   3) Webtools${CEND}"
 			 echo -e "${CGREEN}   4) rtorrent-cleaner de ${CCYAN}@Magicalex-Mondedie.fr${CEND}${NC}"
 			 echo -e "${CGREEN}   5) Plex_Patrol${CEND}"
-			 echo -e "${CGREEN}   6) Modèle Création Appli Personnalisée Docker${CEND}"
-			 if docker ps | grep -q mailserver; then
-                           echo -e "${YELLOW}   7) Desinstaller Mailserver ${CCYAN}@Hardware-Mondedie.fr${CEND}${NC}"
-                         else
-                           echo -e "${CGREEN}   7) Installer Mailserver ${CCYAN}@Hardware-Mondedie.fr${CEND}${NC}"
-                         fi
-                         echo -e "${CGREEN}   8) Bloquer les ports non vitaux avec UFW${CEND}"
-                         echo -e "${CGREEN}   9) Configuration du Backup${CEND}"
+                         echo -e "${CGREEN}   6) Bloquer les ports non vitaux avec UFW${CEND}"
+                         echo -e "${CGREEN}   7) Configuration du Backup${CEND}"
                          echo -e "${CGREEN}   10) Retour menu principal${CEND}"
                          echo -e ""
                          
@@ -816,42 +800,12 @@ function script_plexdrive() {
 			        script_plexdrive
 			        ;;
 
-			        6) ## Modèle création appli docker
-			        clear
-			        echo ""
-			        ${BASEDIR}/includes/config/scripts/docker_create.sh
-			        script_plexdrive
-			        ;;
-
-			        7) ## Installation du mailserver @Hardware
-			        if docker ps | grep -q mailserver; then
-			            echo -e "${BLUE}### DESINSTALLATION DU MAILSERVER ###${NC}"
-			            echo ""
-			            echo -e " ${BWHITE}* désinstallation mailserver @Hardware${NC}"
-			            docker rm -f mailserver postfixadmin mariadb redis rainloop > /dev/null 2>&1
-			            rm -rf /mnt/docker > /dev/null 2>&1
-			            checking_errors $?
-			            echo""
-			            echo -e "${BLUE}### Mailserver a été supprimé ###${NC}"
-			            echo ""
-			        else
-			            echo -e "${BLUE}### INSTALLATION DU MAILSERVER ###${NC}"
-			            echo ""
-			            echo -e " ${BWHITE}* Installation mailserver @Hardware${NC}"
-			            ansible-playbook ${BASEDIR}/includes/config/roles/mailserver/tasks/main.yml
-			            echo ""
-			            echo -e " ${CCYAN}* https://github.com/laster13/patxav/wiki/Configuration-Mailserver-@Hardware${NC}"
-			        fi
-			        pause
-			        script_plexdrive
-			        ;;
-
-			        8)
+			        6)
 			        clear
 			        install_ufw
 			        ;;
 
-			        9)
+			        7)
 			        clear
                                 echo -e " ${BLUE}* Configuration du Backup${NC}"
                                 echo ""
@@ -1358,8 +1312,6 @@ function make_dir_writable() {
 
 }
 
-
-
 function install_base_packages() {
 	echo ""
 	echo -e "${BLUE}### INSTALLATION DES PACKAGES ###${NC}"
@@ -1580,7 +1532,6 @@ function auth() {
 	done
 }
 
-
 function define_parameters() {
 	echo -e "${BLUE}### INFORMATIONS UTILISATEURS ###${NC}"
 	
@@ -1633,7 +1584,6 @@ function create_user_non_systeme() {
 	echo ""
 	return
 }
-
 
 function create_user() {
 		SEEDGROUP=$(whiptail --title "Group" --inputbox \
@@ -1782,41 +1732,6 @@ function choose_other_services() {
 		echo -e "	${GREEN}* $(echo $APPDOCKER | tr -d '"')${NC}"
 		echo $(echo ${APPDOCKER,,} | tr -d '"') >> $SERVICESPERUSER
 	done
-}
-
-
-function webserver() {
-	echo -e "${BLUE}### SERVICES ###${NC}"
-	echo -e " ${BWHITE}--> Services en cours d'installation : ${NC}"
-	for app in $(cat $WEBSERVERAVAILABLE);
-	do
-		service=$(echo $app | cut -d\- -f1)
-		desc=$(echo $app | cut -d\- -f2)
-		echo "$service $desc off" >> /tmp/menuservices.txt
-	done
-	grep 'mariadb' ${CONFDIR}/docker/$SEEDUSER/webserver/resume > /dev/null 2>&1
-	if [[ "$?" == "0" ]]; then
-	   sed -i "/Mariadb/d" /tmp/menuservices.txt
-	fi
-
-	grep 'phpmyadmin' ${CONFDIR}/docker/$SEEDUSER/webserver/resume > /dev/null 2>&1
-	if [[ "$?" == "0" ]]; then
-	   sed -i "/Phpmyadmin/d" /tmp/menuservices.txt
-	fi
-
-	SERVICESTOINSTALL=$(whiptail --title "Gestion Webserver" --checklist \
-	"Applis à ajouter pour $SEEDUSER" 17 54 10 \
-	$(cat /tmp/menuservices.txt) 3>&1 1>&2 2>&3)
-	[[ "$?" = 1 ]] && script_plexdrive;
-
-	touch $SERVICESPERUSER
-	for APPDOCKER in $SERVICESTOINSTALL
-	do
-		echo -e "	${GREEN}* $(echo $APPDOCKER | tr -d '"')${NC}"
-		echo $(echo ${APPDOCKER,,} | tr -d '"') >> $SERVICESPERUSER
-	done
-	echo ""
-	rm /tmp/menuservices.txt
 }
 
 function choose_media_folder_classique() {
@@ -2099,48 +2014,6 @@ decompte() {
     echo -e ""
 }
 
-function replace_media_compose() {
-	if [[ -e "$MEDIASPERUSER" ]]; then
-		FILMS=$(grep -E 'Films' $MEDIASPERUSER)
-		SERIES=$(grep -E 'Series' $MEDIASPERUSER)
-		ANIMES=$(grep -E 'Animes' $MEDIASPERUSER)
-		MUSIC=$(grep -E 'Musiques' $MEDIASPERUSER)
-	fi
-}
-
-function plex_sections() {
-	echo ""
-	##compteur
-	replace_media_compose
-	var="Sections en cours de création, patientez..."
-	PLEXDRIVE="/usr/bin/rclone"
-	if [[ -e "$PLEXDRIVE" ]]; then
-		echo -e "${BLUE}### CREATION DES BIBLIOTHEQUES PLEX ###${NC}"
-		decompte 15
-		
-		## création des bibliothèques plex
-		
-		for x in $(cat $MEDIASPERUSER);
-		do
-			if [[ "$x" == "$ANIMES" ]]; then
-				docker exec plex /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section $x --type 2 --location /data/$x --lang fr
-				echo -e "	${BWHITE}* $x ${NC}"
-			
-			elif [[ "$x" == "$SERIES" ]]; then
-				docker exec plex /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section $x --type 2 --location /data/$x --lang fr
-				echo -e "	${BWHITE}* $x ${NC}"
-			
-			elif [[ "$x" == "$MUSIC" ]]; then
-				docker exec plex /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section $x --type 8 --location /data/$x --lang fr
-				echo -e "	${BWHITE}* $x ${NC}"
-			else
-				docker exec plex /usr/lib/plexmediaserver/Plex\ Media\ Scanner --add-section $x --type 1 --location /data/$x --lang fr
-				echo -e "	${BWHITE}* $x ${NC}"
-			fi
-		done
-	fi
-}
-
 function manage_apps() {
 	echo -e "${BLUE}##########################################${NC}"
 	echo -e "${BLUE}###          GESTION DES APPLIS        ###${NC}"
@@ -2161,8 +2034,7 @@ function manage_apps() {
 	                "Selectionner une action :" 12 50 4 \
 	                "1" "Ajout Applications"  \
 	                "2" "Suppression Applications"  \
-			"3" "Réinitialisation Container" \
- 			"4" "Ajout/Supression Sites Web" 3>&1 1>&2 2>&3)
+			"3" "Réinitialisation Container" 3>&1 1>&2 2>&3)
 	[[ "$?" = 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi;
 
 
@@ -2279,10 +2151,8 @@ function manage_apps() {
                             rtorrentvpn)
                             rm ${CONFDIR}/conf/rutorrent-vpn.yml
                             ;;
-                            authelia)
-			    ${BASEDIR}/includes/config/scripts/authelia.sh
-			    sed -i '/authelia/d' /home/$SEEDUSER/resume > /dev/null 2>&1
-                            ;;
+                            jackett)
+                            docker rm -f flaresolverr > /dev/null 2>&1
                         esac
 
 			if docker ps | grep -q db-$APPSELECTED; then
@@ -2349,110 +2219,6 @@ function manage_apps() {
 				script_classique
 			fi
 			;;
-		"4" ) 	## Installation webserver
-			INSTALLEDFILE="${CONFDIR}/docker/$SEEDUSER/webserver/resume"
-			touch $INSTALLEDFILE > /dev/null 2>&1
-			echo -e " ${BWHITE}* Resume file: $INSTALLEDFILE ${NC}"
-			echo ""
-
-			## CHOOSE AN ACTION FOR SITE
-			ACTIONONAPP=$(whiptail --title "Site Web - Nginx" --menu \
-	                		"Selectionner une action :" 12 50 4 \
-	                		"1" "Ajout Site Web"  \
- 					"2" "Supression Site Web" 3>&1 1>&2 2>&3)
-			[[ "$?" = 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi;
-
-			case $ACTIONONAPP in
-				"1" ) ## Ajout Site Web
-					var="/tmp/menuservices.txt"
-					if [[ -e "$var" ]]; then
-						rm $var
-					fi
-					webserver
-					for line in $(cat $SERVICESPERUSER);
-					do
-					  ansible-playbook "${BASEDIR}/includes/webserver/${line}.yml"
-					done
-					rm -Rf $SERVICESPERUSER > /dev/null 2>&1
-
-					if [[ "${line}" == "mariadb" ]]; then
-					clear
-					echo ""
-echo -e "${CCYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-					tee <<-EOF
-🚀 Mariadb                            📓 Reference: https://github.com/laster13/patxav
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-💬 Création d'une base de donnée Mariadb (Exemple pour wordpress)
-
-[1] docker exec -ti mariadb bash
-[2] mysql -u root -p (mot de passe: mysql)
-[3] CREATE DATABASE wordpress;
-[4] CREATE USER 'wordpress'@'localhost' IDENTIFIED BY 'mysql';
-[5] GRANT USAGE ON *.* TO 'wordpress'@'localhost';
-[6] GRANT ALL PRIVILEGES ON wordpress.* TO 'wordpress'@'localhost';
-[7] FLUSH PRIVILEGES;
-[8] exit
-
-En suivant ce procédé vous pouvez créer autant de base de données que nécessaire
-Ou bien utiliser Phpmyadmin
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🚀 Mariadb                            📓 Reference: https://github.com/laster13/patxav
-					EOF
-echo -e "${CCYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo ""
-					fi
-			                ansible-vault encrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-
-					if [[ -e "$PLEXDRIVE" ]]; then
-						script_plexdrive
-					else
-						script_classique
-					fi
-					;;
-
-				"2" ) ## Suppression APP
-					echo -e " ${BWHITE}* Site Web en cours de suppression${NC}"
-					[ -s ${CONFDIR}/docker/$SEEDUSER/webserver/resume ]
-					if [[ "$?" == "1" ]]; then
-					echo -e " ${BWHITE}* Pas de Sites à Désinstaller ${NC}"
-					pause
-					script_plexdrive
-					fi
-					TABSERVICES=()
-					for SERVICEACTIVATED in $(cat $INSTALLEDFILE)
-					do
-			        		SERVICE=$(echo $SERVICEACTIVATED)
-			        		TABSERVICES+=( ${SERVICE//\"} " " )
-					done
-					APPSELECTED=$(whiptail --title "App Manager" --menu \
-			              		"Sélectionner l'Appli à supprimer" 19 45 11 \
-			              		"${TABSERVICES[@]}"  3>&1 1>&2 2>&3)
-					[[ "$?" = 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi;
-
-					docker rm -f "$APPSELECTED"
-					sed -i "/$APPSELECTED/d" $INSTALLEDFILE
-					rm -rf ${CONFDIR}/docker/$SEEDUSER/webserver/$APPSELECTED
-					checking_errors $?
- 					docker rm -f php7-$APPSELECTED > /dev/null 2>&1
-					docker rm -f php5-$APPSELECTED > /dev/null 2>&1
-
-					docker system prune -af > /dev/null 2>&1
-					docker volume rm $(docker volume ls -qf "dangling=true") > /dev/null 2>&1
-
-					echo ""
-					echo -e " ${CCYAN}* $APPSELECTED à bien été désinstallé ${NC}"
-			                ansible-vault encrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-					pause
-					if [[ -e "$PLEXDRIVE" ]]; then
-						script_plexdrive
-					else
-						script_classique
-					fi
-
-					;;
-			                esac
 	          esac
 }
 

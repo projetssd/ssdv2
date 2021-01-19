@@ -1,0 +1,14 @@
+---
+pgrole: 'overseerr'
+intport: '5055'
+image: 'hotio/overseerr:nightly'
+pg_volumes:
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  PUID: "{{ lookup('env','MYGID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  UMASK: '002'
+  ARGS: ""
+  DEBUG: "no"

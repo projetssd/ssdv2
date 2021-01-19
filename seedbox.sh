@@ -230,10 +230,10 @@ then
         #choose_services
         # On choisit les sous domaines pour les services installés précédemment
         # stocké dans account.yml
-        subdomain
+        #subdomain
         # On choisit le mode d'authentification, basqiue, oauth, authelia
         # stoké dans account.yml
-        auth
+        #auth
         #Installation de tous les services
         #install_services
         # Mise à jour de plex, ajout des librairies
@@ -252,8 +252,8 @@ then
         # mise en place de la sauvegarde
         sauve
         # Affichage du résumé
-        resume_seedbox
-        pause
+        #resume_seedbox
+        #pause
         ansible-vault encrypt ${CONFDIR}/variables/account.yml >/dev/null 2>&1
         script_plexdrive
         # on marque la seedbox comme installée
