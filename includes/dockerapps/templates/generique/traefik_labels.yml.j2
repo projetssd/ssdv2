@@ -1,0 +1,10 @@
+traefik.enable: 'true'
+## HTTP Routers
+traefik.http.routers.{{ pgrole }}-rtr.entrypoints: 'https'
+traefik.http.routers.{{ pgrole }}-rtr.rule: 'Host(`{{sub[pgrole]  if sub_enabled else pgrole}}.{{user.domain}}`)'
+traefik.http.routers.{{ pgrole }}-rtr.tls: 'true'
+## Middlewares
+traefik.http.routers.{{ pgrole }}-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+## HTTP Services
+traefik.http.routers.{{ pgrole }}-rtr.service: '{{ pgrole }}-svc'
+traefik.http.services.{{ pgrole }}-svc.loadbalancer.server.port: "{{ intport }}"
