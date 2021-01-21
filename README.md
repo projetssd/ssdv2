@@ -25,9 +25,6 @@ Une fois les pré requis validé pous pouvez suivre le guide :
 
 ***
 
-> le Guide est en cours de rédaction, en attendant vous pouvez accéder à l'ancienne version  [ici](https://wiki.scriptseedboxdocker.com)
-
-***
-
 Ce script est proposé à des fins d'expérimentation uniquement, le téléchargement d’oeuvre copyrightées est illégal.
 Merci de vous conformer à la législation en vigueur en fonction de vos pays respectifs en faisant vos tests sur des fichiers libres de droits
+***
