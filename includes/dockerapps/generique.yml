@@ -46,6 +46,28 @@
     - name: Launch Pretask
       include_tasks: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/pretasks/{{ pgrole }}.yml"
       when: stat_result.stat.exists
+
+    # LABELS ######################################################################
+    - name: Create temp file
+      tempfile:
+        state: file
+      register: tempfile_1
+      
+    - name: fill temp file with labels
+      template:
+        src: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/traefik_labels.yml.j2"
+        dest: "{{ tempfile_1.path }}"
+        force: yes
+    
+    - name: Import traefik labels
+      include_vars: 
+        file: "{{ tempfile_1.path }}"
+        name: pg_labels
+        
+    - name: Delete temp file
+      file:
+        path: "{{ tempfile_1.path }}"
+        state: absent
     
     # DEPLOY ######################################################################
 

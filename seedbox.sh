@@ -255,9 +255,9 @@ then
         #resume_seedbox
         #pause
         ansible-vault encrypt ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-        #script_plexdrive
         # on marque la seedbox comme installée
         update_seedbox_param "installed" 1
+        script_plexdrive
       else
         script_plexdrive
       fi
@@ -334,13 +334,11 @@ then
         unionfs_fuse
         sauve
         restore
-
-        while read line; do echo $line | cut -d'.' -f1; done <"/home/$SEEDUSER/resume" > $SERVICESPERUSER
-        rm "/home/$SEEDUSER/resume"
-        subdomain
-        auth
+        ## reinitialisation de toutes les applis
+        while read line; do echo $line | cut -d'.' -f1; done <"/home/${USER}/resume" > $SERVICESPERUSER
+        rm /home/${USER}/resume
         install_services
-
+        ## crypt du fichier account
         ansible-vault encrypt ${CONFDIR}/variables/account.yml >/dev/null 2>&1
         # on marque la seedbox comme installée
         update_seedbox_param "installed" 1
