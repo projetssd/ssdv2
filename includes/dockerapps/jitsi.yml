@@ -46,6 +46,12 @@
           path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
         register: check
 
+      - name: 'Set Known Facts'
+        set_fact:
+          pgrole: 'jitsi'
+          intport: '80'
+          image: 'jitsi/web'
+
       - name: "Variables | Set 'cloudflare_enabled' variable"
         set_fact:
           cloudflare_enabled: "{{ true if not(
@@ -89,26 +95,20 @@
       - name: "Variables | Set 'sub' variable"
         set_fact:
           sub_enabled: "{{ true if not(
-              (sub.jitsi is undefined)
+              (sub[pgrole][pgrole] is undefined)
               or
-              (sub.jitsi is none)
+              (sub[pgrole][pgrole] is none)
               or
-              (sub.jitsi | trim | length == 0)
+              (sub[pgrole][pgrole] | trim | length == 0)
             )
               else false }}"
   
       - name: "Set DNS Record on CloudFlare"
-        include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+        include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
         vars:
-          subdomain: "{{sub.jitsi if sub_enabled else 'jitsi'}}"
+          subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
         when: cloudflare_enabled
-  
-      - name: 'Set Known Facts'
-        set_fact:
-          pgrole: 'jitsi'
-          intport: '80'
-          image: 'jitsi/web'
-  
+    
       - name: Create meet.jitsi
         docker_network:
           name: meet.jitsi
@@ -120,10 +120,9 @@
             traefik.enable: 'true'
             ## HTTP Routers
             traefik.http.routers.jitsi-rtr.entrypoints: 'https'
-            traefik.http.routers.jitsi-rtr.rule: 'Host(`{{sub.jitsi if sub_enabled else pgrole}}.{{user.domain}}`)'
+            traefik.http.routers.jitsi-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
             traefik.http.routers.jitsi-rtr.tls: 'true'
             ## Middlewares
-            #traefik.http.routers.jitsi-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
             ## HTTP Services
             traefik.http.routers.jitsi-rtr.service: 'jitsi-svc'
             traefik.http.services.jitsi-svc.loadbalancer.server.port: '80'
@@ -131,20 +130,20 @@
       - name: 'Setting jitsi Volumes'
         set_fact:
           jitsi_volumes:
-            - '/opt/seedbox/docker/{{user.name}}/.jitsi-meet-cfg/web:/config'
-            - '/opt/seedbox/docker/{{user.name}}/.jitsi-meet-cfg/web/letsencrypt:/etc/letsencrypt'
-            - '/opt/seedbox/docker/{{user.name}}/.jitsi-meet-cfg/transcripts:/usr/share/jitsi-meet/transcripts'
+            - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.jitsi-meet-cfg/web:/config"
+            - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.jitsi-meet-cfg/web/letsencrypt:/etc/letsencrypt"
+            - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.jitsi-meet-cfg/transcripts:/usr/share/jitsi-meet/transcripts"
   
       - name: Creating scripts and plugins paths
-        file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
+        file: "path={{item}} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID') }}"
         with_items:
-          - '/opt/seedbox/docker/{{user.name}}/.jitsi-meet-cfg/'
-          - '/opt/seedbox/docker/{{user.name}}/.jitsi-meet-cfg/web'
+          - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.jitsi-meet-cfg/"
+          - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.jitsi-meet-cfg/web"
   
       - name: 'Import config.js'
         template:
-          src: '/opt/seedbox-compose/includes/dockerapps/templates/jitsi/config.js.j2'
-          dest: '/opt/seedbox/docker/{{user.name}}/.jitsi-meet-cfg/web/config.js'
+          src: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/jitsi/config.js.j2"
+          dest: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.jitsi-meet-cfg/web/config.js"
   
       - name: 'Setting jitsi ENV'
         set_fact:
@@ -192,7 +191,7 @@
       - name: 'Setting prosody Volumes'
         set_fact:
           prosody_volumes:
-            - '/opt/seedbox/docker/{{user.name}}/.jitsi-meet-cfg/prosody:/config'
+            - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.jitsi-meet-cfg/prosody:/config"
   
       - name: 'Setting prosody ENV'
         set_fact:
@@ -240,7 +239,7 @@
       - name: 'Setting jicofo Volumes'
         set_fact:
           jicofo_volumes:
-            - '/opt/seedbox/docker/{{user.name}}/.jitsi-meet-cfg/jicofo:/config'
+            - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.jitsi-meet-cfg/jicofo:/config"
   
       - name: 'Setting jicofo ENV'
         set_fact:
@@ -276,7 +275,7 @@
       - name: 'Setting jvb Volumes'
         set_fact:
           jvb_volumes:
-            - '/opt/seedbox/docker/{{user.name}}/.jitsi-meet-cfg/jvb:/config'
+            - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.jitsi-meet-cfg/jvb:/config"
   
       - name: 'Setting jvb ENV'
         set_fact:
@@ -314,11 +313,11 @@
 
       - name: add resume file
         shell: |
-          echo "{{pgrole}}-{{sub.jitsi if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+          echo "{{pgrole}}-{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> {{ lookup('env','CONFDIR') }}/temp.txt
 
       - name: create jistsi state
         shell: |
-          echo "2" > /opt/seedbox/status/jitsi
+          echo "2" > {{ lookup('env','CONFDIR') }}/status/jitsi
 
 
   

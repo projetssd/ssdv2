@@ -27,7 +27,7 @@ done
 
 >&2 echo 'Retrieving a X-Plex-Token using Plex login/password TESTAT...'
 
-echo "RECAP ${PLEX_LOGIN}:${PLEX_PASSWORD}"
+#echo "RECAP ${PLEX_LOGIN}:${PLEX_PASSWORD}"
 
 curl -qu "${PLEX_LOGIN}":"${PLEX_PASSWORD}" 'https://plex.tv/users/sign_in.xml' \
     -X POST -H 'X-Plex-Device-Name: PlexMediaServer' \

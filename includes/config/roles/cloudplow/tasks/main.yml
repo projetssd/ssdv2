@@ -12,7 +12,7 @@
 - hosts: localhost
   gather_facts: false
   vars_files:
-    - /opt/seedbox/variables/account.yml
+    - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
   tasks:
 
     - name: Check if crop.service exists
@@ -69,69 +69,74 @@
         set_fact:
           cloudplow_service_running: "{{ (services['cloudplow.service'] is defined) and (services['cloudplow.service']['state'] == 'running') }}"
 
-      - name: Stop plex_autoscan service
+      - name: Stop cloudplow service
         systemd:
-          name: plex_autoscan
+          name: cloudplow
           state: stopped
         when: cloudplow_service_running
 
       when: cloudplow_service.stat.exists
 
     - name: Create cloudplow directories
-      file: "path={{ item }} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}} recurse=yes"
+      become: yes
+      file: "path={{ item }} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID') }} recurse=yes"
       with_items:
-        - /home/{{user.name}}/scripts/cloudplow
+        - /home/{{ lookup('env','USER') }}/scripts/cloudplow
 
     - name: Clone cloudplow
       git:
         repo: https://github.com/l3uddz/cloudplow/
-        dest: /home/{{user.name}}/scripts/cloudplow
+        dest: /home/{{ lookup('env','USER') }}/scripts/cloudplow
         version: HEAD
         force: yes
       become: yes
-      become_user: "{{user.name}}"
+      become_user: "{{ lookup('env','USER') }}"
 
     - name: Install pip requirements
       pip:
-        requirements: /home/{{user.name}}/scripts/cloudplow/requirements.txt
-        executable: pip3
+        requirements: "/home/{{ lookup('env','USER') }}/scripts/cloudplow/requirements.txt"
+        executable: pip
+        extra_args: --user
 
     - name: Check config exists
       stat:
-        path: "/home/{{user.name}}/scripts/cloudplow/config.json"
+        path: "/home/{{ lookup('env','USER') }}/scripts/cloudplow/config.json"
       register: cloudplow_config
 
     - name: Import default config
       template:
-        src: /opt/seedbox-compose/includes/config/roles/cloudplow/templates/config.json.j2
-        dest: /home/{{user.name}}/scripts/cloudplow/config.json
-        owner: "{{user.userid}}"
-        group: "{{user.groupid}}"
+        src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudplow/templates/config.json.j2"
+        dest: /home/{{ lookup('env','USER') }}/scripts/cloudplow/config.json
+        owner: "{{ lookup('env','MYUID') }}"
+        group: "{{ lookup('env','MYGID') }}"
         mode: 0775
         force: yes
       when: not cloudplow_config.stat.exists
 
     - name: Set cloudplow.py as executable
       file:
-        path: /home/{{user.name}}/scripts/cloudplow/cloudplow.py
-        owner: "{{user.userid}}"
-        group: "{{user.groupid}}"
+        path: /home/{{ lookup('env','USER') }}/scripts/cloudplow/cloudplow.py
+        owner: "{{ lookup('env','MYUID') }}"
+        group: "{{ lookup('env','MYGID') }}"
         mode: a+x
 
     - name: Set directory permissions
-      file: "path=/home/{{user.name}}/scripts/cloudplow state=directory owner=0 group=0 recurse=yes"
+      file: "path=/home/{{ lookup('env','USER') }}/scripts/cloudplow state=directory owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID') }} recurse=yes"
 
     - name: "Create /usr/local/bin symlink"
+      become: yes
       file:
-        src: "/home/{{user.name}}/scripts/cloudplow/cloudplow.py"
+        src: "/home/{{ lookup('env','USER') }}/scripts/cloudplow/cloudplow.py"
         dest: "/usr/local/bin/cloudplow"
         state: link
 
     - name: Import cloudplow service
+      become: yes
       template:
-        src: /opt/seedbox-compose/includes/config/roles/cloudplow/templates/cloudplow.service.j2
+        src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudplow/templates/cloudplow.service.j2"
         dest: /etc/systemd/system/cloudplow.service
         force: yes
 
     - name: Start cloudplow service
+      become: yes
       systemd: state=started name=cloudplow daemon_reload=yes enabled=yes

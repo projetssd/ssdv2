@@ -9,14 +9,20 @@
           
       # FACTS #######################################################################
 
-    - name: create subsonic state
-      shell: |
-        echo "1" > {{ lookup('env','CONFDIR') }}/status/synclounge
+      - name: create subsonic state
+        shell: |
+          echo "1" > {{ lookup('env','CONFDIR') }}/status/synclounge
 
       - name: Checking for existing app data
         stat:
           path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/authelia/configuration.yml"
         register: check
+
+      - name: 'Set Known Facts'
+        set_fact:
+          pgrole: 'synclounge'
+          intport: '8088'
+          image: 'starbix/synclounge'
 
       - name: "Variables | Set 'cloudflare_enabled' variable"
         set_fact:
@@ -58,29 +64,23 @@
             )
               else false }}"
 
-    - name: "Variables | Set 'sub' variable"
-      set_fact:
-        sub_enabled: "{{ true if not(
-            (sub.synclounge is undefined)
-            or
-            (sub.synclounge is none)
-            or
-            (sub.synclounge | trim | length == 0)
-          )
-            else false }}"
+      - name: "Variables | Set 'sub' variable"
+        set_fact:
+          sub_enabled: "{{ true if not(
+              (sub[pgrole][pgrole] is undefined)
+              or
+              (sub[pgrole][pgrole] is none)
+              or
+              (sub[pgrole][pgrole] | trim | length == 0)
+            )
+              else false }}"
 
       - name: "Set DNS Record on CloudFlare"
         include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
         vars:
-        subdomain: "{{sub.synclounge if sub_enabled else 'synclounge'}}"
+          subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
         when: cloudflare_enabled
-  
-      - name: 'Set Known Facts'
-        set_fact:
-          pgrole: 'synclounge'
-          intport: '8088'
-          image: 'starbix/synclounge'
-  
+    
       - name: Creating paths
         file: "path={{item}} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID') }}"
         with_items:
@@ -93,13 +93,12 @@
             traefik.enable: 'true'
             ## HTTP Routers
             traefik.http.routers.synclounge-webui-rtr.entrypoints: 'https'
-          traefik.http.routers.synclounge-rtr.rule: 'Host(`{{sub.synclounge if sub_enabled else pgrole}}.{{user.domain}}`)'
+            traefik.http.routers.synclounge-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
             traefik.http.routers.synclounge-webui-rtr.tls: 'true'
             traefik.http.routers.synclounge-slserver-rtr.entrypoints: 'https'
-            traefik.http.routers.synclounge-slserver-rtr.rule: 'Host(`synclounge.{{user.domain}}`) && PathPrefix(`/slserver`)'
+            traefik.http.routers.synclounge-slserver-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`) && PathPrefix(`/slserver`)'
             traefik.http.routers.synclounge-slserver-rtr.tls: 'true'
             ## Middlewares
-            traefik.http.routers.synclounge-webui-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
             ## HTTP Services
             traefik.http.routers.synclounge-webui-rtr.service: 'synclounge-webui-svc'
             traefik.http.services.synclounge-webui-svc.loadbalancer.server.port: '8088'
@@ -134,13 +133,14 @@
           state: started
           labels: '{{pg_labels}}'
 
-    - name: add resume file
-      shell: |
-        echo "{{pgrole}}-{{sub.synclounge if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+      - name: add resume file
+        become: yes
+        shell: |
+          echo "{{pgrole}}-{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> {{ lookup('env','CONFDIR') }}/temp.txt
 
-    - name: create subsonic state
-      shell: |
-        echo "2" > {{ lookup('env','CONFDIR') }}/status/synclounge
+      - name: create subsonic state
+        shell: |
+          echo "2" > {{ lookup('env','CONFDIR') }}/status/synclounge
 
 
   
