@@ -2,10 +2,15 @@
 - hosts: localhost
   gather_facts: true
   vars_files:
-    - ["{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/plex/tasks/settings.yml"]
-    - ["{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/plex/defaults/main.yml"]
-    - ["{{ lookup('env','CONFDIR') }}/variables/account.yml"]
+    - "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/plex/tasks/settings.yml"
+    - "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/plex/defaults/main.yml"
+    - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
+
   tasks:
+
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'plex'
 
     - name: "Variables | Set 'cloudflare_enabled' variable"
       set_fact:
@@ -38,28 +43,28 @@
     - name: "Variables | Set 'sub' variable"
       set_fact:
         sub_enabled: "{{ true if not(
-            (sub.plex is undefined)
+            (sub[pgrole][pgrole] is undefined)
             or
-            (sub.plex is none)
+            (sub[pgrole][pgrole] is none)
             or
-            (sub.plex | trim | length == 0)
+            (sub[pgrole][pgrole] | trim | length == 0)
           )
             else false }}"
+
+    - name: "create {{ pgrole}} state"
+      shell: |
+        echo "1" > {{ lookup('env','CONFDIR') }}/status/{{ pgrole }}
 
     - name: "Set DNS Record on CloudFlare"
       include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
       vars:
-        subdomain: "{{sub.plex if sub_enabled else 'plex'}}"
+        subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
       when: cloudflare_enabled
 
     - name: "Create Plex directories"
       become: yes
-      file: "path={{ item }} state=directory mode=0775 owner={{ lookup('env','USER') }} group={{ lookup('env','MYGID')}}"
+      file: "path={{ item }} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID')}}"
       with_items: "{{ plex_folders }}"
-
-    - name: 'Set Known Facts'
-      set_fact:
-        pgrole: 'plex'
 
     - name: "Stop and remove any existing container"
       docker_container:
@@ -133,7 +138,7 @@
           traefik.enable: 'true'
           ## HTTP Routers
           traefik.http.routers.plex-rtr.entrypoints: 'https'
-          traefik.http.routers.plex-rtr.rule: 'Host(`{{sub.plex if sub_enabled else pgrole}}.{{user.domain}}`)'
+          traefik.http.routers.plex-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.plex-rtr.tls: 'true'
           ## HTTP Services
           traefik.http.routers.plex-rtr.service: 'plex-svc'
@@ -161,9 +166,10 @@
 
     # Sometimes docker will set transcodes folder to root after a restore.
     - name: "Ensure transcodes folder has the correct permissions"
+      become: yes
       file:
         path: "{{ plex.transcodes }}"
-        owner: "{{ user.userid }}"
+        owner: "{{ lookup('env','MYUID') }}"
         group: "{{ lookup('env','MYGID') }}"
         mode: 0775
         recurse: yes
@@ -175,7 +181,7 @@
     - name: add resume file
       become: yes
       shell: |
-        echo "{{pgrole}}-{{sub.plex if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+        echo "{{pgrole}}-{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> {{ lookup('env','CONFDIR') }}/temp.txt
 
     - name: create traefik state
       shell: |

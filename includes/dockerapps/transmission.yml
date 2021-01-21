@@ -34,6 +34,11 @@
         path: "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/authelia/configuration.yml"
       register: check
 
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'transmission'
+        image: 'haugene/transmission-openvpn:latest'
+
     - name: "Variables | Set 'cloudflare_enabled' variable"
       set_fact:
         cloudflare_enabled: "{{ true if not(
@@ -77,29 +82,24 @@
     - name: "Variables | Set 'sub' variable"
       set_fact:
         sub_enabled: "{{ true if not(
-            (sub.transmission is undefined)
+            (sub[pgrole][pgrole] is undefined)
             or
-            (sub.transmission is none)
+            (sub[pgrole][pgrole] is none)
             or
-            (sub.transmission | trim | length == 0)
+            (sub[pgrole][pgrole] | trim | length == 0)
           )
             else false }}"
 
     - name: "Set DNS Record on CloudFlare"
       include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
       vars:
-        subdomain: "{{sub.transmission if sub_enabled else 'transmission'}}"
+        subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
       when: cloudflare_enabled
 
     - name: 'Creating transmission folder paths'
       file: "path={{item}} state=directory mode=0775 owner={{lookup('env','MYUID')}} group={{lookup('env','MYGID')}}"
       with_items:
         - "/home/{{lookup('env','USER')}}/local/transmission"
-
-    - name: 'Set Known Facts'
-      set_fact:
-        pgrole: 'transmission'
-        image: 'haugene/transmission-openvpn:latest'
 
     # LABELS ######################################################################
     - name: 'Ajout label traefik'
@@ -108,7 +108,7 @@
           traefik.enable: 'true'
           ## HTTP Routers
           traefik.http.routers.transmission-rtr.entrypoints: 'https'
-          traefik.http.routers.transmission-rtr.rule: 'Host(`{{sub.transmission if sub_enabled else pgrole}}.{{user.domain}}`)'
+          traefik.http.routers.transmission-rtr.rule: 'Host(`{{{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.transmission-rtr.tls: 'true'
           ## Middlewares
           traefik.http.routers.transmission-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
@@ -164,8 +164,9 @@
         timeout: 10
 
     - name: add resume file
+      become: yes
       shell: |
-        echo "{{pgrole}}-{{sub.transmission if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+        echo "{{pgrole}}-{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> {{ lookup('env','CONFDIR') }}/temp.txt
 
     - name: create transmission state
       shell: |

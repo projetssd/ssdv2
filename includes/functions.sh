@@ -519,7 +519,7 @@ function script_classique() {
 			DOMAIN=$(cat /home/$SEEDUSER/resume | tail -1 | cut -d. -f2-3)
 			FQDNTMP="plex_patrol.$DOMAIN"
 			echo "$FQDNTMP" >> /home/$SEEDUSER/resume
-			cp "${BASEDIR}/includes/config/roles/plex_patrol/tasks/main.yml" "${CONFIDR}/conf/plex_patrol.yml" > /dev/null 2>&1
+			cp "${BASEDIR}/includes/config/roles/plex_patrol/tasks/main.yml" "${CONFDIR}/conf/plex_patrol.yml" > /dev/null 2>&1
     			echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour revenir au menu principal..."
     			read -r
 			script_classique
@@ -794,7 +794,7 @@ function script_plexdrive() {
 			        DOMAIN=$(cat /home/$SEEDUSER/resume | tail -1 | cut -d. -f2-3)
 			        FQDNTMP="plex_patrol.$DOMAIN"
 			        echo "$FQDNTMP" >> /home/$SEEDUSER/resume
-			        cp "${BASEDIR}/includes/config/roles/plex_patrol/tasks/main.yml" "${CONFIDR}/conf/plex_patrol.yml" > /dev/null 2>&1
+			        cp "${BASEDIR}/includes/config/roles/plex_patrol/tasks/main.yml" "${CONFDIR}/conf/plex_patrol.yml" > /dev/null 2>&1
     			        echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour revenir au menu principal..."
     			        read -r
 			        script_plexdrive
@@ -1783,8 +1783,8 @@ function choose_media_folder_plexdrive() {
 		for line in $(cat $MEDIASPERUSER);
 		do
 			line=$(echo ${line} | sed 's/\(.\)/\U\1/')
-			mkdir -p ${HOME}/local/${line}
-			mkdir -p /mnt/rclone/${USER}/${line}
+			create_dir ${HOME}/local/${line}
+			create_dir /mnt/rclone/${USER}/${line}
 		done
 		rm /tmp/menumedia.txt
 	fi
@@ -1817,7 +1817,7 @@ function install_services() {
 			echo ""
 			echo -e " ${GREEN}ATTENTION IMPORTANT - NE PAS FAIRE D'ERREUR - SINON DESINSTALLER ET REINSTALLER${NC}"
 			token=$(. ${BASEDIR}/includes/config/roles/plex_autoscan/plex_token.sh)
-			sed -i "/token:/c\   token: $token" ${CONFIDR}/variables/account.yml
+			sed -i "/token:/c\   token: $token" ${CONFDIR}/variables/account.yml
 			ansible-playbook ${BASEDIR}/includes/dockerapps/plex.yml
 			cp "${BASEDIR}/includes/dockerapps/plex.yml" "${CONFDIR}/conf/plex.yml" > /dev/null 2>&1
 		else

@@ -13,14 +13,14 @@
 ################################
 
 plex_folders:
-  - "/opt/seedbox/docker/{{ lookup('env','USER') }}/plex"
-  - "/opt/seedbox/docker/{{ lookup('env','USER') }}/plex/config"
-  - "/opt/seedbox/docker/{{ lookup('env','USER') }}/plex/config/Library"
-  - "/opt/seedbox/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support"
-  - "/opt/seedbox/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server"
-  - "/opt/seedbox/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Plug-ins"
-  - "/opt/seedbox/docker/{{ lookup('env','USER') }}/plex/config/Library/Logs"
-  - "/opt/seedbox/docker/{{ lookup('env','USER') }}/plex/config/Library/Logs/Plex Media Server"
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/plex"
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/plex/config"
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/plex/config/Library"
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support"
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server"
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Plug-ins"
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Logs"
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Logs/Plex Media Server"
   - "{{ plex.transcodes }}/plex"
 
 ################################
@@ -63,7 +63,7 @@ plex_docker_volumes:
   - "/etc/localtime:/etc/localtime:ro"
   - "/home/{{ lookup('env','USER') }}:/home/{{ lookup('env','USER') }}"
   - "/home/{{ lookup('env','USER') }}/Medias:/data"
-  - "/opt/seedbox/docker/{{ lookup('env','USER') }}/plex/config:/config"
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/plex/config:/config"
   - "/tmp:/tmp"
   - "/dev/shm:/dev/shm"
   - "{{ plex.transcodes }}/plex:/transcode"

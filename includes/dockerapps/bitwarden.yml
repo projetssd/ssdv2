@@ -1,5 +1,3 @@
-#!/bin/bash
-
 ---
 - hosts: localhost
   gather_facts: false
@@ -37,7 +35,7 @@
         state: present
 
     - name: Creating paths
-      file: "path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}"
+      file: "path={{item}} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID') }}"
       with_items:
         - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}"
 
