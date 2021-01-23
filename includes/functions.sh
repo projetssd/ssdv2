@@ -1760,11 +1760,10 @@ function install_services() {
 			echo -e " ${BWHITE}* Processing plex config file...${NC}"
 			echo ""
 			echo -e " ${GREEN}ATTENTION IMPORTANT - NE PAS FAIRE D'ERREUR - SINON DESINSTALLER ET REINSTALLER${NC}"
+			ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 			token=$(. /opt/seedbox-compose/includes/config/roles/plex_autoscan/plex_token.sh)
 			sed -i "/token:/c\   token: $token" /opt/seedbox/variables/account.yml
 			ansible-playbook /opt/seedbox-compose/includes/dockerapps/plex.yml
-			cp "$BASEDIR/includes/dockerapps/plex.yml" "$CONFDIR/conf/plex.yml" > /dev/null 2>&1
-
 		elif [[ "$line" == "mattermost" ]]; then
 			/opt/seedbox-compose/includes/dockerapps/templates/mattermost/mattermost.sh
 
