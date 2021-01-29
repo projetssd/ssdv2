@@ -74,6 +74,11 @@
       vars:
         subdomain: "{{sub.netdata if sub_enabled else 'netdata'}}"
       when: cloudflare_enabled
+      
+    - name: get gid docker
+      getent:
+        database: group
+        key: docker
 
     - name: 'Set Known Facts'
       set_fact:
@@ -112,7 +117,7 @@
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
-          PGID: '999'
+          PGID: "{{ getent_group['docker'][1] }}"
 
     # MAIN DEPLOYMENT #############################################################
     - name: 'Deploying {{pgrole}}'
