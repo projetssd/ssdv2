@@ -1,0 +1,161 @@
+#!/bin/bash
+
+---
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
+  tasks:
+        
+    # FACTS #######################################################################
+
+    - name: create freshrss state
+      shell: |
+        echo "1" > /opt/seedbox/status/freshrss
+
+    - name: Checking for existing app data
+      stat:
+        path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
+      register: check
+
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
+            (cloudflare.login is undefined)
+            or
+            (cloudflare.login is none)
+            or
+            (cloudflare.login | trim | length == 0)
+            or
+            (cloudflare.api is undefined)
+            or
+            (cloudflare.api is none)
+            or
+            (cloudflare.api | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Variables | Set 'oauth_enabled' variable"
+      set_fact:
+        oauth_enabled: "{{ true if not(
+            (oauth.client is undefined)
+            or
+            (oauth.client is none)
+            or
+            (oauth.client | trim | length == 0)
+            or
+            (oauth.secret is undefined)
+            or
+            (oauth.secret is none)
+            or
+            (oauth.secret | trim | length == 0)
+            or
+            (oauth.account is undefined)
+            or
+            (oauth.account is none)
+            or
+            (oauth.account | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Variables | Set 'sub' variable"
+      set_fact:
+        sub_enabled: "{{ true if not(
+            (sub.freshrss is undefined)
+            or
+            (sub.freshrss is none)
+            or
+            (sub.freshrss | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: "{{sub.freshrss if sub_enabled else 'freshrss'}}"
+      when: cloudflare_enabled
+
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'freshrss'
+        intport: '80'
+        image: 'ghcr.io/linuxserver/freshrss'
+
+    - name: Create freshrss-net network
+      docker_network:
+        name: freshrss-net
+        state: present
+
+    # LABELS ######################################################################
+    - name: 'Adding Traefik'
+      set_fact:
+        pg_labels:
+          traefik.enable: 'true'
+          ## HTTP Routers
+          traefik.http.routers.freshrss-rtr.entrypoints: 'https'
+          traefik.http.routers.freshrss-rtr.rule: 'Host(`{{sub.freshrss if sub_enabled else pgrole}}.{{user.domain}}`)'
+          traefik.http.routers.freshrss-rtr.tls: 'true'
+          ## Middlewares
+          traefik.http.routers.freshrss-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          ## HTTP Services
+          traefik.http.routers.freshrss-rtr.service: 'freshrss-svc'
+          traefik.http.services.freshrss-svc.loadbalancer.server.port: '80'
+
+    - name: 'Deploying db-freshrss'
+      docker_container:
+        name: 'db-freshrss'
+        recreate: true
+        image: 'linuxserver/mariadb'
+        pull: yes
+        volumes:
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/db-freshrss:/config'
+          - '/etc/localtime:/etc/localtime:ro'
+        env:
+          MYSQL_ROOT_PASSWORD: 'freshrss'
+          MYSQL_PASSWORD: 'freshrss'
+          MYSQL_DATABASE: 'freshrss'
+          MYSQL_USER: 'freshrss'
+
+        restart_policy: unless-stopped
+        networks:
+          - name: freshrss-net
+        state: started
+
+    - name: Wait for 10 seconds before continuing
+      wait_for:
+        timeout: 10
+
+    - name: 'Setting PG Volumes'
+      set_fact:
+        pg_volumes:
+          - '/etc/localtime:/etc/localtime:ro'
+          - '/opt/seedbox/docker/{{user.name}}/freshrss:/config'
+
+    - name: 'Setting PG ENV'
+      set_fact:
+        pg_env:
+          freshrss_DB_HOST: 'db-freshrss'
+          freshrss_DB_USER: 'freshrss'
+          freshrss_DB_PASSWORD: 'freshrss'
+          freshrss_DB_NAME: 'db-freshrss'
+
+    - name: Create and start freshrss container
+      docker_container:
+        name: freshrss
+        image: 'ghcr.io/linuxserver/freshrss'
+        pull: yes
+        volumes: '{{pg_volumes}}'
+        networks:
+          - name: traefik_proxy
+          - name: freshrss-net
+        restart_policy: unless-stopped
+        state: started
+        labels: '{{pg_labels}}'
+
+    - name: add resume file
+      shell: |
+        echo "{{pgrole}}-{{sub.freshrss if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+
+    - name: create freshrss state
+      shell: |
+        echo "2" > /opt/seedbox/status/freshrss
