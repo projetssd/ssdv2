@@ -59,11 +59,11 @@
     - name: "Variables | Set 'sub' variable"
       set_fact:
         sub_enabled: "{{ true if not(
-            (sub.gui is undefined)
+            (sub.gui.gui is undefined)
             or
-            (sub.gui is none)
+            (sub.gui.gui is none)
             or
-            (sub.gui | trim | length == 0)
+            (sub.gui.gui | trim | length == 0)
           )
             else false }}"
 
@@ -76,7 +76,7 @@
     - name: "Set GUI DNS Record on CloudFlare"
       include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
       vars:
-        subdomain: "{{sub.gui if sub_enabled else 'gui'}}"
+        subdomain: "{{sub.gui.gui if sub_enabled else 'gui'}}"
       when: cloudflare_enabled
 
     - name: Remove Traefik
@@ -121,14 +121,6 @@
       template:
         src: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/traefik/nginx.toml.j2"
         dest: "{{ lookup('env','CONFDIR') }}/docker/traefik/rules/nginx.toml"
-
-    - name: Set middleware
-      lineinfile:
-        path: "{{ lookup('env','CONFDIR') }}/docker/traefik/rules/nginx.toml"
-        regexp: '#*middlewares\s*=.*'
-        line: 'middlewares = ["chain-oauth"]'
-        state: present
-      when: oauth_enabled
 
     - name: Import middlewares-chains.toml
       template:

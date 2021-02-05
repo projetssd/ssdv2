@@ -44,3 +44,7 @@
     labels: '{{oauth_labels}}'
     networks:
       - name: traefik_proxy
+
+- name: "create oauth state"
+  shell: |
+    echo "2" > {{ lookup('env','CONFDIR') }}/status/oauth
