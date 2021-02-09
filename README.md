@@ -41,6 +41,8 @@ Merci de vous conformer à la législation en vigueur en fonction de vos pays re
 
 ***
 
-# Demande d'ajout de fonctionnalité https://feathub.com/projetssd/ssdv2
+# Demande d'ajout de fonctionnalité 
+https://feathub.com/projetssd/ssdv2
 
+### Demande en cours de vote
 [![Feature Requests](https://feathub.com/projetssd/ssdv2?format=svg)](https://feathub.com/projetssd/ssdv2)
