@@ -1,6 +1,5 @@
-<br /><img src="https://www.scriptseedboxdocker.com/wp-content/uploads/2020/09/ssd.png" width="300">
+<br /><img src="https://user-images.githubusercontent.com/64525827/107496261-5d9e0880-6b91-11eb-8cb0-263c877ddb9e.png" width="250">
 <br /><br />
-
 
 
 Lien vers le WIKI :   https://wiki.scriptseedboxdocker.com 
