@@ -1,6 +1,5 @@
-<br /><img src="https://user-images.githubusercontent.com/64525827/107496261-5d9e0880-6b91-11eb-8cb0-263c877ddb9e.png" width="250">
-<br /><br />
-
+<br /><img src="https://user-images.githubusercontent.com/64525827/107496602-ceddbb80-6b91-11eb-9a05-ac311eedf150.png" width="450">
+<br />
 
 Lien vers le WIKI :   https://wiki.scriptseedboxdocker.com 
 <br /><br />
