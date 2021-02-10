@@ -1,7 +1,6 @@
-<br /><img src="https://www.scriptseedboxdocker.com/wp-content/uploads/2020/09/ssd.png" width="300">
-<br /><br />
-Nous rejoindre sur le groupe discord :
-[![Discord: https://discordapp.com/invite/kkwEvV6dfj](https://img.shields.io/badge/Discord-gray.svg?style=for-the-badge)](https://discordapp.com/invite/HZNMGjDRhp)
+<br /><img src="https://user-images.githubusercontent.com/64525827/107496602-ceddbb80-6b91-11eb-9a05-ac311eedf150.png" width="450">
+<br />
+[![Discord: https://discordapp.com/invite/HZNMGjDRhp](https://img.shields.io/badge/Discord-gray.svg?style=for-the-badge)](https://discordapp.com/invite/HZNMGjDRhp)
 
 
 ## Le script SSD permet l'installation d'une seedbox complète avec Docker
