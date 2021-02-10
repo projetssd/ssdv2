@@ -18,6 +18,17 @@ Une fois les pré requis validé pous pouvez suivre le guide :
 * [Pas à pas d'installation](https://github.com/laster13/patxav/wiki/pas-%C3%A0-pas)
 
 <br/><br/>
+
+***
+
+# Demande d'ajout de fonctionnalité 
+https://feathub.com/projetssd/ssdv2
+
+### Demande en cours de vote
+[![Feature Requests](https://feathub.com/projetssd/ssdv2?format=svg)](https://feathub.com/projetssd/ssdv2)
+
+<br/><br/>
+
 ***
 
 > L'installation peut également ce faire sur un home serveur, cependant ce wiki ne parlera que de l'installation cloud sur serveur distant.
