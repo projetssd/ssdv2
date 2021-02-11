@@ -130,7 +130,7 @@
           PUID: '{{user.userid}}'
           PGID: '{{user.groupid}}'
           VPN_ENABLED: '{{enabled}}'
-          VPN_TYPE: '{{type_vpn}}'
+          VPN_TYPE: '{{type}}'
           VPN_USERNAME: '{{username}}'
           VPN_PASSWORD: '{{password}}'
           LAN_NETWORK: '{{network}}'
