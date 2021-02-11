@@ -1,12 +1,10 @@
 rclone:
   config: /home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf
-  path: /usr/local/bin/fclone
+  path: /usr/bin/rclone
   stats: 30s
-  live_rotate: {{ 'true' if teamdrive1_enabled | default(false) else 'false' }}
+  live_rotate: false
   service_account_remotes:
     '/opt/sa':
-       - {{ rclone.support_source if teamdrive1_enabled | default(false) }}
-       - {{ rclone.support_dest if teamdrive2_enabled | default(false) }}
   global_params:
     default:
       move:
@@ -29,26 +27,46 @@ rclone:
         - '--dedupe-mode=newest'
         - '--tpslimit=5'
 uploader:
-  - name: Medias
+  - name: tv
     enabled: true
     check:
       min_free_space: 10995119925676
       limit: 5
       type: age
-    local_folder: /home/{{user.name}}/local
+    local_folder: /home/{{ lookup('env','USER') }}/local/Series
     remotes:
-      move: '{{rclone.remote}}:{{user.name}}'
+      move: '{{rclone.remote}}:{{ lookup('env','USER') }}/Series'
+    rclone_params:
+      global_move: default
+  - name: movies
+    enabled: true
+    check:
+      min_free_space: 10995119925676
+      limit: 5
+      type: age
+    local_folder: /home/{{ lookup('env','USER') }}/local/Films
+    remotes:
+      move: '{{rclone.remote}}:{{ lookup('env','USER') }}/Films'
+    rclone_params:
+      global_move: default
+  - name: Musiques
+    enabled: true
+    check:
+      min_free_space: 10995119925676
+      limit: 5
+      type: age
+    local_folder: /home/{{ lookup('env','USER') }}/local/Musiques
+    remotes:
+      move: '{{rclone.remote}}:{{ lookup('env','USER') }}/Musiques'
     rclone_params:
       global_move: default
 syncer:
   - name: backup
-    enabled: {{ 'true' if teamdrive2_enabled | default(false) else 'false' }}
-    source_remote: '{{ rclone.support_source if teamdrive1_enabled | default(false) }}:/'
+    enabled: false
+    source_remote:
     remotes:
       sync:
-        - '{{ rclone.support_dest if teamdrive2_enabled | default(false) }}:/'
       dedupe:
-        - '{{ rclone.support_dest if teamdrive2_enabled | default(false) }}:/'
     rclone_params:
       global_sync: default
       global_dedupe: default

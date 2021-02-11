@@ -4,11 +4,11 @@ Description=crop upload
 After=network-online.target
 
 [Service]
-User=0
-Group=0
+User={{ lookup('env','MYUID') }}
+Group={{ lookup('env','MYGID') }}
 Type=exec
-ExecStart=/home/{{user.name}}/scripts/crop/crop upload
-ExecStopPost=/bin/rm -rf /home/{{user.name}}/scripts/crop/crop.lock
+ExecStart=/home/{{ lookup('env','USER') }}/scripts/crop/crop upload
+ExecStopPost=/bin/rm -rf /home/{{ lookup('env','USER') }}/scripts/crop/crop.lock
 
 [Install]
 WantedBy=default.target

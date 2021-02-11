@@ -1,9 +1,11 @@
 [http.routers]
   [http.routers.nginx-rtr]
       entryPoints = ["https"]
-      rule = "Host(`{{sub.gui if sub_enabled else 'gui'}}.{{user.domain}}`)"
+      rule = "Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)"
       service = "nginx-svc"
-      middlewares = ["chain-basic-auth"]
+      middlewares = ["{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
+            else 'chain-basic-auth@file' if auth_enabled and sub[pgrole].auth == 'basique' | default(false)
+            else 'chain-oauth@file' if auth_enabled and sub[pgrole].auth == 'oauth' | default(false) }}"]
       [http.routers.nginx-rtr.tls]
         certresolver = "letsencrypt"
 

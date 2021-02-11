@@ -12,29 +12,29 @@ triggers:
       priority: 0
 
       rewrite:
-        - from: /home/{{ lookup('env','USER') }}/Medias/Series/*
-          to: /home/{{ lookup('env','USER') }}/Medias/Series/$1
+        - from: /home/{{ lookup('env','USER') }}/Medias/Series/
+          to: /home/{{ lookup('env','USER') }}/Medias/Series/
 
   radarr:
     - name: radarr-docker
       priority: 1
 
       rewrite:
-        - from: /home/{{ lookup('env','USER') }}/Medias/Films/*
-          to: /home/{{ lookup('env','USER') }}/Medias/Films/$1
+        - from: /home/{{ lookup('env','USER') }}/Medias/Films/
+          to: /home/{{ lookup('env','USER') }}/Medias/Films/
 
   lidarr:
     - name: lidarr-docker
       priority: 2
 
       rewrite:
-        - from: /home/{{ lookup('env','USER') }}/Medias/Musiques/*
-          to: /home/{{ lookup('env','USER') }}/Medias/Musiques/$1
+        - from: /home/{{ lookup('env','USER') }}/Medias/Musiques/
+          to: /home/{{ lookup('env','USER') }}/Medias/Musiques/
 
 targets:
   plex:
     - url: https://plex.{{user.domain}}
       token: {{plex.token}}
       rewrite:
-        - from: /home/{{ lookup('env','USER') }}/Medias/*
-          to: /data/$1
+        - from: /home/{{ lookup('env','USER') }}/Medias/
+          to: /data/

@@ -5,7 +5,7 @@ Description=Plex Autoscan
 After=network-online.target
 
 [Service]
-User={{ lookup('env','USER') }}
+User={{ lookup('env','MYUID') }}
 Group={{ lookup('env','MYGID') }}
 Type=simple
 WorkingDirectory=/home/{{ lookup('env','USER') }}/scripts/plex_autoscan/

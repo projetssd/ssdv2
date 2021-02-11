@@ -1178,7 +1178,7 @@ function script_plexdrive() {
                        esac
                 ;;
 
-		10) ## Désinstalation seedbox
+		10) ## Désinstallation seedbox
 		clear
 		echo ""
 		echo -e "${YELLOW}### Seedbox-Compose déjà installée !###${NC}"
@@ -1200,72 +1200,115 @@ function script_plexdrive() {
                 echo ""
 
                 # definition variables
+                ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
                 ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
                 DOMAIN=$(cat ${TMPDOMAIN})
 
-                # Ajout ligne sub ds account.yml si elle n y est pas deja
-                ansible-vault decrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-                grep "sub" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-                if [ $? -eq 1 ]; then
-                  sed -i '/transcodes/a sub:' ${CONFDIR}/variables/account.yml
-                fi
-
-                # sous domaine
-                echo ""
-                echo -e "${BWHITE}Adresse par défault: https://gui.${DOMAIN} ${CEND}"
-                echo ""
-                read -rp $'\e[33mSouhaitez vous personnaliser le sous domaine? (o/n)\e[0m :' OUI
-                if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
-                  if [ -z "$subdomain" ]; then
-                  subdomain=$1
-                  fi
-                  while [ -z "$subdomain" ]; do
-                    >&2 echo -n -e "${BWHITE}Sous Domaine: ${CEND}"
-                    read subdomain
-                  done
-
-                  if [ ! -z "$subdomain" ]; then
-                    sed -i "/gui/d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-                    sed -i "/sub/a \ \ \ gui: $subdomain" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-                  fi
-                  echo ""
-                fi
+                # Nettoyage account.yml
+                sed -i "/traefik/,+2d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+                sed -i "/gui/,+2d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 
                 # supression container traefik pour nouvelles rules
                 docker rm -f traefik > /dev/null 2>&1
+                rm ${CONFDIR}/docker/traefik/rules/nginx.toml > /dev/null 2>&1
                 
-                # installation ssd webui
-                ansible-playbook ${BASEDIR}/includes/config/roles/nginx/tasks/main.yml
-
                 # reinstallation traefik
-                ansible-playbook ${BASEDIR}/includes/dockerapps/traefik.yml
+                install_traefik
 
-                # gestion sous domaine
+                # Suppression des precedentes variables SUBDOMAIN et AUTH deja utilisé pour traefik
+                unset SUBDOMAIN
+                unset AUTH
+
+                # choix sous domaine gui
+                echo ""
+                echo -e "${BWHITE}Adresse par défault: https://gui.${DOMAIN} ${CEND}"
+                echo ""
+                read -rp $'\e[33mSouhaitez vous personnaliser le sous domaine? (o/n)\e[0m: ' OUI
+                if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
+                  if [ -z "$SUBDOMAIN" ]; then
+                  SUBDOMAIN=$1
+                  fi
+                  while [ -z "$SUBDOMAIN" ]; do
+                    >&2 echo -n -e "${BWHITE}Sous Domaine: ${CEND}"
+                    read SUBDOMAIN
+                  done
+
+                  if [ ! -z "$SUBDOMAIN" ]; then
+                    grep "gui:" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+                    if [ $? -eq 0 ]; then
+                      sed -i "/gui/,+2d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+                    fi
+                    sed -i "/sub/a \ \ \ gui:" /opt/seedbox/variables/account.yml
+                    sed -i "/gui:/a \ \ \ \ \ gui: $SUBDOMAIN" ${CONFDIR}/variables/account.yml
+                  fi
+                fi
+                
+                # gestion sous domaine gui pour l 'affichage fin de script
                 grep "gui" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
                 if [ $? -eq 0 ]; then
                   SUBDOMAIN=$(grep gui ${CONFDIR}/variables/account.yml | cut -d ':' -f2 |  tr -d ' ')
                 else
                   SUBDOMAIN="gui"
+                  sed -i "/sub/a \ \ \ gui:" /opt/seedbox/variables/account.yml
+                  sed -i "/gui:/a \ \ \ \ \ gui: $SUBDOMAIN" ${CONFDIR}/variables/account.yml
                 fi
 
+                # choix authentification gui
+                echo ""
+                read -rp $'\e\033[1;37mChoix de Authentification pour la gui [ Enter ] 1 => basique | 2 => oauth | 3 => authelia: ' AUTH
+		  case $AUTH in
+			1)
+			     TYPE_AUTH=basique
+			     ;;
+			
+			2)
+			     TYPE_AUTH=oauth
+			     ;;
+			
+			3)
+			     TYPE_AUTH=authelia
+			     ;;
+						
+			*)
+			     echo "Action $action inconnue"
+			     exit 1
+			     ;;
+		  esac
+                sed -i "/gui: ./a \ \ \ \ \ auth: ${TYPE_AUTH}" ${CONFDIR}/variables/account.yml
+
+                # installation ssd webui
+                ansible-playbook ${BASEDIR}/includes/config/roles/nginx/tasks/main.yml
+
+                # pour eviter les doublons dans ${CONFDIR}/resume
+                grep "traefik" ${CONFDIR}/resume > /dev/null 2>&1
+                if [ $? -eq 0 ]; then
+                  sed -i "/traefik/d" ${CONFDIR}/resume > /dev/null 2>&1
+                fi
+
+                grep "oauth" ${CONFDIR}/resume > /dev/null 2>&1
+                if [ $? -eq 0 ]; then
+                  sed -i "/oauth/d" ${CONFDIR}/resume > /dev/null 2>&1
+                fi
+
+                # Mise à jour du fichier /opt/seedbox/resume
                 for i in $(docker ps --format "{{.Names}}" --filter "network=traefik_proxy")
                 do
-                  grep "${i}" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+                  grep "${i}: ." ${CONFDIR}/variables/account.yml > /dev/null 2>&1
                   if [ $? -eq 0 ]; then
-                    j=$(grep ${i} ${CONFDIR}/variables/account.yml | cut -d ':' -f2 |  tr -d ' ')
+                    j=$(grep "${i}: ." ${CONFDIR}/variables/account.yml | cut -d ':' -f2 |  tr -d ' ')
                     echo "${i} = ${j}.${DOMAIN}" >> ${CONFDIR}/resume
                   else
                      echo "${i} = ${i}.${DOMAIN}" >> ${CONFDIR}/resume
                   fi
                 done
-
+                echo ""
                 echo -e "${CRED}---------------------------------------------------------------${CEND}"
                 echo -e "${CRED}          /!\ INSTALLATION EFFECTUEE AVEC SUCCES /!\           ${CEND}"
                 echo -e "${CRED}---------------------------------------------------------------${CEND}"
                 echo ""
                 echo -e "${CRED}---------------------------------------------------------------${CEND}"
                 echo -e "${CCYAN}              Adresse de l'interface WebUI                    ${CEND}"
-                echo -e "${CCYAN}              https://${SUBDOMAIN}.${DOMAIN}                  ${CEND}"
+                echo -e "${CCYAN}              https://"${SUBDOMAIN}"."${DOMAIN}"              ${CEND}"
                 echo -e "${CRED}---------------------------------------------------------------${CEND}"
                 echo ""
 
@@ -1273,9 +1316,7 @@ function script_plexdrive() {
                 ansible-vault encrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
                 echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour sortir du script..."
                 read -r
-
                 ;;
-
 
 		4)
 		exit
@@ -1359,11 +1400,82 @@ function install_ufw() {
 }
 
 function install_traefik() {
-	create_dir ${CONFDIR}/docker/traefik/acme/
-	oauth
-	echo -e "${BLUE}### TRAEFIK ###${NC}"
-	echo -e " ${BWHITE}* Installation Traefik${NC}"
-	ansible-playbook ${BASEDIR}/includes/dockerapps/traefik.yml
+        create_dir ${CONFDIR}/docker/traefik/acme/
+        echo -e "${BLUE}### TRAEFIK ###${NC}"
+
+        ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+        DOMAIN=$(cat ${TMPDOMAIN})
+
+        if [ -z "$DOMAIN" ]; then
+          ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
+          DOMAIN=$(cat ${TMPDOMAIN})
+        fi
+
+        grep "traefik:" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+        if [ $? -eq 0 ]; then
+          sed -i "/traefik/,+2d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+        fi
+
+        # choix sous domaine traefik
+        echo ""
+        echo -e "${BWHITE}Adresse par défault: https://traefik.${DOMAIN} ${CEND}"
+        echo ""
+        read -rp $'\e[33mSouhaitez vous personnaliser le sous domaine? (o/n)\e[0m: ' OUI
+          if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
+            if [ -z "$SUBDOMAIN" ]; then
+              SUBDOMAIN=$1
+            fi
+          while [ -z "$SUBDOMAIN" ]; do
+            >&2 echo -n -e "${BWHITE}Sous Domaine: ${CEND}"
+            read SUBDOMAIN
+          done
+
+          if [ ! -z "$SUBDOMAIN" ]; then
+            grep "traefik:" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+            if [ $? -eq 0 ]; then
+              sed -i "/traefik/,+2d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+            fi
+            sed -i "/sub/a \ \ \ traefik:" /opt/seedbox/variables/account.yml
+            sed -i "/traefik:/a \ \ \ \ \ traefik: $SUBDOMAIN" ${CONFDIR}/variables/account.yml
+          fi
+        fi
+                
+        # gestion sous domaine traefik dans account.yml
+        grep "traefik" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+        if [ $? -eq 0 ]; then
+          SUBDOMAIN=$(grep "traefik: ." ${CONFDIR}/variables/account.yml | cut -d ':' -f2 |  tr -d ' ')
+        else
+          SUBDOMAIN="traefik"
+          sed -i "/sub/a \ \ \ traefik:" /opt/seedbox/variables/account.yml
+          sed -i "/traefik:/a \ \ \ \ \ traefik: $SUBDOMAIN" ${CONFDIR}/variables/account.yml
+        fi
+
+       # choix authentification traefik
+       echo ""
+       read -rp $'\e\033[1;37mChoix de Authentification pour traefik [ Enter ] 1 => basique | 2 => oauth | 3 => authelia: ' AUTH
+           case $AUTH in
+		1)
+		     TYPE_AUTH=basique
+		     ;;
+			
+		2)
+		     TYPE_AUTH=oauth
+		     ;;
+		
+		3)
+		     TYPE_AUTH=authelia
+		     ;;
+						
+		*)
+		     echo "Action $action inconnue"
+		     exit 1
+          	     ;;
+	  esac
+        sed -i "/traefik: ./a \ \ \ \ \ auth: ${TYPE_AUTH}" ${CONFDIR}/variables/account.yml
+
+        echo ""
+        echo -e " ${BWHITE}* Installation Traefik${NC}"
+        ansible-playbook ${BASEDIR}/includes/dockerapps/traefik.yml
 	checking_errors $?
 	if [[ ${CURRENT_ERROR} -eq 1 ]]; then
 		echo "${RED}Cette étape peut ne pas aboutir lors d'une première installation${CEND}"
@@ -1371,6 +1483,18 @@ function install_traefik() {
 		echo "${RED}Cette erreur est bloquante, impossible de continuer${CEND}"
 		exit 1
 	fi
+
+        # eviter les doublons dans  ${CONFDIR}/resume
+        grep "traefik" ${CONFDIR}/resume > /dev/null 2>&1
+        if [ $? -eq 1 ]; then
+          echo "traefik = ${SUBDOMAIN}.${DOMAIN}" >> ${CONFDIR}/resume
+        fi
+
+        grep "oauth" ${CONFDIR}/resume > /dev/null 2>&1
+        if [ $? -eq 1 ]; then
+          echo "oauth = ${SUBDOMAIN}.${DOMAIN}" >> ${CONFDIR}/resume
+        fi
+
 	echo ""
 }
 
@@ -1425,15 +1549,15 @@ function plexdrive() {
 }
 
 function install_rclone() {
-	echo -e "${BLUE}### RCLONE ###${NC}"
-	create_dir /mnt/rclone
-	create_dir /mnt/rclone/${USER}
-	ansible-vault decrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-    ${BASEDIR}/includes/config/scripts/rclone.sh
-    ansible-playbook ${BASEDIR}/includes/config/roles/rclone/tasks/main.yml
-	ansible-vault encrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-	checking_errors $?
-	echo ""
+        echo -e "${BLUE}### RCLONE ###${NC}"
+        create_dir /mnt/rclone
+        create_dir /mnt/rclone/${USER}
+        ansible-vault decrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+        ${BASEDIR}/includes/config/scripts/rclone.sh
+        ansible-playbook ${BASEDIR}/includes/config/roles/rclone/tasks/main.yml
+        ansible-vault encrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+        checking_errors $?
+        echo ""
 }
 
 function unionfs_fuse() {
@@ -1462,7 +1586,7 @@ function subdomain() {
 	grep "sub" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 	if [ $? -eq 1 ]; then
 		sed -i '/transcodes/a sub:' ${CONFDIR}/variables/account.yml
-	fi
+        fi
 	echo ""
 	read -rp $'\e\033[1;37m --> Personnaliser les sous domaines: (o/n) ? ' OUI
 	echo ""
@@ -1471,25 +1595,32 @@ function subdomain() {
 		echo ""
 		for line in $(cat $SERVICESPERUSER);
 		do
-			read -rp $'\e[32m* Sous domaine pour\e[0m '${line}': ' SUBDOMAIN
+
+                 if [ -z "$SUBDOMAIN" ]; then
+                     SUBDOMAIN=$1
+                 fi
+
+                 while [ -z "$SUBDOMAIN" ]; do
+		        read -rp $'\e[32m* Sous domaine pour\e[0m '${line}': ' SUBDOMAIN
+                 done
 			
-			grep "${line}: ." ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-			if [ $? -eq 0 ]; then
-				sed -i "/${line}: ./d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-			fi
-			
-			grep "${line}:" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-			if [ $? -eq 1 ]; then
-				sed -i "/sub/a \ \ \ ${line}:" /opt/seedbox/variables/account.yml
-			fi
-			
-			sed -i "/${line}:/a \ \ \ \ \ ${line}: $SUBDOMAIN" ${CONFDIR}/variables/account.yml
-		done
+                 grep "${line}: ." ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+                 if [ $? -eq 0 ]; then
+                     sed -i "/${line}/,+2d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+                 fi
+
+                 grep "${line}:" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+                 if [ $? -eq 0 ]; then
+                     sed -i "/${line}/,+1d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+                 fi
+
+                 sed -i "/sub/a \ \ \ ${line}:" /opt/seedbox/variables/account.yml
+                 sed -i "/${line}:/a \ \ \ \ \ ${line}: $SUBDOMAIN" ${CONFDIR}/variables/account.yml
+		done       
 	fi
 }
 
 function auth() {
-	
 	grep "sub" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 	if [ $? -eq 1 ]; then
 		sed -i '/transcodes/a sub:' ${CONFDIR}/variables/account.yml
@@ -1498,7 +1629,14 @@ function auth() {
 	for line in $(cat $SERVICESPERUSER);
 	do
 	
-		read -rp $'\e\033[1;37m --> Authentification '${line}' [ Enter ] 1 => basique | 2 => oauth | 3 => authelia | 4 => aucune: ' AUTH
+                if [ -z "$AUTH" ]; then
+                    AUTH=$1
+                fi
+
+                while [ -z "$AUTH" ]; do
+		    read -rp $'\e\033[1;37m --> Authentification '${line}' [ Enter ] 1 => basique | 2 => oauth | 3 => authelia | 4 => aucune: ' AUTH
+                done
+
 		case $AUTH in
 			1)
 				TYPE_AUTH=basique
@@ -1514,7 +1652,7 @@ function auth() {
 				;;
 			
 			4)
-				TYPE_AUTH=none
+				TYPE_AUTH=aucune
 				;;
 			
 			*)
@@ -1804,7 +1942,7 @@ function install_services() {
 		mkdir -p ${CONFDIR}/vars > /dev/null 2>&1
 	fi
 
-      create_file ${CONFDIR}/temp.txt
+        create_file ${CONFDIR}/temp.txt
 
 	## préparation installation
 	for line in $(cat $SERVICESPERUSER);
@@ -1840,7 +1978,6 @@ function install_services() {
 				cp "${BASEDIR}/includes/dockerapps/vars/${line}.yml" "${CONFDIR}/vars/${line}.yml" 
 				# puis on lance le générique avec ce qu'on vient de copier
 				ansible-playbook ${BASEDIR}/includes/dockerapps/generique.yml --extra-vars "@${CONFDIR}/vars/${line}.yml"
-
 			fi
 		fi
                    
@@ -1864,56 +2001,6 @@ function install_services() {
 function config_post_compose() {
 for line in $(cat $SERVICESPERUSER);
 do
-
-		if [[ "${line}" == "subsonic" ]]; then
-		echo -e "${BLUE}### CONFIG POST COMPOSE SUBSONIC ###${NC}"
-		echo -e " ${BWHITE}* Mise à jour subsonic...${NC}"
-		checking_errors $?
-		echo ""
-		echo -e "${BLUE}### SUBSONIC PREMIUM ###${NC}"
-		echo -e "${BWHITE}	--> laster13@hotmail.com${NC}"
-		echo -e "${BWHITE}	--> e402ff7ee47915446e7c2d8c8f83fad9${NC}"
-		echo -e "\nNoter les ${CCYAN}informations du dessus${CEND} et appuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
-		read -r
-		echo ""
-		fi
-
-		if [[ "${line}" == "seafile" ]]; then
-		echo ""
-		echo -e "${BLUE}### CONFIG POST COMPOSE SEAFILE ###${NC}"
-		echo -e " ${BWHITE}* Configuration seafile...${NC}"
-		echo ""
-			echo -e "${CCYAN}-----------------------------------------------------------------------------------${CEND}"
-			echo -e "${CGREEN}   1 ) Connexion: Votre mail et mot de passe             			    ${CEND}"
-			echo -e "${CGREEN}   2 ) Administrateur Système/Paramètres:					    ${CEND}"
- 			echo -e "${YELLOW}       - SERVICE_URL ---> https://seafile.domain.com				    ${CEND}"
-			echo -e "${YELLOW}       - FILE_SERVER_ROOT ---> https://seafile.domaine.com/seafhttp		    ${CEND}"
-			echo -e "${CGREEN}   3 ) Définir compte Admin							    ${CEND}"
-			echo -e "${YELLOW}       - docker exec -it seafile /opt/seafile/seafile-server-latest/reset-admin.sh ${CEND}"
-			echo -e "${CGREEN}   4 ) Déconnexion Seafile							    ${CEND}"
-			echo -e "${CGREEN}   5 ) Reconnexion avec nouveau compte Admin					    ${CEND}"
-			echo -e "${CCYAN}-----------------------------------------------------------------------------------${CEND}"
-		echo ""
-		echo -e "\nNoter les ${CCYAN}informations du dessus${CEND} et appuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
-		read -r
-		fi
-
-		if [[ "${line}" == "piwigo" ]]; then
-		echo ""
-		echo -e "${BLUE}### CONFIG POST COMPOSE PIWIGO ###${NC}"
-		echo -e " ${BWHITE}* Configuration piwigo...${NC}"
-		echo ""
-			echo -e "${CCYAN}-----------------------------------------------------------------------------------${CEND}"
-			echo -e "${CGREEN}		Localhost: 'db-piwigo'						    ${CEND}"
-			echo -e "${CGREEN}		MYSQL_DATABASE: 'piwigodb'					    ${CEND}"
- 			echo -e "${YELLOW}		MYSQL_USER: 'piwigo'						    ${CEND}"
-			echo -e "${YELLOW}		MYSQL_PASSWORD: 'piwigo'					    ${CEND}"
-			echo -e "${CGREEN}		MYSQL_ROOT_PASSWORD: 'piwigo'					    ${CEND}"
-			echo -e "${CCYAN}-----------------------------------------------------------------------------------${CEND}"
-		echo ""
-		echo -e "\nNoter les ${CCYAN}informations du dessus${CEND} et appuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
-		read -r
-		fi
 
 		if [[ "${line}" == "authelia" ]]; then
 		echo ""
@@ -1968,38 +2055,6 @@ do
 		read -r
 		fi
 
-		if [[ "${line}" == "wordpress" ]]; then
-		echo ""
-		echo -e "${BLUE}### CONFIG POST COMPOSE WORDPRESS ###${NC}"
-		echo ""
-echo -e "${CCYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-					tee <<-EOF
-🚀 Wordpress                           📓 Reference: https://github.com/laster13/patxav
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-💬 Réglages pour modifier le site complet en SSL (Section admin comprise)
-
-[1] Télécharger l'extension SSL Insecure Content Fixer
-[2] Séléctionner ' HTTP_X_FORWARDED_PROTO (ex. load balancer, reverse proxy, NginX)'
-[3] Réglages/Général modifier par https dans les url
-
-💬 Infos base de données
-
-Nom de la base de données: wordpress
-Identifiant: wordpress
-Mot de passe: wordpress
-Adresse de la base de données: db-wordpress
-Préfixe des tables: laisser par défault
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🚀 Wordpress                           📓 Reference: https://github.com/laster13/patxav
-					EOF
-echo -e "${CCYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo ""
-		echo -e "\nNoter les ${CCYAN}informations du dessus${CEND} et appuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
-		read -r
-		fi
-echo ""
 done
 }
 
@@ -2188,14 +2243,6 @@ function manage_apps() {
 			[[ "$?" = 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi;
 			echo -e " ${GREEN}   * ${line}${NC}"
                         subdomain=$(grep "${line}" ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
-
-			if [ ${line} = "php5" ] || [ ${line} = "php7" ]; then
-				image=$(docker images | grep "php" | awk '{print $3}')
-			elif [ ${line} = "sonarr3" ]; then
-				image=$(docker images | grep "sonarr" | awk '{print $3}')
-			else
-				image=$(docker images | grep "${line}" | awk '{print $3}')
-			fi
 
                         sed -i "/${line}/d" ${CONFDIR}/resume > /dev/null 2>&1
                         sed -i "/${line}/d" /home/$SEEDUSER/resume > /dev/null 2>&1

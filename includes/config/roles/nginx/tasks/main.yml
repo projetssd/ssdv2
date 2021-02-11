@@ -5,9 +5,25 @@
   gather_facts: false
   
   vars_files:
-    - /opt/seedbox/variables/account.yml
+    - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
+    - "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/generique.yml"
 
   tasks:
+
+    - name: Checking for existing app data
+      stat:
+        path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/authelia/configuration.yml"
+      register: check
+
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'gui'
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
+      vars:
+        subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
+      when: cloudflare_enabled
 
     - name: Install common packages
       become: yes
@@ -54,15 +70,20 @@
         name: "php{{ fpm.stdout }}-fpm"
         state: restarted
 
-
-
-
     - name: Import nginx default
       become: yes
       template:
-        src: /opt/seedbox-compose/includes/config/roles/nginx/templates/default.j2
+        src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/nginx/templates/default.j2"
         dest: /etc/nginx/sites-available/default
         force: yes
+
+    - name: Import middlewares-chains.toml
+      become: yes
+      template:
+        src: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/traefik/nginx.toml.j2"
+        dest: "{{ lookup('env','CONFDIR') }}/docker/traefik/rules/nginx.toml"
+        force: yes
+        owner: "{{ lookup('env','USER') }}"
         
     - name: Change user
       become: yes

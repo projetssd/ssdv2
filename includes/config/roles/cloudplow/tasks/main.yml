@@ -1,12 +1,3 @@
-#########################################################################
-# Title:         Cloudbox: Cloudplow Role                               #
-# Author(s):     l3uddz, desimaniac                                     #
-# URL:           https://github.com/cloudbox/cloudbox                   #
-# --                                                                    #
-#         Part of the Cloudbox project: https://cloudbox.works          #
-#########################################################################
-#                   GNU General Public License v3.0                     #
-#########################################################################
 ---
 
 - hosts: localhost
@@ -27,6 +18,7 @@
         service_facts:
 
       - name: stopped Systemd Unit
+        become: yes
         systemd:
           name: '{{ item }}.service'
           state: stopped
@@ -35,22 +27,22 @@
           - crop_upload
           - crop_sync
 
-      - name: stopped Systemd Unit
-        systemd:
-          name: '{{ item }}.timer'
-          state: stopped
-          enabled: no
-        with_items:
-          - crop_upload
-          - crop_sync
-
       - name: delete crop folder
-        shell: |
-          rm /etc/systemd/system/crop_upload.service
-          rm /etc/systemd/system/crop_sync.service
-          rm /etc/systemd/system/crop_upload.timer
-          rm /etc/systemd/system/crop_sync.timer
-          rm -rf /home/{{user.name}}/scripts/crop
+        become: yes
+        file:
+          path: "{{ item }}"
+          state: absent
+        with_items:
+          - /etc/systemd/system/crop_upload.service
+          - /etc/systemd/system/crop_sync.service
+          - /etc/systemd/system/crop_upload.timer
+          - /etc/systemd/system/crop_sync.timer
+
+      - name: delete crop script
+        become: yes
+        file:
+          path: "/home/{{ lookup('env','USER') }}/scripts/crop"
+          state: absent
 
       when: crop_upload_service.stat.exists
 
@@ -70,10 +62,23 @@
           cloudplow_service_running: "{{ (services['cloudplow.service'] is defined) and (services['cloudplow.service']['state'] == 'running') }}"
 
       - name: Stop cloudplow service
+        become: yes
         systemd:
           name: cloudplow
           state: stopped
         when: cloudplow_service_running
+
+      - name: delete cloudplow.service
+        become: yes
+        file:
+          path: /etc/systemd/system/cloudplow.service
+          state: absent
+
+      - name: delete cloudplow folder
+        become: yes
+        file:
+          path: "/home/{{ lookup('env','USER') }}/scripts/cloudplow"
+          state: absent
 
       when: cloudplow_service.stat.exists
 

@@ -13,12 +13,12 @@
 
     - name: Check if drive1.anchor exists
       stat:
-        path: "/home/{{ lookup('env','USER') }}/Medias/drive1.anchor"
+        path: "/home/{{ lookup('env','USER') }}/local/drive1.anchor"
       register: anchor_service
 
-    - name: delete plex_autoscan folder
+    - name: create file anchor
       shell: |
-        touch /home/{{ lookup('env','USER') }}/Medias/drive1.anchor
+        touch /home/{{ lookup('env','USER') }}/local/drive1.anchor
       when: not anchor_service.stat.exists
 
     - name: Service Tasks
@@ -39,7 +39,7 @@
           enabled: no
         when: plex_autoscan_service_running
 
-      - name: delete plex_autoscan folder
+      - name: delete plex_autoscan folder, file
         become: yes
         file:
           path: "{{ item }}"
@@ -57,7 +57,7 @@
         image: 'cloudb0x/autoscan'
 
     - name: Creating paths
-      file: 'path={{item}} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID') }}'
+      file: "path={{item}} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID') }}"
       with_items:
         - "/home/{{ lookup('env','USER') }}/scripts/{{pgrole}}"
         
