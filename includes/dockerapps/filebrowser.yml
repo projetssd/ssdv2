@@ -121,8 +121,6 @@
         name: '{{pgrole}}'
         image: '{{image}}'
         pull: yes
-        ports:
-          - '8080:8080'
         volumes: '{{pg_volumes}}'
         env: '{{pg_env}}'
         restart_policy: unless-stopped
