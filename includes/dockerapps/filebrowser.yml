@@ -102,10 +102,7 @@
       set_fact:
         pg_volumes:
           - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config:/config'
-          - '/home/{{user.name}}/local/{{pgrole}}/:/local'
-          - '/home/{{user.name}}/Medias/{{pgrole}}/:/Medias'
-          - '/home/{{user.name}}/:/home'
-          - '/:/Serveur'
+          - '/:/data'
 
     - name: 'Setting PG ENV'
       set_fact:
