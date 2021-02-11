@@ -134,6 +134,7 @@
           VPN_USERNAME: '{{username}}'
           VPN_PASSWORD: '{{password}}'
           LAN_NETWORK: '{{network}}'
+          DISABLE_IPV6: 0
           TZ: 'Europe/Paris'
 
     # MAIN DEPLOYMENT #############################################################
