@@ -17,6 +17,7 @@ Overseerr-PlexRequestAndUserManagementSystem
 Plex-PlexMediaServer
 Portainer-LightweightManagementUI
 Qbitorrent-TorrentClient
+QbitorrentVPN-TorrentClientVPN
 Radarr-MoviesAutomation-ForkSonarr
 Readarr-BookMagazineComicsEbookAudiobookManager
 Rtorrentvpn-TorrentClient
