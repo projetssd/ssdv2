@@ -16,7 +16,7 @@
       prompt: "VPN_PASSWORD"
       private: no
     - name: network
-      prompt: "LAN_NETWORK (ex 192.168.1.0/24)"
+      prompt: "LAN_NETWORK (ex 172.18.0.0/24)"
       private: no
   vars_files:
     - /opt/seedbox/variables/account.yml
