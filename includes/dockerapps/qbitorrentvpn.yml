@@ -3,7 +3,7 @@
 ---
 - hosts: localhost
   gather_facts: false
-    vars_prompt:
+  vars_prompt:
     - name: enabled
       prompt: "VPN_ENABLED (yes/no)? "
       private: no
