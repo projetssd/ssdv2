@@ -7,7 +7,7 @@
     - name: enabled
       prompt: "VPN_ENABLED (yes ou no)"
       private: no
-    - name: type
+    - name: type_vpn
       prompt: "VPN_TYPE (wireguard ou openvpn)"
       private: no
     - name: username
@@ -130,7 +130,7 @@
           PUID: '{{user.userid}}'
           PGID: '{{user.groupid}}'
           VPN_ENABLED: '{{enabled}}'
-          VPN_TYPE: '{{type}}'
+          VPN_TYPE: '{{type_vpn}}'
           VPN_USERNAME: '{{username}}'
           VPN_PASSWORD: '{{password}}'
           LAN_NETWORK: '{{network}}'
