@@ -7,7 +7,7 @@
     - name: enabled
       prompt: "VPN_ENABLED (yes ou no)"
       private: no
-    - name: type_vpn
+    - name: type
       prompt: "VPN_TYPE (wireguard ou openvpn)"
       private: no
     - name: username
