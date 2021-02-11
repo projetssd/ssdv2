@@ -93,7 +93,7 @@
 
     - name: 'Set Known Facts'
       set_fact:
-        pgrole: 'qbitorrentvpnvpn'
+        pgrole: 'qbitorrentvpn'
         intport: '8080'
         image: 'dyonr/qbittorrentvpn:latest'
 
