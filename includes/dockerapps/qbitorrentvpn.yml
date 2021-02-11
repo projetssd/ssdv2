@@ -5,7 +5,7 @@
   gather_facts: false
   vars_prompt:
     - name: enabled
-      prompt: "VPN_ENABLED (yes/no)? "
+      prompt: "VPN_ENABLED (yes/no)?"
       private: no
     - name: type
       prompt: "VPN_TYPE (wireguard/openvpn)?"
