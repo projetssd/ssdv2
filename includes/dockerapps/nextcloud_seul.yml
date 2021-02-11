@@ -1,0 +1,178 @@
+#!/bin/bash
+
+---
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+    - /opt/seedbox/variables/account.yml
+  tasks:
+        
+    # FACTS #######################################################################
+
+    - name: create nextcloud state
+      shell: |
+        echo "1" > /opt/seedbox/status/nextcloud
+
+    - name: Checking for existing app data
+      stat:
+        path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
+      register: check
+
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
+            (cloudflare.login is undefined)
+            or
+            (cloudflare.login is none)
+            or
+            (cloudflare.login | trim | length == 0)
+            or
+            (cloudflare.api is undefined)
+            or
+            (cloudflare.api is none)
+            or
+            (cloudflare.api | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Variables | Set 'oauth_enabled' variable"
+      set_fact:
+        oauth_enabled: "{{ true if not(
+            (oauth.client is undefined)
+            or
+            (oauth.client is none)
+            or
+            (oauth.client | trim | length == 0)
+            or
+            (oauth.secret is undefined)
+            or
+            (oauth.secret is none)
+            or
+            (oauth.secret | trim | length == 0)
+            or
+            (oauth.account is undefined)
+            or
+            (oauth.account is none)
+            or
+            (oauth.account | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Variables | Set 'sub' variable"
+      set_fact:
+        sub_enabled: "{{ true if not(
+            (sub.nextcloud is undefined)
+            or
+            (sub.nextcloud is none)
+            or
+            (sub.nextcloud | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: "{{sub.nextcloud if sub_enabled else 'nextcloud'}}"
+      when: cloudflare_enabled
+
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'nextcloud'
+        intport: '443'
+        extport: '4645'
+        image: 'linuxserver/nextcloud'
+
+    - name: Create seafile-net network
+      docker_network:
+        name: nextcloud-net
+        state: present
+
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
+      with_items:
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
+
+    # LABELS ######################################################################
+    - name: 'Adding Traefik'
+      set_fact:
+        pg_labels:
+          traefik.enable: 'true'
+          ## TCP Routers
+          traefik.tcp.routers.nextcloud-tcp.entrypoints: 'https'
+          traefik.tcp.routers.nextcloud-tcp.rule: 'HostSNI(`{{sub.nextcloud if sub_enabled else pgrole}}.{{user.domain}}`)'
+          traefik.tcp.routers.nextcloud-tcp.tls: 'true'
+          traefik.tcp.routers.nextcloud-tcp.tls.passthrough: 'true'
+          ## Middlewares
+          #traefik.http.routers.nextcloud-rtr.middlewares: "{{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          ## HTTP Services
+          traefik.tcp.routers.nextcloud-tcp.service: 'nextcloud-tcp-svc'
+          traefik.tcp.services.nextcloud-tcp-svc.loadbalancer.server.port: '443'
+
+    - name: 'Deploying db-nextcloud'
+      docker_container:
+        name: 'db-nextcloud'
+        recreate: true
+        image: 'linuxserver/mariadb'
+        pull: yes
+        volumes:
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/db-nextcloud:/config'
+          - '/etc/localtime:/etc/localtime:ro'
+        env:
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
+          MYSQL_ROOT_PASSWORD: 'nextcloud'
+          MYSQL_PASSWORD: 'nextcloud'
+          MYSQL_DATABASE: 'nextcloud'
+          MYSQL_USER: 'nextcloud'
+
+        restart_policy: unless-stopped
+        networks:
+          - name: nextcloud-net
+        state: started
+
+    - name: Wait for 10 seconds before continuing
+      wait_for:
+        timeout: 10
+
+    - name: 'Setting PG Volumes'
+      set_fact:
+        pg_volumes:
+          - '/etc/localtime:/etc/localtime:ro'
+          - '/opt/seedbox/docker/{{user.name}}/nextcloud/data:/data'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/conf:/config'
+          - '/home/{{user.name}}:/home/{{user.name}}'
+
+    - name: 'Setting PG ENV'
+      set_fact:
+        pg_env:
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
+          MYSQL_ROOT_PASSWORD: 'nextcloud'
+          MYSQL_PASSWORD: 'nextcloud'
+          MYSQL_DATABASE: 'nextcloud'
+          MYSQL_USER: 'nextcloud'
+
+    - name: Create and start nextcloud container
+      docker_container:
+        name: nextcloud
+        image: 'linuxserver/nextcloud'
+        pull: yes
+        env:
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
+        volumes: '{{pg_volumes}}'
+        networks:
+          - name: traefik_proxy
+          - name: nextcloud-net
+        restart_policy: unless-stopped
+        state: started
+        labels: '{{pg_labels}}'
+
+    - name: add resume file
+      shell: |
+        echo "{{pgrole}}-{{sub.nextcloud if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+
+    - name: create nextcloud state
+      shell: |
+        echo "2" > /opt/seedbox/status/nextcloud
+
