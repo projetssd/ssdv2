@@ -133,9 +133,9 @@
         src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/plex_autoscan/templates/plex_autoscan.service.j2"
         dest: /etc/systemd/system/plex_autoscan.service
         force: yes
-      when: not plex_autoscan_service.stat.exists
 
     - name: Import plex_autoscan.sh
+      become: yes
       template:
         src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/plex_autoscan/templates/plex_autoscan.sh.j2"
         dest: "/home/{{ lookup('env','USER') }}/scripts/plex_autoscan/plex_autoscan.sh"
@@ -143,7 +143,6 @@
         owner: "{{ lookup('env','USER') }}"
         group: "{{user.groupid}}"
         mode: a+x
-      when: not plex_autoscan_service.stat.exists
 
     - name: Start plex_autoscan service
       become: yes

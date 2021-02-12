@@ -1295,7 +1295,7 @@ function script_plexdrive() {
                 do
                   grep "${i}: ." ${CONFDIR}/variables/account.yml > /dev/null 2>&1
                   if [ $? -eq 0 ]; then
-                    j=$(grep "${i}: ." ${CONFDIR}/variables/account.yml | cut -d ':' -f2 |  tr -d ' ')
+                    j=$(grep "${i}: ." ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
                     echo "${i} = ${j}.${DOMAIN}" >> ${CONFDIR}/resume
                   else
                      echo "${i} = ${i}.${DOMAIN}" >> ${CONFDIR}/resume
@@ -1443,7 +1443,7 @@ function install_traefik() {
         # gestion sous domaine traefik dans account.yml
         grep "traefik" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
         if [ $? -eq 0 ]; then
-          SUBDOMAIN=$(grep "traefik: ." ${CONFDIR}/variables/account.yml | cut -d ':' -f2 |  tr -d ' ')
+          SUBDOMAIN=$(grep "traefik: ." ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
         else
           SUBDOMAIN="traefik"
           sed -i "/sub/a \ \ \ traefik:" /opt/seedbox/variables/account.yml
@@ -1994,68 +1994,7 @@ function install_services() {
     fi
     FQDNTMP=""
 
-	done
-	config_post_compose
-}
-
-function config_post_compose() {
-for line in $(cat $SERVICESPERUSER);
-do
-
-		if [[ "${line}" == "authelia" ]]; then
-		echo ""
-		echo -e "${BLUE}### CONFIG POST COMPOSE AUTHELIA ###${NC}"
-		echo -e " ${BWHITE}* Configuration Apllications avec Authelia...${NC}"
-		echo ""
-                ## Variable
-                ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
-                SEEDUSER=$(cat ${TMPNAME})
-                DOMAIN=$(cat ${TMPDOMAIN})
-                SEEDGROUP=$(cat ${TMPGROUP})
-                rm ${TMPNAME} ${TMPDOMAIN} ${TMPGROUP}
-                INSTALLEDFILE="/home/$SEEDUSER/resume"
-
-    	               echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
-    	               echo -e "${CCYAN}   /!\ Authelia avec Traefik – Secure SSO pour les services Docker /!\       ${CEND}"
-    	               echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
-	               echo ""
-    	               echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
-    	               echo -e "${CRED}    IMPORTANT: 	https://github.com/laster13/patxav/wiki			      ${CEND}"
-    	               echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
-	               echo ""
-
-                ## suppression des yml dans ${CONFDIR}/conf
-                install_traefik
-
-                echo ""
-
-                ## reinstallation application
-                echo -e "${BLUE}### REINITIALISATION DES APPLICATIONS ###${NC}"
-                echo -e " ${BWHITE}* Les fichiers de configuration ne seront pas effacés${NC}"
-                while read line; do echo ${line} | cut -d'.' -f1 | sed '/authelia/d'; done < /home/$SEEDUSER/resume > $SERVICESPERUSER
-                mv /home/$SEEDUSER/resume /tmp
-                install_services
-                echo "authelia.$DOMAIN" >> $INSTALLEDFILE
-                rm $SERVICESUSER$SEEDUSER
-
-    	               echo -e "${CRED}---------------------------------------------------------------${CEND}"
-    	               echo -e "${CRED}     /!\ MISE A JOUR DU SERVEUR EFFECTUEE AVEC SUCCES /!\      ${CEND}"
-    	               echo -e "${CRED}---------------------------------------------------------------${CEND}"
-	               echo ""
-    	               echo -e "${CRED}---------------------------------------------------------------${CEND}"
-    	               echo -e "${CCYAN}    IMPORTANT:	Avant la 1ere connexion			       ${CEND}"
-    	               echo -e "${CCYAN}    		- Nettoyer l'historique de votre navigateur    ${CEND}"
-    	               echo -e "${CRED}---------------------------------------------------------------${CEND}"
-	               echo ""
-
-                echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
-                read -r
-		echo ""
-		echo -e "\nNoter les ${CCYAN}informations du dessus${CEND} et appuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
-		read -r
-		fi
-
-done
+    done
 }
 
 decompte() {
@@ -2106,8 +2045,13 @@ function manage_apps() {
 			                  echo -e " ${BWHITE}* Resume file: $USERRESUMEFILE${NC}"
 			                  echo ""
 			                  choose_services
-                                          subdomain
-                                          auth
+                                          for line in $(cat $SERVICESPERUSER);
+                                          do
+                                            if [ ${line} != "authelia" ]; then
+                                              subdomain
+                                              auth
+                                            fi
+                                          done
 			                  install_services
 			                  resume_seedbox
 			                  pause
@@ -2166,15 +2110,9 @@ function manage_apps() {
 			[[ "$?" = 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi;
 			echo -e " ${GREEN}   * $APPSELECTED${NC}"
 
-                        grep "$APPSELECTED: ." ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-                        if [ $? -eq 0 ]; then
-                          SUBDOMAIN=$(grep "$APPSELECTED: ." ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
-                          sed -i "/$SUBDOMAIN/,+2d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-                        fi
-
                         grep "$APPSELECTED:" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-                        if [ $? -eq 0 ] || [ "$APPSELECTED" != "plex" ] ; then
-                          sed -i "/$APPSELECTED/,+1d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+                        if [ $? -eq 0 ]; then
+                          sed -i "/$APPSELECTED/,+2d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
                         fi
 
                         sed -i "/$APPSELECTED/d" ${CONFDIR}/resume > /dev/null 2>&1
@@ -2187,27 +2125,28 @@ function manage_apps() {
 
                         case $APPSELECTED in
                             seafile)
-                            docker rm -f db-seafile memcached > /dev/null 2>&1
-                            ;;
+                                docker rm -f memcached > /dev/null 2>&1
+                                ;;
                             varken)
-                            docker rm -f influxdb telegraf grafana > /dev/null 2>&1
-                            rm -rf ${CONFDIR}/docker/$SEEDUSER/telegraf
-                            rm -rf ${CONFDIR}/docker/$SEEDUSER/grafana
-                            rm -rf ${CONFDIR}/docker/$SEEDUSER/influxdb
-                            ;;
+                                docker rm -f influxdb telegraf grafana > /dev/null 2>&1
+                                rm -rf ${CONFDIR}/docker/$SEEDUSER/telegraf
+                                rm -rf ${CONFDIR}/docker/$SEEDUSER/grafana
+                                rm -rf ${CONFDIR}/docker/$SEEDUSER/influxdb
+                                ;;
                             jitsi)
-                            docker rm -f prosody jicofo jvb
-                            rm -rf ${CONFDIR}/docker/$SEEDUSER/.jitsi-meet-cfg
-                            ;;
+                                docker rm -f prosody jicofo jvb
+                                rm -rf ${CONFDIR}/docker/$SEEDUSER/.jitsi-meet-cfg
+                                ;;
                             nextcloud)
-                            docker rm -f collabora coturn office
-                            rm -rf ${CONFDIR}/docker/$SEEDUSER/coturn
-                            ;;
+                                docker rm -f collabora coturn office
+                                rm -rf ${CONFDIR}/docker/$SEEDUSER/coturn
+                                ;;
                             rtorrentvpn)
-                            rm ${CONFDIR}/conf/rutorrent-vpn.yml
-                            ;;
+                                rm ${CONFDIR}/conf/rutorrent-vpn.yml
+                                ;;
                             jackett)
-                            docker rm -f flaresolverr > /dev/null 2>&1
+                                docker rm -f flaresolverr > /dev/null 2>&1
+                                ;;
                         esac
 
 			if docker ps | grep -q db-$APPSELECTED; then
