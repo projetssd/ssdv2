@@ -194,6 +194,7 @@ function motd() {
 }
 
 function sauve() {
+	create_dir "/var/backup/local"
 	#configuration Sauvegarde
 	echo -e "${BLUE}### BACKUP ###${NC}"
 	echo -e " ${BWHITE}* Mise en place Sauvegarde${NC}"
@@ -2722,8 +2723,44 @@ function usage() {
 	echo "     install_gui : Installe la gui"
 	echo "--force-root"
 	echo "  permet d'installer la seedbox en root"
+	echo "--migrate"
+	echo "  gère la migration de la V1 vers la V2"
 	echo "--ini-file <fichier>"
 	echo "  Change le chemin par défaut du ini-file (/opt/seedbox-compose/autoinstall.ini)"
 	echo ""
 	exit 0
+}
+
+function migrate()
+{
+  echo "Vous allez migrer de SSD V1 vers SSD V2"
+  if [ "$USER" == "root" ]; then
+    echo "Vous ne POUVEZ pas faire cette opération en root"
+    echo "Merci de vous connecter sur le bon user avant de relancer"
+    exit 1
+  fi
+  echo "Assurez vous d'être connecté sur le bon utilisateur (celui qui va piloter la seedbox)"
+  echo "en connection directe (pas de connection sur un autre user ou root, puis sudo)"
+  echo "Cela va provoquer des coupures de service"
+  read -p "Appuyez sur entrée pour lancer la procédure"
+  # copie éventuelle du rclone existant
+  if [ -f "${HOME}/.config/rclone/rclone.conf" ]
+  then
+    mv "${HOME}/.config/rclone/rclone.conf" "${HOME}/.config/rclone/rclone.conf.backup_migration"
+    echo "Le fichier rclone existant a été copié sur ${HOME}/.config/rclone/rclone.conf.backup_migration"
+  fi
+  # copie du rclone de root
+  cp /root/.config/rclone/rclone.conf "${HOME}/.config/rclone/rclone.conf"
+  # remplacement du backup
+  sauve
+  # on relance l'install de rclone pour avoir le bon fichier service
+  # on supprime le fichier de service existant
+  systemctl stop rclone
+  rm -f /etc/systemd/system/rclone.service
+  ansible-vault decrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+  ansible-playbook ${BASEDIR}/includes/config/roles/rclone/tasks/main.yml
+  ansible-vault encrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+  # on met les bons droits sur le conf dir
+  conf_dir
+  echo "Migration terminée, il est conseillé de redémarrer la seedbox"
 }
