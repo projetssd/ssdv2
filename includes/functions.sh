@@ -2750,7 +2750,11 @@ function migrate()
     echo "Le fichier rclone existant a été copié sur ${HOME}/.config/rclone/rclone.conf.backup_migration"
   fi
   # copie du rclone de root
-  cp /root/.config/rclone/rclone.conf "${HOME}/.config/rclone/rclone.conf"
+  sudo cp /root/.config/rclone/rclone.conf "${HOME}/.config/rclone/rclone.conf"
+  sudo chown ${USER} "${HOME}/.config/rclone/rclone.conf"
+  sudo cp /root/.vault_pass "${HOME}/.vault_pass"
+  sudo chown ${USER} "${HOME}/.vault_pass"
+  sudo chown ${USER} "${CONFDIR}/variables/account.yml"
   # remplacement du backup
   sauve
   # on relance l'install de rclone pour avoir le bon fichier service
