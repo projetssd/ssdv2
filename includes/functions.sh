@@ -1211,7 +1211,7 @@ function script_plexdrive() {
                 # supression container traefik pour nouvelles rules
                 docker rm -f traefik > /dev/null 2>&1
                 rm ${CONFDIR}/docker/traefik/rules/nginx.toml > /dev/null 2>&1
-                
+
                 # reinstallation traefik
                 install_traefik
 
@@ -1242,7 +1242,7 @@ function script_plexdrive() {
                     sed -i "/gui:/a \ \ \ \ \ gui: $SUBDOMAIN" ${CONFDIR}/variables/account.yml
                   fi
                 fi
-                
+
                 # gestion sous domaine gui pour l 'affichage fin de script
                 grep "gui" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
                 if [ $? -eq 0 ]; then
@@ -1260,15 +1260,15 @@ function script_plexdrive() {
 			1)
 			     TYPE_AUTH=basique
 			     ;;
-			
+
 			2)
 			     TYPE_AUTH=oauth
 			     ;;
-			
+
 			3)
 			     TYPE_AUTH=authelia
 			     ;;
-						
+
 			*)
 			     echo "Action $action inconnue"
 			     exit 1
@@ -1439,7 +1439,7 @@ function install_traefik() {
             sed -i "/traefik:/a \ \ \ \ \ traefik: $SUBDOMAIN" ${CONFDIR}/variables/account.yml
           fi
         fi
-                
+
         # gestion sous domaine traefik dans account.yml
         grep "traefik" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
         if [ $? -eq 0 ]; then
@@ -1457,15 +1457,15 @@ function install_traefik() {
 		1)
 		     TYPE_AUTH=basique
 		     ;;
-			
+
 		2)
 		     TYPE_AUTH=oauth
 		     ;;
-		
+
 		3)
 		     TYPE_AUTH=authelia
 		     ;;
-						
+
 		*)
 		     echo "Action $action inconnue"
 		     exit 1
@@ -1582,7 +1582,7 @@ function install_docker() {
 }
 
 function subdomain() {
-	
+
 	grep "sub" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 	if [ $? -eq 1 ]; then
 		sed -i '/transcodes/a sub:' ${CONFDIR}/variables/account.yml
@@ -1603,7 +1603,7 @@ function subdomain() {
                  while [ -z "$SUBDOMAIN" ]; do
 		        read -rp $'\e[32m* Sous domaine pour\e[0m '${line}': ' SUBDOMAIN
                  done
-			
+
                  grep "${line}: ." ${CONFDIR}/variables/account.yml > /dev/null 2>&1
                  if [ $? -eq 0 ]; then
                      sed -i "/${line}/,+2d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
@@ -1616,7 +1616,7 @@ function subdomain() {
 
                  sed -i "/sub/a \ \ \ ${line}:" /opt/seedbox/variables/account.yml
                  sed -i "/${line}:/a \ \ \ \ \ ${line}: $SUBDOMAIN" ${CONFDIR}/variables/account.yml
-		done       
+		done
 	fi
 }
 
@@ -1628,7 +1628,7 @@ function auth() {
 	echo ""
 	for line in $(cat $SERVICESPERUSER);
 	do
-	
+
                 if [ -z "$AUTH" ]; then
                     AUTH=$1
                 fi
@@ -1641,20 +1641,20 @@ function auth() {
 			1)
 				TYPE_AUTH=basique
 				;;
-			
+
 			2)
 				TYPE_AUTH=oauth
 				;;
-			
+
 			3)
 				TYPE_AUTH=authelia
 
 				;;
-			
+
 			4)
 				TYPE_AUTH=aucune
 				;;
-			
+
 			*)
 				echo "Action $action inconnue"
 				exit 1
@@ -1672,7 +1672,7 @@ function auth() {
 
 function define_parameters() {
 	echo -e "${BLUE}### INFORMATIONS UTILISATEURS ###${NC}"
-	
+
 	create_user
 	CONTACTEMAIL=$(whiptail --title "Adresse Email" --inputbox \
 	"Merci de taper votre adresse Email :" 7 50 3>&1 1>&2 2>&3)
@@ -1782,13 +1782,13 @@ function projects() {
 	DOMAIN=$(cat ${TMPDOMAIN})
 	SEEDGROUP=$(cat ${TMPGROUP})
 	rm ${TMPNAME} ${TMPDOMAIN} ${TMPGROUP}
-	
+
 	echo -e "${BLUE}### SERVICES ###${NC}"
 	echo -e " ${BWHITE}--> Services en cours d'installation : ${NC}"
 	PROJECTPERUSER="$PROJECTUSER$SEEDUSER"
 	rm -Rf $PROJECTPERUSER > /dev/null 2>&1
 	projects="/tmp/projects.txt"
-	
+
 	if [[ -e "$projects" ]]; then
 		rm ${projects}
 	fi
@@ -1798,20 +1798,20 @@ function projects() {
 		desc=$(echo $app | cut -d\- -f2)
 		echo "$service $desc off" >> /tmp/projects.txt
 	done
-	
+
 	SERVICESTOINSTALL=$(whiptail --title "Gestion des Applications" --checklist \
 	"\nChoisir vos Applications" 18 47 10 \
 	$(cat /tmp/projects.txt) 3>&1 1>&2 2>&3)
 	[[ "$?" = 1 ]] && script_plexdrive && rm /tmp/projects.txt;
 	PROJECTPERUSER="$PROJECTUSER$SEEDUSER"
 	touch $PROJECTPERUSER
-	
+
 	for PROJECTS in $SERVICESTOINSTALL
 	do
 		echo -e "	${GREEN}* $(echo $PROJECTS| tr -d '"')${NC}"
-		echo $(echo ${PROJECTS,,} | tr -d '"') >> $PROJECTPERUSER              
+		echo $(echo ${PROJECTS,,} | tr -d '"') >> $PROJECTPERUSER
 	done
-	
+
 	for line in $(cat $PROJECTPERUSER);
 	do
 		${line}
@@ -1954,10 +1954,13 @@ function install_services() {
 			echo -e " ${BWHITE}* Processing plex config file...${NC}"
 			echo ""
 			echo -e " ${GREEN}ATTENTION IMPORTANT - NE PAS FAIRE D'ERREUR - SINON DESINSTALLER ET REINSTALLER${NC}"
-			token=$(. ${BASEDIR}/includes/config/roles/plex_autoscan/plex_token.sh)
-			sed -i "/token:/c\   token: $token" ${CONFDIR}/variables/account.yml
-			ansible-playbook ${BASEDIR}/includes/dockerapps/plex.yml
-			cp "${BASEDIR}/includes/dockerapps/plex.yml" "${CONFDIR}/conf/plex.yml" > /dev/null 2>&1
+			ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+			token=$(. /opt/seedbox-compose/includes/config/roles/plex_autoscan/plex_token.sh)
+			sed -i "/token:/c\   token: $token" /opt/seedbox/variables/account.yml
+			ansible-playbook /opt/seedbox-compose/includes/dockerapps/plex.yml
+		elif [[ "$line" == "mattermost" ]]; then
+			/opt/seedbox-compose/includes/dockerapps/templates/mattermost/mattermost.sh
+
 		else
 			# On est dans le cas générique
 			# on regarde s'i y a un playbook existant
@@ -1970,17 +1973,191 @@ function install_services() {
 			elif [[ -f "${BASEDIR}/includes/dockerapps/${line}.yml" ]]; then
 				# pas de playbook perso ni de vars perso
 				# Il y a un playbook spécifique pour cette appli, on le copie
-				cp "${BASEDIR}/includes/dockerapps/${line}.yml" "${CONFDIR}/conf/${line}.yml" 
+				cp "${BASEDIR}/includes/dockerapps/${line}.yml" "${CONFDIR}/conf/${line}.yml"
         		# puis on le lance
 				ansible-playbook "${CONFDIR}/conf/${line}.yml"
 			else
 				# on copie les variables pour le user
-				cp "${BASEDIR}/includes/dockerapps/vars/${line}.yml" "${CONFDIR}/vars/${line}.yml" 
+				cp "${BASEDIR}/includes/dockerapps/vars/${line}.yml" "${CONFDIR}/vars/${line}.yml"
 				# puis on lance le générique avec ce qu'on vient de copier
 				ansible-playbook ${BASEDIR}/includes/dockerapps/generique.yml --extra-vars "@${CONFDIR}/vars/${line}.yml"
 			fi
 		fi
                    
+                grep "$line: ." /opt/seedbox/variables/account.yml > /dev/null 2>&1
+                if [ $? -eq 0 ]; then
+                  result=$(grep "$line: ." /opt/seedbox/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
+		  FQDNTMP="$result.$DOMAIN"
+                  echo "$line = $FQDNTMP" | tee -a /opt/seedbox/resume  > /dev/null
+		  echo "$line.$DOMAIN" >> $INSTALLEDFILE
+                else
+		  FQDNTMP="$line.$DOMAIN"
+		  echo "$FQDNTMP" >> $INSTALLEDFILE
+                  echo "$line = $FQDNTMP" | tee -a /opt/seedbox/resume  > /dev/null
+                fi
+		FQDNTMP=""
+                
+	done
+	config_post_compose
+}
+
+function config_post_compose() {
+for line in $(cat $SERVICESPERUSER);
+do
+
+		if [[ "$line" == "subsonic" ]]; then
+		echo -e "${BLUE}### CONFIG POST COMPOSE SUBSONIC ###${NC}"
+		echo -e " ${BWHITE}* Mise à jour subsonic...${NC}"
+		checking_errors $?
+		echo ""
+		echo -e "${BLUE}### SUBSONIC PREMIUM ###${NC}"
+		echo -e "${BWHITE}	--> laster13@hotmail.com${NC}"
+		echo -e "${BWHITE}	--> e402ff7ee47915446e7c2d8c8f83fad9${NC}"
+		echo -e "\nNoter les ${CCYAN}informations du dessus${CEND} et appuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+		read -r
+		echo ""
+		fi
+
+		if [[ "$line" == "seafile" ]]; then
+		echo ""
+		echo -e "${BLUE}### CONFIG POST COMPOSE SEAFILE ###${NC}"
+		echo -e " ${BWHITE}* Configuration seafile...${NC}"
+		echo ""
+			echo -e "${CCYAN}-----------------------------------------------------------------------------------${CEND}"
+			echo -e "${CGREEN}   1 ) Connexion: Votre mail et mot de passe             			    ${CEND}"
+			echo -e "${CGREEN}   2 ) Administrateur Système/Paramètres:					    ${CEND}"
+ 			echo -e "${YELLOW}       - SERVICE_URL ---> https://seafile.domain.com				    ${CEND}"
+			echo -e "${YELLOW}       - FILE_SERVER_ROOT ---> https://seafile.domaine.com/seafhttp		    ${CEND}"
+			echo -e "${CGREEN}   3 ) Définir compte Admin							    ${CEND}"
+			echo -e "${YELLOW}       - docker exec -it seafile /opt/seafile/seafile-server-latest/reset-admin.sh ${CEND}"
+			echo -e "${CGREEN}   4 ) Déconnexion Seafile							    ${CEND}"
+			echo -e "${CGREEN}   5 ) Reconnexion avec nouveau compte Admin					    ${CEND}"
+			echo -e "${CCYAN}-----------------------------------------------------------------------------------${CEND}"
+		echo ""
+		echo -e "\nNoter les ${CCYAN}informations du dessus${CEND} et appuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+		read -r
+		fi
+
+		if [[ "$line" == "piwigo" ]]; then
+		echo ""
+		echo -e "${BLUE}### CONFIG POST COMPOSE PIWIGO ###${NC}"
+		echo -e " ${BWHITE}* Configuration piwigo...${NC}"
+		echo ""
+			echo -e "${CCYAN}-----------------------------------------------------------------------------------${CEND}"
+			echo -e "${CGREEN}		Localhost: 'db-piwigo'						    ${CEND}"
+			echo -e "${CGREEN}		MYSQL_DATABASE: 'piwigodb'					    ${CEND}"
+ 			echo -e "${YELLOW}		MYSQL_USER: 'piwigo'						    ${CEND}"
+			echo -e "${YELLOW}		MYSQL_PASSWORD: 'piwigo'					    ${CEND}"
+			echo -e "${CGREEN}		MYSQL_ROOT_PASSWORD: 'piwigo'					    ${CEND}"
+			echo -e "${CCYAN}-----------------------------------------------------------------------------------${CEND}"
+		echo ""
+		echo -e "\nNoter les ${CCYAN}informations du dessus${CEND} et appuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+		read -r
+		fi
+
+		if [[ "$line" == "pydio" ]]; then
+		echo ""
+		echo -e "${BLUE}### CONFIG POST COMPOSE PYDIO ###${NC}"
+		echo -e " ${BWHITE}* Configuration pydio...${NC}"
+		echo ""
+			echo -e "${CCYAN}-----------------------------------------------------------------------------------${CEND}"
+			echo -e "${CGREEN}		Localhost: 'db-pydio'						    ${CEND}"
+			echo -e "${CGREEN}		MYSQL_DATABASE: 'pydio'					            ${CEND}"
+ 			echo -e "${YELLOW}		MYSQL_USER: 'pydio'						    ${CEND}"
+			echo -e "${YELLOW}		MYSQL_PASSWORD: 'pydio'					            ${CEND}"
+			echo -e "${CGREEN}		MYSQL_ROOT_PASSWORD: 'pydio'					    ${CEND}"
+			echo -e "${CCYAN}-----------------------------------------------------------------------------------${CEND}"
+		echo ""
+		echo -e "\nNoter les ${CCYAN}informations du dessus${CEND} et appuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+		read -r
+		fi
+
+		if [[ "$line" == "authelia" ]]; then
+		echo ""
+		echo -e "${BLUE}### CONFIG POST COMPOSE AUTHELIA ###${NC}"
+		echo -e " ${BWHITE}* Configuration Apllications avec Authelia...${NC}"
+		echo ""
+                ## Variable
+                ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
+                SEEDUSER=$(cat /tmp/name)
+                DOMAIN=$(cat /tmp/domain)
+                SEEDGROUP=$(cat /tmp/group)
+                rm /tmp/name /tmp/domain /tmp/group
+                INSTALLEDFILE="/home/$SEEDUSER/resume"
+                SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
+
+    	               echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
+    	               echo -e "${CCYAN}   /!\ Authelia avec Traefik – Secure SSO pour les services Docker /!\       ${CEND}"
+    	               echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
+	               echo ""
+    	               echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
+    	               echo -e "${CRED}    IMPORTANT: 	https://github.com/laster13/patxav/wiki			      ${CEND}"
+    	               echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
+	               echo ""
+
+                ## reinstall traefik
+                install_traefik
+                echo ""
+
+                ## reinstallation application
+                echo -e "${BLUE}### REINITIALISATION DES APPLICATIONS ###${NC}"
+                echo -e " ${BWHITE}* Les fichiers de configuration ne seront pas effacés${NC}"
+                while read line; do echo $line | cut -d'.' -f1 | sed '/authelia/d'; done < /home/$SEEDUSER/resume > $SERVICESPERUSER
+                mv /home/$SEEDUSER/resume /tmp
+                install_services
+                echo "authelia.$DOMAIN" >> $INSTALLEDFILE
+                rm $SERVICESUSER$SEEDUSER
+
+    	               echo -e "${CRED}---------------------------------------------------------------${CEND}"
+    	               echo -e "${CRED}     /!\ MISE A JOUR DU SERVEUR EFFECTUEE AVEC SUCCES /!\      ${CEND}"
+    	               echo -e "${CRED}---------------------------------------------------------------${CEND}"
+	               echo ""
+    	               echo -e "${CRED}---------------------------------------------------------------${CEND}"
+    	               echo -e "${CCYAN}    IMPORTANT:	Avant la 1ere connexion			       ${CEND}"
+    	               echo -e "${CCYAN}    		- Nettoyer l'historique de votre navigateur    ${CEND}"
+    	               echo -e "${CRED}---------------------------------------------------------------${CEND}"
+	               echo ""
+
+                echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+                read -r
+		echo ""
+		echo -e "\nNoter les ${CCYAN}informations du dessus${CEND} et appuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+		read -r
+		fi
+
+		if [[ "$line" == "wordpress" ]]; then
+		echo ""
+		echo -e "${BLUE}### CONFIG POST COMPOSE WORDPRESS ###${NC}"
+		echo ""
+echo -e "${CCYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+					tee <<-EOF
+🚀 Wordpress                           📓 Reference: https://github.com/laster13/patxav
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💬 Réglages pour modifier le site complet en SSL (Section admin comprise)
+
+[1] Télécharger l'extension SSL Insecure Content Fixer
+[2] Séléctionner ' HTTP_X_FORWARDED_PROTO (ex. load balancer, reverse proxy, NginX)'
+[3] Réglages/Général modifier par https dans les url
+
+💬 Infos base de données
+
+Nom de la base de données: wordpress
+Identifiant: wordpress
+Mot de passe: wordpress
+Adresse de la base de données: db-wordpress
+Préfixe des tables: laisser par défault
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 Wordpress                           📓 Reference: https://github.com/laster13/patxav
+					EOF
+echo -e "${CCYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+		echo -e "\nNoter les ${CCYAN}informations du dessus${CEND} et appuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+		read -r
+		fi
+echo ""
+done
     grep "${line}: ." ${CONFDIR}/variables/account.yml > /dev/null 2>&1
     if [ $? -eq 0 ]; then
       result=$(grep "${line}: ." ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
@@ -2238,14 +2415,14 @@ function resume_seedbox() {
 			done
 		done < "/home/$SEEDUSER/resume"
 	fi
-	
+
 	# TODO : à garder ?
 	echo ""
 	echo -e " ${BWHITE}* Vos IDs :${NC}"
 	echo -e "	--> ${BWHITE}Utilisateur:${NC} ${YELLOW}$SEEDUSER${NC}"
 	echo -e "	--> ${BWHITE}Password:${NC} ${YELLOW}$PASSE${NC}"
 	echo ""
-	
+
 	rm -Rf $SERVICESPERUSER > /dev/null 2>&1
 	rm ${CONFDIR}/temp.txt > /dev/null 2>&1
 	ansible-vault encrypt ${CONFDIR}/variables/account.yml > /dev/null 2>&1
@@ -2381,8 +2558,8 @@ function select_seedbox_param() {
 	else
 		echo $RETURN
 	fi
-	
-  
+
+
 }
 
 function update_seedbox_param() {
@@ -2435,7 +2612,7 @@ function install_gui() {
     exit 0
 }
 
-function premier_lancement() 
+function premier_lancement()
 {
 
   echo "Certains composants doivent encore être installés/réglés"
@@ -2457,11 +2634,11 @@ function premier_lancement()
   # Pas de configuration existante
   # On installe les prérequis
   ##########################################
- 
+
   echo "Installation en cours ...."
-  
+
   mkdir -p ~/.ansible/inventories
-  
+
   ###################################
   # Configuration ansible
   # Pour le user courant uniquement
@@ -2522,7 +2699,7 @@ EOF
   echo "########################################"
   echo "# DEBUG : FIN DE PREMIER LANCEMENT "
   echo "########################################"
-  
+
 }
 
 function usage() {

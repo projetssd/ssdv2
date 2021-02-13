@@ -1,26 +1,22 @@
 #!/bin/bash
+
 ---
 - hosts: localhost
   gather_facts: false
   vars_files:
-    - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
+    - /opt/seedbox/variables/account.yml
   tasks:
         
     # FACTS #######################################################################
 
-    - name: create radarr state
+    - name: create netdata state
       shell: |
-        echo "1" > {{ lookup('env','CONFDIR') }}/status/transmission
+        echo "1" > /opt/seedbox/status/netdata
 
     - name: Checking for existing app data
       stat:
-        path: "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/authelia/configuration.yml"
+        path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
       register: check
-
-    - name: 'Set Known Facts'
-      set_fact:
-        pgrole: 'transmission'
-        image: 'haugene/transmission-openvpn:latest'
 
     - name: "Variables | Set 'cloudflare_enabled' variable"
       set_fact:
@@ -65,25 +61,31 @@
     - name: "Variables | Set 'sub' variable"
       set_fact:
         sub_enabled: "{{ true if not(
-            (sub[pgrole][pgrole] is undefined)
+            (sub.netdata is undefined)
             or
-            (sub[pgrole][pgrole] is none)
+            (sub.netdata is none)
             or
-            (sub[pgrole][pgrole] | trim | length == 0)
+            (sub.netdata | trim | length == 0)
           )
             else false }}"
 
     - name: "Set DNS Record on CloudFlare"
-      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
+        subdomain: "{{sub.netdata if sub_enabled else 'netdata'}}"
       when: cloudflare_enabled
+      
+    - name: get gid docker
+      getent:
+        database: group
+        key: docker
 
     - name: 'Set Known Facts'
       set_fact:
-        pgrole: 'transmission'
-        intport: '9091'
-        image: 'ghcr.io/linuxserver/transmission'
+        pgrole: 'netdata'
+        intport: '19999'
+        extport: '19999'
+        image: 'netdata/netdata'
 
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
@@ -96,64 +98,51 @@
         pg_labels:
           traefik.enable: 'true'
           ## HTTP Routers
-          traefik.http.routers.transmission-rtr.entrypoints: 'https'
-          traefik.http.routers.transmission-rtr.rule: 'Host(`{{{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
-          traefik.http.routers.transmission-rtr.tls: 'true'
+          traefik.http.routers.netdata-rtr.entrypoints: 'https'
+          traefik.http.routers.netdata-rtr.rule: 'Host(`{{sub.netdata if sub_enabled else pgrole}}.{{user.domain}}`)'
+          traefik.http.routers.netdata-rtr.tls: 'true'
           ## Middlewares
-          traefik.http.routers.transmission-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          traefik.http.routers.netdata-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
           ## HTTP Services
-          #traefik.http.routers.transmission-rtr.tls.certresolver: 'dns-cloudflare'
-          traefik.http.routers.transmission-rtr.service: 'transmission-svc'
-          traefik.http.services.transmission-svc.loadbalancer.server.port: '9091'
+          traefik.http.routers.netdata-rtr.service: 'netdata-svc'
+          traefik.http.services.netdata-svc.loadbalancer.server.port: '19999'
 
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
-          - "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/transmission/data:/data"
-          - "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/transmission/config:/config"
-          - '/etc/localtime:/etc/localtime:ro'
-          - "/home/{{lookup('env','USER')}}:/home/{{lookup('env','USER')}}"
+          - '/sys:/host/sys:ro'
+          - '/proc:/host/proc:ro'
+          - '/var/run/docker.sock:/var/run/docker.sock:ro'
 
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
-          PUID: "{{lookup('env','MYUID')}}"
-          PGID: "{{lookup('env','MYGID')}}"
-          CREATE_TUN_DEVICE: 'true'
-          OPENVPN_PROVIDER: '{{provider}}'
-          OPENVPN_USERNAME: '{{username}}'
-          OPENVPN_PASSWORD: '{{password}}'
-          OPENVPN_CONFIG: '{{config}}'
-          LOCAL_NETWORK: '{{network}}'
-          OPENVPN_OPTS: '--inactive 3600 --ping 10 --ping-exit 60'
-          TRANSMISSION_DOWNLOAD_DIR: "/home/{{lookup('env','USER')}}/transmission"
-          TZ: 'Europe/Paris'
+          PGID: "{{ getent_group['docker'][1] }}"
 
     # MAIN DEPLOYMENT #############################################################
-
     - name: 'Deploying {{pgrole}}'
       docker_container:
         name: '{{pgrole}}'
         image: '{{image}}'
         pull: yes
-        published_ports:
-          - '51413:51413'
-          - '51413:51413/udp'
+        hostname: '{{user.domain}}'
+        capabilities:
+          - SYS_PTRACE
         volumes: '{{pg_volumes}}'
         env: '{{pg_env}}'
         restart_policy: unless-stopped
         networks:
           - name: traefik_proxy
+        security_opts:
+          - apparmor:unconfined
         state: started
         labels: '{{pg_labels}}'
 
     - name: add resume file
-      become: yes
       shell: |
-        echo "{{pgrole}}-{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> {{ lookup('env','CONFDIR') }}/temp.txt
+        echo "{{pgrole}}-{{sub.netdata if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
 
-    - name: create transmission state
+    - name: create netdata state
       shell: |
-        echo "2" > {{ lookup('env','CONFDIR') }}/status/transmission
-
+        echo "2" > /opt/seedbox/status/netdata
 

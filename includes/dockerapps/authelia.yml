@@ -1,0 +1,174 @@
+#!/bin/bash
+
+---
+- hosts: localhost
+  gather_facts: false
+  vars_prompt:
+    - name: mail
+      prompt: "Adresse mail"
+      private: no
+    - name: smtp
+      prompt: "smtp de votre mail ex: smtp.gmail.com"
+      private: no
+    - name: port_smtp
+      prompt: "Port SMTP"
+      private: no
+    - name: secret
+      prompt: "mot de passe de l'application Google"
+      private: no
+  vars_files:
+    - /opt/seedbox/variables/account.yml
+  tasks:
+        
+    # FACTS #######################################################################
+
+    - name: create authelia state
+      shell: |
+        echo "1" > /opt/seedbox/status/authelia
+
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
+            (cloudflare.login is undefined)
+            or
+            (cloudflare.login is none)
+            or
+            (cloudflare.login | trim | length == 0)
+            or
+            (cloudflare.api is undefined)
+            or
+            (cloudflare.api is none)
+            or
+            (cloudflare.api | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Variables | Set 'sub' variable"
+      set_fact:
+        sub_enabled: "{{ true if not(
+            (sub.authelia is undefined)
+            or
+            (sub.authelia is none)
+            or
+            (sub.authelia | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: "{{sub.authelia if sub_enabled else 'authelia'}}"
+      when: cloudflare_enabled
+
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'authelia'
+        image: 'authelia/authelia:latest'
+
+    - name: Create authelia-net network
+      docker_network:
+        name: authelia-net
+        state: present
+
+    - name: Create new hashed
+      shell: |
+        docker run --rm authelia/authelia:latest authelia hash-password {{user.pass}} | cut -d: -f2 | sed 's/ //g'
+      register: password
+
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
+      with_items:
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
+
+    - name: Import configuration.yml
+      template:
+        src: /opt/seedbox-compose/includes/dockerapps/templates/authelia/configuration.yml.j2
+        dest: /opt/seedbox/docker/{{user.name}}/{{pgrole}}/configuration.yml
+
+    - name: Import users_database.yml
+      template:
+        src: /opt/seedbox-compose/includes/dockerapps/templates/authelia/users_database.yml.j2
+        dest: /opt/seedbox/docker/{{user.name}}/{{pgrole}}/users_database.yml
+
+    # LABELS ######################################################################
+    - name: 'Ajout label traefik'
+      set_fact:
+        pg_labels:
+          traefik.enable: 'true'
+          ## HTTP Routers
+          traefik.http.routers.authelia-rtr.entrypoints: 'https'
+          traefik.http.routers.authelia-rtr.rule: 'Host(`{{sub.authelia if sub_enabled else pgrole}}.{{user.domain}}`)'
+          traefik.http.routers.authelia-rtr.tls: 'true'
+          ## Middlewares
+          traefik.http.routers.radarr-rtr.middlewares: 'chain-authelia@file'
+          ## HTTP Services
+          traefik.http.routers.authelia-rtr.service: 'authelia-svc'
+          traefik.http.services.authelia-svc.loadbalancer.server.port: '9091'
+
+###################Mariadb#########################################################
+
+    - name: 'Deploying db-authelia'
+      docker_container:
+        name: 'db-authelia'
+        recreate: true
+        image: 'linuxserver/mariadb'
+        pull: yes
+        volumes:
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/db-authelia:/config'
+          - '/etc/localtime:/etc/localtime:ro'
+        env:
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
+          MYSQL_ROOT_PASSWORD: 'authelia'
+          MYSQL_PASSWORD: 'authelia'
+          MYSQL_DATABASE: 'authelia'
+          MYSQL_USER: 'authelia'
+        restart_policy: unless-stopped
+        networks:
+          - name: authelia-net
+        state: started
+
+    - name: Wait for 10 seconds before continuing
+      wait_for:
+        timeout: 10
+
+###################################################################################
+
+    - name: 'Setting PG Volumes'
+      set_fact:
+        pg_volumes:
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}:/var/lib/authelia'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/configuration.yml:/config/configuration.yml:ro'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/users_database.yml:/etc/authelia/users_database.yml'
+
+    - name: 'Setting PG ENV'
+      set_fact:
+        pg_env:
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
+          TZ: 'Europe/Paris'
+
+    # MAIN DEPLOYMENT #############################################################
+
+    - name: 'Deploying {{pgrole}}'
+      docker_container:
+        name: '{{pgrole}}'
+        image: '{{image}}'
+        pull: yes
+        volumes: '{{pg_volumes}}'
+        env: '{{pg_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+          - name: authelia-net
+        state: started
+        labels: '{{pg_labels}}'
+
+    - name: add resume file
+      shell: |
+        echo "{{pgrole}}-{{sub.authelia if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+
+    - name: create authelia state
+      shell: |
+        echo "2" > /opt/seedbox/status/authelia
+

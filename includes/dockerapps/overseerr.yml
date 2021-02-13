@@ -3,24 +3,19 @@
 - hosts: localhost
   gather_facts: false
   vars_files:
-    - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
+    - /opt/seedbox/variables/account.yml
   tasks:
         
     # FACTS #######################################################################
 
     - name: create radarr state
       shell: |
-        echo "1" > {{ lookup('env','CONFDIR') }}/status/transmission
+        echo "1" > /opt/seedbox/status/overseerr
 
     - name: Checking for existing app data
       stat:
-        path: "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/authelia/configuration.yml"
+        path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
       register: check
-
-    - name: 'Set Known Facts'
-      set_fact:
-        pgrole: 'transmission'
-        image: 'haugene/transmission-openvpn:latest'
 
     - name: "Variables | Set 'cloudflare_enabled' variable"
       set_fact:
@@ -65,25 +60,25 @@
     - name: "Variables | Set 'sub' variable"
       set_fact:
         sub_enabled: "{{ true if not(
-            (sub[pgrole][pgrole] is undefined)
+            (sub.overseerr is undefined)
             or
-            (sub[pgrole][pgrole] is none)
+            (sub.overseerr is none)
             or
-            (sub[pgrole][pgrole] | trim | length == 0)
+            (sub.overseerr | trim | length == 0)
           )
             else false }}"
 
     - name: "Set DNS Record on CloudFlare"
-      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
+        subdomain: "{{sub.overseerr if sub_enabled else 'overseerr'}}"
       when: cloudflare_enabled
 
     - name: 'Set Known Facts'
       set_fact:
-        pgrole: 'transmission'
-        intport: '9091'
-        image: 'ghcr.io/linuxserver/transmission'
+        pgrole: 'overseerr'
+        intport: '5055'
+        image: 'hotio/overseerr:nightly'
 
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
@@ -96,38 +91,31 @@
         pg_labels:
           traefik.enable: 'true'
           ## HTTP Routers
-          traefik.http.routers.transmission-rtr.entrypoints: 'https'
-          traefik.http.routers.transmission-rtr.rule: 'Host(`{{{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
-          traefik.http.routers.transmission-rtr.tls: 'true'
+          traefik.http.routers.overseerr-rtr.entrypoints: 'https'
+          traefik.http.routers.overseerr-rtr.rule: 'Host(`{{sub.overseerr if sub_enabled else pgrole}}.{{user.domain}}`)'
+          traefik.http.routers.overseerr-rtr.tls: 'true'
           ## Middlewares
-          traefik.http.routers.transmission-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          traefik.http.routers.overseerr-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
           ## HTTP Services
-          #traefik.http.routers.transmission-rtr.tls.certresolver: 'dns-cloudflare'
-          traefik.http.routers.transmission-rtr.service: 'transmission-svc'
-          traefik.http.services.transmission-svc.loadbalancer.server.port: '9091'
+          #traefik.http.routers.overseerr-rtr.tls.certresolver: 'dns-cloudflare' 
+          traefik.http.routers.overseerr-rtr.service: 'overseerr-svc'
+          traefik.http.services.overseerr-svc.loadbalancer.server.port: '5055'
 
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
-          - "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/transmission/data:/data"
-          - "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/transmission/config:/config"
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config:/config'
+          - '/home/{{user.name}}:/home/{{user.name}}'
           - '/etc/localtime:/etc/localtime:ro'
-          - "/home/{{lookup('env','USER')}}:/home/{{lookup('env','USER')}}"
 
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
-          PUID: "{{lookup('env','MYUID')}}"
-          PGID: "{{lookup('env','MYGID')}}"
-          CREATE_TUN_DEVICE: 'true'
-          OPENVPN_PROVIDER: '{{provider}}'
-          OPENVPN_USERNAME: '{{username}}'
-          OPENVPN_PASSWORD: '{{password}}'
-          OPENVPN_CONFIG: '{{config}}'
-          LOCAL_NETWORK: '{{network}}'
-          OPENVPN_OPTS: '--inactive 3600 --ping 10 --ping-exit 60'
-          TRANSMISSION_DOWNLOAD_DIR: "/home/{{lookup('env','USER')}}/transmission"
-          TZ: 'Europe/Paris'
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
+          UMASK: '002'
+          ARGS: ""
+          DEBUG: "no"
 
     # MAIN DEPLOYMENT #############################################################
 
@@ -136,9 +124,6 @@
         name: '{{pgrole}}'
         image: '{{image}}'
         pull: yes
-        published_ports:
-          - '51413:51413'
-          - '51413:51413/udp'
         volumes: '{{pg_volumes}}'
         env: '{{pg_env}}'
         restart_policy: unless-stopped
@@ -148,12 +133,11 @@
         labels: '{{pg_labels}}'
 
     - name: add resume file
-      become: yes
       shell: |
-        echo "{{pgrole}}-{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> {{ lookup('env','CONFDIR') }}/temp.txt
+        echo "{{pgrole}}-{{sub.overseerr if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
 
-    - name: create transmission state
+    - name: create overseerr state
       shell: |
-        echo "2" > {{ lookup('env','CONFDIR') }}/status/transmission
+        echo "2" > /opt/seedbox/status/overseerr
 
 
