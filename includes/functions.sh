@@ -2759,9 +2759,9 @@ function migrate() {
   # on met les bons droits sur le conf dir
   conf_dir
   # cloudplow
- if [ -f "/home/${USER}/scripts/cloudplow/config.json" ]
- then
-    sed -i 's/\/root\/.config\/rclone\/rclone.conf/\home\/${USER}\/.config\/rclone\/rclone.conf/g' /home/${USER}/scripts/cloudplow/config.json
+  if [ -f "/home/${USER}/scripts/cloudplow/config.json" ]
+  then
+    sed -i "s/\/root\/.config\/rclone\/rclone.conf/\/home\/${USER}\/.config\/rclone\/rclone.conf/g" "/home/${USER}/scripts/cloudplow/config.json"
   fi
   # plexdrive
 
