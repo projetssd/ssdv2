@@ -30,6 +30,11 @@
           path: "/home/{{ lookup('env','USER') }}/scripts/autoscan"
           state: absent
 
+      - name: "create autoscan state"
+        become: yes
+        shell: |
+          echo "0" > {{ lookup('env','CONFDIR') }}/status/autoscan
+
       when: autoscan_service.stat.exists
 
     - name: Check if plex_autoscan.service exists
@@ -161,3 +166,9 @@
       command: "/home/{{ lookup('env','USER') }}/scripts/plex_autoscan/scan.py update_config"
       ignore_errors: yes
       tags: plex_autoscan_update_sections
+
+    - name: "create plex_autoscan state"
+      become: yes
+      shell: |
+        echo "2" > {{ lookup('env','CONFDIR') }}/status/plex_autoscan
+

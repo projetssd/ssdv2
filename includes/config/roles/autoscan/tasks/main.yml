@@ -49,6 +49,10 @@
         - "/home/{{ lookup('env','USER') }}/scripts/plex_autoscan"
         when: plex_autoscan_service_running
 
+      - name: "create plex_autoscan state"
+        shell: |
+          echo "0" > {{ lookup('env','CONFDIR') }}/status/plex_autoscan
+
       when: plex_autoscan_service.stat.exists
 
     - name: 'Set Known Facts'
@@ -99,3 +103,8 @@
         force: yes
       become: yes
       become_user: "{{ lookup('env','USER') }}"
+
+    - name: "create plex_autoscan state"
+      shell: |
+        echo "2" > {{ lookup('env','CONFDIR') }}/status/autoscan
+
