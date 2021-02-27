@@ -57,8 +57,7 @@ python3-pip \
 python-dev \
 python-apt \
 sqlite3 \
-apache2-utils \
-rustc
+apache2-utils
 
 rm -f /usr/bin/python
 

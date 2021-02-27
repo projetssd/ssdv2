@@ -2625,7 +2625,6 @@ function premier_lancement() {
   python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
   pip==${PIP} \
   ansible==${1-$ANSIBLE} \
-  setuptools-rust \
   docker
   ##########################################
   # Pas de configuration existante
