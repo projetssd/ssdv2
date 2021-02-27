@@ -2727,6 +2727,8 @@ function usage() {
 }
 
 function migrate() {
+  premier_lancement
+
   echo "Vous allez migrer de SSD V1 vers SSD V2"
   if [ "$USER" == "root" ]; then
     echo "Vous ne POUVEZ pas faire cette opération en root"
@@ -2744,6 +2746,7 @@ function migrate() {
     echo "Le fichier rclone existant a été copié sur ${HOME}/.config/rclone/rclone.conf.backup_migration"
   fi
   # copie du rclone de root
+  mkdir -p "${HOME}/.config/rclone"
   sudo cp /root/.config/rclone/rclone.conf "${HOME}/.config/rclone/rclone.conf"
   sudo chown "${USER}" "${HOME}/.config/rclone/rclone.conf"
   sudo cp /root/.vault_pass "${HOME}/.vault_pass"
