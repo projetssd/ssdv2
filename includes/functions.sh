@@ -2751,20 +2751,31 @@ function migrate() {
   sauve
   # on relance l'install de rclone pour avoir le bon fichier service
   # on supprime le fichier de service existant
-  systemctl stop rclone
-  rm -f /etc/systemd/system/rclone.service
-  ansible-vault decrypt ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-  ansible-playbook "${BASEDIR}/includes/config/roles/rclone/tasks/main.yml"
-  ansible-vault encrypt ${CONFDIR}/variables/account.yml >/dev/null 2>&1
+  if [ -f "/etc/systemd/system/rclone.service" ]
+  then
+    systemctl stop rclone
+    rm -f /etc/systemd/system/rclone.service
+    ansible-vault decrypt ${CONFDIR}/variables/account.yml >/dev/null 2>&1
+    ansible-playbook "${BASEDIR}/includes/config/roles/rclone/tasks/main.yml"
+    ansible-vault encrypt ${CONFDIR}/variables/account.yml >/dev/null 2>&1
+  fi
   # on met les bons droits sur le conf dir
   conf_dir
   # cloudplow
-  if [ -f "/home/${USER}/scripts/cloudplow/config.json" ]
+  if [ -f "/etc/systemd/system/cloudplow.service" ]
   then
-    sed -i "s/\/root\/.config\/rclone\/rclone.conf/\/home\/${USER}\/.config\/rclone\/rclone.conf/g" "/home/${USER}/scripts/cloudplow/config.json"
+    cloudplow
+  fi
+  # crop
+  if [ -f "/etc/systemd/system/crop_upload.service" ]
+  then
+    crop
   fi
   # plexdrive
-
+  if [ -f "/etc/systemd/system/plexdrive.service" ]
+  then
+    plexdrive
+  fi
 
   echo "Migration terminée, il est conseillé de redémarrer la seedbox"
 }
