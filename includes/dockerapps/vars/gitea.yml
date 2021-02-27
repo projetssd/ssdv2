@@ -1,0 +1,10 @@
+---
+pgrole: 'gitea'
+intport: '3000'
+image: 'gitea/gitea:latest'
+pg_volumes:
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/data"
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  USER_UID: "{{ lookup('env','MYUID') }}"
+  USER_GID: "{{ lookup('env','MYGID') }}"

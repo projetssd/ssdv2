@@ -1,0 +1,28 @@
+---
+pgrole: 'deemixrr'
+intport: '5555'
+image: 'theultimatecoder/deemixrr:nightly'
+pg_volumes:
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config/.config/deemix"
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  Kestrel__EndPoints__Http__Url: 'http://0.0.0.0:5555'
+  # Hangfire dashboard
+  Hangfire__DashboardPath: '/autoloaderjobs'
+  #Hangfire__Password: '{{ user.name }}'
+  #Hangfire__Username: '{{ user.pass }}'
+  Hangfire__Workers: '2'
+  # Configure the cron expression for your job
+  JobConfiguration__GetUpdatesRecurringJob: '0 2 * * *'
+  JobConfiguration__SizeCalculatorRecurringJob: '0 12 * * *'
+  # Configure the wait time between API requests value is in ms
+  DelayConfiguration__ImportArtistsBackgroundJob_ExecuteDelay: '1000'
+  DelayConfiguration__CheckArtistForUpdatesBackgroundJob_GetTrackCountDelay: '1000'
+  DelayConfiguration__CheckArtistForUpdatesBackgroundJob_ExecuteDelay: '1000'
+  DelayConfiguration__CheckPlaylistForUpdatesBackgroundJob_ExecuteDelay: '1000'
+  DelayConfiguration__CreateArtistBackgroundJob_FromPlaylistDelay: '1000'
+  DelayConfiguration__CreateArtistBackgroundJob_FromUserDelay: '1000'
+  DelayConfiguration__CreateArtistBackgroundJob_FromCsvDelay: '1000'
+  DelayConfiguration__CreatePlaylistBackgroundJob_FromCsvDelay: '1000'

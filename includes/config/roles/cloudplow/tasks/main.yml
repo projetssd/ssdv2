@@ -44,6 +44,10 @@
           path: "/home/{{ lookup('env','USER') }}/scripts/crop"
           state: absent
 
+      - name: "create crop state"
+        shell: |
+          echo "0" > {{ lookup('env','CONFDIR') }}/status/crop
+
       when: crop_upload_service.stat.exists
 
     - name: Check if cloudplow.service exists
@@ -145,3 +149,8 @@
     - name: Start cloudplow service
       become: yes
       systemd: state=started name=cloudplow daemon_reload=yes enabled=yes
+
+    - name: "create plex_autoscan state"
+      shell: |
+        echo "2" > {{ lookup('env','CONFDIR') }}/status/cloudplow
+

@@ -41,6 +41,10 @@
           path: "/home/{{ lookup('env','USER') }}/scripts/cloudplow"
           state: absent
 
+      - name: "create plex_autoscan state"
+        shell: |
+          echo "0" > {{ lookup('env','CONFDIR') }}/status/cloudplow
+
       when: cloudplow_service.stat.exists
 
     - name: Check if crop.service exists
@@ -170,6 +174,10 @@
         force: yes
       become: yes
       become_user: "{{ lookup('env','USER') }}"
+
+    - name: "create plex_autoscan state"
+      shell: |
+        echo "2" > {{ lookup('env','CONFDIR') }}/status/crop
 
 
 

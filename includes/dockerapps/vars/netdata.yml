@@ -9,4 +9,4 @@ pg_volumes:
   - '/var/run/docker.sock:/var/run/docker.sock:ro'
 
 pg_env:
-  PGID: "999"
+  PGID: "{{ getent_group['docker'][1] }}"
