@@ -2621,9 +2621,11 @@ function premier_lancement() {
   ## Constants
   readonly PIP="9.0.3"
   readonly ANSIBLE="2.9"
+  ansible-galaxy collection install community.general
   python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
   pip==${PIP} \
   ansible==${1-$ANSIBLE} \
+  setuptools-rust \
   docker
   ##########################################
   # Pas de configuration existante
