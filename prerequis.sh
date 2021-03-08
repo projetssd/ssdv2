@@ -21,7 +21,7 @@ python3 -m pip install --user --upgrade pip
 #python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
 #pip==${PIP}
 python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
-ansible==${ANSIBLE}
+ansible
 python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
 setuptools
 python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \

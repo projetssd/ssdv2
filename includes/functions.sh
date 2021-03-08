@@ -2612,20 +2612,18 @@ function install_gui() {
 function premier_lancement() {
 
   echo "Certains composants doivent encore être installés/réglés"
-  echo "########################################"
-  echo "# DEBUG : DEBUT DE PREMIER LANCEMENT "
-  echo "########################################"
   if [ $mode_install = "manuel" ]; then
     read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
   fi
   ## Constants
   readonly PIP="9.0.3"
   readonly ANSIBLE="2.9"
-  ansible-galaxy collection install community.general
+
   python3 -m pip install --user --upgrade pip
   python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
-  ansible==${ANSIBLE} \
+  ansible \
   docker
+  ${HOME}/.local/bin/ansible-galaxy collection install community.general
   ##########################################
   # Pas de configuration existante
   # On installe les prérequis
@@ -2672,9 +2670,9 @@ EOF
       FOREIGN KEY(appname) REFERENCES applications(name));
 EOF
   echo "Les composants sont maintenants tous installés/réglés, poursuite de l'installation"
-  if [ $mode_install = "manuel" ]; then
+
     read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
-  fi
+
   sudo chown -R ${USER}: ${HOME}/.local
   # on ajoute le PATH qui va bien, au cas où il ne soit pas pris en compte par le ~/.profile
   export PATH="$HOME/.local/bin:$PATH"
@@ -2691,9 +2689,7 @@ EOF
   create_dir ${CONFDIR}
   create_dir ${CONFDIR}/variables
   cp /opt/seedbox-compose/includes/config/account.yml ${CONFDIR}/variables/account.yml
-  echo "########################################"
-  echo "# DEBUG : FIN DE PREMIER LANCEMENT "
-  echo "########################################"
+
 
 }
 
@@ -2752,6 +2748,7 @@ function migrate() {
   sudo chown "${USER}": "${HOME}/.vault_pass"
   sudo chown "${USER}": "${CONFDIR}/variables/account.yml"
   sudo chown -R "${USER}": /opt/seedbox/status
+  sudo chown -R "${USER}": /opt/seedbox/docker
   # remplacement du backup
   sauve
   # on relance l'install de rclone pour avoir le bon fichier service
