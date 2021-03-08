@@ -2622,8 +2622,8 @@ function premier_lancement() {
   readonly PIP="9.0.3"
   readonly ANSIBLE="2.9"
   ansible-galaxy collection install community.general
+  python3 -m pip install --user --upgrade pip
   python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
-  pip==${PIP} \
   ansible==${ANSIBLE} \
   docker
   ##########################################
