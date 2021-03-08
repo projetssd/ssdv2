@@ -2751,7 +2751,7 @@ function migrate() {
   sudo cp /root/.vault_pass "${HOME}/.vault_pass"
   sudo chown "${USER}": "${HOME}/.vault_pass"
   sudo chown "${USER}": "${CONFDIR}/variables/account.yml"
-  sudo chown "${USER}": /opt/seedbox/statu
+  sudo chown -R "${USER}": /opt/seedbox/status
   # remplacement du backup
   sauve
   # on relance l'install de rclone pour avoir le bon fichier service
@@ -2759,7 +2759,8 @@ function migrate() {
   if [ -f "/etc/systemd/system/rclone.service" ]
   then
     sudo systemctl stop rclone
-    rm -f /etc/systemd/system/rclone.service
+    sudo rm -f /etc/systemd/system/rclone.service
+    sudo systemctl daemon-reload
     ansible-vault decrypt ${CONFDIR}/variables/account.yml >/dev/null 2>&1
     ansible-playbook "${BASEDIR}/includes/config/roles/rclone/tasks/main.yml"
     ansible-vault encrypt ${CONFDIR}/variables/account.yml >/dev/null 2>&1
