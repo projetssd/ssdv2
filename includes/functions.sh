@@ -2624,7 +2624,7 @@ function premier_lancement() {
   ansible-galaxy collection install community.general
   python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
   pip==${PIP} \
-  ansible==${1-$ANSIBLE} \
+  ansible==${$ANSIBLE} \
   docker
   ##########################################
   # Pas de configuration existante
