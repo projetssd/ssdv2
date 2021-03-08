@@ -12,10 +12,25 @@
 * [DNS Cloudflare](https://github.com/laster13/patxav/wiki/Cloudflare)
 * [Création API Google Drive](https://github.com/laster13/patxav/wiki/Cr%C3%A9ation-API-Google)
 
+Vous aurez besoin d'un utilisateur standard (non root), mais qui aura les droits en sudo sans mot de passe (http://www.desmoulins.fr/index.php?pg=informatique!linux!sudo)
+Vous devez vous connecter sur votre serveur avec cet utilisateur (pas de connection root puis su - )
+
+Les étapes à accomplir sont :
+```
+sudo apt-get update
+sudo apt install git
+sudo git clone git clone https://github.com/projetssd/ssdv2.git /opt/seedbox-compose
+sudo chown -R ${USER} /opt/seedbox-compose
+cd /opt/seedbox-compose
+sudo ./prerequis.sh
+```
+Il faut ensuite rebooter votre machine, puis se reconnecter et finir l'installation
+``` 
+cd /opt/seedbox-compose
+./seddbox.sh
+```
 ###
 
-Une fois les pré requis validé pous pouvez suivre le guide :  
-* [Pas à pas d'installation](https://github.com/laster13/patxav/wiki/pas-%C3%A0-pas)
 
 <br/><br/>
 
