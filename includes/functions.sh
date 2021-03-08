@@ -2624,6 +2624,7 @@ function premier_lancement() {
   ansible \
   docker
   ${HOME}/.local/bin/ansible-galaxy collection install community.general
+  export PATH=${HOME}/.local/bin:${PATH}
   ##########################################
   # Pas de configuration existante
   # On installe les prérequis
@@ -2723,7 +2724,7 @@ function usage() {
 
 function migrate() {
   premier_lancement
-
+  export PATH=${HOME}/.local/bin:${PATH}
   echo "Vous allez migrer de SSD V1 vers SSD V2"
   if [ "$USER" == "root" ]; then
     echo "Vous ne POUVEZ pas faire cette opération en root"
@@ -2757,10 +2758,10 @@ function migrate() {
   then
     sudo systemctl stop rclone
     sudo rm -f /etc/systemd/system/rclone.service
-    sudo systemctl daemon-reload
-    ansible-vault decrypt ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-    ansible-playbook "${BASEDIR}/includes/config/roles/rclone/tasks/main.yml"
-    ansible-vault encrypt ${CONFDIR}/variables/account.yml >/dev/null 2>&1
+    echo "La configuration rclone va commencer"
+    echo "Choisissez le choix 3 (fichier déjà présent) et laissez vous guider"
+    read -p "Appuyez sur entrée pour continuer"
+    install_rclone
   fi
   # on met les bons droits sur le conf dir
   conf_dir
