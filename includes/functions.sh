@@ -2690,7 +2690,11 @@ EOF
   # Account.yml
   create_dir ${CONFDIR}
   create_dir ${CONFDIR}/variables
-  cp /opt/seedbox-compose/includes/config/account.yml ${CONFDIR}/variables/account.yml
+  if [ ! -f "${CONFDIR}/variables/account.yml" ]
+  then
+    cp /opt/seedbox-compose/includes/config/account.yml ${CONFDIR}/variables/account.yml
+  fi
+
 
 
 }
