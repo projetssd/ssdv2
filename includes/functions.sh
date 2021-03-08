@@ -2623,7 +2623,9 @@ function premier_lancement() {
   python3 -m pip install --user --upgrade pip
   python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
   ansible \
-  docker
+  docker \
+  dnspython \
+  netaddr
   ${HOME}/.local/bin/ansible-galaxy collection install community.general
   export PATH=${HOME}/.local/bin:${PATH}
   ##########################################

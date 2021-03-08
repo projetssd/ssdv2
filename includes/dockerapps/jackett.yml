@@ -186,7 +186,7 @@
 
     - name: add resume file
       shell: |
-        echo "{{pgrole}}-{{sub.jackett if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+        echo "{{pgrole}}-{{sub.jackett if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/seedbox/temp.txt
 
     - name: create jackett state
       shell: |

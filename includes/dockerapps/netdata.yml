@@ -140,7 +140,7 @@
 
     - name: add resume file
       shell: |
-        echo "{{pgrole}}-{{sub.netdata if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+        echo "{{pgrole}}-{{sub.netdata if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/seedbox/temp.txt
 
     - name: create netdata state
       shell: |

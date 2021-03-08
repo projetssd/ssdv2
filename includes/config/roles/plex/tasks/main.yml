@@ -68,6 +68,7 @@
     - name: "Pull Plex Docker image"
       docker_image:
         name: "{{ plex_docker_image }}"
+        source: pull
 
     - name: "Check if '/dev/dri' exists"
       stat:
@@ -173,5 +174,5 @@
 
     - name: add resume file
       shell: |
-        echo "{{pgrole}}-{{sub.media if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+        echo "{{pgrole}}-{{sub.media if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/seedbox/temp.txt
 

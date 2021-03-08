@@ -150,7 +150,7 @@
 
     - name: add resume file
       shell: |
-        echo "{{pgrole}}-{{sub.prestashop if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+        echo "{{pgrole}}-{{sub.prestashop if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/seedbox/temp.txt
 
     - name: create prestashop state
       shell: |

@@ -166,7 +166,7 @@
 
     - name: add resume file
       shell: |
-        echo "{{pgrole}}-{{sub.authelia if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+        echo "{{pgrole}}-{{sub.authelia if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/seedbox/temp.txt
 
     - name: create authelia state
       shell: |
