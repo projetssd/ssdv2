@@ -15,9 +15,11 @@ readonly PIP="9.0.3"
 readonly ANSIBLE="2.9"
 ${SCRIPTPATH}/includes/config/scripts/prerequis_root.sh ${SCRIPTPATH}
 
+python3 -m pip install --upgrade pip
+
 ## Install pip3 Dependencies
-python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
-pip==${PIP}
+#python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
+#pip==${PIP}
 python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
 ansible==${ANSIBLE}
 python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
