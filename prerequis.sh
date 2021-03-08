@@ -19,13 +19,18 @@ ${SCRIPTPATH}/includes/config/scripts/prerequis_root.sh ${SCRIPTPATH}
 python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
 pip==${PIP}
 python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
+ansible==${1-$ANSIBLE}
+python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
 setuptools
 python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
-pyOpenSSL \
-requests \
-netaddr \
-jmespath \
-ansible==${1-$ANSIBLE} \
+pyOpenSSL
+python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
+requests
+python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
+netaddr
+python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
+jmespath
+python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
 docker
 
 
