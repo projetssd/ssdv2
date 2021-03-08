@@ -2610,6 +2610,7 @@ function install_gui() {
 }
 
 function premier_lancement() {
+  sudo chown -R ${USER}: /opt/seedbox-compose
 
   echo "Certains composants doivent encore être installés/réglés"
   if [ $mode_install = "manuel" ]; then
