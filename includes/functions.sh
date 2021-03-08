@@ -2785,6 +2785,6 @@ function migrate() {
   then
     plexdrive
   fi
-
+  update_seedbox_param "installed" 1
   echo "Migration terminée, il est conseillé de redémarrer la seedbox"
 }
