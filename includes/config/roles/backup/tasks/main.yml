@@ -28,7 +28,6 @@
         force: yes
     
     - name: Set cron
-      become: yes
       cron: 
         name: "backup"
         minute: "0"
