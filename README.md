@@ -27,7 +27,7 @@ sudo ./prerequis.sh
 Il faut ensuite rebooter votre machine, puis se reconnecter et finir l'installation
 ``` 
 cd /opt/seedbox-compose
-./seddbox.sh
+./seedbox.sh
 ```
 ###
 
