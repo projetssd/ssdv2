@@ -46,7 +46,7 @@
           - "php-gd"
           - "composer"
 
-   - name: Import nginx default
+    - name: Import nginx default
       become: yes
       template:
         src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/nginx/templates/default.j2"
