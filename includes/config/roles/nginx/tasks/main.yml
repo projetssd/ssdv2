@@ -25,7 +25,28 @@
         subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
       when: cloudflare_enabled
 
-    - name: Import nginx default
+
+
+    - name: Install nginx
+      become: yes
+      apt:
+        state: present
+        name:
+          - "nginx"
+      ignore_errors: true
+
+    - name: Install common packages
+      become: yes
+      apt:
+        state: present
+        name:
+          - "php-fpm"
+          - "php-curl"
+          - "php-dom"
+          - "php-gd"
+          - "composer"
+
+   - name: Import nginx default
       become: yes
       template:
         src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/nginx/templates/default.j2"
@@ -40,25 +61,6 @@
         state: directory
         owner: "{{ lookup('env','USER') }}"
 
-    - name: Install nginx
-      become: yes
-      apt:
-        state: present
-        name:
-          - "nginx"
-      failed_when: 1 != 1
-
-    - name: Install common packages
-      become: yes
-      apt:
-        state: present
-        name:
-          - "php-fpm"
-          - "php-curl"
-          - "php-dom"
-          - "php-gd"
-          - "composer"
-          
     - name: stopped Systemd nginx
       become: yes
       systemd:
