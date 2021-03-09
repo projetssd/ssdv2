@@ -34,6 +34,7 @@
         name:
           - "nginx"
       ignore_errors: true
+      failed_when: false
 
     - name: Install common packages
       become: yes
@@ -46,13 +47,9 @@
           - "php-gd"
           - "composer"
       ignore_errors: true
+      failed_when: false
 
-    - name: Import nginx default
-      become: yes
-      template:
-        src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/nginx/templates/default.j2"
-        dest: /etc/nginx/sites-available/default
-        force: yes
+
 
 
     - name: Change log file owner
@@ -83,6 +80,13 @@
     - name: Chown php-fpm
       become: yes
       shell: chown "{{ lookup('env','USER') }}"  /var/run/php/php*sock
+
+    - name: Import nginx default
+      become: yes
+      template:
+        src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/nginx/templates/default.j2"
+        dest: /etc/nginx/sites-available/default
+        force: yes
       
     - name: change user in php
       become: yes
