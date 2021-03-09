@@ -45,6 +45,7 @@
           - "php-dom"
           - "php-gd"
           - "composer"
+      ignore_errors: true
 
     - name: Import nginx default
       become: yes
