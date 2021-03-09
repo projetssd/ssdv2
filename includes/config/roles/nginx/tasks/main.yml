@@ -25,12 +25,19 @@
         subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
       when: cloudflare_enabled
 
+    - name: Install nginx
+      become: yes
+      apt:
+        state: stopped
+        enabled: yes
+        name:
+          - "nginx"
+
     - name: Install common packages
       become: yes
       apt:
         state: present
         name:
-          - "nginx"
           - "php-fpm"
           - "php-curl"
           - "php-dom"
