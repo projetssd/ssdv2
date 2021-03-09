@@ -32,12 +32,6 @@
         dest: /etc/nginx/sites-available/default
         force: yes
 
-    - name: Change user
-      become: yes
-      lineinfile:
-        path: /etc/nginx/nginx.conf
-        regexp: '^user '
-        line: "user {{ lookup('env','USER') }};"
 
     - name: Change log file owner
       become: yes
@@ -70,6 +64,13 @@
       systemd:
         name: 'nginx.service'
         state: stopped
+
+    - name: Change user
+      become: yes
+      lineinfile:
+        path: /etc/nginx/nginx.conf
+        regexp: '^user '
+        line: "user {{ lookup('env','USER') }};"
 
     - name: Version php-fpm
       become: yes
