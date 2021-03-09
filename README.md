@@ -19,7 +19,7 @@ Les étapes à accomplir sont :
 ```
 sudo apt-get update
 sudo apt install git
-sudo git clone git clone https://github.com/projetssd/ssdv2.git /opt/seedbox-compose
+sudo git clone https://github.com/projetssd/ssdv2.git /opt/seedbox-compose
 sudo chown -R ${USER} /opt/seedbox-compose
 cd /opt/seedbox-compose
 sudo ./prerequis.sh
