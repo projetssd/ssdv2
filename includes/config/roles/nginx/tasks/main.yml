@@ -28,10 +28,10 @@
     - name: Install nginx
       become: yes
       apt:
-        state: stopped
-        enabled: yes
+        state: present
         name:
           - "nginx"
+      failed_when: 1 != 1
 
     - name: Install common packages
       become: yes
