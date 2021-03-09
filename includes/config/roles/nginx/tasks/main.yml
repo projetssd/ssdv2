@@ -25,6 +25,27 @@
         subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
       when: cloudflare_enabled
 
+    - name: Import nginx default
+      become: yes
+      template:
+        src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/nginx/templates/default.j2"
+        dest: /etc/nginx/sites-available/default
+        force: yes
+
+    - name: Change user
+      become: yes
+      lineinfile:
+        path: /etc/nginx/nginx.conf
+        regexp: '^user '
+        line: "user {{ lookup('env','USER') }};"
+
+    - name: Change log file owner
+      become: yes
+      file:
+        path: /var/log/nginx
+        state: directory
+        owner: "{{ lookup('env','USER') }}"
+
     - name: Install nginx
       become: yes
       apt:
@@ -77,12 +98,7 @@
         name: "php{{ fpm.stdout }}-fpm"
         state: restarted
 
-    - name: Import nginx default
-      become: yes
-      template:
-        src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/nginx/templates/default.j2"
-        dest: /etc/nginx/sites-available/default
-        force: yes
+
 
     - name: Import middlewares-chains.toml
       become: yes
@@ -92,19 +108,7 @@
         force: yes
         owner: "{{ lookup('env','USER') }}"
         
-    - name: Change user
-      become: yes
-      lineinfile:
-        path: /etc/nginx/nginx.conf
-        regexp: '^user '
-        line: "user {{ lookup('env','USER') }};"
-        
-    - name: Change log file owner
-      become: yes
-      file:
-        path: /var/log/nginx
-        state: directory
-        owner: "{{ lookup('env','USER') }}"
+
 
     - name: started Systemd nginx
       become: yes
