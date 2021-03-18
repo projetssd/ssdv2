@@ -2619,3 +2619,65 @@ function migrate() {
   update_seedbox_param "installed" 1
   echo "Migration terminée, il est conseillé de redémarrer la seedbox"
 }
+
+function migrate() {
+  premier_lancement
+  export PATH=${HOME}/.local/bin:${PATH}
+  echo "Vous allez migrer de SSD V1 vers SSD V2"
+  if [ "$USER" == "root" ]; then
+    echo "Vous ne POUVEZ pas faire cette opération en root"
+    echo "Merci de vous connecter sur le bon user avant de relancer"
+    exit 1
+  fi
+  echo "Assurez vous d'être connecté sur le bon utilisateur (celui qui va piloter la seedbox)"
+  echo "Cela doit être le user qui a été créé lors de la v1, "
+  echo "en connection directe (pas de connection sur un autre user ou root, puis sudo)"
+  echo "Cela va provoquer des coupures de service"
+  read -p "Appuyez sur entrée pour lancer la procédure"
+  # copie éventuelle du rclone existant
+  if [ -f "${HOME}/.config/rclone/rclone.conf" ]; then
+    mv "${HOME}/.config/rclone/rclone.conf" "${HOME}/.config/rclone/rclone.conf.backup_migration"
+    echo "Le fichier rclone existant a été copié sur ${HOME}/.config/rclone/rclone.conf.backup_migration"
+  fi
+  # copie du rclone de root
+  mkdir -p "${HOME}/.config/rclone"
+  sudo cp /root/.config/rclone/rclone.conf "${HOME}/.config/rclone/rclone.conf"
+  sudo chown "${USER}" "${HOME}/.config/rclone/rclone.conf"
+  sudo cp /root/.vault_pass "${HOME}/.vault_pass"
+  sudo chown "${USER}": "${HOME}/.vault_pass"
+  sudo chown "${USER}": "${CONFDIR}/variables/account.yml"
+  sudo chown -R "${USER}": /opt/seedbox/status
+  sudo chown -R "${USER}": /opt/seedbox/docker
+  # remplacement du backup
+  sauve
+  # on relance l'install de rclone pour avoir le bon fichier service
+  # on supprime le fichier de service existant
+  if [ -f "/etc/systemd/system/rclone.service" ]
+  then
+    sudo systemctl stop rclone
+    sudo rm -f /etc/systemd/system/rclone.service
+    echo "La configuration rclone va commencer"
+    echo "Choisissez le choix 3 (fichier déjà présent) et laissez vous guider"
+    read -p "Appuyez sur entrée pour continuer"
+    install_rclone
+  fi
+  # on met les bons droits sur le conf dir
+  conf_dir
+  # cloudplow
+  if [ -f "/etc/systemd/system/cloudplow.service" ]
+  then
+    cloudplow
+  fi
+  # crop
+  if [ -f "/etc/systemd/system/crop_upload.service" ]
+  then
+    crop
+  fi
+  # plexdrive
+  if [ -f "/etc/systemd/system/plexdrive.service" ]
+  then
+    plexdrive
+  fi
+  update_seedbox_param "installed" 1
+  echo "Migration terminée, il est conseillé de redémarrer la seedbox"
+}
