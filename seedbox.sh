@@ -30,7 +30,7 @@ action=manuel
 export mode_install=manuel
 # lecture des parametres
 OPTS=`getopt -o vhns: --long \
-    help,action:,ini-file:,force-root \
+    help,action:,ini-file:,force-root,migrate \
     -n 'parse-options' -- "$@"`
 
 if [ $? != 0 ] ; then echo "Failed parsing options." >&2 ; exit 1 ; fi
@@ -53,6 +53,12 @@ while true; do
     --ini-file)
       INI_FILE=$2
       shift 2
+      ;;
+
+    --migrate)
+      migrate
+      shift 1
+      exit 0
       ;;
       
     --help)
