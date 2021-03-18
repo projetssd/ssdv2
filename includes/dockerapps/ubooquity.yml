@@ -43,13 +43,18 @@
       set_fact:
         pg_labels:
           traefik.enable: 'true'
-          traefik.http.routers.ubooquity-rtr.entrypoints: 'https'
-          traefik.http.routers.ubooquity-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
-          traefik.http.routers.ubooquity-rtr.service: 'ubooquity'
+          ## HTTP Routers
+          traefik.http.routers.ubooquity.entrypoints: 'http'
+          traefik.http.routers.ubooquity.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
+          traefik.http.routers.ubooquity-secure.entrypoints: 'https'
+          traefik.http.routers.ubooquity-secure.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
+          traefik.http.routers.ubooquity-secure.tls: 'true'
+          traefik.http.routers.ubooquity-secure.service: 'ubooquity'
           traefik.http.services.ubooquity.loadbalancer.server.port: '2202'
-          traefik.http.routers.ubooquity-admin-rtr.entrypoints: 'https'
-          traefik.http.routers.ubooquity-admin-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`) && PathPrefix(`/ubooquity/admin`)'
-          traefik.http.routers.ubooquity-admin-rtr.service: 'ubooquity-admin'
+          traefik.http.routers.ubooquity-admin.entrypoints: 'https'
+          traefik.http.routers.ubooquity-admin.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`) && (PathPrefix(`/admin`)'
+          traefik.http.routers.ubooquity-admin.tls: 'true'
+          traefik.http.routers.ubooquity-admin.service: 'ubooquity-admin'
           traefik.http.services.ubooquity-admin.loadbalancer.server.port: '2203'
 
     - name: 'Setting Volumes'
