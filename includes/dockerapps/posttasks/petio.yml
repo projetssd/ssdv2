@@ -1,0 +1,33 @@
+---
+- name: Create {{pgrole}}-net network
+  docker_network:
+    name: '{{pgrole}}-net'
+    state: present
+
+- name: 'Deploying db-{{pgrole}}'
+  docker_container:
+    name: 'mongo'
+    recreate: true
+    image: 'mongo:latest'
+    pull: yes
+    volumes:
+      - "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}:/data/db"
+      - '/etc/localtime:/etc/localtime:ro'
+    restart_policy: unless-stopped
+    networks:
+      - name: '{{pgrole}}-net'
+    state: started
+
+- name: Wait for 10 seconds before continuing
+  wait_for:
+    timeout: 10
+
+- name: Add '{{pgrole}}-net' to network
+  docker_network:
+    name: '{{pgrole}}-net'
+    connected:
+      - '{{ pgrole }}'
+    appends: yes
+
+
+

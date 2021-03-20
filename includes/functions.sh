@@ -1597,27 +1597,46 @@ function subdomain() {
 		for line in $(cat $SERVICESPERUSER);
 		do
 
-                 if [ -z "$SUBDOMAIN" ]; then
+                  if [ -z "$SUBDOMAIN" ]; then
                      SUBDOMAIN=$1
-                 fi
+                  fi
 
-                 while [ -z "$SUBDOMAIN" ]; do
+                  while [ -z "$SUBDOMAIN" ]; do
 		        read -rp $'\e[32m* Sous domaine pour\e[0m '${line}': ' SUBDOMAIN
-                 done
+                  done
 			
-                 grep "${line}: ." ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-                 if [ $? -eq 0 ]; then
+                  grep "${line}: ." ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+                  if [ $? -eq 0 ]; then
                      sed -i "/${line}/,+2d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-                 fi
+                  fi
 
-                 grep "${line}:" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-                 if [ $? -eq 0 ]; then
+                  grep "${line}:" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+                  if [ $? -eq 0 ]; then
                      sed -i "/${line}/,+1d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-                 fi
+                  fi
 
-                 sed -i "/sub/a \ \ \ ${line}:" /opt/seedbox/variables/account.yml
-                 sed -i "/${line}:/a \ \ \ \ \ ${line}: $SUBDOMAIN" ${CONFDIR}/variables/account.yml
-		done       
+                  sed -i "/sub/a \ \ \ ${line}:" /opt/seedbox/variables/account.yml
+                  sed -i "/${line}:/a \ \ \ \ \ ${line}: $SUBDOMAIN" ${CONFDIR}/variables/account.yml
+                done
+        else
+                for line in $(cat $SERVICESPERUSER);
+		do
+                
+                  SUBDOMAIN=${line}
+			
+                  grep "${line}: ." ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+                  if [ $? -eq 0 ]; then
+                     sed -i "/${line}/,+2d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+                  fi
+
+                  grep "${line}:" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+                  if [ $? -eq 0 ]; then
+                     sed -i "/${line}/,+1d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+                  fi
+
+                  sed -i "/sub/a \ \ \ ${line}:" /opt/seedbox/variables/account.yml
+                  sed -i "/${line}:/a \ \ \ \ \ ${line}: $SUBDOMAIN" ${CONFDIR}/variables/account.yml
+                done
 	fi
 }
 
@@ -2147,6 +2166,9 @@ function manage_apps() {
                                 ;;
                             jackett)
                                 docker rm -f flaresolverr > /dev/null 2>&1
+                                ;;
+                            petio)
+                                docker rm -f mongo > /dev/null 2>&1
                                 ;;
                         esac
 
