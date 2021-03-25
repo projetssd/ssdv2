@@ -4,6 +4,12 @@
     name: '{{pgrole}}-net'
     state: present
 
+- name: 'Setting PG ENV'
+  set_fact:
+    mongo_env:
+      PUID: "{{ lookup('env','MYUID') }}"
+      PGID: "{{ lookup('env','MYGID') }}"
+
 - name: 'Deploying db-{{pgrole}}'
   docker_container:
     name: 'mongo'
@@ -13,6 +19,7 @@
     volumes:
       - "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}:/data/db"
       - '/etc/localtime:/etc/localtime:ro'
+    env: '{{mongo_env}}'
     restart_policy: unless-stopped
     networks:
       - name: '{{pgrole}}-net'
@@ -28,6 +35,5 @@
     connected:
       - '{{ pgrole }}'
     appends: yes
-
 
 
