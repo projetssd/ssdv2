@@ -2550,6 +2550,7 @@ function migrate() {
   mkdir -p "${HOME}/.config/rclone"
   sudo cp /root/.config/rclone/rclone.conf "${HOME}/.config/rclone/rclone.conf"
   sudo chown "${USER}" "${HOME}/.config/rclone/rclone.conf"
+  sudo chown -R "${USER}" /opt/seedbox/conf
   sudo cp /root/.vault_pass "${HOME}/.vault_pass"
   sudo chown "${USER}": "${HOME}/.vault_pass"
   sudo chown "${USER}": "${CONFDIR}/variables/account.yml"
