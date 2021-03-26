@@ -1,9 +1,14 @@
 #!/bin/bash
 
+# on change tout de suis le path pour la suite
+export PATH="$HOME/.local/bin:$PATH"
+
+
 # Absolute path to this script.
 CURRENT_SCRIPT=$(readlink -f "$0")
 # Absolute path this script is in.
-export SCRIPTPATH=$(dirname "$CURRENT_SCRIPT")
+SCRIPTPATH=$(dirname "$CURRENT_SCRIPT")
+export SCRIPTPATH
 cd ${SCRIPTPATH}
 
 
@@ -78,7 +83,7 @@ done
 if [ ! -f "${SCRIPTPATH}/ssddb" ]; then
   premier_lancement
   # on ajoute le PATH qui va bien, au cas où il ne soit pas pris en compte par le ~/.profile
-  export PATH="$HOME/.local/bin:$PATH"
+
 fi
 
  
@@ -145,8 +150,6 @@ then
   sudo chown -R ${USER}: ${HOME}/.local
 fi
 
-# on ajoute le PATH qui va bien, au cas où il ne soit pas pris en compte par le ~/.profile
-export PATH="$HOME/.local/bin:$PATH"
 
 
 

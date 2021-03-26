@@ -1,5 +1,6 @@
 #!/bin/bash
 export SCRIPTPATH=/opt/seedbox-compose
+export PATH="$HOME/.local/bin:$PATH"
 
 if [ -f "${SCRIPTPATH}/ssddb" ]; then
     export BASEDIR="/opt/seedbox-compose"

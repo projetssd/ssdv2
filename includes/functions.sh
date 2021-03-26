@@ -2479,8 +2479,7 @@ EOF
     read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
   fi
   sudo chown -R ${USER}: ${HOME}/.local
-  # on ajoute le PATH qui va bien, au cas où il ne soit pas pris en compte par le ~/.profile
-  export PATH="$HOME/.local/bin:$PATH"
+
   export CONFDIR=/opt/seedbox
   ################################################
   # on vérifie qu'il y ait un vault pass existant
@@ -2524,14 +2523,13 @@ function usage() {
   echo "--migrate"
   echo "  gère la migration de la V1 vers la V2"
   echo "--ini-file <fichier>"
-  echo "  Change le chemin par défaut du ini-file
+  echo "  Change le chemin par défaut du ini-file"
 	echo ""
 	exit 0
 }
 
 function migrate() {
   premier_lancement
-  export PATH=${HOME}/.local/bin:${PATH}
   echo "Vous allez migrer de SSD V1 vers SSD V2"
   if [ "$USER" == "root" ]; then
     echo "Vous ne POUVEZ pas faire cette opération en root"
