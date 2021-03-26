@@ -16,207 +16,140 @@ echo -e "${BLUE}### INFORMATIONS UTILISATEURS ###${NC}"
 
 ACCOUNT=${CONFDIR}/variables/account.yml
 
+if [ ! -f ${ACCOUNT} ]
+then
+  cp ${BASEDIR}/includes/config/account.yml ${ACCOUNT}
+fi
+
 grep "sub" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
 if [ $? -eq 1 ]; then
   sed -i '/transcodes/a sub:' ${CONFDIR}/variables/account.yml
 fi
 
-if [ "$mode_install" = "manuel" ]
-then
-  echo ""
-  echo -e "${BLUE}L'utilisateur et mot de passe demandés${NC}"
-  echo -e "${BLUE}serviront à vous authentifier sur les différents services en mode web${NC}"
-fi
 
-if [ -z ${username} ]
-then
-  read -p $'\e[32m↘️ Nom d utilisateur | Appuyer sur [Enter]: \e[0m' user < /dev/tty
-else
-  user=${username}
-fi
+echo ""
+echo -e "${BLUE}L'utilisateur et mot de passe demandés${NC}"
+echo -e "${BLUE}serviront à vous authentifier sur les différents services en mode web${NC}"
 
-if [ -z ${password} ]
-then
-  read -p $'\e[32m↘️ Mot de passe | Appuyer sur [Enter]: \e[0m' pass < /dev/tty
-else
-  pass=${password}
-fi
+read -p $'\e[32m↘️ Nom d utilisateur | Appuyer sur [Enter]: \e[0m' user < /dev/tty
 
+read -p $'\e[32m↘️ Mot de passe | Appuyer sur [Enter]: \e[0m' pass < /dev/tty
 
-if [ -z ${adresse_email} ]
-then
-  read -p $'\e[32m↘️ Mail | Appuyer sur [Enter]: \e[0m' mail < /dev/tty
-else
-  mail=${adresse_email}
-fi
+read -p $'\e[32m↘️ Mail | Appuyer sur [Enter]: \e[0m' mail < /dev/tty
+read -p $'\e[32m↘️ Domaine | Appuyer sur [Enter]: \e[0m' domain < /dev/tty
 
-if [ -z ${domaine} ]
-then
-  read -p $'\e[32m↘️ Domaine | Appuyer sur [Enter]: \e[0m' domain < /dev/tty
-else
-  domain=${domaine}
-fi
 
 echo ""
 
-is_use_cf=1 # on utilise cloudflare par défaut
-if [ -v use_cf ]
-then
-  is_use_cf=${use_cf}
+
+
+
+echo -e "${BLUE}### Gestion des DNS ###${NC}"
+echo ""
+echo -e "${CCYAN}------------------------------------------------------------------${CEND}"
+echo -e "${CCYAN}   CloudFlare protège et accélère les sites internet.             ${CEND}"
+echo -e "${CCYAN}   CloudFlare optimise automatiquement la déliverabilité          ${CEND}"
+echo -e "${CCYAN}   de vos pages web afin de diminuer le temps de chargement       ${CEND}"
+echo -e "${CCYAN}   et d’améliorer les performances. CloudFlare bloque aussi       ${CEND}"
+echo -e "${CCYAN}   les menaces et empêche certains robots illégitimes de          ${CEND}"
+echo -e "${CCYAN}   consommer votre bande passante et les ressources serveur.      ${CEND}"
+echo -e "${CCYAN}------------------------------------------------------------------${CEND}"
+echo ""
+
+read -rp $'\e[33mSouhaitez vous utiliser les DNS Cloudflare ? (o/n - default n)\e[0m :' OUI
+
+if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
+
+  while [ -z "$cloud_email" ]; do
+    >&2 echo -n -e "${BWHITE}Votre Email Cloudflare: ${CEND}"
+    read cloud_email
+  done
+
+  while [ -z "$cloud_api" ]; do
+    >&2 echo -n -e "${BWHITE}Votre API Cloudflare: ${CEND}"
+    read cloud_api
+  done
 fi
 
-if [ ${is_use_cf} = 1 ]
-then
-	if [ -z ${use_cf} ]
-	then
-		echo -e "${BLUE}### Gestion des DNS ###${NC}"
-		echo ""
-		echo -e "${CCYAN}------------------------------------------------------------------${CEND}"
-		echo -e "${CCYAN}   CloudFlare protège et accélère les sites internet.             ${CEND}"
-		echo -e "${CCYAN}   CloudFlare optimise automatiquement la déliverabilité          ${CEND}"
-		echo -e "${CCYAN}   de vos pages web afin de diminuer le temps de chargement       ${CEND}"
-		echo -e "${CCYAN}   et d’améliorer les performances. CloudFlare bloque aussi       ${CEND}"
-		echo -e "${CCYAN}   les menaces et empêche certains robots illégitimes de          ${CEND}"
-		echo -e "${CCYAN}   consommer votre bande passante et les ressources serveur.      ${CEND}"
-		echo -e "${CCYAN}------------------------------------------------------------------${CEND}"
-		echo ""
+echo ""
+echo -e "${BLUE}### Google OAuth2 avec Traefik – Secure SSO pour les services Docker ###${NC}"
+echo ""
+echo -e "${CCYAN}------------------------------------------------------------------${CEND}"
+echo -e "${CCYAN}    Protocole d'identification via Google OAuth2		   ${CEND}"
+echo -e "${CCYAN}    Securisation SSO pour les services Docker			   ${CEND}"
+echo -e "${CCYAN}------------------------------------------------------------------${CEND}"
+echo ""
+echo -e "${CRED}-------------------------------------------------------------------${CEND}"
+echo -e "${CRED}    /!\ IMPORTANT: Au préalable créer un projet et vos identifiants${CEND}"
+echo -e "${CRED}    https://github.com/laster13/patxav/wiki /!\ 		   ${CEND}"
+echo -e "${CRED}-------------------------------------------------------------------${CEND}"
+echo ""
 
-		read -rp $'\e[33mSouhaitez vous utiliser les DNS Cloudflare ? (o/n - default n)\e[0m :' OUI
-
-		if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
-	
-			while [ -z "$cloud_email" ]; do
-				>&2 echo -n -e "${BWHITE}Votre Email Cloudflare: ${CEND}"
-				read cloud_email
-			done
-
-			while [ -z "$cloud_api" ]; do
-				>&2 echo -n -e "${BWHITE}Votre API Cloudflare: ${CEND}"
-				read cloud_api
-			done
-		fi
-	else
-		if [ -z ${cf_mail_login} ]
-		then
-			while [ -z "$cloud_email" ]; do
-				>&2 echo -n -e "${BWHITE}Votre Email Cloudflare: ${CEND}"
-				read cloud_email
-			done
-		else
-			cloud_email=${cf_mail_login}
-		fi
-		
-		if [ -z ${cf_api} ]
-		then
-			while [ -z "$cloud_api" ]; do
-				>&2 echo -n -e "${BWHITE}Votre API Cloudflare: ${CEND}"
-				read cloud_api
-			done
-		else
-			cloud_api=${cf_api}
-		fi
-	fi
-fi
-
-is_use_goauth=1 # on utilise goauth par défaut
-if [ -v use_goauth ]
-then
-  is_use_goauth=${use_goauth}
-fi
-
-if [ ${is_use_goauth} = 1 ]
-then
-	if [ -z ${use_goaut} ]
-	then
-		echo ""
-		echo -e "${BLUE}### Google OAuth2 avec Traefik – Secure SSO pour les services Docker ###${NC}"
-		echo ""
-		echo -e "${CCYAN}------------------------------------------------------------------${CEND}"
-		echo -e "${CCYAN}    Protocole d'identification via Google OAuth2		   ${CEND}"
-		echo -e "${CCYAN}    Securisation SSO pour les services Docker			   ${CEND}"
-		echo -e "${CCYAN}------------------------------------------------------------------${CEND}"
-		echo ""
-		echo -e "${CRED}-------------------------------------------------------------------${CEND}"
-		echo -e "${CRED}    /!\ IMPORTANT: Au préalable créer un projet et vos identifiants${CEND}"
-		echo -e "${CRED}    https://github.com/laster13/patxav/wiki /!\ 		   ${CEND}"
-		echo -e "${CRED}-------------------------------------------------------------------${CEND}"
-		echo ""
-
-		read -rp $'\e[33mSouhaitez vous sécuriser vos Applis avec Google OAuth2 ? (o/n - default n)\e[0m :' OUI
-		if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
-			if [ -z "$oauth_client" ] || [ -z "$oauth_secret" ] || [ -z "$email" ]; then
-				oauth_client=$1
-				oauth_secret=$2
-				email=$3
-			fi
-		
-
-			while [ -z "$oauth_client" ]; do
-				>&2 echo -n -e "${BWHITE}Oauth_client: ${CEND}"
-				read oauth_client
-			done
-
-			while [ -z "$oauth_secret" ]; do
-			>&2 echo -n -e "${BWHITE}Oauth_secret: ${CEND}"
-			read oauth_secret
-			done
-
-			while [ -z "$email" ]; do
-				>&2 echo -n -e "${BWHITE}Compte Gmail utilisé.s, séparés d une virgule si plusieurs: ${CEND}"
-				read email
-			done
-
-			
-			echo ""
-		fi
-	else
-		oauth_client=$oauth_client
-		oauth_secret=$oauth_secret
-		email=$oauth_email
-		
-	fi
-	openssl=$(openssl rand -hex 16)
-fi
-
-if [ $mode_install == "auto" ]
-then
-  if [ -z ${gui_subdomain} ]
-  then
-    gui_subdomain=gui
+read -rp $'\e[33mSouhaitez vous sécuriser vos Applis avec Google OAuth2 ? (o/n - default n)\e[0m :' OUI
+if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
+  if [ -z "$oauth_client" ] || [ -z "$oauth_secret" ] || [ -z "$email" ]; then
+    oauth_client=$1
+    oauth_secret=$2
+    email=$3
   fi
-    
-fi 
 
-if [ -z ${gui_subdomain} ]
-then
-  set -a
+
+  while [ -z "$oauth_client" ]; do
+    >&2 echo -n -e "${BWHITE}Oauth_client: ${CEND}"
+    read oauth_client
+  done
+
+  while [ -z "$oauth_secret" ]; do
+  >&2 echo -n -e "${BWHITE}Oauth_secret: ${CEND}"
+  read oauth_secret
+  done
+
+  while [ -z "$email" ]; do
+    >&2 echo -n -e "${BWHITE}Compte Gmail utilisé.s, séparés d une virgule si plusieurs: ${CEND}"
+    read email
+  done
+
+
   echo ""
-  echo -e "${BWHITE}Adresse par défault: https://gui.$domain ${CEND}"
-  echo ""
-  read -rp $'\e[33mSouhaitez vous personnaliser le sous domaine? (o/n - default n)\e[0m :' OUI
-  if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
-    if [ -z "$subdomain" ]; then
-      subdomain=$1
-    fi
-    while [ -z "$subdomain" ]; do
-      >&2 echo -n -e "${BWHITE}Sous Domaine: ${CEND}"
-      read subdomain
-    done
-    
-    grep "sub" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-    if [ $? -eq 1 ]; then
-      sed -i '/transcodes/a sub:' ${CONFDIR}/variables/account.yml
-    fi
-    if [ ! -z "$subdomain" ]; then
-      sed -i "/gui/d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-      sed -i "/sub/a \ \ \ gui: $subdomain" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-    fi
-    echo ""
-  else  
-    subdomain=gui
-  fi
-  set +a
 fi
+
+openssl=$(openssl rand -hex 16)
+
+
+
+
+
+set -a
+echo ""
+echo -e "${BWHITE}Adresse par défault: https://gui.$domain ${CEND}"
+echo ""
+read -rp $'\e[33mSouhaitez vous personnaliser le sous domaine? (o/n - default n)\e[0m :' OUI
+if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
+  if [ -z "$subdomain" ]; then
+    subdomain=$1
+  fi
+  while [ -z "$subdomain" ]; do
+    >&2 echo -n -e "${BWHITE}Sous Domaine: ${CEND}"
+    read subdomain
+  done
+
+  grep "sub" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+  if [ $? -eq 1 ]; then
+    sed -i '/transcodes/a sub:' ${CONFDIR}/variables/account.yml
+  fi
+  if [ ! -z "$subdomain" ]; then
+    sed -i "/gui/d" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+    sed -i "/sub/a \ \ \ gui: $subdomain" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+  fi
+  echo ""
+else
+  subdomain=gui
+fi
+set +a
+
+
+
+
 
 # creation utilisateur
 userid=$(id -u)

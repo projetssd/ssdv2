@@ -4,7 +4,20 @@
   vars_files:
     - "/opt/seedbox/variables/account.yml"
   tasks:
-
+    - name: make sure dir is present
+      file:
+        path: "{{ lookup('env','BASEDIR') }}/tmp"
+        state: directory
+        owner: "{{ lookup('env','USER') }}"
+    - name: make sure file is present
+      file:
+        path: "{{ item }}"
+        state: touch
+        owner: "{{ lookup('env','USER') }}"
+      with_items:
+        - "{{ lookup('env','TMPNAME') }}"
+        - "{{ lookup('env','TMPDOMAIN') }}"
+        - "{{ lookup('env','TMPGROUP') }}"
     - name: 
       shell: |
         echo {{user.name}} > {{ lookup('env','TMPNAME') }}
