@@ -2394,7 +2394,6 @@ function install_gui() {
   ansible-playbook ${BASEDIR}/includes/config/roles/nginx/tasks/main.yml
   # TODO : vérifier ou un récupère le subdomain ?
 
-
   DOMAIN=$(select_seedbox_param "domain")
 
   echo -e "${CRED}---------------------------------------------------------------${CEND}"
@@ -2419,11 +2418,20 @@ function premier_lancement() {
   echo "########################################"
   echo "# DEBUG : DEBUT DE PREMIER LANCEMENT "
   echo "########################################"
-  if [ $mode_install = "manuel" ]; then
-    read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
-  fi
+
+  read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
+
+  # installation des paquets nécessaires
+  sudo ${SCRIPTPATH}/includes/config/scripts/prerequis_root.sh
+
+  # création d'un virtualenv
+  python3 -m venv ${SCRIPTPATH}/venv
+
+  # activation du venv
+  source ${SCRIPTPATH}/venv/bin/activate
+
   ## Constants
-  python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
+  python3 -m pip install --disable-pip-version-check --upgrade --force-reinstall \
     pip \
     ansible \
     docker
@@ -2456,6 +2464,8 @@ EOF
   vault_password_file = ~/.vault_pass
   log_path=${SCRIPTPATH}/logs/ansible.log
 EOF
+  ansible-playbook ${SCRIPTPATH}/includes/config/playbooks/sudoers.yml
+  ansible-playbook ${SCRIPTPATH}/includes/config/roles/users/tasks/main.yml
 
   echo "Création de la configuration en cours"
   # On créé la database
@@ -2492,6 +2502,20 @@ EOF
   create_dir ${CONFDIR}/variables
   cp /opt/seedbox-compose/includes/config/account.yml ${CONFDIR}/variables/account.yml
 
+  if [[ -d "${HOME}/.cache" ]]; then
+    sudo chown -R ${SUDO_USER}: "${HOME}/.cache"
+  fi
+  if [[ -d "${HOME}/.local" ]]; then
+    sudo chown -R ${SUDO_USER}: "${HOME}/.local"
+  fi
+  if [[ -d "${HOME}/.ansible" ]]; then
+    sudo chown -R ${SUDO_USER}: "${HOME}/.ansible"
+  fi
+  sudo chown -R ${SUDO_USER} logs/
+  touch ${SCRIPTPATH}/.prerequis.lock
+  # fin du venv
+  deactivate
+
 }
 
 function usage() {
@@ -2522,12 +2546,17 @@ function usage() {
   echo "  gère la migration de la V1 vers la V2"
   echo "--ini-file <fichier>"
   echo "  Change le chemin par défaut du ini-file"
-	echo ""
-	exit 0
+  echo ""
+  exit 0
 }
 
 function migrate() {
+  # on sort du venv car on va le retrouver juste après
+  deactivate
   premier_lancement
+  # on revient dans le venv
+  source ${SCRIPTPATH}/venv/bin/activate
+
   echo "Vous allez migrer de SSD V1 vers SSD V2"
   if [ "$USER" == "root" ]; then
     echo "Vous ne POUVEZ pas faire cette opération en root"

@@ -8,7 +8,8 @@ fi
 # Absolute path to this script.
 CURRENT_SCRIPT=$(readlink -f "$0")
 # Absolute path this script is in.
-export SCRIPTPATH=$(dirname "$CURRENT_SCRIPT")
+SCRIPTPATH=$(dirname "$CURRENT_SCRIPT")
+export SCRIPTPATH
 cd ${SCRIPTPATH}
 
 ${SCRIPTPATH}/includes/config/scripts/prerequis_root.sh ${SCRIPTPATH}
@@ -29,10 +30,10 @@ docker
 
   
 ## Copy pip to /usr/bin
-rm -f /usr/bin/pip3
-rm -f /usr/bin/pip
-ln -s ${HOME}/.local/bin/pip3 /usr/bin/pip3
-ln -s ${HOME}/.local/bin/pip3 /usr/bin/pip
+#rm -f /usr/bin/pip3
+#rm -f /usr/bin/pip
+#ln -s ${HOME}/.local/bin/pip3 /usr/bin/pip3
+#ln -s ${HOME}/.local/bin/pip3 /usr/bin/pip
 
 ${HOME}/.local/bin/ansible-playbook includes/config/playbooks/sudoers.yml
 ${HOME}/.local/bin/ansible-playbook includes/config/roles/users/tasks/main.yml

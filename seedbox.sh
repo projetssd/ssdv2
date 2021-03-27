@@ -19,12 +19,7 @@ source "${SCRIPTPATH}/includes/variables.sh"
 # shellcheck source=${BASEDIR}/includes/functions.sh
 source "${SCRIPTPATH}/includes/functions.sh"
 
-if [ ! -f ${SCRIPTPATH}/.prerequis.lock ]; then
-    echo "Les prérequis ne sont pas installés"
-    echo "Vous devez les lancer en tapant"
-    echo "./prerequis.sh"
-    exit 1
-fi
+
 
 ################################################
 # récupération des parametre
@@ -83,10 +78,10 @@ done
 if [ ! -f "${SCRIPTPATH}/ssddb" ]; then
   premier_lancement
   # on ajoute le PATH qui va bien, au cas où il ne soit pas pris en compte par le ~/.profile
-
 fi
 
- 
+source ${SCRIPTPATH}/venv/bin/activate
+
 case "$action" in
   install_gui)
     if [ ! -f ${INI_FILE} ]
