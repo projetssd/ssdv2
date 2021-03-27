@@ -78,8 +78,6 @@ ${SCRIPTPATH}/logs/*.log {
 EOF
 
 
-python3 -m pip uninstall -y cryptography
-
 
 
 

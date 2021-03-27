@@ -2415,10 +2415,6 @@ function install_gui() {
 function premier_lancement() {
 
   echo "Certains composants doivent encore être installés/réglés"
-  echo "########################################"
-  echo "# DEBUG : DEBUT DE PREMIER LANCEMENT "
-  echo "########################################"
-
   read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
 
   # installation des paquets nécessaires
@@ -2430,13 +2426,11 @@ function premier_lancement() {
   fi
 
   # création d'un virtualenv
-  read -p "DEBUG Creation du venv"
   python3 -m venv ${SCRIPTPATH}/venv
 
   # activation du venv
   source ${SCRIPTPATH}/venv/bin/activate
 
-  read -p "DEBUG install python modules"
   ## Constants
   python3 -m pip install --disable-pip-version-check --upgrade --force-reinstall \
     pip \
@@ -2471,8 +2465,6 @@ EOF
   vault_password_file = ~/.vault_pass
   log_path=${SCRIPTPATH}/logs/ansible.log
 EOF
-  read -p "DEBUG lancement des premiers playbooks"
-  ansible-playbook ${SCRIPTPATH}/includes/config/playbooks/sudoers.yml
   ansible-playbook ${SCRIPTPATH}/includes/config/roles/users/tasks/main.yml
 
   echo "Création de la configuration en cours"
@@ -2494,7 +2486,7 @@ EOF
   if [ $mode_install = "manuel" ]; then
     read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
   fi
-  sudo chown -R ${USER}: ${HOME}/.local
+
 
   export CONFDIR=/opt/seedbox
   ################################################
@@ -2511,18 +2503,17 @@ EOF
   cp /opt/seedbox-compose/includes/config/account.yml ${CONFDIR}/variables/account.yml
 
   if [[ -d "${HOME}/.cache" ]]; then
-    sudo chown -R ${SUDO_USER}: "${HOME}/.cache"
+    sudo chown -R ${USER}: "${HOME}/.cache"
   fi
   if [[ -d "${HOME}/.local" ]]; then
-    sudo chown -R ${SUDO_USER}: "${HOME}/.local"
+    sudo chown -R ${USER}: "${HOME}/.local"
   fi
   if [[ -d "${HOME}/.ansible" ]]; then
-    sudo chown -R ${SUDO_USER}: "${HOME}/.ansible"
+    sudo chown -R ${USER}: "${HOME}/.ansible"
   fi
-  sudo chown -R ${SUDO_USER} logs/
+  sudo chown -R ${USER} ${SCRIPTPATH}/logs/
   touch ${SCRIPTPATH}/.prerequis.lock
   # fin du venv
-  read -p "DEBUG désactivation du venv et sortie de premier lancement"
   deactivate
 
 }
