@@ -119,17 +119,7 @@ if [ "$USER" == "root" ]; then
     echo -e "${CCYAN}Pour des raisons de sécurité, il n'est pas conseillé de lancer ce script en root${CEND}"
     echo -e "${CCYAN}-----------------------${CEND}"
     echo -e "${CCYAN}Vous pouvez continuer en root en passant l'option --force-root en parametre${CEND}"
-    read -rp $'\e[33mSouhaitez vous créer un utilisateur dédié (c), ou quitter le script (q) ? (c/r/Q)\e[0m :' CREEUSER
-    
-    if [[ "${CREEUSER}" = "c" ]] || [[ "${CREEUSER}" = "C" ]]; then
-      read -rp $'\e[33mTapez le nom d utilisateur\e[0m :' CREEUSER_USERNAME
-      read -rp $'\e[33mTapez le password (pas de \ ni apostrophe dans le password) \e[0m :' CREEUSER_PASSWORD
-      ansible-playbook ${BASEDIR}/includes/config/playbooks/cree_user.yml --extra-vars '{"CREEUSER_USERNAME":"'${CREEUSER_USERNAME}'","CREEUSER_PASSWORD":"'${CREEUSER_PASSWORD}'"}'
-      echo -e "${CCYAN}L'utilisateur ${CREEUSER_USERNAME} a été créé, merci de vous déloguer et reloguer avec ce user pour continer${CEND}"
-      exit 0
-    else
-      exit 0
-    fi
+    exit 1
   fi
 fi
 
@@ -139,15 +129,6 @@ fi
 
 # on met les droits comme il faut, au cas où il y ait eu un mauvais lancement
 sudo chown -R ${USER}: ${SCRIPTPATH}
-
-if [[ -d "${HOME}/.local" ]]
-then
-  sudo chown -R ${USER}: ${HOME}/.local
-fi
-
-
-
-
 
 ################################################
 # on vérifie qu'il y ait un vault pass existant

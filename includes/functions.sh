@@ -2425,16 +2425,18 @@ function premier_lancement() {
   sudo ${SCRIPTPATH}/includes/config/scripts/prerequis_root.sh
 
   # création d'un vault_pass vide
-  echo 0 > ~/.vault_pass
+  if [ ! -f "${HOME}/.vault_pass" ]; then
+    echo "0" >${HOME}/.vault_pass
+  fi
 
   # création d'un virtualenv
-  read -p "Creation du venv"
+  read -p "DEBUG Creation du venv"
   python3 -m venv ${SCRIPTPATH}/venv
 
   # activation du venv
   source ${SCRIPTPATH}/venv/bin/activate
 
-  read -p "install python modules"
+  read -p "DEBUG install python modules"
   ## Constants
   python3 -m pip install --disable-pip-version-check --upgrade --force-reinstall \
     pip \
@@ -2469,7 +2471,7 @@ EOF
   vault_password_file = ~/.vault_pass
   log_path=${SCRIPTPATH}/logs/ansible.log
 EOF
-  read -p "lancement des premiers playbooks"
+  read -p "DEBUG lancement des premiers playbooks"
   ansible-playbook ${SCRIPTPATH}/includes/config/playbooks/sudoers.yml
   ansible-playbook ${SCRIPTPATH}/includes/config/roles/users/tasks/main.yml
 
@@ -2520,7 +2522,7 @@ EOF
   sudo chown -R ${SUDO_USER} logs/
   touch ${SCRIPTPATH}/.prerequis.lock
   # fin du venv
-  read -p "désactivation du venv et sortie de premier lancemenit"
+  read -p "DEBUG désactivation du venv et sortie de premier lancement"
   deactivate
 
 }
