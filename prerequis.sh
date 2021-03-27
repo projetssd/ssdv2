@@ -11,13 +11,11 @@ CURRENT_SCRIPT=$(readlink -f "$0")
 export SCRIPTPATH=$(dirname "$CURRENT_SCRIPT")
 cd ${SCRIPTPATH}
 
-readonly PIP="9.0.3"
-readonly ANSIBLE="2.9"
 ${SCRIPTPATH}/includes/config/scripts/prerequis_root.sh ${SCRIPTPATH}
 
 ## Install pip3 Dependencies
 python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
-pip==${PIP}
+pip
 python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
 setuptools
 python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
@@ -25,7 +23,7 @@ pyOpenSSL \
 requests \
 netaddr \
 jmespath \
-ansible==${1-$ANSIBLE} \
+ansible \
 docker
 
 
