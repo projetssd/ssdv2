@@ -2423,11 +2423,9 @@ function premier_lancement() {
     read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
   fi
   ## Constants
-  readonly PIP="9.0.3"
-  readonly ANSIBLE="2.9"
   python3 -m pip install --user --disable-pip-version-check --upgrade --force-reinstall \
-    pip==${PIP} \
-    ansible==${1-$ANSIBLE} \
+    pip \
+    ansible \
     docker
   ##########################################
   # Pas de configuration existante
