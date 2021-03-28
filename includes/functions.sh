@@ -2389,7 +2389,12 @@ function install_gui() {
   # Installation de docker
   install_docker
   # install de traefik
-  install_traefik
+  if docker ps | grep -q traefik; then
+    # on ne fait rien, traefik est déjà isntallé
+    :
+  else
+    install_traefik
+  fi
   # On install nginx
   ansible-playbook ${BASEDIR}/includes/config/roles/nginx/tasks/main.yml
   # TODO : vérifier ou un récupère le subdomain ?
