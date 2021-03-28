@@ -30,6 +30,7 @@ if [ ${USERNAME} == notfound ]; then
   manage_account_yml user.name "$user"
   update_seedbox_param "name" $user
 else
+  echo -e "${BLUE}Username déjà renseigné${CEND}"
   user=${USERNAME}
 fi
 
@@ -38,6 +39,7 @@ if [ ${PASSWORD} == notfound ]; then
   read -p $'\e[32m↘️ Mot de passe | Appuyer sur [Enter]: \e[0m' pass </dev/tty
   manage_account_yml user.pass "$pass"
 else
+  echo -e "${BLUE}Password déjà renseigné${CEND}"
   pass=${PASSWORD}
 fi
 
@@ -46,6 +48,8 @@ if [ ${MAIL} == notfound ]; then
   read -p $'\e[32m↘️ Mail | Appuyer sur [Enter]: \e[0m' mail </dev/tty
   update_seedbox_param "mail" $mail
   manage_account_yml user.mail $mail
+else
+  echo -e "${BLUE}Email déjà renseigné${CEND}"
 fi
 
 DOMAINE=$(get_from_account_yml user.domain)
@@ -53,6 +57,8 @@ if [ ${DOMAINE} == notfound ]; then
   read -p $'\e[32m↘️ Domaine | Appuyer sur [Enter]: \e[0m' domain </dev/tty
   manage_account_yml user.domain "$domain"
   update_seedbox_param "domain" $domain
+else
+  echo -e "${BLUE}Domaine déjà renseigné${CEND}"
 fi
 
 echo -e "${BLUE}### Gestion des DNS ###${NC}"
@@ -79,6 +85,8 @@ if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
 
     done
     manage_account_yml cloudflare.login "$cloud_email"
+  else
+    echo -e "${BLUE}Cloudflare login déjà renseigné${CEND}"
   fi
   CLOUD_API=$(get_from_account_yml cloudflare.api)
   if [ "$CLOUD_API" == notfound ]; then
@@ -88,6 +96,8 @@ if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
 
     done
     manage_account_yml cloudflare.api "$cloud_api"
+  else
+    echo -e "${BLUE}Cloudflare api déjà renseigné${CEND}"
   fi
 fi
 
@@ -121,6 +131,8 @@ if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
 
     done
     manage_account_yml oauth.client "$oauth_client"
+  else
+    echo -e "${BLUE}Oauth client renseigné${CEND}"
   fi
 
   OAUTH_SECRET=$(get_from_account_yml oauth.secret)
@@ -130,6 +142,8 @@ if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
       read oauth_secret
     done
     manage_account_yml oauth.secret "$oauth_secret"
+  else
+    echo -e "${BLUE}Oauth secret déjà renseigné${CEND}"
   fi
 
   OAUTH_ACCOUNT=$(get_from_account_yml oauth.account)
@@ -139,6 +153,8 @@ if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
       read email
     done
     manage_account_yml oauth.account "$email"
+  else
+    echo -e "${BLUE}Oauth account déjà renseigné${CEND}"
   fi
 
   echo ""
@@ -148,7 +164,7 @@ if [ "OAUTH_SSL" == notfound ]; then
   openssl=$(openssl rand -hex 16)
   manage_account_yml oauth.openssl "openssl"
 fi
-domain=get_from_account_yml user.domain
+domain=$(get_from_account_yml user.domain)
 set -a
 echo ""
 echo -e "${BWHITE}Adresse par défault: https://gui.$domain ${CEND}"
