@@ -2372,7 +2372,7 @@ function get_from_account_yml() {
   # usage
   # get_from_account_yml user.name
   ansible-vault decrypt "${CONFDIR}/variables/account.yml" >/dev/null 2>&1
-  temp_return=$(shyaml <"${CONFDIR}/variables/account.yml" get-value $1 2>/dev/null)
+  temp_return=$(shyaml -q <"${CONFDIR}/variables/account.yml" get-value $1 )
   if [ $? != 0 ]; then
     temp_return=notfound
   fi
