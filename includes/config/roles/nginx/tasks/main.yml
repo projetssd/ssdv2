@@ -61,7 +61,9 @@
       service:
         name: "php{{ fpm.stdout }}-fpm"
         state: restarted
+
     - name: Make sure directory nginx is present
+      become: yes
       file:
         path: /etc/nginx/sites-available
         state: directory

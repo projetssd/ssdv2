@@ -2371,6 +2371,8 @@ function manage_account_yml() {
 function get_from_account_yml() {
   # usage
   # get_from_account_yml user.name
+  # retourne la valeur trouvée
+  # si la valeur est vide ou n'existe pas, retourn la chaine "notfound"
   ansible-vault decrypt "${CONFDIR}/variables/account.yml" >/dev/null 2>&1
   temp_return=$(shyaml -q <"${CONFDIR}/variables/account.yml" get-value $1 )
   if [ $? != 0 ]; then
