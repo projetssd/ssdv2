@@ -74,10 +74,10 @@
         force: yes
 
     - name: Install Nginx
-        become: yes
-        apt:
-          state: present
-          name: nginx
+      become: yes
+      apt:
+        state: present
+        name: nginx
 
     - name: Import middlewares-chains.toml
       become: yes

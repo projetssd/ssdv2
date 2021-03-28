@@ -20,20 +20,40 @@ if [ ! -f ${ACCOUNT} ]; then
   cp ${BASEDIR}/includes/config/account.yml ${ACCOUNT}
 fi
 
-
-
 echo ""
 echo -e "${BLUE}L'utilisateur et mot de passe demandés${NC}"
 echo -e "${BLUE}serviront à vous authentifier sur les différents services en mode web${NC}"
 
-read -p $'\e[32m↘️ Nom d utilisateur | Appuyer sur [Enter]: \e[0m' user </dev/tty
+USERNAME=$(get_from_account_yml user.name)
+if [ ${USERNAME} == notfound ]; then
+  read -p $'\e[32m↘️ Nom d utilisateur | Appuyer sur [Enter]: \e[0m' user </dev/tty
+  manage_account_yml user.name "$user"
+  update_seedbox_param "name" $user
+else
+  user=${USERNAME}
+fi
 
-read -p $'\e[32m↘️ Mot de passe | Appuyer sur [Enter]: \e[0m' pass </dev/tty
+PASSWORD=$(get_from_account_yml user.passsword)
+if [ ${PASSWORD} == notfound ]; then
+  read -p $'\e[32m↘️ Mot de passe | Appuyer sur [Enter]: \e[0m' pass </dev/tty
+  manage_account_yml user.pass "$pass"
+else
+  pass=${PASSWORD}
+fi
 
-read -p $'\e[32m↘️ Mail | Appuyer sur [Enter]: \e[0m' mail </dev/tty
-read -p $'\e[32m↘️ Domaine | Appuyer sur [Enter]: \e[0m' domain </dev/tty
+MAIL=$(get_from_account_yml user.mail)
+if [ ${MAIL} == notfound ]; then
+  read -p $'\e[32m↘️ Mail | Appuyer sur [Enter]: \e[0m' mail </dev/tty
+  update_seedbox_param "mail" $mail
+  manage_account_yml user.mail $mail
+fi
 
-echo ""
+DOMAINE=$(get_from_account_yml user.domain)
+if [ ${DOMAINE} == notfound ]; then
+  read -p $'\e[32m↘️ Domaine | Appuyer sur [Enter]: \e[0m' domain </dev/tty
+  manage_account_yml user.domain "$domain"
+  update_seedbox_param "domain" $domain
+fi
 
 echo -e "${BLUE}### Gestion des DNS ###${NC}"
 echo ""
@@ -51,15 +71,24 @@ read -rp $'\e[33mSouhaitez vous utiliser les DNS Cloudflare ? (o/n - default n)\
 
 if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
 
-  while [ -z "$cloud_email" ]; do
-    echo >&2 -n -e "${BWHITE}Votre Email Cloudflare: ${CEND}"
-    read cloud_email
-  done
+  CLOUD_EMAIL=$(get_from_account_yml cloudflaire.email)
+  if [ "$CLOUD_EMAIL" == notfound ]; then
+    while [ -z "$cloud_email" ]; do
+      echo >&2 -n -e "${BWHITE}Votre Email Cloudflare: ${CEND}"
+      read cloud_email
 
-  while [ -z "$cloud_api" ]; do
-    echo >&2 -n -e "${BWHITE}Votre API Cloudflare: ${CEND}"
-    read cloud_api
-  done
+    done
+    manage_account_yml cloudflare.email "$cloud_email"
+  fi
+  CLOUD_API=$(get_from_account_yml cloudflaire.api)
+  if [ "$CLOUD_API" == notfound ]; then
+    while [ -z "$cloud_api" ]; do
+      echo >&2 -n -e "${BWHITE}Votre API Cloudflare: ${CEND}"
+      read cloud_api
+
+    done
+    manage_account_yml cloudflare.api "$cloud_api"
+  fi
 fi
 
 echo ""
@@ -84,25 +113,41 @@ if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
     email=$3
   fi
 
-  while [ -z "$oauth_client" ]; do
-    echo >&2 -n -e "${BWHITE}Oauth_client: ${CEND}"
-    read oauth_client
-  done
+  OAUTH_CLIENT=$(get_from_account_yml oauth.client)
+  if [ "OAUTH_CLIENT" == notfound ]; then
+    while [ -z "$oauth_client" ]; do
+      echo >&2 -n -e "${BWHITE}Oauth_client: ${CEND}"
+      read oauth_client
 
-  while [ -z "$oauth_secret" ]; do
-    echo >&2 -n -e "${BWHITE}Oauth_secret: ${CEND}"
-    read oauth_secret
-  done
+    done
+    manage_account_yml oauth.client "$oauth_client"
+  fi
 
-  while [ -z "$email" ]; do
-    echo >&2 -n -e "${BWHITE}Compte Gmail utilisé.s, séparés d une virgule si plusieurs: ${CEND}"
-    read email
-  done
+  OAUTH_SECRET=$(get_from_account_yml oauth.secret)
+  if [ "OAUTH_SECRET" == notfound ]; then
+    while [ -z "$oauth_secret" ]; do
+      echo >&2 -n -e "${BWHITE}Oauth_secret: ${CEND}"
+      read oauth_secret
+    done
+    manage_account_yml oauth.secret "$oauth_secret"
+  fi
+
+  OAUTH_ACCOUNT=$(get_from_account_yml oauth.account)
+  if [ "OAUTH_ACCOUNT" == notfound ]; then
+    while [ -z "$email" ]; do
+      echo >&2 -n -e "${BWHITE}Compte Gmail utilisé.s, séparés d une virgule si plusieurs: ${CEND}"
+      read email
+    done
+    manage_account_yml oauth.account "$email"
+  fi
 
   echo ""
 fi
-
-openssl=$(openssl rand -hex 16)
+OAUTH_SSL=$(get_from_account_yml oauth.openssl)
+if [ "OAUTH_SSL" == notfound ]; then
+  openssl=$(openssl rand -hex 16)
+  manage_account_yml oauth.openssl "openssl"
+fi
 
 set -a
 echo ""
@@ -121,7 +166,7 @@ if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
 
   echo ""
 fi
-if [  -z "$subdomain" ]; then
+if [ -z "$subdomain" ]; then
   subdomain=gui
 fi
 manage_account_yml sub.gui.gui "$subdomain"
@@ -135,27 +180,6 @@ htpasswd -c -b /tmp/.htpasswd $user $pass >/dev/null 2>&1
 htpwd=$(cat /tmp/.htpasswd)
 echo $pass >~/.vault_pass
 
-# pour l'instant, on laisse tout dans le fichier vault
-# a terme, on n'y mettra que les infos sensibles
-
-manage_account_yml user.name "$user"
-manage_account_yml user.pass "$pass"
 manage_account_yml user.userid "$userid"
 manage_account_yml user.groupid "$grpid"
-manage_account_yml user.domain "$domain"
-manage_account_yml cloudflare.login "$cloud_email"
-manage_account_yml cloudflare.api "$cloud_api"
-manage_account_yml oauth.client "$oauth_client"
-manage_account_yml oauth.secret "$oauth_secret"
-manage_account_yml oauth.account "$email"
 manage_account_yml user.htpwd "$htpwd"
-
-update_seedbox_param "name" $user
-update_seedbox_param "userid" $userid
-update_seedbox_param "groupid" $grpid
-update_seedbox_param "group" $user
-update_seedbox_param "mail" $mail
-update_seedbox_param "domain" $domain
-update_seedbox_param "cf_login" $cloud_email
-update_seedbox_param "oauth2_email" $email
-update_seedbox_param "gui_subdomain" $subdomain
