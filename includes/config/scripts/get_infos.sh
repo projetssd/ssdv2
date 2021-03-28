@@ -71,7 +71,7 @@ read -rp $'\e[33mSouhaitez vous utiliser les DNS Cloudflare ? (o/n - default n)\
 
 if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
 
-  CLOUD_EMAIL=$(get_from_account_yml cloudflaire.login)
+  CLOUD_EMAIL=$(get_from_account_yml cloudflare.login)
   if [ "$CLOUD_EMAIL" == notfound ]; then
     while [ -z "$cloud_email" ]; do
       echo >&2 -n -e "${BWHITE}Votre Email Cloudflare: ${CEND}"
@@ -80,7 +80,7 @@ if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
     done
     manage_account_yml cloudflare.login "$cloud_email"
   fi
-  CLOUD_API=$(get_from_account_yml cloudflaire.api)
+  CLOUD_API=$(get_from_account_yml cloudflare.api)
   if [ "$CLOUD_API" == notfound ]; then
     while [ -z "$cloud_api" ]; do
       echo >&2 -n -e "${BWHITE}Votre API Cloudflare: ${CEND}"
@@ -148,7 +148,7 @@ if [ "OAUTH_SSL" == notfound ]; then
   openssl=$(openssl rand -hex 16)
   manage_account_yml oauth.openssl "openssl"
 fi
-
+domain=get_from_account_yml user.domain
 set -a
 echo ""
 echo -e "${BWHITE}Adresse par défault: https://gui.$domain ${CEND}"
