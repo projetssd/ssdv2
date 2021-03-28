@@ -111,6 +111,7 @@
 
     - name: Install common pip modules
       pip:
+        virtualenv: '/opt/seedbox-compose/venv'
         state: present
         name:
           - passlib

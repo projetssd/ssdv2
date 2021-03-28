@@ -11,7 +11,10 @@
 ##########################################################################
 ---
 - name: Settings | Forced Quality | Install lxml pip module
-  pip: "name=lxml state=present"
+  pip:
+    virtualenv: '/opt/seedbox-compose/venv'
+    name: lxml
+    state: present
 
 - name: Settings | Forced Quality | Wait for 'Preferences.xml' to be created by Plex
   wait_for:

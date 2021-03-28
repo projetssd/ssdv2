@@ -12,6 +12,7 @@
   pip:
     name: docker-py
     state: absent
+    virtualenv: '/opt/seedbox-compose/venv'
   ignore_errors: yes
 
 - name: Binary | Add official gpg signing key
@@ -44,4 +45,5 @@
   pip:
     name: docker
     state: latest
+    virtualenv: '/opt/seedbox-compose/venv'
   ignore_errors: yes

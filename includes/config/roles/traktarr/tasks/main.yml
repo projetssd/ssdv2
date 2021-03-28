@@ -40,7 +40,8 @@
     - name: Install pip requirements
       pip:
         requirements: /home/{{user.name}}/scripts/traktarr/requirements.txt
-        executable: pip3
+        executable: pip
+        virtualenv: '/opt/seedbox-compose/venv'
 
     - name: Check if traktarr config exists
       stat:
