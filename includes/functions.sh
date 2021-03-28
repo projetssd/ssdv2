@@ -1548,7 +1548,7 @@ function plexdrive() {
   echo ""
   clear
   echo -e " ${BWHITE}* Dès que le message ${NC}${CCYAN}"First cache build process started" apparait à l'écran, taper ${NC}${CCYAN}CTRL + C${NC}${BWHITE} pour poursuivre le script !${NC}"
-  if grep "id_teamdrive" ${CONFDIR}/variables/account.yml >/dev/null 2>&1;
+  if grep "id_teamdrive" ${CONFDIR}/variables/account.yml >/dev/null 2>&1; then
     team=$(grep "id_teamdrive" ${CONFDIR}/variables/account.yml | cut -d':' -f2 | sed 's/ //g') >/dev/null 2>&1
     /usr/bin/plexdrive mount -v 3 --drive-id=$team --refresh-interval=1m --chunk-check-threads=8 --chunk-load-threads=8 --chunk-load-ahead=4 --max-chunks=100 --fuse-options=allow_other,read_only /mnt/plexdrive
     systemctl start plexdrive >/dev/null 2>&1
