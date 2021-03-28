@@ -33,7 +33,7 @@ else
   user=${USERNAME}
 fi
 
-PASSWORD=$(get_from_account_yml user.passsword)
+PASSWORD=$(get_from_account_yml user.pass)
 if [ ${PASSWORD} == notfound ]; then
   read -p $'\e[32m↘️ Mot de passe | Appuyer sur [Enter]: \e[0m' pass </dev/tty
   manage_account_yml user.pass "$pass"
@@ -71,14 +71,14 @@ read -rp $'\e[33mSouhaitez vous utiliser les DNS Cloudflare ? (o/n - default n)\
 
 if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
 
-  CLOUD_EMAIL=$(get_from_account_yml cloudflaire.email)
+  CLOUD_EMAIL=$(get_from_account_yml cloudflaire.login)
   if [ "$CLOUD_EMAIL" == notfound ]; then
     while [ -z "$cloud_email" ]; do
       echo >&2 -n -e "${BWHITE}Votre Email Cloudflare: ${CEND}"
       read cloud_email
 
     done
-    manage_account_yml cloudflare.email "$cloud_email"
+    manage_account_yml cloudflare.login "$cloud_email"
   fi
   CLOUD_API=$(get_from_account_yml cloudflaire.api)
   if [ "$CLOUD_API" == notfound ]; then
