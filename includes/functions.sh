@@ -2438,8 +2438,8 @@ function premier_lancement() {
 
   ## Constants
   python3 -m pip install --disable-pip-version-check --upgrade --force-reinstall \
-    pip \
-    ansible \
+    pip
+  pip install ansible \
     docker
   ##########################################
   # Pas de configuration existante
@@ -2517,6 +2517,7 @@ EOF
     sudo chown -R ${USER}: "${HOME}/.ansible"
   fi
   sudo chown -R ${USER} ${SCRIPTPATH}/logs/
+  sudo chmod 777 ${SCRIPTPATH}/logs
   touch ${SCRIPTPATH}/.prerequis.lock
   # fin du venv
   deactivate
