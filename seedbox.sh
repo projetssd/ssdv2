@@ -159,6 +159,7 @@ then
     echo -e "${CGREEN}   1) Installation Seedbox rclone && gdrive${CEND}"
     echo -e "${CGREEN}   2) Installation Seedbox Classique ${CEND}"
     echo -e "${CGREEN}   3) Restauration Seedbox${CEND}"
+    echo -e "${CGREEN}   999) Installer la GUI${CEND}"
     echo -e "${CGREEN}   9) Sortir du script${CEND}"
 
     echo -e ""

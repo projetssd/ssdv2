@@ -133,7 +133,9 @@
       tags: glances
 
     - name: Install pip glances
-      shell: pip install glances[action,browser,cloud,cpuinfo,docker,folders,gpu,graph,ip,raid,snmp,web]
+      pip:
+        name: glances[action,browser,cloud,cpuinfo,docker,folders,gpu,graph,ip,raid,snmp,web]
+        virtualenv: '/opt/seedbox-compose/venv'
       tags: glances
 
     - name: "Hetzner Tasks"

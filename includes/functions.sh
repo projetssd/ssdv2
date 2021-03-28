@@ -565,6 +565,7 @@ function script_plexdrive() {
     echo -e "${CGREEN}   1) Ajout/Supression d'Applis${CEND}"
     echo -e "${CGREEN}   2) Gestion${CEND}"
     echo -e "${CGREEN}   3) Quitter${CEND}"
+    echo -e "${CGREEN}   4) Installer/Réinstaller la GUI${CEND}"
     echo -e "${CRED}   10) Désinstaller la seedbox ${CEND}"
 
     echo -e ""
@@ -1170,6 +1171,10 @@ function script_plexdrive() {
         script_plexdrive
         ;;
       esac
+      ;;
+
+    4) ## install gui
+      install_gui
       ;;
 
     10) ## Désinstallation seedbox
