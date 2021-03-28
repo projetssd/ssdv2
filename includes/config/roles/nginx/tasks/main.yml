@@ -107,7 +107,7 @@
       become: yes
       systemd:
         name: 'nginx.service'
-        state: started
+        state: restarted
 
     - name: Create www directories
       become: yes

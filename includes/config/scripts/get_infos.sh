@@ -156,14 +156,17 @@ if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
   else
     echo -e "${BLUE}Oauth account déjà renseigné${CEND}"
   fi
-
+  OAUTH_SSL=$(get_from_account_yml oauth.openssl)
+  if [ "OAUTH_SSL" == notfound ]; then
+    openssl=$(openssl rand -hex 16)
+    manage_account_yml oauth.openssl "openssl"
+  fi
+  manage_account_yml sub.gui.auth oauth
   echo ""
+else
+  manage_account_yml sub.gui.auth basique
 fi
-OAUTH_SSL=$(get_from_account_yml oauth.openssl)
-if [ "OAUTH_SSL" == notfound ]; then
-  openssl=$(openssl rand -hex 16)
-  manage_account_yml oauth.openssl "openssl"
-fi
+
 domain=$(get_from_account_yml user.domain)
 set -a
 echo ""
