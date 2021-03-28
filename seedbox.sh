@@ -130,13 +130,7 @@ fi
 # on met les droits comme il faut, au cas où il y ait eu un mauvais lancement
 sudo chown -R ${USER}: ${SCRIPTPATH}
 
-################################################
-# on vérifie qu'il y ait un vault pass existant
-# Sinon ansible va râler au lancement
-# Le password sera bien sur écrasé plus tard
-if [ ! -f "${HOME}/.vault_pass" ]; then
-  echo "0" >  ${HOME}/.vault_pass
-fi
+
 
 IS_INSTALLED=$(select_seedbox_param "installed")
 

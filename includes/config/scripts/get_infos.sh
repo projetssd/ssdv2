@@ -197,7 +197,6 @@ userid=$(id -u)
 grpid=$(id -g)
 htpasswd -c -b /tmp/.htpasswd $user $pass >/dev/null 2>&1
 htpwd=$(cat /tmp/.htpasswd)
-echo $pass >~/.vault_pass
 
 manage_account_yml user.userid "$userid"
 manage_account_yml user.groupid "$grpid"

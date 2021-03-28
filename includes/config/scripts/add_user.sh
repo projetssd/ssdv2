@@ -127,7 +127,6 @@ source /opt/seedbox-compose/includes/variables.sh
   grpid=$(id -g $user)
   htpasswd -c -b /tmp/.htpasswd $user $pass > /dev/null 2>&1
   htpwd=$(cat /tmp/.htpasswd)
-  echo $pass > ~/.vault_pass
   echo "vault_password_file = ~/.vault_pass" >> /etc/ansible/ansible.cfg
 
 manage_account_yml user.name $user

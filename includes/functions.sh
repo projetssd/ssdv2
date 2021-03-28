@@ -1683,7 +1683,7 @@ function create_user_non_systeme() {
   #  sed -i "s/pass:/pass: $PASSWORD/" ${CONFDIR}/variables/account.yml
   #  sed -i "s/userid:/userid: $(id -u)/" ${CONFDIR}/variables/account.yml
   #  sed -i "s/groupid:/groupid: $(id -g)/" ${CONFDIR}/variables/account.yml
-  echo $PASSWORD >~/.vault_pass
+
 
   update_seedbox_param "name" $user
   update_seedbox_param "userid" $(id -u)
@@ -1760,7 +1760,7 @@ function create_user() {
   manage_account_yml user.name $SEEDUSER
   #  sed -i "/htpwd:/c\   htpwd: $htpwd" ${CONFDIR}/variables/account.yml
   #  sed -i "s/name:/name: $SEEDUSER/" ${CONFDIR}/variables/account.yml
-  echo $PASSWORD >~/.vault_pass
+
   echo "vault_password_file = ~/.vault_pass" >>/etc/ansible/ansible.cfg
   return
 }
@@ -1963,7 +1963,7 @@ function install_services() {
     if [ "${temp_subdomain}" != notfound ]; then
       FQDNTMP="${temp_subdomain}.$DOMAIN"
       echo "${line} = $FQDNTMP" | tee -a "${CONFDIR}/resume" >/dev/null
-      echo "${line}.$DOMAIN" >> "$INSTALLEDFILE"
+      echo "${line}.$DOMAIN" >>"$INSTALLEDFILE"
     else
       FQDNTMP="${line}.$DOMAIN"
       echo "$FQDNTMP" >>$INSTALLEDFILE
@@ -2192,7 +2192,7 @@ function resume_seedbox() {
   echo -e "${BLUE}##########################################${NC}"
   echo ""
   echo -e " ${BWHITE}* Accès Applis à partir de URL :${NC}"
-  PASSE=$(cat ~/.vault_pass)
+  PASSE=$(get_from_account_yml user.pass)
 
   if [[ -s ${CONFDIR}/temp.txt ]]; then
     while read line; do
@@ -2374,7 +2374,7 @@ function get_from_account_yml() {
   # retourne la valeur trouvée
   # si la valeur est vide ou n'existe pas, retourn la chaine "notfound"
   ansible-vault decrypt "${CONFDIR}/variables/account.yml" >/dev/null 2>&1
-  temp_return=$(shyaml -q <"${CONFDIR}/variables/account.yml" get-value $1 )
+  temp_return=$(shyaml -q get-value $1 <"${CONFDIR}/variables/account.yml")
   if [ $? != 0 ]; then
     temp_return=notfound
   fi
@@ -2449,8 +2449,13 @@ function premier_lancement() {
   sudo ${SCRIPTPATH}/includes/config/scripts/prerequis_root.sh
 
   # création d'un vault_pass vide
+
   if [ ! -f "${HOME}/.vault_pass" ]; then
-    echo "0" >${HOME}/.vault_pass
+    echo "============================================="
+    echo "Avant toute chose, merci de choisir un mot de passe de chiffrement des données"
+    echo "Ce mot de passe sera stocké et ne vous sera plus demandé par la suite"
+    read -sp 'Merci de taper votre mot de passe' firstpass
+    echo ${firstpass} >${HOME}/.vault_pass
   fi
 
   # création d'un virtualenv
@@ -2518,13 +2523,7 @@ EOF
   fi
 
   export CONFDIR=/opt/seedbox
-  ################################################
-  # on vérifie qu'il y ait un vault pass existant
-  # Sinon ansible va râler au lancement
-  # Le password sera bien sur écrasé plus tard
-  if [ ! -f "${HOME}/.vault_pass" ]; then
-    echo "0" >${HOME}/.vault_pass
-  fi
+
   ##################################################
   # Account.yml
   create_dir ${CONFDIR}
