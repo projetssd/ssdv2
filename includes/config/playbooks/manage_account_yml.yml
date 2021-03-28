@@ -1,0 +1,11 @@
+---
+- hosts: localhost
+  gather_facts: false
+  roles:
+    - kwoodson.yedit
+  tasks:
+  - name: Gestion du fichier account.yml
+    yedit:
+      src: "{{ lookup('env','CONFDIR') }}/variables/account.yml"
+      key: "{{ account_key }}"
+      value: "{{ account_value }}"
