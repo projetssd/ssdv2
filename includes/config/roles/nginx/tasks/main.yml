@@ -29,19 +29,12 @@
       apt:
         state: present
         name:
-          - "nginx"
           - "php-fpm"
           - "php-curl"
           - "php-dom"
           - "php-gd"
           - "composer"
           
-    - name: stopped Systemd nginx
-      become: yes
-      systemd:
-        name: 'nginx.service'
-        state: stopped
-
     - name: Version php-fpm
       become: yes
       shell: ls /etc/php
@@ -68,6 +61,10 @@
       service:
         name: "php{{ fpm.stdout }}-fpm"
         state: restarted
+    - name: Make sure directory nginx is present
+      file:
+        path: /etc/nginx/sites-available
+        state: directory
 
     - name: Import nginx default
       become: yes
@@ -75,6 +72,12 @@
         src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/nginx/templates/default.j2"
         dest: /etc/nginx/sites-available/default
         force: yes
+
+    - name: Install Nginx
+        become: yes
+        apt:
+          state: present
+          name: nginx
 
     - name: Import middlewares-chains.toml
       become: yes
