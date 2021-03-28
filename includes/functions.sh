@@ -2395,7 +2395,7 @@ function manage_account_yml() {
   # usage
   # manage_account_yml key value
   # key séparées par des points (par exemple user.name ou sub.application.subdomain)
-  ansible-playbook "${CONFDIR}/includes/config/playbooks/manage_account_yml.yml" -e "account_key=${1} account_value=${2}"
+  ansible-playbook "${BASEDIR}/includes/config/playbooks/manage_account_yml.yml" -e "account_key=${1} account_value=${2}"
 }
 
 function install_gui() {
