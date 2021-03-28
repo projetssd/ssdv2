@@ -2439,6 +2439,7 @@ function premier_lancement() {
   ## Constants
   python3 -m pip install --disable-pip-version-check --upgrade --force-reinstall \
     pip
+  pip install wheel
   pip install ansible \
     docker
   ##########################################
