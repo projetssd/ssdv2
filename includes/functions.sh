@@ -89,14 +89,16 @@ function cloudflare() {
     while [ -z "$cloud_email" ]; do
       echo >&2 -n -e "${BWHITE}Votre Email Cloudflare: ${CEND}"
       read cloud_email
-      sed -i "/login:/c\   login: $cloud_email" ${CONFDIR}/variables/account.yml
+      manage_account_yml cloudflare.login "$cloud_email"
+      ###sed -i "/login:/c\   login: $cloud_email" ${CONFDIR}/variables/account.yml
       update_seedbox_param "cf_login" $cloud_email
     done
 
     while [ -z "$cloud_api" ]; do
       echo >&2 -n -e "${BWHITE}Votre API Cloudflare: ${CEND}"
       read cloud_api
-      sed -i "/api:/c\   api: $cloud_api" ${CONFDIR}/variables/account.yml
+      manage_account_yml cloudflare.api "$cloud_api"
+      ###sed -i "/api:/c\   api: $cloud_api" ${CONFDIR}/variables/account.yml
     done
   fi
   echo ""
@@ -134,23 +136,27 @@ function oauth() {
       while [ -z "$oauth_client" ]; do
         echo >&2 -n -e "${BWHITE}Oauth_client: ${CEND}"
         read oauth_client
-        sed -i "s/client:/client: $oauth_client/" ${CONFDIR}/variables/account.yml
+        manage_account_yml oauth.client "$oauth_client"
+        ###sed -i "s/client:/client: $oauth_client/" ${CONFDIR}/variables/account.yml
       done
 
       while [ -z "$oauth_secret" ]; do
         echo >&2 -n -e "${BWHITE}Oauth_secret: ${CEND}"
         read oauth_secret
-        sed -i "s/secret:/secret: $oauth_secret/" ${CONFDIR}/variables/account.yml
+        manage_account_yml oauth.secret "$oauth_secret"
+        ###sed -i "s/secret:/secret: $oauth_secret/" ${CONFDIR}/variables/account.yml
       done
 
       while [ -z "$email" ]; do
         echo >&2 -n -e "${BWHITE}Compte Gmail utilisé(s), séparés d'une virgule si plusieurs: ${CEND}"
         read email
-        sed -i "s/account:/account: $email/" ${CONFDIR}/variables/account.yml
+        manage_account_yml oauth.account "$email"
+        ###sed -i "s/account:/account: $email/" ${CONFDIR}/variables/account.yml
       done
 
       openssl=$(openssl rand -hex 16)
-      sed -i "s/openssl:/openssl: $openssl/" ${CONFDIR}/variables/account.yml
+      manage_account_yml oauth.openssl "$openssl"
+      ###sed -i "s/openssl:/openssl: $openssl/" ${CONFDIR}/variables/account.yml
 
       echo ""
       echo -e "${CRED}---------------------------------------------------------------${CEND}"
@@ -362,19 +368,23 @@ function script_classique() {
         1)
           clear
           echo ""
-          ${BASEDIR}/includes/config/scripts/oauth.sh
+          "${BASEDIR}/includes/config/scripts/oauth.sh"
           script_classique
           ;;
 
-        2)
+        2) ## auth classique, on supprime les valeurs de oauth
           clear
           echo ""
           ansible-vault decrypt ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-          sed -i "/client:/c\   client: " ${CONFDIR}/variables/account.yml
-          sed -i "/secret:/c\   secret: " ${CONFDIR}/variables/account.yml
-          sed -i "/account:/c\   account: " ${CONFDIR}/variables/account.yml
-          sed -i "/openssl:/c\   openssl: " ${CONFDIR}/variables/account.yml
-          ${BASEDIR}/includes/config/scripts/basique.sh
+          manage_account_yml oauth.client " "
+          manage_account_yml oauth.secret " "
+          manage_account_yml oauth.account " "
+          manage_account_yml oauth.openssl " "
+#          sed -i "/client:/c\   client: " ${CONFDIR}/variables/account.yml
+#          sed -i "/secret:/c\   secret: " ${CONFDIR}/variables/account.yml
+#          sed -i "/account:/c\   account: " ${CONFDIR}/variables/account.yml
+#          sed -i "/openssl:/c\   openssl: " ${CONFDIR}/variables/account.yml
+          "${BASEDIR}/includes/config/scripts/basique.sh"
           script_classique
           ;;
 
@@ -385,7 +395,8 @@ function script_classique() {
           ansible-vault decrypt ${CONFDIR}/variables/account.yml >/dev/null 2>&1
           echo >&2 -n -e "${BWHITE}Compte(s) Gmail utilisé(s), séparés d'une virgule si plusieurs: ${CEND}"
           read email
-          sed -i "/account:/c\   account: $email" ${CONFDIR}/variables/account.yml
+          manage_account_yml oauth.account $email
+          ###sed -i "/account:/c\   account: $email" ${CONFDIR}/variables/account.yml
           ansible-playbook ${BASEDIR}/includes/dockerapps/traefik.yml
           ansible-vault encrypt ${CONFDIR}/variables/account.yml >/dev/null 2>&1
 
@@ -626,14 +637,18 @@ function script_plexdrive() {
           script_plexdrive
           ;;
 
-        2)
+        2) ## auth classique, on supprime les valeurs oauth
           clear
           echo ""
           ansible-vault decrypt ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-          sed -i "/client:/c\   client: " ${CONFDIR}/variables/account.yml
-          sed -i "/secret:/c\   secret: " ${CONFDIR}/variables/account.yml
-          sed -i "/openssl:/c\   openssl: " ${CONFDIR}/variables/account.yml
-          sed -i "/account:/c\   account: " ${CONFDIR}/variables/account.yml
+          manage_account_yml oauth.client " "
+          manage_account_yml oauth.secret " "
+          manage_account_yml oauth.openssl " "
+          manage_account_yml oauth.account " "
+#          sed -i "/client:/c\   client: " ${CONFDIR}/variables/account.yml
+#          sed -i "/secret:/c\   secret: " ${CONFDIR}/variables/account.yml
+#          sed -i "/openssl:/c\   openssl: " ${CONFDIR}/variables/account.yml
+#          sed -i "/account:/c\   account: " ${CONFDIR}/variables/account.yml
 
           ${BASEDIR}/includes/config/scripts/basique.sh
           script_plexdrive
@@ -646,7 +661,8 @@ function script_plexdrive() {
           ansible-vault decrypt ${CONFDIR}/variables/account.yml >/dev/null 2>&1
           echo >&2 -n -e "${BWHITE}Compte(s) Gmail utilisé(s), séparés d'une virgule si plusieurs: ${CEND}"
           read email
-          sed -i "/account:/c\   account: $email" ${CONFDIR}/variables/account.yml
+          ###sed -i "/account:/c\   account: $email" ${CONFDIR}/variables/account.yml
+          manage_account_yml oauth.email $email
           ansible-playbook ${BASEDIR}/includes/dockerapps/traefik.yml
           ansible-vault encrypt ${CONFDIR}/variables/account.yml >/dev/null 2>&1
 
@@ -1204,8 +1220,10 @@ function script_plexdrive() {
       DOMAIN=$(cat ${TMPDOMAIN})
 
       # Nettoyage account.yml
-      sed -i "/traefik/,+2d" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-      sed -i "/gui/,+2d" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
+      manage_account_yml sub.traefik " "
+      manage_account_yml sub.gui " "
+#      sed -i "/traefik/,+2d" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
+#      sed -i "/gui/,+2d" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
 
       # supression container traefik pour nouvelles rules
       docker rm -f traefik >/dev/null 2>&1
@@ -1233,18 +1251,20 @@ function script_plexdrive() {
         done
 
         if [ ! -z "$SUBDOMAIN" ]; then
-          grep "gui:" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-          if [ $? -eq 0 ]; then
-            sed -i "/gui/,+2d" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-          fi
-          sed -i "/sub/a \ \ \ gui:" /opt/seedbox/variables/account.yml
-          sed -i "/gui:/a \ \ \ \ \ gui: $SUBDOMAIN" ${CONFDIR}/variables/account.yml
+          manage_account_yml sub.gui.gui $SUBDOMAIN
+#          grep "gui:" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
+#          if [ $? -eq 0 ]; then
+#            sed -i "/gui/,+2d" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
+#          fi
+#          sed -i "/sub/a \ \ \ gui:" /opt/seedbox/variables/account.yml
+#          sed -i "/gui:/a \ \ \ \ \ gui: $SUBDOMAIN" ${CONFDIR}/variables/account.yml
+        else
+          manage_account_yml sub.gui.gui gui
         fi
       fi
 
       # gestion sous domaine gui pour l 'affichage fin de script
-      grep "gui" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-      if [ $? -eq 0 ]; then
+      if grep "gui" ${CONFDIR}/variables/account.yml >/dev/null 2>&1; then
         SUBDOMAIN=$(grep gui ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | tr -d ' ')
       else
         SUBDOMAIN="gui"
@@ -1273,14 +1293,14 @@ function script_plexdrive() {
         exit 1
         ;;
       esac
-      sed -i "/gui: ./a \ \ \ \ \ auth: ${TYPE_AUTH}" ${CONFDIR}/variables/account.yml
+      manage_account_yml sub.gui.auth ${TYPE_AUTH}
+      ###sed -i "/gui: ./a \ \ \ \ \ auth: ${TYPE_AUTH}" ${CONFDIR}/variables/account.yml
 
       # installation ssd webui
       ansible-playbook ${BASEDIR}/includes/config/roles/nginx/tasks/main.yml
 
       # pour eviter les doublons dans ${CONFDIR}/resume
-      grep "traefik" ${CONFDIR}/resume >/dev/null 2>&1
-      if [ $? -eq 0 ]; then
+      if grep "traefik" ${CONFDIR}/resume >/dev/null 2>&1; then
         sed -i "/traefik/d" ${CONFDIR}/resume >/dev/null 2>&1
       fi
 
@@ -1409,10 +1429,9 @@ function install_traefik() {
     DOMAIN=$(cat ${TMPDOMAIN})
   fi
 
-  grep "traefik:" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-  if [ $? -eq 0 ]; then
-    sed -i "/traefik/,+2d" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-  fi
+#  if grep "traefik:" ${CONFDIR}/variables/account.yml >/dev/null 2>&1; then
+#    sed -i "/traefik/,+2d" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
+#  fi
 
   # choix sous domaine traefik
   echo ""
@@ -1429,23 +1448,17 @@ function install_traefik() {
     done
 
     if [ ! -z "$SUBDOMAIN" ]; then
-      grep "traefik:" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-      if [ $? -eq 0 ]; then
-        sed -i "/traefik/,+2d" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-      fi
-      sed -i "/sub/a \ \ \ traefik:" /opt/seedbox/variables/account.yml
-      sed -i "/traefik:/a \ \ \ \ \ traefik: $SUBDOMAIN" ${CONFDIR}/variables/account.yml
+      manage_account_yml sub.traefik.traefik $SUBDOMAIN
+      ###sed -i "/sub/a \ \ \ traefik:" /opt/seedbox/variables/account.yml
+      ###sed -i "/traefik:/a \ \ \ \ \ traefik: $SUBDOMAIN" ${CONFDIR}/variables/account.yml
     fi
   fi
 
   # gestion sous domaine traefik dans account.yml
-  grep "traefik" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-  if [ $? -eq 0 ]; then
+  if grep "traefik" ${CONFDIR}/variables/account.yml >/dev/null 2>&1; then
     SUBDOMAIN=$(grep "traefik: ." ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
   else
-    SUBDOMAIN="traefik"
-    sed -i "/sub/a \ \ \ traefik:" /opt/seedbox/variables/account.yml
-    sed -i "/traefik:/a \ \ \ \ \ traefik: $SUBDOMAIN" ${CONFDIR}/variables/account.yml
+    manage_account_yml sub.traefik.traefik traefik
   fi
 
   # choix authentification traefik
@@ -1469,7 +1482,8 @@ function install_traefik() {
     exit 1
     ;;
   esac
-  sed -i "/traefik: ./a \ \ \ \ \ auth: ${TYPE_AUTH}" ${CONFDIR}/variables/account.yml
+  manage_account_yml sub.traefik.auth ${TYPE_AUTH}
+  ###sed -i "/traefik: ./a \ \ \ \ \ auth: ${TYPE_AUTH}" ${CONFDIR}/variables/account.yml
 
   echo ""
   echo -e " ${BWHITE}* Installation Traefik${NC}"
@@ -1514,8 +1528,7 @@ function install_plexdrive() {
   echo ""
   clear
   echo -e " ${BWHITE}* Dès que le message ${NC}${CCYAN}"First cache build process started" apparait à l'écran, taper ${NC}${CCYAN}CTRL + C${NC}${BWHITE} pour poursuivre le script !${NC}"
-  grep "id_teamdrive" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-  if [ $? -eq 0 ]; then
+  if grep "id_teamdrive" ${CONFDIR}/variables/account.yml >/dev/null 2>&1; then
     team=$(grep "id_teamdrive" ${CONFDIR}/variables/account.yml | cut -d':' -f2 | sed 's/ //g') >/dev/null 2>&1
     /usr/bin/plexdrive mount -v 3 --drive-id=$team --refresh-interval=1m --chunk-check-threads=8 --chunk-load-threads=8 --chunk-load-ahead=4 --max-chunks=100 --fuse-options=allow_other,read_only /mnt/plexdrive
     systemctl start plexdrive >/dev/null 2>&1
@@ -1535,8 +1548,7 @@ function plexdrive() {
   echo ""
   clear
   echo -e " ${BWHITE}* Dès que le message ${NC}${CCYAN}"First cache build process started" apparait à l'écran, taper ${NC}${CCYAN}CTRL + C${NC}${BWHITE} pour poursuivre le script !${NC}"
-  grep "id_teamdrive" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-  if [ $? -eq 0 ]; then
+  if grep "id_teamdrive" ${CONFDIR}/variables/account.yml >/dev/null 2>&1;
     team=$(grep "id_teamdrive" ${CONFDIR}/variables/account.yml | cut -d':' -f2 | sed 's/ //g') >/dev/null 2>&1
     /usr/bin/plexdrive mount -v 3 --drive-id=$team --refresh-interval=1m --chunk-check-threads=8 --chunk-load-threads=8 --chunk-load-ahead=4 --max-chunks=100 --fuse-options=allow_other,read_only /mnt/plexdrive
     systemctl start plexdrive >/dev/null 2>&1
@@ -1581,10 +1593,7 @@ function install_docker() {
 
 function subdomain() {
 
-  grep "sub" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-  if [ $? -eq 1 ]; then
-    sed -i '/transcodes/a sub:' ${CONFDIR}/variables/account.yml
-  fi
+
   echo ""
   read -rp $'\e\033[1;37m --> Personnaliser les sous domaines: (o/n) ? ' OUI
   echo ""
@@ -1601,35 +1610,27 @@ function subdomain() {
         read -rp $'\e[32m* Sous domaine pour\e[0m '${line}': ' SUBDOMAIN
       done
 
-      grep "${line}: ." ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-      if [ $? -eq 0 ]; then
-        sed -i "/${line}/,+2d" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-      fi
-
-      sed -i "/sub/a \ \ \ ${line}:" /opt/seedbox/variables/account.yml
-      sed -i "/${line}:/a \ \ \ \ \ ${line}: $SUBDOMAIN" ${CONFDIR}/variables/account.yml
+#      grep "${line}: ." ${CONFDIR}/variables/account.yml >/dev/null 2>&1
+#      if [ $? -eq 0 ]; then
+#        sed -i "/${line}/,+2d" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
+#      fi
+      manage_account_yml sub.${line}.${line} $SUBDOMAIN
+      ###sed -i "/sub/a \ \ \ ${line}:" /opt/seedbox/variables/account.yml
+      ###sed -i "/${line}:/a \ \ \ \ \ ${line}: $SUBDOMAIN" ${CONFDIR}/variables/account.yml
     done
   else
     for line in $(cat $SERVICESPERUSER); do
-
       SUBDOMAIN=${line}
-
-      grep "${line}: ." ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-      if [ $? -eq 0 ]; then
-        sed -i "/${line}/,+2d" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-      fi
-
-      sed -i "/sub/a \ \ \ ${line}:" /opt/seedbox/variables/account.yml
-      sed -i "/${line}:/a \ \ \ \ \ ${line}: $SUBDOMAIN" ${CONFDIR}/variables/account.yml
+      manage_account_yml sub.${line}.${line} $SUBDOMAIN
     done
   fi
 }
 
 function auth() {
-  grep "sub" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-  if [ $? -eq 1 ]; then
-    sed -i '/transcodes/a sub:' ${CONFDIR}/variables/account.yml
-  fi
+#  grep "sub" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
+#  if [ $? -eq 1 ]; then
+#    sed -i '/transcodes/a sub:' ${CONFDIR}/variables/account.yml
+#  fi
   echo ""
   for line in $(cat $SERVICESPERUSER); do
 
@@ -1664,13 +1665,14 @@ function auth() {
       exit 1
       ;;
     esac
-    grep "${line}:" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-    if [ $? -eq 1 ]; then
-      sed -i "/sub/a \ \ \ ${line}:" ${CONFDIR}/variables/account.yml
-      sed -i "/${line}:/a \ \ \ \ \ auth: ${TYPE_AUTH}" ${CONFDIR}/variables/account.yml
-    else
-      sed -i "/${line}: ./a \ \ \ \ \ auth: ${TYPE_AUTH}" ${CONFDIR}/variables/account.yml
-    fi
+#    grep "${line}:" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
+#    if [ $? -eq 1 ]; then
+#      sed -i "/sub/a \ \ \ ${line}:" ${CONFDIR}/variables/account.yml
+#      sed -i "/${line}:/a \ \ \ \ \ auth: ${TYPE_AUTH}" ${CONFDIR}/variables/account.yml
+#    else
+#      sed -i "/${line}: ./a \ \ \ \ \ auth: ${TYPE_AUTH}" ${CONFDIR}/variables/account.yml
+#    fi
+    manage_account_yml sub.${line}.auth ${TYPE_AUTH}
   done
 }
 
@@ -1680,11 +1682,13 @@ function define_parameters() {
   create_user
   CONTACTEMAIL=$(whiptail --title "Adresse Email" --inputbox \
     "Merci de taper votre adresse Email :" 7 50 3>&1 1>&2 2>&3)
-  sed -i "s/mail:/mail: $CONTACTEMAIL/" ${CONFDIR}/variables/account.yml
+  manage_account_yml user.mail $CONTACTEMAIL
+  ###sed -i "s/mail:/mail: $CONTACTEMAIL/" ${CONFDIR}/variables/account.yml
 
   DOMAIN=$(whiptail --title "Votre nom de Domaine" --inputbox \
     "Merci de taper votre nom de Domaine (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3)
-  sed -i "s/domain:/domain: $DOMAIN/" ${CONFDIR}/variables/account.yml
+    manage_account_yml user.domain $DOMAIN
+  ###sed -i "s/domain:/domain: $DOMAIN/" ${CONFDIR}/variables/account.yml
   echo ""
 }
 
@@ -1700,11 +1704,16 @@ function create_user_non_systeme() {
 
   htpasswd -c -b /tmp/.htpasswd $SEEDUSER $PASSWORD >/dev/null 2>&1
   htpwd=$(cat /tmp/.htpasswd)
-  sed -i "/htpwd:/c\   htpwd: $htpwd" ${CONFDIR}/variables/account.yml
-  sed -i "s/name:/name: $SEEDUSER/" ${CONFDIR}/variables/account.yml
-  sed -i "s/pass:/pass: $PASSWORD/" ${CONFDIR}/variables/account.yml
-  sed -i "s/userid:/userid: $(id -u)/" ${CONFDIR}/variables/account.yml
-  sed -i "s/groupid:/groupid: $(id -g)/" ${CONFDIR}/variables/account.yml
+  manage_account_yml user.htpwd $htpwd
+  manage_account_yml user.name $SEEDUSER
+  manage_account_yml user.pass $PASSWORD
+  manage_account_yml user.userid $(id -u)
+  manage_account_yml user.groupid $(id -g)
+#  sed -i "/htpwd:/c\   htpwd: $htpwd" ${CONFDIR}/variables/account.yml
+#  sed -i "s/name:/name: $SEEDUSER/" ${CONFDIR}/variables/account.yml
+#  sed -i "s/pass:/pass: $PASSWORD/" ${CONFDIR}/variables/account.yml
+#  sed -i "s/userid:/userid: $(id -u)/" ${CONFDIR}/variables/account.yml
+#  sed -i "s/groupid:/groupid: $(id -g)/" ${CONFDIR}/variables/account.yml
   echo $PASSWORD >~/.vault_pass
 
   update_seedbox_param "name" $user
@@ -1714,12 +1723,14 @@ function create_user_non_systeme() {
 
   CONTACTEMAIL=$(whiptail --title "Adresse Email" --inputbox \
     "Merci de taper votre adresse Email :" 7 50 3>&1 1>&2 2>&3)
-  sed -i "s/mail:/mail: $CONTACTEMAIL/" ${CONFDIR}/variables/account.yml
+  manage_account_yml user.mail $CONTACTEMAIL
+  ###sed -i "s/mail:/mail: $CONTACTEMAIL/" ${CONFDIR}/variables/account.yml
   update_seedbox_param "mail" $CONTACTEMAIL
 
   DOMAIN=$(whiptail --title "Votre nom de Domaine" --inputbox \
     "Merci de taper votre nom de Domaine (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3)
-  sed -i "s/domain:/domain: $DOMAIN/" ${CONFDIR}/variables/account.yml
+  ###sed -i "s/domain:/domain: $DOMAIN/" ${CONFDIR}/variables/account.yml
+  manage_account_yml user.domain $DOMAIN
   update_seedbox_param "domain" $DOMAIN
   echo ""
   return
@@ -1736,21 +1747,24 @@ function create_user() {
   else
     echo -e " ${YELLOW}* Le groupe $SEEDGROUP existe déjà.${NC}"
   fi
-  sed -i "s/group:/group: $SEEDGROUP/" ${CONFDIR}/variables/account.yml
+  manage_account_yml user.group $SEEDGROUP
+  ###sed -i "s/group:/group: $SEEDGROUP/" ${CONFDIR}/variables/account.yml
 
   SEEDUSER=$(whiptail --title "Administrateur" --inputbox \
     "Nom d'Administrateur de la Seedbox :" 7 50 3>&1 1>&2 2>&3)
   [[ "$?" == 1 ]] && script_plexdrive
   PASSWORD=$(whiptail --title "Password" --passwordbox \
     "Mot de passe :" 7 50 3>&1 1>&2 2>&3)
-  sed -i "s/pass:/pass: $PASSWORD/" ${CONFDIR}/variables/account.yml
-  egrep "^$SEEDUSER" /etc/passwd >/dev/null
-  if [ $? -eq 0 ]; then
+  manage_account_yml user.pass $PASSWORD
+  ###sed -i "s/pass:/pass: $PASSWORD/" ${CONFDIR}/variables/account.yml
+  if egrep "^$SEEDUSER" /etc/passwd >/dev/null; then
     echo -e " ${YELLOW}* L'utilisateur existe déjà !${NC}"
     USERID=$(id -u $SEEDUSER)
     GRPID=$(id -g $SEEDUSER)
-    sed -i "s/userid:/userid: $USERID/" ${CONFDIR}/variables/account.yml
-    sed -i "s/groupid:/groupid: $GRPID/" ${CONFDIR}/variables/account.yml
+    manage_account_yml user.userid $USERID
+    manage_account_yml user.group $GRPID
+#    sed -i "s/userid:/userid: $USERID/" ${CONFDIR}/variables/account.yml
+#    sed -i "s/groupid:/groupid: $GRPID/" ${CONFDIR}/variables/account.yml
     usermod -a -G docker $SEEDUSER >/dev/null 2>&1
     echo -e " ${BWHITE}* Ajout de $SEEDUSER à $SEEDGROUP"
     usermod -a -G $SEEDGROUP $SEEDUSER
@@ -1766,13 +1780,17 @@ function create_user() {
     checking_errors $?
     USERID=$(id -u $SEEDUSER)
     GRPID=$(id -g $SEEDUSER)
-    sed -i "s/userid:/userid: $USERID/" ${CONFDIR}/variables/account.yml
-    sed -i "s/groupid:/groupid: $GRPID/" ${CONFDIR}/variables/account.yml
+    manage_account_yml user.userid $USERID
+    manage_account_yml user.groupid $GRPID
+#    sed -i "s/userid:/userid: $USERID/" ${CONFDIR}/variables/account.yml
+#    sed -i "s/groupid:/groupid: $GRPID/" ${CONFDIR}/variables/account.yml
   fi
   htpasswd -c -b /tmp/.htpasswd $SEEDUSER $PASSWORD >/dev/null 2>&1
   htpwd=$(cat /tmp/.htpasswd)
-  sed -i "/htpwd:/c\   htpwd: $htpwd" ${CONFDIR}/variables/account.yml
-  sed -i "s/name:/name: $SEEDUSER/" ${CONFDIR}/variables/account.yml
+  manage_account_yml user.htpwd $htpwd
+  manage_account_yml user.name $SEEDUSER
+#  sed -i "/htpwd:/c\   htpwd: $htpwd" ${CONFDIR}/variables/account.yml
+#  sed -i "s/name:/name: $SEEDUSER/" ${CONFDIR}/variables/account.yml
   echo $PASSWORD >~/.vault_pass
   echo "vault_password_file = ~/.vault_pass" >>/etc/ansible/ansible.cfg
   return
@@ -1945,7 +1963,8 @@ function install_services() {
       echo ""
       echo -e " ${GREEN}ATTENTION IMPORTANT - NE PAS FAIRE D'ERREUR - SINON DESINSTALLER ET REINSTALLER${NC}"
       token=$(. ${BASEDIR}/includes/config/roles/plex_autoscan/plex_token.sh)
-      sed -i "/token:/c\   token: $token" ${CONFDIR}/variables/account.yml
+      manage_account_yml plex.token $token
+      ###sed -i "/token:/c\   token: $token" ${CONFDIR}/variables/account.yml
       ansible-playbook ${BASEDIR}/includes/dockerapps/plex.yml
       cp "${BASEDIR}/includes/dockerapps/plex.yml" "${CONFDIR}/conf/plex.yml" >/dev/null 2>&1
     else
@@ -2096,10 +2115,11 @@ function manage_apps() {
     [[ "$?" == 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi
     echo -e " ${GREEN}   * $APPSELECTED${NC}"
 
-    grep "$APPSELECTED:" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-    if [ $? -eq 0 ]; then
-      sed -i "/$APPSELECTED/,+2d" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-    fi
+#    grep "$APPSELECTED:" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
+#    if [ $? -eq 0 ]; then
+#      sed -i "/$APPSELECTED/,+2d" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
+#    fi
+    manage_account_yml sub.${APPSELECTED} " "
 
     sed -i "/$APPSELECTED/d" ${CONFDIR}/resume >/dev/null 2>&1
     sed -i "/$APPSELECTED/d" /home/$SEEDUSER/resume >/dev/null 2>&1
@@ -2371,10 +2391,19 @@ function update_seedbox_param() {
   sqlite3 ${SCRIPTPATH}/ssddb "${request}"
 }
 
+function manage_account_yml() {
+  # usage
+  # manage_account_yml key value
+  # key séparées par des points (par exemple user.name ou sub.application.subdomain)
+  ansible-playbook "${CONFDIR}/includes/config/playbooks/manage_account_yml.yml" -e "account_key=${1} account_value=${2}"
+}
+
 function install_gui() {
 
   # installation des dépendances, permet de créer les docker network via ansible
   ansible-galaxy collection install community.general
+  # dépendence permettant de gérer les fichiers yml
+  ansible-galaxy install kwoodson.yedit
   # On vérifie que le user ait bien les droits d'écriture
   make_dir_writable ${BASEDIR}
   # on vérifie que le user ait bien les droits d'écriture dans la db
