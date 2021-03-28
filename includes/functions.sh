@@ -2395,7 +2395,9 @@ function manage_account_yml() {
   # usage
   # manage_account_yml key value
   # key séparées par des points (par exemple user.name ou sub.application.subdomain)
+  #ansible-vault decrypt ${CONFDIR}/variables/account.yml >/dev/null 2>&1
   ansible-playbook "${BASEDIR}/includes/config/playbooks/manage_account_yml.yml" -e "account_key=${1} account_value=${2}"
+  #ansible-vault encrypt ${CONFDIR}/variables/account.yml >/dev/null 2>&1
 }
 
 function install_gui() {
