@@ -2379,7 +2379,7 @@ function get_from_account_yml() {
   if [ -z "$temp_return" ]; then
     temp_return=notfound
   fi
-  if [ "$temp_return" == None ]; then
+  if [ "$temp_return" == "None" ]; then
     temp_return=notfound
   fi
   ansible-vault encrypt "${CONFDIR}/variables/account.yml" >/dev/null 2>&1
