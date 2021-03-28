@@ -15,11 +15,6 @@ source /opt/seedbox-compose/includes/variables.sh
   echo -e "${BLUE}### INFORMATIONS UTILISATEURS ###${NC}"
   ACCOUNT=/opt/seedbox/variables/account.yml
 
-  grep "sub" /opt/seedbox/variables/account.yml > /dev/null 2>&1
-  if [ $? -eq 1 ]; then
-    sed -i '/transcodes/a sub:' /opt/seedbox/variables/account.yml
-  fi
-
   echo ""
   read -p $'\e[32m↘️ Nom d utilisateur | Appuyer sur [Enter]: \e[0m' user < /dev/tty
   read -p $'\e[32m↘️ Mot de passe | Appuyer sur [Enter]: \e[0m' pass < /dev/tty
@@ -111,13 +106,8 @@ source /opt/seedbox-compose/includes/variables.sh
       read subdomain
     done
 
-    grep "sub" /opt/seedbox/variables/account.yml > /dev/null 2>&1
-    if [ $? -eq 1 ]; then
-      sed -i '/transcodes/a sub:' /opt/seedbox/variables/account.yml
-    fi
     if [ ! -z "$subdomain" ]; then
-     sed -i "/gui/d" /opt/seedbox/variables/account.yml > /dev/null 2>&1
-     sed -i "/sub/a \ \ \ gui: $subdomain" /opt/seedbox/variables/account.yml > /dev/null 2>&1
+     manage_account_yml sub.gui.gui $subdomain
     fi
     echo ""
   fi
@@ -140,21 +130,20 @@ source /opt/seedbox-compose/includes/variables.sh
   echo $pass > ~/.vault_pass
   echo "vault_password_file = ~/.vault_pass" >> /etc/ansible/ansible.cfg
 
-
-  sed -i "s/name:/name: $user/
-          s/pass:/pass: $pass/
-          s/userid:/userid: $userid/
-          s/groupid:/groupid: $grpid/
-          s/group:/group: $user/
-          s/mail:/mail: $mail/
-          s/domain:/domain: $domain/
-          s/login:/login: $cloud_email/
-          s/api:/api: $cloud_api/
-          s/client:/client: $oauth_client/
-          s/secret:/secret: $oauth_secret/
-          s/account:/account: $email/
-          s/openssl:/openssl: $openssl/
-          /htpwd:/c\   htpwd: $htpwd" $ACCOUNT
+manage_account_yml user.name $user
+manage_account_yml user.pass: $pass
+manage_account_yml user.userid: $userid
+manage_account_yml user.groupid: $grpid
+manage_account_yml user.group: $user
+manage_account_yml user.mail: $mail
+manage_account_yml user.domain: $domain
+manage_account_yml cloudflare.login: $cloud_email
+manage_account_yml cloudflare.api: $cloud_api
+manage_account_yml oauth.client: $oauth_client
+manage_account_yml oauth.secret: $oauth_secret
+manage_account_yml oauth.account: $email
+manage_account_yml oauth.openssl: $openssl
+manage_account_yml user.htpwd $htpwd
 
 
 

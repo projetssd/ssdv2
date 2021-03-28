@@ -8,14 +8,15 @@ RCLONE_CONFIG_FILE=${HOME}/.config/rclone/rclone.conf
 ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
 USER=$(cat ${TMPNAME})
 
-ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
-sed -i '/plexdrive*/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
+
+
 mkdir /mnt/rclone > /dev/null 2>&1
 
 ## detection remote plexdrive ##
 grep "plexdrive" ${RCLONE_CONFIG_FILE} > /dev/null 2>&1
 if [ $? -eq 0 ]; then
   REMOTE_PLEXDRIVE=$(grep -iC 2 "/mnt/plexdrive/Medias" ${RCLONE_CONFIG_FILE} | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
+
   sed -i "/remote/a \ \ \ plexdrive: $REMOTE_PLEXDRIVE" /opt/seedbox/variables/account.yml
 else
   PASSWORD=$(grep password ${RCLONE_CONFIG_FILE} | head -1)

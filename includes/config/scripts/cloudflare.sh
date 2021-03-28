@@ -42,7 +42,6 @@ echo -e " ${BWHITE}* Les fichiers de configuration ne seront pas effacés${NC}"
 while read line; do echo $line | cut -d'.' -f1; done < /home/$SEEDUSER/resume > $SERVICESUSER$SEEDUSER
 rm /home/$SEEDUSER/resume
 install_services
-ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 
 rm $SERVICESUSER$SEEDUSER
     	echo -e "${CRED}---------------------------------------------------------------${CEND}"

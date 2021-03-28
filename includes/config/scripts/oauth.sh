@@ -22,28 +22,27 @@ email=$3
     	echo -e "${CRED}    https://github.com/laster13/patxav/wiki				      ${CEND}"
     	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
 	echo ""
-ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 
 while [ -z "$oauth_client" ]; do
     >&2 echo -n -e "${BWHITE}Oauth_client: ${CEND}"
     read oauth_client
-    sed -i "/client:/c\   client: $oauth_client" /opt/seedbox/variables/account.yml
+    manage_account_yml oauth.client $oauth_client
 done
 
 while [ -z "$oauth_secret" ]; do
     >&2 echo -n -e "${BWHITE}Oauth_secret: ${CEND}"
     read oauth_secret
-    sed -i "/secret:/c\   secret: $oauth_secret" /opt/seedbox/variables/account.yml
+    manage_account_yml oauth.secret $oauth_secret
 done
 
 while [ -z "$email" ]; do
     >&2 echo -n -e "${BWHITE}Compte Gmail utilisé(s), séparés d'une virgule si plusieurs: ${CEND}"
     read email
-    sed -i "/account:/c\   account: $email" /opt/seedbox/variables/account.yml
+    manage_account_yml oauth.account $email
 done
 
 openssl=$(openssl rand -hex 16)
-sed -i "/openssl:/c\   openssl: $openssl" /opt/seedbox/variables/account.yml
+manage_account_yml oauth.openssl $openssl
 
 ## suppression des yml dans /opt/seedbox/conf
 rm /opt/seedbox/conf/*
@@ -84,7 +83,6 @@ rm $SERVICESUSER$SEEDUSER
     	echo -e "${CCYAN}    		- déconnection de tout compte google	       ${CEND}"
     	echo -e "${CRED}---------------------------------------------------------------${CEND}"
 	echo ""
-ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 
 echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
 read -r

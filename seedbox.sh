@@ -240,7 +240,6 @@ then
         # Affichage du résumé
         #resume_seedbox
         #pause
-        ansible-vault encrypt ${CONFDIR}/variables/account.yml >/dev/null 2>&1
         # on marque la seedbox comme installée
         update_seedbox_param "installed" 1
         script_plexdrive
@@ -271,7 +270,6 @@ then
         filebot
         resume_seedbox
         pause
-        ansible-vault encrypt ${CONFDIR}/variables/account.yml >/dev/null 2>&1
         touch "${CONFDIR}/media-$SEEDUSER"
         script_classique
       else
@@ -324,8 +322,6 @@ then
         while read line; do echo $line | cut -d'.' -f1; done <"/home/${USER}/resume" > $SERVICESPERUSER
         rm /home/${USER}/resume
         install_services
-        ## crypt du fichier account
-        ansible-vault encrypt ${CONFDIR}/variables/account.yml >/dev/null 2>&1
         # on marque la seedbox comme installée
         update_seedbox_param "installed" 1
         script_plexdrive

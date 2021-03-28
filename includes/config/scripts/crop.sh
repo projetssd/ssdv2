@@ -5,12 +5,11 @@ source /opt/seedbox-compose/includes/variables.sh
 
 RCLONE_CONFIG_FILE=${HOME}/.config/rclone/rclone.conf
 
-ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 
 rm /tmp/team.txt /tmp/crop.txt > /dev/null 2>&1
 sed -i '/#Debut team source/,/#Fin team source/d' ${RCLONE_CONFIG_FILE} > /dev/null 2>&1
 sed -i '/#Debut team backup/,/#Fin team backup/d' ${RCLONE_CONFIG_FILE} > /dev/null 2>&1
-sed -i '/support*/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
+
 
 i=1
 grep "team_drive" ${RCLONE_CONFIG_FILE} | uniq > /tmp/crop.txt
@@ -93,5 +92,4 @@ echo -e "#Debut team backup\n[$teamdrive_dest$dest] \ntype = drive\nscope = driv
 sed -i "/remote/a \ \ \ support_dest: $teamdrive_dest$dest" /opt/seedbox/variables/account.yml
 rm /tmp/team.txt /tmp/crop.txt > /dev/null 2>&1
 
-ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 echo ""

@@ -7,14 +7,15 @@ source /opt/seedbox-compose/includes/variables.sh
     	echo -e "${CRED}     /!\ Changement du nom de Domaine /!\     ${CEND}"
     	echo -e "${CRED}----------------------------------------------${CEND}"
 	echo ""
-ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 CONTACTEMAIL=$(whiptail --title "Adresse Email" --inputbox \
 "Merci de taper votre adresse Email :" 7 50 3>&1 1>&2 2>&3)
-sed -i "/mail:/c\   mail: $CONTACTEMAIL" /opt/seedbox/variables/account.yml
+manage_account_yml user.mail $CONTACTEMAIL
+###sed -i "/mail:/c\   mail: $CONTACTEMAIL" /opt/seedbox/variables/account.yml
 
 DOMAIN=$(whiptail --title "Votre nom de Domaine" --inputbox \
 "Merci de taper le nouveau nom de Domaine :" 7 50 3>&1 1>&2 2>&3)
-sed -i "/domain:/c\   domain: $DOMAIN" /opt/seedbox/variables/account.yml
+manage_account_yml user.domain $DOMAIN
+###sed -i "/domain:/c\   domain: $DOMAIN" /opt/seedbox/variables/account.yml
 echo ""
 
 echo -e " ${BWHITE}* Supression Containers docker${NC}"
@@ -68,7 +69,6 @@ service plex_autoscan stop
 rm -rf /home/$SEEDUSER/scripts/plex_autoscan
 ansible-playbook /opt/seedbox-compose/includes/config/roles/plex_autoscan/tasks/main.yml
 fi
-ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 
     	echo -e "${CRED}---------------------------------------------------------------${CEND}"
     	echo -e "${CRED}     /!\ MISE A JOUR DU SERVEUR EFFECTUEE AVEC SUCCES /!\     ${CEND}"

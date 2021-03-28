@@ -184,9 +184,10 @@ fi
 
 function verif() {
   detection
-  
-  sed -i "/rclone/a \ \ \ remote: $remotecrypt" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-  sed -i "/rclone/a \ \ \ id_teamdrive: $id_teamdrive" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+  manage_account_yml rclone.remote $remotecrypt
+  manage_account_yml rclone.id_teamdrive $id_teamdrive
+  ###sed -i "/rclone/a \ \ \ remote: $remotecrypt" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
+  ###sed -i "/rclone/a \ \ \ id_teamdrive: $id_teamdrive" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
   exit
 }
 

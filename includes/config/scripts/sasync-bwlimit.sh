@@ -39,7 +39,7 @@ echo -e "${YELLOW}
 ${CEND}"
 echo ""
 
-ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+
 sed -i '/#Debut team source/,/#Fin team source/d' ${RCLONE_CONFIG_FILE} > /dev/null 2>&1
 sed -i '/#Debut team backup/,/#Fin team backup/d' ${RCLONE_CONFIG_FILE} > /dev/null 2>&1
 sed -i '/support*/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
@@ -70,7 +70,7 @@ if [[ ! -d "/opt/sa" ]]; then
 echo ""
 fi
 
-ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
+
 rm /tmp/team.txt /tmp/crop.txt > /dev/null 2>&1
 i=1
 grep "token" ${RCLONE_CONFIG_FILE} | uniq > /tmp/crop.txt
