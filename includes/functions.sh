@@ -36,7 +36,6 @@ function update_system() {
 
 function status() {
   # Créé les fichiers de service, comme quoi rien n'est encore installé
-  # TODO : est-ce utile ?
   create_dir ${CONFDIR}/status
   for app in $(cat ${BASEDIR}/includes/config/services-available); do
     service=$(echo $app | tr '[:upper:]' '[:lower:]' | cut -d\- -f1)
@@ -49,9 +48,6 @@ function status() {
 }
 
 function update_status() {
-  #
-  # TODO : ajouter la base de données
-  #
   for i in $(docker ps --format "{{.Names}}" --filter "network=traefik_proxy"); do
     echo "2" >${CONFDIR}/status/${i}
 
@@ -63,8 +59,6 @@ function cloudflare() {
   #####################################
   # Récupère les infos de cloudflare
   # Pour utilisation ultérieure
-  # TODO : ne pas poser la question si
-  # variables positionnées
   ######################################
   echo -e "${BLUE}### Gestion des DNS ###${NC}"
   echo ""
@@ -107,8 +101,6 @@ function cloudflare() {
 function oauth() {
   #######################################
   # Récupère les infos oauth
-  # TODO : ne pas poser les questions
-  # Si variables déjà passées
   #######################################
 
   echo -e "${BLUE}### Google OAuth2 avec Traefik – Secure SSO pour les services Docker ###${NC}"
@@ -554,6 +546,7 @@ function insert_mod() {
   /opt/motd/motd/12-rtorrent-stats
 }
 
+# shellcheck disable=SC2120
 function script_plexdrive() {
   if [[ -d "${CONFDIR}" ]]; then
     clear
@@ -1293,16 +1286,14 @@ function script_plexdrive() {
       fi
 
       # Mise à jour du fichier /opt/seedbox/resume
-      # TODO, à refaire
-      #      for i in $(docker ps --format "{{.Names}}" --filter "network=traefik_proxy"); do
-      #        grep "${i}: ." ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-      #        if [ $? -eq 0 ]; then
-      #          j=$(grep "${i}: ." ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
-      #          echo "${i} = ${j}.${DOMAIN}" >>${CONFDIR}/resume
-      #        else
-      #          echo "${i} = ${i}.${DOMAIN}" >>${CONFDIR}/resume
-      #        fi
-      #      done
+      for i in $(docker ps --format "{{.Names}}" --filter "network=traefik_proxy"); do
+        temp=$(get_from_account_yml gui.${i}.${i})
+        if [ "${temp}" != notfound ]; then
+          echo "${i} = ${temp}.${DOMAIN}" >>${CONFDIR}/resume
+        else
+          echo "${i} = ${i}.${DOMAIN}" >>${CONFDIR}/resume
+        fi
+      done
       echo ""
       echo -e "${CRED}---------------------------------------------------------------${CEND}"
       echo -e "${CRED}          /!\ INSTALLATION EFFECTUEE AVEC SUCCES /!\           ${CEND}"
@@ -1310,11 +1301,11 @@ function script_plexdrive() {
       echo ""
       echo -e "${CRED}---------------------------------------------------------------${CEND}"
       echo -e "${CCYAN}              Adresse de l'interface WebUI                    ${CEND}"
-      echo -e "${CCYAN}              https://"${SUBDOMAIN}"."${DOMAIN}"              ${CEND}"
+      echo -e "${CCYAN}              https://${SUBDOMAIN}.${DOMAIN}                  ${CEND}"
       echo -e "${CRED}---------------------------------------------------------------${CEND}"
       echo ""
 
-      rm ${TMPDOMAIN}
+      rm -f "${TMPDOMAIN}"
       echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour sortir du script..."
       read -r
       ;;
@@ -1683,7 +1674,6 @@ function create_user_non_systeme() {
   #  sed -i "s/pass:/pass: $PASSWORD/" ${CONFDIR}/variables/account.yml
   #  sed -i "s/userid:/userid: $(id -u)/" ${CONFDIR}/variables/account.yml
   #  sed -i "s/groupid:/groupid: $(id -g)/" ${CONFDIR}/variables/account.yml
-
 
   update_seedbox_param "name" $user
   update_seedbox_param "userid" $(id -u)
@@ -2212,7 +2202,6 @@ function resume_seedbox() {
     done <"/home/$SEEDUSER/resume"
   fi
 
-  # TODO : à garder ?
   echo ""
   echo -e " ${BWHITE}* Vos IDs :${NC}"
   echo -e "	--> ${BWHITE}Utilisateur:${NC} ${YELLOW}$SEEDUSER${NC}"
@@ -2421,9 +2410,9 @@ function install_gui() {
   fi
   # On install nginx
   ansible-playbook ${BASEDIR}/includes/config/roles/nginx/tasks/main.yml
-  # TODO : vérifier ou un récupère le subdomain ?
 
   DOMAIN=$(select_seedbox_param "domain")
+  GUISUBDOMAIN=$(get_from_account_yml sub.gui.gui)
 
   echo -e "${CRED}---------------------------------------------------------------${CEND}"
   echo -e "${CRED}          /!\ INSTALLATION EFFECTUEE AVEC SUCCES /!\           ${CEND}"
@@ -2431,7 +2420,7 @@ function install_gui() {
   echo ""
   echo -e "${CRED}---------------------------------------------------------------${CEND}"
   echo -e "${CCYAN}              Adresse de l'interface WebUI                    ${CEND}"
-  echo -e "${CCYAN}              https://${gui_subdomain}.${DOMAIN}              ${CEND}"
+  echo -e "${CCYAN}              https://${GUISUBDOMAIN}.${DOMAIN}              ${CEND}"
   echo -e "${CRED}---------------------------------------------------------------${CEND}"
   echo ""
 
@@ -2640,6 +2629,26 @@ function migrate() {
   if [ -f "/etc/systemd/system/plexdrive.service" ]; then
     plexdrive
   fi
+  # mise  à jour du account.yml
+  echo "Mise à jour du account.yml, merci de patienter"
+  if docker ps | grep oauth; then
+    type_auth=oauth
+  else
+    type_auth=basique
+  fi
+  sort -u /opt/seedbox/resume > /tmp/resume
+  rm /opt/seedbox/resume
+  mv /tmp/resume /opt/seedbox/resume
+  while read line; do
+    appli=$(echo $line| awk '{print $3}'| awk -F'.' '{print $1}')
+    if [ -z ${appli} ]; then
+      :
+    else
+      manage_account_yml sub.${line} " "
+      manage_account_yml sub.${line}.${line} ${appli}
+      manage_account_yml sub.${line}.auth ${type_auth}
+    fi
+  done < /opt/seedbox/resume
   update_seedbox_param "installed" 1
   echo "Migration terminée, il est conseillé de redémarrer la seedbox"
 }
