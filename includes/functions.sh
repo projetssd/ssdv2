@@ -2440,11 +2440,9 @@ function premier_lancement() {
   # création d'un vault_pass vide
 
   if [ ! -f "${HOME}/.vault_pass" ]; then
-    echo "============================================="
-    echo "Avant toute chose, merci de choisir un mot de passe de chiffrement des données"
-    echo "Ce mot de passe sera stocké et ne vous sera plus demandé par la suite"
-    read -sp 'Merci de taper votre mot de passe' firstpass
-    echo ${firstpass} >${HOME}/.vault_pass
+    mypass=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 25 ; echo '')
+    echo "$mypass" > "${HOME}/.vault_pass"
+
   fi
 
   # création d'un virtualenv
@@ -2506,6 +2504,9 @@ EOF
       value varchar(50),
       FOREIGN KEY(appname) REFERENCES applications(name));
 EOF
+  ansible-galaxy collection install community.general
+  # dépendence permettant de gérer les fichiers yml
+  ansible-galaxy install kwoodson.yedit
   echo "Les composants sont maintenants tous installés/réglés, poursuite de l'installation"
   if [ $mode_install = "manuel" ]; then
     read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
