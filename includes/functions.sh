@@ -2440,8 +2440,11 @@ function premier_lancement() {
   # création d'un vault_pass vide
 
   if [ ! -f "${HOME}/.vault_pass" ]; then
-    mypass=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 25 ; echo '')
-    echo "$mypass" > "${HOME}/.vault_pass"
+    mypass=$(
+      tr -dc A-Za-z0-9 </dev/urandom | head -c 25
+      echo ''
+    )
+    echo "$mypass" >"${HOME}/.vault_pass"
 
   fi
 
@@ -2508,9 +2511,8 @@ EOF
   # dépendence permettant de gérer les fichiers yml
   ansible-galaxy install kwoodson.yedit
   echo "Les composants sont maintenants tous installés/réglés, poursuite de l'installation"
-  if [ $mode_install = "manuel" ]; then
-    read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
-  fi
+
+  read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
 
   export CONFDIR=/opt/seedbox
 
@@ -2637,11 +2639,11 @@ function migrate() {
   else
     type_auth=basique
   fi
-  sort -u /opt/seedbox/resume > /tmp/resume
+  sort -u /opt/seedbox/resume >/tmp/resume
   rm /opt/seedbox/resume
   mv /tmp/resume /opt/seedbox/resume
   while read line; do
-    appli=$(echo $line| awk '{print $3}'| awk -F'.' '{print $1}')
+    appli=$(echo $line | awk '{print $3}' | awk -F'.' '{print $1}')
     if [ -z ${appli} ]; then
       :
     else
@@ -2649,7 +2651,7 @@ function migrate() {
       manage_account_yml sub.${line}.${line} ${appli}
       manage_account_yml sub.${line}.auth ${type_auth}
     fi
-  done < /opt/seedbox/resume
+  done </opt/seedbox/resume
   update_seedbox_param "installed" 1
   echo "Migration terminée, il est conseillé de redémarrer la seedbox"
 }
