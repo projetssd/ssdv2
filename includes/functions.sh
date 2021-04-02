@@ -2659,8 +2659,8 @@ function migrate() {
 
 function check_docker_group() {
   error=0
-  if getent passwd docker; then
-    if getent passwd docker | grep ${USER}; then
+  if getent group docker; then
+    if getent group docker | grep ${USER}; then
       :
     else
       error=1
