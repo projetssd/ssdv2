@@ -2461,6 +2461,9 @@ function premier_lancement() {
   pip install ansible \
     docker \
     shyaml
+  ansible-galaxy collection install community.general
+  # dépendence permettant de gérer les fichiers yml
+  ansible-galaxy install kwoodson.yedit
   ##########################################
   # Pas de configuration existante
   # On installe les prérequis
@@ -2507,9 +2510,7 @@ EOF
       value varchar(50),
       FOREIGN KEY(appname) REFERENCES applications(name));
 EOF
-  ansible-galaxy collection install community.general
-  # dépendence permettant de gérer les fichiers yml
-  ansible-galaxy install kwoodson.yedit
+
   echo "Les composants sont maintenants tous installés/réglés, poursuite de l'installation"
 
   read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
@@ -2654,4 +2655,28 @@ function migrate() {
   done </opt/seedbox/resume
   update_seedbox_param "installed" 1
   echo "Migration terminée, il est conseillé de redémarrer la seedbox"
+}
+
+function check_docker_group() {
+  error=0
+  if getent passwd docker; then
+    if getent passwd docker | grep ${USER}; then
+      :
+    else
+      error=1
+      sudo usermod -aG docker ${USER}
+    fi
+  else
+    error=1
+    sudo groupadd docker
+    sudo usermod -aG docker ${USER}
+  fi
+  if [ "${error}" = 1 ]; then
+    echo "IMPORTANT !"
+    echo "==================================================="
+    echo "Votre utilisateur n'était pas dans le groupe docker"
+    echo "Il a été ajouté, mais vous devez vous déconnecter/reconnecter pour que la suite du process puisse fonctionner"
+    echo "===================================================="
+    exit 1
+  fi
 }

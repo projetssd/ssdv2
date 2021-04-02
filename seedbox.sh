@@ -75,7 +75,9 @@ done
 #
 # Maintenant, on a toutes les infos
 #
+check_docker_group
 if [ ! -f "${SCRIPTPATH}/ssddb" ]; then
+
   premier_lancement
   # on ajoute le PATH qui va bien, au cas où il ne soit pas pris en compte par le ~/.profile
 fi
