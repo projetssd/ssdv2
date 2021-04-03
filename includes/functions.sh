@@ -2469,7 +2469,7 @@ function premier_lancement() {
   read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
 
   # installation des paquets nécessaires
-  sudo ${SCRIPTPATH}/includes/config/scripts/prerequis_root.sh
+  sudo ${SCRIPTPATH}/includes/config/scripts/prerequis_root.sh ${USER}
 
   # création d'un vault_pass vide
 

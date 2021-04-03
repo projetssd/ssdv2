@@ -73,6 +73,6 @@ ${SCRIPTPATH}/logs/*.log {
 }
 EOF
 
-if [ ! -f /etc/sudoers.d/${USER} ]; then
-  echo "${USER} ALL=(ALL) NOPASSWD: ALL" >/etc/sudoers.d/${USER}
+if [ ! -f /etc/sudoers.d/${1} ]; then
+  echo "${1} ALL=(ALL) NOPASSWD: ALL" >/etc/sudoers.d/${1}
 fi
