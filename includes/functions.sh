@@ -2529,7 +2529,7 @@ EOF
   vault_password_file = ~/.vault_pass
   log_path=${SCRIPTPATH}/logs/ansible.log
 EOF
-  ansible-playbook ${SCRIPTPATH}/includes/config/roles/users/tasks/main.yml
+  ansible-playbook ${SCRIPTPATH}/includes/config/playbooks/sudoers.yml
 
   echo "Création de la configuration en cours"
   # On créé la database
@@ -2549,7 +2549,7 @@ EOF
 
   export CONFDIR=/opt/seedbox
 
-  ansible-playbook ${SCRIPTPATH}/includes/config/playbooks/suedoers.yml
+  ansible-playbook ${SCRIPTPATH}/includes/config/playbooks/sudoers.yml
 
   ##################################################
   # Account.yml
