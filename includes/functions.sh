@@ -1558,9 +1558,6 @@ function install_common() {
   # Installation de docker
   install_docker
   # install de traefik
-  ansible-playbook ${BASEDIR}/includes/config/roles/unionfs/tasks/subtasks/containers_stop.yml
-  ansible-playbook ${BASEDIR}/includes/config/roles/unionfs/tasks/subtasks/docker.yml
-  ansible-playbook ${BASEDIR}/includes/config/roles/unionfs/tasks/subtasks/containers_start.yml
   if docker ps | grep -q traefik; then
     # on ne fait rien, traefik est déjà isntallé
     :

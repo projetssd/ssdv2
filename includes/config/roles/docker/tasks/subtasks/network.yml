@@ -21,7 +21,7 @@
   block:
 
   - name: Create traefik_proxy network
-    docker_network:
+    community.docker.docker_network:
       name: traefik_proxy
       state: present
 
