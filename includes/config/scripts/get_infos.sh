@@ -167,30 +167,7 @@ else
   manage_account_yml sub.gui.auth basique
 fi
 
-domain=$(get_from_account_yml user.domain)
-set -a
-echo ""
-echo -e "${BWHITE}Adresse par défault: https://gui.$domain ${CEND}"
-echo ""
-read -rp $'\e[33mSouhaitez vous personnaliser le sous domaine? (o/n - default n)\e[0m :' OUI
 
-if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
-  if [ -z "$subdomain" ]; then
-    subdomain=$1
-  fi
-  while [ -z "$subdomain" ]; do
-    echo >&2 -n -e "${BWHITE}Sous Domaine: ${CEND}"
-    read subdomain
-  done
-
-  echo ""
-fi
-if [ -z "$subdomain" ]; then
-  subdomain=gui
-fi
-manage_account_yml sub.gui.gui "$subdomain"
-set +a
-export gui_subdomain=$subdomain
 
 # creation utilisateur
 userid=$(id -u)

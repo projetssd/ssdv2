@@ -1408,9 +1408,7 @@ function install_traefik() {
   echo ""
   read -rp $'\e[33mSouhaitez vous personnaliser le sous domaine? (o/n)\e[0m: ' OUI
   if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
-    if [ -z "$SUBDOMAIN" ]; then
-      SUBDOMAIN=$1
-    fi
+
     while [ -z "$SUBDOMAIN" ]; do
       echo >&2 -n -e "${BWHITE}Sous Domaine: ${CEND}"
       read SUBDOMAIN
@@ -1560,13 +1558,17 @@ function install_common() {
   # Installation de docker
   install_docker
   # install de traefik
+  ansible-playbook ${BASEDIR}/includes/config/roles/unionfs/tasks/subtasks/containers_stop.yml
+  ansible-playbook ${BASEDIR}/includes/config/roles/unionfs/tasks/subtasks/docker.yml
+  ansible-playbook ${BASEDIR}/includes/config/roles/unionfs/tasks/subtasks/containers_start.yml
   if docker ps | grep -q traefik; then
     # on ne fait rien, traefik est déjà isntallé
     :
   else
     install_traefik
   fi
-  unionfs_fuse
+  #unionfs_fuse
+
 }
 
 function unionfs_fuse() {
@@ -2416,11 +2418,35 @@ function get_from_account_yml() {
 }
 
 function install_gui() {
+  domain=$(get_from_account_yml user.domain)
+  set -a
+  echo ""
+  echo -e "${BWHITE}Adresse par défault: https://gui.$domain ${CEND}"
+  echo ""
+  read -rp $'\e[33mSouhaitez vous personnaliser le sous domaine? (o/n - default n)\e[0m :' OUI
+
+  if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
+    if [ -z "$subdomain" ]; then
+      subdomain=$1
+    fi
+    while [ -z "$subdomain" ]; do
+      echo >&2 -n -e "${BWHITE}Sous Domaine: ${CEND}"
+      read subdomain
+    done
+
+    echo ""
+  fi
+  if [ -z "$subdomain" ]; then
+    subdomain=gui
+  fi
+  manage_account_yml sub.gui.gui "$subdomain"
+  set +a
+  export gui_subdomain=$subdomain
   # On install nginx
   ansible-playbook ${BASEDIR}/includes/config/roles/nginx/tasks/main.yml
 
-  DOMAIN=$(select_seedbox_param "domain")
-  GUISUBDOMAIN=$(get_from_account_yml sub.gui.gui)
+  #DOMAIN=$(select_seedbox_param "domain")
+  #GUISUBDOMAIN=$(get_from_account_yml sub.gui.gui)
 
   echo -e "${CRED}---------------------------------------------------------------${CEND}"
   echo -e "${CRED}          /!\ INSTALLATION EFFECTUEE AVEC SUCCES /!\           ${CEND}"
@@ -2428,7 +2454,7 @@ function install_gui() {
   echo ""
   echo -e "${CRED}---------------------------------------------------------------${CEND}"
   echo -e "${CCYAN}              Adresse de l'interface WebUI                    ${CEND}"
-  echo -e "${CCYAN}              https://${GUISUBDOMAIN}.${DOMAIN}              ${CEND}"
+  echo -e "${CCYAN}              https://${subdomain}.${domain}              ${CEND}"
   echo -e "${CRED}---------------------------------------------------------------${CEND}"
   echo ""
 
@@ -2440,6 +2466,8 @@ function install_gui() {
 function premier_lancement() {
 
   echo "Certains composants doivent encore être installés/réglés"
+  echo "Cette opération va prendre plusieurs minutes selon votre système "
+  echo "=================================================================="
   read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
 
   # installation des paquets nécessaires
@@ -2524,6 +2552,8 @@ EOF
 EOF
 
   export CONFDIR=/opt/seedbox
+
+  ansible-playbook ${SCRIPTPATH}/includes/config/playbooks/suedoers.yml
 
   ##################################################
   # Account.yml
