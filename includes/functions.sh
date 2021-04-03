@@ -2529,7 +2529,7 @@ EOF
   vault_password_file = ~/.vault_pass
   log_path=${SCRIPTPATH}/logs/ansible.log
 EOF
-  ansible-playbook ${SCRIPTPATH}/includes/config/playbooks/sudoers.yml
+  #ansible-playbook ${SCRIPTPATH}/includes/config/playbooks/sudoers.yml
 
   echo "Création de la configuration en cours"
   # On créé la database

@@ -11,7 +11,6 @@ if [ "$USER" != "root" ]; then
   exit 1
 fi
 
-
 ## Constants
 readonly PIP="9.0.3"
 readonly ANSIBLE="2.9"
@@ -22,9 +21,10 @@ export DEBIAN_FRONTEND=noninteractive
 ## Install Pre-Dependencies
 apt-get update
 apt-get install -y --reinstall \
-software-properties-common \
-apt-transport-https \
-lsb-release
+  software-properties-common \
+  apt-transport-https \
+  lsb-release \
+  sudo
 ## Add apt repos
 osname=$(lsb_release -si)
 
@@ -47,28 +47,24 @@ apt-get update
 
 ## Install apt Dependencies
 apt-get install -y --reinstall \
-nano \
-git \
-build-essential \
-libssl-dev \
-libffi-dev \
-python3-dev \
-python3-pip \
-python-dev \
-python-apt \
-python3-venv \
-sqlite3 \
-apache2-utils
+  nano \
+  git \
+  build-essential \
+  libssl-dev \
+  libffi-dev \
+  python3-dev \
+  python3-pip \
+  python-dev \
+  python-apt \
+  python3-venv \
+  sqlite3 \
+  apache2-utils
 
 rm -f /usr/bin/python
 
 ln -s /usr/bin/python3 /usr/bin/python
 
-
-
-
-
-cat << EOF > /etc/logrotate.d/ansible
+cat <<EOF >/etc/logrotate.d/ansible
 ${SCRIPTPATH}/logs/*.log {
   rotate 7
   daily
@@ -77,7 +73,6 @@ ${SCRIPTPATH}/logs/*.log {
 }
 EOF
 
-
-
-
-
+if [ ! -f /etc/sudoers.d/${USER} ]; then
+  echo "${USER} ALL=(ALL) NOPASSWD: ALL" >/etc/sudoers.d/${USER}
+fi
