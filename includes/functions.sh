@@ -1562,6 +1562,7 @@ function install_common() {
   else
     install_traefik
   fi
+  unionfs_fuse
 }
 
 function unionfs_fuse() {
@@ -2411,7 +2412,6 @@ function get_from_account_yml() {
 }
 
 function install_gui() {
-  install_common
   # On install nginx
   ansible-playbook ${BASEDIR}/includes/config/roles/nginx/tasks/main.yml
 
@@ -2519,9 +2519,7 @@ EOF
       FOREIGN KEY(appname) REFERENCES applications(name));
 EOF
 
-  echo "Les composants sont maintenants tous installés/réglés, poursuite de l'installation"
 
-  read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
 
   export CONFDIR=/opt/seedbox
 
@@ -2547,6 +2545,10 @@ EOF
   touch ${SCRIPTPATH}/.prerequis.lock
   # fin du venv
   deactivate
+  install_common
+  echo "Les composants sont maintenants tous installés/réglés, poursuite de l'installation"
+
+  read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
 
 }
 

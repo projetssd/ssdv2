@@ -164,7 +164,6 @@ if [ $mode_install = "manuel" ]; then
       if [[ ${IS_INSTALLED} -eq 0 ]]; then
 
         clear
-        install_common
         # Installation et configuration de rclone
         install_rclone
         # Install de watchtower
