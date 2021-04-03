@@ -3,7 +3,6 @@
 # on change tout de suis le path pour la suite
 export PATH="$HOME/.local/bin:$PATH"
 
-
 # Absolute path to this script.
 CURRENT_SCRIPT=$(readlink -f "$0")
 # Absolute path this script is in.
@@ -11,15 +10,12 @@ SCRIPTPATH=$(dirname "$CURRENT_SCRIPT")
 export SCRIPTPATH
 cd ${SCRIPTPATH}
 
-
 # shellcheck source=${BASEDIR}/includes/functions.sh
 source "${SCRIPTPATH}/includes/functions.sh"
 # shellcheck source=${BASEDIR}/includes/variables.sh
 source "${SCRIPTPATH}/includes/variables.sh"
 # shellcheck source=${BASEDIR}/includes/functions.sh
 source "${SCRIPTPATH}/includes/functions.sh"
-
-
 
 ################################################
 # récupération des parametre
@@ -29,46 +25,55 @@ INI_FILE=${SCRIPTPATH}/autoinstall.ini
 action=manuel
 export mode_install=manuel
 # lecture des parametres
-OPTS=`getopt -o vhns: --long \
-    help,action:,ini-file:,force-root,migrate \
-    -n 'parse-options' -- "$@"`
+OPTS=$(getopt -o vhns: --long \
+  help,action:,ini-file:,force-root,migrate \
+  -n 'parse-options' -- "$@")
 
-if [ $? != 0 ] ; then echo "Failed parsing options." >&2 ; exit 1 ; fi
+if [ $? != 0 ]; then
+  echo "Failed parsing options." >&2
+  exit 1
+fi
 
 eval set -- "${OPTS}"
 
 while true; do
   case "$1" in
-    --action)
-      export action=$2
-      export mode_install=auto
-      shift 2
-      ;;
+  --action)
+    export action=$2
+    export mode_install=auto
+    shift 2
+    ;;
 
-    --force-root)
-      FORCE_ROOT=1
-      shift
-      ;;
-      
-    --ini-file)
-      INI_FILE=$2
-      shift 2
-      ;;
+  --force-root)
+    FORCE_ROOT=1
+    shift
+    ;;
 
-    --migrate)
-      migrate
-      shift 1
-      exit 0
-      ;;
-      
-    --help)
-      
-      usage
-      shift
-      ;;
+  --ini-file)
+    INI_FILE=$2
+    shift 2
+    ;;
 
-    --) shift ; break ;;
-    *) echo "Internal error! $2" ; exit 1 ;;
+  --migrate)
+    migrate
+    shift 1
+    exit 0
+    ;;
+
+  --help)
+
+    usage
+    shift
+    ;;
+
+  --)
+    shift
+    break
+    ;;
+  *)
+    echo "Internal error! $2"
+    exit 1
+    ;;
   esac
 done
 
@@ -83,28 +88,29 @@ if [ ! -f "${SCRIPTPATH}/ssddb" ]; then
 fi
 
 source ${SCRIPTPATH}/venv/bin/activate
+temppath=$(ls /opt/seedbox-compose/venv/lib)
+pythonpath=/opt/seedbox-compose/venv/lib/${temppath}/site-packages
+export PYTHONPATH=${pythonpath}
 
 case "$action" in
-  install_gui)
-    if [ ! -f ${INI_FILE} ]
-    then
-      echo "ERREUR, fichier d'autoinstall non trouvé !"
-      exit 1
-    fi
-    source <(grep = ${INI_FILE})
-    install_gui
-
-    exit 0
-    ;;
-  manuel)
-    # pas d'action passée, on sort du case
-    ;;
-  *)
-    echo "Action $action inconnue"
+install_gui)
+  if [ ! -f ${INI_FILE} ]; then
+    echo "ERREUR, fichier d'autoinstall non trouvé !"
     exit 1
-    ;;
-esac
+  fi
+  source <(grep = ${INI_FILE})
+  install_gui
 
+  exit 0
+  ;;
+manuel)
+  # pas d'action passée, on sort du case
+  ;;
+*)
+  echo "Action $action inconnue"
+  exit 1
+  ;;
+esac
 
 # Si on est ici, c'est a priori qu'on n'a pas passé d'option
 # ou en tout cas qu'on n'a pas redirigé vers une fonction
@@ -113,8 +119,7 @@ esac
 ################################################
 # TEST ROOT USER
 if [ "$USER" == "root" ]; then
-  if [ "$FORCE_ROOT" == 0 ]
-  then
+  if [ "$FORCE_ROOT" == 0 ]; then
     echo -e "${CCYAN}-----------------------${CEND}"
     echo -e "${CCYAN}[  Lancement en root  ]${CEND}"
     echo -e "${CCYAN}-----------------------${CEND}"
@@ -125,25 +130,14 @@ if [ "$USER" == "root" ]; then
   fi
 fi
 
-
-
-
-
 # on met les droits comme il faut, au cas où il y ait eu un mauvais lancement
 sudo chown -R ${USER}: ${SCRIPTPATH}
 
-
-
 IS_INSTALLED=$(select_seedbox_param "installed")
-
-
-
 
 #clear
 
-if [ $mode_install = "manuel" ]
-then
-
+if [ $mode_install = "manuel" ]; then
 
   if [[ ${IS_INSTALLED} -eq 0 ]]; then
     # Si on est là, c'est que le prérequis sont installés, mais c'est tout
@@ -163,38 +157,14 @@ then
     echo ""
     case $CHOICE in
 
-
-    1) ## Installation de la seedbox Rclone et Gdrive
+    \
+      1) ## Installation de la seedbox Rclone et Gdrive
 
       #check_dir "$PWD"
       if [[ ${IS_INSTALLED} -eq 0 ]]; then
+
         clear
-        # on met la timezone
-        #ansible-playbook ${BASEDIR}/includes/config/playbooks/timezone.yml
-        # Dépendances pour ansible (permet de créer le docker network)
-        ansible-galaxy  collection install community.general
-        # on vérifie les droits sur répertoire et bdd
-        make_dir_writable ${BASEDIR}
-        change_file_owner ${BASEDIR}/ssddb
-        # On crée le conf dir (par défaut /opt/seedbox) s'il n'existe pas
-        conf_dir
-        # Maj du système
-        update_system
-        # On crée le dossier status
-        status
-        # Install des packages de base
-        install_base_packages
-        # Install de docker
-        install_docker
-        #  On part à la pêche aux infos
-        create_user_non_systeme
-        # récup infos cloudflare
-        cloudflare
-        # récup infos oauth
-        oauth
-        # Install de traefik
-        # BLOQUANT si erreur
-        install_traefik
+        install_common
         # Installation et configuration de rclone
         install_rclone
         # Install de watchtower
@@ -207,30 +177,12 @@ then
         # Cette install a une incidence sur docker (dépendances dans systemd)
         unionfs_fuse
         pause
-        # Choix des services à installer
-        # Jusque là, on ne fait que les choisir, et les stocker dans un fichier texte
-        #choose_services
-        # On choisit les sous domaines pour les services installés précédemment
-        # stocké dans account.yml
-        #subdomain
-        # On choisit le mode d'authentification, basqiue, oauth, authelia
-        # stoké dans account.yml
-        #auth
-        #Installation de tous les services
-        #install_services
-        # Mise à jour de plex, ajout des librairies
 
-        #for i in $(docker ps --format "{{.Names}}")
-        #do
-        #  if [[ "$i" == "plex" ]]; then
-        #    plex_sections
-        #  fi
-        #done
 
         # Installation de filebot
         # TODO : à laisser ? Ou à mettre dans les applis ?
-
         #filebot
+
         # mise en place de la sauvegarde
         sauve
         # Affichage du résumé
@@ -281,7 +233,7 @@ then
         # on met la timezone
         #ansible-playbook ${BASEDIR}/includes/config/playbooks/timezone.yml
         # Dépendances pour ansible (permet de créer le docker network)
-        ansible-galaxy  collection install community.general
+        ansible-galaxy collection install community.general
         # on vérifie les droits sur répertoire et bdd
         make_dir_writable ${BASEDIR}
         change_file_owner ${BASEDIR}/ssddb
@@ -315,7 +267,7 @@ then
         sauve
         restore
         ## reinitialisation de toutes les applis
-        while read line; do echo $line | cut -d'.' -f1; done <"/home/${USER}/resume" > $SERVICESPERUSER
+        while read line; do echo $line | cut -d'.' -f1; done <"/home/${USER}/resume" >$SERVICESPERUSER
         rm /home/${USER}/resume
         install_services
         # on marque la seedbox comme installée
@@ -331,13 +283,11 @@ then
       ;;
 
     999) ## Installation seedbox webui
-        install_gui
-     ;;
+      install_gui
+      ;;
 
     esac
   fi
-  
-
 
   update_status
 

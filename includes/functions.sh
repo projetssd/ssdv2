@@ -1531,6 +1531,39 @@ function install_rclone() {
   echo ""
 }
 
+function install_common() {
+  # toutes les installs communes
+   # installation des dépendances, permet de créer les docker network via ansible
+  ansible-galaxy collection install community.general
+  # dépendence permettant de gérer les fichiers yml
+  ansible-galaxy install kwoodson.yedit
+  # On vérifie que le user ait bien les droits d'écriture
+  make_dir_writable ${BASEDIR}
+  # on vérifie que le user ait bien les droits d'écriture dans la db
+  change_file_owner ${BASEDIR}/ssddb
+  # On crée le conf dir (par défaut /opt/seedbox) s'il n'existe pas
+  conf_dir
+  # On part à la pêche aux infos....
+  ${BASEDIR}/includes/config/scripts/get_infos.sh
+  pause
+  echo ""
+  # On crée les fichier de status à 0
+  status
+  # Mise à jour du système
+  update_system
+  # Installation des packages de base
+  install_base_packages
+  # Installation de docker
+  install_docker
+  # install de traefik
+  if docker ps | grep -q traefik; then
+    # on ne fait rien, traefik est déjà isntallé
+    :
+  else
+    install_traefik
+  fi
+}
+
 function unionfs_fuse() {
   echo -e "${BLUE}### Unionfs-Fuse ###${NC}"
   echo -e " ${BWHITE}* Installation Mergerfs${NC}"
@@ -2378,36 +2411,7 @@ function get_from_account_yml() {
 }
 
 function install_gui() {
-
-  # installation des dépendances, permet de créer les docker network via ansible
-  ansible-galaxy collection install community.general
-  # dépendence permettant de gérer les fichiers yml
-  ansible-galaxy install kwoodson.yedit
-  # On vérifie que le user ait bien les droits d'écriture
-  make_dir_writable ${BASEDIR}
-  # on vérifie que le user ait bien les droits d'écriture dans la db
-  change_file_owner ${BASEDIR}/ssddb
-  # On crée le conf dir (par défaut /opt/seedbox) s'il n'existe pas
-  conf_dir
-  # On part à la pêche aux infos....
-  ${BASEDIR}/includes/config/scripts/get_infos.sh
-  pause
-  echo ""
-  # On crée les fichier de status à 0
-  status
-  # Mise à jour du système
-  update_system
-  # Installation des packages de base
-  install_base_packages
-  # Installation de docker
-  install_docker
-  # install de traefik
-  if docker ps | grep -q traefik; then
-    # on ne fait rien, traefik est déjà isntallé
-    :
-  else
-    install_traefik
-  fi
+  install_common
   # On install nginx
   ansible-playbook ${BASEDIR}/includes/config/roles/nginx/tasks/main.yml
 
@@ -2453,6 +2457,10 @@ function premier_lancement() {
 
   # activation du venv
   source ${SCRIPTPATH}/venv/bin/activate
+
+  temppath=$(ls /opt/seedbox-compose/venv/lib)
+  pythonpath=/opt/seedbox-compose/venv/lib/${temppath}/site-packages
+  export PYTHONPATH=${pythonpath}
 
   ## Constants
   python3 -m pip install --disable-pip-version-check --upgrade --force-reinstall \
@@ -2659,8 +2667,8 @@ function migrate() {
 
 function check_docker_group() {
   error=0
-  if getent group docker; then
-    if getent group docker | grep ${USER}; then
+  if getent group docker > /dev/null 2>&; then
+    if getent group docker | grep ${USER} > /dev/null 2>&1; then
       :
     else
       error=1
