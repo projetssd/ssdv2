@@ -1532,8 +1532,12 @@ function install_rclone() {
 }
 
 function install_common() {
+  source ${SCRIPTPATH}/venv/bin/activate
+  temppath=$(ls /opt/seedbox-compose/venv/lib)
+  pythonpath=/opt/seedbox-compose/venv/lib/${temppath}/site-packages
+  export PYTHONPATH=${pythonpath}
   # toutes les installs communes
-   # installation des dépendances, permet de créer les docker network via ansible
+  # installation des dépendances, permet de créer les docker network via ansible
   ansible-galaxy collection install community.general
   # dépendence permettant de gérer les fichiers yml
   ansible-galaxy install kwoodson.yedit
@@ -2519,8 +2523,6 @@ EOF
       FOREIGN KEY(appname) REFERENCES applications(name));
 EOF
 
-
-
   export CONFDIR=/opt/seedbox
 
   ##################################################
@@ -2669,8 +2671,8 @@ function migrate() {
 
 function check_docker_group() {
   error=0
-  if getent group docker > /dev/null 2>&1 ; then
-    if getent group docker | grep ${USER} > /dev/null 2>&1; then
+  if getent group docker >/dev/null 2>&1; then
+    if getent group docker | grep ${USER} >/dev/null 2>&1; then
       :
     else
       error=1
