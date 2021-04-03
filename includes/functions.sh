@@ -2669,7 +2669,7 @@ function migrate() {
 
 function check_docker_group() {
   error=0
-  if getent group docker > /dev/null 2>&; then
+  if getent group docker > /dev/null 2>&1 ; then
     if getent group docker | grep ${USER} > /dev/null 2>&1; then
       :
     else
