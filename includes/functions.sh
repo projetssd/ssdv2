@@ -1537,6 +1537,7 @@ function install_common() {
   # toutes les installs communes
   # installation des dépendances, permet de créer les docker network via ansible
   ansible-galaxy collection install community.general
+  ansible-galaxy collection install community.docker
   # dépendence permettant de gérer les fichiers yml
   ansible-galaxy install kwoodson.yedit
   # On vérifie que le user ait bien les droits d'écriture
@@ -2498,9 +2499,7 @@ function premier_lancement() {
   pip install ansible \
     docker \
     shyaml
-  ansible-galaxy collection install community.general
-  # dépendence permettant de gérer les fichiers yml
-  ansible-galaxy install kwoodson.yedit
+
   ##########################################
   # Pas de configuration existante
   # On installe les prérequis
@@ -2572,13 +2571,13 @@ EOF
   sudo chown -R ${USER} ${SCRIPTPATH}/logs/
   sudo chmod 777 ${SCRIPTPATH}/logs
   touch ${SCRIPTPATH}/.prerequis.lock
-  # fin du venv
-  deactivate
+
   install_common
   echo "Les composants sont maintenants tous installés/réglés, poursuite de l'installation"
 
   read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
-
+  # fin du venv
+  deactivate
 }
 
 function usage() {
