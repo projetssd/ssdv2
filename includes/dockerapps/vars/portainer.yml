@@ -3,9 +3,9 @@ pgrole: 'portainer'
 intport: '9000'
 image: 'portainer/portainer-ce'
 pg_volumes:
-  - '/etc/localtime:/etc/localtime:ro'
-  - '{{ lookup('env','CONFDIR') }}/docker/{{ pgrole }}:/data'
-  - '/var/run/docker.sock:/var/run/docker.sock'
+  - "/etc/localtime:/etc/localtime:ro"
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ pgrole }}:/data"
+  - "/var/run/docker.sock:/var/run/docker.sock"
 
 pg_env:
   PUID: "{{ lookup('env','MYUID') }}"
