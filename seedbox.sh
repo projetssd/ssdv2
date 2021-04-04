@@ -87,7 +87,8 @@ if [ ! -f "${SCRIPTPATH}/ssddb" ]; then
   # on ajoute le PATH qui va bien, au cas où il ne soit pas pris en compte par le ~/.profile
 fi
 
-source ${SCRIPTPATH}/venv/bin/activate
+# on contre le bug de debian et du venv qui ne trouve pas les paquets installés par galaxy
+source "${SCRIPTPATH}/venv/bin/activate"
 temppath=$(ls /opt/seedbox-compose/venv/lib)
 pythonpath=/opt/seedbox-compose/venv/lib/${temppath}/site-packages
 export PYTHONPATH=${pythonpath}

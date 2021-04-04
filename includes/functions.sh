@@ -263,8 +263,9 @@ function filebot() {
 }
 
 function check_dir() {
-  if [[ $1 != ${BASEDIR} ]]; then
-    cd ${BASEDIR}
+  if [[ $1 != "${BASEDIR}" ]]; then
+    # shellcheck disable=SC2164
+    cd "${BASEDIR}"
   fi
 }
 
@@ -1200,8 +1201,8 @@ function script_plexdrive() {
       echo ""
 
       # definition variables
-      ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
-      DOMAIN=$(cat ${TMPDOMAIN})
+      ansible-playbook "${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml"
+      DOMAIN=$(cat "${TMPDOMAIN}")
 
       # Nettoyage account.yml
       manage_account_yml sub.traefik " "
@@ -1211,7 +1212,7 @@ function script_plexdrive() {
 
       # supression container traefik pour nouvelles rules
       docker rm -f traefik >/dev/null 2>&1
-      rm ${CONFDIR}/docker/traefik/rules/nginx.toml >/dev/null 2>&1
+      rm -f "${CONFDIR}/docker/traefik/rules/nginx.toml"
 
       # reinstallation traefik
       install_traefik
@@ -1231,11 +1232,12 @@ function script_plexdrive() {
         fi
         while [ -z "$SUBDOMAIN" ]; do
           echo >&2 -n -e "${BWHITE}Sous Domaine: ${CEND}"
+          # shellcheck disable=SC2162
           read SUBDOMAIN
         done
 
         if [ ! -z "$SUBDOMAIN" ]; then
-          manage_account_yml sub.gui.gui $SUBDOMAIN
+          manage_account_yml sub.gui.gui "$SUBDOMAIN"
           #          grep "gui:" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
           #          if [ $? -eq 0 ]; then
           #            sed -i "/gui/,+2d" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
@@ -1273,16 +1275,15 @@ function script_plexdrive() {
       ###sed -i "/gui: ./a \ \ \ \ \ auth: ${TYPE_AUTH}" ${CONFDIR}/variables/account.yml
 
       # installation ssd webui
-      ansible-playbook ${BASEDIR}/includes/config/roles/nginx/tasks/main.yml
+      ansible-playbook "${BASEDIR}/includes/config/roles/nginx/tasks/main.yml"
 
       # pour eviter les doublons dans ${CONFDIR}/resume
-      if grep "traefik" ${CONFDIR}/resume >/dev/null 2>&1; then
-        sed -i "/traefik/d" ${CONFDIR}/resume >/dev/null 2>&1
+      if grep -q "traefik" "${CONFDIR}/resume"; then
+        sed -i "/traefik/d" "${CONFDIR}/resume" >/dev/null 2>&1
       fi
 
-      grep "oauth" ${CONFDIR}/resume >/dev/null 2>&1
-      if [ $? -eq 0 ]; then
-        sed -i "/oauth/d" ${CONFDIR}/resume >/dev/null 2>&1
+      if grep -q "oauth" "${CONFDIR}/resume"; then
+        sed -i "/oauth/d" "${CONFDIR}/resume" >/dev/null 2>&1
       fi
 
       # Mise à jour du fichier /opt/seedbox/resume
@@ -1318,29 +1319,29 @@ function script_plexdrive() {
 }
 
 function create_dir() {
-  ansible-playbook ${BASEDIR}/includes/config/playbooks/create_directory.yml \
+  ansible-playbook "${BASEDIR}/includes/config/playbooks/create_directory.yml" \
     --extra-vars '{"DIRECTORY":"'${1}'"}'
 }
 
 function conf_dir() {
-  create_dir ${CONFDIR}
+  create_dir "${CONFDIR}"
 }
 
 function create_file() {
   TMPMYUID=$(whoami)
   MYGID=$(id -g)
-  ansible-playbook ${BASEDIR}/includes/config/playbooks/create_file.yml \
+  ansible-playbook "${BASEDIR}/includes/config/playbooks/create_file.yml" \
     --extra-vars '{"FILE":"'${1}'","UID":"'${TMPMYUID}'","GID":"'${MYGID}'"}'
 }
 
 function change_file_owner() {
-  ansible-playbook ${BASEDIR}/includes/config/playbooks/chown_file.yml \
+  ansible-playbook "${BASEDIR}/includes/config/playbooks/chown_file.yml" \
     --extra-vars '{"FILE":"'${1}'"}'
 
 }
 
 function make_dir_writable() {
-  ansible-playbook ${BASEDIR}/includes/config/playbooks/change_rights.yml \
+  ansible-playbook "${BASEDIR}/includes/config/playbooks/change_rights.yml" \
     --extra-vars '{"DIRECTORY":"'${1}'"}'
 
 }
@@ -1350,7 +1351,7 @@ function install_base_packages() {
   echo -e "${BLUE}### INSTALLATION DES PACKAGES ###${NC}"
   echo ""
   echo -e " ${BWHITE}* Installation apache2-utils, unzip, git, curl ...${NC}"
-  ansible-playbook ${BASEDIR}/includes/config/roles/install/tasks/main.yml
+  ansible-playbook "${BASEDIR}/includes/config/roles/install/tasks/main.yml"
   checking_errors $?
   echo ""
 }
@@ -1367,7 +1368,7 @@ function checking_errors() {
 
 function install_fail2ban() {
   echo -e "${BLUE}### FAIL2BAN ###${NC}"
-  ansible-playbook ${BASEDIR}/includes/config/roles/fail2ban/tasks/main.yml
+  ansible-playbook "${BASEDIR}/includes/config/roles/fail2ban/tasks/main.yml"
   checking_errors $?
   echo ""
 }
@@ -1385,18 +1386,18 @@ function install_ufw() {
   echo -e "${RED} Appuyez sur [Entrée] pour continer ${CEND}"
   read -r
   echo -e "${BLUE}### UFW ###${NC}"
-  ansible-playbook ${BASEDIR}/includes/config/roles/ufw/tasks/main.yml
-  ansible-playbook ${CONFDIR}/conf/ufw.yml
+  ansible-playbook "${BASEDIR}/includes/config/roles/ufw/tasks/main.yml"
+  ansible-playbook "${CONFDIR}/conf/ufw.yml"
   checking_errors $?
   echo ""
 }
 
 function install_traefik() {
-  create_dir ${CONFDIR}/docker/traefik/acme/
+  create_dir "${CONFDIR}/docker/traefik/acme/"
   echo -e "${BLUE}### TRAEFIK ###${NC}"
 
-  ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
-  DOMAIN=$(cat ${TMPDOMAIN})
+  ansible-playbook "${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml"
+  DOMAIN=$(cat "${TMPDOMAIN}")
 
   #  if grep "traefik:" ${CONFDIR}/variables/account.yml >/dev/null 2>&1; then
   #    sed -i "/traefik/,+2d" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
@@ -1530,7 +1531,8 @@ function install_rclone() {
 }
 
 function install_common() {
-  source ${SCRIPTPATH}/venv/bin/activate
+  source "${SCRIPTPATH}/venv/bin/activate"
+  # on contre le bug de debian et du venv qui ne trouve pas les paquets installés par galaxy
   temppath=$(ls /opt/seedbox-compose/venv/lib)
   pythonpath=/opt/seedbox-compose/venv/lib/${temppath}/site-packages
   export PYTHONPATH=${pythonpath}
@@ -1541,9 +1543,9 @@ function install_common() {
   # dépendence permettant de gérer les fichiers yml
   ansible-galaxy install kwoodson.yedit
   # On vérifie que le user ait bien les droits d'écriture
-  make_dir_writable ${BASEDIR}
+  make_dir_writable "${BASEDIR}"
   # on vérifie que le user ait bien les droits d'écriture dans la db
-  change_file_owner ${BASEDIR}/ssddb
+  change_file_owner "${BASEDIR}/ssddb"
   # On crée le conf dir (par défaut /opt/seedbox) s'il n'existe pas
   conf_dir
   # On part à la pêche aux infos....
@@ -1600,21 +1602,10 @@ function subdomain() {
     echo ""
     for line in $(cat $SERVICESPERUSER); do
 
-      if [ -z "$SUBDOMAIN" ]; then
-        SUBDOMAIN=$1
-      fi
-
       while [ -z "$SUBDOMAIN" ]; do
         read -rp $'\e[32m* Sous domaine pour\e[0m '${line}': ' SUBDOMAIN
       done
-
-      #      grep "${line}: ." ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-      #      if [ $? -eq 0 ]; then
-      #        sed -i "/${line}/,+2d" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-      #      fi
       manage_account_yml sub.${line}.${line} $SUBDOMAIN
-      ###sed -i "/sub/a \ \ \ ${line}:" /opt/seedbox/variables/account.yml
-      ###sed -i "/${line}:/a \ \ \ \ \ ${line}: $SUBDOMAIN" ${CONFDIR}/variables/account.yml
     done
   else
     for line in $(cat $SERVICESPERUSER); do
@@ -1631,10 +1622,6 @@ function auth() {
   #  fi
   echo ""
   for line in $(cat $SERVICESPERUSER); do
-
-    if [ -z "$AUTH" ]; then
-      AUTH=$1
-    fi
 
     while [ -z "$AUTH" ]; do
       read -rp $'\e\033[1;37m --> Authentification '${line}' [ Enter ] 1 => basique | 2 => oauth | 3 => authelia | 4 => aucune: ' AUTH
@@ -1713,121 +1700,61 @@ function create_user_non_systeme() {
   #  sed -i "s/userid:/userid: $(id -u)/" ${CONFDIR}/variables/account.yml
   #  sed -i "s/groupid:/groupid: $(id -g)/" ${CONFDIR}/variables/account.yml
 
-  update_seedbox_param "name" $user
-  update_seedbox_param "userid" $(id -u)
-  update_seedbox_param "groupid" $(id -g)
-  update_seedbox_param "htpwd" $htpwd
+  update_seedbox_param "name" "${user}"
+  update_seedbox_param "userid" "$(id -u)"
+  update_seedbox_param "groupid" "$(id -g)"
+  update_seedbox_param "htpwd" "${htpwd}"
 
   CONTACTEMAIL=$(whiptail --title "Adresse Email" --inputbox \
     "Merci de taper votre adresse Email :" 7 50 3>&1 1>&2 2>&3)
-  manage_account_yml user.mail $CONTACTEMAIL
+  manage_account_yml user.mail "${CONTACTEMAIL}"
   ###sed -i "s/mail:/mail: $CONTACTEMAIL/" ${CONFDIR}/variables/account.yml
-  update_seedbox_param "mail" $CONTACTEMAIL
+  update_seedbox_param "mail" "${CONTACTEMAIL}"
 
   DOMAIN=$(whiptail --title "Votre nom de Domaine" --inputbox \
     "Merci de taper votre nom de Domaine (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3)
   ###sed -i "s/domain:/domain: $DOMAIN/" ${CONFDIR}/variables/account.yml
-  manage_account_yml user.domain $DOMAIN
-  update_seedbox_param "domain" $DOMAIN
+  manage_account_yml user.domain "${DOMAIN}"
+  update_seedbox_param "domain" "${DOMAIN}"
   echo ""
   return
 }
 
-function create_user() {
-  SEEDGROUP=$(whiptail --title "Group" --inputbox \
-    "Création d'un groupe pour la Seedbox" 7 50 3>&1 1>&2 2>&3)
-  egrep "^$SEEDGROUP" /etc/group >/dev/null
-  if [[ "$?" != "0" ]]; then
-    echo -e " ${BWHITE}* Création du groupe $SEEDGROUP"
-    groupadd $SEEDGROUP
-    checking_errors $?
-  else
-    echo -e " ${YELLOW}* Le groupe $SEEDGROUP existe déjà.${NC}"
-  fi
-  manage_account_yml user.group $SEEDGROUP
-  ###sed -i "s/group:/group: $SEEDGROUP/" ${CONFDIR}/variables/account.yml
-
-  SEEDUSER=$(whiptail --title "Administrateur" --inputbox \
-    "Nom d'Administrateur de la Seedbox :" 7 50 3>&1 1>&2 2>&3)
-  [[ "$?" == 1 ]] && script_plexdrive
-  PASSWORD=$(whiptail --title "Password" --passwordbox \
-    "Mot de passe :" 7 50 3>&1 1>&2 2>&3)
-  manage_account_yml user.pass $PASSWORD
-  ###sed -i "s/pass:/pass: $PASSWORD/" ${CONFDIR}/variables/account.yml
-  if egrep "^$SEEDUSER" /etc/passwd >/dev/null; then
-    echo -e " ${YELLOW}* L'utilisateur existe déjà !${NC}"
-    USERID=$(id -u $SEEDUSER)
-    GRPID=$(id -g $SEEDUSER)
-    manage_account_yml user.userid $USERID
-    manage_account_yml user.group $GRPID
-    #    sed -i "s/userid:/userid: $USERID/" ${CONFDIR}/variables/account.yml
-    #    sed -i "s/groupid:/groupid: $GRPID/" ${CONFDIR}/variables/account.yml
-    usermod -a -G docker $SEEDUSER >/dev/null 2>&1
-    echo -e " ${BWHITE}* Ajout de $SEEDUSER à $SEEDGROUP"
-    usermod -a -G $SEEDGROUP $SEEDUSER
-    checking_errors $?
-  else
-    PASS=$(perl -e 'print crypt($ARGV[0], "password")' $PASSWORD)
-    echo -e " ${BWHITE}* Ajout de $SEEDUSER au système"
-    useradd -M -g $SEEDGROUP -p $PASS -s /bin/bash $SEEDUSER >/dev/null 2>&1
-    usermod -a -G docker $SEEDUSER >/dev/null 2>&1
-    mkdir -p /home/$SEEDUSER
-    chown -R $SEEDUSER:$SEEDGROUP /home/$SEEDUSER
-    chmod 755 /home/$SEEDUSER
-    checking_errors $?
-    USERID=$(id -u $SEEDUSER)
-    GRPID=$(id -g $SEEDUSER)
-    manage_account_yml user.userid $USERID
-    manage_account_yml user.groupid $GRPID
-    #    sed -i "s/userid:/userid: $USERID/" ${CONFDIR}/variables/account.yml
-    #    sed -i "s/groupid:/groupid: $GRPID/" ${CONFDIR}/variables/account.yml
-  fi
-  htpasswd -c -b /tmp/.htpasswd $SEEDUSER $PASSWORD >/dev/null 2>&1
-  htpwd=$(cat /tmp/.htpasswd)
-  manage_account_yml user.htpwd $htpwd
-  manage_account_yml user.name $SEEDUSER
-  #  sed -i "/htpwd:/c\   htpwd: $htpwd" ${CONFDIR}/variables/account.yml
-  #  sed -i "s/name:/name: $SEEDUSER/" ${CONFDIR}/variables/account.yml
-
-  echo "vault_password_file = ~/.vault_pass" >>/etc/ansible/ansible.cfg
-  return
-}
-
 function projects() {
-  ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
-  SEEDUSER=${USER}
-  DOMAIN=$(cat ${TMPDOMAIN})
-  SEEDGROUP=$(cat ${TMPGROUP})
-  rm ${TMPNAME} ${TMPDOMAIN} ${TMPGROUP}
+  ansible-playbook "${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml"
+  SEEDUSER="${USER}"
+  DOMAIN=$(cat "${TMPDOMAIN}")
+  SEEDGROUP=$(cat "${TMPGROUP}")
+  rm -f "${TMPNAME}" "${TMPDOMAIN}" "${TMPGROUP}"
 
   echo -e "${BLUE}### SERVICES ###${NC}"
   echo -e " ${BWHITE}--> Services en cours d'installation : ${NC}"
   PROJECTPERUSER="$PROJECTUSER$SEEDUSER"
-  rm -Rf $PROJECTPERUSER >/dev/null 2>&1
+  rm -Rf "${PROJECTPERUSER}" >/dev/null 2>&1
   projects="/tmp/projects.txt"
 
   if [[ -e "$projects" ]]; then
     rm ${projects}
   fi
-  for app in $(cat $PROJECTSAVAILABLE); do
-    service=$(echo $app | cut -d\- -f1)
-    desc=$(echo $app | cut -d\- -f2)
+  for app in $("cat ${PROJECTSAVAILABLE}"); do
+    service=$(echo "${app}" | cut -d\- -f1)
+    desc=$(echo "${app}" | cut -d\- -f2)
     echo "$service $desc off" >>/tmp/projects.txt
   done
 
   SERVICESTOINSTALL=$(whiptail --title "Gestion des Applications" --checklist \
     "\nChoisir vos Applications" 18 47 10 \
-    $(cat /tmp/projects.txt) 3>&1 1>&2 2>&3)
+    $("cat /tmp/projects.txt") 3>&1 1>&2 2>&3)
   [[ "$?" == 1 ]] && script_plexdrive && rm /tmp/projects.txt
-  PROJECTPERUSER="$PROJECTUSER$SEEDUSER"
-  touch $PROJECTPERUSER
+  PROJECTPERUSER="${PROJECTUSER}${SEEDUSER}"
+  touch "${PROJECTPERUSER}"
 
-  for PROJECTS in $SERVICESTOINSTALL; do
-    echo -e "	${GREEN}* $(echo $PROJECTS | tr -d '"')${NC}"
-    echo $(echo ${PROJECTS,,} | tr -d '"') >>$PROJECTPERUSER
+  for PROJECTS in ${SERVICESTOINSTALL}; do
+    echo -e "	${GREEN}* $(echo "${PROJECTS}" | tr -d '"')${NC}"
+    echo $(echo ${PROJECTS,,} | tr -d '"') >>"${PROJECTPERUSER}"
   done
 
-  for line in $(cat $PROJECTPERUSER); do
+  for line in $("cat ${PROJECTPERUSER}"); do
     ${line}
   done
 }
@@ -1835,58 +1762,58 @@ function projects() {
 function choose_services() {
   echo -e "${BLUE}### SERVICES ###${NC}"
   echo -e " ${BWHITE}--> Services en cours d'installation : ${NC}"
-  rm -Rf $SERVICESPERUSER >/dev/null 2>&1
+  rm -Rf "${SERVICESPERUSER}" >/dev/null 2>&1
   menuservices="/tmp/menuservices.txt"
-  if [[ -e "$menuservices" ]]; then
-    rm $menuservices
+  if [[ -e "${menuservices}" ]]; then
+    rm "${menuservices}"
   fi
 
-  for app in $(cat $SERVICESAVAILABLE); do
-    service=$(echo $app | cut -d\- -f1)
-    desc=$(echo $app | cut -d\- -f2)
-    echo "$service $desc off" >>/tmp/menuservices.txt
+  for app in $("cat ${SERVICESAVAILABLE}"); do
+    service=$(echo ${app} | cut -d\- -f1)
+    desc=$(echo ${app} | cut -d\- -f2)
+    echo "${service} ${desc} off" >>/tmp/menuservices.txt
   done
   SERVICESTOINSTALL=$(whiptail --title "Gestion des Applications" --checklist \
     "Appuyer sur la barre espace pour la sélection" 28 64 21 \
-    $(cat /tmp/menuservices.txt) 3>&1 1>&2 2>&3)
+    $("cat /tmp/menuservices.txt") 3>&1 1>&2 2>&3)
   [[ "$?" == 1 ]] && script_plexdrive && rm /tmp/menuservices.txt
   touch $SERVICESPERUSER
   for APPDOCKER in $SERVICESTOINSTALL; do
     echo -e "	${GREEN}* $(echo $APPDOCKER | tr -d '"')${NC}"
-    echo $(echo ${APPDOCKER,,} | tr -d '"') >>$SERVICESPERUSER
+    echo $(echo ${APPDOCKER,,} | tr -d '"') >>"${SERVICESPERUSER}"
   done
 }
 
 function choose_other_services() {
   echo -e "${BLUE}### SERVICES ###${NC}"
   echo -e " ${BWHITE}--> Services en cours d'installation : ${NC}"
-  rm -Rf $SERVICESPERUSER >/dev/null 2>&1
+  rm -Rf "${SERVICESPERUSER}" >/dev/null 2>&1
   menuservices="/tmp/menuservices.txt"
-  if [[ -e "$menuservices" ]]; then
+  if [[ -e "${menuservices}" ]]; then
     rm /tmp/menuservices.txt
   fi
 
-  for app in $(cat ${BASEDIR}/includes/config/other-services-available); do
-    service=$(echo $app | cut -d\- -f1)
-    desc=$(echo $app | cut -d\- -f2)
-    echo "$service $desc off" >>/tmp/menuservices.txt
+  for app in $("cat ${BASEDIR}/includes/config/other-services-available"); do
+    service=$(echo "${app}" | cut -d\- -f1)
+    desc=$(echo "${app}" | cut -d\- -f2)
+    echo "${service} ${desc} off" >>/tmp/menuservices.txt
   done
   SERVICESTOINSTALL=$(whiptail --title "Gestion des Applications" --checklist \
     "Appuyer sur la barre espace pour la sélection" 28 64 21 \
-    $(cat /tmp/menuservices.txt) 3>&1 1>&2 2>&3)
+    $("cat /tmp/menuservices.txt") 3>&1 1>&2 2>&3)
   [[ "$?" == 1 ]] && script_plexdrive && rm /tmp/menuservices.txt
-  touch $SERVICESPERUSER
+  touch "${SERVICESPERUSER}"
   for APPDOCKER in $SERVICESTOINSTALL; do
-    echo -e "	${GREEN}* $(echo $APPDOCKER | tr -d '"')${NC}"
-    echo $(echo ${APPDOCKER,,} | tr -d '"') >>$SERVICESPERUSER
+    echo -e "	${GREEN}* $(echo "${APPDOCKER}" | tr -d '"')${NC}"
+    echo $(echo "${APPDOCKER,,}" | tr -d '"') >>"${SERVICESPERUSER}"
   done
 }
 
 function choose_media_folder_classique() {
   echo -e "${BLUE}### DOSSIERS MEDIAS ###${NC}"
   echo -e " ${BWHITE}--> Création des dossiers Medias : ${NC}"
-  mkdir -p ${HOME}/filebot
-  mkdir -p ${HOME}/local/{Films,Series,Musiques,Animes}
+  mkdir -p "${HOME}/filebot"
+  mkdir -p "${HOME}/local/{Films,Series,Musiques,Animes}"
   checking_errors $?
   echo ""
 }
@@ -1897,10 +1824,10 @@ function choose_media_folder_plexdrive() {
   FOLDER="/mnt/rclone/${USER}"
 
   # si le dossier /mnt/rclone/user n'est pas vide
-  mkdir -p ${HOME}/Medias
+  mkdir -p "${HOME}/Medias"
   if [ "$(ls -A /mnt/rclone/${USER})" ]; then
-    cd /mnt/rclone/${USER}
-    ls -Ad */ | sed 's,/$,,g' >$MEDIASPERUSER
+    cd "/mnt/rclone/${USER}"
+    ls -Ad */ | sed 's,/$,,g' >"${MEDIASPERUSER}"
 
     echo -e " ${BWHITE}--> Récupération des dossiers Utilisateur à partir de Gdrive... : ${NC}"
     for line in $(cat $MEDIASPERUSER); do
@@ -2382,8 +2309,9 @@ function select_seedbox_param() {
 }
 
 function update_seedbox_param() {
+  # shellcheck disable=SC2027
   request="replace into seedbox_params (param,value) values ('"${1}"','"${2}"')"
-  sqlite3 ${SCRIPTPATH}/ssddb "${request}"
+  sqlite3 "${SCRIPTPATH}/ssddb" "${request}"
 }
 
 function manage_account_yml() {
@@ -2469,7 +2397,8 @@ function premier_lancement() {
   read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
 
   # installation des paquets nécessaires
-  sudo ${SCRIPTPATH}/includes/config/scripts/prerequis_root.sh ${USER}
+  # on passe le user en parametre pour pouvoir créer le /etc/sudoers.d/${USER}
+  sudo "${SCRIPTPATH}/includes/config/scripts/prerequis_root.sh" "${USER}"
 
   # création d'un vault_pass vide
 
@@ -2529,11 +2458,10 @@ EOF
   vault_password_file = ~/.vault_pass
   log_path=${SCRIPTPATH}/logs/ansible.log
 EOF
-  #ansible-playbook ${SCRIPTPATH}/includes/config/playbooks/sudoers.yml
 
   echo "Création de la configuration en cours"
   # On créé la database
-  sqlite3 ${SCRIPTPATH}/ssddb <<EOF
+  sqlite3 "${SCRIPTPATH}/ssddb" <<EOF
     create table seedbox_params(param varchar(50) PRIMARY KEY, value varchar(50));
     replace into seedbox_params (param,value) values ('installed',0);
     replace into seedbox_params (param,value) values ('seedbox_path','/opt/seedbox');
@@ -2549,30 +2477,30 @@ EOF
 
   export CONFDIR=/opt/seedbox
 
-  ansible-playbook ${SCRIPTPATH}/includes/config/playbooks/sudoers.yml
 
   ##################################################
   # Account.yml
-  create_dir ${CONFDIR}
-  create_dir ${CONFDIR}/variables
-  if [ ! -f ${CONFDIR}/variables/account.yml ]; then
-    cp /opt/seedbox-compose/includes/config/account.yml ${CONFDIR}/variables/account.yml
+  create_dir "${CONFDIR}"
+  create_dir "${CONFDIR}/variables"
+  if [ ! -f "${CONFDIR}/variables/account.yml" ]; then
+    cp /opt/seedbox-compose/includes/config/account.yml "${CONFDIR}/variables/account.yml"
   fi
 
   if [[ -d "${HOME}/.cache" ]]; then
-    sudo chown -R ${USER}: "${HOME}/.cache"
+    sudo chown -R "${USER}": "${HOME}/.cache"
   fi
   if [[ -d "${HOME}/.local" ]]; then
-    sudo chown -R ${USER}: "${HOME}/.local"
+    sudo chown -R "${USER}": "${HOME}/.local"
   fi
   if [[ -d "${HOME}/.ansible" ]]; then
-    sudo chown -R ${USER}: "${HOME}/.ansible"
+    sudo chown -R "${USER}": "${HOME}/.ansible"
   fi
-  sudo chown -R ${USER} ${SCRIPTPATH}/logs/
-  sudo chmod 777 ${SCRIPTPATH}/logs
-  touch ${SCRIPTPATH}/.prerequis.lock
+  sudo chown -R "${USER}" $"{SCRIPTPATH}/logs/"
+  sudo chmod 777 "${SCRIPTPATH}/logs"
+  touch "${SCRIPTPATH}/.prerequis.lock"
 
   install_common
+  # shellcheck disable=SC2162
   echo "Les composants sont maintenants tous installés/réglés, poursuite de l'installation"
 
   read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
