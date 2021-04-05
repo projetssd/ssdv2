@@ -1761,6 +1761,7 @@ function projects() {
 
 function choose_services() {
   echo -e "${BLUE}### SERVICES ###${NC}"
+  echo "DEBUG ${SERVICESAVAILABLE}"
   echo -e " ${BWHITE}--> Services en cours d'installation : ${NC}"
   rm -Rf "${SERVICESPERUSER}" >/dev/null 2>&1
   menuservices="/tmp/menuservices.txt"
@@ -1775,7 +1776,7 @@ function choose_services() {
   done
   SERVICESTOINSTALL=$(whiptail --title "Gestion des Applications" --checklist \
     "Appuyer sur la barre espace pour la sélection" 28 64 21 \
-    $("cat /tmp/menuservices.txt") 3>&1 1>&2 2>&3)
+    $(cat /tmp/menuservices.txt) 3>&1 1>&2 2>&3)
   [[ "$?" == 1 ]] && script_plexdrive && rm /tmp/menuservices.txt
   touch $SERVICESPERUSER
   for APPDOCKER in $SERVICESTOINSTALL; do
@@ -1800,7 +1801,7 @@ function choose_other_services() {
   done
   SERVICESTOINSTALL=$(whiptail --title "Gestion des Applications" --checklist \
     "Appuyer sur la barre espace pour la sélection" 28 64 21 \
-    $("cat /tmp/menuservices.txt") 3>&1 1>&2 2>&3)
+    $(cat /tmp/menuservices.txt) 3>&1 1>&2 2>&3)
   [[ "$?" == 1 ]] && script_plexdrive && rm /tmp/menuservices.txt
   touch "${SERVICESPERUSER}"
   for APPDOCKER in $SERVICESTOINSTALL; do
