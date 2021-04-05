@@ -1768,7 +1768,7 @@ function choose_services() {
     rm "${menuservices}"
   fi
 
-  for app in $("cat ${SERVICESAVAILABLE}"); do
+  for app in $(cat ${SERVICESAVAILABLE}); do
     service=$(echo ${app} | cut -d\- -f1)
     desc=$(echo ${app} | cut -d\- -f2)
     echo "${service} ${desc} off" >>/tmp/menuservices.txt
