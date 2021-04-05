@@ -1736,7 +1736,7 @@ function projects() {
   if [[ -e "$projects" ]]; then
     rm ${projects}
   fi
-  for app in $("cat ${PROJECTSAVAILABLE}"); do
+  for app in $(cat ${PROJECTSAVAILABLE}); do
     service=$(echo "${app}" | cut -d\- -f1)
     desc=$(echo "${app}" | cut -d\- -f2)
     echo "$service $desc off" >>/tmp/projects.txt
@@ -1744,7 +1744,7 @@ function projects() {
 
   SERVICESTOINSTALL=$(whiptail --title "Gestion des Applications" --checklist \
     "\nChoisir vos Applications" 18 47 10 \
-    $("cat /tmp/projects.txt") 3>&1 1>&2 2>&3)
+    $(cat /tmp/projects.txt) 3>&1 1>&2 2>&3)
   [[ "$?" == 1 ]] && script_plexdrive && rm /tmp/projects.txt
   PROJECTPERUSER="${PROJECTUSER}${SEEDUSER}"
   touch "${PROJECTPERUSER}"
@@ -1754,7 +1754,7 @@ function projects() {
     echo $(echo ${PROJECTS,,} | tr -d '"') >>"${PROJECTPERUSER}"
   done
 
-  for line in $("cat ${PROJECTPERUSER}"); do
+  for line in $(cat ${PROJECTPERUSER}); do
     ${line}
   done
 }
@@ -1794,7 +1794,7 @@ function choose_other_services() {
     rm /tmp/menuservices.txt
   fi
 
-  for app in $("cat ${BASEDIR}/includes/config/other-services-available"); do
+  for app in $(cat "${BASEDIR}/includes/config/other-services-available"); do
     service=$(echo "${app}" | cut -d\- -f1)
     desc=$(echo "${app}" | cut -d\- -f2)
     echo "${service} ${desc} off" >>/tmp/menuservices.txt
