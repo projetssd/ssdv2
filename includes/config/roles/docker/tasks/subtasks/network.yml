@@ -21,7 +21,7 @@
   block:
 
   - name: Create traefik_proxy network
-    community.docker.docker_network:
+    community.general.docker_network:
       name: traefik_proxy
       state: present
 
@@ -42,7 +42,7 @@
     ignore_errors: yes
 
   - name: Network | Rebuild seedbox network
-    docker_network:
+    community.general.docker_network:
       name: traefik_proxy
       state: present
       force: yes

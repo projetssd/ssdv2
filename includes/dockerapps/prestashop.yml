@@ -82,7 +82,7 @@
         image: 'prestashop/prestashop'
 
     - name: Create prestashop-net network
-      docker_network:
+      community.general.docker_network:
         name: prestashop-net
         state: present
 

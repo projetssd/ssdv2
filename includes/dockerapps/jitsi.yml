@@ -110,7 +110,7 @@
         when: cloudflare_enabled
     
       - name: Create meet.jitsi
-        docker_network:
+        community.general.docker_network:
           name: meet.jitsi
           state: present
   

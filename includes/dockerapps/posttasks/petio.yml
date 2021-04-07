@@ -1,6 +1,6 @@
 ---
 - name: Create {{pgrole}}-net network
-  docker_network:
+  community.general.docker_network:
     name: '{{pgrole}}-net'
     state: present
 
@@ -30,7 +30,7 @@
     timeout: 10
 
 - name: Add '{{pgrole}}-net' to network
-  docker_network:
+  community.general.docker_network:
     name: '{{pgrole}}-net'
     connected:
       - '{{ pgrole }}'

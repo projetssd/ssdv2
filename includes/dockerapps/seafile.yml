@@ -81,7 +81,7 @@
         image: 'seafileltd/seafile-mc:latest'
 
     - name: Create seafile-net network
-      docker_network:
+      community.general.docker_network:
         name: seafile-net
         state: present
 
