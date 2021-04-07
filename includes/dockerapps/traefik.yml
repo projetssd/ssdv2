@@ -185,7 +185,7 @@
       when: not cloudflare_enabled
       
     - name: Create a network
-      community.general.docker_network:
+      community.docker.docker_network:
         name: traefik_proxy
 
     - name: Deploy Traefik

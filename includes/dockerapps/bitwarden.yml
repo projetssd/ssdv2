@@ -30,7 +30,7 @@
       when: cloudflare_enabled
 
     - name: Create bw-net network
-      community.general.docker_network:
+      community.docker.docker_network:
         name: bw-net
         state: present
 
