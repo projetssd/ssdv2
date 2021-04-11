@@ -1822,12 +1822,13 @@ function choose_media_folder_classique() {
 function choose_media_folder_plexdrive() {
   # Attention, là on ne va pas créer de /home/$SEEDUSER, on reste sur le user qui a lancé l'install
   echo -e "${BLUE}### DOSSIERS MEDIAS ###${NC}"
-  FOLDER="/mnt/rclone/${USER}"
+  USERSEED=$(get_from_account_yml user.name)
+  FOLDER="/mnt/rclone/${USERSEED}"
 
   # si le dossier /mnt/rclone/user n'est pas vide
   mkdir -p "${HOME}/Medias"
-  if [ "$(ls -A /mnt/rclone/${USER})" ]; then
-    cd "/mnt/rclone/${USER}"
+  if [ "$(ls -A /mnt/rclone/${USERSEED})" ]; then
+    cd "/mnt/rclone/${USERSEED}"
     ls -Ad */ | sed 's,/$,,g' >"${MEDIASPERUSER}"
 
     echo -e " ${BWHITE}--> Récupération des dossiers Utilisateur à partir de Gdrive... : ${NC}"
@@ -1891,6 +1892,7 @@ function install_services() {
       manage_account_yml plex.token $token
       ###sed -i "/token:/c\   token: $token" ${CONFDIR}/variables/account.yml
       ansible-playbook ${BASEDIR}/includes/dockerapps/plex.yml
+      choose_media_folder_plexdrive
       cp "${BASEDIR}/includes/dockerapps/plex.yml" "${CONFDIR}/conf/plex.yml" >/dev/null 2>&1
     else
       # On est dans le cas générique
