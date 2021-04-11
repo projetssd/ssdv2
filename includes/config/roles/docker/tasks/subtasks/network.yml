@@ -17,15 +17,15 @@
   register: docker_gateway
   when: ('traefik_proxy' in docker_networks.stdout_lines)
 
-- name: "Network | Create new traefik_proxy docker network block"
-  block:
+#- name: "Network | Create new traefik_proxy docker network block"
+#  block:
 
-  - name: Create traefik_proxy network
-    community.docker.docker_network:
-      name: traefik_proxy
-      state: present
+#  - name: Create traefik_proxy network
+#    community.docker.docker_network:
+#      name: traefik_proxy
+#      state: present
 
-  when: ('traefik_proxy' not in docker_networks.stdout_lines)
+#  when: ('traefik_proxy' not in docker_networks.stdout_lines)
 
 - name: "Network | Rebuild existing traefik_proxy docker network block"
   block:
