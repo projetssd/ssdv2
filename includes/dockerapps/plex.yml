@@ -72,8 +72,9 @@
         state: absent
 
     - name: "Pull Plex Docker image"
-      docker_image:
+      community.docker.docker_image:
         name: "{{ plex_docker_image }}"
+        source: pull
 
     - name: "Check if '/dev/dri' exists"
       stat:
