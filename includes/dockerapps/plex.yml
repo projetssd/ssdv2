@@ -75,6 +75,7 @@
       community.docker.docker_image:
         name: "{{ plex_docker_image }}"
         source: pull
+        state: present
 
     - name: "Check if '/dev/dri' exists"
       stat:
