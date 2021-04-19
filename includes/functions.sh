@@ -1548,6 +1548,7 @@ function install_common() {
   change_file_owner "${BASEDIR}/ssddb"
   # On crée le conf dir (par défaut /opt/seedbox) s'il n'existe pas
   conf_dir
+  stocke_public_ip
   # On part à la pêche aux infos....
   ${BASEDIR}/includes/config/scripts/get_infos.sh
   pause
@@ -2483,6 +2484,7 @@ EOF
 
   ##################################################
   # Account.yml
+  mkdir "${CONFDIR}/logs"
   create_dir "${CONFDIR}"
   create_dir "${CONFDIR}/variables"
   if [ ! -f "${CONFDIR}/variables/account.yml" ]; then
@@ -2503,7 +2505,6 @@ EOF
   touch "${SCRIPTPATH}/.prerequis.lock"
 
   install_common
-  stocke_public_ip
   # shellcheck disable=SC2162
   echo "Les composants sont maintenants tous installés/réglés, poursuite de l'installation"
 
