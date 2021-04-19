@@ -2501,8 +2501,9 @@ EOF
   sudo chown -R "${USER}" $"{SCRIPTPATH}/logs/"
   sudo chmod 777 "${SCRIPTPATH}/logs"
   touch "${SCRIPTPATH}/.prerequis.lock"
-  stocke_public_ip
+
   install_common
+  stocke_public_ip
   # shellcheck disable=SC2162
   echo "Les composants sont maintenants tous installés/réglés, poursuite de l'installation"
 
