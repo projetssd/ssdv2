@@ -2501,12 +2501,13 @@ EOF
   sudo chown -R "${USER}" $"{SCRIPTPATH}/logs/"
   sudo chmod 777 "${SCRIPTPATH}/logs"
   touch "${SCRIPTPATH}/.prerequis.lock"
-
+  stocke_public_ip
   install_common
   # shellcheck disable=SC2162
   echo "Les composants sont maintenants tous installés/réglés, poursuite de l'installation"
 
   read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
+
   # fin du venv
   deactivate
 }
@@ -2647,5 +2648,20 @@ function check_docker_group() {
     echo "Il a été ajouté, mais vous devez vous déconnecter/reconnecter pour que la suite du process puisse fonctionner"
     echo "===================================================="
     exit 1
+  fi
+}
+
+function stocke_public_ip() {
+  echo "Stockage des adresses ip publiques"
+  IPV4=$(dig @resolver4.opendns.com myip.opendns.com +short -4)
+  echo "IPV4 = ${IPV4}"
+  manage_account_yml network.ipv4 ${IPV4}
+  IPV6=$(dig @resolver1.ipv6-sandbox.opendns.com AAAA myip.opendns.com +short -6)
+  if [ $? -eq 0 ]
+  then
+    echo "IPV6 = ${IPV6}"
+    manage_account_yml network.ipv6 ${IPV6}
+  else
+    echo "Aucune adresse ipv6 trouvée"
   fi
 }
