@@ -1252,7 +1252,7 @@ function script_plexdrive() {
 
       # choix authentification gui
       echo ""
-      read -rp $'\e\033[1;37mChoix de Authentification pour la gui [ Enter ] 1 => basique | 2 => oauth | 3 => authelia: ' AUTH
+      read -rp $'\e\033[1;37mChoix de Authentification pour la gui [ Enter ] 1 => basique (défaut) | 2 => oauth | 3 => authelia: ' AUTH
       case $AUTH in
       1)
         TYPE_AUTH=basique
@@ -1267,8 +1267,8 @@ function script_plexdrive() {
         ;;
 
       *)
-        echo "Action $action inconnue"
-        exit 1
+        echo "Aucun choix, on passe sur une une auth basique"
+        TYPE_AUTH=basique
         ;;
       esac
       manage_account_yml sub.gui.auth ${TYPE_AUTH}
@@ -1439,8 +1439,8 @@ function install_traefik() {
     ;;
 
   *)
-    echo "Action $action inconnue"
-    exit 1
+    TYPE_AUTH=basique
+    echo "Pas de choix sélectionné, on passe sur une auth basique"
     ;;
   esac
   manage_account_yml sub.traefik.auth ${TYPE_AUTH}
@@ -1625,7 +1625,7 @@ function auth() {
   for line in $(cat $SERVICESPERUSER); do
 
     while [ -z "$AUTH" ]; do
-      read -rp $'\e\033[1;37m --> Authentification '${line}' [ Enter ] 1 => basique | 2 => oauth | 3 => authelia | 4 => aucune: ' AUTH
+      read -rp $'\e\033[1;37m --> Authentification '${line}' [ Enter ] 1 => basique (défaut) | 2 => oauth | 3 => authelia | 4 => aucune: ' AUTH
     done
 
     case $AUTH in
@@ -1647,8 +1647,9 @@ function auth() {
       ;;
 
     *)
-      echo "Action $action inconnue"
-      exit 1
+       TYPE_AUTH=basique
+        echo "Pas de choix sélectionné, on passe sur une auth basique"
+
       ;;
     esac
     #    grep "${line}:" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
