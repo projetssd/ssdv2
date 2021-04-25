@@ -1252,7 +1252,7 @@ function script_plexdrive() {
 
       # choix authentification gui
       echo ""
-      read -rp $'\e\033[1;37mChoix de Authentification pour la gui [ Enter ] 1 => basique | 2 => oauth | 3 => authelia: ' AUTH
+      read -rp $'\e\033[1;37mChoix de Authentification pour la gui [ Enter ] 1 => basique (défaut) | 2 => oauth | 3 => authelia: ' AUTH
       case $AUTH in
       1)
         TYPE_AUTH=basique
@@ -1267,8 +1267,8 @@ function script_plexdrive() {
         ;;
 
       *)
-        echo "Action $action inconnue"
-        exit 1
+        echo "Aucun choix, on passe sur une une auth basique"
+        TYPE_AUTH=basique
         ;;
       esac
       manage_account_yml sub.gui.auth ${TYPE_AUTH}
@@ -1439,8 +1439,8 @@ function install_traefik() {
     ;;
 
   *)
-    echo "Action $action inconnue"
-    exit 1
+    TYPE_AUTH=basique
+    echo "Pas de choix sélectionné, on passe sur une auth basique"
     ;;
   esac
   manage_account_yml sub.traefik.auth ${TYPE_AUTH}
@@ -1548,6 +1548,7 @@ function install_common() {
   change_file_owner "${BASEDIR}/ssddb"
   # On crée le conf dir (par défaut /opt/seedbox) s'il n'existe pas
   conf_dir
+  stocke_public_ip
   # On part à la pêche aux infos....
   ${BASEDIR}/includes/config/scripts/get_infos.sh
   pause
@@ -1624,7 +1625,7 @@ function auth() {
   for line in $(cat $SERVICESPERUSER); do
 
     while [ -z "$AUTH" ]; do
-      read -rp $'\e\033[1;37m --> Authentification '${line}' [ Enter ] 1 => basique | 2 => oauth | 3 => authelia | 4 => aucune: ' AUTH
+      read -rp $'\e\033[1;37m --> Authentification '${line}' [ Enter ] 1 => basique (défaut) | 2 => oauth | 3 => authelia | 4 => aucune: ' AUTH
     done
 
     case $AUTH in
@@ -1646,8 +1647,9 @@ function auth() {
       ;;
 
     *)
-      echo "Action $action inconnue"
-      exit 1
+       TYPE_AUTH=basique
+        echo "Pas de choix sélectionné, on passe sur une auth basique"
+
       ;;
     esac
     #    grep "${line}:" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
@@ -2483,6 +2485,7 @@ EOF
 
   ##################################################
   # Account.yml
+  mkdir "${CONFDIR}/logs"
   create_dir "${CONFDIR}"
   create_dir "${CONFDIR}/variables"
   if [ ! -f "${CONFDIR}/variables/account.yml" ]; then
@@ -2507,6 +2510,7 @@ EOF
   echo "Les composants sont maintenants tous installés/réglés, poursuite de l'installation"
 
   read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
+
   # fin du venv
   deactivate
 }
@@ -2647,5 +2651,20 @@ function check_docker_group() {
     echo "Il a été ajouté, mais vous devez vous déconnecter/reconnecter pour que la suite du process puisse fonctionner"
     echo "===================================================="
     exit 1
+  fi
+}
+
+function stocke_public_ip() {
+  echo "Stockage des adresses ip publiques"
+  IPV4=$(dig @resolver4.opendns.com myip.opendns.com +short -4)
+  echo "IPV4 = ${IPV4}"
+  manage_account_yml network.ipv4 ${IPV4}
+  IPV6=$(dig @resolver1.ipv6-sandbox.opendns.com AAAA myip.opendns.com +short -6)
+  if [ $? -eq 0 ]
+  then
+    echo "IPV6 = ${IPV6}"
+    manage_account_yml network.ipv6 ${IPV6}
+  else
+    echo "Aucune adresse ipv6 trouvée"
   fi
 }

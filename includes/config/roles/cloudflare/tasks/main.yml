@@ -9,17 +9,6 @@
 #########################################################################
 ---
 
-- name: Install 'dnsutils'
-  apt: "name=dnsutils state=present"
-
-- name: Get Public IP Address
-  shell: dig -4 TXT +short o-o.myaddr.l.google.com @ns1.google.com | awk -F'\"' '{ print $2}'
-  register: public_ip_lookup
-
-- name: Set 'public_ip' variable
-  set_fact:
-    public_ip: "{{ public_ip_lookup.stdout }}"
-
 - name: Set 'record' variable
   set_fact:
     record: "{{ (subdomain == user.domain) | ternary(user.domain,subdomain + '.' + user.domain) }}"
@@ -33,9 +22,28 @@
     solo: true
     proxied: yes
     type: A
-    value: "{{ public_ip }}"
+    value: "{{ network.ipv4 }}"
     record: "{{ subdomain }}"
 
 - name: Display DNS Record
   debug:
-    msg: "DNS Record for '{{ record }}' set to '{{ public_ip }}'."
+    msg: "DNS Record for '{{ record }}' set to '{{ network.ipv4 }}'."
+
+- name: Set record for ipv6
+  block:
+  - name: Set DNS Record ipv6
+    cloudflare_dns:
+      account_api_token: "{{ cloudflare.api }}"
+      account_email: "{{ cloudflare.login }}"
+      zone: "{{ user.domain }}"
+      state: present
+      solo: true
+      proxied: yes
+      type: AAAA
+      value: "{{ network.ipv6 }}"
+      record: "{{ subdomain }}"
+
+  - name: Display DNS Record ipv6
+    debug:
+      msg: "DNS Record for '{{ record }}' set to '{{ network.ipv6 }}'."
+  when: (network.ipv6 is defined) and (network.ipv6|length > 0)
