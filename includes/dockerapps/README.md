@@ -19,6 +19,7 @@ Pour celles ci on crée un playbook dans dockerapps
 Pour toutes les applis (generiques ou complexes), on peut créer des playbooks dans dockerapps/pretasks et/ou dockerapp/posttasks.
 
 Ces playbooks seront lancés avant et/ou après le paybook principal.
+C'est le cas des applis qui nécessitent une base de données (wordpress,...) ou des réglages particuliers (verif de xml pour emby)
 
 ## Fonctionnement
 
