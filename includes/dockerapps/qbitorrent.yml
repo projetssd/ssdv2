@@ -4,6 +4,7 @@
   gather_facts: false
   vars_files:
     - /opt/seedbox/variables/account.yml
+    - "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/generique.yml"
   tasks:
 
     - name: create qbitorrent state
@@ -14,57 +15,6 @@
       stat:
         path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
       register: check
-  
-    - name: "Variables | Set 'cloudflare_enabled' variable"
-      set_fact:
-        cloudflare_enabled: "{{ true if not(
-            (cloudflare.login is undefined)
-            or
-            (cloudflare.login is none)
-            or
-            (cloudflare.login | trim | length == 0)
-            or
-            (cloudflare.api is undefined)
-            or
-            (cloudflare.api is none)
-            or
-            (cloudflare.api | trim | length == 0)
-          )
-            else false }}"
-
-    - name: "Variables | Set 'oauth_enabled' variable"
-      set_fact:
-        oauth_enabled: "{{ true if not(
-            (oauth.client is undefined)
-            or
-            (oauth.client is none)
-            or
-            (oauth.client | trim | length == 0)
-            or
-            (oauth.secret is undefined)
-            or
-            (oauth.secret is none)
-            or
-            (oauth.secret | trim | length == 0)
-            or
-            (oauth.account is undefined)
-            or
-            (oauth.account is none)
-            or
-            (oauth.account | trim | length == 0)
-          )
-            else false }}"
-
-    - name: "Variables | Set 'sub' variable"
-      set_fact:
-        sub_enabled: "{{ true if not(
-            (sub.qbitorrent is undefined)
-            or
-            (sub.qbitorrent is none)
-            or
-            (sub.qbitorrent | trim | length == 0)
-          )
-            else false }}"
 
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
@@ -93,7 +43,10 @@
           traefik.http.routers.qbitorrent-rtr.rule: 'Host(`{{sub.qbitorrent.qbitorrent if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.qbitorrent-rtr.tls: 'true'
           ## Middlewares
-          traefik.http.routers.qbitorrent-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+          traefik.http.routers.{{pgrole}}-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
+          else 'chain-basic-auth@file' if auth_enabled and sub[pgrole].auth == 'basique' | default(false)
+          else 'chain-oauth@file' if auth_enabled and sub[pgrole].auth == 'oauth' | default(false)
+          else omit if auth_enabled and sub[pgrole].auth == 'aucune'}}"
           ## HTTP Services
           traefik.http.routers.qbitorrent-rtr.service: 'qbitorrent-svc'
           traefik.http.services.qbitorrent-svc.loadbalancer.server.port: '8080'
