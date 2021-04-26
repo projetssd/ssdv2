@@ -1585,8 +1585,7 @@ function install_docker() {
   echo -e " ${BWHITE}* Installation Docker${NC}"
   file="/usr/bin/docker"
   if [ ! -e "$file" ]; then
-    # cp -r /usr/local/lib/python2.7/dist-packages/backports/ssl_match_hostname/ /usr/lib/python2.7/dist-packages/backports
-    ansible-playbook ${BASEDIR}/includes/config/roles/docker/tasks/main.yml
+     ansible-playbook ${BASEDIR}/includes/config/roles/docker/tasks/main.yml
   else
     echo -e " ${YELLOW}* docker est déjà installé !${NC}"
   fi
@@ -1608,6 +1607,29 @@ function subdomain() {
       done
       manage_account_yml sub.${line}.${line} $SUBDOMAIN
     done
+  else
+    for line in $(cat $SERVICESPERUSER); do
+      SUBDOMAIN=${line}
+      manage_account_yml sub.${line}.${line} $SUBDOMAIN
+    done
+  fi
+}
+
+function subdomain_unitaire() {
+  line=$1
+  echo ""
+  read -rp $'\e\033[1;37m --> Personnaliser les sous domaines: (o/n) ? ' OUI
+  echo ""
+  if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
+    echo -e " ${CRED}--> NE PAS SAISIR LE NOM DE DOMAINE - LES POINTS NE SONT PAS ACCEPTES${NC}"
+    echo ""
+
+
+      while [ -z "$SUBDOMAIN" ]; do
+        read -rp $'\e[32m* Sous domaine pour\e[0m '${line}': ' SUBDOMAIN
+      done
+      manage_account_yml sub.${line}.${line} $SUBDOMAIN
+
   else
     for line in $(cat $SERVICESPERUSER); do
       SUBDOMAIN=${line}
@@ -1883,8 +1905,13 @@ function install_services() {
 
   ## préparation installation
   for line in $(cat $SERVICESPERUSER); do
+    launch_service "${line}"
+  done
+}
 
-    if [[ "${line}" == "plex" ]]; then
+function launch_service() {
+  line=$1
+  if [[ "${line}" == "plex" ]]; then
       echo ""
       echo -e "${BLUE}### CONFIG POST COMPOSE PLEX ###${NC}"
       echo -e " ${BWHITE}* Processing plex config file...${NC}"
@@ -1933,7 +1960,6 @@ function install_services() {
 
     FQDNTMP=""
 
-  done
 }
 
 decompte() {
