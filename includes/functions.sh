@@ -1939,11 +1939,11 @@ function install_services() {
 function launch_service() {
   line=$1
   tempsubdomain=$(get_from_account_yml sub.${line}.${line})
-  if [ "${tempsubdomain}" = 'notfound' ]; then
+  if [ "${tempsubdomain}" = notfound ]; then
     subdomain_unitaire ${line}
   fi
   tempauth=$(get_from_account_yml sub.${line}.auth)
-  if [ "${tempauth}" = 'notfound' ]; then
+  if [ "${tempauth}" = notfound ]; then
     auth_unitaire ${line}
   fi
 
