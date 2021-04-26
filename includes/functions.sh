@@ -1585,7 +1585,7 @@ function install_docker() {
   echo -e " ${BWHITE}* Installation Docker${NC}"
   file="/usr/bin/docker"
   if [ ! -e "$file" ]; then
-     ansible-playbook ${BASEDIR}/includes/config/roles/docker/tasks/main.yml
+    ansible-playbook ${BASEDIR}/includes/config/roles/docker/tasks/main.yml
   else
     echo -e " ${YELLOW}* docker est déjà installé !${NC}"
   fi
@@ -1595,7 +1595,7 @@ function install_docker() {
 function subdomain() {
 
   echo ""
-  read -rp $'\e\033[1;37m --> Personnaliser les sous domaines: (o/n) ? ' OUI
+  read -rp $'\e\033[1;37m --> Personnaliser les sous domaines: (o/N) ? ' OUI
   echo ""
   if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
     echo -e " ${CRED}--> NE PAS SAISIR LE NOM DE DOMAINE - LES POINTS NE SONT PAS ACCEPTES${NC}"
@@ -1618,17 +1618,16 @@ function subdomain() {
 function subdomain_unitaire() {
   line=$1
   echo ""
-  read -rp $'\e\033[1;37m --> Personnaliser les sous domaines: (o/n) ? ' OUI
+  read -rp $'\e\033[1;37m --> Personnaliser les sous domaines: (o/N) ? ' OUI
   echo ""
   if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
     echo -e " ${CRED}--> NE PAS SAISIR LE NOM DE DOMAINE - LES POINTS NE SONT PAS ACCEPTES${NC}"
     echo ""
 
-
-      while [ -z "$SUBDOMAIN" ]; do
-        read -rp $'\e[32m* Sous domaine pour\e[0m '${line}': ' SUBDOMAIN
-      done
-      manage_account_yml sub.${line}.${line} $SUBDOMAIN
+    while [ -z "$SUBDOMAIN" ]; do
+      read -rp $'\e[32m* Sous domaine pour\e[0m '${line}': ' SUBDOMAIN
+    done
+    manage_account_yml sub.${line}.${line} $SUBDOMAIN
 
   else
     for line in $(cat $SERVICESPERUSER); do
@@ -1639,10 +1638,7 @@ function subdomain_unitaire() {
 }
 
 function auth() {
-  #  grep "sub" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-  #  if [ $? -eq 1 ]; then
-  #    sed -i '/transcodes/a sub:' ${CONFDIR}/variables/account.yml
-  #  fi
+
   echo ""
   for line in $(cat $SERVICESPERUSER); do
 
@@ -1669,20 +1665,51 @@ function auth() {
       ;;
 
     *)
-       TYPE_AUTH=basique
-        echo "Pas de choix sélectionné, on passe sur une auth basique"
+      TYPE_AUTH=basique
+      echo "Pas de choix sélectionné, on passe sur une auth basique"
 
       ;;
     esac
-    #    grep "${line}:" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-    #    if [ $? -eq 1 ]; then
-    #      sed -i "/sub/a \ \ \ ${line}:" ${CONFDIR}/variables/account.yml
-    #      sed -i "/${line}:/a \ \ \ \ \ auth: ${TYPE_AUTH}" ${CONFDIR}/variables/account.yml
-    #    else
-    #      sed -i "/${line}: ./a \ \ \ \ \ auth: ${TYPE_AUTH}" ${CONFDIR}/variables/account.yml
-    #    fi
+
     manage_account_yml sub.${line}.auth ${TYPE_AUTH}
   done
+}
+
+function auth_unitaire() {
+  line=$1
+  echo ""
+
+  while [ -z "$AUTH" ]; do
+    read -rp $'\e\033[1;37m --> Authentification '${line}' [ Enter ] 1 => basique (défaut) | 2 => oauth | 3 => authelia | 4 => aucune: ' AUTH
+  done
+
+  case $AUTH in
+  1)
+    TYPE_AUTH=basique
+    ;;
+
+  2)
+    TYPE_AUTH=oauth
+    ;;
+
+  3)
+    TYPE_AUTH=authelia
+
+    ;;
+
+  4)
+    TYPE_AUTH=aucune
+    ;;
+
+  *)
+    TYPE_AUTH=basique
+    echo "Pas de choix sélectionné, on passe sur une auth basique"
+
+    ;;
+  esac
+
+  manage_account_yml sub.${line}.auth ${TYPE_AUTH}
+
 }
 
 function define_parameters() {
@@ -1911,54 +1938,63 @@ function install_services() {
 
 function launch_service() {
   line=$1
+  tempsubdomain=$(get_from_account_yml sub.${line}.${line})
+  if [ "${tempsubdomain}" = 'notfound' ]; then
+    subdomain_unitaire ${line}
+  fi
+  tempauth=$(get_from_account_yml sub.${line}.auth)
+  if [ "${tempauth}" = 'notfound' ]; then
+    auth_unitaire ${line}
+  fi
+
   if [[ "${line}" == "plex" ]]; then
-      echo ""
-      echo -e "${BLUE}### CONFIG POST COMPOSE PLEX ###${NC}"
-      echo -e " ${BWHITE}* Processing plex config file...${NC}"
-      echo ""
-      echo -e " ${GREEN}ATTENTION IMPORTANT - NE PAS FAIRE D'ERREUR - SINON DESINSTALLER ET REINSTALLER${NC}"
-      token=$(. ${BASEDIR}/includes/config/roles/plex_autoscan/plex_token.sh)
-      manage_account_yml plex.token $token
-      ###sed -i "/token:/c\   token: $token" ${CONFDIR}/variables/account.yml
-      ansible-playbook ${BASEDIR}/includes/dockerapps/plex.yml
-      choose_media_folder_plexdrive
-      cp "${BASEDIR}/includes/dockerapps/plex.yml" "${CONFDIR}/conf/plex.yml" >/dev/null 2>&1
+    echo ""
+    echo -e "${BLUE}### CONFIG POST COMPOSE PLEX ###${NC}"
+    echo -e " ${BWHITE}* Processing plex config file...${NC}"
+    echo ""
+    echo -e " ${GREEN}ATTENTION IMPORTANT - NE PAS FAIRE D'ERREUR - SINON DESINSTALLER ET REINSTALLER${NC}"
+    token=$(. ${BASEDIR}/includes/config/roles/plex_autoscan/plex_token.sh)
+    manage_account_yml plex.token $token
+    ###sed -i "/token:/c\   token: $token" ${CONFDIR}/variables/account.yml
+    ansible-playbook ${BASEDIR}/includes/dockerapps/plex.yml
+    choose_media_folder_plexdrive
+    cp "${BASEDIR}/includes/dockerapps/plex.yml" "${CONFDIR}/conf/plex.yml" >/dev/null 2>&1
+  else
+    # On est dans le cas générique
+    # on regarde s'i y a un playbook existant
+    if [[ -f "${CONFDIR}/conf/${line}.yml" ]]; then
+      # il y a déjà un playbook "perso", on le lance
+      ansible-playbook "${CONFDIR}/conf/${line}.yml"
+    elif [[ -f "${CONFDIR}/vars/${line}.yml" ]]; then
+      # il y a des variables persos, on les lance
+      ansible-playbook "${BASEDIR}/includes/dockerapps/generique.yml" --extra-vars "@${CONFDIR}/vars/${line}.yml"
+    elif [[ -f "${BASEDIR}/includes/dockerapps/${line}.yml" ]]; then
+      # pas de playbook perso ni de vars perso
+      # Il y a un playbook spécifique pour cette appli, on le copie
+      cp "${BASEDIR}/includes/dockerapps/${line}.yml" "${CONFDIR}/conf/${line}.yml"
+      # puis on le lance
+      ansible-playbook "${CONFDIR}/conf/${line}.yml"
     else
-      # On est dans le cas générique
-      # on regarde s'i y a un playbook existant
-      if [[ -f "${CONFDIR}/conf/${line}.yml" ]]; then
-        # il y a déjà un playbook "perso", on le lance
-        ansible-playbook "${CONFDIR}/conf/${line}.yml"
-      elif [[ -f "${CONFDIR}/vars/${line}.yml" ]]; then
-        # il y a des variables persos, on les lance
-        ansible-playbook "${BASEDIR}/includes/dockerapps/generique.yml" --extra-vars "@${CONFDIR}/vars/${line}.yml"
-      elif [[ -f "${BASEDIR}/includes/dockerapps/${line}.yml" ]]; then
-        # pas de playbook perso ni de vars perso
-        # Il y a un playbook spécifique pour cette appli, on le copie
-        cp "${BASEDIR}/includes/dockerapps/${line}.yml" "${CONFDIR}/conf/${line}.yml"
-        # puis on le lance
-        ansible-playbook "${CONFDIR}/conf/${line}.yml"
-      else
-        # on copie les variables pour le user
-        cp "${BASEDIR}/includes/dockerapps/vars/${line}.yml" "${CONFDIR}/vars/${line}.yml"
-        # puis on lance le générique avec ce qu'on vient de copier
-        ansible-playbook ${BASEDIR}/includes/dockerapps/generique.yml --extra-vars "@${CONFDIR}/vars/${line}.yml"
-      fi
+      # on copie les variables pour le user
+      cp "${BASEDIR}/includes/dockerapps/vars/${line}.yml" "${CONFDIR}/vars/${line}.yml"
+      # puis on lance le générique avec ce qu'on vient de copier
+      ansible-playbook ${BASEDIR}/includes/dockerapps/generique.yml --extra-vars "@${CONFDIR}/vars/${line}.yml"
     fi
+  fi
 
-    temp_subdomain=$(get_from_account_yml "sub.${line}.${line}")
-    if [ "${temp_subdomain}" != notfound ]; then
-      FQDNTMP="${temp_subdomain}.$DOMAIN"
-      echo "${line} = $FQDNTMP" | tee -a "${CONFDIR}/resume" >/dev/null
-      echo "${line}.$DOMAIN" >>"$INSTALLEDFILE"
-    else
-      FQDNTMP="${line}.$DOMAIN"
-      echo "$FQDNTMP" >>$INSTALLEDFILE
-      echo "${line} = $FQDNTMP" | tee -a "${CONFDIR}/resume" >/dev/null
+  temp_subdomain=$(get_from_account_yml "sub.${line}.${line}")
+  if [ "${temp_subdomain}" != notfound ]; then
+    FQDNTMP="${temp_subdomain}.$DOMAIN"
+    echo "${line} = $FQDNTMP" | tee -a "${CONFDIR}/resume" >/dev/null
+    echo "${line}.$DOMAIN" >>"$INSTALLEDFILE"
+  else
+    FQDNTMP="${line}.$DOMAIN"
+    echo "$FQDNTMP" >>$INSTALLEDFILE
+    echo "${line} = $FQDNTMP" | tee -a "${CONFDIR}/resume" >/dev/null
 
-    fi
+  fi
 
-    FQDNTMP=""
+  FQDNTMP=""
 
 }
 
@@ -2508,7 +2544,6 @@ EOF
 
   export CONFDIR=/opt/seedbox
 
-
   ##################################################
   # Account.yml
   mkdir "${CONFDIR}/logs"
@@ -2686,8 +2721,7 @@ function stocke_public_ip() {
   echo "IPV4 = ${IPV4}"
   manage_account_yml network.ipv4 ${IPV4}
   IPV6=$(dig @resolver1.ipv6-sandbox.opendns.com AAAA myip.opendns.com +short -6)
-  if [ $? -eq 0 ]
-  then
+  if [ $? -eq 0 ]; then
     echo "IPV6 = ${IPV6}"
     manage_account_yml network.ipv6 ${IPV6}
   else

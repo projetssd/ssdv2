@@ -69,7 +69,7 @@
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: "{{sub.qbitorrent if sub_enabled else 'qbitorrent'}}"
+        subdomain: "{{sub.qbitorrent.qbitorrent if sub_enabled else 'qbitorrent'}}"
       when: cloudflare_enabled
 
     - name: 'Set Known Facts'
@@ -90,7 +90,7 @@
           traefik.enable: 'true'
           ## HTTP Routers
           traefik.http.routers.qbitorrent-rtr.entrypoints: 'https'
-          traefik.http.routers.qbitorrent-rtr.rule: 'Host(`{{sub.qbitorrent if sub_enabled else pgrole}}.{{user.domain}}`)'
+          traefik.http.routers.qbitorrent-rtr.rule: 'Host(`{{sub.qbitorrent.qbitorrent if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.qbitorrent-rtr.tls: 'true'
           ## Middlewares
           traefik.http.routers.qbitorrent-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
