@@ -54,8 +54,9 @@
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
-          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config:/config'
-          - '/home/{{user.name}}/local/{{pgrole}}/downloads:/downloads'
+          - "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
+          - "{{ lookup('env','HOME') }}/local/{{pgrole}}/downloads:/downloads"
+          - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
 
     - name: 'Setting PG ENV'
       set_fact:
