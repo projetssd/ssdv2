@@ -2,6 +2,8 @@
 ---
 - hosts: localhost
   gather_facts: false
+  vars:
+    pgrole: qbitorrent
   vars_files:
     - /opt/seedbox/variables/account.yml
     - "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/generique.yml"
@@ -15,6 +17,13 @@
       stat:
         path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
       register: check
+
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'qbitorrent'
+        intport: '8080'
+        image: 'ghcr.io/linuxserver/qbittorrent'
+
 
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
@@ -82,9 +91,6 @@
         state: started
         labels: '{{pg_labels}}'
 
-    - name: add resume file
-      shell: |
-        echo "{{pgrole}}-{{sub.qbitorrent if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
 
     - name: create qbitorrent state
       shell: |
