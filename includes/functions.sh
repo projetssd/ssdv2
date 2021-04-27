@@ -2385,6 +2385,9 @@ function manage_account_yml() {
   # usage
   # manage_account_yml key value
   # key séparées par des points (par exemple user.name ou sub.application.subdomain)
+  # pour supprimer une clé, il faut que le value soit égale à un espace
+  # ex : manage_account_yml sub.toto.toto toto => va créer la clé sub.toto.toto et lui mettre à la valeur toto
+  # ex : manage_account_yml sub.toto.toto " " => va supprimer la clé sub.toto.toto et toutes les sous clés
   ansible-vault decrypt "${CONFDIR}/variables/account.yml" >/dev/null 2>&1
   if [ "${2}" = " " ];
   then
