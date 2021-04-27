@@ -2391,9 +2391,9 @@ function manage_account_yml() {
   ansible-vault decrypt "${CONFDIR}/variables/account.yml" >/dev/null 2>&1
   if [ "${2}" = " " ];
   then
-    ansible-playbook "${BASEDIR}/includes/config/playbooks/delete_account_yml.yml" -e "account_key=${1}"
+    ansible-playbook "${BASEDIR}/includes/config/playbooks/manage_account_yml.yml" -e "account_key=${1} state=absent"
   else
-    ansible-playbook "${BASEDIR}/includes/config/playbooks/manage_account_yml.yml" -e "account_key=${1} account_value=${2}"
+    ansible-playbook "${BASEDIR}/includes/config/playbooks/manage_account_yml.yml" -e "account_key=${1} account_value=${2} state=present"
   fi
   ansible-vault encrypt "${CONFDIR}/variables/account.yml" >/dev/null 2>&1
 }
