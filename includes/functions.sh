@@ -2389,8 +2389,7 @@ function manage_account_yml() {
   # ex : manage_account_yml sub.toto.toto toto => va créer la clé sub.toto.toto et lui mettre à la valeur toto
   # ex : manage_account_yml sub.toto.toto " " => va supprimer la clé sub.toto.toto et toutes les sous clés
   ansible-vault decrypt "${CONFDIR}/variables/account.yml" >/dev/null 2>&1
-  if [ "${2}" = " " ];
-  then
+  if [ "${2}" = " " ]; then
     ansible-playbook "${BASEDIR}/includes/config/playbooks/manage_account_yml.yml" -e "account_key=${1} account_value=${2}  state=absent"
   else
     ansible-playbook "${BASEDIR}/includes/config/playbooks/manage_account_yml.yml" -e "account_key=${1} account_value=${2} state=present"
@@ -2629,6 +2628,11 @@ function migrate() {
     echo "Merci de vous connecter sur le bon user avant de relancer"
     exit 1
   fi
+  olduser=$(get_from_account_yml user.name)
+  if [ "${olduser}" != "$USER" ]; then
+    echo "Vous devez être connexté avec le même user que celui qui gérait la seedbox (${olduser}) pour effectuer cette action"
+    exit 1
+  fi
   echo "Assurez vous d'être connecté sur le bon utilisateur (celui qui va piloter la seedbox)"
   echo "Cela doit être le user qui a été créé lors de la v1, "
   echo "en connection directe (pas de connection sur un autre user ou root, puis sudo)"
@@ -2676,25 +2680,26 @@ function migrate() {
     plexdrive
   fi
   # mise  à jour du account.yml
-  echo "Mise à jour du account.yml, merci de patienter"
-  if docker ps | grep oauth; then
-    type_auth=oauth
-  else
-    type_auth=basique
-  fi
-  sort -u /opt/seedbox/resume >/tmp/resume
-  rm /opt/seedbox/resume
-  mv /tmp/resume /opt/seedbox/resume
-  while read line; do
-    appli=$(echo $line | awk '{print $3}' | awk -F'.' '{print $1}')
-    if [ -z ${appli} ]; then
-      :
-    else
-      manage_account_yml sub.${line} " "
-      manage_account_yml sub.${line}.${line} ${appli}
-      manage_account_yml sub.${line}.auth ${type_auth}
-    fi
-  done </opt/seedbox/resume
+  # TODO : cette partie devrait être gérée appli par appli
+#  echo "Mise à jour du account.yml, merci de patienter"
+#  if docker ps | grep oauth; then
+#    type_auth=oauth
+#  else
+#    type_auth=basique
+#  fi
+#  sort -u /opt/seedbox/resume >/tmp/resume
+#  rm /opt/seedbox/resume
+#  mv /tmp/resume /opt/seedbox/resume
+#  while read line; do
+#    appli=$(echo $line | awk '{print $3}' | awk -F'.' '{print $1}')
+#    if [ -z ${appli} ]; then
+#      :
+#    else
+#      manage_account_yml sub.${line} " "
+#      manage_account_yml sub.${line}.${line} ${appli}
+#      manage_account_yml sub.${line}.auth ${type_auth}
+#    fi
+#  done </opt/seedbox/resume
   update_seedbox_param "installed" 1
   echo "Migration terminée, il est conseillé de redémarrer la seedbox"
 }
