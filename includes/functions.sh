@@ -1627,14 +1627,10 @@ function subdomain_unitaire() {
     while [ -z "$SUBDOMAIN" ]; do
       read -rp $'\e[32m* Sous domaine pour\e[0m '${line}': ' SUBDOMAIN
     done
-    manage_account_yml sub.${line}.${line} $SUBDOMAIN
-
   else
-    for line in $(cat $SERVICESPERUSER); do
-      SUBDOMAIN=${line}
-      manage_account_yml sub.${line}.${line} $SUBDOMAIN
-    done
+    SUBDOMAIN=${line}
   fi
+  manage_account_yml sub.${line}.${line} $SUBDOMAIN
 }
 
 function auth() {
@@ -2681,27 +2677,44 @@ function migrate() {
   fi
   # mise  à jour du account.yml
   # TODO : cette partie devrait être gérée appli par appli
-#  echo "Mise à jour du account.yml, merci de patienter"
-#  if docker ps | grep oauth; then
-#    type_auth=oauth
-#  else
-#    type_auth=basique
-#  fi
-#  sort -u /opt/seedbox/resume >/tmp/resume
-#  rm /opt/seedbox/resume
-#  mv /tmp/resume /opt/seedbox/resume
-#  while read line; do
-#    appli=$(echo $line | awk '{print $3}' | awk -F'.' '{print $1}')
-#    if [ -z ${appli} ]; then
-#      :
-#    else
-#      manage_account_yml sub.${line} " "
-#      manage_account_yml sub.${line}.${line} ${appli}
-#      manage_account_yml sub.${line}.auth ${type_auth}
-#    fi
-#  done </opt/seedbox/resume
+  reinstall_appli_migrate
+
+  #  echo "Mise à jour du account.yml, merci de patienter"
+  #  if docker ps | grep oauth; then
+  #    type_auth=oauth
+  #  else
+  #    type_auth=basique
+  #  fi
+  #  sort -u /opt/seedbox/resume >/tmp/resume
+  #  rm /opt/seedbox/resume
+  #  mv /tmp/resume /opt/seedbox/resume
+  #  while read line; do
+  #    appli=$(echo $line | awk '{print $3}' | awk -F'.' '{print $1}')
+  #    if [ -z ${appli} ]; then
+  #      :
+  #    else
+  #      manage_account_yml sub.${line} " "
+  #      manage_account_yml sub.${line}.${line} ${appli}
+  #      manage_account_yml sub.${line}.auth ${type_auth}
+  #    fi
+  #  done </opt/seedbox/resume
   update_seedbox_param "installed" 1
   echo "Migration terminée, il est conseillé de redémarrer la seedbox"
+}
+
+function reinstall_appli_migrate() {
+  for appli in $(ls ${CONFDIR}/status/); do
+    temp=$(cat ${CONFDIR}/status/${appli})
+    if [ ${appli} != "traefik" ] && [ ${appli:0:3} != "db-" ] && [ ${appli} != "watchtower" ] && [ ${appli} != "flaresolverr" ] && [ ${appli} != "cloudplow" ] && [ ${appli} != "autoscan" ] && [ ${appli} != "collabora" ] && [ ${appli} != "office" ] && [ ${appli} != "plex" ]; then
+      if [ "${temp:0:1}" = 2 ]; then
+        # appli à réinstaller
+        echo "L'appli ${appli} est à réinstaller"
+        # on supprime les fichiers de conf existant
+        rm -f "/opt/seedbox/conf/${appli}.yml"
+        launch_service ${appli}
+      fi
+    fi
+  done
 }
 
 function check_docker_group() {
