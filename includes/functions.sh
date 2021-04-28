@@ -1933,6 +1933,7 @@ function install_services() {
 }
 
 function launch_service() {
+  INSTALLEDFILE="${HOME}/resume"
   line=$1
   tempsubdomain=$(get_from_account_yml sub.${line}.${line})
   if [ "${tempsubdomain}" = notfound ]; then
@@ -1982,6 +1983,7 @@ function launch_service() {
   fi
 
   temp_subdomain=$(get_from_account_yml "sub.${line}.${line}")
+  DOMAIN=$(get_from_account_yml user.domain)
   if [ "${temp_subdomain}" != notfound ]; then
     FQDNTMP="${temp_subdomain}.$DOMAIN"
     echo "${line} = $FQDNTMP" | tee -a "${CONFDIR}/resume" >/dev/null
@@ -1990,11 +1992,8 @@ function launch_service() {
     FQDNTMP="${line}.$DOMAIN"
     echo "$FQDNTMP" >>$INSTALLEDFILE
     echo "${line} = $FQDNTMP" | tee -a "${CONFDIR}/resume" >/dev/null
-
   fi
-
   FQDNTMP=""
-
 }
 
 decompte() {
@@ -2657,12 +2656,7 @@ function migrate() {
   # on relance l'install de rclone pour avoir le bon fichier service
   # on supprime le fichier de service existant
   if [ -f "/etc/systemd/system/rclone.service" ]; then
-    sudo systemctl stop rclone
-    sudo rm -f /etc/systemd/system/rclone.service
-    echo "La configuration rclone va commencer"
-    echo "Choisissez le choix 3 (fichier déjà présent) et laissez vous guider"
-    read -p "Appuyez sur entrée pour continuer"
-    install_rclone
+     ansible-playbook ${BASEDIR}/includes/config/roles/rclone/tasks/main.yml
   fi
   # on met les bons droits sur le conf dir
   conf_dir
