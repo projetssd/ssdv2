@@ -1970,11 +1970,14 @@ function launch_service() {
       cp "${BASEDIR}/includes/dockerapps/${line}.yml" "${CONFDIR}/conf/${line}.yml"
       # puis on le lance
       ansible-playbook "${CONFDIR}/conf/${line}.yml"
-    else
+    elif [[ -f "${BASEDIR}/includes/dockerapps/vars/${line}.yml" ]]; then
       # on copie les variables pour le user
       cp "${BASEDIR}/includes/dockerapps/vars/${line}.yml" "${CONFDIR}/vars/${line}.yml"
       # puis on lance le générique avec ce qu'on vient de copier
       ansible-playbook ${BASEDIR}/includes/dockerapps/generique.yml --extra-vars "@${CONFDIR}/vars/${line}.yml"
+    else
+      echo "Aucun fichier de configuration trouvé dans les sources, abandon"
+
     fi
   fi
 
