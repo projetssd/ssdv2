@@ -171,7 +171,5 @@
       shell: |
         echo "{{pgrole}}-{{sub.seafile if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
 
-    - name: create seafile state
-      shell: |
-        echo "2" > {{ lookup('env',CONFDIR') }}/status/seafile
+
 

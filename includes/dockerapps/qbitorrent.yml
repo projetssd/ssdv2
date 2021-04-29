@@ -92,6 +92,4 @@
         labels: '{{pg_labels}}'
 
 
-    - name: create qbitorrent state
-      shell: |
-        echo "2" > /opt/seedbox/status/qbitorrent
+

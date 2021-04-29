@@ -36,12 +36,8 @@
         restart_policy: unless-stopped
         networks:
           - name: traefik_proxy
-
-    - name: create watchtower state
-      shell: |
-        echo "2" > "{{ lookup('env','CONFDIR') }}/status/watchtower"
     
-    - name: Insert traefik into database
+    - name: Insert watchtower into database
       shell : 
         cmd: |
           sqlite3 {{  lookup('env','BASEDIR') }}/ssddb << EOF

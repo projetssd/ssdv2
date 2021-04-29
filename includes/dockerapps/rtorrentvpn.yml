@@ -333,8 +333,6 @@
       shell: |
         echo "{{pgrole}}-{{sub.rtorrentvpn if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
 
-    - name: create rtorrentvpn state
-      shell: |
-        echo "2" > /opt/seedbox/status/rtorrentvpn
+
 
 

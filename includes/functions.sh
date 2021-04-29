@@ -1956,9 +1956,11 @@ function launch_service() {
     ansible-playbook ${BASEDIR}/includes/dockerapps/plex.yml
     choose_media_folder_plexdrive
     cp "${BASEDIR}/includes/dockerapps/plex.yml" "${CONFDIR}/conf/plex.yml" >/dev/null 2>&1
+    echo "2" >"${CONFDIR}/status/plex"
   else
     # On est dans le cas générique
     # on regarde s'i y a un playbook existant
+    error=0
     if [[ -f "${CONFDIR}/conf/${line}.yml" ]]; then
       # il y a déjà un playbook "perso", on le lance
       ansible-playbook "${CONFDIR}/conf/${line}.yml"
@@ -1978,18 +1980,16 @@ function launch_service() {
       ansible-playbook ${BASEDIR}/includes/dockerapps/generique.yml --extra-vars "@${CONFDIR}/vars/${line}.yml"
     else
       echo "Aucun fichier de configuration trouvé dans les sources, abandon"
-
+      error=1
     fi
   fi
+  if [ ${error} = 0 ];then
+    temp_subdomain=$(get_from_account_yml "sub.${line}.${line}")
+    DOMAIN=$(get_from_account_yml user.domain)
+    echo "2" >"${CONFDIR}/status/${line}"
 
-  temp_subdomain=$(get_from_account_yml "sub.${line}.${line}")
-  DOMAIN=$(get_from_account_yml user.domain)
-  if [ "${temp_subdomain}" != notfound ]; then
+
     FQDNTMP="${temp_subdomain}.$DOMAIN"
-    echo "${line} = $FQDNTMP" | tee -a "${CONFDIR}/resume" >/dev/null
-    echo "${line}.$DOMAIN" >>"$INSTALLEDFILE"
-  else
-    FQDNTMP="${line}.$DOMAIN"
     echo "$FQDNTMP" >>$INSTALLEDFILE
     echo "${line} = $FQDNTMP" | tee -a "${CONFDIR}/resume" >/dev/null
   fi
@@ -2656,7 +2656,7 @@ function migrate() {
   # on relance l'install de rclone pour avoir le bon fichier service
   # on supprime le fichier de service existant
   if [ -f "/etc/systemd/system/rclone.service" ]; then
-     ansible-playbook ${BASEDIR}/includes/config/roles/rclone/tasks/main.yml
+    ansible-playbook ${BASEDIR}/includes/config/roles/rclone/tasks/main.yml
   fi
   # on met les bons droits sur le conf dir
   conf_dir

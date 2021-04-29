@@ -87,8 +87,6 @@
       shell: |
         echo "{{pgrole}}-{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> "{{ lookup('env','CONFDIR') }}/temp.txt"
 
-    - name: create ubooquity state
-      shell: |
-        echo "2" > {{ lookup('env','CONFDIR') }}/status/ubooquity
+
 
 
