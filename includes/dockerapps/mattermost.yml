@@ -21,9 +21,6 @@
         
     # FACTS #######################################################################
 
-    - name: create mattermost state
-      shell: |
-        echo "1" > /opt/seedbox/status/mattermost
 
     - name: Checking for existing app data
       stat:

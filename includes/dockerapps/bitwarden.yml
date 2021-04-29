@@ -9,9 +9,6 @@
         
     # FACTS #######################################################################
 
-    - name: create bitwarden state
-      shell: |
-        echo "1" > {{ lookup('env','CONFDIR') }}/status/bitwarden
 
     - name: Checking for existing app data
       stat:

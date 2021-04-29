@@ -9,9 +9,6 @@
         
     # FACTS #######################################################################
 
-    - name: create prestashop state
-      shell: |
-        echo "1" > /opt/seedbox/status/prestashop
 
     - name: Checking for existing app data
       stat:

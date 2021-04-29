@@ -51,9 +51,6 @@
           )
             else false }}"
 
-    - name: "create {{ pgrole}} state"
-      shell: |
-        echo "1" > {{ lookup('env','CONFDIR') }}/status/{{ pgrole }}
 
     - name: "Set DNS Record on CloudFlare"
       include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"

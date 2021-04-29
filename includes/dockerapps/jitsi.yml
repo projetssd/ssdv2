@@ -7,11 +7,7 @@
       - /opt/seedbox/variables/account.yml
     tasks:
 
-      - name: create jistsi state
-        shell: |
-          echo "1" > /opt/seedbox/status/jitsi
-
-      - name: 'JICOFO_COMPONENT_SECRET'
+s      - name: 'JICOFO_COMPONENT_SECRET'
         shell: | 
           openssl rand -hex 16
         register: jicofo_component_secret

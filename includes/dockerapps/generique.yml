@@ -17,10 +17,6 @@
         
     # FACTS #######################################################################
 
-    - name: "create {{ pgrole}} state"
-      shell: |
-        echo "1" > {{ lookup('env','CONFDIR') }}/status/{{ pgrole }}
-
     - name: Checking for existing app data
       stat:
         path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/authelia/configuration.yml"

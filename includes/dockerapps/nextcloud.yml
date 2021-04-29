@@ -11,9 +11,6 @@
         
     # FACTS #######################################################################
 
-    - name: create nextcloud state
-      shell: |
-        echo "1" > /opt/seedbox/status/nextcloud
 
     - name: Checking for existing app data
       stat:
