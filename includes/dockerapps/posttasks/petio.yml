@@ -12,7 +12,7 @@
 
 - name: 'Deploying db-{{pgrole}}'
   docker_container:
-    name: 'mongo'
+    name: 'mongo-{{pgrole}}'
     recreate: true
     image: 'mongo:latest'
     pull: yes
