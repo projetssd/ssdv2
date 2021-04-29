@@ -2672,29 +2672,10 @@ function migrate() {
   if [ -f "/etc/systemd/system/plexdrive.service" ]; then
     plexdrive
   fi
-  # mise  à jour du account.yml
-  # TODO : cette partie devrait être gérée appli par appli
+  # Resintall des applis
   reinstall_appli_migrate
 
-  #  echo "Mise à jour du account.yml, merci de patienter"
-  #  if docker ps | grep oauth; then
-  #    type_auth=oauth
-  #  else
-  #    type_auth=basique
-  #  fi
-  #  sort -u /opt/seedbox/resume >/tmp/resume
-  #  rm /opt/seedbox/resume
-  #  mv /tmp/resume /opt/seedbox/resume
-  #  while read line; do
-  #    appli=$(echo $line | awk '{print $3}' | awk -F'.' '{print $1}')
-  #    if [ -z ${appli} ]; then
-  #      :
-  #    else
-  #      manage_account_yml sub.${line} " "
-  #      manage_account_yml sub.${line}.${line} ${appli}
-  #      manage_account_yml sub.${line}.auth ${type_auth}
-  #    fi
-  #  done </opt/seedbox/resume
+  # on marque la seedbox comme installée
   update_seedbox_param "installed" 1
   echo "Migration terminée, il est conseillé de redémarrer la seedbox"
 }
