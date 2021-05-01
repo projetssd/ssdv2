@@ -2615,8 +2615,10 @@ function usage() {
 
 function migrate() {
   # on sort du venv car on va le retrouver juste après
-  deactivate
+  deactivate > /dev/null 2>&1
+
   premier_lancement
+  sudo chown ${USER} /opt/seedbox/variables/account.yml
   # on revient dans le venv
   source ${SCRIPTPATH}/venv/bin/activate
 
