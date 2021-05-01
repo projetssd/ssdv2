@@ -2,6 +2,28 @@
 <br />
 [![Discord: https://discordapp.com/invite/HZNMGjDRhp](https://img.shields.io/badge/Discord-gray.svg?style=for-the-badge)](https://discordapp.com/invite/HZNMGjDRhp)
 
+## Comment migrer de la v1 vers la v2 ?
+
+Il est fortement conseillé de faire un backup de la seedbox avant de commencer !
+```
+backup
+```
+
+Renommer le répertoire existant
+```
+sudo mv /opt/seedbox-compose /opt/seedbox-compose.old
+```
+Cloner le nouveau répertoire
+``` 
+sudo git clone https://github.com/projetssd/ssdv2.git /opt/seedbox-compose
+sudo chown -R ${USER}: /opt/seedbox-compose
+```
+Lancer la migration
+``` 
+cd /opt/seedbox-compose
+./seedbox.sh --migrate
+```
+Rebooter la machine une fois terminé !
 
 ## Le script SSD permet l'installation d'une seedbox complète avec Docker
 
@@ -13,6 +35,7 @@
 * [Création API Google Drive](https://github.com/laster13/patxav/wiki/Cr%C3%A9ation-API-Google)
 
 ###
+
 
 Une fois les pré requis validé pous pouvez suivre le guide :  
 * [Pas à pas d'installation](https://github.com/laster13/patxav/wiki/pas-%C3%A0-pas)
