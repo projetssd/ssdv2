@@ -1,0 +1,15 @@
+---
+- hosts: localhost
+  gather_facts: no
+  roles:
+    - kwoodson.yedit
+  tasks:
+    - name: manage yaml files
+      yedit:
+        src: /opt/seedbox-compose/includes/config/account.yml.sauve
+        state: list
+      register: steph
+    - name: correction
+      yedit:
+        src: /opt/seedbox-compose/includes/config/account.yml
+        content: "{{ steph.result }}"

@@ -1542,12 +1542,18 @@ function install_common() {
   ansible-galaxy collection install community.docker
   # dépendence permettant de gérer les fichiers yml
   ansible-galaxy install kwoodson.yedit
+
   # On vérifie que le user ait bien les droits d'écriture
   make_dir_writable "${BASEDIR}"
   # on vérifie que le user ait bien les droits d'écriture dans la db
   change_file_owner "${BASEDIR}/ssddb"
   # On crée le conf dir (par défaut /opt/seedbox) s'il n'existe pas
   conf_dir
+
+  # mise en conformité du account.yml
+  mv /opt/seedbox-compose/includes/config/account.yml /opt/seedbox-compose/includes/config/account.yml.sauve
+  ansible-playbook "${BASEDIR}/includes/config/playbooks/mec_account.yml"
+
   stocke_public_ip
   # On part à la pêche aux infos....
   ${BASEDIR}/includes/config/scripts/get_infos.sh
@@ -1983,11 +1989,10 @@ function launch_service() {
       error=1
     fi
   fi
-  if [ ${error} = 0 ];then
+  if [ ${error} = 0 ]; then
     temp_subdomain=$(get_from_account_yml "sub.${line}.${line}")
     DOMAIN=$(get_from_account_yml user.domain)
     echo "2" >"${CONFDIR}/status/${line}"
-
 
     FQDNTMP="${temp_subdomain}.$DOMAIN"
     echo "$FQDNTMP" >>$INSTALLEDFILE
@@ -2570,7 +2575,6 @@ EOF
     sudo chown -R "${USER}": "${HOME}/.ansible"
   fi
 
-
   touch "${SCRIPTPATH}/.prerequis.lock"
 
   install_common
@@ -2600,25 +2604,22 @@ function usage() {
   echo "Options possibles : "
   echo "--help"
   echo "  Affiche cette aide"
-  echo "--action <action>"
-  echo "  définit une action à lancer"
-  echo "  Cette option nécessite un fichier autoinstall.ini"
-  echo "  Les actions possibles sont :"
-  echo "     install_gui : Installe la gui"
-  echo "--force-root"
-  echo "  permet d'installer la seedbox en root"
   echo "--migrate"
   echo "  gère la migration de la V1 vers la V2"
-  echo "--ini-file <fichier>"
-  echo "  Change le chemin par défaut du ini-file"
   echo ""
   exit 0
 }
 
 function migrate() {
   # on sort du venv car on va le retrouver juste après
-  deactivate > /dev/null 2>&1
+  deactivate >/dev/null 2>&1
   sudo chown ${USER} /opt/seedbox/variables/account.yml
+  # on bouge le vault pass
+  if [ f /root/.vault_pass ]; then
+    sudo cp /root/.vault_pass ${HOME}/.vault_pass
+    sudo chown ${USER}: ${HOME}/.vault_pass
+  fi
+
   premier_lancement
 
   # on revient dans le venv
@@ -2635,6 +2636,7 @@ function migrate() {
     echo "Vous devez être connexté avec le même user que celui qui gérait la seedbox (${olduser}) pour effectuer cette action"
     exit 1
   fi
+  sudo chown -R ${USER}: ${CONFDIR}/status/*
   echo "Assurez vous d'être connecté sur le bon utilisateur (celui qui va piloter la seedbox)"
   echo "Cela doit être le user qui a été créé lors de la v1, "
   echo "en connection directe (pas de connection sur un autre user ou root, puis sudo)"
@@ -2647,6 +2649,7 @@ function migrate() {
   fi
   # copie du rclone de root
   mkdir -p "${HOME}/.config/rclone"
+  mkdir -p "${CONFDIR}/vars"
   sudo cp /root/.config/rclone/rclone.conf "${HOME}/.config/rclone/rclone.conf"
   sudo chown "${USER}" "${HOME}/.config/rclone/rclone.conf"
   sudo chown -R "${USER}" /opt/seedbox/conf
