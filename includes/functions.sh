@@ -2551,7 +2551,9 @@ EOF
 
   ##################################################
   # Account.yml
-  mkdir "${CONFDIR}/logs"
+  sudo mkdir "${SCRIPTPATH}/logs"
+  sudo chown -R ${user}: "${SCRIPTPATH}/logs"
+  sudo chmod 777 "${SCRIPTPATH}/logs"
   create_dir "${CONFDIR}"
   create_dir "${CONFDIR}/variables"
   if [ ! -f "${CONFDIR}/variables/account.yml" ]; then
@@ -2567,8 +2569,8 @@ EOF
   if [[ -d "${HOME}/.ansible" ]]; then
     sudo chown -R "${USER}": "${HOME}/.ansible"
   fi
-  sudo chown -R "${USER}" $"{SCRIPTPATH}/logs/"
-  sudo chmod 777 "${SCRIPTPATH}/logs"
+
+
   touch "${SCRIPTPATH}/.prerequis.lock"
 
   install_common
@@ -2616,9 +2618,9 @@ function usage() {
 function migrate() {
   # on sort du venv car on va le retrouver juste après
   deactivate > /dev/null 2>&1
-
-  premier_lancement
   sudo chown ${USER} /opt/seedbox/variables/account.yml
+  premier_lancement
+
   # on revient dans le venv
   source ${SCRIPTPATH}/venv/bin/activate
 
