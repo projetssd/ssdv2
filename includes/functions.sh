@@ -1552,7 +1552,10 @@ function install_common() {
 
   # mise en conformité du account.yml
   mv /opt/seedbox-compose/includes/config/account.yml /opt/seedbox-compose/includes/config/account.yml.sauve
+  ansible-vault decrypt /opt/seedbox-compose/includes/config/account.yml.sauve > /dev/null 2> &1
   ansible-playbook "${BASEDIR}/includes/config/playbooks/mec_account.yml"
+  rm -f /opt/seedbox-compose/includes/config/account.yml.sauve
+  ansible-playbook encrypt /opt/seedbox-compose/includes/config/account.yml
 
   stocke_public_ip
   # On part à la pêche aux infos....
