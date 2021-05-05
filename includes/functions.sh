@@ -1552,7 +1552,7 @@ function install_common() {
 
   # mise en conformité du account.yml
   mv /opt/seedbox-compose/includes/config/account.yml /opt/seedbox-compose/includes/config/account.yml.sauve
-  ansible-vault decrypt /opt/seedbox-compose/includes/config/account.yml.sauve > /dev/null 2> &1
+  ansible-vault decrypt /opt/seedbox-compose/includes/config/account.yml.sauve > /dev/null 2>&1
   ansible-playbook "${BASEDIR}/includes/config/playbooks/mec_account.yml"
   rm -f /opt/seedbox-compose/includes/config/account.yml.sauve
   ansible-playbook encrypt /opt/seedbox-compose/includes/config/account.yml
@@ -2618,7 +2618,7 @@ function migrate() {
   deactivate >/dev/null 2>&1
   sudo chown ${USER} /opt/seedbox/variables/account.yml
   # on bouge le vault pass
-  if [ f /root/.vault_pass ]; then
+  if [ -f /root/.vault_pass ]; then
     sudo cp /root/.vault_pass ${HOME}/.vault_pass
     sudo chown ${USER}: ${HOME}/.vault_pass
   fi
