@@ -4,8 +4,16 @@
 
 ## Comment migrer de la v1 vers la v2 ?
 
-!!! TOUTES LES ACTIONS SONT A FAIRE EN USER "NORMAL", pas en root !!!
+Il faut un user qui porte le même nom que le user d'admin de la v1. Il faut ce user soit dans le groupe sudo. 
+En root :
+```
+usermod -aG sudo <user>
+```
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!! TOUTES LES ACTIONS SUIVANTES SONT A FAIRE EN USER "NORMAL", pas en root           !!!
+!!! Déconnectez vous de root, et reconnectez vous avec le bon user avant de continuer !!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 Il est fortement conseillé de faire un backup de la seedbox avant de commencer !
 ```
