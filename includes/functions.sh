@@ -2624,6 +2624,7 @@ function migrate() {
   sudo chown -R "${USER}": /opt/seedbox/status
   sudo chown -R "${USER}": /opt/seedbox/docker
   sudo chown -R "${USER}": /opt/seedbox/resume
+  sudo chown -R "${USER}": ${HOME}/resume
   premier_lancement
 
   # on revient dans le venv
