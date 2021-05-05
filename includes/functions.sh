@@ -1550,13 +1550,6 @@ function install_common() {
   # On crée le conf dir (par défaut /opt/seedbox) s'il n'existe pas
   conf_dir
 
-  # mise en conformité du account.yml
-  mv /opt/seedbox-compose/includes/config/account.yml /opt/seedbox-compose/includes/config/account.yml.sauve
-  ansible-vault decrypt /opt/seedbox-compose/includes/config/account.yml.sauve > /dev/null 2>&1
-  ansible-playbook "${BASEDIR}/includes/config/playbooks/mec_account.yml"
-  rm -f /opt/seedbox-compose/includes/config/account.yml.sauve
-  ansible-playbook encrypt /opt/seedbox-compose/includes/config/account.yml
-
   stocke_public_ip
   # On part à la pêche aux infos....
   ${BASEDIR}/includes/config/scripts/get_infos.sh
@@ -2628,7 +2621,9 @@ function migrate() {
     )
     echo "$mypass" >"${HOME}/.vault_pass"
   fi
-
+  sudo chown -R "${USER}": /opt/seedbox/status
+  sudo chown -R "${USER}": /opt/seedbox/docker
+  sudo chown -R "${USER}": /opt/seedbox/resume
   premier_lancement
 
   # on revient dans le venv
@@ -2662,11 +2657,8 @@ function migrate() {
   sudo cp /root/.config/rclone/rclone.conf "${HOME}/.config/rclone/rclone.conf"
   sudo chown "${USER}" "${HOME}/.config/rclone/rclone.conf"
   sudo chown -R "${USER}" /opt/seedbox/conf
-  sudo cp /root/.vault_pass "${HOME}/.vault_pass"
-  sudo chown "${USER}": "${HOME}/.vault_pass"
   sudo chown "${USER}": "${CONFDIR}/variables/account.yml"
-  sudo chown -R "${USER}": /opt/seedbox/status
-  sudo chown -R "${USER}": /opt/seedbox/docker
+
   # remplacement du backup
   sauve
   # on relance l'install de rclone pour avoir le bon fichier service
