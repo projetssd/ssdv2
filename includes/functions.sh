@@ -2618,9 +2618,15 @@ function migrate() {
   deactivate >/dev/null 2>&1
   sudo chown ${USER} /opt/seedbox/variables/account.yml
   # on bouge le vault pass
-  if [ -f /root/.vault_pass ]; then
+  if sudo test -f /root/.vault_pass; then
     sudo cp /root/.vault_pass ${HOME}/.vault_pass
     sudo chown ${USER}: ${HOME}/.vault_pass
+  else
+    mypass=$(
+      tr -dc A-Za-z0-9 </dev/urandom | head -c 25
+      echo ''
+    )
+    echo "$mypass" >"${HOME}/.vault_pass"
   fi
 
   premier_lancement
