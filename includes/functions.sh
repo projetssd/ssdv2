@@ -2694,6 +2694,8 @@ function reinstall_appli_migrate() {
     temp=$(cat ${CONFDIR}/status/${appli})
     if [ ${appli} != "traefik" ] && [ ${appli:0:3} != "db-" ] && [ ${appli} != "watchtower" ] && [ ${appli} != "flaresolverr" ] && [ ${appli} != "cloudplow" ] && [ ${appli} != "autoscan" ] && [ ${appli} != "collabora" ] && [ ${appli} != "office" ] && [ ${appli} != "plex" ]; then
       if [ "${temp:0:1}" = 2 ]; then
+        echo "###########################################"
+        echo "# Migration de l'application ${appli}"
         # appli à réinstaller
         # echo "L'appli ${appli} est à réinstaller"
         # on supprime les fichiers de conf existant
