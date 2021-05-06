@@ -2114,7 +2114,7 @@ function manage_apps() {
     sed -i "/$APPSELECTED/d" ${CONFDIR}/resume >/dev/null 2>&1
     sed -i "/$APPSELECTED/d" /home/$SEEDUSER/resume >/dev/null 2>&1
     docker rm -f "$APPSELECTED" >/dev/null 2>&1
-    rm -rf ${CONFDIR}/docker/$SEEDUSER/$APPSELECTED
+    sudo rm -rf ${CONFDIR}/docker/$SEEDUSER/$APPSELECTED
     rm ${CONFDIR}/conf/$APPSELECTED.yml >/dev/null 2>&1
     rm ${CONFDIR}/vars/$APPSELECTED.yml >/dev/null 2>&1
     echo "0" >${CONFDIR}/status/$APPSELECTED
