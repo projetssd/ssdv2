@@ -549,6 +549,7 @@ function insert_mod() {
 
 # shellcheck disable=SC2120
 function script_plexdrive() {
+  source ${SCRIPTPATH}/includes/menus.sh
   if [[ -d "${CONFDIR}" ]]; then
     clear
 
@@ -576,14 +577,11 @@ function script_plexdrive() {
 
     \
       1)
-      clear
-      ## Ajout d'Applications
-      echo""
-      clear
-      manage_apps
+      menu_ajout_supp_applis
       ;;
 
     2)
+      ## gestion
       clear
       logo
       echo ""
@@ -602,323 +600,28 @@ function script_plexdrive() {
 
       case $GESTION in
 
-      1) ## sécurisation systeme
-        clear
-        logo
-        echo ""
-        echo -e "${CCYAN}SECURISER APPLIS DOCKER${CEND}"
-        echo -e "${CGREEN}${CEND}"
-        echo -e "${CGREEN}   1) Sécuriser Traefik avec Google OAuth2${CEND}"
-        echo -e "${CGREEN}   2) Sécuriser avec Authentification Classique${CEND}"
-        echo -e "${CGREEN}   3) Ajout / Supression adresses mail autorisées pour Google OAuth2${CEND}"
-        echo -e "${CGREEN}   4) Modification port SSH, mise à jour fail2ban, installation Iptables${CEND}"
-        echo -e "${CGREEN}   5) Mise à jour Seedbox avec Cloudflare${CEND}"
-        echo -e "${CGREEN}   6) Changement de Domaine && Modification des sous domaines${CEND}"
-        echo -e "${CGREEN}   7) Retour menu principal${CEND}"
-
-        echo -e ""
-        read -p "Votre choix [1-8]: " OAUTH
-        case $OAUTH in
-
-        1)
-          clear
-          echo ""
-          ${BASEDIR}/includes/config/scripts/oauth.sh
-          script_plexdrive
-          ;;
-
-        2) ## auth classique, on supprime les valeurs oauth
-          clear
-          echo ""
-          manage_account_yml oauth.client " "
-          manage_account_yml oauth.secret " "
-          manage_account_yml oauth.openssl " "
-          manage_account_yml oauth.account " "
-          #          sed -i "/client:/c\   client: " ${CONFDIR}/variables/account.yml
-          #          sed -i "/secret:/c\   secret: " ${CONFDIR}/variables/account.yml
-          #          sed -i "/openssl:/c\   openssl: " ${CONFDIR}/variables/account.yml
-          #          sed -i "/account:/c\   account: " ${CONFDIR}/variables/account.yml
-
-          ${BASEDIR}/includes/config/scripts/basique.sh
-          script_plexdrive
-          ;;
-
-        3)
-          clear
-          logo
-          echo ""
-          echo >&2 -n -e "${BWHITE}Compte(s) Gmail utilisé(s), séparés d'une virgule si plusieurs: ${CEND}"
-          read email
-          ###sed -i "/account:/c\   account: $email" ${CONFDIR}/variables/account.yml
-          manage_account_yml oauth.email $email
-          ansible-playbook ${BASEDIR}/includes/dockerapps/traefik.yml
-
-          echo -e "${CRED}---------------------------------------------------------------${CEND}"
-          echo -e "${CRED}     /!\ MISE A JOUR EFFECTUEE AVEC SUCCES /!\      ${CEND}"
-          echo -e "${CRED}---------------------------------------------------------------${CEND}"
-
-          echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
-          read -r
-
-          script_plexdrive
-          ;;
-
-        4)
-          clear
-          echo ""
-          ${BASEDIR}/includes/config/scripts/iptables.sh
-          script_plexdrive
-          ;;
-
-        5) ## Mise à jour Cloudflare
-          ${BASEDIR}/includes/config/scripts/cloudflare.sh
-          script_plexdrive
-          ;;
-
-        6) ## Changement du nom de domaine
-          clear
-          logo
-          echo ""
-          echo -e "${CCYAN}CHANGEMENT DOMAINE && SOUS DOMAINES${CEND}"
-          echo -e "${CGREEN}${CEND}"
-          echo -e "${CGREEN}   1) Changement du nom de domaine ${CEND}"
-          echo -e "${CGREEN}   2) Modifier les sous domaines${CEND}"
-          echo -e "${CGREEN}   3) Retour Menu principal${CEND}"
-
-          echo -e ""
-          read -p "Votre choix [1-3]: " DOMAIN
-          case $DOMAIN in
-
-          1) ## Changement nom de domaine
-            clear
-            echo ""
-            ${BASEDIR}/includes/config/scripts/domain.sh
-            ;;
-
-          2) ## Modifier les sous domaines
-            ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
-            SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
-            SEEDUSER=$(cat ${TMPNAME})
-            rm ${TMPNAME}
-            rm ${CONFDIR}/conf/* >/dev/null 2>&1
-
-            while read line; do
-              echo ${line} | cut -d'.' -f1
-            done </home/$SEEDUSER/resume >$SERVICESUSER$SEEDUSER
-            mv /home/$SEEDUSER/resume ${CONFDIR}/resume >/dev/null 2>&1
-            subdomain
-
-            grep "plex" $SERVICESPERUSER >/dev/null 2>&1
-            if [ $? -eq 0 ]; then
-              ansible-playbook ${BASEDIR}/includes/config/roles/plex/tasks/main.yml
-              sed -i "/plex/d" $SERVICESPERUSER >/dev/null 2>&1
-            fi
-
-            install_services
-            mv ${CONFDIR}/resume /home/$SEEDUSER/resume >/dev/null 2>&1
-            resume_seedbox
-            script_plexdrive
-            ;;
-
-          3)
-            Retour menu principal
-            script_plexdrive
-            ;;
-          esac
-          ;;
-
-        7)
-          script_plexdrive
-          ;;
-        esac
+      1) ## 2.1 sécurisation systeme
+        menu_securisation_systeme
         ;;
-      2) ## utilitaires
-        clear
-        logo
-        echo ""
-        echo -e "${CCYAN}UTILITAIRES${CEND}"
-        echo -e "${CGREEN}${CEND}"
-        echo -e "${CGREEN}   1) Installation du motd${CEND}"
-        echo -e "${CGREEN}   2) Traktarr${CEND}"
-        echo -e "${CGREEN}   3) Webtools${CEND}"
-        echo -e "${CGREEN}   4) rtorrent-cleaner de ${CCYAN}@Magicalex-Mondedie.fr${CEND}${NC}"
-        echo -e "${CGREEN}   5) Plex_Patrol${CEND}"
-        echo -e "${CGREEN}   6) Bloquer les ports non vitaux avec UFW${CEND}"
-        echo -e "${CGREEN}   7) Configuration du Backup${CEND}"
-        echo -e "${CGREEN}   10) Retour menu principal${CEND}"
-        echo -e ""
-
-        read -p "Votre choix [1-8]: " UTIL
-        case $UTIL in
-
-        \
-          1) ## Installation du motd
-          clear
-          echo ""
-          motd
-          pause
-          script_plexdrive
-          ;;
-
-        2) ## Installation de traktarr
-          clear
-          echo ""
-          traktarr
-          pause
-          script_plexdrive
-          ;;
-
-        3) ## Installation de Webtools
-          clear
-          echo ""
-          webtools
-          pause
-          script_plexdrive
-          ;;
-
-        4) ## Installation de rtorrent-cleaner
-          clear
-          echo ""
-          rtorrent-cleaner
-          docker run -it --rm -v /home/$SEEDUSER/local/rutorrent:/home/$SEEDUSER/local/rutorrent -v /run/php:/run/php magicalex/rtorrent-cleaner
-          pause
-          script_plexdrive
-          ;;
-
-        5) ## Installation Plex_Patrol
-          ansible-playbook ${BASEDIR}/includes/config/roles/plex_patrol/tasks/main.yml
-          SEEDUSER=$(ls ${CONFDIR}/media* | cut -d '-' -f2)
-          DOMAIN=$(cat /home/$SEEDUSER/resume | tail -1 | cut -d. -f2-3)
-          FQDNTMP="plex_patrol.$DOMAIN"
-          echo "$FQDNTMP" >>/home/$SEEDUSER/resume
-          cp "${BASEDIR}/includes/config/roles/plex_patrol/tasks/main.yml" "${CONFDIR}/conf/plex_patrol.yml" >/dev/null 2>&1
-          echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour revenir au menu principal..."
-          read -r
-          script_plexdrive
-          ;;
-
-        6)
-          clear
-          install_ufw
-          ;;
-
-        7)
-          clear
-          echo -e " ${BLUE}* Configuration du Backup${NC}"
-          echo ""
-          ansible-playbook ${BASEDIR}/includes/config/roles/backup/tasks/main.yml
-          echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
-          read -r
-
-          script_plexdrive
-          ;;
-
-        10)
-          script_plexdrive
-          ;;
-        esac
+      2) ## 2.2 Gestion - utilitaires
+        menu_gestion_utilitaires
         ;;
 
-      3) ### creation share drive + rclone.conf
+      3) ### 2.3 - gestion -  creation share drive + rclone.conf
         clear
         echo ""
         ${BASEDIR}/includes/config/scripts/createrclone.sh
         ;;
 
-      4) ## Outils
-        clear
-        logo
-        echo ""
-        echo -e "${CCYAN}OUTILS${CEND}"
-        echo -e "${CGREEN}${CEND}"
-        echo -e "${CGREEN}   1) Plex_autoscan${CEND}"
-        echo -e "${CGREEN}   2) Autoscan (Nouvelle version de Plex_autoscan)${CEND}"
-        echo -e "${CGREEN}   3) Cloudplow${CEND}"
-        echo -e "${CGREEN}   4) Crop (Nouvelle version de Cloudplow) => Experimental${CEND}"
-        echo -e "${CGREEN}   5) Plex_dupefinder${CEND}"
-        echo -e "${CGREEN}   6) Retour menu principal${CEND}"
-
-        echo -e ""
-        read -p "Votre choix [1-6]: " OUTILS
-        case $OUTILS in
-
-        1) ## Installation Plex_autoscan
-          clear
-          echo ""
-          plex_autoscan
-          pause
-          script_plexdrive
-          ;;
-
-        2) ## Installation Autoscan
-          clear
-          echo ""
-          ansible-playbook ${BASEDIR}/includes/config/roles/autoscan/tasks/main.yml
-          pause
-          script_plexdrive
-          ;;
-
-        3) ## Installation Cloudplow
-          clear
-          logo
-          echo ""
-          cloudplow
-          pause
-          script_plexdrive
-          ;;
-
-        4) ## Installation Crop
-          clear
-          crop
-          echo ""
-          pause
-          script_plexdrive
-          ;;
-
-        5) ## Installation plex_dupefinder
-          clear
-          plex_dupefinder
-          echo ""
-          pause
-          script_plexdrive
-          ;;
-
-        6)
-          script_plexdrive
-          ;;
-        esac
+      4) ## 2 . 4 - gestion - Outils
+        menu_gestoutilss
         ;;
 
-      5) ## Comptes de Services
-        clear
-        logo
-        echo ""
-        echo -e "${CCYAN}COMPTES DE SERVICES${CEND}"
-        echo -e "${CGREEN}${CEND}"
-        echo -e "${CGREEN}   1) Création des SA avec sa_gen${CEND}"
-        echo -e "${CGREEN}   2) Création des SA avec safire${CEND}"
-        echo -e "${CGREEN}   3) Retour menu principal${CEND}"
-        echo -e ""
-        read -p "Votre choix [1-3]: " SERVICES
-        case $SERVICES in
-
-        1) ## Création des SA avec gen-sa
-          ${BASEDIR}/includes/config/scripts/sa-gen.sh
-          script_plexdrive
-          ;;
-
-        2) ## Creation des SA avec safire
-          ${BASEDIR}/includes/config/scripts/safire.sh
-          script_plexdrive
-          ;;
-
-        3)
-          script_plexdrive
-          ;;
-        esac
+      5) ## 2.5 - Gestion - Comptes de Services
+        menu_gest_service_account
         ;;
 
-      6) ## Migration Gdrive - Share Drive --> share drive
+      6) ## 2.6 - gestion - Migration Gdrive - Share Drive --> share drive
         clear
         logo
         echo ""
@@ -932,85 +635,7 @@ function script_plexdrive() {
         case $MIGRE in
 
         1) ## migration gdrive -> share drive
-          clear
-          logo
-          echo ""
-          echo -e "${CCYAN}MIGRATION GDRIVE ==> SHARE DRIVE${CEND}"
-          echo -e "${CGREEN}${CEND}"
-          echo -e "${CGREEN}   1) GDrive et Share Drive font partis du même compte Google ${CEND}"
-          echo -e "${CGREEN}   2) GDrive et Share Drive sont sur deux comptes Google Différents ${CEND}"
-          echo -e "${CGREEN}   3) Retour menu principal${CEND}"
-          echo ""
-          read -p "Votre choix [1-3]: " MVEA
-          case $MVEA in
-          1)
-            clear
-            logo
-            echo ""
-            echo -e "${CCYAN}MIGRATION GDRIVE ==> SHARE DRIVE$ => MEME COMPTE GOOGLE{CEND}"
-            echo -e "${CGREEN}${CEND}"
-            echo -e "${CGREEN}   1) Déplacer les données => Pas de limite ${CEND}"
-            echo -e "${CGREEN}   2) Copier les données => 10 Tera par jour ${CEND}"
-            echo -e "${CGREEN}   3) Retour menu principal${CEND}"
-            echo ""
-            read -p "Votre choix [1-3]: " MVEB
-            case $MVEB in
-
-            1) # Déplacer les données (Pas de limite)
-              clear
-              ${BASEDIR}/includes/config/scripts/migration.sh
-              pause
-              script_plexdrive
-              ;;
-
-            2) # Copier les données (10 Tera par jour)
-              clear
-              ${BASEDIR}/includes/config/scripts/sasync.sh
-              pause
-              script_plexdrive
-              ;;
-
-            3)
-              script_plexdrive
-              ;;
-            esac
-            ;;
-          2)
-            clear
-            logo
-            echo ""
-            echo -e "${CCYAN}MIGRATION GDRIVE ==> SHARE DRIVE => COMPTES GOOGLE DIFFERENTS${CEND}"
-            echo -e "${CGREEN}${CEND}"
-            echo -e "${CGREEN}   1) Déplacer les données => Pas de limite ${CEND}"
-            echo -e "${CGREEN}   2) Copier les données => 1,8 Tera par jour ${CEND}"
-            echo -e "${CGREEN}   3) Retour menu principal${CEND}"
-            echo ""
-            read -p "Votre choix [1-3]: " MVEBC
-            case $MVEBC in
-
-            1) # Déplacer les données (Pas de limite)
-              clear
-              ${BASEDIR}/includes/config/scripts/migration.sh
-              pause
-              script_plexdrive
-              ;;
-
-            2) # Copier les données (1,8 Tera par jour)
-              clear
-              ${BASEDIR}/includes/config/scripts/sasync-bwlimit.sh
-              pause
-              script_plexdrive
-              ;;
-
-            3)
-              script_plexdrive
-              ;;
-            esac
-            ;;
-          3)
-            script_plexdrive
-            ;;
-          esac
+          menu_migr_gdrive2share
           ;;
 
         2) ## migration share drive -> share drive
@@ -1119,7 +744,7 @@ function script_plexdrive() {
 
         ;;
 
-      7)
+      7) # 2.7 - gestion
         clear
         logo
         echo ""
@@ -1169,13 +794,14 @@ function script_plexdrive() {
         esac
         ;;
 
-      8) ## retour menu principal
+      8) ## 2.8 - Gestionretour menu principal
         script_plexdrive
         ;;
       esac
       ;;
 
-    4) ## install gui
+    \
+      4) ## install gui
       install_gui
       ;;
 
@@ -1314,6 +940,8 @@ function script_plexdrive() {
     4)
       exit
       ;;
+    *) ;;
+
     esac
   fi
 }
