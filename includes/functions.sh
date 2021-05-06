@@ -2695,7 +2695,7 @@ function reinstall_appli_migrate() {
     if [ ${appli} != "traefik" ] && [ ${appli:0:3} != "db-" ] && [ ${appli} != "watchtower" ] && [ ${appli} != "flaresolverr" ] && [ ${appli} != "cloudplow" ] && [ ${appli} != "autoscan" ] && [ ${appli} != "collabora" ] && [ ${appli} != "office" ] && [ ${appli} != "plex" ]; then
       if [ "${temp:0:1}" = 2 ]; then
         # appli à réinstaller
-        echo "L'appli ${appli} est à réinstaller"
+        # echo "L'appli ${appli} est à réinstaller"
         # on supprime les fichiers de conf existant
         rm -f "/opt/seedbox/conf/${appli}.yml"
         launch_service ${appli}

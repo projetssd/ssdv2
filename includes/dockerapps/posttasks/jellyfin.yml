@@ -18,7 +18,7 @@
 
   - name: 'Turn Off Reporting'
     xml:
-      path: '{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config/system.xml'
+      path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config/system.xml"
       xpath: /ServerConfiguration/EnableAnonymousUsageReporting
       value: 'false'
 
