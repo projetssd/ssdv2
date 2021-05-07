@@ -52,3 +52,4 @@ auth_enabled: "{{ true if not(
     (sub[pgrole].auth | trim | length == 0)
     )
     else false }}"
+extra_labels: ""
