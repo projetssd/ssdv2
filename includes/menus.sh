@@ -487,4 +487,256 @@ menu_migr_gdrive2share() {
   esac
 }
 
+menu_migr_share2share_compte_diff() {
+  clear
+  logo
+  echo ""
+  echo -e "${CCYAN}Share Drive => Share Drive => Compte Google Différents${CEND}"
+  echo -e "${CGREEN}${CEND}"
+  echo -e "${CGREEN}   1) Déplacer les données => Vous pouvez directement le faire à partir de l'interface UI${CEND}"
+  echo -e "${CGREEN}   2) Copier les données => 10 Tera par jour${CEND}"
+  echo -e "${CGREEN}   3) Retour menu principal${CEND}"
+  echo ""
+  read -p "Votre choix [1-3]: " MVED
+  case $MVED in
 
+  1) # Déplacer les données (Pas de limite)
+    clear
+    logo
+    echo ""
+    echo -e "${CGREEN} /!\ Vous pouvez directement le faire à partir de l'interface UI /!\ ${CEND}"
+    echo ""
+    read -rp $'\e[36m   Poursuivre malgré tout avec rclone: (o/n) ? \e[0m' OUI
+    if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
+      echo ""
+      ${BASEDIR}/includes/config/scripts/sasync-share.sh
+    fi
+    pause
+    script_plexdrive
+    ;;
+
+  2) # Copier les données (10 Tera par jour)
+    ${BASEDIR}/includes/config/scripts/sasync-share.sh
+    pause
+    script_plexdrive
+    ;;
+
+  3)
+    script_plexdrive
+    ;;
+  esac
+}
+
+menu_migr_share2share_mm_compte() {
+  clear
+  logo
+  echo ""
+  echo -e "${CCYAN}Share Drive => Share Drive ==> Même compte Google${CEND}"
+  echo -e "${CGREEN}${CEND}"
+  echo -e "${CGREEN}   1) Déplacer les données => Vous pouvez directement le faire à partir de l'interface UI${CEND}"
+  echo -e "${CGREEN}   2) Copier les données =>10 Tera par jour ${CEND}"
+  echo -e "${CGREEN}   3) Retour menu principal${CEND}"
+  echo ""
+  read -p "Votre choix [1-3]: " MVEC
+  case $MVEC in
+
+  \
+    1) # Déplacer les données (Pas de limite)
+    clear
+    logo
+    echo ""
+    echo -e "${CGREEN} /!\ Vous pouvez directement le faire à partir de l'interface UI /!\ ${CEND}"
+    echo ""
+    read -rp $'\e[36m   Poursuivre malgré tout avec rclone: (o/n) ? \e[0m' OUI
+
+    if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
+      echo ""
+      ${BASEDIR}/includes/config/scripts/sasync-share.sh
+    fi
+    pause
+    script_plexdrive
+    ;;
+
+  2) # Copier les données (10 Tera par jour)
+    ${BASEDIR}/includes/config/scripts/sasync-share.sh
+    pause
+    script_plexdrive
+    ;;
+
+  3)
+    script_plexdrive
+    ;;
+  esac
+}
+
+menu_migr_share2share() {
+  clear
+  logo
+  echo ""
+  echo -e "${CCYAN}Share Drive => Share Drive${CEND}"
+  echo -e "${CGREEN}${CEND}"
+  echo -e "${CGREEN}   1) Share Drive et Share Drive font partis du même compte Google${CEND}"
+  echo -e "${CGREEN}   2) Share Drive et Share Drive sont sur deux comptes Google Différents${CEND}"
+  echo -e "${CGREEN}   3) Retour menu principal${CEND}"
+  echo ""
+  read -p "Votre choix [1-3]: " SHARE
+  case $SHARE in
+
+  1) ## migration share drive -> share drive meme compte
+    menu_migr_share2share_mm_compte
+    ;;
+
+  2) ## migration share drive -> share drive compte diff
+    menu_migr_share2share_compte_diff
+    ;;
+  3)
+    script_plexdrive
+    ;;
+  esac
+}
+
+menu_migr() {
+  clear
+  logo
+  echo ""
+  echo -e "${CCYAN}MIGRATION${CEND}"
+  echo -e "${CGREEN}${CEND}"
+  echo -e "${CGREEN}   1) GDrive => Share Drive${CEND}"
+  echo -e "${CGREEN}   2) Share Drive => Share Drive${CEND}"
+  echo -e "${CGREEN}   3) Retour menu principal${CEND}"
+  echo -e ""
+  read -p "Votre choix [1-3]: " MIGRE
+  case $MIGRE in
+
+  1) ## migration gdrive -> share drive
+    menu_migr_gdrive2share
+    ;;
+
+  2) ## migration share drive -> share drive
+    menu_migr_share2share
+    ;;
+  3)
+    script_plexdrive
+    ;;
+  esac
+}
+
+menu_install_rclone_plexdrive() {
+  clear
+  logo
+  echo ""
+  echo -e "${CCYAN}RCLONE && PLEXDRIVE${CEND}"
+  echo ""
+  echo -e "${CGREEN}   1) Installation rclone vfs${CEND}"
+  echo -e "${CGREEN}   2) Installation plexdrive${CEND}"
+  echo -e "${CGREEN}   3) Installation plexdrive + rclone vfs${CEND}"
+  echo -e ""
+
+  read -p "Votre choix: " RCLONE
+  case $RCLONE in
+
+  1)
+    ${BASEDIR}/includes/config/scripts/fusermount.sh
+    install_rclone
+    unionfs_fuse
+    rm -rf /mnt/plexdrive
+    echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+    read -r
+    script_plexdrive
+    ;;
+
+  2)
+    clear
+    ${BASEDIR}/includes/config/scripts/fusermount.sh
+    ${BASEDIR}/includes/config/scripts/rclone.sh
+    ${BASEDIR}/includes/config/scripts/plexdrive.sh
+    install_plexdrive
+    echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+    read -r
+    script_plexdrive
+    ;;
+
+  3)
+    clear
+    ${BASEDIR}/includes/config/scripts/fusermount.sh
+    install_rclone
+    unionfs_fuse
+    ${BASEDIR}/includes/config/scripts/plexdrive.sh
+
+    plexdrive
+    echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+    read -r
+    script_plexdrive
+    ;;
+  esac # case $RCLONE
+
+}
+
+menu_gestion() {
+  clear
+  logo
+  echo ""
+  echo -e "${CCYAN}GESTION${CEND}"
+  echo -e "${CGREEN}${CEND}"
+  echo -e "${CGREEN}   1) Sécurisation Systeme${CEND}"
+  echo -e "${CGREEN}   2) Utilitaires${CEND}"
+  echo -e "${CGREEN}   3) Création Share Drive && rclone${CEND}"
+  echo -e "${CGREEN}   4) Outils (autoscan, crop, cloudplow, plex-autoscan, plex_dupefinder)${CEND}"
+  echo -e "${CGREEN}   5) Comptes de Service${CEND}"
+  echo -e "${CGREEN}   6) Migration Gdrive/Share Drive ==> Share Drive${CEND}"
+  echo -e "${CGREEN}   7) Installation Rclone vfs && Plexdrive${CEND}"
+  echo -e "${CGREEN}   8) Retour menu principal${CEND}"
+  echo -e ""
+  read -p "Votre choix [1-8]: " GESTION
+
+  case $GESTION in
+
+  1) ## 2.1 sécurisation systeme
+    menu_securisation_systeme
+    ;;
+  2) ## 2.2 Gestion - utilitaires
+    menu_gestion_utilitaires
+    ;;
+
+  3) ### 2.3 - gestion -  creation share drive + rclone.conf
+    clear
+    echo ""
+    ${BASEDIR}/includes/config/scripts/createrclone.sh
+    ;;
+
+  4) ## 2 . 4 - gestion - Outils
+    menu_gestoutilss
+    ;;
+
+  5) ## 2.5 - Gestion - Comptes de Services
+    menu_gest_service_account
+    ;;
+
+  6) ## 2.6 - gestion - Migration Gdrive - Share Drive --> share drive
+    menu_migr
+    ;;
+
+  7) # 2.7 - Installation Rclone vfs && Plexdrive
+    menu_install_rclone_plexdrive
+    ;;
+
+  8) ## 2.8 - Gestion retour menu principal
+    script_plexdrive
+    ;;
+  esac
+}
+
+menu_uninstall() {
+  clear
+  echo ""
+  echo -e "${YELLOW}### Seedbox-Compose déjà installée !###${NC}"
+  if (whiptail --title "Seedbox-Compose déjà installée" --yesno "Désinstaller complètement la Seedbox ?" 7 50); then
+    if (whiptail --title "ATTENTION" --yesno "Etes vous sur de vouloir désintaller la seedbox ?" 7 55); then
+      uninstall_seedbox
+    else
+      script_plexdrive
+    fi
+  else
+    script_plexdrive
+  fi
+}
