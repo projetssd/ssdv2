@@ -705,7 +705,7 @@ menu_gestion() {
     ;;
 
   4) ## 2 . 4 - gestion - Outils
-    menu_gestoutilss
+    menu_gestoutils
     ;;
 
   5) ## 2.5 - Gestion - Comptes de Services
