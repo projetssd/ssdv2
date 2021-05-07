@@ -13,5 +13,5 @@ traefik.http.routers.{{pgrole}}-rtr.service: '{{pgrole}}-svc'
 traefik.http.services.{{pgrole}}-svc.loadbalancer.server.port: "{{ intport }}"
 {# AJOUT DES SPECIFIQUES #}
 {% for ligne in extra_labels %}
-{{ ligne }}: "{{ ligne.value }}"
+{{ ligne.key }}: "{{ ligne.value }}"
 {% endfor %}
