@@ -9,7 +9,7 @@ User=0
 Group=0
 Type=simple
 WorkingDirectory=/home/{{user.name}}/scripts/cloudplow/
-ExecStart=/usr/bin/python3 /home/{{user.name}}/scripts/cloudplow/cloudplow.py run --loglevel=INFO
+ExecStart=/opt/seedbox-compose/venv/bin/python3 /home/{{user.name}}/scripts/cloudplow/cloudplow.py run --loglevel=INFO
 ExecStopPost=/bin/rm -rf /home/{{user.name}}/scripts/cloudplow/locks
 Restart=always
 RestartSec=10

@@ -104,7 +104,7 @@
     - name: Install pip requirements
       pip:
         requirements: "/home/{{ lookup('env','USER') }}/scripts/cloudplow/requirements.txt"
-        executable: pip
+        #executable: pip
         extra_args: --user
         virtualenv: '/opt/seedbox-compose/venv'
 
