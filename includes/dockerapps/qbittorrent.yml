@@ -3,15 +3,15 @@
 - hosts: localhost
   gather_facts: false
   vars:
-    pgrole: qbitorrent
+    pgrole: qbittorrent
   vars_files:
     - /opt/seedbox/variables/account.yml
     - "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/generique.yml"
   tasks:
 
-    - name: create qbitorrent state
+    - name: create qbittorrent state
       shell: |
-        echo "1" > /opt/seedbox/status/qbitorrent
+        echo "1" > /opt/seedbox/status/qbittorrent
 
     - name: Checking for existing app data
       stat:
@@ -20,7 +20,7 @@
 
     - name: 'Set Known Facts'
       set_fact:
-        pgrole: 'qbitorrent'
+        pgrole: 'qbittorrent'
         intport: '8080'
         image: 'ghcr.io/linuxserver/qbittorrent'
 
@@ -28,12 +28,12 @@
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
-        subdomain: "{{sub.qbitorrent.qbitorrent if sub_enabled else 'qbitorrent'}}"
+        subdomain: "{{sub.qbittorrent.qbittorrent if sub_enabled else 'qbittorrent'}}"
       when: cloudflare_enabled
 
     - name: 'Set Known Facts'
       set_fact:
-        pgrole: 'qbitorrent'
+        pgrole: 'qbittorrent'
         intport: '8080'
         image: 'ghcr.io/linuxserver/qbittorrent'
 
@@ -48,17 +48,17 @@
         pg_labels:
           traefik.enable: 'true'
           ## HTTP Routers
-          traefik.http.routers.qbitorrent-rtr.entrypoints: 'https'
-          traefik.http.routers.qbitorrent-rtr.rule: 'Host(`{{sub.qbitorrent.qbitorrent if sub_enabled else pgrole}}.{{user.domain}}`)'
-          traefik.http.routers.qbitorrent-rtr.tls: 'true'
+          traefik.http.routers.qbittorrent-rtr.entrypoints: 'https'
+          traefik.http.routers.qbittorrent-rtr.rule: 'Host(`{{sub.qbittorrent.qbittorrent if sub_enabled else pgrole}}.{{user.domain}}`)'
+          traefik.http.routers.qbittorrent-rtr.tls: 'true'
           ## Middlewares
           traefik.http.routers.{{pgrole}}-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
           else 'chain-basic-auth@file' if auth_enabled and sub[pgrole].auth == 'basique' | default(false)
           else 'chain-oauth@file' if auth_enabled and sub[pgrole].auth == 'oauth' | default(false)
           else omit if auth_enabled and sub[pgrole].auth == 'aucune'}}"
           ## HTTP Services
-          traefik.http.routers.qbitorrent-rtr.service: 'qbitorrent-svc'
-          traefik.http.services.qbitorrent-svc.loadbalancer.server.port: '8080'
+          traefik.http.routers.qbittorrent-rtr.service: 'qbittorrent-svc'
+          traefik.http.services.qbittorrent-svc.loadbalancer.server.port: '8080'
 
     - name: 'Setting PG Volumes'
       set_fact:

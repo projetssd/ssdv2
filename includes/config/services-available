@@ -17,8 +17,9 @@ Overseerr-PlexRequestAndUserManagementSystem
 Petio-PlexRequestAndUserManagementSystem
 Plex-PlexMediaServer
 Portainer-LightweightManagementUI
-Qbitorrent-TorrentClient
-Radarr-MoviesAutomation-ForkSonarr
+Qbittorrent-TorrentClient
+Radarr-MoviesAutomation
+Radarr4k-MoviesAutomation
 Readarr-BookMagazineComicsEbookAudiobook
 Rtorrentvpn-TorrentClient
 Rutorrent-TorrentClient

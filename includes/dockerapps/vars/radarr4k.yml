@@ -1,11 +1,15 @@
 ---
-pgrole: 'sonarr'
-intport: '8989'
-image: 'linuxserver/sonarr:latest'
+pgrole: 'radarr4k'
+intport: '7878'
+image: 'linuxserver/radarr:nightly'
 pg_volumes:
   - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:
-  PUID: "{{ lookup('env','MYUID') }}"
+  PUID: "{{ lookup('env','MYGID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
+  DOCKER_MODS: 'ghcr.io/gilbn/theme.park:radarr'
+  TP_DOMAIN: 'theme-park.dev'
+  TP_ADDON: 'radarr-4k-logo'
+  TP_THEME: 'plex'
