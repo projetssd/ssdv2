@@ -9,3 +9,12 @@ pg_volumes:
 pg_env:
   PUID: "{{ lookup('env','MYGID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
+# Pour contourner l'authentification pour des outils de style nzb360, décommentez le pavé ci dessous
+# et remplacer API par votre API radarr
+#extra_labels:
+#  traefik.http.routers.radarr-rtr-bypass.entrypoints: 'https'
+#  traefik.http.routers.radarr-rtr-bypass.rule: 'Headers(`X-Api-Key`, `API`)'
+#  traefik.http.routers.radarr-rtr-bypass.priority: '100'
+#  traefik.http.routers.radarr-rtr-bypass.tls: 'true'
+#  traefik.http.routers.radarr-rtr-bypass.middlewares: 'chain-no-auth@file'
+#  traefik.http.routers.radarr-rtr-bypass.service: 'radarr-svc'
