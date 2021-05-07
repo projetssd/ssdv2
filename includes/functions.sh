@@ -1954,6 +1954,8 @@ function migrate() {
   # cloudplow
   if [ -f "/etc/systemd/system/cloudplow.service" ]; then
     cloudplow
+    sudo chown -R ${USER}: /home/${USER}/scripts/cloudplow
+
   fi
   # crop
   if [ -f "/etc/systemd/system/crop_upload.service" ]; then
