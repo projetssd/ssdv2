@@ -105,7 +105,7 @@
       pip:
         requirements: "/home/{{ lookup('env','USER') }}/scripts/cloudplow/requirements.txt"
         #executable: pip
-        extra_args: --user
+        #extra_args: --user
         virtualenv: '/opt/seedbox-compose/venv'
 
     - name: Check config exists
