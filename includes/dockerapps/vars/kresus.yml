@@ -1,0 +1,13 @@
+---
+pgrole: 'kresus'
+intport: '9876'
+image: 'bnjbvr/kresus'
+pg_volumes:
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  LOCAL_USER_ID: "{{ lookup('env','MYGID') }}"
+  KRESUS_DB_TYPE: "postgres"
+  KRESUS_DB_HOST: "db-{{pgrole}}"
+  KRESUS_DB_PORT: "5432"
+  KRESUS_DB_USERNAME: "{{pgrole}}"
+  KRESUS_DB_PASSWORD: "{{pgrole}}"
