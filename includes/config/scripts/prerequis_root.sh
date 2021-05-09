@@ -48,7 +48,6 @@ apt-get update
 ## Install apt Dependencies
 apt-get install -y --reinstall \
   nano \
-  git \
   build-essential \
   libssl-dev \
   libffi-dev \
@@ -56,10 +55,7 @@ apt-get install -y --reinstall \
   python3-pip \
   python-dev \
   python-apt \
-  python3-venv \
-  sqlite3 \
-  apache2-utils \
-  dnsutils
+  python3-venv
 
 rm -f /usr/bin/python
 

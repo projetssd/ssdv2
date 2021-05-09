@@ -69,7 +69,6 @@
           - "lsof"
           - "man-db"
           - "ksmtuned"
-          - "git"
           - "pwgen"
           - "rsync"
           - "logrotate"
