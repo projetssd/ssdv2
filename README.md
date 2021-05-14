@@ -51,7 +51,28 @@ Rebooter la machine une fois terminé !
 
 
 Une fois les pré requis validé pous pouvez suivre le guide :  
-* [Pas à pas d'installation](https://github.com/laster13/patxav/wiki/pas-%C3%A0-pas)
+* il faut un user NON root, qui ait les droits de faire du sudo
+
+Sur debian, il faut commencer par installer sudo
+``` 
+apt install -y sudo
+```
+
+Si vous n'avez que root :
+``` 
+useradd seed # changez "seed" par le user que vous voulez
+passwd seed # permet de choisir un password, changez "seed" par le user que vous voulez
+usermod -aG sudo seed # changez "seed" par le user que vous voulez
+```
+Une fois que tout ça est fait, déconnectez vous de votre session root, et reconnectez vous avec le user qui vient d'être créé
+
+Ensuite
+```
+sudo git clone https://github.com/projetssd/ssdv2.git /opt/seedbox-compose
+sudo chown -R ${USER}: /opt/seedbox-compose
+cd /opt/seedbox-compose
+./seedbox.sh # et laissez vous guider
+```
 
 <br/><br/>
 
