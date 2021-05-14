@@ -1387,58 +1387,7 @@ function manage_apps() {
     [[ "$?" == 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi
     echo -e " ${GREEN}   * $APPSELECTED${NC}"
 
-    #    grep "$APPSELECTED:" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-    #    if [ $? -eq 0 ]; then
-    #      sed -i "/$APPSELECTED/,+2d" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-    #    fi
-    manage_account_yml sub.${APPSELECTED} " "
-
-    sed -i "/$APPSELECTED/d" ${CONFDIR}/resume >/dev/null 2>&1
-    sed -i "/$APPSELECTED/d" /home/$SEEDUSER/resume >/dev/null 2>&1
-    docker rm -f "$APPSELECTED" >/dev/null 2>&1
-    sudo rm -rf ${CONFDIR}/docker/$SEEDUSER/$APPSELECTED
-    rm ${CONFDIR}/conf/$APPSELECTED.yml >/dev/null 2>&1
-    rm ${CONFDIR}/vars/$APPSELECTED.yml >/dev/null 2>&1
-    echo "0" >${CONFDIR}/status/$APPSELECTED
-
-    case $APPSELECTED in
-    seafile)
-      docker rm -f memcached >/dev/null 2>&1
-      ;;
-    varken)
-      docker rm -f influxdb telegraf grafana >/dev/null 2>&1
-      rm -rf ${CONFDIR}/docker/$SEEDUSER/telegraf
-      rm -rf ${CONFDIR}/docker/$SEEDUSER/grafana
-      rm -rf ${CONFDIR}/docker/$SEEDUSER/influxdb
-      ;;
-    jitsi)
-      docker rm -f prosody jicofo jvb
-      rm -rf ${CONFDIR}/docker/$SEEDUSER/.jitsi-meet-cfg
-      ;;
-    nextcloud)
-      docker rm -f collabora coturn office
-      rm -rf ${CONFDIR}/docker/$SEEDUSER/coturn
-      ;;
-    rtorrentvpn)
-      rm ${CONFDIR}/conf/rutorrent-vpn.yml
-      ;;
-    jackett)
-      docker rm -f flaresolverr >/dev/null 2>&1
-      ;;
-    petio)
-      docker rm -f mongo >/dev/null 2>&1
-      ;;
-    esac
-
-    if docker ps | grep -q db-$APPSELECTED; then
-      docker rm -f db-$APPSELECTED >/dev/null 2>&1
-    fi
-
-    docker system prune -af >/dev/null 2>&1
-    checking_errors $?
-    echo""
-    echo -e "${BLUE}### $APPSELECTED a été supprimé ###${NC}"
-    echo ""
+    suppression_appli ${APPSELECTED}
     pause
     if [[ -e "$PLEXDRIVE" ]]; then
       script_plexdrive
@@ -1486,6 +1435,58 @@ function manage_apps() {
     fi
     ;;
   esac
+}
+
+function suppression_appli() {
+  APPSELECTED=$1
+  manage_account_yml sub.${APPSELECTED} " "
+
+  sed -i "/$APPSELECTED/d" ${CONFDIR}/resume >/dev/null 2>&1
+  sed -i "/$APPSELECTED/d" /home/$SEEDUSER/resume >/dev/null 2>&1
+  docker rm -f "$APPSELECTED" >/dev/null 2>&1
+  sudo rm -rf ${CONFDIR}/docker/$SEEDUSER/$APPSELECTED
+  rm ${CONFDIR}/conf/$APPSELECTED.yml >/dev/null 2>&1
+  rm ${CONFDIR}/vars/$APPSELECTED.yml >/dev/null 2>&1
+  echo "0" >${CONFDIR}/status/$APPSELECTED
+
+  case $APPSELECTED in
+  seafile)
+    docker rm -f memcached >/dev/null 2>&1
+    ;;
+  varken)
+    docker rm -f influxdb telegraf grafana >/dev/null 2>&1
+    rm -rf ${CONFDIR}/docker/$SEEDUSER/telegraf
+    rm -rf ${CONFDIR}/docker/$SEEDUSER/grafana
+    rm -rf ${CONFDIR}/docker/$SEEDUSER/influxdb
+    ;;
+  jitsi)
+    docker rm -f prosody jicofo jvb
+    rm -rf ${CONFDIR}/docker/$SEEDUSER/.jitsi-meet-cfg
+    ;;
+  nextcloud)
+    docker rm -f collabora coturn office
+    rm -rf ${CONFDIR}/docker/$SEEDUSER/coturn
+    ;;
+  rtorrentvpn)
+    rm ${CONFDIR}/conf/rutorrent-vpn.yml
+    ;;
+  jackett)
+    docker rm -f flaresolverr >/dev/null 2>&1
+    ;;
+  petio)
+    docker rm -f mongo >/dev/null 2>&1
+    ;;
+  esac
+
+  if docker ps | grep -q db-$APPSELECTED; then
+    docker rm -f db-$APPSELECTED >/dev/null 2>&1
+  fi
+
+  docker system prune -af >/dev/null 2>&1
+  checking_errors $?
+  echo""
+  echo -e "${BLUE}### $APPSELECTED a été supprimé ###${NC}"
+  echo ""
 }
 
 function resume_seedbox() {
