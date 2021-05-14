@@ -8,12 +8,12 @@
 
     - name: Stop Container
       docker_container:
-        name: {{ pgrole }}
+        name: "{{ pgrole }}"
         state: stopped
 
     - name: Restart {{pgrole}}
       docker_container:
-        name: '{{ pgrole }}'
+        name: "{{ pgrole }}"
         state: started
 
   when: not confcheck.stat.exists
