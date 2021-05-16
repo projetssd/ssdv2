@@ -8,16 +8,15 @@
 #                           MIT License                                 #
 #########################################################################
 
-if [ -z "$PLEX_LOGIN" ] || [ -z "$PLEX_PASSWORD" ]; then
-    PLEX_LOGIN=$1
-    PLEX_PASSWORD=$2
-fi
+#if [ -z "$PLEX_LOGIN" ] || [ -z "$PLEX_PASSWORD" ]; then
+#    PLEX_LOGIN=$1
+#    PLEX_PASSWORD=$2
+#fi
 
 while [ -z "$PLEX_LOGIN" ]; do
     >&2 echo -n 'Votre login Plex (e-mail or username): '
     read PLEX_LOGIN
     manage_account_yml plex.ident $PLEX_LOGIN
-    ###sed -i "/ident:/c\   ident: $PLEX_LOGIN" /opt/seedbox/variables/account.yml
 done
 
 while [ -z "$PLEX_PASSWORD" ]; do
