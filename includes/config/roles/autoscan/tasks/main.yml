@@ -1,7 +1,7 @@
 ---
 - hosts: localhost
   gather_facts: false
-  become: yes
+
   vars_files:
     - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
   tasks:
@@ -101,8 +101,6 @@
         dest: "/home/{{ lookup('env','USER') }}/scripts/autoscan/config.yml"
         mode: 0600
         force: yes
-      become: yes
-      become_user: "{{ lookup('env','USER') }}"
 
     - name: "create plex_autoscan state"
       shell: |
