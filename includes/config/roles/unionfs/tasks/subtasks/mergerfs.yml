@@ -24,6 +24,12 @@
     mergerfs_download_url_backup: https://github.com/trapexit/mergerfs/releases/download/2.27.1/mergerfs_2.27.1.{{ ansible_distribution|lower
      }}-{{ ansible_distribution_release|lower }}_amd64.deb
 
+- name: "Create local directory"
+  file:
+    path: "/home/{{ lookup('env','USER') }}/local"
+    state: directory
+
+
 - name: "MergerFS | Install mergerfs"
   become: yes
   apt:
