@@ -1542,7 +1542,7 @@ function uninstall_seedbox() {
   SEEDGROUP=$(cat ${TMPGROUP})
   rm ${TMPNAME} ${TMPDOMAIN} ${TMPGROUP}
 
-  USERHOMEDIR="/home/$SEEDUSER"
+  USERHOMEDIR=${HOME}
   PLEXDRIVE="/usr/bin/rclone"
   PLEXSCAN="$USERHOMEDIR/scripts/plex_autoscan/scan.py"
   CLOUDPLOW="$USERHOMEDIR/scripts/cloudplow/cloudplow.py"
@@ -1612,28 +1612,21 @@ function uninstall_seedbox() {
     checking_errors $?
   fi
 
-  echo -e " ${BWHITE}* Suppression user: $SEEDUSER...${NC}"
-  userdel -rf $SEEDUSER >/dev/null 2>&1
-  checking_errors $?
-
-  echo -e " ${BWHITE}* Suppression home $SEEDUSER...${NC}"
-  rm -Rf $USERHOMEDIR >/dev/null 2>&1
-  checking_errors $?
-  echo ""
-
   echo -e " ${BWHITE}* Suppression Containers...${NC}"
   docker rm -f $(docker ps -aq) >/dev/null 2>&1
   docker volume rm $(docker volume ls -qf "dangling=true") >/dev/null 2>&1
-  checking_errors $?
-
-  echo -e " ${BWHITE}* Suppression group...${NC}"
-  groupdel $SEEDGROUP >/dev/null 2>&1
   checking_errors $?
 
   echo -e " ${BWHITE}* Supression du dossier ${CONFDIR}...${NC}"
   rm -Rf ${CONFDIR}
   checking_errors $?
   pause
+
+  echo -e " ${BWHITE}* Supression des données... (hors drive)${NC}"
+  rm -rf /opt/seedbox/docker
+  checking_errors $?
+  pause
+
 }
 
 function pause() {
