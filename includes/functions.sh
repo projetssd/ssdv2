@@ -1531,6 +1531,9 @@ function uninstall_seedbox() {
   echo -e "${BLUE}##########################################${NC}"
   echo -e "${BLUE}###       DESINSTALLATION SEEDBOX      ###${NC}"
   echo -e "${BLUE}##########################################${NC}"
+  echo "Ceci va SUPPRIMER votre seedbox, êtes vous sur de continuer ?"
+  echo "Appuyer sur entrée pour SUPPRIMER la seedbox, ou ctrl+c pour sortir"
+  pause
 
   ## variables
   ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
