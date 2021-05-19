@@ -284,37 +284,22 @@ function script_classique() {
     echo ""
     echo -e "${CCYAN}SEEDBOX CLASSIQUE${CEND}"
     echo -e "${CGREEN}${CEND}"
-    echo -e "${CGREEN}   1) Désinstaller la seedbox ${CEND}"
-    echo -e "${CGREEN}   2) Ajout/Supression d'Applis${CEND}"
-    echo -e "${CGREEN}   3) Outils${CEND}"
-    echo -e "${CGREEN}   4) Quitter${CEND}"
+    echo -e "${CGREEN}   1) Ajout/Supression d'Applis${CEND}"
+    echo -e "${CGREEN}   2) Outils${CEND}"
+    echo -e "${CGREEN}   3) Quitter${CEND}"
 
     echo -e ""
     read -p "Votre choix [1-4]: " PORT_CHOICE
 
     case $PORT_CHOICE in
-    1) ## Installation de la seedbox
-      clear
-      echo ""
-      echo -e "${YELLOW}### Seedbox-Compose déjà installée !###${NC}"
-      if (whiptail --title "Seedbox-Compose déjà installée" --yesno "Désinstaller complètement la Seedbox ?" 7 50); then
-        if (whiptail --title "ATTENTION" --yesno "Etes vous sur de vouloir désintaller la seedbox ?" 7 55); then
-          uninstall_seedbox
-        else
-          script_classique
-        fi
-      else
-        script_classique
-      fi
-      ;;
-    2)
+    1)
       clear
       ## Ajout d'Applications
       echo""
       clear
       manage_apps
       ;;
-    3)
+    2)
       clear
       logo
       echo ""
@@ -530,7 +515,7 @@ function script_classique() {
         ;;
       esac
       ;;
-    4)
+    3)
       exit
       ;;
     esac
@@ -568,7 +553,6 @@ function script_plexdrive() {
     echo -e "${CGREEN}   2) Gestion${CEND}"
     echo -e "${CGREEN}   3) Quitter${CEND}"
     echo -e "${CGREEN}   4) Installer/Réinstaller la GUI${CEND}"
-    echo -e "${CRED}   10) Désinstaller la seedbox ${CEND}"
 
     echo -e ""
     read -p "Votre choix: " PORT_CHOICE
@@ -586,10 +570,6 @@ function script_plexdrive() {
       ;;
     4) ## install gui
       install_gui
-      ;;
-
-    10) ## Désinstallation seedbox
-      menu_uninstall
       ;;
 
     *)
@@ -1885,7 +1865,20 @@ function usage() {
   exit 0
 }
 
+function log_migrate() {
+  LOG_MIGRATE=/opt/seedbox-compose/logs/migrate.log
+  echo $1 >>${LOG_MIGRATE}
+  echo $1
+}
+
 function migrate() {
+  LOG_MIGRATE=/opt/seedbox-compose/logs/migrate.log
+  echo "Vous allez migrer de SSD V1 vers SSD V2"
+  if [ "$USER" == "root" ]; then
+    echo "Vous ne POUVEZ pas faire cette opération en root"
+    echo "Merci de vous connecter sur le bon user avant de relancer"
+    exit 1
+  fi
   # on sort du venv car on va le retrouver juste après
   deactivate >/dev/null 2>&1
   sudo chown ${USER} /opt/seedbox/variables/account.yml
@@ -1894,42 +1887,46 @@ function migrate() {
     sudo cp /root/.vault_pass ${HOME}/.vault_pass
     sudo chown ${USER}: ${HOME}/.vault_pass
   else
-    mypass=$(
-      tr -dc A-Za-z0-9 </dev/urandom | head -c 25
-      echo ''
-    )
-    echo "$mypass" >"${HOME}/.vault_pass"
+    # pas de vault_pass trouvé en root ?
+    if [ -f "${HOME}/.vault_pass" ]; then
+      :
+    else
+      # pas de vault_pass dans le user, on en créé un
+      mypass=$(
+        tr -dc A-Za-z0-9 </dev/urandom | head -c 25
+        echo ''
+      )
+      echo "$mypass" >"${HOME}/.vault_pass"
+    fi
   fi
-  sudo chown -R "${USER}": /opt/seedbox/status
-  sudo chown -R "${USER}": /opt/seedbox/docker
-  sudo chown -R "${USER}": /opt/seedbox/resume
-  sudo chown -R "${USER}": ${HOME}/resume
+
   premier_lancement
 
   # on revient dans le venv
   source ${SCRIPTPATH}/venv/bin/activate
-
-  echo "Vous allez migrer de SSD V1 vers SSD V2"
-  if [ "$USER" == "root" ]; then
-    echo "Vous ne POUVEZ pas faire cette opération en root"
-    echo "Merci de vous connecter sur le bon user avant de relancer"
-    exit 1
-  fi
   olduser=$(get_from_account_yml user.name)
   if [ "${olduser}" != "$USER" ]; then
     echo "Vous devez être connexté avec le même user que celui qui gérait la seedbox (${olduser}) pour effectuer cette action"
     exit 1
   fi
+
+  sudo chown -R "${USER}": /opt/seedbox/status
+  sudo chown -R "${USER}": /opt/seedbox/docker
+  sudo chown -R "${USER}": /opt/seedbox/resume
+  sudo chown -R "${USER}": ${HOME}/resume
   sudo chown -R ${USER}: ${CONFDIR}/status/*
+
   echo "Assurez vous d'être connecté sur le bon utilisateur (celui qui va piloter la seedbox)"
-  echo "Cela doit être le user qui a été créé lors de la v1, "
   echo "en connection directe (pas de connection sur un autre user ou root, puis sudo)"
   echo "Cela va provoquer des coupures de service"
+  echo "--------------------------------------------"
+  echo "Les données vont être conservées, mais les éventuelles personnalisations peuvent être perdues"
+  echo "(personnalisations = modifications manuelles des fichiers de service ou des playbooks)"
   read -p "Appuyez sur entrée pour lancer la procédure"
   # copie éventuelle du rclone existant
   if [ -f "${HOME}/.config/rclone/rclone.conf" ]; then
     mv "${HOME}/.config/rclone/rclone.conf" "${HOME}/.config/rclone/rclone.conf.backup_migration"
-    echo "Le fichier rclone existant a été copié sur ${HOME}/.config/rclone/rclone.conf.backup_migration"
+    log_migrate "Le fichier rclone existant a été copié sur ${HOME}/.config/rclone/rclone.conf.backup_migration"
   fi
   # copie du rclone de root
   mkdir -p "${HOME}/.config/rclone"
@@ -1940,6 +1937,7 @@ function migrate() {
   sudo chown "${USER}": "${CONFDIR}/variables/account.yml"
 
   # remplacement du backup
+  log_migrate "Mise à jour du script de sauvegarde"
   sauve
   # on relance l'install de rclone pour avoir le bon fichier service
   # on supprime le fichier de service existant
@@ -1963,11 +1961,13 @@ function migrate() {
     plexdrive
   fi
   # Resintall des applis
+  log_migrate "Prérequis de migration terminés, passage à la réinstallation des applications"
+  pause
   reinstall_appli_migrate
 
   # on marque la seedbox comme installée
   update_seedbox_param "installed" 1
-  echo "Migration terminée, il est conseillé de redémarrer la seedbox"
+  log_migrate "Migration terminée, il est conseillé de redémarrer la seedbox"
 }
 
 function reinstall_appli_migrate() {
