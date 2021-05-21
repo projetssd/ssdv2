@@ -244,7 +244,7 @@ function crop() {
   checking_errors $?
 }
 
-function cloudplow() {
+function install_cloudplow() {
   #configuration plex_autoscan avec ansible
   echo -e "${BLUE}### CLOUDPLOW ###${NC}"
   echo -e " ${BWHITE}* Installation cloudplow${NC}"
@@ -1948,7 +1948,7 @@ function migrate() {
   conf_dir
   # cloudplow
   if [ -f "/etc/systemd/system/cloudplow.service" ]; then
-    cloudplow
+    install_cloudplow
     sudo chown -R ${USER}: /home/${USER}/scripts/cloudplow
 
   fi
