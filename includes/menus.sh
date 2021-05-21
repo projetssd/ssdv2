@@ -304,7 +304,7 @@ menu_gestoutils_cloudplow() {
   clear
   logo
   echo ""
-  cloudplow
+  install_cloudplow
   pause
   script_plexdrive
 }
