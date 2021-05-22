@@ -224,6 +224,7 @@ function plex_autoscan() {
   echo -e "${BLUE}### PLEX_AUTOSCAN ###${NC}"
   echo -e " ${BWHITE}* Installation plex_autoscan${NC}"
   ansible-playbook ${BASEDIR}/includes/config/roles/plex_autoscan/tasks/main.yml
+
   checking_errors $?
 }
 
