@@ -224,7 +224,7 @@ function plex_autoscan() {
   echo -e "${BLUE}### PLEX_AUTOSCAN ###${NC}"
   echo -e " ${BWHITE}* Installation plex_autoscan${NC}"
   ansible-playbook ${BASEDIR}/includes/config/roles/plex_autoscan/tasks/main.yml
-
+  sudo chown -R ${USER} ${HOME}/scripts/plex_autoscan
   checking_errors $?
 }
 
@@ -250,6 +250,7 @@ function install_cloudplow() {
   echo -e "${BLUE}### CLOUDPLOW ###${NC}"
   echo -e " ${BWHITE}* Installation cloudplow${NC}"
   ansible-playbook ${BASEDIR}/includes/config/roles/cloudplow/tasks/main.yml
+  sudo chown -R ${USER} ${HOME}/scripts/cloudplow
   checking_errors $?
 }
 
