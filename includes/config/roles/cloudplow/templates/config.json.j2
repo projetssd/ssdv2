@@ -43,7 +43,8 @@
                 ".fuse_hidden**",
                 "rutorrent**/",
                 "sabnzbd**/",
-                "Unsorted**/"
+                "Unsorted**/",
+                "qbittorrent/**"
             ],
             "rclone_extras": {
                 "--checkers": 16,
@@ -83,15 +84,17 @@
             "exclude_open_files": false,
             "max_size_gb": 50,
             "opened_excludes": [
-                "/rutorrent/"
+                "/rutorrent/",
+                "/qbittorrent/"
             ],
             "schedule": {
                 "allowed_from": "04:00",
                 "allowed_until": "08:00",
-                "enabled": false
+                "enabled": true
             },
             "size_excludes": [
-                "rutorrent/*"
+                "rutorrent/*",
+                "qbittorrent/*"
             ],
             "service_account_path": "/opt/sa"
         }
