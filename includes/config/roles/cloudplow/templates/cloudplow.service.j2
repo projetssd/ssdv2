@@ -5,8 +5,8 @@ Description=Cloudplow
 After=network-online.target
 
 [Service]
-User=0
-Group=0
+User={{user.name}}
+Group={{user.name}}
 Type=simple
 WorkingDirectory=/home/{{user.name}}/scripts/cloudplow/
 ExecStart=/opt/seedbox-compose/venv/bin/python3 /home/{{user.name}}/scripts/cloudplow/cloudplow.py run --loglevel=INFO
