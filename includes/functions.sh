@@ -1679,34 +1679,21 @@ function get_from_account_yml() {
 
 function install_gui() {
   domain=$(get_from_account_yml user.domain)
-  set -a
-  echo ""
-  echo -e "${BWHITE}Adresse par défault: https://gui.$domain ${CEND}"
-  echo ""
-  read -rp $'\e[33mSouhaitez vous personnaliser le sous domaine? (o/n - default n)\e[0m :' OUI
-
-  if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
-    if [ -z "$subdomain" ]; then
-      subdomain=$1
-    fi
-    while [ -z "$subdomain" ]; do
-      echo >&2 -n -e "${BWHITE}Sous Domaine: ${CEND}"
-      read subdomain
-    done
-
-    echo ""
+  tempsubdomain=$(get_from_account_yml sub.gui.gui)
+  if [ "${tempsubdomain}" = notfound ]; then
+    subdomain_unitaire gui
   fi
-  if [ -z "$subdomain" ]; then
-    subdomain=gui
+  tempauth=$(get_from_account_yml sub.gui.auth)
+  if [ "${tempauth}" = notfound ]; then
+    auth_unitaire gui
   fi
-  manage_account_yml sub.gui.gui "$subdomain"
+  subomain=$(get_from_account_yml sub.gui.gui})
+
+
   set +a
   export gui_subdomain=$subdomain
   # On install nginx
   ansible-playbook ${BASEDIR}/includes/config/roles/nginx/tasks/main.yml
-
-  #DOMAIN=$(select_seedbox_param "domain")
-  #GUISUBDOMAIN=$(get_from_account_yml sub.gui.gui)
 
   echo -e "${CRED}---------------------------------------------------------------${CEND}"
   echo -e "${CRED}          /!\ INSTALLATION EFFECTUEE AVEC SUCCES /!\           ${CEND}"
