@@ -39,11 +39,11 @@ function status() {
   create_dir ${CONFDIR}/status
   for app in $(cat ${BASEDIR}/includes/config/services-available); do
     service=$(echo $app | tr '[:upper:]' '[:lower:]' | cut -d\- -f1)
-    echo "0" >>${CONFDIR}/status/$service
+    echo "0" >${CONFDIR}/status/$service
   done
   for app in $(cat ${BASEDIR}/includes/config/other-services-available); do
     service=$(echo $app | tr '[:upper:]' '[:lower:]' | cut -d\- -f1)
-    echo "0" >>${CONFDIR}/status/$service
+    echo "0" >${CONFDIR}/status/$service
   done
 }
 
