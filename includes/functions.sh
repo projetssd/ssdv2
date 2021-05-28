@@ -27,6 +27,7 @@ function logo() {
 
 }
 
+
 function update_system() {
   #Mise à jour systeme
   echo -e "${BLUE}### MISE A JOUR DU SYTEME ###${NC}"
