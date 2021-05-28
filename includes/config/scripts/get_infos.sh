@@ -101,71 +101,72 @@ if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
   fi
 fi
 
-echo ""
-echo -e "${BLUE}### Google OAuth2 avec Traefik – Secure SSO pour les services Docker ###${NC}"
-echo ""
-echo -e "${CCYAN}------------------------------------------------------------------${CEND}"
-echo -e "${CCYAN}    Protocole d'identification via Google OAuth2		   ${CEND}"
-echo -e "${CCYAN}    Securisation SSO pour les services Docker			   ${CEND}"
-echo -e "${CCYAN}------------------------------------------------------------------${CEND}"
-echo ""
-echo -e "${CRED}-------------------------------------------------------------------${CEND}"
-echo -e "${CRED}    /!\ IMPORTANT: Au préalable créer un projet et vos identifiants${CEND}"
-echo -e "${CRED}    https://github.com/laster13/patxav/wiki /!\ 		   ${CEND}"
-echo -e "${CRED}-------------------------------------------------------------------${CEND}"
-echo ""
+#echo ""
+#echo -e "${BLUE}### Google OAuth2 avec Traefik – Secure SSO pour les services Docker ###${NC}"
+#echo ""
+#echo -e "${CCYAN}------------------------------------------------------------------${CEND}"
+#echo -e "${CCYAN}    Protocole d identification via Google OAuth2		   ${CEND}"
+#echo -e "${CCYAN}    Securisation SSO pour les services Docker			   ${CEND}"
+#echo -e "${CCYAN}------------------------------------------------------------------${CEND}"
+#echo ""
+#echo -e "${CRED}-------------------------------------------------------------------${CEND}"
+#echo -e "${CRED}    /!\ IMPORTANT: Au préalable créer un projet et vos identifiants${CEND}"
+#echo -e "${CRED}    https://github.com/laster13/patxav/wiki /!\ 		   ${CEND}"
+#echo -e "${CRED}-------------------------------------------------------------------${CEND}"
+#echo ""
+#
+#read -rp $'\e[33mSouhaitez vous sécuriser vos Applis avec Google OAuth2 ? (o/n - default n)\e[0m :' OUI
+#if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
+#  if [ -z "$oauth_client" ] || [ -z "$oauth_secret" ] || [ -z "$email" ]; then
+#    oauth_client=$1
+#    oauth_secret=$2
+#    email=$3
+#  fi
+#
+#  OAUTH_CLIENT=$(get_from_account_yml oauth.client)
+#  if [ "OAUTH_CLIENT" == notfound ]; then
+#    while [ -z "$oauth_client" ]; do
+#      echo >&2 -n -e "${BWHITE}Oauth_client: ${CEND}"
+#      read oauth_client
+#
+#    done
+#    manage_account_yml oauth.client "$oauth_client"
+#  else
+#    echo -e "${BLUE}Oauth client renseigné${CEND}"
+#  fi
+#
+#  OAUTH_SECRET=$(get_from_account_yml oauth.secret)
+#  if [ "OAUTH_SECRET" == notfound ]; then
+#    while [ -z "$oauth_secret" ]; do
+#      echo >&2 -n -e "${BWHITE}Oauth_secret: ${CEND}"
+#      read oauth_secret
+#    done
+#    manage_account_yml oauth.secret "$oauth_secret"
+#  else
+#    echo -e "${BLUE}Oauth secret déjà renseigné${CEND}"
+#  fi
+#
+#  OAUTH_ACCOUNT=$(get_from_account_yml oauth.account)
+#  if [ "OAUTH_ACCOUNT" == notfound ]; then
+#    while [ -z "$email" ]; do
+#      echo >&2 -n -e "${BWHITE}Compte Gmail utilisé.s, séparés d une virgule si plusieurs: ${CEND}"
+#      read email
+#    done
+#    manage_account_yml oauth.account "$email"
+#  else
+#    echo -e "${BLUE}Oauth account déjà renseigné${CEND}"
+#  fi
+#  OAUTH_SSL=$(get_from_account_yml oauth.openssl)
+#  if [ "OAUTH_SSL" == notfound ]; then
+#    openssl=$(openssl rand -hex 16)
+#    manage_account_yml oauth.openssl "openssl"
+#  fi
+#  manage_account_yml sub.gui.auth oauth
+#  echo ""
+#else
+#  manage_account_yml sub.gui.auth basique
+#fi
 
-read -rp $'\e[33mSouhaitez vous sécuriser vos Applis avec Google OAuth2 ? (o/n - default n)\e[0m :' OUI
-if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
-  if [ -z "$oauth_client" ] || [ -z "$oauth_secret" ] || [ -z "$email" ]; then
-    oauth_client=$1
-    oauth_secret=$2
-    email=$3
-  fi
-
-  OAUTH_CLIENT=$(get_from_account_yml oauth.client)
-  if [ "OAUTH_CLIENT" == notfound ]; then
-    while [ -z "$oauth_client" ]; do
-      echo >&2 -n -e "${BWHITE}Oauth_client: ${CEND}"
-      read oauth_client
-
-    done
-    manage_account_yml oauth.client "$oauth_client"
-  else
-    echo -e "${BLUE}Oauth client renseigné${CEND}"
-  fi
-
-  OAUTH_SECRET=$(get_from_account_yml oauth.secret)
-  if [ "OAUTH_SECRET" == notfound ]; then
-    while [ -z "$oauth_secret" ]; do
-      echo >&2 -n -e "${BWHITE}Oauth_secret: ${CEND}"
-      read oauth_secret
-    done
-    manage_account_yml oauth.secret "$oauth_secret"
-  else
-    echo -e "${BLUE}Oauth secret déjà renseigné${CEND}"
-  fi
-
-  OAUTH_ACCOUNT=$(get_from_account_yml oauth.account)
-  if [ "OAUTH_ACCOUNT" == notfound ]; then
-    while [ -z "$email" ]; do
-      echo >&2 -n -e "${BWHITE}Compte Gmail utilisé.s, séparés d une virgule si plusieurs: ${CEND}"
-      read email
-    done
-    manage_account_yml oauth.account "$email"
-  else
-    echo -e "${BLUE}Oauth account déjà renseigné${CEND}"
-  fi
-  OAUTH_SSL=$(get_from_account_yml oauth.openssl)
-  if [ "OAUTH_SSL" == notfound ]; then
-    openssl=$(openssl rand -hex 16)
-    manage_account_yml oauth.openssl "openssl"
-  fi
-  manage_account_yml sub.gui.auth oauth
-  echo ""
-else
-  manage_account_yml sub.gui.auth basique
-fi
 
 
 
