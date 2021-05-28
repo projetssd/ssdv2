@@ -8,7 +8,7 @@ function logo() {
   color3='\033[0;33m' # light yellow
   nocolor='\033[0m'   # no color
   companyname='\033[1;34mMondedie.fr\033[0m'
-  divisionname='\033[1;32mlaster13\033[0m'
+  divisionname='\033[1;32mlaster13 - Merrick\033[0m'
   descriptif='\033[1;31mHeimdall - Syncthing - sonerezh - Portainer - Nextcloud - Lidarr\033[0m'
   appli='\033[0;36mPlex - Sonarr - Medusa - Rutorrent - Radarr - Jackett - Pyload - Traefik\033[0m'
 
@@ -554,7 +554,7 @@ function script_plexdrive() {
     echo -e "${CGREEN}   1) Ajout/Supression d'Applis${CEND}"
     echo -e "${CGREEN}   2) Gestion${CEND}"
     echo -e "${CGREEN}   3) Quitter${CEND}"
-    echo -e "${CGREEN}   4) Installer/Réinstaller la GUI${CEND}"
+    #echo -e "${CGREEN}   4) Installer/Réinstaller la GUI${CEND}"
 
     echo -e ""
     read -p "Votre choix: " PORT_CHOICE
