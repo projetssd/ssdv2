@@ -1001,9 +1001,8 @@ function create_user_non_systeme() {
   PASSWORD=$(whiptail --title "Password" --passwordbox \
     "Mot de passe :" 7 50 3>&1 1>&2 2>&3)
 
-  htpasswd -c -b /tmp/.htpasswd $SEEDUSER $PASSWORD >/dev/null 2>&1
-  htpwd=$(cat /tmp/.htpasswd)
-  manage_account_yml user.htpwd $htpwd
+
+  manage_account_yml user.htpwd $(htpasswd -nb $SEEDUSER $PASSWORD)
   manage_account_yml user.name $SEEDUSER
   manage_account_yml user.pass $PASSWORD
   manage_account_yml user.userid $(id -u)

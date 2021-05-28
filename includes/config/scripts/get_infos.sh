@@ -167,15 +167,17 @@ fi
 #  manage_account_yml sub.gui.auth basique
 #fi
 
-
-
-
 # creation utilisateur
 userid=$(id -u)
 grpid=$(id -g)
-htpasswd -c -b /tmp/.htpasswd $user $pass >/dev/null 2>&1
-htpwd=$(cat /tmp/.htpasswd)
+
+# on reprend les valeurs du account.yml, juste au cas où
+user=$(get_from_account_yml user.name)
+pass=$(get_from_account_yml user.pass)
+
+
+manage_account_yml user.htpwd $(htpasswd -nb $user $pass)
 
 manage_account_yml user.userid "$userid"
 manage_account_yml user.groupid "$grpid"
-manage_account_yml user.htpwd "$htpwd"
+
