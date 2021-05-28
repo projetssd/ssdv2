@@ -55,7 +55,8 @@ apt-get install -y --reinstall \
   python3-pip \
   python-dev \
   python-apt \
-  python3-venv
+  python3-venv \
+  sqlite3
 
 rm -f /usr/bin/python
 
