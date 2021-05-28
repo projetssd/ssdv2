@@ -41,11 +41,11 @@ Rebooter la machine une fois terminé !
 ## Le script SSD permet l'installation d'une seedbox complète avec Docker
 
 #### Pour se lancer dans l’installation, il faut au préalable suivre les étapes suivantes:
-* [Un serveur distant](https://github.com/laster13/patxav/wiki/Serveur)
-* [Un nom de domaine](https://github.com/laster13/patxav/wiki/Nom-de-domaine)
-* [Un abonnement à cloud workspace](https://github.com/laster13/patxav/wiki/Les-offres-Cloud-Google)
-* [DNS Cloudflare](https://github.com/laster13/patxav/wiki/Cloudflare)
-* [Création API Google Drive](https://github.com/laster13/patxav/wiki/Cr%C3%A9ation-API-Google)
+* [Un serveur distant](https://github.com/projetssd/ssdv2/wiki/Serveur)
+* [Un nom de domaine](https://github.com/projetssd/ssdv2/wiki/Nom-de-domaine)
+* [Un abonnement à cloud workspace](https://github.com/projetssd/ssdv2/wiki/Les-offres-Cloud-Google)
+* [DNS Cloudflare](https://github.com/projetssd/ssdv2/wiki/Cloudflare)
+* [Création API Google Drive](https://github.com/projetssd/ssdv2/wiki/Cr%C3%A9ation-API-Google)
 
 ###
 
