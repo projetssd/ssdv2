@@ -190,7 +190,11 @@ if [ $mode_install = "manuel" ]; then
         #pause
         # on marque la seedbox comme installée
         update_seedbox_param "installed" 1
-        script_plexdrive
+        echo "L'installation est maintenant terminée."
+        echo "Pour le configurer ou modifier les applis, vous pouvez le relancer"
+        echo "cd /opt/seedbox-comose"
+        echo "./seedbox.sh"
+        exit 0
       else
         script_plexdrive
       fi
@@ -219,7 +223,11 @@ if [ $mode_install = "manuel" ]; then
         resume_seedbox
         pause
         touch "${CONFDIR}/media-$SEEDUSER"
-        script_classique
+        echo "L'installation est maintenant terminée."
+        echo "Pour le configurer ou modifier les applis, vous pouvez le relancer"
+        echo "cd /opt/seedbox-comose"
+        echo "./seedbox.sh"
+        exit 0
       else
         script_classique
       fi
