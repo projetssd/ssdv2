@@ -69,11 +69,24 @@ Une fois que tout ça est fait, déconnectez vous de votre session root, et reco
 Ensuite
 ```
 sudo apt-get update
+```
+```
 sudo apt install -y git
 sudo git clone https://github.com/projetssd/ssdv2.git /opt/seedbox-compose
 sudo chown -R ${USER}: /opt/seedbox-compose
 cd /opt/seedbox-compose
-./seedbox.sh # et laissez vous guider
+./seedbox.sh
+```
+### Vous aurez ce message : 
+```
+IMPORTANT !
+===================================================
+Votre utilisateur n'était pas dans le groupe docker
+Il a été ajouté, mais vous devez vous déconnecter/reconnecter pour que la suite du process puisse fonctionner
+```
+Alors déconnexion puis Reconnexion et on continue avec la même commande
+```
+cd /opt/seedbox-compose && ./seedbox.sh
 ```
 
 <br/><br/>
