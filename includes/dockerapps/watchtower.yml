@@ -19,6 +19,11 @@
   gather_facts: false
   tasks:
 
+    - name: Create directory if needed
+      file:
+        path: "{{ lookup('env','CONFDIR') }}/status"
+        state: directory
+
     - name: create watchtower state
       shell: |
         echo "1" > "{{ lookup('env','CONFDIR') }}/status/watchtower"
