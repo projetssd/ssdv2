@@ -34,18 +34,23 @@ read -rp $'\e[36m   Souhaitez vous poursuivre l installation: (o/n) ? \e[0m' OUI
 if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
 
   # Add the Cloud SDK distribution URI as a package source
-  sudo echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+  echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
 
   # Import the Google Cloud Platform public key
   curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
 
   # Update the package list and install the Cloud SDK
-  sudo apt update && sudo apt install google-cloud-sdk
+  sudo apt update && sudo apt install -y google-cloud-sdk
   echo ""
   gcloud init
   echo ""
+  if [ -d /opt/gen-sa ]; then
+    sudo rm -f /opt/gen-sa
+  fi
   sudo git clone https://github.com/88lex/sa-gen.git /opt/gen-sa
   sudo chown -R ${USER} /opt/gen-sa
+  sudo mkdir /opt/sa > /dev/null 2>&1
+  sudo chown -R ${USER} /opt/sa
   echo ""
   ansible-playbook /opt/seedbox-compose/includes/config/roles/gen-sa/tasks/main.yml
   echo ""
