@@ -17,7 +17,7 @@
       - man-db
 
 - name: Install Binary | Create rclone directories
-  file: "path={{ item }} state=directory mode=0775 owner={{ lookup('env','USER') }} group={{ lookup('env','USER') }} recurse=yes"
+  file: "path={{ item }} state=directory mode=0775 owner={{ lookup('env','USER') }} group={{ lookup('env','MYGIDNAME') }} recurse=yes"
   with_items:
     - "{{ lookup('env','HOME') }}/.config"
     - "{{ lookup('env','HOME') }}/.config/rclone"

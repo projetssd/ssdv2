@@ -36,8 +36,10 @@ function update_system() {
 }
 
 function status() {
+
   # Créé les fichiers de service, comme quoi rien n'est encore installé
   create_dir ${CONFDIR}/status
+  sudo chown -R ${USER}: ${CONFDIR}/status
   for app in $(cat ${BASEDIR}/includes/config/services-available); do
     service=$(echo $app | tr '[:upper:]' '[:lower:]' | cut -d\- -f1)
     echo "0" >${CONFDIR}/status/$service
@@ -1875,7 +1877,7 @@ function migrate() {
   fi
   # on sort du venv car on va le retrouver juste après
   deactivate >/dev/null 2>&1
-  sudo chown ${USER} /opt/seedbox/variables/account.yml
+
   # on bouge le vault pass
   if sudo test -f /root/.vault_pass; then
     sudo cp /root/.vault_pass ${HOME}/.vault_pass
@@ -1897,6 +1899,7 @@ function migrate() {
   premier_lancement
 
   # on revient dans le venv
+  sudo chown -R "${USER}": ${SCRIPTPATH}/venv
   source ${SCRIPTPATH}/venv/bin/activate
   olduser=$(get_from_account_yml user.name)
   if [ "${olduser}" != "$USER" ]; then
@@ -1909,6 +1912,7 @@ function migrate() {
   sudo chown -R "${USER}": /opt/seedbox/resume
   sudo chown -R "${USER}": ${HOME}/resume
   sudo chown -R ${USER}: ${CONFDIR}/status/*
+  sudo chown ${USER} /opt/seedbox/variables/account.yml
 
   echo "Assurez vous d'être connecté sur le bon utilisateur (celui qui va piloter la seedbox)"
   echo "en connection directe (pas de connection sur un autre user ou root, puis sudo)"
