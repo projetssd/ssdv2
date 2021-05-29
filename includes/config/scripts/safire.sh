@@ -26,9 +26,10 @@ ${YELLOW}2. ${CEND}""${GREEN}Ajouter le groupe à votre source et destination Te
 ${CEND}"
 pause
 echo ""
-git clone https://github.com/88lex/safire.git /opt/safire
+sudo git clone https://github.com/88lex/safire.git /opt/safire
+sudo chown -R ${USER} /opt/safire
 cd /opt/safire
-pip install -r requirements.txt
+pip install -r requirements.txt --user
 echo ""
 ansible-playbook /opt/seedbox-compose/includes/config/roles/safire/tasks/main.yml
 echo ""
