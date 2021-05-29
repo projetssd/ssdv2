@@ -195,6 +195,11 @@ function sauve() {
   echo ""
 }
 
+function debug() {
+  echo "### DEBUG ${1}"
+  pause
+}
+
 function plex_dupefinder() {
   #configuration plex_dupefinder avec ansible
   echo -e "${BLUE}### PLEX_DUPEFINDER ###${NC}"
