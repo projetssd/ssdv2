@@ -892,7 +892,7 @@ function subdomain() {
 function subdomain_unitaire() {
   line=$1
   echo ""
-  read -rp $'\e\033[1;37m --> Personnaliser le sous domaines pour ${line} : (o/N) ? ' OUI
+  read -rp $'\e\033[1;37m --> Personnaliser le sous domaines pour '${line}' : (o/N) ? ' OUI
   echo ""
   if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
     echo -e " ${CRED}--> NE PAS SAISIR LE NOM DE DOMAINE - LES POINTS NE SONT PAS ACCEPTES${NC}"
