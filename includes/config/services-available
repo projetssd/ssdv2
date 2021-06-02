@@ -7,6 +7,7 @@ Jackett-TorrentProviders
 Jdownloader-DownloadManagement
 Jellyfin-EmbyMediaServer
 Lidarr-MusicCollectionManager
+Mango-MangaServer
 Medusa-TVShowsAutomation
 Netdata-RealtimePerformanceHealthMonitoring
 Nextcloud-SafeHomeForAllYourData
