@@ -57,7 +57,8 @@ apt-get install -y --reinstall \
   python-apt \
   python3-venv \
   sqlite3 \
-  apache2-utils
+  apache2-utils \
+  dnsutils
 
 rm -f /usr/bin/python
 
