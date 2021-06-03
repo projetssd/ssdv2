@@ -4,6 +4,7 @@ Deluge-TorrentClient
 Emby-EmbyMediaServer
 Heimdall-OrganiseLinksWebApplications
 Jackett-TorrentProviders
+JackettVPN-TorrentProvidersVPN
 Jdownloader-DownloadManagement
 Jellyfin-EmbyMediaServer
 Lidarr-MusicCollectionManager
