@@ -1,5 +1,5 @@
 ---
-- privileged: 'true'
+privileged: 'true'
 pgrole: 'jackettvpn'
 intport: '9117'
 image: 'dyonr/jackettvpn:latest'
