@@ -1,0 +1,16 @@
+---
+- name: 'Deploying flaresolverr-vpn'
+  docker_container:
+    name: 'flaresolverr-vpn'
+    image: 'ghcr.io/flaresolverr/flaresolverr:latest'
+    env:
+      CAPTCHA_SOLVER: 'harvester'
+      HARVESTER_ENDPOINT: 'https://127.0.0.1:5000/token'
+      LOG_LEVEL: 'info'
+    published_ports:
+      - '8191:8191'
+    pull: yes
+    restart_policy: unless-stopped
+    networks:
+      - name: traefik_proxy
+    state: started
