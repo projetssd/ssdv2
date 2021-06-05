@@ -12,4 +12,4 @@
     group: '{{ user.groupid }}'
     force: no
   ignore_errors: True
-  when: jsonfile.stat.exists == False
+  when: not jsonfile.stat.exists
