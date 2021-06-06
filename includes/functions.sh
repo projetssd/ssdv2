@@ -219,7 +219,7 @@ function traktarr() {
 }
 
 function update_logrotate() {
-  ansible-playbook ${BASEDIR}/includes/playbooks/logrotate.yml
+  ansible-playbook ${BASEDIR}/includes/config/playbooks/logrotate.yml
 }
 
 function webtools() {
