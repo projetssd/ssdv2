@@ -218,6 +218,10 @@ function traktarr() {
   checking_errors $?
 }
 
+function update_logrotate() {
+  ansible-playbook ${BASEDIR}/includes/playbooks/logrotate.yml
+}
+
 function webtools() {
   ##configuration Webtools avec ansible
   echo -e "${BLUE}### WEBTOOLS ###${NC}"
@@ -1809,7 +1813,7 @@ EOF
   # Account.yml
   sudo mkdir "${SCRIPTPATH}/logs"
   sudo chown -R ${user}: "${SCRIPTPATH}/logs"
-  sudo chmod 777 "${SCRIPTPATH}/logs"
+  sudo chmod 755 "${SCRIPTPATH}/logs"
   create_dir "${CONFDIR}"
   create_dir "${CONFDIR}/variables"
   if [ ! -f "${CONFDIR}/variables/account.yml" ]; then

@@ -1,0 +1,7 @@
+/opt/seedbox-compose/logs/*.log {
+  rotate 7
+  daily
+  compress
+  missingok
+  su {{ lookup('env','USER') }} {{ lookup('env','MYGIDNAME') }}
+}

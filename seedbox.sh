@@ -299,6 +299,8 @@ if [ $mode_install = "manuel" ]; then
 
   update_status
 
+  chmod 755 /opt/seedbox-compose/logs
+  update_logrotate
   PLEXDRIVE="/usr/bin/rclone"
   if [[ -e "$PLEXDRIVE" ]]; then
     script_plexdrive
