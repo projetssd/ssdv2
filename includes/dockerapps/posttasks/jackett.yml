@@ -4,8 +4,7 @@
     name: 'flaresolverr'
     image: 'flaresolverr/flaresolverr:latest'
     env:
-      CAPTCHA_SOLVER: 'harvester'
-      HARVESTER_ENDPOINT: 'https://127.0.0.1:5000/token'
+      CAPTCHA_SOLVER: 'hcaptcha-solver'
       LOG_LEVEL: 'info'
     published_ports:
       - '8191:8191'
