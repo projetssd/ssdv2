@@ -40,7 +40,7 @@ function detection() {
   read -rp "Votre choix: " RTYPE
   
   case "$RTYPE" in
-	  "1")
+	  1)
 	  i=1
 	  # on met les team drive dans un fichier temporaire
 	  grep "team_drive" ${RCLONE_CONFIG_FILE} | uniq > /tmp/drive.txt
@@ -94,7 +94,7 @@ function detection() {
 	  done
 	  ;;
 	  
-	  "2")
+	  2)
 	  i=1
 	  grep "root_folder_id = ." ${RCLONE_CONFIG_FILE} | uniq > /tmp/drive.txt
 	  grep "root_folder_id = ." ${RCLONE_CONFIG_FILE} > /dev/null 2>&1
