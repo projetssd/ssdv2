@@ -1678,9 +1678,9 @@ function auth() {
   echo ""
   for line in $(cat $SERVICESPERUSER); do
 
-    while [ -z "$AUTH" ]; do
-      read -rp $'\e\033[1;37m --> Authentification '${line}' [ Enter ] 1 => basique (défaut) | 2 => oauth | 3 => authelia | 4 => aucune: ' AUTH
-    done
+
+      read -rp $'\e\033[1;37m --> Authentification pour '${line}' [ Enter ] 1 => basique (défaut) | 2 => oauth | 3 => authelia | 4 => aucune: ' AUTH
+
 
     case $AUTH in
     1)
@@ -1702,7 +1702,7 @@ function auth() {
 
     *)
       TYPE_AUTH=basique
-      echo "Pas de choix sélectionné, on passe sur une auth basique"
+      echo "Pas de choix sélectionné, auth basique"
 
       ;;
     esac
