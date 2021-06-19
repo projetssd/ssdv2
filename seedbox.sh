@@ -273,7 +273,7 @@ if [ $mode_install = "manuel" ]; then
         choose_media_folder_plexdrive
         unionfs_fuse
         sauve
-        restore
+        sudo restore
         ## reinitialisation de toutes les applis
         while read line; do echo $line | cut -d'.' -f1; done <"/home/${USER}/resume" >$SERVICESPERUSER
         rm /home/${USER}/resume

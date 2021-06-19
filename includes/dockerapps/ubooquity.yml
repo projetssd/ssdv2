@@ -32,9 +32,19 @@
       when: cloudflare_enabled
 
     # FACTS #######################################################################
+<<<<<<< HEAD
 
     - name: Creating paths
       file: "path={{item}} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID') }}"
+=======
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'ubooquity'
+        image: 'ghcr.io/linuxserver/ubooquity'
+
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
+>>>>>>> 14ad3ee2afa16ec29c7b71763d517a1306764019
       with_items:
         - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}"
 
@@ -44,11 +54,19 @@
         pg_labels:
           traefik.enable: 'true'
           traefik.http.routers.ubooquity-rtr.entrypoints: 'https'
+<<<<<<< HEAD
           traefik.http.routers.ubooquity-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.ubooquity-rtr.service: 'ubooquity'
           traefik.http.services.ubooquity.loadbalancer.server.port: '2202'
           traefik.http.routers.ubooquity-admin-rtr.entrypoints: 'https'
           traefik.http.routers.ubooquity-admin-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`) && PathPrefix(`/ubooquity/admin`)'
+=======
+          traefik.http.routers.ubooquity-rtr.rule: 'Host(`{{sub.ubooquity if sub_enabled else pgrole}}.{{user.domain}}`)'
+          traefik.http.routers.ubooquity-rtr.service: 'ubooquity'
+          traefik.http.services.ubooquity.loadbalancer.server.port: '2202'
+          traefik.http.routers.ubooquity-admin-rtr.entrypoints: 'https'
+          traefik.http.routers.ubooquity-admin-rtr.rule: 'Host(`{{sub.ubooquity if sub_enabled else pgrole}}.{{user.domain}}`) && PathPrefix(`/ubooquity/admin`)'
+>>>>>>> 14ad3ee2afa16ec29c7b71763d517a1306764019
           traefik.http.routers.ubooquity-admin-rtr.service: 'ubooquity-admin'
           traefik.http.services.ubooquity-admin.loadbalancer.server.port: '2203'
 
@@ -63,8 +81,13 @@
     - name: 'Setting ENV'
       set_fact:
         pg_env:
+<<<<<<< HEAD
           PUID: "{{ lookup('env','MYUID') }}"
           PGID: "{{ lookup('env','MYGID') }}"
+=======
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
+>>>>>>> 14ad3ee2afa16ec29c7b71763d517a1306764019
           TZ: 'Europe/Paris'
 
     # MAIN DEPLOYMENT #############################################################

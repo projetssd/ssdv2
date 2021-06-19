@@ -1,31 +1,14 @@
 #!/bin/bash
-
 ---
 - hosts: localhost
   gather_facts: false
-  vars_prompt:
-    - name: provider
-      prompt: "OPENVPN_PROVIDER"
-      private: no
-    - name: username
-      prompt: "OPENVPN_USERNAME"
-      private: no
-    - name: password
-      prompt: "OPENVPN_PASSWORD"
-      private: no
-    - name: config
-      prompt: "OPENVPN_CONFIG (Nom fichier sans la terminaison opvn)"
-      private: no
-    - name: network
-      prompt: "LOCAL_NETWORK (ex 192.168.1.0/24)"
-      private: no
   vars_files:
     - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
   tasks:
         
     # FACTS #######################################################################
 
-    - name: create transmission state
+    - name: create radarr state
       shell: |
         echo "1" > {{ lookup('env','CONFDIR') }}/status/transmission
 
@@ -96,10 +79,23 @@
         subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
       when: cloudflare_enabled
 
+<<<<<<< HEAD
     - name: 'Creating transmission folder paths'
       file: "path={{item}} state=directory mode=0775 owner={{lookup('env','MYUID')}} group={{lookup('env','MYGID')}}"
       with_items:
         - "/home/{{lookup('env','USER')}}/local/transmission"
+=======
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'transmission'
+        intport: '9091'
+        image: 'ghcr.io/linuxserver/transmission'
+
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
+      with_items:
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
+>>>>>>> 14ad3ee2afa16ec29c7b71763d517a1306764019
 
     # LABELS ######################################################################
     - name: 'Ajout label traefik'
@@ -113,20 +109,30 @@
           ## Middlewares
           traefik.http.routers.transmission-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
           ## HTTP Services
+          #traefik.http.routers.transmission-rtr.tls.certresolver: 'dns-cloudflare' 
           traefik.http.routers.transmission-rtr.service: 'transmission-svc'
           traefik.http.services.transmission-svc.loadbalancer.server.port: '9091'
 
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
+<<<<<<< HEAD
           - "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/transmission/data:/data"
           - "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/transmission/config:/config"
           - '/etc/localtime:/etc/localtime:ro'
           - "/home/{{lookup('env','USER')}}:/home/{{lookup('env','USER')}}"
+=======
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config:/config'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/downloads:/downloads'
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/watch:/watch'
+          - '/home/{{user.name}}:/home/{{user.name}}'
+          - '/etc/localtime:/etc/localtime:ro'
+>>>>>>> 14ad3ee2afa16ec29c7b71763d517a1306764019
 
     - name: 'Setting PG ENV'
       set_fact:
         pg_env:
+<<<<<<< HEAD
           PUID: "{{lookup('env','MYUID')}}"
           PGID: "{{lookup('env','MYGID')}}"
           CREATE_TUN_DEVICE: 'true'
@@ -138,16 +144,21 @@
           OPENVPN_OPTS: '--inactive 3600 --ping 10 --ping-exit 60'
           TRANSMISSION_DOWNLOAD_DIR: "/home/{{lookup('env','USER')}}/transmission"
           TZ: 'Europe/Paris'
+=======
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
+>>>>>>> 14ad3ee2afa16ec29c7b71763d517a1306764019
 
     # MAIN DEPLOYMENT #############################################################
+
     - name: 'Deploying {{pgrole}}'
       docker_container:
         name: '{{pgrole}}'
         image: '{{image}}'
         pull: yes
-        capabilities:
-          - 'NET_ADMIN'
-        sysctls: 'net.ipv6.conf.all.disable_ipv6=0'
+        published_ports:
+          - '51413:51413'
+          - '51413:51413/udp'
         volumes: '{{pg_volumes}}'
         env: '{{pg_env}}'
         restart_policy: unless-stopped
@@ -155,13 +166,6 @@
           - name: traefik_proxy
         state: started
         labels: '{{pg_labels}}'
-
-    - debug:
-        msg: Une fois l'installation terminée, il faut patienter environ 5 mn pour l'interface Webui soit dispo !!
-
-    - name: Prendre connaissance du message ci dessus
-      wait_for:
-        timeout: 10
 
     - name: add resume file
       become: yes

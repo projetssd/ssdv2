@@ -177,7 +177,11 @@
           - --providers.docker.swarmMode=false
           - --providers.file.directory=/rules
           - --providers.file.watch=true
+<<<<<<< HEAD
            - --certificatesResolvers.letsencrypt.acme.email='{{user.mail}}'
+=======
+          - --certificatesResolvers.letsencrypt.acme.email='{{user.mail}}'
+>>>>>>> 14ad3ee2afa16ec29c7b71763d517a1306764019
           - --certificatesResolvers.letsencrypt.acme.storage=/acme.json
           - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
       when: not cloudflare_enabled

@@ -19,16 +19,25 @@ Overseerr-PlexRequestAndUserManagementSystem
 Petio-PlexRequestAndUserManagementSystem
 Plex-PlexMediaServer
 Portainer-LightweightManagementUI
+<<<<<<< HEAD
 Prowlarr-indexermanager
 Qbittorrent-TorrentClient
 Radarr-MoviesAutomation
 Radarr4k-MoviesAutomation
 Readarr-BookMagazineComicsEbookAudiobook
+=======
+Prowlarr-IndexerManager
+Qbittorrent-TorrentClient
+QbittorrentVPN-TorrentClientVPN
+Radarr-MoviesAutomation-ForkSonarr
+Readarr-BookComicsEbookAudiobookManager
+>>>>>>> 14ad3ee2afa16ec29c7b71763d517a1306764019
 Rtorrentvpn-TorrentClient
 Rutorrent-TorrentClient
 Sabnzbd-SabnzbdUsenet
 Sensorr-MoviesAutomation
 Sonarr-TVShowsAutomation
 Tautulli-FeatureRichDashboardOfStatistics
+Transmissionvpn-TorrentClientVPN
 Transmission-TorrentClientVPN
-Sickchill-AutomaticVideoLibraryManagerTVShows
+Sickchill-AutomaticVideoManagerTVShows

@@ -2,11 +2,16 @@
 ---
 - hosts: localhost
   gather_facts: false
+<<<<<<< HEAD
   vars:
     pgrole: qbittorrent
   vars_files:
     - /opt/seedbox/variables/account.yml
     - "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/generique.yml"
+=======
+  vars_files:
+    - /opt/seedbox/variables/account.yml
+>>>>>>> 14ad3ee2afa16ec29c7b71763d517a1306764019
   tasks:
 
     - name: create qbittorrent state
@@ -17,6 +22,7 @@
       stat:
         path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
       register: check
+<<<<<<< HEAD
 
     - name: 'Set Known Facts'
       set_fact:
@@ -24,18 +30,79 @@
         intport: '8080'
         image: 'ghcr.io/linuxserver/qbittorrent'
 
+=======
+  
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
+            (cloudflare.login is undefined)
+            or
+            (cloudflare.login is none)
+            or
+            (cloudflare.login | trim | length == 0)
+            or
+            (cloudflare.api is undefined)
+            or
+            (cloudflare.api is none)
+            or
+            (cloudflare.api | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Variables | Set 'oauth_enabled' variable"
+      set_fact:
+        oauth_enabled: "{{ true if not(
+            (oauth.client is undefined)
+            or
+            (oauth.client is none)
+            or
+            (oauth.client | trim | length == 0)
+            or
+            (oauth.secret is undefined)
+            or
+            (oauth.secret is none)
+            or
+            (oauth.secret | trim | length == 0)
+            or
+            (oauth.account is undefined)
+            or
+            (oauth.account is none)
+            or
+            (oauth.account | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Variables | Set 'sub' variable"
+      set_fact:
+        sub_enabled: "{{ true if not(
+            (sub.qbittorrent is undefined)
+            or
+            (sub.qbittorrent is none)
+            or
+            (sub.qbittorrent | trim | length == 0)
+          )
+            else false }}"
+>>>>>>> 14ad3ee2afa16ec29c7b71763d517a1306764019
 
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
+<<<<<<< HEAD
         subdomain: "{{sub.qbittorrent.qbittorrent if sub_enabled else 'qbittorrent'}}"
+=======
+        subdomain: "{{sub.qbittorrent if sub_enabled else 'qbittorrent'}}"
+>>>>>>> 14ad3ee2afa16ec29c7b71763d517a1306764019
       when: cloudflare_enabled
 
     - name: 'Set Known Facts'
       set_fact:
         pgrole: 'qbittorrent'
         intport: '8080'
+<<<<<<< HEAD
         image: 'ghcr.io/linuxserver/qbittorrent'
+=======
+        image: 'linuxserver/qbittorrent:latest'
+>>>>>>> 14ad3ee2afa16ec29c7b71763d517a1306764019
 
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
@@ -49,6 +116,7 @@
           traefik.enable: 'true'
           ## HTTP Routers
           traefik.http.routers.qbittorrent-rtr.entrypoints: 'https'
+<<<<<<< HEAD
           traefik.http.routers.qbittorrent-rtr.rule: 'Host(`{{sub.qbittorrent.qbittorrent if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.qbittorrent-rtr.tls: 'true'
           ## Middlewares
@@ -56,6 +124,12 @@
           else 'chain-basic-auth@file' if auth_enabled and sub[pgrole].auth == 'basique' | default(false)
           else 'chain-oauth@file' if auth_enabled and sub[pgrole].auth == 'oauth' | default(false)
           else omit if auth_enabled and sub[pgrole].auth == 'aucune'}}"
+=======
+          traefik.http.routers.qbittorrent-rtr.rule: 'Host(`{{sub.qbittorrent if sub_enabled else pgrole}}.{{user.domain}}`)'
+          traefik.http.routers.qbittorrent-rtr.tls: 'true'
+          ## Middlewares
+          traefik.http.routers.qbittorrent-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
+>>>>>>> 14ad3ee2afa16ec29c7b71763d517a1306764019
           ## HTTP Services
           traefik.http.routers.qbittorrent-rtr.service: 'qbittorrent-svc'
           traefik.http.services.qbittorrent-svc.loadbalancer.server.port: '8080'
@@ -63,9 +137,14 @@
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
+<<<<<<< HEAD
           - "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
           - "{{ lookup('env','HOME') }}/local/{{pgrole}}/downloads:/downloads"
           - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+=======
+          - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config:/config'
+          - '/home/{{user.name}}/local/{{pgrole}}/downloads:/downloads'
+>>>>>>> 14ad3ee2afa16ec29c7b71763d517a1306764019
 
     - name: 'Setting PG ENV'
       set_fact:
@@ -91,5 +170,15 @@
         state: started
         labels: '{{pg_labels}}'
 
+<<<<<<< HEAD
 
 
+=======
+    - name: add resume file
+      shell: |
+        echo "{{pgrole}}-{{sub.qbittorrent if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+
+    - name: create qbittorrent state
+      shell: |
+        echo "2" > /opt/seedbox/status/qbittorrent
+>>>>>>> 14ad3ee2afa16ec29c7b71763d517a1306764019
