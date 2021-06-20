@@ -51,7 +51,7 @@
         force: yes
         mode: 0600
       when: acme_json.stat.exists == False
-      
+
     - name: Create directory
       file:
         path: "{{ item }}"
@@ -88,7 +88,7 @@
           traefik.http.routers.traefik-rtr.entrypoints: 'https'
           traefik.http.routers.traefik-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.traefik-rtr.tls: 'true'
-          traefik.http.routers.traefik-rtr.tls.certresolver: 'letsencrypt' 
+          traefik.http.routers.traefik-rtr.tls.certresolver: 'letsencrypt'
           traefik.http.routers.traefik-rtr.tls.domains[0].main: '{{user.domain}}'
           traefik.http.routers.traefik-rtr.tls.domains[0].sans: '*.{{user.domain}}'
           ## Services - API
@@ -96,7 +96,7 @@
           ## Middlewares
           traefik.http.routers.traefik-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
             else 'chain-basic-auth@file' if auth_enabled and sub[pgrole].auth == 'basique' | default(false)
-            else 'chain-oauth@file' if auth_enabled and sub[pgrole].auth == 'oauth' | default(false) 
+            else 'chain-oauth@file' if auth_enabled and sub[pgrole].auth == 'oauth' | default(false)
             else omit if auth_enabled and sub[pgrole].auth == 'aucune'}}"
       when: cloudflare_enabled
 
@@ -119,7 +119,7 @@
           ## Middlewares
           traefik.http.routers.traefik-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
             else 'chain-basic-auth@file' if auth_enabled and sub[pgrole].auth == 'basique' | default(false)
-            else 'chain-oauth@file' if auth_enabled and sub[pgrole].auth == 'oauth' | default(false) 
+            else 'chain-oauth@file' if auth_enabled and sub[pgrole].auth == 'oauth' | default(false)
             else omit if auth_enabled and sub[pgrole].auth == 'aucune'}}"
       when: not cloudflare_enabled
 
@@ -177,15 +177,11 @@
           - --providers.docker.swarmMode=false
           - --providers.file.directory=/rules
           - --providers.file.watch=true
-<<<<<<< HEAD
            - --certificatesResolvers.letsencrypt.acme.email='{{user.mail}}'
-=======
-          - --certificatesResolvers.letsencrypt.acme.email='{{user.mail}}'
->>>>>>> 14ad3ee2afa16ec29c7b71763d517a1306764019
           - --certificatesResolvers.letsencrypt.acme.storage=/acme.json
           - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
       when: not cloudflare_enabled
-      
+
     - name: Create a network
       community.docker.docker_network:
         name: traefik_proxy
@@ -224,14 +220,14 @@
     - name: create {{pgrole}}state
       shell: |
         echo "2" >  {{ lookup('env','CONFDIR') }}/status/{{pgrole}}
-        
+
     - name: create {{pgrole}}state
       shell: |
         echo "2" >  {{ lookup('env','CONFDIR') }}/status/oauth
       when: oauth_enabled
 
     - name: Insert traefik into database
-      shell : 
+      shell :
         cmd: |
           sqlite3 {{  lookup('env','BASEDIR') }}/ssddb << EOF
               replace into applications (name,status,subdomain,port)

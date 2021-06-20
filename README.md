@@ -84,12 +84,13 @@ IMPORTANT !
 ===================================================
 Votre utilisateur n'était pas dans le groupe docker
 Il a été ajouté, mais vous devez vous déconnecter/reconnecter pour que la suite du process puisse fonctionner
+=======
 ```
 Alors déconnexion puis Reconnexion et on continue avec la même commande
 ```
 cd /opt/seedbox-compose && ./seedbox.sh
 ```
-=======
+
 [![Discord: https://discordapp.com/invite/kkwEvV6dfj](https://img.shields.io/badge/Discord-gray.svg?style=for-the-badge)](https://discordapp.com/invite/kkwEvV6dfj)
 
 
@@ -106,7 +107,7 @@ cd /opt/seedbox-compose && ./seedbox.sh
 
 Une fois les pré requis validé pous pouvez suivre le guide :  
 * [Pas à pas d'installation](https://github.com/laster13/patxav/wiki/pas-%C3%A0-pas)
->>>>>>> 14ad3ee2afa16ec29c7b71763d517a1306764019
+
 
 <br/><br/>
 

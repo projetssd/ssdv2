@@ -8,17 +8,10 @@
 
 # List of users
 users:
-<<<<<<< HEAD
   "{{ lookup('env','USER') }}":
     displayname: "{{ lookup('env','USER') }}"
     password: "{{password.stdout}}"
     email: {{user.mail}}
-=======
-  '{{user.name}}':
-    displayname: '{{user.name}}'
-    password: '{{password.stdout}}'
-    email: '{{user.mail}}'
->>>>>>> 14ad3ee2afa16ec29c7b71763d517a1306764019
     groups:
       - admins
       - dev
