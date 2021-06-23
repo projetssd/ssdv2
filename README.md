@@ -1,6 +1,6 @@
 <br /><img src="https://user-images.githubusercontent.com/64525827/107496602-ceddbb80-6b91-11eb-9a05-ac311eedf150.png" width="450">
 <br />
-<<<<<<< HEAD
+
 [![Discord: https://discordapp.com/invite/HZNMGjDRhp](https://img.shields.io/badge/Discord-gray.svg?style=for-the-badge)](https://discordapp.com/invite/HZNMGjDRhp)
 
 ## Comment migrer de la v1 vers la v2 ?
