@@ -237,32 +237,7 @@ if [ $mode_install = "manuel" ]; then
 
       #check_dir "$PWD"
       if [[ ${IS_INSTALLED} -eq 0 ]]; then
-        clear
-        # on met la timezone
-        #ansible-playbook ${BASEDIR}/includes/config/playbooks/timezone.yml
-        # Dépendances pour ansible (permet de créer le docker network)
-        ansible-galaxy collection install community.general
-        # on vérifie les droits sur répertoire et bdd
-        make_dir_writable ${BASEDIR}
-        change_file_owner ${BASEDIR}/ssddb
-        # On crée le conf dir (par défaut /opt/seedbox) s'il n'existe pas
-        conf_dir
-        # Maj du système
-        update_system
-        # On crée le dossier status
-        status
-        # Install des packages de base
-        install_base_packages
-        # Install de docker
-        install_docker
-        #  On part à la pêche aux infos
-        create_user_non_systeme
-        # récup infos cloudflare
-        cloudflare
-        # récup infos oauth
-        oauth
-        # Install de traefik
-        install_traefik
+          clear
         # Installation et configuration de rclone
         install_rclone
         # Install de watchtower
@@ -271,8 +246,19 @@ if [ $mode_install = "manuel" ]; then
         install_fail2ban
         # Choix des dossiers et création de l'arborescence
         choose_media_folder_plexdrive
+        # Installation de mergerfs
+        # Cette install a une incidence sur docker (dépendances dans systemd)
         unionfs_fuse
+        pause
+
+
+        # Installation de filebot
+        # TODO : à laisser ? Ou à mettre dans les applis ?
+        #filebot
+
+        # mise en place de la sauvegarde
         sauve
+
         sudo restore
         ## reinitialisation de toutes les applis
         while read line; do echo $line | cut -d'.' -f1; done <"/home/${USER}/resume" >$SERVICESPERUSER

@@ -48,12 +48,12 @@ backupList() {
 remoteRestoration() {
 
 path=/tmp/seedbox.txt
-backups=$(rclone -c /home/${SUDO_USER}/.config/rclone/rclone.conf lsf {{rclone.remote}}:/{{user.name}}/BACKUPS| sed 's:/.*::' | cat -n | sed 's/\([1-9].*\)/\1/')
+backups=$(rclone --config /home/${SUDO_USER}/.config/rclone/rclone.conf lsf {{rclone.remote}}:/{{user.name}}/BACKUPS| sed 's:/.*::' | cat -n | sed 's/\([1-9].*\)/\1/')
 
 echo -e "\n${CCYAN}Liste des archives disponibles :${CEND}"
 echo -e "${CGREEN}$backups${CEND}"
 
-rclone -c /home/${SUDO_USER}/.config/rclone/rclone.conf lsf {{rclone.remote}}:/{{user.name}}/BACKUPS | sed 's:/.*::' > $path
+rclone --config /home/${SUDO_USER}/.config/rclone/rclone.conf lsf {{rclone.remote}}:/{{user.name}}/BACKUPS | sed 's:/.*::' > $path
 
 echo ""
 
@@ -91,7 +91,7 @@ GdriveRestoration() {
     read -r
 
     echo "> Récupération de l'archive distante"
-    rclone -c /home/${SUDO_USER}/.config/rclone/rclone.conf  copy {{rclone.remote}}:/{{user.name}}/BACKUPS/$BACKUPFOLDER/$ARCHIVE . --progress
+    rclone --config /home/${SUDO_USER}/.config/rclone/rclone.conf  copy {{rclone.remote}}:/{{user.name}}/BACKUPS/$BACKUPFOLDER/$ARCHIVE . --progress
 }
 
 fin() {
@@ -154,7 +154,6 @@ done
 echo "> Décompression de l'archive à la racine du système"
 sleep 3
 tar xvf "$ARCHIVE" --absolute-names -C / 2> $ERROR_FILE
-
 
 if [[ -s $ERROR_FILE ]]; then
     echo -e "\n${CRED}/!\ ERREUR: Echec de la décompression de l'archive.${CEND}"
