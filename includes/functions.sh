@@ -27,7 +27,6 @@ function logo() {
 
 }
 
-
 function update_system() {
   #Mise à jour systeme
   echo -e "${BLUE}### MISE A JOUR DU SYTEME ###${NC}"
@@ -916,9 +915,7 @@ function auth() {
   echo ""
   for line in $(cat $SERVICESPERUSER); do
 
-
-      read -rp $'\e\033[1;37m --> Authentification '${line}' [ Enter ] 1 => basique (défaut) | 2 => oauth | 3 => authelia | 4 => aucune: ' AUTH
-
+    read -rp $'\e\033[1;37m --> Authentification '${line}' [ Enter ] 1 => basique (défaut) | 2 => oauth | 3 => authelia | 4 => aucune: ' AUTH
 
     case $AUTH in
     1)
@@ -953,9 +950,7 @@ function auth_unitaire() {
   line=$1
   echo ""
 
-
-    read -rp $'\e\033[1;37m --> Authentification '${line}' [ Enter ] 1 => basique (défaut) | 2 => oauth | 3 => authelia | 4 => aucune: ' AUTH
-
+  read -rp $'\e\033[1;37m --> Authentification '${line}' [ Enter ] 1 => basique (défaut) | 2 => oauth | 3 => authelia | 4 => aucune: ' AUTH
 
   case $AUTH in
   1)
@@ -1011,7 +1006,6 @@ function create_user_non_systeme() {
   [[ "$?" == 1 ]] && script_plexdrive
   PASSWORD=$(whiptail --title "Password" --passwordbox \
     "Mot de passe :" 7 50 3>&1 1>&2 2>&3)
-
 
   manage_account_yml user.htpwd $(htpasswd -nb $SEEDUSER $PASSWORD)
   manage_account_yml user.name $SEEDUSER
@@ -1204,9 +1198,14 @@ function install_services() {
   create_file ${CONFDIR}/temp.txt
 
   ## préparation installation
-  for line in $(cat $SERVICESPERUSER); do
-    launch_service "${line}"
+  for line in $(grep -l 2 ${CONFDIR}/status/*); do
+    basename=$(basename "${line}")
+    launch_service "${basename}"
   done
+
+  #for line in $(cat $SERVICESPERUSER); do
+  #  launch_service "${line}"
+  #done
 }
 
 function launch_service() {
@@ -1699,7 +1698,6 @@ function install_gui() {
     auth_unitaire gui
   fi
   subomain=$(get_from_account_yml sub.gui.gui})
-
 
   set +a
   export gui_subdomain=$subdomain
