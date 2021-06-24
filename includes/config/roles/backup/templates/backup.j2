@@ -39,7 +39,7 @@ echo ""
 mkdir -p $BACKUP_FOLDER
 
 echo -e "${CCYAN}> Création de l'archive${CEND}"
-tar -I pigz -cf $ARCHIVE -P /opt/seedbox /home/{{ lookup('env','USER') }}/scripts /home/{{ lookup('env','USER') }}/resume /home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf /etc/systemd
+tar -I pigz -cf $ARCHIVE -P /opt/seedbox /home/{{ lookup('env','USER') }}/.vault_pass /home/{{ lookup('env','USER') }}/scripts /home/{{ lookup('env','USER') }}/resume /home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf /etc/systemd
 sleep 2s
 
 # Si une erreur survient lors de la compression
