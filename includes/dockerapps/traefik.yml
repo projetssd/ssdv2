@@ -42,7 +42,7 @@
         path: " {{ lookup('env','CONFDIR') }}/docker/{{pgrole}}/acme/acme.json"
       register: acme_json
 
-    - name: Installing ACME
+    - name: Installing ACME (touch)
       file:
         path: "{{ lookup('env','CONFDIR') }}/docker/{{pgrole}}/acme/acme.json"
         state: touch
