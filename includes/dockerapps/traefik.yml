@@ -45,10 +45,9 @@
       register: acme_json
 
     - name: Installing ACME
-      template:
-        src: acme.json
-        dest: "{{ lookup('env','CONFDIR') }}/docker/{{pgrole}}/acme/acme.json"
-        force: yes
+      file:
+        path: "{{ lookup('env','CONFDIR') }}/docker/{{pgrole}}/acme/acme.json"
+        state: touch
         mode: 0600
       when: acme_json.stat.exists == False
 
