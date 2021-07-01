@@ -211,7 +211,7 @@
           - name: traefik_proxy
 
     - name: Google OAuth2 tasks
-      include_tasks: 'templates/{{pgrole}}/oauth.yml'
+      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/{{pgrole}}/oauth.yml"
       when: oauth_enabled
 
     - name: create {{pgrole}}state
