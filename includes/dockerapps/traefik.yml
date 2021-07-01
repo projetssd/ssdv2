@@ -1,5 +1,3 @@
-#!/bin/bash
-
 ---
 - hosts: localhost
   gather_facts: True
