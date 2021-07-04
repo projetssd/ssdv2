@@ -1482,7 +1482,7 @@ function suppression_appli() {
 
   req1="delete from applications where name='"
   req2="'"
-  req=${req}${APPSELECTED}${req2}
+  req=${req1}${APPSELECTED}${req2}
   sqlite3 ${SCRIPTPATH}/ssddb << EOF
     $req
 EOF
