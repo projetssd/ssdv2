@@ -1317,12 +1317,12 @@ function manage_apps() {
       echo -e " ${BWHITE}* Resume file: $USERRESUMEFILE${NC}"
       echo ""
       choose_services
-      for line in $(cat $SERVICESPERUSER); do
-        if [ ${line} != "authelia" ]; then
-          subdomain
-          auth
-        fi
-      done
+#       for line in $(cat $SERVICESPERUSER); do
+#        if [ ${line} != "authelia" ]; then
+#          subdomain
+#          auth
+#        fi
+#      done
       install_services
       pause
       resume_seedbox
