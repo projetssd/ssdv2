@@ -1198,14 +1198,14 @@ function install_services() {
   create_file ${CONFDIR}/temp.txt
 
   ## préparation installation
-  for line in $(grep -l 2 ${CONFDIR}/status/*); do
-    basename=$(basename "${line}")
-    launch_service "${basename}"
-  done
-
-  #for line in $(cat $SERVICESPERUSER); do
-  #  launch_service "${line}"
+  #for line in $(grep -l 2 ${CONFDIR}/status/*); do
+  #  basename=$(basename "${line}")
+  #  launch_service "${basename}"
   #done
+
+  for line in $(cat $SERVICESPERUSER); do
+    launch_service "${line}"
+  done
 }
 
 function launch_service() {
@@ -1628,7 +1628,7 @@ function pause() {
   echo ""
 }
 
-function select_seedbox_param() {
+select_seedbox_param() {
   if [ ! -f ${SCRIPTPATH}/ssddb ]; then
     # le fichier de base de données n'est pas là
     # on sort avant de faire une requête, sinon il va se créer
