@@ -1323,7 +1323,6 @@ function manage_apps() {
 #          auth
 #        fi
 #      done
-
       install_services
       pause
       resume_seedbox
