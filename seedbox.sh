@@ -132,7 +132,7 @@ if [ "$USER" == "root" ]; then
 fi
 
 # on met les droits comme il faut, au cas où il y ait eu un mauvais lancement
-sudo chown -R ${USER}: ${SCRIPTPATH}
+#sudo chown -R ${USER}: ${SCRIPTPATH}
 
 IS_INSTALLED=$(select_seedbox_param "installed")
 
