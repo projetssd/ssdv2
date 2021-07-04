@@ -1479,6 +1479,13 @@ function suppression_appli() {
   echo""
   echo -e "${BLUE}### $APPSELECTED a été supprimé ###${NC}"
   echo ""
+
+  req1="delete from applications where name='"
+  req2="'"
+  req=${req}${APPSELECTED}${req2}
+  sqlite3 ${SCRIPTPATH}/ssddb << EOF
+    $req
+EOF
 }
 
 function resume_seedbox() {
