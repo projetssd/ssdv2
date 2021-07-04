@@ -225,7 +225,7 @@ if [ $mode_install = "manuel" ]; then
         touch "${CONFDIR}/media-$SEEDUSER"
         echo "L'installation est maintenant terminée."
         echo "Pour le configurer ou modifier les applis, vous pouvez le relancer"
-        echo "cd /opt/seedbox-comose"
+        echo "cd /opt/seedbox-compose"
         echo "./seedbox.sh"
         exit 0
       else
@@ -261,7 +261,12 @@ if [ $mode_install = "manuel" ]; then
 
         sudo restore
         ## reinitialisation de toutes les applis
-        while read line; do echo $line | cut -d'.' -f1; done <"/home/${USER}/resume" >$SERVICESPERUSER
+        sqlite3 /opt/seedbox-compose/ssddb << EOF > $SERVICESPERUSER
+select name from applications;
+EOF
+
+
+        #while read line; do echo $line | cut -d'.' -f1; done <"/home/${USER}/resume" >$SERVICESPERUSER
         rm /home/${USER}/resume
         install_services
         # on marque la seedbox comme installée
