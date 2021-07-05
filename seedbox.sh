@@ -259,7 +259,16 @@ if [ $mode_install = "manuel" ]; then
         # mise en place de la sauvegarde
         sauve
 
+        ## On va garde ce qui a été saisi pour l'écraser plus tard
+        cp /opt/seedbox/variables/account.yml /opt/seebox/variables/account.temp
+
         sudo restore
+        # on remet le account.yml précédent qui a été écrasé par la restauration
+        cp /opt/seedbox/variables/account.yml /opt/seedbox/variables/account.restore
+        mv /opt/seebox/variables/account.temp /opt/seebox/variables/account.yml
+
+
+
         ## reinitialisation de toutes les applis
         sqlite3 /opt/seedbox-compose/ssddb << EOF > $SERVICESPERUSER
 select name from applications;
