@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/bash -e
 #########################################################################
 # Title:         Retrieve Plex Token                                    #
 # Author(s):     Werner Beroux (https://github.com/wernight)            #
@@ -18,20 +18,19 @@ source ${SCRIPTPATH}/includes/functions.sh
 source ${SCRIPTPATH}/includes/variables.sh
 source ${SCRIPTPATH}/includes/functions.sh
 
-while [ -z "$PLEX_LOGIN" ]; do
-    >&2 echo -n 'Votre login Plex (e-mail or username): '
-    read PLEX_LOGIN
-    manage_account_yml plex.ident $PLEX_LOGIN
-done
 
-while [ -z "$PLEX_PASSWORD" ]; do
-    >&2 echo -n 'Votre password Plex: '
-    read PLEX_PASSWORD
-    manage_account_yml plex.sesame $PLEX_PASSWORD
-    ###sed -i "/sesame:/c\   sesame: $PLEX_PASSWORD" /opt/seedbox/variables/account.yml
-done
+>&2 echo -n 'Votre login Plex (e-mail or username): '
+read PLEX_LOGIN
+manage_account_yml plex.ident $PLEX_LOGIN
 
->&2 echo 'Retrieving a X-Plex-Token using Plex login/password TESTAT...'
+
+
+>&2 echo -n 'Votre password Plex: '
+read PLEX_PASSWORD
+manage_account_yml plex.sesame $PLEX_PASSWORD
+
+
+>&2 echo 'Retrieving a X-Plex-Token using Plex login/password ...'
 
 #echo "RECAP ${PLEX_LOGIN}:${PLEX_PASSWORD}"
 
