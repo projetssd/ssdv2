@@ -132,7 +132,7 @@ if [ "$USER" == "root" ]; then
 fi
 
 # on met les droits comme il faut, au cas où il y ait eu un mauvais lancement
-sudo chown -R ${USER}: ${SCRIPTPATH}
+#sudo chown -R ${USER}: ${SCRIPTPATH}
 
 IS_INSTALLED=$(select_seedbox_param "installed")
 
@@ -225,7 +225,7 @@ if [ $mode_install = "manuel" ]; then
         touch "${CONFDIR}/media-$SEEDUSER"
         echo "L'installation est maintenant terminée."
         echo "Pour le configurer ou modifier les applis, vous pouvez le relancer"
-        echo "cd /opt/seedbox-comose"
+        echo "cd /opt/seedbox-compose"
         echo "./seedbox.sh"
         exit 0
       else
@@ -259,9 +259,23 @@ if [ $mode_install = "manuel" ]; then
         # mise en place de la sauvegarde
         sauve
 
+        ## On va garde ce qui a été saisi pour l'écraser plus tard
+        cp /opt/seedbox/variables/account.yml /opt/seebox/variables/account.temp
+
         sudo restore
+        # on remet le account.yml précédent qui a été écrasé par la restauration
+        cp /opt/seedbox/variables/account.yml /opt/seedbox/variables/account.restore
+        mv /opt/seebox/variables/account.temp /opt/seebox/variables/account.yml
+
+
+
         ## reinitialisation de toutes les applis
-        while read line; do echo $line | cut -d'.' -f1; done <"/home/${USER}/resume" >$SERVICESPERUSER
+        sqlite3 /opt/seedbox-compose/ssddb << EOF > $SERVICESPERUSER
+select name from applications;
+EOF
+
+
+        #while read line; do echo $line | cut -d'.' -f1; done <"/home/${USER}/resume" >$SERVICESPERUSER
         rm /home/${USER}/resume
         install_services
         # on marque la seedbox comme installée

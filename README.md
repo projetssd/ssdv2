@@ -5,7 +5,9 @@
 
 ## Comment migrer de la v1 vers la v2 ?
 
-Il faut un user qui porte le même nom que le user d'admin de la v1. Il faut ce user soit dans le groupe sudo. 
+### Attendre la présence d'un membre du staff sur le discord !!!
+
+Il faut un user qui porte le même nom que le user d'admin de la v1. Il faut que cette user soit dans le groupe sudo. 
 En root :
 ```
 usermod -aG sudo <user>
@@ -34,8 +36,7 @@ sudo chown -R ${USER}: /opt/seedbox-compose
 ```
 Lancer la migration
 ``` 
-cd /opt/seedbox-compose
-./seedbox.sh --migrate
+cd /opt/seedbox-compose && bash -x ./seedbox.sh --migrate
 ```
 Rebooter la machine une fois terminé !
 

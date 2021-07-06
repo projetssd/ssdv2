@@ -1198,14 +1198,14 @@ function install_services() {
   create_file ${CONFDIR}/temp.txt
 
   ## préparation installation
-  for line in $(grep -l 2 ${CONFDIR}/status/*); do
-    basename=$(basename "${line}")
-    launch_service "${basename}"
-  done
-
-  #for line in $(cat $SERVICESPERUSER); do
-  #  launch_service "${line}"
+  #for line in $(grep -l 2 ${CONFDIR}/status/*); do
+  #  basename=$(basename "${line}")
+  #  launch_service "${basename}"
   #done
+
+  for line in $(cat $SERVICESPERUSER); do
+    launch_service "${line}"
+  done
 }
 
 function launch_service() {
@@ -1317,12 +1317,12 @@ function manage_apps() {
       echo -e " ${BWHITE}* Resume file: $USERRESUMEFILE${NC}"
       echo ""
       choose_services
-      for line in $(cat $SERVICESPERUSER); do
-        if [ ${line} != "authelia" ]; then
-          subdomain
-          auth
-        fi
-      done
+#       for line in $(cat $SERVICESPERUSER); do
+#        if [ ${line} != "authelia" ]; then
+#          subdomain
+#          auth
+#        fi
+#      done
       install_services
       pause
       resume_seedbox
@@ -1479,6 +1479,13 @@ function suppression_appli() {
   echo""
   echo -e "${BLUE}### $APPSELECTED a été supprimé ###${NC}"
   echo ""
+
+  req1="delete from applications where name='"
+  req2="'"
+  req=${req1}${APPSELECTED}${req2}
+  sqlite3 ${SCRIPTPATH}/ssddb << EOF
+    $req
+EOF
 }
 
 function resume_seedbox() {
@@ -1628,7 +1635,7 @@ function pause() {
   echo ""
 }
 
-function select_seedbox_param() {
+select_seedbox_param() {
   if [ ! -f ${SCRIPTPATH}/ssddb ]; then
     # le fichier de base de données n'est pas là
     # on sort avant de faire une requête, sinon il va se créer
