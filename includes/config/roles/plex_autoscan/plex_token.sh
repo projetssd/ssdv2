@@ -12,6 +12,11 @@
 #    PLEX_LOGIN=$1
 #    PLEX_PASSWORD=$2
 #fi
+export SCRIPTPATH=/opt/seedbox-compose
+export PATH="$HOME/.local/bin:$PATH"
+source ${SCRIPTPATH}/includes/functions.sh
+source ${SCRIPTPATH}/includes/variables.sh
+source ${SCRIPTPATH}/includes/functions.sh
 
 while [ -z "$PLEX_LOGIN" ]; do
     >&2 echo -n 'Votre login Plex (e-mail or username): '
