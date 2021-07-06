@@ -53,4 +53,4 @@ auth_enabled: "{{ true if not(
     )
     else false }}"
 extra_labels: ""
-extra_ports: ""
+{{ extra_vars }}
