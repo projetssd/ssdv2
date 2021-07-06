@@ -45,6 +45,8 @@ if [ -z "$X_PLEX_TOKEN" ]; then
     rm -f /tmp/plex_sign_in
     >&2 echo 'Failed to retrieve the X-Plex-Token.'
     exit 0
+else
+  manage_account_yml plex.token $X_PLEX_TOKEN
 fi
 
 rm -f /tmp/plex_sign_in
