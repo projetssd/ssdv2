@@ -78,6 +78,7 @@
           - name: traefik_proxy
         state: started
         labels: '{{pg_labels}}'
+        ports: "{{ extra_ports }}"
     
     # POST TASKS ###################################################################
     - name: Check that posttasks file exists

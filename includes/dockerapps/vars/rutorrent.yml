@@ -11,6 +11,8 @@ pg_volumes:
 pg_env:
   UID: "{{ lookup('env','MYUID') }}"
   GID: "{{ lookup('env','MYGID') }}"
+extra_ports:
+  - 45000:45000
 # Pour contourner l'authentification pour des outils de style nzb360, décommentez le pavé ci dessous
 #extra_labels:
 #  traefik.enable: 'true'
