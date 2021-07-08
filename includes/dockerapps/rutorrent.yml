@@ -18,12 +18,6 @@
         path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
       register: check
 
-    - name: 'Set Known Facts'
-      set_fact:
-        pgrole: 'rutorrent'
-        intport: '8080'
-        image: 'ghcr.io/linuxserver/rutorrent'
-
 
     - name: "Set DNS Record on CloudFlare"
       include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
@@ -69,10 +63,11 @@
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
-          - "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
-          - "{{ lookup('env','HOME') }}/local/{{pgrole}}/data:/data"
-          - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+          - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
+          - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/data:/data"
           - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/sock:/run/rtorrent"
+          - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+
           - '/etc/localtime:/etc/localtime:ro'
 
     - name: 'Setting PG ENV'
