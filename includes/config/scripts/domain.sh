@@ -38,17 +38,17 @@ install_watchtower
 echo -e "${BLUE}### REINITIALISATION DES APPLICATIONS ###${NC}"
 echo -e " ${BWHITE}* Les fichiers de configuration ne seront pas effacés${NC}"
 ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
-SEEDUSER=$(cat ${TMPNAME})
+
 rm ${TMPNAME}
-while read line; do echo $line | cut -d'.' -f1; done < /home/$SEEDUSER/resume > $SERVICESUSER$SEEDUSER
-rm /home/$SEEDUSER/resume
+while read line; do echo $line | cut -d'.' -f1; done < /home/${USER}/resume > $SERVICESUSER${USER}
+rm /home/${USER}/resume
 install_services
-rm $SERVICESUSER$SEEDUSER
+rm $SERVICESUSER${USER}
 
 ## restauration plex_dupefinder
-PLEXDUPE=/home/$SEEDUSER/scripts/plex_dupefinder/plex_dupefinder.py
+PLEXDUPE=/home/${USER}/scripts/plex_dupefinder/plex_dupefinder.py
 if [[ -e "$PLEXDUPE" ]]; then
-rm -rf /home/$SEEDUSER/scripts/plex_dupefinder > /dev/null 2>&1
+rm -rf /home/${USER}/scripts/plex_dupefinder > /dev/null 2>&1
 rm /usr/local/bin/plexdupes > /dev/null 2>&1
 ansible-playbook /opt/seedbox-compose/includes/config/roles/plex_dupefinder/tasks/main.yml
 fi
@@ -57,7 +57,7 @@ fi
 CLOUDPLOWSERVICE=/etc/systemd/system/cloudplow.service
 if [[ -e "$CLOUDPLOWSERVICE" ]]; then
 service cloudplow stop
-rm -rf /home/$SEEDUSER/scripts/cloudplow
+rm -rf /home/${USER}/scripts/cloudplow
 rm /usr/local/bin/cloudplow
 ansible-playbook /opt/seedbox-compose/includes/config/roles/cloudplow/tasks/main.yml
 fi
@@ -66,7 +66,7 @@ fi
 PLEXSCANSERVICE=/etc/systemd/system/plex_autoscan.service
 if [[ -e "$PLEXSCANSERVICE" ]]; then
 service plex_autoscan stop
-rm -rf /home/$SEEDUSER/scripts/plex_autoscan
+rm -rf /home/${USER}/scripts/plex_autoscan
 ansible-playbook /opt/seedbox-compose/includes/config/roles/plex_autoscan/tasks/main.yml
 fi
 

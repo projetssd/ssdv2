@@ -172,7 +172,7 @@ function rtorrent-cleaner() {
   echo -e " ${BWHITE}* Installation RTORRENT-CLEANER${NC}"
 
   ## choix de l'utilisateur
-  SEEDUSER=$(ls ${CONFDIR}/media* | cut -d '-' -f2)
+  #SEEDUSER=$(ls ${CONFDIR}/media* | cut -d '-' -f2)
   cp -r ${BASEDIR}/includes/config/rtorrent-cleaner/rtorrent-cleaner /usr/local/bin
   sed -i "s|%SEEDUSER%|${USER}|g" /usr/local/bin/rtorrent-cleaner
 }
@@ -508,7 +508,7 @@ function script_classique() {
 
       10) ## Installation Plex_Patrol
         ansible-playbook ${BASEDIR}/includes/config/roles/plex_patrol/tasks/main.yml
-        SEEDUSER=$(ls ${CONFDIR}/media* | cut -d '-' -f2)
+        #SEEDUSER=$(ls ${CONFDIR}/media* | cut -d '-' -f2)
         DOMAIN=$(cat /home/${USER}/resume | tail -1 | cut -d. -f2-3)
         FQDNTMP="plex_patrol.$DOMAIN"
         echo "$FQDNTMP" >>/home/${USER}/resume
@@ -1001,9 +1001,9 @@ function create_user_non_systeme() {
   # nouvelle version de define_parameters()
   echo -e "${BLUE}### INFORMATIONS UTILISATEURS ###${NC}"
 
-  SEEDUSER=$(whiptail --title "Administrateur" --inputbox \
-    "Nom d'Administrateur de la Seedbox :" 7 50 3>&1 1>&2 2>&3)
-  [[ "$?" == 1 ]] && script_plexdrive
+#  SEEDUSER=$(whiptail --title "Administrateur" --inputbox \
+#    "Nom d'Administrateur de la Seedbox :" 7 50 3>&1 1>&2 2>&3)
+#  [[ "$?" == 1 ]] && script_plexdrive
   PASSWORD=$(whiptail --title "Password" --passwordbox \
     "Mot de passe :" 7 50 3>&1 1>&2 2>&3)
 
@@ -1035,7 +1035,7 @@ function create_user_non_systeme() {
 
 function projects() {
   ansible-playbook "${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml"
-  SEEDUSER="${USER}"
+  #SEEDUSER="${USER}"
   DOMAIN=$(cat "${TMPDOMAIN}")
   SEEDGROUP=$(cat "${TMPGROUP}")
   rm -f "${TMPNAME}" "${TMPDOMAIN}" "${TMPGROUP}"
@@ -1059,7 +1059,7 @@ function projects() {
     "\nChoisir vos Applications" 18 47 10 \
     $(cat /tmp/projects.txt) 3>&1 1>&2 2>&3)
   [[ "$?" == 1 ]] && script_plexdrive && rm /tmp/projects.txt
-  PROJECTPERUSER="${PROJECTUSER}${SEEDUSER}"
+  PROJECTPERUSER="${PROJECTUSER}${USER}"
   touch "${PROJECTPERUSER}"
 
   for PROJECTS in ${SERVICESTOINSTALL}; do
@@ -1281,7 +1281,7 @@ function manage_apps() {
 
   ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
 
-  SEEDUSER=$(cat ${TMPNAME})
+  #SEEDUSER=$(cat ${TMPNAME})
   DOMAIN=$(cat ${TMPDOMAIN})
   SEEDGROUP=$(cat ${TMPGROUP})
   rm ${TMPNAME} ${TMPDOMAIN} ${TMPGROUP}
@@ -1526,7 +1526,7 @@ function uninstall_seedbox() {
 
   ## variables
   ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
-  SEEDUSER=$(cat ${TMPNAME})
+  #SEEDUSER=$(cat ${TMPNAME})
   DOMAIN=$(cat ${TMPDOMAIN})
   SEEDGROUP=$(cat ${TMPGROUP})
   rm ${TMPNAME} ${TMPDOMAIN} ${TMPGROUP}

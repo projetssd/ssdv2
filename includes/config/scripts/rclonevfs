@@ -144,21 +144,21 @@ echo -e "${BLUE}### Containers en cours de restart, merci de patienter ###${NC}"
 echo ""
 docker start $(docker ps -a -q --filter "status=exited") >/dev/null 2>&1
 ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
-SEEDUSER=$(cat ${TMPNAME})
+
 
 ######### configuration des services#######################
 echo ""
 clear
 echo -e " ${BWHITE}* Reconfiguration automatique cloudplow, crop, plex_autoscan${NC}"
 echo ""
-if [[ -d "/home/$SEEDUSER/scripts/cloudplow" ]]; then
+if [[ -d "/home/${USER}/scripts/cloudplow" ]]; then
   ansible-playbook /opt/seedbox-compose/includes/config/roles/cloudplow/tasks/main.yml
 fi
-if [[ -d "/home/$SEEDUSER/scripts/crop" ]]; then
+if [[ -d "/home/${USER}/scripts/crop" ]]; then
   /opt/seedbox-compose/includes/config/scripts/crop.sh
   ansible-playbook /opt/seedbox-compose/includes/config/roles/crop/tasks/main.yml
 fi
-if [[ -d "/home/$SEEDUSER/scripts/plex_autoscan" ]]; then
+if [[ -d "/home/${USER}/scripts/plex_autoscan" ]]; then
   ansible-playbook /opt/seedbox-compose/includes/config/roles/plex_autoscan/tasks/main.yml
 fi
 

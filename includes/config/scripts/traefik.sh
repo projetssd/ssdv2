@@ -6,7 +6,6 @@ source /opt/seedbox-compose/includes/variables.sh
 
 ## Variable
 ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
-SEEDUSER=$(cat ${TMPNAME})
 DOMAIN=$(cat ${TMPDOMAIN})
 SEEDGROUP=$(cat ${TMPGROUP})
 rm ${TMPNAME} ${TMPDOMAIN} ${TMPGROUP}
@@ -62,11 +61,11 @@ echo ""
 ## reinstallation application
 echo -e "${BLUE}### REINITIALISATION DES APPLICATIONS ###${NC}"
 echo -e " ${BWHITE}* Les fichiers de configuration ne seront pas effacés${NC}"
-while read line; do echo $line | cut -d'.' -f1; done < /home/$SEEDUSER/resume > $SERVICESUSER$SEEDUSER
-rm /home/$SEEDUSER/resume
+while read line; do echo $line | cut -d'.' -f1; done < /home/${USER}/resume > $SERVICESUSER${USER}
+rm /home/${USER}/resume
 install_services
 
-rm $SERVICESUSER$SEEDUSER
+rm $SERVICESUSER${USER}
     	echo -e "${CRED}---------------------------------------------------------------${CEND}"
     	echo -e "${CCYAN}     /!\ MISE A JOUR DU SERVEUR EFFECTUEE AVEC SUCCES /!\     ${CEND}"
     	echo -e "${CRED}---------------------------------------------------------------${CEND}"

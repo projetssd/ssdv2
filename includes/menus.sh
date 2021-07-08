@@ -69,15 +69,15 @@ menu_change_domaine() {
 
 menu_change_sous_domaine() {
   ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
-  SERVICESPERUSER="$SERVICESUSER$SEEDUSER"
-  SEEDUSER=$(cat ${TMPNAME})
+  SERVICESPERUSER="$SERVICESUSER${USER}"
+  #SEEDUSER=$(cat ${TMPNAME})
   rm ${TMPNAME}
   rm ${CONFDIR}/conf/* >/dev/null 2>&1
 
   while read line; do
     echo ${line} | cut -d'.' -f1
-  done </home/$SEEDUSER/resume >$SERVICESUSER$SEEDUSER
-  mv /home/$SEEDUSER/resume ${CONFDIR}/resume >/dev/null 2>&1
+  done </home/${USER}/resume >$SERVICESUSER${USER}
+  mv /home/${USER}/resume ${CONFDIR}/resume >/dev/null 2>&1
   subdomain
 
   grep "plex" $SERVICESPERUSER >/dev/null 2>&1
@@ -87,7 +87,7 @@ menu_change_sous_domaine() {
   fi
 
   install_services
-  mv ${CONFDIR}/resume /home/$SEEDUSER/resume >/dev/null 2>&1
+  mv ${CONFDIR}/resume /home/${USER}/resume >/dev/null 2>&1
   resume_seedbox
   script_plexdrive
 }
@@ -197,17 +197,17 @@ menu_gestion_rtorrent_cleaner() {
   clear
   echo ""
   rtorrent-cleaner
-  docker run -it --rm -v /home/$SEEDUSER/local/rutorrent:/home/$SEEDUSER/local/rutorrent -v /run/php:/run/php magicalex/rtorrent-cleaner
+  docker run -it --rm -v /home/${USER}/local/rutorrent:/home/${USER}/local/rutorrent -v /run/php:/run/php magicalex/rtorrent-cleaner
   pause
   script_plexdrive
 }
 
 menu_gestion_plex_patrol() {
   ansible-playbook ${BASEDIR}/includes/config/roles/plex_patrol/tasks/main.yml
-  SEEDUSER=$(ls ${CONFDIR}/media* | cut -d '-' -f2)
-  DOMAIN=$(cat /home/$SEEDUSER/resume | tail -1 | cut -d. -f2-3)
+  #SEEDUSER=$(ls ${CONFDIR}/media* | cut -d '-' -f2)
+  DOMAIN=$(get_from_account_yml user.domain)
   FQDNTMP="plex_patrol.$DOMAIN"
-  echo "$FQDNTMP" >>/home/$SEEDUSER/resume
+  echo "$FQDNTMP" >>/home/${USER}/resume
   cp "${BASEDIR}/includes/config/roles/plex_patrol/tasks/main.yml" "${CONFDIR}/conf/plex_patrol.yml" >/dev/null 2>&1
   echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour revenir au menu principal..."
   read -r
@@ -725,4 +725,3 @@ menu_gestion() {
     ;;
   esac
 }
-
