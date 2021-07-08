@@ -1369,7 +1369,7 @@ function manage_apps() {
     [[ "$?" == 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi
     echo -e " ${GREEN}   * $APPSELECTED${NC}"
 
-    suppression_appli ${APPSELECTED}
+    suppression_appli ${APPSELECTED} 1
     pause
     if [[ -e "$PLEXDRIVE" ]]; then
       script_plexdrive
