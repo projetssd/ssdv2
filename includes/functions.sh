@@ -1421,12 +1421,22 @@ function manage_apps() {
 
 function suppression_appli() {
   APPSELECTED=$1
+  DELETE=0
+  if [[ $# -eq 2 ]]; then
+   if [ $2 = "1" ]; then
+     DELETE=1
+    fi
+  fi
   manage_account_yml sub.${APPSELECTED} " "
 
   sed -i "/$APPSELECTED/d" ${CONFDIR}/resume >/dev/null 2>&1
   sed -i "/$APPSELECTED/d" /home/${USER}/resume >/dev/null 2>&1
+
   docker rm -f "$APPSELECTED" >/dev/null 2>&1
-  sudo rm -rf ${CONFDIR}/docker/${USER}/$APPSELECTED
+  if [ $DELETE -eq 1 ]; then
+    sudo rm -rf ${CONFDIR}/docker/${USER}/$APPSELECTED
+  fi
+
   rm ${CONFDIR}/conf/$APPSELECTED.yml >/dev/null 2>&1
   rm ${CONFDIR}/vars/$APPSELECTED.yml >/dev/null 2>&1
   echo "0" >${CONFDIR}/status/$APPSELECTED
