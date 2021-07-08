@@ -174,7 +174,7 @@ function rtorrent-cleaner() {
   ## choix de l'utilisateur
   SEEDUSER=$(ls ${CONFDIR}/media* | cut -d '-' -f2)
   cp -r ${BASEDIR}/includes/config/rtorrent-cleaner/rtorrent-cleaner /usr/local/bin
-  sed -i "s|%SEEDUSER%|$SEEDUSER|g" /usr/local/bin/rtorrent-cleaner
+  sed -i "s|%SEEDUSER%|${USER}|g" /usr/local/bin/rtorrent-cleaner
 }
 
 function motd() {
@@ -501,7 +501,7 @@ function script_classique() {
         clear
         echo ""
         rtorrent-cleaner
-        docker run -it --rm -v /home/$SEEDUSER/local/rutorrent:/home/$SEEDUSER/local/rutorrent -v /run/php:/run/php magicalex/rtorrent-cleaner
+        docker run -it --rm -v /home/${USER}/local/rutorrent:/home/${USER}/local/rutorrent -v /run/php:/run/php magicalex/rtorrent-cleaner
         pause
         script_classique
         ;;
@@ -509,9 +509,9 @@ function script_classique() {
       10) ## Installation Plex_Patrol
         ansible-playbook ${BASEDIR}/includes/config/roles/plex_patrol/tasks/main.yml
         SEEDUSER=$(ls ${CONFDIR}/media* | cut -d '-' -f2)
-        DOMAIN=$(cat /home/$SEEDUSER/resume | tail -1 | cut -d. -f2-3)
+        DOMAIN=$(cat /home/${USER}/resume | tail -1 | cut -d. -f2-3)
         FQDNTMP="plex_patrol.$DOMAIN"
-        echo "$FQDNTMP" >>/home/$SEEDUSER/resume
+        echo "$FQDNTMP" >>/home/${USER}/resume
         cp "${BASEDIR}/includes/config/roles/plex_patrol/tasks/main.yml" "${CONFDIR}/conf/plex_patrol.yml" >/dev/null 2>&1
         echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour revenir au menu principal..."
         read -r
@@ -1007,16 +1007,11 @@ function create_user_non_systeme() {
   PASSWORD=$(whiptail --title "Password" --passwordbox \
     "Mot de passe :" 7 50 3>&1 1>&2 2>&3)
 
-  manage_account_yml user.htpwd $(htpasswd -nb $SEEDUSER $PASSWORD)
-  manage_account_yml user.name $SEEDUSER
+  manage_account_yml user.htpwd $(htpasswd -nb ${USER} $PASSWORD)
+  manage_account_yml user.name ${USER}
   manage_account_yml user.pass $PASSWORD
   manage_account_yml user.userid $(id -u)
   manage_account_yml user.groupid $(id -g)
-  #  sed -i "/htpwd:/c\   htpwd: $htpwd" ${CONFDIR}/variables/account.yml
-  #  sed -i "s/name:/name: $SEEDUSER/" ${CONFDIR}/variables/account.yml
-  #  sed -i "s/pass:/pass: $PASSWORD/" ${CONFDIR}/variables/account.yml
-  #  sed -i "s/userid:/userid: $(id -u)/" ${CONFDIR}/variables/account.yml
-  #  sed -i "s/groupid:/groupid: $(id -g)/" ${CONFDIR}/variables/account.yml
 
   update_seedbox_param "name" "${user}"
   update_seedbox_param "userid" "$(id -u)"
@@ -1047,7 +1042,7 @@ function projects() {
 
   echo -e "${BLUE}### SERVICES ###${NC}"
   echo -e " ${BWHITE}--> Services en cours d'installation : ${NC}"
-  PROJECTPERUSER="$PROJECTUSER$SEEDUSER"
+  PROJECTPERUSER="$PROJECTUSER${USER}"
   rm -Rf "${PROJECTPERUSER}" >/dev/null 2>&1
   projects="/tmp/projects.txt"
 
@@ -1138,7 +1133,6 @@ function choose_media_folder_classique() {
 }
 
 function choose_media_folder_plexdrive() {
-  # Attention, là on ne va pas créer de /home/$SEEDUSER, on reste sur le user qui a lancé l'install
   echo -e "${BLUE}### DOSSIERS MEDIAS ###${NC}"
   USERSEED=$(get_from_account_yml user.name)
   FOLDER="/mnt/rclone/${USERSEED}"
@@ -1165,7 +1159,7 @@ function choose_media_folder_plexdrive() {
       echo "$service $desc off" >>/tmp/menumedia.txt
     done
     MEDIASTOINSTALL=$(whiptail --title "Gestion des dossiers Medias" --checklist \
-      "Medias à ajouter pour $SEEDUSER (Barre espace pour la sélection)" 28 60 17 \
+      "Medias à ajouter pour ${USER} (Barre espace pour la sélection)" 28 60 17 \
       $(cat /tmp/menumedia.txt) 3>&1 1>&2 2>&3)
     touch $MEDIASPERUSER
     for MEDDOCKER in $MEDIASTOINSTALL; do
@@ -1291,10 +1285,10 @@ function manage_apps() {
   DOMAIN=$(cat ${TMPDOMAIN})
   SEEDGROUP=$(cat ${TMPGROUP})
   rm ${TMPNAME} ${TMPDOMAIN} ${TMPGROUP}
-  USERRESUMEFILE="/home/$SEEDUSER/resume"
+  USERRESUMEFILE="/home/${USER}/resume"
   status
   echo ""
-  echo -e "${GREEN}### Gestion des Applis pour: $SEEDUSER ###${NC}"
+  echo -e "${GREEN}### Gestion des Applis pour: ${USER} ###${NC}"
   ## CHOOSE AN ACTION FOR APPS
   ACTIONONAPP=$(whiptail --title "App Manager" --menu \
     "Selectionner une action :" 12 50 4 \
@@ -1316,12 +1310,7 @@ function manage_apps() {
       echo -e " ${BWHITE}* Resume file: $USERRESUMEFILE${NC}"
       echo ""
       choose_services
-#       for line in $(cat $SERVICESPERUSER); do
-#        if [ ${line} != "authelia" ]; then
-#          subdomain
-#          auth
-#        fi
-#      done
+
       install_services
       pause
       resume_seedbox
@@ -1355,16 +1344,18 @@ function manage_apps() {
     echo -e " ${BWHITE}* Resume file: $USERRESUMEFILE${NC}"
     echo ""
 
-    [ -s /home/$SEEDUSER/resume ]
-    if [[ "$?" == "1" ]]; then
-      echo -e " ${BWHITE}* Pas d'Applis à Désinstaller ${NC}"
-      pause
-      if [[ -e "$PLEXDRIVE" ]]; then
-        script_plexdrive
-      else
-        script_classique
-      fi
-    fi
+    # Code a priori inutile, commenté le 08/07/2021
+    # A supprimer si pas de plainte...
+    #    [ -s /home/${USER}/resume ]
+    #    if [[ "$?" == "1" ]]; then
+    #      echo -e " ${BWHITE}* Pas d'Applis à Désinstaller ${NC}"
+    #      pause
+    #      if [[ -e "$PLEXDRIVE" ]]; then
+    #        script_plexdrive
+    #      else
+    #        script_classique
+    #      fi
+    #    fi
 
     echo -e " ${BWHITE}* Application en cours de suppression${NC}"
     TABSERVICES=()
@@ -1404,7 +1395,7 @@ function manage_apps() {
     ###subdomain=$(grep "${line}" ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
 
     sed -i "/${line}/d" ${CONFDIR}/resume >/dev/null 2>&1
-    sed -i "/${line}/d" /home/$SEEDUSER/resume >/dev/null 2>&1
+    sed -i "/${line}/d" /home/${USER}/resume >/dev/null 2>&1
     docker rm -f "${line}" >/dev/null 2>&1
     docker system prune -af >/dev/null 2>&1
     docker volume rm $(docker volume ls -qf "dangling=true") >/dev/null 2>&1
@@ -1433,9 +1424,9 @@ function suppression_appli() {
   manage_account_yml sub.${APPSELECTED} " "
 
   sed -i "/$APPSELECTED/d" ${CONFDIR}/resume >/dev/null 2>&1
-  sed -i "/$APPSELECTED/d" /home/$SEEDUSER/resume >/dev/null 2>&1
+  sed -i "/$APPSELECTED/d" /home/${USER}/resume >/dev/null 2>&1
   docker rm -f "$APPSELECTED" >/dev/null 2>&1
-  sudo rm -rf ${CONFDIR}/docker/$SEEDUSER/$APPSELECTED
+  sudo rm -rf ${CONFDIR}/docker/${USER}/$APPSELECTED
   rm ${CONFDIR}/conf/$APPSELECTED.yml >/dev/null 2>&1
   rm ${CONFDIR}/vars/$APPSELECTED.yml >/dev/null 2>&1
   echo "0" >${CONFDIR}/status/$APPSELECTED
@@ -1446,17 +1437,17 @@ function suppression_appli() {
     ;;
   varken)
     docker rm -f influxdb telegraf grafana >/dev/null 2>&1
-    rm -rf ${CONFDIR}/docker/$SEEDUSER/telegraf
-    rm -rf ${CONFDIR}/docker/$SEEDUSER/grafana
-    rm -rf ${CONFDIR}/docker/$SEEDUSER/influxdb
+    rm -rf ${CONFDIR}/docker/${USER}/telegraf
+    rm -rf ${CONFDIR}/docker/${USER}/grafana
+    rm -rf ${CONFDIR}/docker/${USER}/influxdb
     ;;
   jitsi)
     docker rm -f prosody jicofo jvb
-    rm -rf ${CONFDIR}/docker/$SEEDUSER/.jitsi-meet-cfg
+    rm -rf ${CONFDIR}/docker/${USER}/.jitsi-meet-cfg
     ;;
   nextcloud)
     docker rm -f collabora coturn office
-    rm -rf ${CONFDIR}/docker/$SEEDUSER/coturn
+    rm -rf ${CONFDIR}/docker/${USER}/coturn
     ;;
   rtorrentvpn)
     rm ${CONFDIR}/conf/rutorrent-vpn.yml
@@ -1482,7 +1473,7 @@ function suppression_appli() {
   req1="delete from applications where name='"
   req2="'"
   req=${req1}${APPSELECTED}${req2}
-  sqlite3 ${SCRIPTPATH}/ssddb << EOF
+  sqlite3 ${SCRIPTPATH}/ssddb <<EOF
     $req
 EOF
 }
@@ -1511,12 +1502,12 @@ function resume_seedbox() {
         DOCKERAPP=$(echo $word | cut -d "." -f1)
         echo -e "	--> ${BWHITE}$DOCKERAPP${NC} --> ${YELLOW}$ACCESSDOMAIN${NC}"
       done
-    done <"/home/$SEEDUSER/resume"
+    done <"/home/${USER}/resume"
   fi
 
   echo ""
   echo -e " ${BWHITE}* Vos IDs :${NC}"
-  echo -e "	--> ${BWHITE}Utilisateur:${NC} ${YELLOW}$SEEDUSER${NC}"
+  echo -e "	--> ${BWHITE}Utilisateur:${NC} ${YELLOW}${USER}${NC}"
   echo -e "	--> ${BWHITE}Password:${NC} ${YELLOW}$PASSE${NC}"
   echo ""
 
