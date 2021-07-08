@@ -1,7 +1,16 @@
+{% if sub_enabled %}
+    {% if sub[pgrole][pgrole] != user.domain %}
+        {% set fqdn = sub[pgrole][pgrole] ~ '.' ~ user.domain %}
+    {% else %}
+         {% set fqdn = user.domain %}
+    {% endif %}
+{% else %}
+    {% set fqdn = pgrole ~ '.' ~ user.domain %}
+{% endif %}
 traefik.enable: 'true'
 ## HTTP Routers
 traefik.http.routers.{{pgrole}}-rtr.entrypoints: 'https'
-traefik.http.routers.{{pgrole}}-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
+traefik.http.routers.{{pgrole}}-rtr.rule: 'Host(`{{ fqdn }}`)'
 traefik.http.routers.{{pgrole}}-rtr.tls: 'true'
 ## Middlewares
 traefik.http.routers.{{pgrole}}-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
