@@ -1,6 +1,5 @@
 <br /><img src="https://user-images.githubusercontent.com/64525827/107496602-ceddbb80-6b91-11eb-9a05-ac311eedf150.png" width="450">
 <br />
-<<<<<<< HEAD
 [![Discord: https://discordapp.com/invite/HZNMGjDRhp](https://img.shields.io/badge/Discord-gray.svg?style=for-the-badge)](https://discordapp.com/invite/HZNMGjDRhp)
 
 ## Comment migrer de la v1 vers la v2 ?
@@ -50,7 +49,6 @@ Rebooter la machine une fois terminé !
 
 ###
 
-
 Une fois les pré requis validé pous pouvez suivre le guide :  
 * il faut un user NON root, qui ait les droits de faire du sudo
 
@@ -89,26 +87,8 @@ Alors déconnexion puis Reconnexion et on continue avec la même commande
 ```
 cd /opt/seedbox-compose && ./seedbox.sh
 ```
-=======
-[![Discord: https://discordapp.com/invite/kkwEvV6dfj](https://img.shields.io/badge/Discord-gray.svg?style=for-the-badge)](https://discordapp.com/invite/kkwEvV6dfj)
 
-
-## Le script SSD permet l'installation d'une seedbox complète avec Docker
-
-#### Pour se lancer dans l’installation, il faut au préalable suivre les étapes suivantes:
-* [Un serveur distant](https://github.com/laster13/patxav/wiki/Serveur)
-* [Un nom de domaine](https://github.com/laster13/patxav/wiki/Nom-de-domaine)
-* [Un abonnement à cloud workspace](https://github.com/laster13/patxav/wiki/Les-offres-Cloud-Google)
-* [DNS Cloudflare](https://github.com/laster13/patxav/wiki/Cloudflare)
-* [Création API Google Drive](https://github.com/laster13/patxav/wiki/Cr%C3%A9ation-API-Google)
-
-###
-
-Une fois les pré requis validé pous pouvez suivre le guide :  
-* [Pas à pas d'installation](https://github.com/laster13/patxav/wiki/pas-%C3%A0-pas)
->>>>>>> 14ad3ee2afa16ec29c7b71763d517a1306764019
-
-<br/><br/>
+Au besoin vous pouvez vous aider du [wiki](https://github.com/projetssd/ssdv2/wiki/pas-%C3%A0-pas) pour plus de détails. 
 
 ***
 
