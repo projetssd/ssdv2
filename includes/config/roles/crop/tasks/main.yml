@@ -94,11 +94,8 @@
 
     - name: install crop latest
       shell: |
-        wget -P "/home/{{ lookup('env','USER') }}/scripts/" https://github.com/$(wget https://github.com/l3uddz/crop/releases/latest -O - | egrep '/.*/.*/.*linux_amd64.tar.gz' -o)
-        archive=$(ls *linux_amd64.tar.gz)
-        tar -xvf $archive -C "/home/{{ lookup('env','USER') }}/scripts/crop"     
-        chmod +x crop
-        rm $archive
+        wget -O crop -P "/home/{{ lookup('env','USER') }}/scripts/crop/" https://github.com/$(wget https://github.com/l3uddz/crop/releases/latest -O - | egrep '/.*/.*/.*linux_amd64' -o) 
+        chmod +x /home/{{ lookup('env','USER') }}/scripts/crop/crop
       become: yes
       become_user: "{{ lookup('env','USER') }}"
       args:
