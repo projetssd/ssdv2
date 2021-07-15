@@ -94,7 +94,7 @@
 
     - name: install crop latest
       shell: |
-        wget -O crop -P "/home/{{ lookup('env','USER') }}/scripts/crop/crop" https://github.com/$(wget https://github.com/l3uddz/crop/releases/latest -O - | egrep '/.*/.*/.*linux_amd64' -o)
+        wget -O "/home/{{ lookup('env','USER') }}/scripts/crop/crop" https://github.com/$(wget https://github.com/l3uddz/crop/releases/latest -O - | egrep '/.*/.*/.*linux_amd64' -o)
         chmod +x /home/{{ lookup('env','USER') }}/scripts/crop/crop
       become: yes
       become_user: "{{ lookup('env','USER') }}"
