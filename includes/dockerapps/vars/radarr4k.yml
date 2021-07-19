@@ -13,3 +13,12 @@ pg_env:
   TP_DOMAIN: 'theme-park.dev'
   TP_ADDON: 'radarr-4k-logo'
   TP_THEME: 'plex'
+# Pour contourner l'authentification pour des outils de style nzb360, décommentez le pavé ci dessous
+# et remplacer API par votre API radarr4k
+#extra_labels:
+#  traefik.http.routers.radarr4k-rtr-bypass.entrypoints: 'https'
+#  traefik.http.routers.radarr4k-rtr-bypass.rule: 'Headers(`X-Api-Key`, `API`)'
+#  traefik.http.routers.radarr4k-rtr-bypass.priority: '100'
+#  traefik.http.routers.radarr4k-rtr-bypass.tls: 'true'
+#  traefik.http.routers.radarr4k-rtr-bypass.middlewares: 'chain-no-auth@file'
+#  traefik.http.routers.radarr4k-rtr-bypass.service: 'radarr4k-svc'
