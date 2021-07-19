@@ -5,6 +5,16 @@
     - /opt/seedbox/variables/account.yml
 
   tasks:
+    - name: Creating paths
+      become: yes
+      file:
+        path: "/mnt/plexdrive"
+        state: directory
+        mode: "0775"
+        owner: "{{ lookup('env','USER') }}"
+        group: "{{ lookup('env','MYGIDNAME') }}"
+
+
 
     - name: "Variables | Set 'teamdrive_enabled' variable"
       set_fact:
@@ -47,6 +57,7 @@
           mergerfs_plexdrive_service_running: "{{ (services['mergerfs_plexdrive.service'] is defined) and (services['mergerfs_plexdrive.service']['state'] == 'running') }}"
 
       - name: Stop mergerfs_plexdrive service
+        become: yes
         systemd:
           name: mergerfs_plexdrive
           state: stopped
@@ -54,6 +65,7 @@
         when: mergerfs_plexdrive_service_running
 
       - name: delete mergerfs_plexdrive.service
+        become: yes
         shell: |
           rm /etc/systemd/system/mergerfs_plexdrive.service
 
@@ -75,6 +87,7 @@
           rclone_plexdrive_service_running: "{{ (services['rclone_plexdrive.service'] is defined) and (services['rclone_plexdrive.service']['state'] == 'running') }}"
 
       - name: Stop rclone_plexdrive service
+        become: yes
         systemd:
           name: rclone_plexdrive
           state: stopped
@@ -82,6 +95,7 @@
         when: rclone_plexdrive_service_running
 
       - name: delete rclone_plexdrive.service
+        become: yes
         shell: |
           rm /etc/systemd/system/rclone_plexdrive.service
 
@@ -103,6 +117,7 @@
           mergerfs_service_running: "{{ (services['mergers.service'] is defined) and (services['mergers.service']['state'] == 'running') }}"
 
       - name: Stop mergerfs service
+        become: yes
         systemd:
           name: mergerfs
           state: stopped
@@ -110,6 +125,7 @@
         when: mergerfs_service_running
 
       - name: delete mergerfs.service
+        become: yes
         shell: |
           rm /etc/systemd/system/mergerfs.service
         when: mergerfs_service_running
@@ -132,6 +148,7 @@
           rclone_service_running: "{{ (services['rclone.service'] is defined) and (services['rclone.service']['state'] == 'running') }}"
 
       - name: Stop rclone service
+        become: yes
         systemd:
           name: rclone
           state: stopped
@@ -139,6 +156,7 @@
         when: rclone_service_running
 
       - name: delete rclone.service
+        become: yes
         shell: |
           rm /etc/systemd/system/rclone.service
         when: rclone_service_running
@@ -161,6 +179,7 @@
           plexdrive_service_running: "{{ (services['plexdrive.service'] is defined) and (services['plexdrive.service']['state'] == 'running') }}"
 
       - name: Stop plexdrive service
+        become: yes
         systemd:
           name: plexdrive
           state: stopped
@@ -168,6 +187,7 @@
         when: plexdrive_service_running
 
       - name: delete plexdrive.service
+        become: yes
         shell: |
           rm /etc/systemd/system/plexdrive.service
         when: plexdrive_service_running
@@ -175,6 +195,7 @@
       when: plexdrive_service.stat.exists
 
     - name: install plexdrive latest
+      become: yes
       shell: |
         version=$(curl https://github.com/plexdrive/plexdrive/releases/latest -s -L -I -o /dev/null -w '%{url_effective}'| grep -o '[0-9.].[0-9.].[0-9.]')
         wget -P /usr/bin https://github.com/plexdrive/plexdrive/releases/download/$version/plexdrive-linux-amd64
@@ -182,28 +203,33 @@
         chmod +x /usr/bin/plexdrive
 
     - name: Import systemd
+      become: yes
       template:
         src: /opt/seedbox-compose/includes/config/roles/plexdrive/templates/teamdrive.plexdrive.service.j2
         dest: /etc/systemd/system/plexdrive.service
       when: teamdrive_enabled
 
     - name: Import systemd
+      become: yes
       template:
         src: /opt/seedbox-compose/includes/config/roles/plexdrive/templates/gdrive.plexdrive.service.j2
         dest: /etc/systemd/system/plexdrive.service
       when: not teamdrive_enabled
 
     - name: Import systemd
+      become: yes
       template:
         src: /opt/seedbox-compose/includes/config/roles/unionfs/templates/mergerfs_only_plexdrive.service.j2
         dest: /etc/systemd/system/mergerfs.service
 
     - name: Import systemd
+      become: yes
       template:
         src: /opt/seedbox-compose/includes/config/roles/rclone/templates/rclone_only_plexdrive.service.j2
         dest: /etc/systemd/system/rclone.service
 
     - name: started Systemd plexdrive.service
+      become: yes
       systemd:
         state: started
         daemon_reload: yes
@@ -211,6 +237,7 @@
         name: plexdrive.service
 
     - name: started Systemd mergerfs.service
+      become: yes
       systemd:
         state: started
         daemon_reload: yes
@@ -218,6 +245,7 @@
         name: mergerfs.service
 
     - name: started Systemd rclone.service
+      become: yes
       systemd:
         state: restarted
         daemon_reload: yes

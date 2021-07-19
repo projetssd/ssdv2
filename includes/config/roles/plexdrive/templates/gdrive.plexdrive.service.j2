@@ -3,6 +3,8 @@ Description=Plexdrive Mount
 After=network-online.target
 
 [Service]
+User={{user.name}}
+Group={{user.name}}
 Type=simple
 ExecStartPre=/bin/sleep 10
 ExecStart=/usr/bin/plexdrive mount \
