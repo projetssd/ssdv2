@@ -22,7 +22,7 @@
       set_fact:
         pgrole: 'openvpn'
         intport: '7878'
-        image: 'linuxserver/openvpn-as'
+        image: 'ghcr.io/linuxserver/openvpn-as'
 
 
     - name: "Set DNS Record on CloudFlare"
@@ -35,7 +35,7 @@
       set_fact:
         pgrole: 'openvpn'
         intport: '7878'
-        image: 'linuxserver/openvpn-as'
+        image: 'ghcr.io/linuxserver/openvpn-as'
 
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
@@ -59,6 +59,13 @@
           ## HTTP Services
           traefik.http.routers.openvpn-rtr.service: 'openvpn-svc'
           traefik.http.services.openvpn-svc.loadbalancer.server.port: '7878'
+          ## TCP Services
+          traefik.tcp.routers.openvpn-tcp.entrypoints: 'https'
+          traefik.tcp.routers.openvpn-tcp.rule: 'HostSNI(`{{sub.openvpn.openvpn if sub_enabled else pgrole}}.{{user.domain}}`)'
+          traefik.tcp.routers.openvpn-tcp.tls: 'true'
+          traefik.tcp.routers.openvpn-tcp.tls.passthrough: 'true'
+          traefik.tcp.routers.openvpn-tcp.service: 'openvpn-tcp-svc'
+          traefik.tcp.services.openvpn-tcp-svc.loadbalancer.server.port: '943'
 
     - name: 'Setting PG Volumes'
       set_fact:
@@ -79,6 +86,7 @@
       docker_container:
         name: '{{pgrole}}'
         image: '{{image}}'
+        capabilities: NET_ADMIN
         pull: yes
         ports:
           - '943:943'
