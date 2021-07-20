@@ -53,4 +53,5 @@ auth_enabled: "{{ true if not(
     )
     else false }}"
 extra_labels: ""
-pg_env: ""
+pg_env:
+  TEMP: temp
