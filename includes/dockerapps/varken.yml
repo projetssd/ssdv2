@@ -116,7 +116,7 @@
       file:
         path: "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/{{pgrole}}"
         state: directory
-        mode: 0775
+        mode: 0777
         owner: 472
         group: 104
 
