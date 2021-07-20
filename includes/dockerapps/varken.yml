@@ -112,9 +112,13 @@
       when: cloudflare_enabled
 
     - name: Creating paths
-      file: "path={{item}} state=directory mode=0775 owner=472 group=104"
-      with_items:
-        - "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/{{pgrole}}"
+      become: yes
+      file:
+        path: "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/{{pgrole}}"
+        state: directory
+        mode: 0775
+        owner: 472
+        group: 104
 
     # LABELS ######################################################################
     - name: 'Ajout label traefik'
@@ -158,9 +162,13 @@
     # telegraf #############################################################
 
     - name: Creating paths
-      file: 'path={{item}} state=directory mode=0775'
-      with_items:
-        - "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/telegraf"
+      become: yes
+      file:
+        path: "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/telegraf"
+        state: directory
+        mode: 0775
+        owner: "{{ lookup('env','USER') }}"
+        group: "{{ lookup('env','MYGIDNAME') }}"
 
     - name: Wait for 10 seconds before continuing
       wait_for:
