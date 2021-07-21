@@ -1,0 +1,11 @@
+---
+pgrole: 'ntopng'
+intport: '3000'
+image: 'aerya/ntopng:3.8_Ubuntu_16.04'
+pg_volumes:
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/etc/ntopng"
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/var/lib/ntopng"
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  UID: "{{ lookup('env','MYGID') }}"
+  GID: "{{ lookup('env','MYGID') }}"
