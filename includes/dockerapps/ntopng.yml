@@ -31,12 +31,6 @@
         subdomain: "{{sub.ntopng.ntopng if sub_enabled else 'ntopng'}}"
       when: cloudflare_enabled
 
-    - name: 'Set Known Facts'
-      set_fact:
-        pgrole: 'ntopng'
-        intport: '8080'
-        image: 'ghcr.io/linuxserver/ntopng'
-
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
       with_items:
