@@ -1,0 +1,93 @@
+#!/bin/bash
+---
+- hosts: localhost
+  gather_facts: false
+  vars:
+    pgrole: ntopng
+  vars_files:
+    - /opt/seedbox/variables/account.yml
+    - "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/generique.yml"
+  tasks:
+
+    - name: create ntopng state
+      shell: |
+        echo "1" > /opt/seedbox/status/ntopng
+
+    - name: Checking for existing app data
+      stat:
+        path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
+      register: check
+
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'ntopng'
+        intport: '3000'
+        image: 'aerya/ntopng:3.8_Ubuntu_16.04'
+
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: "{{sub.ntopng.ntopng if sub_enabled else 'ntopng'}}"
+      when: cloudflare_enabled
+
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'ntopng'
+        intport: '8080'
+        image: 'ghcr.io/linuxserver/ntopng'
+
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
+      with_items:
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
+
+    # LABELS ######################################################################
+    - name: 'Ajout label traefik'
+      set_fact:
+        pg_labels:
+          traefik.enable: 'true'
+          ## HTTP Routers
+          traefik.http.routers.ntopng-rtr.entrypoints: 'https'
+          traefik.http.routers.ntopng-rtr.rule: 'Host(`{{sub.ntopng.ntopng if sub_enabled else pgrole}}.{{user.domain}}`)'
+          traefik.http.routers.ntopng-rtr.tls: 'true'
+          ## Middlewares
+          traefik.http.routers.ntopng-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
+          else 'chain-basic-auth@file' if auth_enabled and sub[pgrole].auth == 'basique' | default(false)
+          else 'chain-oauth@file' if auth_enabled and sub[pgrole].auth == 'oauth' | default(false)
+          else omit if auth_enabled and sub[pgrole].auth == 'aucune'}}"
+          ## HTTP Services
+          traefik.http.routers.ntopng-rtr.service: 'ntopng-svc'
+          traefik.http.services.ntopng-svc.loadbalancer.server.port: '3000'
+
+    - name: 'Setting PG Volumes'
+      set_fact:
+        pg_volumes:
+          - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/etc/ntopng"
+          - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/var/lib/ntopng"
+          - '/etc/localtime:/etc/localtime:ro'
+
+    - name: 'Setting PG ENV'
+      set_fact:
+        pg_env:
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
+          TZ: 'Europe/Paris'
+
+    # MAIN DEPLOYMENT #############################################################
+
+    - name: 'Deploying {{pgrole}}'
+      docker_container:
+        name: '{{pgrole}}'
+        image: '{{image}}'
+        pull: yes
+        volumes: '{{pg_volumes}}'
+        env: '{{pg_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: host
+        state: started
+        labels: '{{pg_labels}}'
+
+
+
