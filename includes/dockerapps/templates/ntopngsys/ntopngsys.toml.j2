@@ -1,0 +1,24 @@
+[http.routers]
+  [http.routers.ntopngsys-rtr]
+      entryPoints = ["https"]
+      rule = "Host(`{{sub.ntopngsys.ntopngsys if sub_enabled else pgrole}}.{{user.domain}}`)"
+      tls = true
+      {% if check.stat.exists and sub[pgrole].auth == 'authelia' %}
+      middlewares = "chain-authelia@file"
+      {% endif %}
+      {% if auth_enabled and sub[pgrole].auth == 'basique' %}
+      middlewares = "chain-basic-auth@file"
+      {% endif %}
+      {% if auth_enabled and sub[pgrole].auth == 'oauth' %}
+      middlewares = "chain-oauth@file"
+      {% endif %}
+      service = "ntopngsys-svc"
+      [http.routers.ntopngsys-rtr.tls]
+        certresolver = "letsencrypt"
+
+[http.services]
+  [http.services.ntopngsys-svc]
+    [http.services.ntopngsys-svc.loadBalancer]
+      passHostHeader = true
+      [[http.services.ntopngsys-svc.loadBalancer.servers]]
+        url = "http://172.17.0.1:3000"

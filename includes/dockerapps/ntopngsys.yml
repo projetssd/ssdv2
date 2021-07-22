@@ -1,0 +1,102 @@
+#!/bin/bash
+---
+- hosts: localhost
+  gather_facts: false
+  vars:
+    pgrole: ntopngsys
+  vars_files:
+    - /opt/seedbox/variables/account.yml
+    - "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/generique.yml"
+  tasks:
+
+    - name: create ntopngsys state
+      shell: |
+        echo "1" > /opt/seedbox/status/ntopngsys
+
+    - name: Checking for existing app data
+      stat:
+        path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
+      register: check
+
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'ntopngsys'
+        intport: '8080'
+        image: 'ghcr.io/linuxserver/ntopngsys'
+
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: "{{sub.ntopngsys.ntopngsys if sub_enabled else 'ntopngsys'}}"
+      when: cloudflare_enabled
+
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'ntopngsys'
+        intport: '3000'
+        image: 'ntop/ntopng:stable'
+
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
+      with_items:
+          - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config"
+          - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data"
+
+    - name: Change rights
+      file:
+        path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/redis"
+        state: directory
+        mode: 0777
+        owner: "{{user.userid}}"
+        group: "{{user.groupid}}"
+
+    # LABELS ######################################################################
+    - name: 'Ajout label traefik'
+      set_fact:
+        pg_labels:
+          traefik.enable: 'false'
+          ## HTTP Routers
+          traefik.http.routers.ntopngsys-rtr.entrypoints: 'https'
+          traefik.http.routers.ntopngsys-rtr.rule: 'Host(`{{sub.ntopngsys.ntopngsys if sub_enabled else pgrole}}.{{user.domain}}`)'
+          traefik.http.routers.ntopngsys-rtr.tls: 'true'
+          ## Middlewares
+          traefik.http.routers.ntopngsys-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
+          else 'chain-basic-auth@file' if auth_enabled and sub[pgrole].auth == 'basique' | default(false)
+          else 'chain-oauth@file' if auth_enabled and sub[pgrole].auth == 'oauth' | default(false)
+          else omit if auth_enabled and sub[pgrole].auth == 'aucune'}}"
+          ## HTTP Services
+          traefik.http.routers.ntopngsys-rtr.service: 'ntopngsys-svc'
+          traefik.http.services.ntopngsys-svc.loadbalancer.server.port: '8080'
+
+    - name: 'Setting PG Volumes'
+      set_fact:
+        pg_volumes:
+          - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/etc/ntopng"
+          - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/var/lib/ntopng"
+          - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/redis:/var/lib/redis"
+
+    - name: 'Setting PG ENV'
+      set_fact:
+        pg_env:
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
+          TZ: 'Europe/Paris'
+
+    # MAIN DEPLOYMENT #############################################################
+
+    - name: 'Deploying {{pgrole}}'
+      docker_container:
+        name: '{{pgrole}}'
+        image: '{{image}}'
+        pull: yes
+        volumes: '{{pg_volumes}}'
+        env: '{{pg_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: host
+        state: started
+        labels: '{{pg_labels}}'
+
+
+
