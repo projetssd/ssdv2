@@ -55,7 +55,7 @@
 
     - name: Fichier toml pour traefik
       template:
-        src: "{{ lookup('env','BASEDIR') }}/includes/config/dockerapps/templates/{{ pgrole }}/ntopngsys.toml.j2"
+        src: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/{{ pgrole }}/ntopngsys.toml.j2"
         dest: "{{ lookup('env','CONFDIR') }}/docker/traefik/rules/ntopngsys.toml"
 
     # LABELS ######################################################################
