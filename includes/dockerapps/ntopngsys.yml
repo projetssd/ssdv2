@@ -51,23 +51,17 @@
         owner: "{{user.userid}}"
         group: "{{user.groupid}}"
 
+    - name: Fichier toml pour traefik
+      template:
+        src: "{{ lookup('env','BASEDIR') }}/includes/config/dockerapps/templates/{{ pgrole }}/ntopngsys.toml.j2"
+        dest: "{{ lookup('env','CONFDIR') }}/docker/traefik/rules/ntopngsys.toml"
+
     # LABELS ######################################################################
     - name: 'Ajout label traefik'
       set_fact:
         pg_labels:
           traefik.enable: 'false'
-          ## HTTP Routers
-          traefik.http.routers.ntopngsys-rtr.entrypoints: 'https'
-          traefik.http.routers.ntopngsys-rtr.rule: 'Host(`{{sub.ntopngsys.ntopngsys if sub_enabled else pgrole}}.{{user.domain}}`)'
-          traefik.http.routers.ntopngsys-rtr.tls: 'true'
-          ## Middlewares
-          traefik.http.routers.ntopngsys-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
-          else 'chain-basic-auth@file' if auth_enabled and sub[pgrole].auth == 'basique' | default(false)
-          else 'chain-oauth@file' if auth_enabled and sub[pgrole].auth == 'oauth' | default(false)
-          else omit if auth_enabled and sub[pgrole].auth == 'aucune'}}"
-          ## HTTP Services
-          traefik.http.routers.ntopngsys-rtr.service: 'ntopngsys-svc'
-          traefik.http.services.ntopngsys-svc.loadbalancer.server.port: '8080'
+
 
     - name: 'Setting PG Volumes'
       set_fact:
