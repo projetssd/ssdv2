@@ -38,12 +38,14 @@
         image: 'ntop/ntopng:stable'
 
     - name: Creating paths
+      become: yes
       file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
       with_items:
           - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config"
           - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data"
 
-    - name: Change rights
+    - name: Creating paths with 777
+      become: yes
       file:
         path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/redis"
         state: directory
