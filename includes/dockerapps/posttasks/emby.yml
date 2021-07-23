@@ -31,8 +31,10 @@
       xpath: /ServerConfiguration/EnableAnonymousUsageReporting
       value: 'false'
 
-  - name: 'Restart {{ pgrole }}'
-    docker_container:
-      name: '{{ pgrole }}'
-      state: started
-  when: not xmlcheck.stat.exists
+  failed_when: false
+
+- name: 'Restart {{ pgrole }}'
+  docker_container:
+    name: '{{ pgrole }}'
+    state: started
+when: not xmlcheck.stat.exists
