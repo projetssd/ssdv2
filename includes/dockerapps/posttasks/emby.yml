@@ -37,4 +37,3 @@
   docker_container:
     name: '{{ pgrole }}'
     state: started
-when: not xmlcheck.stat.exists
