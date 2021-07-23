@@ -30,10 +30,10 @@
       path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config/config/system.xml"
       xpath: /ServerConfiguration/EnableAnonymousUsageReporting
       value: 'false'
+    ignore_errors: yes
 
-  failed_when: false
-
-- name: 'Restart {{ pgrole }}'
-  docker_container:
-    name: '{{ pgrole }}'
-    state: started
+  - name: 'Restart {{ pgrole }}'
+    docker_container:
+      name: '{{ pgrole }}'
+      state: started
+  when: not xmlcheck.stat.exists
