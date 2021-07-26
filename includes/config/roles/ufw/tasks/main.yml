@@ -4,6 +4,7 @@
   tasks:
 
     - name: copy plex ufw rules
+      become: yes
       copy:
         src: /opt/seedbox-compose/includes/config/roles/ufw/files/plexmediaserver
         dest: /etc/ufw/applications.d/plexmediaserver

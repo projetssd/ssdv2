@@ -17,6 +17,7 @@
       # - fe20:abcd::
   tasks:
     - name: Install UFW
+      become: yes
       apt:
         state: present
         name:
@@ -32,32 +33,39 @@
           - "{{ ansible_env['SSH_CLIENT'].split() | first }}"
 
     - name: Enable ufw
+      become: yes
       ufw:
         state: enabled
     - name: Open ssh
+      become: yes
       ufw:
         rule: allow
         port: "{{ ansible_env['SSH_CLIENT'].split() | last }}"
     - name: Open Current IP
+      become: yes
       ufw:
         rule: allow
         from_ip: "{{ ansible_env['SSH_CLIENT'].split() | first }}"
     - name: Open for authorized IPs
+      become: yes
       ufw:
         rule: allow
         from_ip: "{{ item }}"
       loop: "{{ allow_ips }}"
     - name: Apply specific port rules
+      become: yes
       ufw:
         rule: allow
         port: "{{ item }}"
       loop: "{{ opened_ports }}"
 
     - name: Apply plex rules
+      become: yes
       ufw:
         name: plexmediaserver-all
         rule: allow
     - name: block all
+      become: yes
       ufw:
         policy: reject
 
