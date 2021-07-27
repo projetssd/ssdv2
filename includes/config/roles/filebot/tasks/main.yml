@@ -16,7 +16,7 @@
       become: yes
       file:
         path: "/home/{{ lookup('env','USER') }}/exclude.txt"
-        state: file
+        state: touch
         owner: "{{ lookup('env','USER') }}"
         mode: 0755
 
