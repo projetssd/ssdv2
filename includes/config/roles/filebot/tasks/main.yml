@@ -12,11 +12,13 @@
     - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
   tasks:
 
-    - name: Install openjdk
+    - name: change rights
       become: yes
-      apt:
-        name: default-jdk
-        state: present
+      file:
+        path: "/home/{{ lookup('env','USER') }}/exclude.txt"
+        state: file
+        owner: "{{ lookup('env','USER') }}"
+        mode: 0755
 
     # FILEBOT ##############################################################
     - name: Check filebot

@@ -230,6 +230,17 @@ menu_gestion_backup() {
   script_plexdrive
 }
 
+function menu_gestion_install_filebot() {
+  clear
+  echo -e " ${BLUE}* Installation de filebot${NC}"
+  echo ""
+  ansible-playbook ${BASEDIR}/includes/config/roles/filebot/tasks/main.yml
+  echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+  read -r
+
+  script_plexdrive
+}
+
 menu_gestion_utilitaires() {
   clear
   logo
@@ -243,6 +254,7 @@ menu_gestion_utilitaires() {
   echo -e "${CGREEN}   5) Plex_Patrol${CEND}"
   echo -e "${CGREEN}   6) Bloquer les ports non vitaux avec UFW${CEND}"
   echo -e "${CGREEN}   7) Configuration du Backup${CEND}"
+  echo -e "${CGREEN}   8) Installation de filebot${CEND}"
   echo -e "${CGREEN}   10) Retour menu principal${CEND}"
   echo -e ""
 
@@ -276,6 +288,10 @@ menu_gestion_utilitaires() {
 
   7)
     menu_gestion_backup
+    ;;
+
+  8)
+    menu_gestion_install_filebot
     ;;
 
   10)
