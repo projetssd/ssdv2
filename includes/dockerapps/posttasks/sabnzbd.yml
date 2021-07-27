@@ -22,7 +22,7 @@
         path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/sabnzbd.ini"
         section: misc
         option: host_whitelist
-        value: 'sabnzbd.{{user.domain}},'
+        value: '{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}},'
         state: present
 
     - name: Set direct_unpack
