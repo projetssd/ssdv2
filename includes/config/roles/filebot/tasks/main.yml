@@ -16,7 +16,7 @@
       become: yes
       apt:
         name: default-jdk
-        state: installed
+        state: present
 
     # FILEBOT ##############################################################
     - name: Check filebot
