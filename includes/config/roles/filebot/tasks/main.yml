@@ -12,6 +12,12 @@
     - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
   tasks:
 
+    - name: Install openjdk
+      become: yes
+      apt:
+        name: default-jdk
+        state: installed
+
     # FILEBOT ##############################################################
     - name: Check filebot
       stat:
