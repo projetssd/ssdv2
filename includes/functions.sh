@@ -2039,3 +2039,33 @@ function stocke_public_ip() {
     echo "Aucune adresse ipv6 trouvée"
   fi
 }
+
+function affiche_menu_db() {
+  echo -e "${CGREEN}${CEND}"
+  start_menu="is null"
+  texte_sortie="Sortie du script"
+  precedent=""
+  if [[ $# -eq 2 ]]; then
+    if [ -z "$2" ]; then
+      start_menu="=${2}"
+      texte_sortie="Menu précédent"
+      precedent="${2}"
+    fi
+  fi
+  # chargement des menus
+  request="select * from menu where parent_id ${start_menu}"
+  sqlite3 "${SCRIPTPATH}/menu" "${request}" | while read db_id,db_texte,db_parent_id,db_ordre,db_action; do
+    echo -e "${CGREEN}   ${db_ordre}) ${db_texte}${CEND}"
+  done
+  echo -e "------------------------"
+  echo -e "${CGREEN}   $E) ${texte_sortie}${CEND}"
+
+  read -p "Votre choix : " PORT_CHOICE
+
+  if [ "${PORT_CHOICE}" == "E" ]; then
+    affiche_menu_db ${precedent}
+  else
+    affiche_menu_db ${db_id}
+  fi
+
+}
