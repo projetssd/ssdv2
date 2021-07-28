@@ -168,4 +168,4 @@ echo -e "${CCYAN} /!\ Migration plexdrive ==> rclone vsf REUSSI!! /!\ ${CEND}"
 echo -e "${CRED}------------------------------------------------------${CEND}"
 pause
 ansible-vault encrypt /opt/seedbox/variables/account.yml >/dev/null 2>&1
-script_plexdrive
+

@@ -547,50 +547,51 @@ function insert_mod() {
 
 # shellcheck disable=SC2120
 function script_plexdrive() {
-  source ${SCRIPTPATH}/includes/menus.sh
-  if [[ -d "${CONFDIR}" ]]; then
-    clear
-
-    # Vérification installation modt
-    confmodt="/opt/motd"
-    if [ -d "$confmodt" ]; then
-      insert_mod
-    else
-      logo
-    fi
-
-    echo ""
-    echo -e "${CCYAN}SEEDBOX RCLONE/PLEXDRIVE${CEND}"
-    echo -e "${CGREEN}${CEND}"
-    echo -e "${CGREEN}   1) Ajout/Supression d'Applis${CEND}"
-    echo -e "${CGREEN}   2) Gestion${CEND}"
-    echo -e "${CGREEN}   3) Quitter${CEND}"
-    #echo -e "${CGREEN}   4) Installer/Réinstaller la GUI${CEND}"
-
-    echo -e ""
-    read -p "Votre choix: " PORT_CHOICE
-
-    case $PORT_CHOICE in
-    1)
-      menu_ajout_supp_applis
-      ;;
-
-    2)
-      menu_gestion
-      ;;
-    3)
-      exit 0
-      ;;
-    4) ## install gui
-      install_gui
-      ;;
-
-    *)
-      script_plexdrive
-      ;;
-
-    esac
-  fi
+  echo "vide"
+#  source ${SCRIPTPATH}/includes/menus.sh
+#  if [[ -d "${CONFDIR}" ]]; then
+#    clear
+#
+#    # Vérification installation modt
+#    confmodt="/opt/motd"
+#    if [ -d "$confmodt" ]; then
+#      insert_mod
+#    else
+#      logo
+#    fi
+#
+#    echo ""
+#    echo -e "${CCYAN}SEEDBOX RCLONE/PLEXDRIVE${CEND}"
+#    echo -e "${CGREEN}${CEND}"
+#    echo -e "${CGREEN}   1) Ajout/Supression d'Applis${CEND}"
+#    echo -e "${CGREEN}   2) Gestion${CEND}"
+#    echo -e "${CGREEN}   3) Quitter${CEND}"
+#    #echo -e "${CGREEN}   4) Installer/Réinstaller la GUI${CEND}"
+#
+#    echo -e ""
+#    read -p "Votre choix: " PORT_CHOICE
+#
+#    case $PORT_CHOICE in
+#    1)
+#      menu_ajout_supp_applis
+#      ;;
+#
+#    2)
+#      menu_gestion
+#      ;;
+#    3)
+#      exit 0
+#      ;;
+#    4) ## install gui
+#      install_gui
+#      ;;
+#
+#    *)
+#      affiche_menu_db
+#      ;;
+#
+#    esac
+#  fi
 }
 
 function create_dir() {
@@ -1070,7 +1071,7 @@ function projects() {
       "\nChoisir vos Applications" 18 47 10 \
       $(cat /tmp/projects.txt) 3>&1 1>&2 2>&3
   )
-  [[ "$?" == 1 ]] && script_plexdrive && rm /tmp/projects.txt
+  [[ "$?" == 1 ]] && rm /tmp/projects.txt
   PROJECTPERUSER="${PROJECTUSER}${USER}"
   touch "${PROJECTPERUSER}"
 
@@ -1104,7 +1105,7 @@ function choose_services() {
       "Appuyer sur la barre espace pour la sélection" 28 64 21 \
       $(cat /tmp/menuservices.txt) 3>&1 1>&2 2>&3
   )
-  [[ "$?" == 1 ]] && script_plexdrive && rm /tmp/menuservices.txt
+  [[ "$?" == 1 ]] && rm /tmp/menuservices.txt
   touch $SERVICESPERUSER
   for APPDOCKER in $SERVICESTOINSTALL; do
     echo -e "	${GREEN}* $(echo $APPDOCKER | tr -d '"')${NC}"
@@ -1131,7 +1132,7 @@ function choose_other_services() {
       "Appuyer sur la barre espace pour la sélection" 28 64 21 \
       $(cat /tmp/menuservices.txt) 3>&1 1>&2 2>&3
   )
-  [[ "$?" == 1 ]] && script_plexdrive && rm /tmp/menuservices.txt
+  [[ "$?" == 1 ]] && rm /tmp/menuservices.txt
   touch "${SERVICESPERUSER}"
   for APPDOCKER in $SERVICESTOINSTALL; do
     echo -e "	${GREEN}* $(echo "${APPDOCKER}" | tr -d '"')${NC}"
