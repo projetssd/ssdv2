@@ -198,24 +198,19 @@ menu_gest_service_account() {
   echo -e "${CGREEN}${CEND}"
   echo -e "${CGREEN}   1) Création des SA avec sa_gen${CEND}"
   echo -e "${CGREEN}   2) Création des SA avec safire${CEND}"
-  echo -e "${CGREEN}   3) Retour menu principal${CEND}"
   echo -e ""
   read -p "Votre choix [1-3]: " SERVICES
   case $SERVICES in
 
   1) ## Création des SA avec gen-sa
     ${BASEDIR}/includes/config/scripts/sa-gen.sh
-    script_plexdrive
     ;;
 
   2) ## Creation des SA avec safire
     ${BASEDIR}/includes/config/scripts/safire.sh
-    script_plexdrive
     ;;
 
-  3)
-    script_plexdrive
-    ;;
+
   esac # case services
 }
 
@@ -227,7 +222,6 @@ menu_migr_meme_compte() {
   echo -e "${CGREEN}${CEND}"
   echo -e "${CGREEN}   1) Déplacer les données => Pas de limite ${CEND}"
   echo -e "${CGREEN}   2) Copier les données => 10 Tera par jour ${CEND}"
-  echo -e "${CGREEN}   3) Retour menu principal${CEND}"
   echo ""
   read -p "Votre choix [1-3]: " MVEB
   case $MVEB in
@@ -236,19 +230,15 @@ menu_migr_meme_compte() {
     clear
     ${BASEDIR}/includes/config/scripts/migration.sh
     pause
-    script_plexdrive
     ;;
 
   2) # Copier les données (10 Tera par jour)
     clear
     ${BASEDIR}/includes/config/scripts/sasync.sh
-    pause
-    script_plexdrive
+
     ;;
 
-  3)
-    script_plexdrive
-    ;;
+
   esac
 }
 
@@ -260,7 +250,6 @@ menu_migr_compte_diff() {
   echo -e "${CGREEN}${CEND}"
   echo -e "${CGREEN}   1) Déplacer les données => Pas de limite ${CEND}"
   echo -e "${CGREEN}   2) Copier les données => 1,8 Tera par jour ${CEND}"
-  echo -e "${CGREEN}   3) Retour menu principal${CEND}"
   echo ""
   read -p "Votre choix [1-3]: " MVEBC
   case $MVEBC in
@@ -269,19 +258,15 @@ menu_migr_compte_diff() {
     clear
     ${BASEDIR}/includes/config/scripts/migration.sh
     pause
-    script_plexdrive
     ;;
 
   2) # Copier les données (1,8 Tera par jour)
     clear
     ${BASEDIR}/includes/config/scripts/sasync-bwlimit.sh
     pause
-    script_plexdrive
     ;;
 
-  3)
-    script_plexdrive
-    ;;
+
   esac
 }
 
@@ -293,7 +278,6 @@ menu_migr_gdrive2share() {
   echo -e "${CGREEN}${CEND}"
   echo -e "${CGREEN}   1) GDrive et Share Drive font partis du même compte Google ${CEND}"
   echo -e "${CGREEN}   2) GDrive et Share Drive sont sur deux comptes Google Différents ${CEND}"
-  echo -e "${CGREEN}   3) Retour menu principal${CEND}"
   echo ""
   read -p "Votre choix [1-3]: " MVEA
   case $MVEA in
@@ -303,9 +287,7 @@ menu_migr_gdrive2share() {
   2)
     menu_migr_compte_diff
     ;;
-  3)
-    script_plexdrive
-    ;;
+
   esac
 }
 
@@ -317,7 +299,6 @@ menu_migr_share2share_compte_diff() {
   echo -e "${CGREEN}${CEND}"
   echo -e "${CGREEN}   1) Déplacer les données => Vous pouvez directement le faire à partir de l'interface UI${CEND}"
   echo -e "${CGREEN}   2) Copier les données => 10 Tera par jour${CEND}"
-  echo -e "${CGREEN}   3) Retour menu principal${CEND}"
   echo ""
   read -p "Votre choix [1-3]: " MVED
   case $MVED in
@@ -334,18 +315,14 @@ menu_migr_share2share_compte_diff() {
       ${BASEDIR}/includes/config/scripts/sasync-share.sh
     fi
     pause
-    script_plexdrive
     ;;
 
   2) # Copier les données (10 Tera par jour)
     ${BASEDIR}/includes/config/scripts/sasync-share.sh
     pause
-    script_plexdrive
     ;;
 
-  3)
-    script_plexdrive
-    ;;
+
   esac
 }
 
@@ -357,7 +334,6 @@ menu_migr_share2share_mm_compte() {
   echo -e "${CGREEN}${CEND}"
   echo -e "${CGREEN}   1) Déplacer les données => Vous pouvez directement le faire à partir de l'interface UI${CEND}"
   echo -e "${CGREEN}   2) Copier les données =>10 Tera par jour ${CEND}"
-  echo -e "${CGREEN}   3) Retour menu principal${CEND}"
   echo ""
   read -p "Votre choix [1-3]: " MVEC
   case $MVEC in
@@ -376,18 +352,14 @@ menu_migr_share2share_mm_compte() {
       ${BASEDIR}/includes/config/scripts/sasync-share.sh
     fi
     pause
-    script_plexdrive
     ;;
 
   2) # Copier les données (10 Tera par jour)
     ${BASEDIR}/includes/config/scripts/sasync-share.sh
     pause
-    script_plexdrive
     ;;
 
-  3)
-    script_plexdrive
-    ;;
+
   esac
 }
 
@@ -399,7 +371,6 @@ menu_migr_share2share() {
   echo -e "${CGREEN}${CEND}"
   echo -e "${CGREEN}   1) Share Drive et Share Drive font partis du même compte Google${CEND}"
   echo -e "${CGREEN}   2) Share Drive et Share Drive sont sur deux comptes Google Différents${CEND}"
-  echo -e "${CGREEN}   3) Retour menu principal${CEND}"
   echo ""
   read -p "Votre choix [1-3]: " SHARE
   case $SHARE in
@@ -411,9 +382,7 @@ menu_migr_share2share() {
   2) ## migration share drive -> share drive compte diff
     menu_migr_share2share_compte_diff
     ;;
-  3)
-    script_plexdrive
-    ;;
+
   esac
 }
 
@@ -425,7 +394,6 @@ menu_migr() {
   echo -e "${CGREEN}${CEND}"
   echo -e "${CGREEN}   1) GDrive => Share Drive${CEND}"
   echo -e "${CGREEN}   2) Share Drive => Share Drive${CEND}"
-  echo -e "${CGREEN}   3) Retour menu principal${CEND}"
   echo -e ""
   read -p "Votre choix [1-3]: " MIGRE
   case $MIGRE in
@@ -437,9 +405,7 @@ menu_migr() {
   2) ## migration share drive -> share drive
     menu_migr_share2share
     ;;
-  3)
-    script_plexdrive
-    ;;
+
   esac
 }
 
@@ -464,7 +430,6 @@ menu_install_rclone_plexdrive() {
     rm -rf /mnt/plexdrive
     echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
     read -r
-    script_plexdrive
     ;;
 
   2)
@@ -475,7 +440,6 @@ menu_install_rclone_plexdrive() {
     install_plexdrive
     echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
     read -r
-    script_plexdrive
     ;;
 
   3)
@@ -488,7 +452,6 @@ menu_install_rclone_plexdrive() {
     plexdrive
     echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
     read -r
-    script_plexdrive
     ;;
   esac # case $RCLONE
 
@@ -507,7 +470,6 @@ menu_gestion() {
   echo -e "${CGREEN}   5) Comptes de Service${CEND}"
   echo -e "${CGREEN}   6) Migration Gdrive/Share Drive ==> Share Drive${CEND}"
   echo -e "${CGREEN}   7) Installation Rclone vfs && Plexdrive${CEND}"
-  echo -e "${CGREEN}   8) Retour menu principal${CEND}"
   echo -e ""
   read -p "Votre choix [1-8]: " GESTION
 
@@ -542,9 +504,7 @@ menu_gestion() {
     menu_install_rclone_plexdrive
     ;;
 
-  8) ## 2.8 - Gestion retour menu principal
-    script_plexdrive
-    ;;
+
   esac
 }
 

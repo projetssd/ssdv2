@@ -197,7 +197,7 @@ if [ $mode_install = "manuel" ]; then
         echo "./seedbox.sh"
         exit 0
       else
-        script_plexdrive
+        affiche_menu_db
       fi
       ;;
 
@@ -281,9 +281,9 @@ EOF
         install_services
         # on marque la seedbox comme installée
         update_seedbox_param "installed" 1
-        script_plexdrive
+        affiche_menu_db
       else
-        script_plexdrive
+        affiche_menu_db
       fi
       ;;
 
@@ -304,7 +304,7 @@ EOF
   update_logrotate
   PLEXDRIVE="/usr/bin/rclone"
   if [[ -e "$PLEXDRIVE" ]]; then
-    script_plexdrive
+    affiche_menu_db
   else
     script_classique
   fi
