@@ -2058,7 +2058,7 @@ function affiche_menu_db() {
   request="select * from menu where parent_id ${start_menu}"
   sqlite3 "${SCRIPTPATH}/menu" "${request}" | while read -a db_select; do
     IFS='|'
-    read -ra db_select2 <<< "db_select"
+    read -ra db_select2 <<< "$db_select"
     echo -e "${CGREEN}   ${db_select2[3]}) ${db_select2[1]}${CEND}"
     IFS=$'\n'
   done
