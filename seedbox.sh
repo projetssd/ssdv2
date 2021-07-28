@@ -2,6 +2,7 @@
 
 # on change tout de suis le path pour la suite
 export PATH="$HOME/.local/bin:$PATH"
+export IFSORIGIN="${IFS}"
 
 # Absolute path to this script.
 CURRENT_SCRIPT=$(readlink -f "$0")

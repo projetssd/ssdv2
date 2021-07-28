@@ -1920,7 +1920,9 @@ function stocke_public_ip() {
 }
 
 function affiche_menu_db() {
-  OLDIFS=${IFS}
+  if [ -z "$OLDIFS"]; then
+	  OLDIFS=${IFS}
+  fi
   IFS=$'\n'
   echo -e "${CGREEN}${CEND}"
   start_menu="is null"
@@ -1964,6 +1966,7 @@ function affiche_menu_db() {
       : # pas d'action à effectuer
     else
       # on va lancer la fonction qui a été chargée
+      IFS=${OLDIFS}
       $action
     fi
 
