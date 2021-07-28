@@ -1,8 +1,5 @@
 menu_ajout_supp_applis() {
   clear
-  ## Ajout d'Applications
-  echo""
-  clear
   manage_apps
 }
 
@@ -10,7 +7,6 @@ menu_secu_system_oauth2() {
   clear
   echo ""
   ${BASEDIR}/includes/config/scripts/oauth.sh
-  script_plexdrive
 }
 
 menu_secu_system_auth_classique() {
@@ -26,7 +22,6 @@ menu_secu_system_auth_classique() {
   #          sed -i "/account:/c\   account: " ${CONFDIR}/variables/account.yml
 
   ${BASEDIR}/includes/config/scripts/basique.sh
-  script_plexdrive
 }
 
 menu_secu_system_ajout_adresse_oauth2() {
@@ -46,19 +41,16 @@ menu_secu_system_ajout_adresse_oauth2() {
   echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
   read -r
 
-  script_plexdrive
 }
 
 menu_secu_systeme_iptables() {
   clear
   echo ""
   ${BASEDIR}/includes/config/scripts/iptables.sh
-  script_plexdrive
 }
 
 menu_secu_systeme_cloudflare() {
   ${BASEDIR}/includes/config/scripts/cloudflare.sh
-  script_plexdrive
 }
 
 menu_change_domaine() {
@@ -89,92 +81,17 @@ menu_change_sous_domaine() {
   install_services
   mv ${CONFDIR}/resume /home/${USER}/resume >/dev/null 2>&1
   resume_seedbox
-  script_plexdrive
 }
 
-menu_gestion_domaine() {
-  clear
-  logo
-  echo ""
-  echo -e "${CCYAN}CHANGEMENT DOMAINE && SOUS DOMAINES${CEND}"
-  echo -e "${CGREEN}${CEND}"
-  echo -e "${CGREEN}   1) Changement du nom de domaine ${CEND}"
-  echo -e "${CGREEN}   2) Modifier les sous domaines${CEND}"
-  echo -e "${CGREEN}   3) Retour Menu principal${CEND}"
 
-  echo -e ""
-  read -p "Votre choix [1-3]: " DOMAIN
-  case $DOMAIN in
 
-  1) ## Changement nom de domaine
-    menu_change_domaine
-    ;;
 
-  2) ## Modifier les sous domaines
-    menu_change_sous_domaine
-    ;;
-
-  3)
-    # Retour menu principal
-    script_plexdrive
-    ;;
-  esac # case DOMAIN
-}
-
-menu_securisation_systeme() {
-  clear
-  logo
-  echo ""
-  echo -e "${CCYAN}SECURISER APPLIS DOCKER${CEND}"
-  echo -e "${CGREEN}${CEND}"
-  echo -e "${CGREEN}   1) Sécuriser Traefik avec Google OAuth2${CEND}"
-  echo -e "${CGREEN}   2) Sécuriser avec Authentification Classique${CEND}"
-  echo -e "${CGREEN}   3) Ajout / Supression adresses mail autorisées pour Google OAuth2${CEND}"
-  echo -e "${CGREEN}   4) Modification port SSH, mise à jour fail2ban, installation Iptables${CEND}"
-  echo -e "${CGREEN}   5) Mise à jour Seedbox avec Cloudflare${CEND}"
-  echo -e "${CGREEN}   6) Changement de Domaine && Modification des sous domaines${CEND}"
-  echo -e "${CGREEN}   7) Retour menu principal${CEND}"
-
-  echo -e ""
-  read -p "Votre choix [1-8]: " OAUTH
-  case $OAUTH in
-
-  1)
-    menu_secu_system_oauth2
-    ;;
-
-  2) ## auth classique, on supprime les valeurs oauth
-    menu_secu_system_auth_classique
-    ;;
-
-  3)
-    menu_secu_system_ajout_adresse_oauth2
-    ;;
-
-  4)
-    menu_secu_systeme_iptables
-    ;;
-
-  5) ## Mise à jour Cloudflare
-    menu_secu_systeme_cloudflare
-    ;;
-
-  6) ## Changement du nom de domaine
-    menu_gestion_domaine
-    ;;
-
-  7)
-    script_plexdrive
-    ;;
-  esac # case oauth
-}
 
 menu_gestion_motd() {
   clear
   echo ""
   motd
   pause
-  script_plexdrive
 }
 
 menu_gestion_traktarr() {
@@ -182,7 +99,6 @@ menu_gestion_traktarr() {
   echo ""
   traktarr
   pause
-  script_plexdrive
 }
 
 menu_gestion_webtools() {
@@ -190,7 +106,6 @@ menu_gestion_webtools() {
   echo ""
   webtools
   pause
-  script_plexdrive
 }
 
 menu_gestion_rtorrent_cleaner() {
@@ -199,7 +114,6 @@ menu_gestion_rtorrent_cleaner() {
   rtorrent-cleaner
   docker run -it --rm -v /home/${USER}/local/rutorrent:/home/${USER}/local/rutorrent -v /run/php:/run/php magicalex/rtorrent-cleaner
   pause
-  script_plexdrive
 }
 
 menu_gestion_plex_patrol() {
@@ -211,7 +125,6 @@ menu_gestion_plex_patrol() {
   cp "${BASEDIR}/includes/config/roles/plex_patrol/tasks/main.yml" "${CONFDIR}/conf/plex_patrol.yml" >/dev/null 2>&1
   echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour revenir au menu principal..."
   read -r
-  script_plexdrive
 }
 
 menu_gestion_ufw() {
@@ -227,7 +140,6 @@ menu_gestion_backup() {
   echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
   read -r
 
-  script_plexdrive
 }
 
 function menu_gestion_install_filebot() {
@@ -238,74 +150,15 @@ function menu_gestion_install_filebot() {
   echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
   read -r
 
-  script_plexdrive
 }
 
-menu_gestion_utilitaires() {
-  clear
-  logo
-  echo ""
-  echo -e "${CCYAN}UTILITAIRES${CEND}"
-  echo -e "${CGREEN}${CEND}"
-  echo -e "${CGREEN}   1) Installation du motd${CEND}"
-  echo -e "${CGREEN}   2) Traktarr${CEND}"
-  echo -e "${CGREEN}   3) Webtools${CEND}"
-  echo -e "${CGREEN}   4) rtorrent-cleaner de ${CCYAN}@Magicalex-Mondedie.fr${CEND}${NC}"
-  echo -e "${CGREEN}   5) Plex_Patrol${CEND}"
-  echo -e "${CGREEN}   6) Bloquer les ports non vitaux avec UFW${CEND}"
-  echo -e "${CGREEN}   7) Configuration du Backup${CEND}"
-  echo -e "${CGREEN}   8) Installation de filebot${CEND}"
-  echo -e "${CGREEN}   10) Retour menu principal${CEND}"
-  echo -e ""
 
-  read -p "Votre choix [1-8]: " UTIL
-  case $UTIL in
-
-  \
-    1) ## Installation du motd
-    menu_gestion_motd
-    ;;
-
-  2) ## Installation de traktarr
-    menu_gestion_traktarr
-    ;;
-
-  3) ## Installation de Webtools
-    menu_gestion_webtools
-    ;;
-
-  4) ## Installation de rtorrent-cleaner
-    menu_gestion_rtorrent_cleaner
-    ;;
-
-  5) ## Installation Plex_Patrol
-    menu_gestion_plex_patrol
-    ;;
-
-  6)
-    menu_gestion_ufw
-    ;;
-
-  7)
-    menu_gestion_backup
-    ;;
-
-  8)
-    menu_gestion_install_filebot
-    ;;
-
-  10)
-    script_plexdrive
-    ;;
-  esac
-}
 
 menu_gestoutils_plexautoscan() {
   clear
   echo ""
   plex_autoscan
   pause
-  script_plexdrive
 }
 
 menu_gestoutils_autoscan() {
@@ -313,7 +166,6 @@ menu_gestoutils_autoscan() {
   echo ""
   ansible-playbook ${BASEDIR}/includes/config/roles/autoscan/tasks/main.yml
   pause
-  script_plexdrive
 }
 
 menu_gestoutils_cloudplow() {
@@ -322,7 +174,6 @@ menu_gestoutils_cloudplow() {
   echo ""
   install_cloudplow
   pause
-  script_plexdrive
 }
 
 menu_gestoutils_crop() {
@@ -330,7 +181,6 @@ menu_gestoutils_crop() {
   crop
   echo ""
   pause
-  script_plexdrive
 }
 
 menu_gestoutils_dupefinder() {
@@ -338,50 +188,6 @@ menu_gestoutils_dupefinder() {
   plex_dupefinder
   echo ""
   pause
-  script_plexdrive
-}
-
-menu_gestoutils() {
-  clear
-  logo
-  echo ""
-  echo -e "${CCYAN}OUTILS${CEND}"
-  echo -e "${CGREEN}${CEND}"
-  echo -e "${CGREEN}   1) Plex_autoscan${CEND}"
-  echo -e "${CGREEN}   2) Autoscan (Nouvelle version de Plex_autoscan)${CEND}"
-  echo -e "${CGREEN}   3) Cloudplow${CEND}"
-  echo -e "${CGREEN}   4) Crop (Nouvelle version de Cloudplow) => Experimental${CEND}"
-  echo -e "${CGREEN}   5) Plex_dupefinder${CEND}"
-  echo -e "${CGREEN}   6) Retour menu principal${CEND}"
-
-  echo -e ""
-  read -p "Votre choix [1-6]: " OUTILS
-  case $OUTILS in
-
-  1) ## Installation Plex_autoscan
-    menu_gestoutils_plexautoscan
-    ;;
-
-  2) ## Installation Autoscan
-    menu_gestoutils_autoscan
-    ;;
-
-  3) ## Installation Cloudplow
-    menu_gestoutils_cloudplow
-    ;;
-
-  4) ## Installation Crop
-    menu_gestoutils_crop
-    ;;
-
-  5) ## Installation plex_dupefinder
-    menu_gestoutils_dupefinder
-    ;;
-
-  6)
-    script_plexdrive
-    ;;
-  esac # case outils
 }
 
 menu_gest_service_account() {
@@ -742,8 +548,88 @@ menu_gestion() {
   esac
 }
 
-
 function test_menu_sde() {
   ls
+  pause
+}
+
+########################
+function ajout_app_seedbox() {
+  echo -e " ${BWHITE}* Resume file: $USERRESUMEFILE${NC}"
+  echo ""
+  choose_services
+
+  install_services
+  pause
+  resume_seedbox
+}
+
+function ajout_app_autres() {
+  echo -e " ${BWHITE}* Resume file: $USERRESUMEFILE${NC}"
+  echo ""
+  choose_other_services
+  subdomain
+  auth
+  install_services
+  pause
+  resume_seedbox
+  pause
+}
+
+function menu_suppression_application() {
+  echo -e " ${BWHITE}* Application en cours de suppression${NC}"
+  TABSERVICES=()
+  for SERVICEACTIVATED in $(docker ps --format "{{.Names}}" | cut -d'-' -f2 | sort -u); do
+    SERVICE=$(echo $SERVICEACTIVATED | cut -d\. -f1)
+    TABSERVICES+=(${SERVICE//\"/} " ")
+  done
+  APPSELECTED=$(
+    whiptail --title "App Manager" --menu \
+      "Sélectionner l'Appli à supprimer" 19 45 11 \
+      "${TABSERVICES[@]}" 3>&1 1>&2 2>&3
+  )
+  [[ "$?" == 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi
+  echo -e " ${GREEN}   * $APPSELECTED${NC}"
+
+  suppression_appli ${APPSELECTED} 1
+  pause
+}
+
+function menu_reinit_container() {
+  touch $SERVICESPERUSER
+  echo -e " ${BWHITE}* Les fichiers de configuration ne seront pas effacés${NC}"
+  TABSERVICES=()
+  for SERVICEACTIVATED in $(docker ps --format "{{.Names}}"); do
+    SERVICE=$(echo $SERVICEACTIVATED | cut -d\. -f1)
+    TABSERVICES+=(${SERVICE//\"/} " ")
+  done
+  line=$(
+    whiptail --title "App Manager" --menu \
+      "Sélectionner le container à réinitialiser" 19 45 11 \
+      "${TABSERVICES[@]}" 3>&1 1>&2 2>&3
+  )
+  [[ "$?" == 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi
+  echo -e " ${GREEN}   * ${line}${NC}"
+  subdomain=$(get_from_account_yml "sub.${line}.${line}")
+  ###subdomain=$(grep "${line}" ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
+
+  sed -i "/${line}/d" ${CONFDIR}/resume >/dev/null 2>&1
+  sed -i "/${line}/d" /home/${USER}/resume >/dev/null 2>&1
+  suppression_appli "${line}"
+  rm -f "${CONFDIR}/conf/${line}.yml"
+  rm -f "${CONFDIR}/vars/${line}.yml"
+
+  docker system prune -af >/dev/null 2>&1
+  docker volume rm $(docker volume ls -qf "dangling=true") >/dev/null 2>&1
+  echo ""
+  echo ${line} >>$SERVICESPERUSER
+
+  install_services
+  pause
+  checking_errors $?
+  echo""
+  echo -e "${BLUE}### Le Container ${line} a été Réinitialisé ###${NC}"
+  echo ""
+  resume_seedbox
   pause
 }
