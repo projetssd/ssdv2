@@ -741,3 +741,9 @@ menu_gestion() {
     ;;
   esac
 }
+
+
+function test_menu_sde() {
+  ls
+  pause
+}

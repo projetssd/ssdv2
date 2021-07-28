@@ -985,13 +985,17 @@ function define_parameters() {
   echo -e "${BLUE}### INFORMATIONS UTILISATEURS ###${NC}"
 
   create_user
-  CONTACTEMAIL=$(whiptail --title "Adresse Email" --inputbox \
-    "Merci de taper votre adresse Email :" 7 50 3>&1 1>&2 2>&3)
+  CONTACTEMAIL=$(
+    whiptail --title "Adresse Email" --inputbox \
+      "Merci de taper votre adresse Email :" 7 50 3>&1 1>&2 2>&3
+  )
   manage_account_yml user.mail $CONTACTEMAIL
   ###sed -i "s/mail:/mail: $CONTACTEMAIL/" ${CONFDIR}/variables/account.yml
 
-  DOMAIN=$(whiptail --title "Votre nom de Domaine" --inputbox \
-    "Merci de taper votre nom de Domaine (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3)
+  DOMAIN=$(
+    whiptail --title "Votre nom de Domaine" --inputbox \
+      "Merci de taper votre nom de Domaine (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3
+  )
   manage_account_yml user.domain $DOMAIN
   ###sed -i "s/domain:/domain: $DOMAIN/" ${CONFDIR}/variables/account.yml
   echo ""
@@ -1004,8 +1008,10 @@ function create_user_non_systeme() {
   #  SEEDUSER=$(whiptail --title "Administrateur" --inputbox \
   #    "Nom d'Administrateur de la Seedbox :" 7 50 3>&1 1>&2 2>&3)
   #  [[ "$?" == 1 ]] && script_plexdrive
-  PASSWORD=$(whiptail --title "Password" --passwordbox \
-    "Mot de passe :" 7 50 3>&1 1>&2 2>&3)
+  PASSWORD=$(
+    whiptail --title "Password" --passwordbox \
+      "Mot de passe :" 7 50 3>&1 1>&2 2>&3
+  )
 
   manage_account_yml user.htpwd $(htpasswd -nb ${USER} $PASSWORD)
   manage_account_yml user.name ${USER}
@@ -1018,14 +1024,18 @@ function create_user_non_systeme() {
   update_seedbox_param "groupid" "$(id -g)"
   update_seedbox_param "htpwd" "${htpwd}"
 
-  CONTACTEMAIL=$(whiptail --title "Adresse Email" --inputbox \
-    "Merci de taper votre adresse Email :" 7 50 3>&1 1>&2 2>&3)
+  CONTACTEMAIL=$(
+    whiptail --title "Adresse Email" --inputbox \
+      "Merci de taper votre adresse Email :" 7 50 3>&1 1>&2 2>&3
+  )
   manage_account_yml user.mail "${CONTACTEMAIL}"
   ###sed -i "s/mail:/mail: $CONTACTEMAIL/" ${CONFDIR}/variables/account.yml
   update_seedbox_param "mail" "${CONTACTEMAIL}"
 
-  DOMAIN=$(whiptail --title "Votre nom de Domaine" --inputbox \
-    "Merci de taper votre nom de Domaine (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3)
+  DOMAIN=$(
+    whiptail --title "Votre nom de Domaine" --inputbox \
+      "Merci de taper votre nom de Domaine (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3
+  )
   ###sed -i "s/domain:/domain: $DOMAIN/" ${CONFDIR}/variables/account.yml
   manage_account_yml user.domain "${DOMAIN}"
   update_seedbox_param "domain" "${DOMAIN}"
@@ -1055,9 +1065,11 @@ function projects() {
     echo "$service $desc off" >>/tmp/projects.txt
   done
 
-  SERVICESTOINSTALL=$(whiptail --title "Gestion des Applications" --checklist \
-    "\nChoisir vos Applications" 18 47 10 \
-    $(cat /tmp/projects.txt) 3>&1 1>&2 2>&3)
+  SERVICESTOINSTALL=$(
+    whiptail --title "Gestion des Applications" --checklist \
+      "\nChoisir vos Applications" 18 47 10 \
+      $(cat /tmp/projects.txt) 3>&1 1>&2 2>&3
+  )
   [[ "$?" == 1 ]] && script_plexdrive && rm /tmp/projects.txt
   PROJECTPERUSER="${PROJECTUSER}${USER}"
   touch "${PROJECTPERUSER}"
@@ -1087,9 +1099,11 @@ function choose_services() {
     desc=$(echo ${app} | cut -d\- -f2)
     echo "${service} ${desc} off" >>/tmp/menuservices.txt
   done
-  SERVICESTOINSTALL=$(whiptail --title "Gestion des Applications" --checklist \
-    "Appuyer sur la barre espace pour la sélection" 28 64 21 \
-    $(cat /tmp/menuservices.txt) 3>&1 1>&2 2>&3)
+  SERVICESTOINSTALL=$(
+    whiptail --title "Gestion des Applications" --checklist \
+      "Appuyer sur la barre espace pour la sélection" 28 64 21 \
+      $(cat /tmp/menuservices.txt) 3>&1 1>&2 2>&3
+  )
   [[ "$?" == 1 ]] && script_plexdrive && rm /tmp/menuservices.txt
   touch $SERVICESPERUSER
   for APPDOCKER in $SERVICESTOINSTALL; do
@@ -1112,9 +1126,11 @@ function choose_other_services() {
     desc=$(echo "${app}" | cut -d\- -f2)
     echo "${service} ${desc} off" >>/tmp/menuservices.txt
   done
-  SERVICESTOINSTALL=$(whiptail --title "Gestion des Applications" --checklist \
-    "Appuyer sur la barre espace pour la sélection" 28 64 21 \
-    $(cat /tmp/menuservices.txt) 3>&1 1>&2 2>&3)
+  SERVICESTOINSTALL=$(
+    whiptail --title "Gestion des Applications" --checklist \
+      "Appuyer sur la barre espace pour la sélection" 28 64 21 \
+      $(cat /tmp/menuservices.txt) 3>&1 1>&2 2>&3
+  )
   [[ "$?" == 1 ]] && script_plexdrive && rm /tmp/menuservices.txt
   touch "${SERVICESPERUSER}"
   for APPDOCKER in $SERVICESTOINSTALL; do
@@ -1158,9 +1174,11 @@ function choose_media_folder_plexdrive() {
       desc=$(echo $media | cut -d\- -f2)
       echo "$service $desc off" >>/tmp/menumedia.txt
     done
-    MEDIASTOINSTALL=$(whiptail --title "Gestion des dossiers Medias" --checklist \
-      "Medias à ajouter pour ${USER} (Barre espace pour la sélection)" 28 60 17 \
-      $(cat /tmp/menumedia.txt) 3>&1 1>&2 2>&3)
+    MEDIASTOINSTALL=$(
+      whiptail --title "Gestion des dossiers Medias" --checklist \
+        "Medias à ajouter pour ${USER} (Barre espace pour la sélection)" 28 60 17 \
+        $(cat /tmp/menumedia.txt) 3>&1 1>&2 2>&3
+    )
     touch $MEDIASPERUSER
     for MEDDOCKER in $MEDIASTOINSTALL; do
       echo -e "	${GREEN}* $(echo $MEDDOCKER | tr -d '"')${NC}"
@@ -1290,20 +1308,24 @@ function manage_apps() {
   echo ""
   echo -e "${GREEN}### Gestion des Applis pour: ${USER} ###${NC}"
   ## CHOOSE AN ACTION FOR APPS
-  ACTIONONAPP=$(whiptail --title "App Manager" --menu \
-    "Selectionner une action :" 12 50 4 \
-    "1" "Ajout Applications" \
-    "2" "Suppression Applications" \
-    "3" "Réinitialisation Container" 3>&1 1>&2 2>&3)
+  ACTIONONAPP=$(
+    whiptail --title "App Manager" --menu \
+      "Selectionner une action :" 12 50 4 \
+      "1" "Ajout Applications" \
+      "2" "Suppression Applications" \
+      "3" "Réinitialisation Container" 3>&1 1>&2 2>&3
+  )
   [[ "$?" == 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi
 
   case $ACTIONONAPP in
   "1") ## Ajout APP
 
-    APPLISEEDBOX=$(whiptail --title "App Manager" --menu \
-      "Selectionner une action :" 12 50 4 \
-      "1" "Applications Seedbox" \
-      "2" "Autres Applications" 3>&1 1>&2 2>&3)
+    APPLISEEDBOX=$(
+      whiptail --title "App Manager" --menu \
+        "Selectionner une action :" 12 50 4 \
+        "1" "Applications Seedbox" \
+        "2" "Autres Applications" 3>&1 1>&2 2>&3
+    )
     [[ "$?" == 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi
     case $APPLISEEDBOX in
     "1") ## Ajout Applications Seedbox
@@ -1363,9 +1385,11 @@ function manage_apps() {
       SERVICE=$(echo $SERVICEACTIVATED | cut -d\. -f1)
       TABSERVICES+=(${SERVICE//\"/} " ")
     done
-    APPSELECTED=$(whiptail --title "App Manager" --menu \
-      "Sélectionner l'Appli à supprimer" 19 45 11 \
-      "${TABSERVICES[@]}" 3>&1 1>&2 2>&3)
+    APPSELECTED=$(
+      whiptail --title "App Manager" --menu \
+        "Sélectionner l'Appli à supprimer" 19 45 11 \
+        "${TABSERVICES[@]}" 3>&1 1>&2 2>&3
+    )
     [[ "$?" == 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi
     echo -e " ${GREEN}   * $APPSELECTED${NC}"
 
@@ -1386,9 +1410,11 @@ function manage_apps() {
       SERVICE=$(echo $SERVICEACTIVATED | cut -d\. -f1)
       TABSERVICES+=(${SERVICE//\"/} " ")
     done
-    line=$(whiptail --title "App Manager" --menu \
-      "Sélectionner le container à réinitialiser" 19 45 11 \
-      "${TABSERVICES[@]}" 3>&1 1>&2 2>&3)
+    line=$(
+      whiptail --title "App Manager" --menu \
+        "Sélectionner le container à réinitialiser" 19 45 11 \
+        "${TABSERVICES[@]}" 3>&1 1>&2 2>&3
+    )
     [[ "$?" == 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi
     echo -e " ${GREEN}   * ${line}${NC}"
     subdomain=$(get_from_account_yml "sub.${line}.${line}")
@@ -2049,15 +2075,13 @@ function affiche_menu_db() {
   precedent=""
   if [[ $# -eq 1 ]]; then
     if [ -z "$1" ]; then
-	    :
+      :
     else
       start_menu="=${1}"
       texte_sortie="Menu précédent"
       precedent="${1}"
     fi
   fi
-  #echo "debug"
-  #echo $start_menu - $texte_sortie - $precedent
   ## chargement des menus
   request="select * from menu where parent_id ${start_menu}"
   sqlite3 "${SCRIPTPATH}/menu" "${request}" | while read -a db_select; do
@@ -2072,17 +2096,32 @@ function affiche_menu_db() {
   read -p "Votre choix : " PORT_CHOICE
 
   if [ "${PORT_CHOICE}" == "E" ]; then
-	  if [ "${precedent}" = "" ]; then
-		  pause
-		  exit 0
-	  fi
-	  request2="select parent_id from menu where id ${start_menu}" 
-	           newchoice=$(sqlite3 ${SCRIPTPATH}/menu $request2)
-
+    if [ "${precedent}" = "" ]; then
+      pause
+      exit 0
+    fi
+    request2="select parent_id from menu where id ${start_menu}"
+    newchoice=$(sqlite3 ${SCRIPTPATH}/menu $request2)
     affiche_menu_db ${newchoice}
   else
-	 request2="select id from menu where parent_id ${start_menu} and ordre = ${PORT_CHOICE}"
-	 newchoice=$(sqlite3 ${SCRIPTPATH}/menu $request2)
+    # on va voir s'il y a une action à faire
+    request_action="select action from menu where parent_id ${start_menu} and ordre = ${PORT_CHOICE}"
+    action=$(sqlite3 ${SCRIPTPATH}/menu $request2)
+    if [ $? != 0 ]; then
+      : # pas d'action à effectuer
+    else
+      # on va lancer la fonction qui a été chargée
+      $action
+    fi
+
+    req_new_choice="select id from menu where parent_id ${start_menu} and ordre = ${PORT_CHOICE}"
+    newchoice=$(sqlite3 ${SCRIPTPATH}/menu ${req_new_choice})
+    request_cpt = "select count(*) from menu where parent_id = ${newchoice}"
+    cpt=$(sqlite3 ${SCRIPTPATH}/menu $request_cpt)
+    if [ "${cpt} -eq 0 "]; then
+      # pas de sous menu, on va rester sur le même
+      newchoice=${precedent}
+    fi
     affiche_menu_db ${newchoice}
 
   fi
