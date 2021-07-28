@@ -1955,7 +1955,7 @@ function affiche_menu_db() {
     echo -e "${CGREEN}   H) Retour au menu principal${CEND}"
     echo -e "${CGREEN}   B) Retour au menu précédent${CEND}"
   fi
-  echo -e "${CGREEN}   Q) ${texte_sortie}${CEND}"
+  echo -e "${CGREEN}   Q) Quitter${CEND}"
   echo -e "${CGREEN}---------------------------------------${CEND}"
   read -p "Votre choix : " PORT_CHOICE
 
