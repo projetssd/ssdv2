@@ -16,10 +16,6 @@ menu_secu_system_auth_classique() {
   manage_account_yml oauth.secret " "
   manage_account_yml oauth.openssl " "
   manage_account_yml oauth.account " "
-  #          sed -i "/client:/c\   client: " ${CONFDIR}/variables/account.yml
-  #          sed -i "/secret:/c\   secret: " ${CONFDIR}/variables/account.yml
-  #          sed -i "/openssl:/c\   openssl: " ${CONFDIR}/variables/account.yml
-  #          sed -i "/account:/c\   account: " ${CONFDIR}/variables/account.yml
 
   ${BASEDIR}/includes/config/scripts/basique.sh
 }
@@ -82,10 +78,6 @@ menu_change_sous_domaine() {
   mv ${CONFDIR}/resume /home/${USER}/resume >/dev/null 2>&1
   resume_seedbox
 }
-
-
-
-
 
 menu_gestion_motd() {
   clear
@@ -152,8 +144,6 @@ function menu_gestion_install_filebot() {
 
 }
 
-
-
 menu_gestoutils_plexautoscan() {
   clear
   echo ""
@@ -190,85 +180,36 @@ menu_gestoutils_dupefinder() {
   pause
 }
 
-menu_gest_service_account() {
-  clear
-  logo
-  echo ""
-  echo -e "${CCYAN}COMPTES DE SERVICES${CEND}"
-  echo -e "${CGREEN}${CEND}"
-  echo -e "${CGREEN}   1) Création des SA avec sa_gen${CEND}"
-  echo -e "${CGREEN}   2) Création des SA avec safire${CEND}"
-  echo -e ""
-  read -p "Votre choix [1-3]: " SERVICES
-  case $SERVICES in
-
-  1) ## Création des SA avec gen-sa
-    ${BASEDIR}/includes/config/scripts/sa-gen.sh
-    ;;
-
-  2) ## Creation des SA avec safire
-    ${BASEDIR}/includes/config/scripts/safire.sh
-    ;;
-
-
-  esac # case services
+function menu_sa_gen() {
+  ${BASEDIR}/includes/config/scripts/sa-gen.sh
 }
 
-menu_migr_meme_compte() {
-  clear
-  logo
-  echo ""
-  echo -e "${CCYAN}MIGRATION GDRIVE ==> SHARE DRIVE$ => MEME COMPTE GOOGLE{CEND}"
-  echo -e "${CGREEN}${CEND}"
-  echo -e "${CGREEN}   1) Déplacer les données => Pas de limite ${CEND}"
-  echo -e "${CGREEN}   2) Copier les données => 10 Tera par jour ${CEND}"
-  echo ""
-  read -p "Votre choix [1-3]: " MVEB
-  case $MVEB in
-
-  1) # Déplacer les données (Pas de limite)
-    clear
-    ${BASEDIR}/includes/config/scripts/migration.sh
-    pause
-    ;;
-
-  2) # Copier les données (10 Tera par jour)
-    clear
-    ${BASEDIR}/includes/config/scripts/sasync.sh
-
-    ;;
-
-
-  esac
+function menu_safire() {
+  ${BASEDIR}/includes/config/scripts/safire.sh
 }
 
-menu_migr_compte_diff() {
+function menu_migr_donnees() {
   clear
-  logo
-  echo ""
-  echo -e "${CCYAN}MIGRATION GDRIVE ==> SHARE DRIVE => COMPTES GOOGLE DIFFERENTS${CEND}"
-  echo -e "${CGREEN}${CEND}"
-  echo -e "${CGREEN}   1) Déplacer les données => Pas de limite ${CEND}"
-  echo -e "${CGREEN}   2) Copier les données => 1,8 Tera par jour ${CEND}"
-  echo ""
-  read -p "Votre choix [1-3]: " MVEBC
-  case $MVEBC in
+  ${BASEDIR}/includes/config/scripts/migration.sh
+}
 
-  1) # Déplacer les données (Pas de limite)
-    clear
-    ${BASEDIR}/includes/config/scripts/migration.sh
-    pause
-    ;;
+function menu_copier_donnees() {
+  clear
+  ${BASEDIR}/includes/config/scripts/sasync.sh
+}
 
-  2) # Copier les données (1,8 Tera par jour)
-    clear
+function menu_migration_compte_diff_deplace() {
+  clear
+  ${BASEDIR}/includes/config/scripts/migration.sh
+  pause
+}
+
+function menu_migration_compte_diff_copie() {
+   clear
     ${BASEDIR}/includes/config/scripts/sasync-bwlimit.sh
     pause
-    ;;
-
-
-  esac
 }
+
 
 menu_migr_gdrive2share() {
   clear
@@ -322,8 +263,8 @@ menu_migr_share2share_compte_diff() {
     pause
     ;;
 
-
   esac
+
 }
 
 menu_migr_share2share_mm_compte() {
@@ -359,8 +300,8 @@ menu_migr_share2share_mm_compte() {
     pause
     ;;
 
-
   esac
+
 }
 
 menu_migr_share2share() {
@@ -457,6 +398,10 @@ menu_install_rclone_plexdrive() {
 
 }
 
+function menu_create_rclone() {
+  ${BASEDIR}/includes/config/scripts/createrclone.sh
+}
+
 menu_gestion() {
   clear
   logo
@@ -475,28 +420,9 @@ menu_gestion() {
 
   case $GESTION in
 
-  1) ## 2.1 sécurisation systeme
-    menu_securisation_systeme
-    ;;
-  2) ## 2.2 Gestion - utilitaires
-    menu_gestion_utilitaires
-    ;;
-
-  3) ### 2.3 - gestion -  creation share drive + rclone.conf
-    clear
-    echo ""
-    ${BASEDIR}/includes/config/scripts/createrclone.sh
-    ;;
-
-  4) ## 2 . 4 - gestion - Outils
-    menu_gestoutils
-    ;;
-
-  5) ## 2.5 - Gestion - Comptes de Services
-    menu_gest_service_account
-    ;;
-
-  6) ## 2.6 - gestion - Migration Gdrive - Share Drive --> share drive
+  \
+    6)
+    ## 2.6 - gestion - Migration Gdrive - Share Drive --> share drive
     menu_migr
     ;;
 
@@ -504,8 +430,8 @@ menu_gestion() {
     menu_install_rclone_plexdrive
     ;;
 
-
   esac
+
 }
 
 function test_menu_sde() {
@@ -548,7 +474,7 @@ function menu_suppression_application() {
       "Sélectionner l'Appli à supprimer" 19 45 11 \
       "${TABSERVICES[@]}" 3>&1 1>&2 2>&3
   )
-  [[ "$?" == 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi
+  [[ "$?" == 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then affiche_menu_db; else script_classique; fi
   echo -e " ${GREEN}   * $APPSELECTED${NC}"
 
   suppression_appli ${APPSELECTED} 1
@@ -568,7 +494,7 @@ function menu_reinit_container() {
       "Sélectionner le container à réinitialiser" 19 45 11 \
       "${TABSERVICES[@]}" 3>&1 1>&2 2>&3
   )
-  [[ "$?" == 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then script_plexdrive; else script_classique; fi
+  [[ "$?" == 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then affiche_menu_db; else script_classique; fi
   echo -e " ${GREEN}   * ${line}${NC}"
   subdomain=$(get_from_account_yml "sub.${line}.${line}")
   ###subdomain=$(grep "${line}" ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
