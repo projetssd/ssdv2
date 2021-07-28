@@ -2065,7 +2065,7 @@ function affiche_menu_db() {
   if [ "${PORT_CHOICE}" == "E" ]; then
     affiche_menu_db ${precedent}
   else
-    affiche_menu_db $${db_select[0]}
+    affiche_menu_db ${db_select[0]}
   fi
 
 }
