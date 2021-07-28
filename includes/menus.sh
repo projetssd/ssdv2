@@ -205,239 +205,94 @@ function menu_migration_compte_diff_deplace() {
 }
 
 function menu_migration_compte_diff_copie() {
-   clear
-    ${BASEDIR}/includes/config/scripts/sasync-bwlimit.sh
-    pause
+  clear
+  ${BASEDIR}/includes/config/scripts/sasync-bwlimit.sh
+  pause
 }
 
-
-menu_migr_gdrive2share() {
+function menu_migr_share2share_autre_compte_copie() {
   clear
   logo
   echo ""
-  echo -e "${CCYAN}MIGRATION GDRIVE ==> SHARE DRIVE${CEND}"
-  echo -e "${CGREEN}${CEND}"
-  echo -e "${CGREEN}   1) GDrive et Share Drive font partis du même compte Google ${CEND}"
-  echo -e "${CGREEN}   2) GDrive et Share Drive sont sur deux comptes Google Différents ${CEND}"
+  echo -e "${CGREEN} /!\ Vous pouvez directement le faire à partir de l'interface UI /!\ ${CEND}"
   echo ""
-  read -p "Votre choix [1-3]: " MVEA
-  case $MVEA in
-  1)
-    menu_migr_meme_compte
-    ;;
-  2)
-    menu_migr_compte_diff
-    ;;
-
-  esac
-}
-
-menu_migr_share2share_compte_diff() {
-  clear
-  logo
-  echo ""
-  echo -e "${CCYAN}Share Drive => Share Drive => Compte Google Différents${CEND}"
-  echo -e "${CGREEN}${CEND}"
-  echo -e "${CGREEN}   1) Déplacer les données => Vous pouvez directement le faire à partir de l'interface UI${CEND}"
-  echo -e "${CGREEN}   2) Copier les données => 10 Tera par jour${CEND}"
-  echo ""
-  read -p "Votre choix [1-3]: " MVED
-  case $MVED in
-
-  1) # Déplacer les données (Pas de limite)
-    clear
-    logo
+  read -rp $'\e[36m   Poursuivre malgré tout avec rclone: (o/n) ? \e[0m' OUI
+  if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
     echo ""
-    echo -e "${CGREEN} /!\ Vous pouvez directement le faire à partir de l'interface UI /!\ ${CEND}"
-    echo ""
-    read -rp $'\e[36m   Poursuivre malgré tout avec rclone: (o/n) ? \e[0m' OUI
-    if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
-      echo ""
-      ${BASEDIR}/includes/config/scripts/sasync-share.sh
-    fi
-    pause
-    ;;
-
-  2) # Copier les données (10 Tera par jour)
     ${BASEDIR}/includes/config/scripts/sasync-share.sh
-    pause
-    ;;
-
-  esac
-
+  fi
+  pause
 }
 
-menu_migr_share2share_mm_compte() {
+function menu_migr_share2share_autre_compte_copie_2() {
+  ${BASEDIR}/includes/config/scripts/sasync-share.sh
+  pause
+}
+
+function menu_migr_share2share_deplacer() {
   clear
   logo
   echo ""
-  echo -e "${CCYAN}Share Drive => Share Drive ==> Même compte Google${CEND}"
-  echo -e "${CGREEN}${CEND}"
-  echo -e "${CGREEN}   1) Déplacer les données => Vous pouvez directement le faire à partir de l'interface UI${CEND}"
-  echo -e "${CGREEN}   2) Copier les données =>10 Tera par jour ${CEND}"
+  echo -e "${CGREEN} /!\ Vous pouvez directement le faire à partir de l'interface UI /!\ ${CEND}"
   echo ""
-  read -p "Votre choix [1-3]: " MVEC
-  case $MVEC in
+  read -rp $'\e[36m   Poursuivre malgré tout avec rclone: (o/n) ? \e[0m' OUI
 
-  \
-    1) # Déplacer les données (Pas de limite)
-    clear
-    logo
+  if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
     echo ""
-    echo -e "${CGREEN} /!\ Vous pouvez directement le faire à partir de l'interface UI /!\ ${CEND}"
-    echo ""
-    read -rp $'\e[36m   Poursuivre malgré tout avec rclone: (o/n) ? \e[0m' OUI
-
-    if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
-      echo ""
-      ${BASEDIR}/includes/config/scripts/sasync-share.sh
-    fi
-    pause
-    ;;
-
-  2) # Copier les données (10 Tera par jour)
     ${BASEDIR}/includes/config/scripts/sasync-share.sh
-    pause
-    ;;
-
-  esac
-
+  fi
+  pause
 }
 
-menu_migr_share2share() {
+function menu_migr_share2share_copier_10() {
   clear
   logo
   echo ""
-  echo -e "${CCYAN}Share Drive => Share Drive${CEND}"
-  echo -e "${CGREEN}${CEND}"
-  echo -e "${CGREEN}   1) Share Drive et Share Drive font partis du même compte Google${CEND}"
-  echo -e "${CGREEN}   2) Share Drive et Share Drive sont sur deux comptes Google Différents${CEND}"
+  echo -e "${CGREEN} /!\ Vous pouvez directement le faire à partir de l'interface UI /!\ ${CEND}"
   echo ""
-  read -p "Votre choix [1-3]: " SHARE
-  case $SHARE in
+  read -rp $'\e[36m   Poursuivre malgré tout avec rclone: (o/n) ? \e[0m' OUI
 
-  1) ## migration share drive -> share drive meme compte
-    menu_migr_share2share_mm_compte
-    ;;
-
-  2) ## migration share drive -> share drive compte diff
-    menu_migr_share2share_compte_diff
-    ;;
-
-  esac
+  if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
+    echo ""
+    ${BASEDIR}/includes/config/scripts/sasync-share.sh
+  fi
+  pause
 }
 
-menu_migr() {
+function menu_install_rclone_vfs() {
+  ${BASEDIR}/includes/config/scripts/fusermount.sh
+  install_rclone
+  unionfs_fuse
+  rm -rf /mnt/plexdrive
+  pause
+}
+
+function menu_install_plexdrive() {
   clear
-  logo
-  echo ""
-  echo -e "${CCYAN}MIGRATION${CEND}"
-  echo -e "${CGREEN}${CEND}"
-  echo -e "${CGREEN}   1) GDrive => Share Drive${CEND}"
-  echo -e "${CGREEN}   2) Share Drive => Share Drive${CEND}"
-  echo -e ""
-  read -p "Votre choix [1-3]: " MIGRE
-  case $MIGRE in
-
-  1) ## migration gdrive -> share drive
-    menu_migr_gdrive2share
-    ;;
-
-  2) ## migration share drive -> share drive
-    menu_migr_share2share
-    ;;
-
-  esac
+  ${BASEDIR}/includes/config/scripts/fusermount.sh
+  ${BASEDIR}/includes/config/scripts/rclone.sh
+  ${BASEDIR}/includes/config/scripts/plexdrive.sh
+  install_plexdrive
+  pause
 }
 
-menu_install_rclone_plexdrive() {
+function menu_install_vfs_plexdrive() {
   clear
-  logo
-  echo ""
-  echo -e "${CCYAN}RCLONE && PLEXDRIVE${CEND}"
-  echo ""
-  echo -e "${CGREEN}   1) Installation rclone vfs${CEND}"
-  echo -e "${CGREEN}   2) Installation plexdrive${CEND}"
-  echo -e "${CGREEN}   3) Installation plexdrive + rclone vfs${CEND}"
-  echo -e ""
+  ${BASEDIR}/includes/config/scripts/fusermount.sh
+  install_rclone
+  unionfs_fuse
+  ${BASEDIR}/includes/config/scripts/plexdrive.sh
 
-  read -p "Votre choix: " RCLONE
-  case $RCLONE in
-
-  1)
-    ${BASEDIR}/includes/config/scripts/fusermount.sh
-    install_rclone
-    unionfs_fuse
-    rm -rf /mnt/plexdrive
-    echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
-    read -r
-    ;;
-
-  2)
-    clear
-    ${BASEDIR}/includes/config/scripts/fusermount.sh
-    ${BASEDIR}/includes/config/scripts/rclone.sh
-    ${BASEDIR}/includes/config/scripts/plexdrive.sh
-    install_plexdrive
-    echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
-    read -r
-    ;;
-
-  3)
-    clear
-    ${BASEDIR}/includes/config/scripts/fusermount.sh
-    install_rclone
-    unionfs_fuse
-    ${BASEDIR}/includes/config/scripts/plexdrive.sh
-
-    plexdrive
-    echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
-    read -r
-    ;;
-  esac # case $RCLONE
-
+  plexdrive
+  pause
 }
+
 
 function menu_create_rclone() {
   ${BASEDIR}/includes/config/scripts/createrclone.sh
 }
 
-menu_gestion() {
-  clear
-  logo
-  echo ""
-  echo -e "${CCYAN}GESTION${CEND}"
-  echo -e "${CGREEN}${CEND}"
-  echo -e "${CGREEN}   1) Sécurisation Systeme${CEND}"
-  echo -e "${CGREEN}   2) Utilitaires${CEND}"
-  echo -e "${CGREEN}   3) Création Share Drive && rclone${CEND}"
-  echo -e "${CGREEN}   4) Outils (autoscan, crop, cloudplow, plex-autoscan, plex_dupefinder)${CEND}"
-  echo -e "${CGREEN}   5) Comptes de Service${CEND}"
-  echo -e "${CGREEN}   6) Migration Gdrive/Share Drive ==> Share Drive${CEND}"
-  echo -e "${CGREEN}   7) Installation Rclone vfs && Plexdrive${CEND}"
-  echo -e ""
-  read -p "Votre choix [1-8]: " GESTION
 
-  case $GESTION in
-
-  \
-    6)
-    ## 2.6 - gestion - Migration Gdrive - Share Drive --> share drive
-    menu_migr
-    ;;
-
-  7) # 2.7 - Installation Rclone vfs && Plexdrive
-    menu_install_rclone_plexdrive
-    ;;
-
-  esac
-
-}
-
-function test_menu_sde() {
-  ls
-  pause
-}
 
 ########################
 function ajout_app_seedbox() {
