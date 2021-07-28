@@ -2054,18 +2054,18 @@ function affiche_menu_db() {
   fi
   # chargement des menus
   request="select * from menu where parent_id ${start_menu}"
-  sqlite3 "${SCRIPTPATH}/menu" "${request}" | while read db_id,db_texte,db_parent_id,db_ordre,db_action; do
-    echo -e "${CGREEN}   ${db_ordre}) ${db_texte}${CEND}"
+  sqlite3 "${SCRIPTPATH}/menu" "${request}" | while read -a db_select; do
+    echo -e "${CGREEN}   ${db_select[3]}) ${db_select[1]}${CEND}"
   done
   echo -e "------------------------"
-  echo -e "${CGREEN}   $E) ${texte_sortie}${CEND}"
+  echo -e "${CGREEN}   E) ${texte_sortie}${CEND}"
 
   read -p "Votre choix : " PORT_CHOICE
 
   if [ "${PORT_CHOICE}" == "E" ]; then
     affiche_menu_db ${precedent}
   else
-    affiche_menu_db ${db_id}
+    affiche_menu_db $${db_select[0]}
   fi
 
 }
