@@ -2106,8 +2106,8 @@ function affiche_menu_db() {
   else
     # on va voir s'il y a une action à faire
     request_action="select action from menu where parent_id ${start_menu} and ordre = ${PORT_CHOICE}"
-    action=$(sqlite3 ${SCRIPTPATH}/menu $request2)
-    if [ $? != 0 ]; then
+    action=$(sqlite3 ${SCRIPTPATH}/menu "$request_action")
+    if [ -z "$action" ]; then
       : # pas d'action à effectuer
     else
       # on va lancer la fonction qui a été chargée
@@ -2115,10 +2115,10 @@ function affiche_menu_db() {
     fi
 
     req_new_choice="select id from menu where parent_id ${start_menu} and ordre = ${PORT_CHOICE}"
-    newchoice=$(sqlite3 ${SCRIPTPATH}/menu ${req_new_choice})
-    request_cpt = "select count(*) from menu where parent_id = ${newchoice}"
-    cpt=$(sqlite3 ${SCRIPTPATH}/menu $request_cpt)
-    if [ "${cpt} -eq 0 "]; then
+    newchoice=$(sqlite3 ${SCRIPTPATH}/menu "${req_new_choice}")
+    request_cpt="select count(*) from menu where parent_id = ${newchoice}"
+    cpt=$(sqlite3 ${SCRIPTPATH}/menu "$request_cpt")
+    if [ "${cpt}" -eq 0 ]; then
       # pas de sous menu, on va rester sur le même
       newchoice=${precedent}
     fi
