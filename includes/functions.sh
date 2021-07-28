@@ -2048,13 +2048,17 @@ function affiche_menu_db() {
   texte_sortie="Sortie du script"
   precedent=""
   if [[ $# -eq 1 ]]; then
-    if [ -z "$2" ]; then
-      start_menu="=${2}"
+    if [ -z "$1" ]; then
+	    :
+    else
+      start_menu="=${1}"
       texte_sortie="Menu précédent"
-      precedent="${2}"
+      precedent="${1}"
     fi
   fi
-  # chargement des menus
+  #echo "debug"
+  #echo $start_menu - $texte_sortie - $precedent
+  ## chargement des menus
   request="select * from menu where parent_id ${start_menu}"
   sqlite3 "${SCRIPTPATH}/menu" "${request}" | while read -a db_select; do
     IFS='|'
@@ -2068,9 +2072,19 @@ function affiche_menu_db() {
   read -p "Votre choix : " PORT_CHOICE
 
   if [ "${PORT_CHOICE}" == "E" ]; then
-    affiche_menu_db ${precedent}
+	  if [ "${precedent}" = "" ]; then
+		  pause
+		  exit 0
+	  fi
+	  request2="select parent_id from menu where id ${start_menu}" 
+	           newchoice=$(sqlite3 ${SCRIPTPATH}/menu $request2)
+
+    affiche_menu_db ${newchoice}
   else
-    affiche_menu_db ${PORT_CHOICE}
+	 request2="select id from menu where parent_id ${start_menu} and ordre = ${PORT_CHOICE}"
+	 newchoice=$(sqlite3 ${SCRIPTPATH}/menu $request2)
+    affiche_menu_db ${newchoice}
+
   fi
   IFS=${OLDFIFS}
 }
