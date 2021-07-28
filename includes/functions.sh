@@ -1001,9 +1001,9 @@ function create_user_non_systeme() {
   # nouvelle version de define_parameters()
   echo -e "${BLUE}### INFORMATIONS UTILISATEURS ###${NC}"
 
-#  SEEDUSER=$(whiptail --title "Administrateur" --inputbox \
-#    "Nom d'Administrateur de la Seedbox :" 7 50 3>&1 1>&2 2>&3)
-#  [[ "$?" == 1 ]] && script_plexdrive
+  #  SEEDUSER=$(whiptail --title "Administrateur" --inputbox \
+  #    "Nom d'Administrateur de la Seedbox :" 7 50 3>&1 1>&2 2>&3)
+  #  [[ "$?" == 1 ]] && script_plexdrive
   PASSWORD=$(whiptail --title "Password" --passwordbox \
     "Mot de passe :" 7 50 3>&1 1>&2 2>&3)
 
@@ -1396,7 +1396,10 @@ function manage_apps() {
 
     sed -i "/${line}/d" ${CONFDIR}/resume >/dev/null 2>&1
     sed -i "/${line}/d" /home/${USER}/resume >/dev/null 2>&1
-    docker rm -f "${line}" >/dev/null 2>&1
+    suppression_appli "${line}"
+    rm -f "${CONFDIR}/conf/${line}.yml"
+    rm -f "${CONFDIR}/vars/${line}.yml"
+
     docker system prune -af >/dev/null 2>&1
     docker volume rm $(docker volume ls -qf "dangling=true") >/dev/null 2>&1
     echo ""
@@ -1423,8 +1426,8 @@ function suppression_appli() {
   APPSELECTED=$1
   DELETE=0
   if [[ $# -eq 2 ]]; then
-   if [ $2 = "1" ]; then
-     DELETE=1
+    if [ "$2" = "1" ]; then
+      DELETE=1
     fi
   fi
   manage_account_yml sub.${APPSELECTED} " "
