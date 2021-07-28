@@ -1920,7 +1920,7 @@ function stocke_public_ip() {
 }
 
 function affiche_menu_db() {
-  if [ -z "$OLDIFS"]; then
+  if [ -z "$OLDIFS" ]; then
 	  OLDIFS=${IFS}
   fi
   IFS=$'\n'
