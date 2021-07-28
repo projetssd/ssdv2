@@ -1938,6 +1938,8 @@ function affiche_menu_db() {
       precedent="${1}"
     fi
   fi
+  clear
+  logo
   ## chargement des menus
   request="select * from menu where parent_id ${start_menu}"
   sqlite3 "${SCRIPTPATH}/menu" "${request}" | while read -a db_select; do
