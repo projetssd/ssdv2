@@ -548,50 +548,50 @@ function insert_mod() {
 # shellcheck disable=SC2120
 function script_plexdrive() {
   echo "vide"
-#  source ${SCRIPTPATH}/includes/menus.sh
-#  if [[ -d "${CONFDIR}" ]]; then
-#    clear
-#
-#    # Vérification installation modt
-#    confmodt="/opt/motd"
-#    if [ -d "$confmodt" ]; then
-#      insert_mod
-#    else
-#      logo
-#    fi
-#
-#    echo ""
-#    echo -e "${CCYAN}SEEDBOX RCLONE/PLEXDRIVE${CEND}"
-#    echo -e "${CGREEN}${CEND}"
-#    echo -e "${CGREEN}   1) Ajout/Supression d'Applis${CEND}"
-#    echo -e "${CGREEN}   2) Gestion${CEND}"
-#    echo -e "${CGREEN}   3) Quitter${CEND}"
-#    #echo -e "${CGREEN}   4) Installer/Réinstaller la GUI${CEND}"
-#
-#    echo -e ""
-#    read -p "Votre choix: " PORT_CHOICE
-#
-#    case $PORT_CHOICE in
-#    1)
-#      menu_ajout_supp_applis
-#      ;;
-#
-#    2)
-#      menu_gestion
-#      ;;
-#    3)
-#      exit 0
-#      ;;
-#    4) ## install gui
-#      install_gui
-#      ;;
-#
-#    *)
-#      affiche_menu_db
-#      ;;
-#
-#    esac
-#  fi
+  #  source ${SCRIPTPATH}/includes/menus.sh
+  #  if [[ -d "${CONFDIR}" ]]; then
+  #    clear
+  #
+  #    # Vérification installation modt
+  #    confmodt="/opt/motd"
+  #    if [ -d "$confmodt" ]; then
+  #      insert_mod
+  #    else
+  #      logo
+  #    fi
+  #
+  #    echo ""
+  #    echo -e "${CCYAN}SEEDBOX RCLONE/PLEXDRIVE${CEND}"
+  #    echo -e "${CGREEN}${CEND}"
+  #    echo -e "${CGREEN}   1) Ajout/Supression d'Applis${CEND}"
+  #    echo -e "${CGREEN}   2) Gestion${CEND}"
+  #    echo -e "${CGREEN}   3) Quitter${CEND}"
+  #    #echo -e "${CGREEN}   4) Installer/Réinstaller la GUI${CEND}"
+  #
+  #    echo -e ""
+  #    read -p "Votre choix: " PORT_CHOICE
+  #
+  #    case $PORT_CHOICE in
+  #    1)
+  #      menu_ajout_supp_applis
+  #      ;;
+  #
+  #    2)
+  #      menu_gestion
+  #      ;;
+  #    3)
+  #      exit 0
+  #      ;;
+  #    4) ## install gui
+  #      install_gui
+  #      ;;
+  #
+  #    *)
+  #      affiche_menu_db
+  #      ;;
+  #
+  #    esac
+  #  fi
 }
 
 function create_dir() {
@@ -1922,7 +1922,7 @@ function stocke_public_ip() {
 
 function affiche_menu_db() {
   if [ -z "$OLDIFS" ]; then
-	  OLDIFS=${IFS}
+    OLDIFS=${IFS}
   fi
   IFS=$'\n'
   echo -e "${CGREEN}${CEND}"
@@ -1948,19 +1948,27 @@ function affiche_menu_db() {
     echo -e "${CGREEN}   ${db_select2[3]}) ${db_select2[1]}${CEND}"
     IFS=$'\n'
   done
-  echo -e "------------------------"
-  echo -e "${CGREEN}   E) ${texte_sortie}${CEND}"
-
+  echo -e "${CGREEN}---------------------------------------${CEND}"
+  if [ "${precedent}" = "" ]; then
+    :
+  else
+    echo -e "${CGREEN}   H) Retour au menu principal${CEND}"
+    echo -e "${CGREEN}   B) Retour au menu précédent${CEND}"
+  fi
+  echo -e "${CGREEN}   Q) ${texte_sortie}${CEND}"
+  echo -e "${CGREEN}---------------------------------------${CEND}"
   read -p "Votre choix : " PORT_CHOICE
 
-  if [ "${PORT_CHOICE}" == "E" ]; then
-    if [ "${precedent}" = "" ]; then
-      pause
-      exit 0
-    fi
+  if [ "${PORT_CHOICE,,}" == "b" ]; then
+
     request2="select parent_id from menu where id ${start_menu}"
     newchoice=$(sqlite3 ${SCRIPTPATH}/menu $request2)
     affiche_menu_db ${newchoice}
+  elif [ "${PORT_CHOICE,,}" == "e" ]; then
+    exit 0
+  elif [ "${PORT_CHOICE,,}" == "h" ]; then
+    # retour au début
+    affiche_menu_db
   else
     # on va voir s'il y a une action à faire
     request_action="select action from menu where parent_id ${start_menu} and ordre = ${PORT_CHOICE}"
