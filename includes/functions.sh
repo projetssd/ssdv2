@@ -2041,6 +2041,8 @@ function stocke_public_ip() {
 }
 
 function affiche_menu_db() {
+  OLDIFS=${IFS}
+  IFS=$'\n'
   echo -e "${CGREEN}${CEND}"
   start_menu="is null"
   texte_sortie="Sortie du script"
@@ -2055,7 +2057,10 @@ function affiche_menu_db() {
   # chargement des menus
   request="select * from menu where parent_id ${start_menu}"
   sqlite3 "${SCRIPTPATH}/menu" "${request}" | while read -a db_select; do
-    echo -e "${CGREEN}   ${db_select[3]}) ${db_select[1]}${CEND}"
+    IFS='|'
+    read -ra db_select2 <<< "db_select"
+    echo -e "${CGREEN}   ${db_select2[3]}) ${db_select2[1]}${CEND}"
+    IFS=$'\n'
   done
   echo -e "------------------------"
   echo -e "${CGREEN}   E) ${texte_sortie}${CEND}"
@@ -2065,7 +2070,7 @@ function affiche_menu_db() {
   if [ "${PORT_CHOICE}" == "E" ]; then
     affiche_menu_db ${precedent}
   else
-    affiche_menu_db ${db_select[0]}
+    affiche_menu_db ${PORT_CHOICE}
   fi
-
+  IFS=${OLDFIFS}
 }
