@@ -2047,10 +2047,8 @@ function affiche_menu_db() {
   start_menu="is null"
   texte_sortie="Sortie du script"
   precedent=""
-  if [[ $# -eq 2 ]]; then
+  if [[ $# -eq 1 ]]; then
     if [ -z "$2" ]; then
-      :
-    else
       start_menu="=${2}"
       texte_sortie="Menu précédent"
       precedent="${2}"
