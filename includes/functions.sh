@@ -1964,7 +1964,7 @@ function affiche_menu_db() {
     request2="select parent_id from menu where id ${start_menu}"
     newchoice=$(sqlite3 ${SCRIPTPATH}/menu $request2)
     affiche_menu_db ${newchoice}
-  elif [ "${PORT_CHOICE,,}" == "e" ]; then
+  elif [ "${PORT_CHOICE,,}" == "q" ]; then
     exit 0
   elif [ "${PORT_CHOICE,,}" == "h" ]; then
     # retour au début
@@ -1978,7 +1978,7 @@ function affiche_menu_db() {
     else
       # on va lancer la fonction qui a été chargée
       IFS=${OLDIFS}
-      $action
+      ${action}
     fi
 
     req_new_choice="select id from menu where parent_id ${start_menu} and ordre = ${PORT_CHOICE}"

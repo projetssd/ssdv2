@@ -17,6 +17,7 @@ source "${SCRIPTPATH}/includes/functions.sh"
 source "${SCRIPTPATH}/includes/variables.sh"
 # shellcheck source=${BASEDIR}/includes/functions.sh
 source "${SCRIPTPATH}/includes/functions.sh"
+source "${SCRIPTPATH}/includes/menus.sh"
 
 ################################################
 # récupération des parametre
