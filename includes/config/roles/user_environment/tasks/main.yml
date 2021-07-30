@@ -2,7 +2,6 @@
 - hosts: localhost
   gather_facts: false
   vars_files:
-    - ['settings.yml']
     - ["{{ lookup('env','CONFDIR') }}/variables/account.yml"]
   tasks:
     - name: Ajout alias
