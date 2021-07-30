@@ -7,7 +7,7 @@
     - name: Ajout alias
       lineinfile:
         path: "/home/{{ lookup('env','USER') }}/.profile"
-        line: "alias seedbox='cd /opt/seedbox-compose && seedbox.sh'"
+        line: "alias seedbox='cd /opt/seedbox-compose && ./seedbox.sh'"
 
     - name: Ajout chargement venv
       lineinfile:
