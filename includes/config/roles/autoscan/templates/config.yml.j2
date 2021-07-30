@@ -7,6 +7,24 @@ anchors:
   - /home/{{ lookup('env','USER') }}/Medias/drive1.anchor
 
 triggers:
+   inotify:
+      - priority: 0
+
+        # filter with regular expressions
+        include:
+          - ^/home/{{ lookup('env','USER') }}/Media/
+        exclude:
+          - '\.(srt|pdf)$'
+
+        # rewrite inotify path to unified filesystem
+        rewrite:
+          - from: ^/home/{{ lookup('env','USER') }}/local/
+            to: /home/{{ lookup('env','USER') }}/Media/
+
+        # local filesystem paths to monitor
+        paths:
+          - path: /home/{{ lookup('env','USER') }}/local/Series
+          - path: /home/{{ lookup('env','USER') }}/local/Films
   sonarr:
     - name: sonarr-docker
       priority: 0

@@ -69,7 +69,7 @@
       set_fact:
         pg_volumes:
           - "/home/{{ lookup('env','USER') }}/scripts/{{pgrole}}:/config"
-          - "/home/{{ lookup('env','USER') }}/Medias:/home/{{ lookup('env','USER') }}/Medias:ro"
+          - "/home/{{ lookup('env','USER') }}:/home/{{ lookup('env','USER') }}:ro"
           - '/etc/localtime:/etc/localtime:ro'
 
     - name: 'Setting PG ENV'
