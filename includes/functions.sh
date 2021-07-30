@@ -2039,3 +2039,11 @@ function stocke_public_ip() {
     echo "Aucune adresse ipv6 trouvée"
   fi
 }
+
+function install_environnement() {
+  clear
+  echo ""
+  ansible-playbook ${BASEDIR}/includes/config/roles/user_environment/tasks/main.yml
+  echo "Pour bénéficer des changements, vous devez vous déconnecter/reconnecter"
+  pause
+}
