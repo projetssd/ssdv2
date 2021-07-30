@@ -231,7 +231,7 @@ if [ $mode_install = "manuel" ]; then
         echo "./seedbox.sh"
         exit 0
       else
-        script_classique
+        affiche_menu_db
       fi
       ;;
 
@@ -304,9 +304,5 @@ EOF
   chmod 755 /opt/seedbox-compose/logs
   update_logrotate
   PLEXDRIVE="/usr/bin/rclone"
-  if [[ -e "$PLEXDRIVE" ]]; then
-    affiche_menu_db
-  else
-    script_classique
-  fi
+  affiche_menu_db
 fi

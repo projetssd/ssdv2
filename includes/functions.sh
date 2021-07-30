@@ -545,54 +545,7 @@ function insert_mod() {
   /opt/motd/motd/12-rtorrent-stats
 }
 
-# shellcheck disable=SC2120
-function script_plexdrive() {
-  echo "vide"
-  #  source ${SCRIPTPATH}/includes/menus.sh
-  #  if [[ -d "${CONFDIR}" ]]; then
-  #    clear
-  #
-  #    # Vérification installation modt
-  #    confmodt="/opt/motd"
-  #    if [ -d "$confmodt" ]; then
-  #      insert_mod
-  #    else
-  #      logo
-  #    fi
-  #
-  #    echo ""
-  #    echo -e "${CCYAN}SEEDBOX RCLONE/PLEXDRIVE${CEND}"
-  #    echo -e "${CGREEN}${CEND}"
-  #    echo -e "${CGREEN}   1) Ajout/Supression d'Applis${CEND}"
-  #    echo -e "${CGREEN}   2) Gestion${CEND}"
-  #    echo -e "${CGREEN}   3) Quitter${CEND}"
-  #    #echo -e "${CGREEN}   4) Installer/Réinstaller la GUI${CEND}"
-  #
-  #    echo -e ""
-  #    read -p "Votre choix: " PORT_CHOICE
-  #
-  #    case $PORT_CHOICE in
-  #    1)
-  #      menu_ajout_supp_applis
-  #      ;;
-  #
-  #    2)
-  #      menu_gestion
-  #      ;;
-  #    3)
-  #      exit 0
-  #      ;;
-  #    4) ## install gui
-  #      install_gui
-  #      ;;
-  #
-  #    *)
-  #      affiche_menu_db
-  #      ;;
-  #
-  #    esac
-  #  fi
-}
+
 
 function create_dir() {
   ansible-playbook "${BASEDIR}/includes/config/playbooks/create_directory.yml" \
@@ -1926,6 +1879,89 @@ function install_environnement() {
   ansible-playbook ${BASEDIR}/includes/config/roles/user_environment/tasks/main.yml
   echo "Pour bénéficer des changements, vous devez vous déconnecter/reconnecter"
   pause
+}
+
+function debug_menu() {
+  if [ -z "$OLDIFS" ]; then
+    OLDIFS=${IFS}
+  fi
+  IFS=$'\n'
+  echo -e "${CGREEN}${CEND}"
+  start_menu="is null"
+  precedent=""
+  if [[ $# -ne 0 ]]; then
+    if [ -z "$1" ]; then
+      :
+    else
+      start_menu="=${1}"
+      precedent="${1}"
+    fi
+  fi
+
+  ## chargement des menus
+  request="select * from menu where parent_id ${start_menu}"
+  sqlite3 "${SCRIPTPATH}/menu" "${request}" | while read -a db_select; do
+    texte_sep=""
+
+    separateur=$(calcul_niveau_menu ${precedent})
+    for i in $(seq 1 $separateur); do
+      texte_sep="${texte_sep} ==> "
+    done
+
+
+    # on affiche le menu en cours
+    IFS='|'
+    read -ra db_select2 <<<"$db_select"
+
+    echo -e "${CGREEN}${texte_sep}${db_select2[0]} - ${db_select2[3]}) ${db_select2[1]}${CEND}"
+
+    # on regarde s'il y a des menus enfants
+    request_cpt="select count(*) from menu where parent_id = ${db_select2[0]}"
+    cpt=$(sqlite3 ${SCRIPTPATH}/menu "$request_cpt")
+    if [ "${cpt}" -eq 0 ]; then
+      # pas de sous menu, on va rester sur le même
+      :
+    else
+      debug_menu ${db_select2[0]}
+
+    fi
+    IFS=$'\n'
+  done
+
+  IFS=${OLDFIFS}
+}
+
+function calcul_niveau_menu() {
+  if [[ $# -ne 0 ]]; then
+    niveau=${2}
+    if [ -z $niveau ]; then
+      niveau=1
+    fi
+    depart="${1}"
+    request_cpt="select parent_id from menu where id = ${depart}"
+    parent=$(sqlite3 ${SCRIPTPATH}/menu "$request_cpt")
+    if [ -z "$parent" ]; then
+
+      echo $niveau
+    else
+      request_cpt="select count(*) from menu where parent_id = ${parent}"
+      cpt=$(sqlite3 ${SCRIPTPATH}/menu "$request_cpt")
+      if [ "${cpt}" -eq 0 ]; then
+        echo $niveau
+      else
+        niveau=$((niveau + 1))
+        request_cpt="select parent_id from menu where id = ${depart}"
+        parent2=$(sqlite3 ${SCRIPTPATH}/menu "$request_cpt")
+        if [ -z "$parent2" ]; then
+          echo $niveau
+        fi
+        niveau=$(calcul_niveau_menu ${parent} ${niveau})
+      fi
+      echo $niveau
+    fi
+  else
+    echo 0
+  fi
 }
 
 function affiche_menu_db() {
