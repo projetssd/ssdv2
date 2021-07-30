@@ -338,7 +338,6 @@ function menu_suppression_application() {
 
 function menu_reinit_container() {
   touch $SERVICESPERUSER
-  echo -e " ${BWHITE}* Les fichiers de configuration ne seront pas effacés${NC}"
   TABSERVICES=()
   for SERVICEACTIVATED in $(docker ps --format "{{.Names}}"); do
     SERVICE=$(echo $SERVICEACTIVATED | cut -d\. -f1)
