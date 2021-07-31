@@ -1886,7 +1886,7 @@ function debug_menu() {
     OLDIFS=${IFS}
   fi
   IFS=$'\n'
-  echo -e "${CGREEN}${CEND}"
+  #echo -e "${CGREEN}${CEND}"
   start_menu="is null"
   precedent=""
   if [[ $# -ne 0 ]]; then
@@ -1902,18 +1902,15 @@ function debug_menu() {
   request="select * from menu where parent_id ${start_menu}"
   sqlite3 "${SCRIPTPATH}/menu" "${request}" | while read -a db_select; do
     texte_sep=""
-
-    separateur=$(calcul_niveau_menu ${precedent})
-    for i in $(seq 1 $separateur); do
+IFS='|'
+    read -ra db_select2 <<<"$db_select"
+    separateur=$(calcul_niveau_menu "${db_select2[0]}")
+    IFS=$'\n'
+    for i in $(seq 1 ${separateur}); do
       texte_sep="${texte_sep} ==> "
     done
 
-
-    # on affiche le menu en cours
-    IFS='|'
-    read -ra db_select2 <<<"$db_select"
-
-    echo -e "${CGREEN}${texte_sep}${db_select2[0]} - ${db_select2[3]}) ${db_select2[1]}${CEND}"
+    echo -e "${texte_sep}${db_select2[0]}-${db_select2[3]}) ${db_select2[1]} | ${db_select2[4]}"
 
     # on regarde s'il y a des menus enfants
     request_cpt="select count(*) from menu where parent_id = ${db_select2[0]}"
