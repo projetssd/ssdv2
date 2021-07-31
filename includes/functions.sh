@@ -545,8 +545,6 @@ function insert_mod() {
   /opt/motd/motd/12-rtorrent-stats
 }
 
-
-
 function create_dir() {
   ansible-playbook "${BASEDIR}/includes/config/playbooks/create_directory.yml" \
     --extra-vars '{"DIRECTORY":"'${1}'"}'
@@ -1886,7 +1884,6 @@ function debug_menu() {
     OLDIFS=${IFS}
   fi
   IFS=$'\n'
-  #echo -e "${CGREEN}${CEND}"
   start_menu="is null"
   precedent=""
   if [[ $# -ne 0 ]]; then
@@ -1902,7 +1899,7 @@ function debug_menu() {
   request="select * from menu where parent_id ${start_menu}"
   sqlite3 "${SCRIPTPATH}/menu" "${request}" | while read -a db_select; do
     texte_sep=""
-IFS='|'
+    IFS='|'
     read -ra db_select2 <<<"$db_select"
     separateur=$(calcul_niveau_menu "${db_select2[0]}")
     IFS=$'\n'
@@ -1919,7 +1916,7 @@ IFS='|'
       # pas de sous menu, on va rester sur le même
       :
     else
-      debug_menu ${db_select2[0]}
+      debug_menu "${db_select2[0]}"
 
     fi
     IFS=$'\n'
@@ -1936,7 +1933,7 @@ function calcul_niveau_menu() {
     fi
     depart="${1}"
     request_cpt="select parent_id from menu where id = ${depart}"
-    parent=$(sqlite3 ${SCRIPTPATH}/menu "$request_cpt")
+    parent=$(sqlite3 "${SCRIPTPATH}/menu" "$request_cpt")
     if [ -z "$parent" ]; then
 
       echo $niveau
