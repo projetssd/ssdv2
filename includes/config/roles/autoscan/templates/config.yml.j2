@@ -8,26 +8,26 @@ anchors:
 
 triggers:
    inotify:
-      - priority: 0
+     - priority: 0
 
-        # filter with regular expressions
-        include:
-          - ^/home/{{ lookup('env','USER') }}/Media/
-        exclude:
-          - '\.(srt|pdf)$'
+       # filter with regular expressions
+       include:
+         - ^/home/{{ lookup('env','USER') }}/Media/
+       exclude:
+         - '\.(srt|pdf)$'
 
-        # rewrite inotify path to unified filesystem
-        rewrite:
-          - from: ^/home/{{ lookup('env','USER') }}/local/
-            to: /home/{{ lookup('env','USER') }}/Media/
+       # rewrite inotify path to unified filesystem
+       rewrite:
+         - from: ^/home/{{ lookup('env','USER') }}/local/
+           to /home/{{ lookup('env','USER') }}/Media/
 
-        # local filesystem paths to monitor
-        paths:
-          - path: /home/{{ lookup('env','USER') }}/local/Series
-          - path: /home/{{ lookup('env','USER') }}/local/Films
+       # local filesystem paths to monitor
+       paths:
+         - path: /home/{{ lookup('env','USER') }}/local/Series
+         - path: /home/{{ lookup('env','USER') }}/local/Films
   sonarr:
     - name: sonarr-docker
-      priority: 0
+      priority: 3
 
       rewrite:
         - from: /home/{{ lookup('env','USER') }}/Medias/Series/
@@ -51,7 +51,7 @@ triggers:
 
 targets:
   plex:
-    - url: https://plex.{{user.domain}}
+    - url: http://plex:32400
       token: {{plex.token}}
       rewrite:
         - from: /home/{{ lookup('env','USER') }}/Medias/
