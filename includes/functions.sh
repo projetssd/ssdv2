@@ -1281,9 +1281,11 @@ function suppression_appli() {
     ;;
   varken)
     docker rm -f influxdb telegraf grafana >/dev/null 2>&1
-    rm -rf ${CONFDIR}/docker/${USER}/telegraf
-    rm -rf ${CONFDIR}/docker/${USER}/grafana
-    rm -rf ${CONFDIR}/docker/${USER}/influxdb
+    if [ $DELETE -eq 1 ]; then
+      sudo rm -rf ${CONFDIR}/docker/${USER}/telegraf
+      sudo rm -rf ${CONFDIR}/docker/${USER}/grafana
+      sudo rm -rf ${CONFDIR}/docker/${USER}/influxdb
+    fi
     ;;
   jitsi)
     docker rm -f prosody jicofo jvb
