@@ -1,0 +1,106 @@
+#!/bin/bash
+---
+- hosts: localhost
+  gather_facts: false
+  vars:
+    pgrole: 
+  vars_files:
+    - /opt/seedbox/variables/account.yml
+    - "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/generique.yml"
+  tasks:
+
+    - name: create scrutiny state
+      shell: |
+        echo "1" > /opt/seedbox/status/scrutiny
+
+    - name: Checking for existing app data
+      stat:
+        path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
+      register: check
+
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      vars:
+        subdomain: "{{sub.scrutiny.scrutiny if sub_enabled else 'scrutiny'}}"
+      when: cloudflare_enabled
+
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'scrutiny'
+        intport: '8080'
+        image: 'ghcr.io/linuxserver/scrutiny'
+
+    - name: Creating paths
+      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
+      with_items:
+        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}'
+
+    # LABELS ######################################################################
+    - name: 'Ajout label traefik'
+      set_fact:
+        pg_labels:
+          traefik.enable: 'true'
+          ## HTTP Routers
+          traefik.http.routers.scrutiny-rtr.entrypoints: 'https'
+          traefik.http.routers.scrutiny-rtr.rule: 'Host(`{{sub.scrutiny.scrutiny if sub_enabled else pgrole}}.{{user.domain}}`)'
+          traefik.http.routers.scrutiny-rtr.tls: 'true'
+          ## Middlewares
+          traefik.http.routers.scrutiny-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
+          else 'chain-basic-auth@file' if auth_enabled and sub[pgrole].auth == 'basique' | default(false)
+          else 'chain-oauth@file' if auth_enabled and sub[pgrole].auth == 'oauth' | default(false)
+          else omit if auth_enabled and sub[pgrole].auth == 'aucune'}}"
+          ## HTTP Services
+          traefik.http.routers.scrutiny-rtr.service: 'scrutiny-svc'
+          traefik.http.services.scrutiny-svc.loadbalancer.server.port: '8080'
+
+    - name: 'Setting PG Volumes'
+      set_fact:
+        pg_volumes:
+          - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
+          - "/run/udev:/run/udev:ro"
+
+
+    - name: 'Setting PG ENV'
+      set_fact:
+        pg_env:
+          PUID: '{{user.userid}}'
+          PGID: '{{user.groupid}}'
+          TZ: 'Europe/Paris'
+          SCRUTINY_API_ENDPOINT: http://localhost:8080
+          SCRUTINY_WEB: true
+          SCRUTINY_COLLECTOR: true
+
+    - name: Get physical disks
+      cmd: "lsblk |grep disk |awk '{print $1}'"
+      register: mydisks
+
+    - name: prepare devices
+      set fact:
+      "{{ mydisks}}"
+      loop:
+        - mydisks.stdout_lines
+
+    # MAIN DEPLOYMENT #############################################################
+
+    - name: 'Deploying {{pgrole}}'
+      docker_container:
+        name: '{{pgrole}}'
+        image: '{{image}}'
+        pull: yes
+        volumes: '{{pg_volumes}}'
+        env: '{{pg_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+        cap_add:
+          - SYS_RAWIO
+          - SYS_ADMIN
+        state: started
+        devices:
+          -
+        labels: '{{pg_labels}}'
+
+
+
+
