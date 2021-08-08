@@ -77,7 +77,8 @@
 
     - name: prepare devices
       set fact:
-      "{{ mydisks}}"
+        pg_dev:
+        - "{{item}}": "{{item}}"
       loop:
         - mydisks.stdout_lines
 
@@ -97,8 +98,7 @@
           - SYS_RAWIO
           - SYS_ADMIN
         state: started
-        devices:
-          -
+        devices: '{{pg_dev}}'
         labels: '{{pg_labels}}'
 
 
