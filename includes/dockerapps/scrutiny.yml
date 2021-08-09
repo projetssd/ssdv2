@@ -4,6 +4,7 @@
   gather_facts: false
   vars:
     pgrole: 
+    pg_dev: []
   vars_files:
     - /opt/seedbox/variables/account.yml
     - "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/generique.yml"
@@ -67,20 +68,24 @@
           PUID: '{{user.userid}}'
           PGID: '{{user.groupid}}'
           TZ: 'Europe/Paris'
-          SCRUTINY_API_ENDPOINT: http://localhost:8080
-          SCRUTINY_WEB: true
-          SCRUTINY_COLLECTOR: true
+          SCRUTINY_API_ENDPOINT: "http://localhost:8080"
+          SCRUTINY_WEB: "true"
+          SCRUTINY_COLLECTOR: "true"
 
     - name: Get physical disks
-      cmd: "lsblk |grep disk |awk '{print $1}'"
+      shell: "lsblk |grep disk |awk '{print \"/dev/\"$1}'"
       register: mydisks
 
     - name: prepare devices
-      set fact:
-        pg_dev:
-        - "{{item}}": "{{item}}"
-      loop:
-        - mydisks.stdout_lines
+      set_fact:
+              pg_dev: "{{ pg_dev + [item +': ' + item + ':rwm'] }}" 
+      with_items:
+        - "{{mydisks.stdout_lines}}"
+
+
+    - name: debug
+      debug:
+        msg: "{{ pg_dev}}"
 
     # MAIN DEPLOYMENT #############################################################
 
@@ -94,12 +99,13 @@
         restart_policy: unless-stopped
         networks:
           - name: traefik_proxy
-        cap_add:
+        capabilities:
           - SYS_RAWIO
           - SYS_ADMIN
         state: started
         devices: '{{pg_dev}}'
         labels: '{{pg_labels}}'
+        privileged: true
 
 
 
