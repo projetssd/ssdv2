@@ -12,6 +12,14 @@ function logo() {
   descriptif='\033[1;31mHeimdall - Syncthing - sonerezh - Portainer - Nextcloud - Lidarr\033[0m'
   appli='\033[0;36mPlex - Sonarr - Medusa - Rutorrent - Radarr - Jackett - Pyload - Traefik\033[0m'
 
+# ███████╗ ███████╗ ██████╗
+# ██╔════╝ ██╔════╝ ██╔══██╗
+# ███████╗ ███████╗ ██║  ██║
+# ╚════██║ ╚════██║ ██║  ██║
+# ███████║ ███████║ ██████╔╝
+# ╚══════╝ ╚══════╝ ╚═════╝
+
+
   printf "               ${color1}.-.${nocolor}\n"
   printf "         ${color2}.-'\`\`${color1}(   )    ${companyname}${nocolor}\n"
   printf "      ${color3},\`\\ ${color2}\\    ${color1}\`-\`${color2}.    ${divisionname}${nocolor}\n"
@@ -895,7 +903,7 @@ function choose_media_folder_plexdrive() {
 }
 
 function install_services() {
-  if [ -s $SERVICESPERUSER ]; then
+  if [ -f $SERVICESPERUSER ]; then
     INSTALLEDFILE="${HOME}/resume"
     touch ${INSTALLEDFILE} >/dev/null 2>&1
 
@@ -907,8 +915,13 @@ function install_services() {
       mkdir -p ${CONFDIR}/vars >/dev/null 2>&1
     fi
 
-    # contient la liste des apps qu'on va installer
     create_file ${CONFDIR}/temp.txt
+
+    ## préparation installation
+    #for line in $(grep -l 2 ${CONFDIR}/status/*); do
+    #  basename=$(basename "${line}")
+    #  launch_service "${basename}"
+    #done
 
     for line in $(cat $SERVICESPERUSER); do
       launch_service "${line}"
@@ -1075,7 +1088,7 @@ function resume_seedbox() {
   echo -e "${BLUE}##########################################${NC}"
   echo ""
   echo -e " ${BWHITE}* Accès Applis à partir de URL :${NC}"
-  #PASSE=$(get_from_account_yml user.pass)
+  PASSE=$(get_from_account_yml user.pass)
 
   if [[ -s ${CONFDIR}/temp.txt ]]; then
     while read line; do
@@ -1095,14 +1108,14 @@ function resume_seedbox() {
     done <"/home/${USER}/resume"
   fi
 
-#  echo ""
-#  echo -e " ${BWHITE}* Vos IDs :${NC}"
-#  echo -e "	--> ${BWHITE}Utilisateur:${NC} ${YELLOW}${USER}${NC}"
-#  echo -e "	--> ${BWHITE}Password:${NC} ${YELLOW}$PASSE${NC}"
-#  echo ""
+  echo ""
+  echo -e " ${BWHITE}* Vos IDs :${NC}"
+  echo -e "	--> ${BWHITE}Utilisateur:${NC} ${YELLOW}${USER}${NC}"
+  echo -e "	--> ${BWHITE}Password:${NC} ${YELLOW}$PASSE${NC}"
+  echo ""
 
   rm -Rf $SERVICESPERUSER >/dev/null 2>&1
-  rm -f ${CONFDIR}/temp.txt >/dev/null 2>&1
+  rm ${CONFDIR}/temp.txt >/dev/null 2>&1
 }
 
 function uninstall_seedbox() {
