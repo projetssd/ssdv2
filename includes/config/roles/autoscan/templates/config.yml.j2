@@ -12,14 +12,14 @@ triggers:
 
        # filter with regular expressions
        include:
-         - ^/home/{{ lookup('env','USER') }}/Media/
+         - ^/home/{{ lookup('env','USER') }}/Medias/
        exclude:
          - '\.(srt|pdf)$'
 
        # rewrite inotify path to unified filesystem
        rewrite:
          - from: ^/home/{{ lookup('env','USER') }}/local/
-           to /home/{{ lookup('env','USER') }}/Media/
+           to: /home/{{ lookup('env','USER') }}/Medias/
 
        # local filesystem paths to monitor
        paths:

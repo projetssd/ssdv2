@@ -303,14 +303,14 @@ function ajout_app_seedbox() {
   install_services
   pause
   resume_seedbox
+  pause
 }
 
 function ajout_app_autres() {
   echo -e " ${BWHITE}* Resume file: $USERRESUMEFILE${NC}"
   echo ""
   choose_other_services
-  subdomain
-  auth
+
   install_services
   pause
   resume_seedbox
