@@ -115,6 +115,7 @@
         src: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config/scrutiny.yaml"
         key: "disks.include"
         value: "{{ item }}"
+        state: list
       with_items:
         - "{{ mydisks.stdout_lines }}"
 
