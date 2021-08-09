@@ -287,12 +287,9 @@ function menu_install_vfs_plexdrive() {
   pause
 }
 
-
 function menu_create_rclone() {
   ${BASEDIR}/includes/config/scripts/createrclone.sh
 }
-
-
 
 ########################
 function ajout_app_seedbox() {
@@ -329,7 +326,8 @@ function menu_suppression_application() {
       "Sélectionner l'Appli à supprimer" 19 45 11 \
       "${TABSERVICES[@]}" 3>&1 1>&2 2>&3
   )
-  [[ "$?" == 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then affiche_menu_db; else script_classique; fi
+  affiche_menu_db
+
   echo -e " ${GREEN}   * $APPSELECTED${NC}"
 
   suppression_appli ${APPSELECTED} 1
@@ -348,7 +346,7 @@ function menu_reinit_container() {
       "Sélectionner le container à réinitialiser" 19 45 11 \
       "${TABSERVICES[@]}" 3>&1 1>&2 2>&3
   )
-  [[ "$?" == 1 ]] && if [[ -e "$PLEXDRIVE" ]]; then affiche_menu_db; else script_classique; fi
+  affiche_menu_db
   echo -e " ${GREEN}   * ${line}${NC}"
   subdomain=$(get_from_account_yml "sub.${line}.${line}")
   ###subdomain=$(grep "${line}" ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
