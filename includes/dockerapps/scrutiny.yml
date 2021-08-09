@@ -109,17 +109,3 @@
         labels: '{{pg_labels}}'
         privileged: true
 
-    # POST TASKS
-    - name: modify config
-      yedit:
-        src: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config/scrutiny.yaml"
-        key: "disks.include"
-        value: "{{ item }}"
-        state: list
-      with_items:
-        - "{{ mydisks.stdout_lines }}"
-
-
-
-
-
