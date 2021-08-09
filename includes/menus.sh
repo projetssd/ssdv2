@@ -298,7 +298,6 @@ function ajout_app_seedbox() {
   choose_services
 
   install_services
-  pause
   resume_seedbox
   pause
 }
@@ -309,7 +308,6 @@ function ajout_app_autres() {
   choose_other_services
 
   install_services
-  pause
   resume_seedbox
   pause
 }

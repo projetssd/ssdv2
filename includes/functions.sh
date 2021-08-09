@@ -282,8 +282,6 @@ function check_dir() {
   fi
 }
 
-
-
 function insert_mod() {
   sed -i 's/\/etc\/update-motd.d/\/opt\/motd\/motd/g' /opt/motd/motd/04-load-average
   sed -i 's/\/etc\/update-motd.d/\/opt\/motd\/motd/g' /opt/motd/motd/10-plex-stats
@@ -897,28 +895,24 @@ function choose_media_folder_plexdrive() {
 }
 
 function install_services() {
-  INSTALLEDFILE="${HOME}/resume"
-  touch ${INSTALLEDFILE} >/dev/null 2>&1
+  if [ -s $SERVICESPERUSER ]; then
+    INSTALLEDFILE="${HOME}/resume"
+    touch ${INSTALLEDFILE} >/dev/null 2>&1
 
-  if [[ ! -d "${CONFDIR}/conf" ]]; then
-    mkdir -p ${CONFDIR}/conf >/dev/null 2>&1
+    if [[ ! -d "${CONFDIR}/conf" ]]; then
+      mkdir -p ${CONFDIR}/conf >/dev/null 2>&1
+    fi
+
+    if [[ ! -d "${CONFDIR}/vars" ]]; then
+      mkdir -p ${CONFDIR}/vars >/dev/null 2>&1
+    fi
+
+    create_file ${CONFDIR}/temp.txt
+
+    for line in $(cat $SERVICESPERUSER); do
+      launch_service "${line}"
+    done
   fi
-
-  if [[ ! -d "${CONFDIR}/vars" ]]; then
-    mkdir -p ${CONFDIR}/vars >/dev/null 2>&1
-  fi
-
-  create_file ${CONFDIR}/temp.txt
-
-  ## préparation installation
-  #for line in $(grep -l 2 ${CONFDIR}/status/*); do
-  #  basename=$(basename "${line}")
-  #  launch_service "${basename}"
-  #done
-
-  for line in $(cat $SERVICESPERUSER); do
-    launch_service "${line}"
-  done
 }
 
 function launch_service() {
