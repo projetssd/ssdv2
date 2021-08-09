@@ -2,6 +2,8 @@
 ---
 - hosts: localhost
   gather_facts: false
+  roles:
+      - kwoodson.yedit
   vars:
     pgrole: 
     pg_dev: []
@@ -109,8 +111,12 @@
 
     # POST TASKS
     - name: modify config
-      lineinfile:
-        path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config/scrutiny.yaml"
+      yedit:
+        src: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config/scrutiny.yaml"
+        key: "disks.include"
+        value: "{{ item }}"
+      with_items:
+        - "{{ mydisks.stdout_lines }}"
 
 
 
