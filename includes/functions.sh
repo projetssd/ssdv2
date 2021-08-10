@@ -11,13 +11,15 @@ function logo() {
   divisionname='\033[1;32mlaster13 - Merrick\033[0m'
   descriptif='\033[1;31mHeimdall - Syncthing - sonerezh - Portainer - Nextcloud - Lidarr\033[0m'
   appli='\033[0;36mPlex - Sonarr - Medusa - Rutorrent - Radarr - Jackett - Pyload - Traefik\033[0m'
-
- printf " ${color1}███████╗ ${color2}███████╗ ${color3}██████╗  $(/usr/bin/uptime -p)${nocolor}\n"
+ printf " \n"
+ printf " ${color1}███████╗ ${color2}███████╗ ${color3}██████╗  ${companyname}${nocolor}\n"
  printf " ${color1}██╔════╝ ${color2}██╔════╝ ${color3}██╔══██╗ ${divisionname}${nocolor}\n"
- printf " ${color1}███████╗ ${color2}███████╗ ${color3}██║  ██║ $(lsb_release -sd)${nocolor}\n"
+ printf " ${color1}███████╗ ${color2}███████╗ ${color3}██║  ██║ ${nocolor}\n"
  printf " ${color1}╚════██║ ${color2}╚════██║ ${color3}██║  ██║ $(uname -srmo)${nocolor}\n"
- printf " ${color1}███████║ ${color2}███████║ ${color3}██████╔╝ ${descriptif}${nocolor}\n"
- printf " ${color1}╚══════╝ ${color2}╚══════╝ ${color3}╚═════╝  ${appli}${nocolor}\n"
+ printf " ${color1}███████║ ${color2}███████║ ${color3}██████╔╝ $(lsb_release -sd)${nocolor}\n"
+ printf " ${color1}╚══════╝ ${color2}╚══════╝ ${color3}╚═════╝  $(/usr/bin/uptime -p)${nocolor}\n"
+ printf " \n"
+
 
 
 #  printf "               ${color1}.-.${nocolor}\n"
