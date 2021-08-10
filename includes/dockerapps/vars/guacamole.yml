@@ -4,9 +4,10 @@ intport: '8080'
 image: 'guacamole/guacamole'
 pg_volumes:
   - '/etc/localtime:/etc/localtime:ro'
+  - "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}/init:/initdb:rw"
 pg_env:
-  MYSQL_DATABASE:
-  MYSQL_USER:
-  MYSQL_PASSWORD:
+  MYSQL_DATABASE: "db-{{pgrole}}"
+  MYSQL_USER: "{{pgrole}}"
+  MYSQL_PASSWORD: "{{pgrole}}"
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"

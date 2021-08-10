@@ -1,0 +1,15 @@
+---
+- name: Prepare database dump
+  docker_container_exec:
+    container: "{{ pgrole }}"
+    command: /opt/guacamole/bin/initdb.sh --mysql > /initdb/initdb.sql
+
+- name: Launch Pretask
+  include_tasks: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/mariadb_officiel.yml"
+
+- name: Wait for database to be up
+  wait_for:
+    timeout: 30
+
+
+
