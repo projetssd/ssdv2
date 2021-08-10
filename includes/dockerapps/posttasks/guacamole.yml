@@ -1,8 +1,19 @@
 ---
+- name: prepare directory
+  file:
+    path: "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}/init"
+    state: directory
+
 - name: Prepare database dump
-  docker_container_exec:
-    container: "{{ pgrole }}"
-    command: /opt/guacamole/bin/initdb.sh --mysql > /initdb/initdb.sql
+  shell: 
+    chdir: "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}/init"
+    cmd: "docker run --rm guacamole/guacamole /opt/guacamole/bin/initdb.sh --mysql > /tmp/initdb.sql"
+
+- name: Copy file
+  copy:
+    src: /tmp/initdb.sql
+    dest: "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}/init/initdb.sql"
+
 
 - name: Launch Pretask
   include_tasks: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/mariadb_officiel.yml"
@@ -11,5 +22,11 @@
   wait_for:
     timeout: 30
 
-
-
+- name: 'Deploying guacd'
+  docker_container:
+    name: 'guacd'
+    image: "guacamole/guacd"
+    restart_policy: unless-stopped
+    networks:
+    - name: traefik_proxy
+    state: started

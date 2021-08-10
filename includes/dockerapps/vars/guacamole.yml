@@ -6,8 +6,10 @@ pg_volumes:
   - '/etc/localtime:/etc/localtime:ro'
   - "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}/init:/initdb:rw"
 pg_env:
-  MYSQL_DATABASE: "db-{{pgrole}}"
+  MYSQL_DATABASE: "{{pgrole}}"
+  MYSQL_HOSTNAME: "db-{{pgrole}}"
   MYSQL_USER: "{{pgrole}}"
   MYSQL_PASSWORD: "{{pgrole}}"
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
+  GUACD_HOSTNAME: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
