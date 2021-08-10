@@ -1,0 +1,12 @@
+---
+pgrole: 'guacamole'
+intport: '8080'
+image: 'guacamole/guacamole'
+pg_volumes:
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  MYSQL_DATABASE:
+  MYSQL_USER:
+  MYSQL_PASSWORD:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
