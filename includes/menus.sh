@@ -324,12 +324,13 @@ function menu_suppression_application() {
       "Sélectionner l'Appli à supprimer" 19 45 11 \
       "${TABSERVICES[@]}" 3>&1 1>&2 2>&3
   )
-  affiche_menu_db
+
 
   echo -e " ${GREEN}   * $APPSELECTED${NC}"
 
   suppression_appli ${APPSELECTED} 1
   pause
+  affiche_menu_db
 }
 
 function menu_reinit_container() {
