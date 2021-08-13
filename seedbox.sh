@@ -289,10 +289,11 @@ EOF
   git_branch=$(git rev-parse --abbrev-ref HEAD)
   if [ ${git_branch} == 'master' ]; then
     cd /opt/seedbox-compose
-    git fetch
+    git fetch >> /dev/null 2>&1
     current_hash=$(git rev-parse HEAD)
     distant_hash=$(git rev-parse master@{upstream})
     if [ ${current_hash} != ${distant_hash} ]; then
+      clear
       echo "==============================================="
       echo "= Il existe une mise à jour"
       echo "= Pour le faire, sortez du script, puis tapez"
@@ -301,6 +302,7 @@ EOF
       pause
     fi
   else
+    clear
     echo "==============================================="
     echo "= Attention, vous n'êtes pas sur la branche master !"
     echo "= Pour repasser sur master, sortez du script, puis tapez "
