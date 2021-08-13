@@ -282,7 +282,6 @@ EOF
 
     esac
   fi
-
   update_status
 
   chmod 755 /opt/seedbox-compose/logs
