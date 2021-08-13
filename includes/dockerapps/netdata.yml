@@ -64,9 +64,9 @@
           - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/netdatalib:/var/lib/netdata"
           - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/netdatacache:/var/cache/netdata"
           - "/etc/passwd:/host/etc/passwd:ro"
-          - "/etc/group:/host/etc/group:ro "
-          - "/proc:/host/proc:ro "
-          - "/sys:/host/sys:ro "
+          - "/etc/group:/host/etc/group:ro"
+          - "/proc:/host/proc:ro"
+          - "/sys:/host/sys:ro"
           - "/etc/os-release:/host/etc/os-release:ro"
 
     - name: Get physical disks
