@@ -288,6 +288,8 @@ EOF
   #update_logrotate
   git_branch=$(git rev-parse --abbrev-ref HEAD)
   if [ ${git_branch} == 'master' ]; then
+    cd /opt/seedboc-compose
+    git fetch
     current_hash=$(git rev-parse HEAD)
     distant_hash=$(git rev-parse master@{upstream})
     if [ ${current_hash} != ${distant_hash} ]; then
