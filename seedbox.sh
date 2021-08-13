@@ -292,6 +292,22 @@ EOF
 
   chmod 755 /opt/seedbox-compose/logs
   #update_logrotate
+  git_branch=$(git rev-parse --abbrev-ref HEAD)
+  if [ ${git_branch} == 'master' ]; then
+    current_hash=$(git rev-parse HEAD)
+    distant_hash=$(git rev-parse main@{upstream})
+    if [ ${current_hash} != ${distant_hash} ]; then
+      echo "Il existe une mise à jour"
+      echo "Pour le faire, sortez du script, puis tapez"
+      echo "git pull"
+      pause
+    fi
+  else
+    echo "Attention, vous n'êtes pas sur la branche master !"
+    echo "Pour repasser sur master, sortez du script, puis tapez "
+    echo "git checkout master"
+    pause
+  fi
 
   affiche_menu_db
 fi
