@@ -55,7 +55,7 @@
           else omit if auth_enabled and sub[pgrole].auth == 'aucune'}}"
           ## HTTP Services
           traefik.http.routers.netdata-rtr.service: 'netdata-svc'
-          traefik.http.services.netdata-svc.loadbalancer.server.port: '8080'
+          traefik.http.services.netdata-svc.loadbalancer.server.port: '19999'
 
     - name: 'Setting PG Volumes'
       set_fact:
@@ -68,6 +68,7 @@
           - "/proc:/host/proc:ro"
           - "/sys:/host/sys:ro"
           - "/etc/os-release:/host/etc/os-release:ro"
+          - "/var/run/docker.sock:/var//run/docker.sock:ro"
 
     - name: Get physical disks
       shell: "lsblk |grep disk |awk '{print \"/dev/\"$1}'"
@@ -95,5 +96,4 @@
           - SYS_PTRACE
         state: started
         labels: '{{pg_labels}}'
-        privileged: true
 
