@@ -180,7 +180,6 @@ if [ $mode_install = "manuel" ]; then
         unionfs_fuse
         pause
 
-
         # Installation de filebot
         # TODO : à laisser ? Ou à mettre dans les applis ?
         #filebot
@@ -228,7 +227,7 @@ if [ $mode_install = "manuel" ]; then
 
       #check_dir "$PWD"
       if [[ ${IS_INSTALLED} -eq 0 ]]; then
-          clear
+        clear
         # Installation et configuration de rclone
         install_rclone
         # Install de watchtower
@@ -241,7 +240,6 @@ if [ $mode_install = "manuel" ]; then
         # Cette install a une incidence sur docker (dépendances dans systemd)
         unionfs_fuse
         pause
-
 
         # Installation de filebot
         # TODO : à laisser ? Ou à mettre dans les applis ?
@@ -258,13 +256,10 @@ if [ $mode_install = "manuel" ]; then
         cp /opt/seedbox/variables/account.yml /opt/seedbox/variables/account.restore
         mv /opt/seebox/variables/account.temp /opt/seebox/variables/account.yml
 
-
-
         ## reinitialisation de toutes les applis
-        sqlite3 /opt/seedbox-compose/ssddb << EOF > $SERVICESPERUSER
+        sqlite3 /opt/seedbox-compose/ssddb <<EOF >$SERVICESPERUSER
 select name from applications;
 EOF
-
 
         #while read line; do echo $line | cut -d'.' -f1; done <"/home/${USER}/resume" >$SERVICESPERUSER
         rm /home/${USER}/resume
@@ -295,17 +290,21 @@ EOF
   git_branch=$(git rev-parse --abbrev-ref HEAD)
   if [ ${git_branch} == 'master' ]; then
     current_hash=$(git rev-parse HEAD)
-    distant_hash=$(git rev-parse main@{upstream})
+    distant_hash=$(git rev-parse master@{upstream})
     if [ ${current_hash} != ${distant_hash} ]; then
-      echo "Il existe une mise à jour"
-      echo "Pour le faire, sortez du script, puis tapez"
-      echo "git pull"
+      echo "==============================================="
+      echo "= Il existe une mise à jour"
+      echo "= Pour le faire, sortez du script, puis tapez"
+      echo "= git pull"
+      echo "==============================================="
       pause
     fi
   else
-    echo "Attention, vous n'êtes pas sur la branche master !"
-    echo "Pour repasser sur master, sortez du script, puis tapez "
-    echo "git checkout master"
+    echo "==============================================="
+    echo "= Attention, vous n'êtes pas sur la branche master !"
+    echo "= Pour repasser sur master, sortez du script, puis tapez "
+    echo "= git checkout master"
+    echo "==============================================="
     pause
   fi
 
