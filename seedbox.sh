@@ -205,24 +205,13 @@ if [ $mode_install = "manuel" ]; then
     2) ## Installation de la seedbox classique
 
       check_dir "$PWD"
-      if [[ ! -d "$CONFDIR" ]]; then
-        clear
-        conf_dir
-        update_system
-        install_base_packages
-        install_docker
-        define_parameters
-        cloudflare
-        oauth
-        install_traefik
+      if [[ ${IS_INSTALLED} -eq 0 ]]; then
+        # Install de watchtower
         install_watchtower
+        # Install fail2ban
         install_fail2ban
-        choose_media_folder_classique
-        choose_services
-        subdomain
-        install_services
-        filebot
-        resume_seedbox
+        # Choix des dossiers et création de l'arborescence
+        choose_media_folder_plexdrive
         pause
         touch "${CONFDIR}/media-$SEEDUSER"
         echo "L'installation est maintenant terminée."
@@ -302,7 +291,7 @@ EOF
   update_status
 
   chmod 755 /opt/seedbox-compose/logs
-  update_logrotate
-  PLEXDRIVE="/usr/bin/rclone"
+  #update_logrotate
+
   affiche_menu_db
 fi
