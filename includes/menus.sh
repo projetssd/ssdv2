@@ -345,7 +345,7 @@ function menu_reinit_container() {
       "Sélectionner le container à réinitialiser" 19 45 11 \
       "${TABSERVICES[@]}" 3>&1 1>&2 2>&3
   )
-  affiche_menu_db
+  
   echo -e " ${GREEN}   * ${line}${NC}"
   subdomain=$(get_from_account_yml "sub.${line}.${line}")
   ###subdomain=$(grep "${line}" ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
