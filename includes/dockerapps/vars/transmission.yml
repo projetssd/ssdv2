@@ -1,0 +1,21 @@
+---
+pgrole: 'transmission'
+intport: '9091'
+image: 'haugene/transmission-openvpn:latest'
+pg_volumes:
+  - "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/transmission/data:/data"
+  - "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/transmission/config:/config"
+  - '/etc/localtime:/etc/localtime:ro'
+  - "/home/{{lookup('env','USER')}}:/home/{{lookup('env','USER')}}"
+pg_env:
+  PUID: "{{lookup('env','MYUID')}}"
+  PGID: "{{lookup('env','MYGID')}}"
+  CREATE_TUN_DEVICE: 'true'
+  OPENVPN_PROVIDER: '{{provider}}'
+  OPENVPN_USERNAME: '{{username}}'
+  OPENVPN_PASSWORD: '{{password}}'
+  OPENVPN_CONFIG: '{{config}}'
+  LOCAL_NETWORK: '{{network}}'
+  OPENVPN_OPTS: '--inactive 3600 --ping 10 --ping-exit 60'
+  TRANSMISSION_DOWNLOAD_DIR: "/home/{{lookup('env','USER')}}/transmission"
+  TZ: 'Europe/Paris'

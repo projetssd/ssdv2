@@ -1,0 +1,19 @@
+---
+vars_prompt:
+- name: provider
+  prompt: "OPENVPN_PROVIDER"
+  private: no
+- name: username
+  prompt: "OPENVPN_USERNAME"
+  private: no
+- name: password
+  prompt: "OPENVPN_PASSWORD"
+  private: no
+- name: config
+  prompt: "OPENVPN_CONFIG (Nom fichier sans la terminaison opvn)"
+  private: no
+- name: network
+  prompt: "LOCAL_NETWORK (ex 192.168.1.0/24)"
+  private: no
+
+
