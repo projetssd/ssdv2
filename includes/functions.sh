@@ -1416,6 +1416,8 @@ EOF
   sudo chmod 755 "${SCRIPTPATH}/logs"
   create_dir "${CONFDIR}"
   create_dir "${CONFDIR}/variables"
+  create_dir "${CONFDIR}/conf"
+  create_dir "${CONFDIR}/vars"
   if [ ! -f "${CONFDIR}/variables/account.yml" ]; then
     cp /opt/seedbox-compose/includes/config/account.yml "${CONFDIR}/variables/account.yml"
   fi

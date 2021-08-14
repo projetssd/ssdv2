@@ -1,0 +1,19 @@
+---
+pgrole: 'rutorrent'
+intport: '8080'
+image: 'mondedie/rutorrent:latest'
+pg_volumes:
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/data:/data"
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/sock:/run/rtorrent"
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+  - '/etc/localtime:/etc/localtime:ro'
+
+pg_env:
+  UID: '{{user.userid}}'
+  GID: '{{user.groupid}}'
+  TZ: 'Europe/Paris'
+# tags spécifiques à ajouter à la construction du docker
+specific_docker_info:
+  ports:
+    - '45000:45000'

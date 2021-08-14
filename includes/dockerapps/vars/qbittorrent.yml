@@ -1,0 +1,17 @@
+---
+pgrole: 'qbittorrent'
+intport: '8080'
+image: 'ghcr.io/linuxserver/qbittorrent'
+pg_volumes:
+  - "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
+  - "{{ lookup('env','HOME') }}/local/{{pgrole}}/downloads:/downloads"
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+
+pg_env:
+  PUID: '{{user.userid}}'
+  PGID: '{{user.groupid}}'
+  TZ: 'Europe/Paris'
+# tags spécifiques à ajouter à la construction du docker
+specific_docker_info:
+  ports:
+    - '6881:6881'

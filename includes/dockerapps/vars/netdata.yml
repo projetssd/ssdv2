@@ -10,3 +10,7 @@ pg_volumes:
 
 pg_env:
   PGID: "{{ getent_group['docker'][1] }}"
+# tags spécifiques à ajouter à la construction du docker
+specific_docker_info:
+  capabilities:
+  - SYS_PTRACE

@@ -211,6 +211,7 @@ if [ $mode_install = "manuel" ]; then
         install_fail2ban
         # Choix des dossiers et création de l'arborescence
         choose_media_folder_plexdrive
+        update_seedbox_param "installed" 1
         pause
         touch "${CONFDIR}/media-$SEEDUSER"
         echo "L'installation est maintenant terminée."
