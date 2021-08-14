@@ -186,7 +186,7 @@
     - name: Deploy Traefik
       docker_container:
         name: '{{pgrole}}'
-        image: traefik:chevrotin
+        image: traefik:v2.4
         pull: yes
         published_ports:
           - "443:443"
