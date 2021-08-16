@@ -1,7 +1,7 @@
 ---
 pgrole: 'prowlarr'
 intport: '9696'
-image: 'hotio/prowlarr:nightly'
+image: 'e4a13a3cdcbf4030b9e4cf90416d3918'
 pg_volumes:
   - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config:rw"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
