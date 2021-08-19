@@ -7,6 +7,6 @@ pg_volumes:
 pg_env:
   VIRTUAL_HOST: 'wetty.{{user.domain}}'
   VIRTUAL_PORT: '3000'
-  REMOTE_SSH_SERVER: '{{public_ip_lookup.stdout}}'
+  REMOTE_SSH_SERVER: '{{network.ipv4}}'
   REMOTE_SSH_PORT: "{{ ansible_env['SSH_CLIENT'].split() | last }}"
   REMOTE_SSH_USER: ''
