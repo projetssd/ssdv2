@@ -888,7 +888,7 @@ function choose_media_folder_plexdrive() {
         "Medias à ajouter pour ${USER} (Barre espace pour la sélection)" 28 60 17 \
         $(cat /tmp/menumedia.txt) 3>&1 1>&2 2>&3
     )
-    touch $MEDIASPERUSER
+    touch "$MEDIASPERUSER"
     for MEDDOCKER in $MEDIASTOINSTALL; do
       echo -e "	${GREEN}* $(echo $MEDDOCKER | tr -d '"')${NC}"
       echo $(echo ${MEDDOCKER} | tr -d '"') >>$MEDIASPERUSER
