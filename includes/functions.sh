@@ -895,29 +895,29 @@ function choose_media_folder_plexdrive() {
     done
     for line in $(cat $MEDIASPERUSER); do
       line=$(echo ${line} | sed 's/\(.\)/\U\1/')
-      create_dir ${HOME}/local/${line}
-      create_dir /mnt/rclone/${USER}/${line}
+      create_dir "${HOME}/local/${line}"
+      create_dir "/mnt/rclone/${USER}/${line}"
     done
     rm /tmp/menumedia.txt
   fi
-  mkdir -p ${HOME}/filebot
+  mkdir -p "${HOME}/filebot"
   echo ""
 }
 
 function install_services() {
-  if [ -f $SERVICESPERUSER ]; then
+  if [ -f "$SERVICESPERUSER" ]; then
     INSTALLEDFILE="${HOME}/resume"
-    touch ${INSTALLEDFILE} >/dev/null 2>&1
+    touch "${INSTALLEDFILE}" >/dev/null 2>&1
 
     if [[ ! -d "${CONFDIR}/conf" ]]; then
-      mkdir -p ${CONFDIR}/conf >/dev/null 2>&1
+      mkdir -p "${CONFDIR}/conf" >/dev/null 2>&1
     fi
 
     if [[ ! -d "${CONFDIR}/vars" ]]; then
-      mkdir -p ${CONFDIR}/vars >/dev/null 2>&1
+      mkdir -p "${CONFDIR}/vars" >/dev/null 2>&1
     fi
 
-    create_file ${CONFDIR}/temp.txt
+    create_file "${CONFDIR}/temp.txt"
 
     ## préparation installation
     #for line in $(grep -l 2 ${CONFDIR}/status/*); do
