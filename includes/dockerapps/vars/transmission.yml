@@ -1,0 +1,17 @@
+---
+pgrole: 'transmission'
+intport: '9091'
+image: 'ghcr.io/linuxserver/transmission'
+pg_volumes:
+  - "{{ lookup('env','HOME') }}/local/{{pgrole}}/downloads:/downloads"
+  - "{{ lookup('env','HOME') }}/local/{{pgrole}}/watch:/watch"
+  - "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+pg_env:
+  PUID: '{{user.userid}}'
+  PGID: '{{user.groupid}}'
+  TZ: 'Europe/Paris'
+  # tags spécifiques à ajouter à la construction du docker
+specific_docker_info:
+  ports:
+    - '51413:51413'
