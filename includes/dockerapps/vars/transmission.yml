@@ -7,6 +7,7 @@ pg_volumes:
   - "{{ lookup('env','HOME') }}/local/{{pgrole}}/watch:/watch"
   - "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+
 pg_env:
   PUID: '{{user.userid}}'
   PGID: '{{user.groupid}}'
