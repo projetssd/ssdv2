@@ -12,7 +12,11 @@ pg_env:
   PUID: '{{user.userid}}'
   PGID: '{{user.groupid}}'
   TZ: 'Europe/Paris'
-  TRANSMISSION_WEB_HOME : /flood-for-transmission/
+  # interface webui
+  TRANSMISSION_WEB_HOME : /transmission-web-control/
+  #TRANSMISSION_WEB_HOME : /flood-for-transmission/
+  #TRANSMISSION_WEB_HOME : /combustion-release/
+  #TRANSMISSION_WEB_HOME : /kettu/
   # tags spécifiques à ajouter à la construction du docker
 specific_docker_info:
   ports:
