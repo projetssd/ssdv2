@@ -1,5 +1,5 @@
 ---
-pgrole: 'transmission'
+pgrole: 'transmissionvpn'
 intport: '9091'
 image: 'haugene/transmission-openvpn:latest'
 pg_volumes:
