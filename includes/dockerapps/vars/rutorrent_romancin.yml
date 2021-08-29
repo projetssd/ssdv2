@@ -1,7 +1,7 @@
 ---
 pgrole: 'rutorrent_romancin'
 intport: '9443'
-image: 'mondedie/rutorrent:latest'
+image: 'romancin/rutorrent:latest'
 pg_volumes:
   - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
   - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/downloads:/downloads"
