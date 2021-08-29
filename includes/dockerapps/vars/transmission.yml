@@ -12,6 +12,7 @@ pg_env:
   PUID: '{{user.userid}}'
   PGID: '{{user.groupid}}'
   TZ: 'Europe/Paris'
+  TRANSMISSION_WEB_HOME : /flood-for-transmission/
   # tags spécifiques à ajouter à la construction du docker
 specific_docker_info:
   ports:
