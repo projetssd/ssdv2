@@ -3,6 +3,9 @@
   file:
     path: "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}/init"
     state: directory
+    mode: 0777
+    owner: "{{ lookup('env','MYUID') }}"
+    group: "{{ lookup('env','MYGID') }}"
 
 - name: Prepare database dump
   shell: 
@@ -10,6 +13,7 @@
     cmd: "docker run --rm guacamole/guacamole /opt/guacamole/bin/initdb.sh --mysql > /tmp/initdb.sql"
 
 - name: Copy file
+  become: yes
   copy:
     src: /tmp/initdb.sql
     dest: "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}/init/initdb.sql"
