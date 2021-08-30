@@ -1,5 +1,6 @@
 ---
 - name: prepare directory
+  become: yes
   file:
     path: "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}/init"
     state: directory
