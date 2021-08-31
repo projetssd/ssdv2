@@ -844,12 +844,17 @@ function choose_other_services() {
       "Appuyer sur la barre espace pour la sélection" 28 64 21 \
       $(cat /tmp/menuservices.txt) 3>&1 1>&2 2>&3
   )
-  [[ "$?" == 1 ]] && rm /tmp/menuservices.txt
-  touch "${SERVICESPERUSER}"
-  for APPDOCKER in $SERVICESTOINSTALL; do
-    echo -e "	${GREEN}* $(echo "${APPDOCKER}" | tr -d '"')${NC}"
-    echo $(echo "${APPDOCKER,,}" | tr -d '"') >>"${SERVICESPERUSER}"
-  done
+  exitstatus=$?
+  if [ $exitstatus = 0 ]; then
+    rm /tmp/menuservices.txt
+    touch "${SERVICESPERUSER}"
+    for APPDOCKER in $SERVICESTOINSTALL; do
+      echo -e "	${GREEN}* $(echo "${APPDOCKER}" | tr -d '"')${NC}"
+      echo $(echo "${APPDOCKER,,}" | tr -d '"') >>"${SERVICESPERUSER}"
+    done
+  else
+    return
+  fi
 }
 
 function choose_media_folder_classique() {
