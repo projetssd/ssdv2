@@ -41,6 +41,7 @@
         group: "{{ lookup('env','MYGIDNAME') }}"
       with_items:
         - '/mnt/PlexdriveSeed'
+        - '/mnt/plexdrive'
         - '/home/{{user.name}}/PlexdriveSeed'
 
 

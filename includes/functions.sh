@@ -466,10 +466,10 @@ function install_watchtower() {
 function install_plexdrive() {
   echo -e "${BLUE}### PLEXDRIVE ###${NC}"
   echo ""
-  mkdir -p /mnt/plexdrive >/dev/null 2>&1
+  sudo mkdir -p /mnt/plexdrive >/dev/null 2>&1
+  sudo chown ${USER}: /mnt/plexdrive
   ansible-playbook ${BASEDIR}/includes/config/roles/plexdrive/tasks/main.yml
   systemctl stop plexdrive >/dev/null 2>&1
-  ansible-vault decrypt ${CONFDIR}/variables/account.yml >/dev/null 2>&1
   echo ""
   clear
   echo -e " ${BWHITE}* Dès que le message ${NC}${CCYAN}"First cache build process started" apparait à l'écran, taper ${NC}${CCYAN}CTRL + C${NC}${BWHITE} pour poursuivre le script !${NC}"
@@ -487,7 +487,8 @@ function install_plexdrive() {
 function plexdrive() {
   echo -e "${BLUE}### PLEXDRIVE ###${NC}"
   echo ""
-  mkdir -p /mnt/plexdrive >/dev/null 2>&1
+  sudo mkdir -p /mnt/plexdrive >/dev/null 2>&1
+  sudo chown ${USER}: /mnt/plexdrive
   ansible-playbook ${BASEDIR}/includes/config/roles/plexdrive/tasks/plexdrive.yml
   systemctl stop plexdrive >/dev/null 2>&1
   echo ""

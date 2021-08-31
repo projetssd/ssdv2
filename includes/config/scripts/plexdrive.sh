@@ -5,19 +5,18 @@ source /opt/seedbox-compose/includes/variables.sh
 
 RCLONE_CONFIG_FILE=${HOME}/.config/rclone/rclone.conf
 
-ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
-USER=$(cat ${TMPNAME})
+#ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
+#USER=$(cat ${TMPNAME})
 
 
 
-mkdir /mnt/rclone > /dev/null 2>&1
-
+sudo mkdir /mnt/rclone > /dev/null 2>&1
+sudo chown ${USER}: /mnt/plexdrive
 ## detection remote plexdrive ##
 grep "plexdrive" ${RCLONE_CONFIG_FILE} > /dev/null 2>&1
 if [ $? -eq 0 ]; then
   REMOTE_PLEXDRIVE=$(grep -iC 2 "/mnt/plexdrive/Medias" ${RCLONE_CONFIG_FILE} | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
-
-  sed -i "/remote/a \ \ \ plexdrive: $REMOTE_PLEXDRIVE" /opt/seedbox/variables/account.yml
+  manage_account_yml remote.plexdrive $REMOTE_PLEXDRIVE
 else
   PASSWORD=$(grep password ${RCLONE_CONFIG_FILE} | head -1)
   PASSWORD2=$(grep password ${RCLONE_CONFIG_FILE} | head -2 | tail -1)
@@ -29,7 +28,6 @@ else
   echo "$PASSWORD" >> ${RCLONE_CONFIG_FILE}
   echo "$PASSWORD2" >> ${RCLONE_CONFIG_FILE}
   echo ""
-  sed -i "/remote/a \ \ \ plexdrive: plexdrive" /opt/seedbox/variables/account.yml
+  manage_account_yml remote.plexdrive plexdrive
 fi
-ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 
