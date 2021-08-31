@@ -11,29 +11,27 @@ function logo() {
   divisionname='\033[1;32mlaster13 - Merrick\033[0m'
   descriptif='\033[1;31mHeimdall - Syncthing - sonerezh - Portainer - Nextcloud - Lidarr\033[0m'
   appli='\033[0;36mPlex - Sonarr - Medusa - Rutorrent - Radarr - Jackett - Pyload - Traefik\033[0m'
- printf " \n"
- printf " ${color1}███████╗ ${color2}███████╗ ${color3}██████╗  ${companyname}${nocolor}\n"
- printf " ${color1}██╔════╝ ${color2}██╔════╝ ${color3}██╔══██╗ ${divisionname}${nocolor}\n"
- printf " ${color1}███████╗ ${color2}███████╗ ${color3}██║  ██║ ${nocolor}\n"
- printf " ${color1}╚════██║ ${color2}╚════██║ ${color3}██║  ██║ $(uname -srmo)${nocolor}\n"
- printf " ${color1}███████║ ${color2}███████║ ${color3}██████╔╝ $(lsb_release -sd)${nocolor}\n"
- printf " ${color1}╚══════╝ ${color2}╚══════╝ ${color3}╚═════╝  $(/usr/bin/uptime -p)${nocolor}\n"
- printf " \n"
+  printf " \n"
+  printf " ${color1}███████╗ ${color2}███████╗ ${color3}██████╗  ${companyname}${nocolor}\n"
+  printf " ${color1}██╔════╝ ${color2}██╔════╝ ${color3}██╔══██╗ ${divisionname}${nocolor}\n"
+  printf " ${color1}███████╗ ${color2}███████╗ ${color3}██║  ██║ ${nocolor}\n"
+  printf " ${color1}╚════██║ ${color2}╚════██║ ${color3}██║  ██║ $(uname -srmo)${nocolor}\n"
+  printf " ${color1}███████║ ${color2}███████║ ${color3}██████╔╝ $(lsb_release -sd)${nocolor}\n"
+  printf " ${color1}╚══════╝ ${color2}╚══════╝ ${color3}╚═════╝  $(/usr/bin/uptime -p)${nocolor}\n"
+  printf " \n"
 
-
-
-#  printf "               ${color1}.-.${nocolor}\n"
-#  printf "         ${color2}.-'\`\`${color1}(   )    ${companyname}${nocolor}\n"
-#  printf "      ${color3},\`\\ ${color2}\\    ${color1}\`-\`${color2}.    ${divisionname}${nocolor}\n"
-#  printf "     ${color3}/   \\ ${color2}'\`\`-.   \`   ${color3}$(lsb_release -sd)${nocolor}\n"
-#  printf "   ${color2}.-.  ${color3},       ${color2}\`___:  ${nocolor}$(uname -srmo)${nocolor}\n"
-#  printf "  ${color2}(   ) ${color3}:       ${color1} ___   ${nocolor}$(date +"%A, %e %B %Y, %r")${nocolor}\n"
-#  printf "   ${color2}\`-\`  ${color3}\`      ${color1} ,   :${nocolor}  Seedbox docker\n"
-#  printf "     ${color3}\\   / ${color1},..-\`   ,${nocolor}   ${descriptif} ${nocolor}\n"
-#  printf "      ${color3}\`./${color1} /    ${color3}.-.${color1}\`${nocolor}    ${appli}\n"
-#  printf "         ${color1}\`-..-${color3}(   )${nocolor}    Uptime: $(/usr/bin/uptime -p)\n"
-#  printf "               ${color3}\`-\`${nocolor}\n"
-#  echo ""
+  #  printf "               ${color1}.-.${nocolor}\n"
+  #  printf "         ${color2}.-'\`\`${color1}(   )    ${companyname}${nocolor}\n"
+  #  printf "      ${color3},\`\\ ${color2}\\    ${color1}\`-\`${color2}.    ${divisionname}${nocolor}\n"
+  #  printf "     ${color3}/   \\ ${color2}'\`\`-.   \`   ${color3}$(lsb_release -sd)${nocolor}\n"
+  #  printf "   ${color2}.-.  ${color3},       ${color2}\`___:  ${nocolor}$(uname -srmo)${nocolor}\n"
+  #  printf "  ${color2}(   ) ${color3}:       ${color1} ___   ${nocolor}$(date +"%A, %e %B %Y, %r")${nocolor}\n"
+  #  printf "   ${color2}\`-\`  ${color3}\`      ${color1} ,   :${nocolor}  Seedbox docker\n"
+  #  printf "     ${color3}\\   / ${color1},..-\`   ,${nocolor}   ${descriptif} ${nocolor}\n"
+  #  printf "      ${color3}\`./${color1} /    ${color3}.-.${color1}\`${nocolor}    ${appli}\n"
+  #  printf "         ${color1}\`-..-${color3}(   )${nocolor}    Uptime: $(/usr/bin/uptime -p)\n"
+  #  printf "               ${color3}\`-\`${nocolor}\n"
+  #  echo ""
 
 }
 
@@ -814,12 +812,17 @@ function choose_services() {
       "Appuyer sur la barre espace pour la sélection" 28 64 21 \
       $(cat /tmp/menuservices.txt) 3>&1 1>&2 2>&3
   )
-  [[ "$?" == 1 ]] && rm /tmp/menuservices.txt
-  touch $SERVICESPERUSER
-  for APPDOCKER in $SERVICESTOINSTALL; do
-    echo -e "	${GREEN}* $(echo $APPDOCKER | tr -d '"')${NC}"
-    echo $(echo ${APPDOCKER,,} | tr -d '"') >>"${SERVICESPERUSER}"
-  done
+  exitstatus=$?
+  if [ $exitstatus = 0 ]; then
+    rm /tmp/menuservices.txt
+    touch $SERVICESPERUSER
+    for APPDOCKER in $SERVICESTOINSTALL; do
+      echo -e "	${GREEN}* $(echo $APPDOCKER | tr -d '"')${NC}"
+      echo $(echo ${APPDOCKER,,} | tr -d '"') >>"${SERVICESPERUSER}"
+    done
+  else
+    return
+  fi
 }
 
 function choose_other_services() {
