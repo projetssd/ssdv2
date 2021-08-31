@@ -1092,42 +1092,7 @@ function suppression_appli() {
 EOF
 }
 
-function resume_seedbox() {
-  clear
-  echo -e "${BLUE}##########################################${NC}"
-  echo -e "${BLUE}###     INFORMATION SEEDBOX INSTALL    ###${NC}"
-  echo -e "${BLUE}##########################################${NC}"
-  echo ""
-  echo -e " ${BWHITE}* Accès Applis à partir de URL :${NC}"
-  PASSE=$(get_from_account_yml user.pass)
 
-  if [[ -s ${CONFDIR}/temp.txt ]]; then
-    while read line; do
-      for word in ${line}; do
-        ACCESSDOMAIN=$(echo ${line} | cut -d "-" -f 2-4)
-        DOCKERAPP=$(echo $word | cut -d "-" -f1)
-        echo -e "	--> ${BWHITE}$DOCKERAPP${NC} --> ${YELLOW}$ACCESSDOMAIN${NC}"
-      done
-    done <"${CONFDIR}/temp.txt"
-  else
-    while read line; do
-      for word in ${line}; do
-        ACCESSDOMAIN=$(echo ${line})
-        DOCKERAPP=$(echo $word | cut -d "." -f1)
-        echo -e "	--> ${BWHITE}$DOCKERAPP${NC} --> ${YELLOW}$ACCESSDOMAIN${NC}"
-      done
-    done <"/home/${USER}/resume"
-  fi
-
-  echo ""
-  echo -e " ${BWHITE}* Vos IDs :${NC}"
-  echo -e "	--> ${BWHITE}Utilisateur:${NC} ${YELLOW}${USER}${NC}"
-  echo -e "	--> ${BWHITE}Password:${NC} ${YELLOW}$PASSE${NC}"
-  echo ""
-
-  rm -Rf $SERVICESPERUSER >/dev/null 2>&1
-  rm ${CONFDIR}/temp.txt >/dev/null 2>&1
-}
 
 function uninstall_seedbox() {
   clear

@@ -76,7 +76,8 @@ menu_change_sous_domaine() {
 
   install_services
   mv ${CONFDIR}/resume /home/${USER}/resume >/dev/null 2>&1
-  resume_seedbox
+  echo "Changement effectué"
+  pause
 }
 
 menu_gestion_motd() {
@@ -298,7 +299,7 @@ function ajout_app_seedbox() {
   choose_services
 
   install_services
-  resume_seedbox
+  echo "Installations terminées"
   pause
 }
 
@@ -308,7 +309,7 @@ function ajout_app_autres() {
   choose_other_services
 
   install_services
-  resume_seedbox
+  echo "Installations terminées"
   pause
 }
 
@@ -324,7 +325,6 @@ function menu_suppression_application() {
       "Sélectionner l'Appli à supprimer" 19 45 11 \
       "${TABSERVICES[@]}" 3>&1 1>&2 2>&3
   )
-
 
   echo -e " ${GREEN}   * $APPSELECTED${NC}"
 
@@ -345,7 +345,7 @@ function menu_reinit_container() {
       "Sélectionner le container à réinitialiser" 19 45 11 \
       "${TABSERVICES[@]}" 3>&1 1>&2 2>&3
   )
-  
+
   echo -e " ${GREEN}   * ${line}${NC}"
   subdomain=$(get_from_account_yml "sub.${line}.${line}")
   ###subdomain=$(grep "${line}" ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
@@ -367,6 +367,5 @@ function menu_reinit_container() {
   echo""
   echo -e "${BLUE}### Le Container ${line} a été Réinitialisé ###${NC}"
   echo ""
-  resume_seedbox
   pause
 }

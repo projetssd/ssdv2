@@ -187,7 +187,6 @@ if [ $mode_install = "manuel" ]; then
         # mise en place de la sauvegarde
         sauve
         # Affichage du résumé
-        #resume_seedbox
         #pause
         # on marque la seedbox comme installée
         update_seedbox_param "installed" 1
