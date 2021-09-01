@@ -13,7 +13,7 @@
 
 - name: Set download location
   lineinfile:
-    path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config/rutorrent/conf/config.php'
+    path: "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/config/rutorrent/conf/config.php"
     regexp: '\$topDirectory\s*=.*'
     line: "$topDirectory = '/home/{{ lookup('env','USER') }};"
     state: present
