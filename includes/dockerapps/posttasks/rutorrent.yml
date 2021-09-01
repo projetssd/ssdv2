@@ -25,7 +25,7 @@
 
 - name: Set MaterialDesign
   shell: |
-    echo 'O:6:"rTheme":2:{s:4:"hash";s:9:"theme.dat";s:7:"current";s:14:"materialdesign";}' > /opt/seedbox/docker/{{ lookup('env','USER') }}/rutorrent/config/rutorrent/share/settings/theme.dat
+    echo 'O:6:"rTheme":2:{s:4:"hash";s:9:"theme.dat";s:7:"current";s:14:"materialdesign";}" > /opt/seedbox/docker/{{ lookup("env","USER") }}/rutorrent/config/rutorrent/share/settings/theme.dat
 
 - name: 'Restart {{ pgrole }}'
   docker_container:
