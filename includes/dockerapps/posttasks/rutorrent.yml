@@ -1,0 +1,24 @@
+---
+- name: 'Stop {{ pgrole }}'
+  docker_container:
+    name: '{{ pgrole }}'
+    state: stopped
+
+- name: Set download location
+  lineinfile:
+    path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config/rtorrent/.rtorrent.rc'
+    regexp: '#*directory.default.set\s*=.*'
+    line: 'directory.default.set = /home/{{user.name}}/local/{{pgrole}}'
+    state: present
+
+- name: Set download location
+  lineinfile:
+    path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config/rutorrent/conf/config.php'
+    regexp: '\$topDirectory\s*=.*'
+    line: $topDirectory = '/home/{{user.name}}';
+    state: present
+
+- name: 'Restart {{ pgrole }}'
+  docker_container:
+    name: '{{ pgrole }}'
+    state: started
