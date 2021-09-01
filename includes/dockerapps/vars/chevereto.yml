@@ -1,6 +1,6 @@
 ---
 pgrole: 'chevereto'
-intport: '443'
+intport: '80'
 image: 'ghcr.io/linuxserver/chevereto:latest'
 pg_volumes:
   - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
