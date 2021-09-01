@@ -15,7 +15,7 @@
   lineinfile:
     path: "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/config/rutorrent/conf/config.php"
     regexp: '\$topDirectory\s*=.*'
-    line: "$topDirectory = '/home/{{ lookup('env','USER') }};"
+    line: "$topDirectory = '/home/{{ lookup('env','USER') }}';"
     state: present
 
 - name: Clone ratio color
