@@ -4,6 +4,11 @@
     name: '{{ pgrole }}'
     state: stopped
 
+- name: Crete directory
+  file:
+    path: "/home/{{ lookup('env','USER') }}/local/{{pgrole}}"
+    state: directory
+
 - name: Set download location
   lineinfile:
     path: "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/config/rtorrent/.rtorrent.rc"
