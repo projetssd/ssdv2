@@ -361,7 +361,8 @@ function menu_reinit_container() {
   echo ""
   echo ${line} >>$SERVICESPERUSER
 
-  install_services
+  launch_service ${line}
+
   pause
   checking_errors $?
   echo""
