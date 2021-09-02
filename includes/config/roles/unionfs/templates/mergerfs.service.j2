@@ -5,7 +5,7 @@ After=rclone.service
 
 [Service]
 Type=forking
-ExecStart=/usr/bin/mergerfs {{ lookup('env','HOME') }}/local:/mnt/rclone/{{user.name}} {{ lookup('env','HOME') }}/Medias -o rw,use_ino,allow_other,func.getattr=newest,category.action=all,category.create=ff,cache.files=auto-full
+ExecStart=/usr/bin/mergerfs {{ lookup('env','HOME') }}/local:/mnt/rclone/{{lookup('env','USER'}} {{ lookup('env','HOME') }}/Medias -o rw,use_ino,allow_other,func.getattr=newest,category.action=all,category.create=ff,cache.files=auto-full
 ExecStop=/bin/fusermount -u {{ lookup('env','HOME') }}/Medias
 KillMode=process
 Restart=on-failure

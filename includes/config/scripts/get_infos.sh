@@ -26,9 +26,8 @@ echo -e "${BLUE}serviront à vous authentifier sur les différents services en m
 
 USERNAME=$(get_from_account_yml user.name)
 if [ ${USERNAME} == notfound ]; then
-  read -p $'\e[32m↘️ Nom d utilisateur | Appuyer sur [Enter]: \e[0m' user </dev/tty
-  manage_account_yml user.name "$user"
-  update_seedbox_param "name" $user
+  manage_account_yml user.name "${USER}"
+  update_seedbox_param "name" ${USER}
 else
   echo -e "${BLUE}Username déjà renseigné${CEND}"
   user=${USERNAME}
