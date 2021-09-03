@@ -54,9 +54,15 @@
         mode: a+x
 
     - name: Set directory permissions
-      file: "path=/home/{{ lookup('env','USER') }}/scripts/plex_dupefinder state=directory owner={{user.userid}} group={{user.groupid}} recurse=yes"
+      file:
+        path: "/home/{{ lookup('env','USER') }}/scripts/plex_dupefinder"
+        state: directory
+        owner: "{{user.userid}}"
+        group: "{{user.groupid}}"
+        recurse: yes
 
     - name: "Create /usr/local/bin symlink"
+      become: yes
       file:
         src: "/home/{{ lookup('env','USER') }}/scripts/plex_dupefinder/plex_dupefinder.py"
         dest: "/usr/local/bin/plexdupes"
