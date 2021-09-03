@@ -1777,6 +1777,8 @@ function affiche_menu_db() {
 function log_statusbar()
 {
   tput sc #save the current cursor position
+  tput cup $((`tput lines`-2)) 3 # go to last line
+  tput ed
   tput cup $((`tput lines`-1)) 3 # go to last line
   echo $1
   tput rc # bring the cursor back to the last saved position
