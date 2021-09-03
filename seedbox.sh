@@ -286,6 +286,7 @@ EOF
 
   chmod 755 /opt/seedbox-compose/logs
   #update_logrotate
+  log_statusbar "Check de la dernière version sur git"
   git_branch=$(git rev-parse --abbrev-ref HEAD)
   if [ ${git_branch} == 'master' ]; then
     cd /opt/seedbox-compose

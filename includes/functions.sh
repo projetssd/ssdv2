@@ -58,6 +58,7 @@ function status() {
 }
 
 function update_status() {
+
   for i in $(docker ps --format "{{.Names}}" --filter "network=traefik_proxy"); do
     echo "2" >${CONFDIR}/status/${i}
 
@@ -1475,6 +1476,10 @@ function migrate() {
       echo "$mypass" >"${HOME}/.vault_pass"
     fi
   fi
+  echo "Application des droits pour le nouveau user"
+  echo "Cette opération peut prendre du temps en fonction du nombre de fichiers à traiter"
+  echo "Merci de votre patience ..."
+  echo "=================================================================================="
   sudo chown -R "${USER}": /opt/seedbox/status
   sudo chown -R "${USER}": /opt/seedbox/docker
   sudo chown -R "${USER}": /opt/seedbox/resume
@@ -1493,7 +1498,6 @@ function migrate() {
   fi
 
   sudo chown -R "${USER}": /opt/seedbox/status
-  sudo chown -R "${USER}": /opt/seedbox/docker
   sudo chown -R "${USER}": /opt/seedbox/resume
   sudo chown -R "${USER}": ${HOME}/resume
   sudo chown -R ${USER}: ${CONFDIR}/status/*
@@ -1768,4 +1772,12 @@ function affiche_menu_db() {
 
   fi
   IFS=${OLDFIFS}
+}
+
+function log_statusbar()
+{
+  tput sc #save the current cursor position
+  tput cup $((`tput lines`-1)) 3 # go to last line
+  echo $1
+  tput rc # bring the cursor back to the last saved position
 }
