@@ -126,7 +126,12 @@ https://feathub.com/projetssd/ssdv2
 
 > L'installation peut également ce faire sur un home serveur, cependant ce wiki ne parlera que de l'installation cloud sur serveur distant.
 
+## JetBrains
+Thank you to [<img src="/images/jetbrains-training-partner.svg" alt="JetBrains" width="32"> JetBrains](http://www.jetbrains.com/) for providing us with free licenses to their great tools.
 
+* [<img src="/images/logo-phpstorm.png" alt="PhpStorm" width="32"> PhpStorm](http://www.jetbrains.com/phpstorm/)
+* [<img src="/Logo/logo-webstorm.svg" alt="WebStorm" width="32"> WebStorm](http://www.jetbrains.com/webstorm/)
+* [<img src="/Logo/logo-pycharm.svg" alt="Pycharm" width="32"> Pycharm](http://www.jetbrains.com/pycharm/)
 ***
 
 > Ce script est proposé à des fins d'expérimentation uniquement, le téléchargement d’oeuvre copyrightées est illégal.
