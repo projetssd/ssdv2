@@ -5,12 +5,12 @@ Description=Cloudplow
 After=network-online.target
 
 [Service]
-User={{user.name}}
-Group={{user.name}}
+User={{ lookup('env','USER') }}
+Group={{ lookup('env','USER') }}
 Type=simple
-WorkingDirectory=/home/{{user.name}}/scripts/cloudplow/
-ExecStart=/opt/seedbox-compose/venv/bin/python3 /home/{{user.name}}/scripts/cloudplow/cloudplow.py run --loglevel=INFO
-ExecStopPost=/bin/rm -rf /home/{{user.name}}/scripts/cloudplow/locks
+WorkingDirectory=/home/{{ lookup('env','USER') }}/scripts/cloudplow/
+ExecStart=/opt/seedbox-compose/venv/bin/python3 /home/{{ lookup('env','USER') }}/scripts/cloudplow/cloudplow.py run --loglevel=INFO
+ExecStopPost=/bin/rm -rf /home/{{ lookup('env','USER') }}/scripts/cloudplow/locks
 Restart=always
 RestartSec=10
 
