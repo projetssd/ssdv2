@@ -129,9 +129,9 @@ https://feathub.com/projetssd/ssdv2
 ## JetBrains
 merci à  [<img src="/images/jetbrains-training-partner.svg" alt="JetBrains" width="32"> JetBrains](http://www.jetbrains.com/) pour les licences open source qui nous permettent de travailler sur ce projet.
 
-* [<img src="/images/logo-phpstorm.png" alt="PhpStorm" width="32"> PhpStorm](http://www.jetbrains.com/phpstorm/)
-* [<img src="/images/logo-webstorm.svg" alt="WebStorm" width="32"> WebStorm](http://www.jetbrains.com/webstorm/)
-* [<img src="/images/logo-pycharm.svg" alt="Pycharm" width="32"> Pycharm](http://www.jetbrains.com/pycharm/)
+* [<img src="/images/icon-phpstorm.svg" alt="PhpStorm" width="32"> PhpStorm](http://www.jetbrains.com/phpstorm/)
+* [<img src="/images/icon-webstorm.svg" alt="WebStorm" width="32"> WebStorm](http://www.jetbrains.com/webstorm/)
+* [<img src="/images/icon-pycharm.svg" alt="Pycharm" width="32"> Pycharm](http://www.jetbrains.com/pycharm/)
 ***
 
 > Ce script est proposé à des fins d'expérimentation uniquement, le téléchargement d’oeuvre copyrightées est illégal.
