@@ -17,30 +17,29 @@
     - name: Create plex_dupefinder directories
       file: "path={{ item }} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}} recurse=yes"
       with_items:
-        - /home/{{user.name}}/scripts/plex_dupefinder
+        - /home/{{ lookup('env','USER') }}/scripts/plex_dupefinder
 
     - name: Clone plex_dupefinder
       git:
         repo: https://github.com/l3uddz/plex_dupefinder/
-        dest: /home/{{user.name}}/scripts/plex_dupefinder
+        dest: /home/{{ lookup('env','USER') }}/scripts/plex_dupefinder
         version: HEAD
         force: yes
 
     - name: Install pip requirements
       pip:
-        requirements: /home/{{user.name}}/scripts/plex_dupefinder/requirements.txt
-        executable: pip3
+        requirements: /home/{{ lookup('env','USER') }}/scripts/plex_dupefinder/requirements.txt
         virtualenv: '/opt/seedbox-compose/venv'
 
     - name: Check config exists
       stat:
-        path: "/home/{{user.name}}/scripts/plex_dupefinder/config.json"
+        path: "/home/{{ lookup('env','USER') }}/scripts/plex_dupefinder/config.json"
       register: plex_dupefinder_config
 
     - name: Import default config
       template:
         src: /opt/seedbox-compose/includes/config/roles/plex_dupefinder/templates/config.json.j2
-        dest: /home/{{user.name}}/scripts/plex_dupefinder/config.json
+        dest: /home/{{ lookup('env','USER') }}/scripts/plex_dupefinder/config.json
         owner: "{{user.userid}}"
         group: "{{user.groupid}}"
         mode: 0775
@@ -49,16 +48,16 @@
 
     - name: Set plex_dupefinder.py as executable
       file:
-        path: /home/{{user.name}}/scripts/plex_dupefinder/plex_dupefinder.py
+        path: /home/{{ lookup('env','USER') }}/scripts/plex_dupefinder/plex_dupefinder.py
         owner: "{{user.userid}}"
         group: "{{user.groupid}}"
         mode: a+x
 
     - name: Set directory permissions
-      file: "path=/home/{{user.name}}/scripts/plex_dupefinder state=directory owner={{user.userid}} group={{user.groupid}} recurse=yes"
+      file: "path=/home/{{ lookup('env','USER') }}/scripts/plex_dupefinder state=directory owner={{user.userid}} group={{user.groupid}} recurse=yes"
 
     - name: "Create /usr/local/bin symlink"
       file:
-        src: "/home/{{user.name}}/scripts/plex_dupefinder/plex_dupefinder.py"
+        src: "/home/{{ lookup('env','USER') }}/scripts/plex_dupefinder/plex_dupefinder.py"
         dest: "/usr/local/bin/plexdupes"
         state: link
