@@ -6,7 +6,7 @@ After=network-online.target
 
 [Service]
 User={{ lookup('env','USER') }}
-Group={{ lookup('env','USER') }}
+Group={{ lookup('env','MYGIDNAME') }}
 Type=simple
 WorkingDirectory=/home/{{ lookup('env','USER') }}/scripts/cloudplow/
 ExecStart=/opt/seedbox-compose/venv/bin/python3 /home/{{ lookup('env','USER') }}/scripts/cloudplow/cloudplow.py run --loglevel=INFO
