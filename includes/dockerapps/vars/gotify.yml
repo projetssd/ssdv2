@@ -1,0 +1,13 @@
+---
+pgrole: 'gotify'
+intport: '80'
+image: 'gotify/server'
+pg_volumes:
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/app/data"
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  GOTIFY_DEFAULTUSER_NAME: "{{ user.name }}"
+  GOTIFY_DEFAULTUSER_PASS: "{{ user.pass }}"
