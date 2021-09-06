@@ -7,6 +7,22 @@
 
 ### Attendre la présence d'un membre du staff sur le discord !!!
 
+==========================================================
+
+ATTENTION POUR CEUX QUI SONT EN DEBIAN 10
+
+Avant toute chose, passez root puis tapez "apt update" et acceptez les changements proposés.
+
+Verifiez ensuite avec
+```
+apt-get update
+apt-get upgrade
+```
+que les commandes passent sans erreur.
+
+============================================================
+
+
 Il faut un user qui porte le même nom que le user d'admin de la v1. Il faut que cette user soit dans le groupe sudo. 
 En root :
 ```

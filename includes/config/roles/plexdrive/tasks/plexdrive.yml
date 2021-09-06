@@ -42,7 +42,7 @@
       with_items:
         - '/mnt/PlexdriveSeed'
         - '/mnt/plexdrive'
-        - '/home/{{user.name}}/PlexdriveSeed'
+        - "/home/{{ lookup('env','USER') }}/PlexdriveSeed"
 
 
     - name: Check if plexdrive.service exists
