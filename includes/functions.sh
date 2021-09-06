@@ -1481,7 +1481,9 @@ function migrate() {
   echo "Merci de votre patience ..."
   echo "=================================================================================="
   sudo chown -R "${USER}": /opt/seedbox/status
+  sudo systemctl docker stop
   sudo chown -R "${USER}": /opt/seedbox/docker
+  sudo systemctl docker start
   sudo chown -R "${USER}": /opt/seedbox/resume
   sudo chown -R "${USER}": ${HOME}/resume
   sudo chown -R ${USER}: ${CONFDIR}/status/*
