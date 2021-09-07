@@ -64,19 +64,8 @@ cd /opt/seedbox-compose && ./seedbox.sh
 [![Discord: https://discordapp.com/invite/kkwEvV6dfj](https://img.shields.io/badge/Discord-gray.svg?style=for-the-badge)](https://discordapp.com/invite/kkwEvV6dfj)
 
 
-## Le script SSD permet l'installation d'une seedbox complète avec Docker
-
-#### Pour se lancer dans l’installation, il faut au préalable suivre les étapes suivantes:
-* [Un serveur distant](https://github.com/laster13/patxav/wiki/Serveur)
-* [Un nom de domaine](https://github.com/laster13/patxav/wiki/Nom-de-domaine)
-* [Un abonnement à cloud workspace](https://github.com/laster13/patxav/wiki/Les-offres-Cloud-Google)
-* [DNS Cloudflare](https://github.com/laster13/patxav/wiki/Cloudflare)
-* [Création API Google Drive](https://github.com/laster13/patxav/wiki/Cr%C3%A9ation-API-Google)
-
-###
-
 Une fois les pré requis validé pous pouvez suivre le guide :  
-* [Pas à pas d'installation](https://github.com/laster13/patxav/wiki/pas-%C3%A0-pas)
+* [Pas à pas d'installation](https://github.com/projetssd/ssdv2/wiki/pas-%C3%A0-pas)
 
 
 <br/><br/>
