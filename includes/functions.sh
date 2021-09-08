@@ -944,6 +944,7 @@ function install_services() {
 function launch_service() {
   INSTALLEDFILE="${HOME}/resume"
   line=$1
+  error=0
   tempsubdomain=$(get_from_account_yml sub.${line}.${line})
   if [ "${tempsubdomain}" = notfound ]; then
     subdomain_unitaire ${line}
@@ -968,7 +969,7 @@ function launch_service() {
   else
     # On est dans le cas générique
     # on regarde s'i y a un playbook existant
-    error=0
+
     if [[ -f "${CONFDIR}/conf/${line}.yml" ]]; then
       # il y a déjà un playbook "perso", on le lance
       ansible-playbook "${CONFDIR}/conf/${line}.yml"
@@ -1025,7 +1026,7 @@ function manage_apps() {
 function suppression_appli() {
   sousdomaine=$(get_from_account_yml sub.${APPSELECTED}.${APPSELECTED})
   domaine=$(get_from_account_yml user.domain)
-  sort -u /home/${USER}/resume | grep -v ${sousdomaine}.${domaine} > /tmp/resume
+  sort -u /home/${USER}/resume | grep -v ${sousdomaine}.${domaine} >/tmp/resume
   cp /tmp/resume /home/${USER}/resume
   APPSELECTED=$1
   DELETE=0
@@ -1096,8 +1097,6 @@ function suppression_appli() {
     $req
 EOF
 }
-
-
 
 function uninstall_seedbox() {
   clear
@@ -1780,12 +1779,11 @@ function affiche_menu_db() {
   IFS=${OLDFIFS}
 }
 
-function log_statusbar()
-{
-  tput sc #save the current cursor position
-  tput cup $((`tput lines`-2)) 3 # go to last line
+function log_statusbar() {
+  tput sc                           #save the current cursor position
+  tput cup $(($(tput lines) - 2)) 3 # go to last line
   tput ed
-  tput cup $((`tput lines`-1)) 3 # go to last line
+  tput cup $(($(tput lines) - 1)) 3 # go to last line
   echo $1
   tput rc # bring the cursor back to the last saved position
 }
