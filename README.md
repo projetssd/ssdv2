@@ -6,7 +6,7 @@
 
 ## Comment migrer de la v1 vers la v2 ?
 
-[Cliquez ici pour voir le tuto](https://github.com/projetssd/ssdv2/wiki/Comment-migrer-de-la-v1-vers-la-v2-%3F)
+[Cliquez ici pour voir le tuto](https://github.com/projetssd/ssdv2/wiki/Comment-migrer-de-la-v1-vers-la-v2)
 
 
 ## Le script SSD permet l'installation d'une seedbox complète avec Docker
