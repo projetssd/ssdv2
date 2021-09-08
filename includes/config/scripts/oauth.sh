@@ -67,6 +67,8 @@ echo ""
 ## reinstallation application
 echo -e "${BLUE}### REINITIALISATION DES APPLICATIONS ###${NC}"
 echo -e " ${BWHITE}* Les fichiers de configuration ne seront pas effacés${NC}"
+sort -u /home/${USER}/resume |grep -v notfound > /tmp/resume
+cp /tmp/resume /home/${USER}/resume
 while read line; do echo $line | cut -d'.' -f1; done < /home/${USER}/resume > $SERVICESPERUSER
 mv /home/${USER}/resume /tmp
 install_services
