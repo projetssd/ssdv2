@@ -1000,6 +1000,8 @@ function launch_service() {
     FQDNTMP="${temp_subdomain}.$DOMAIN"
     echo "$FQDNTMP" >>$INSTALLEDFILE
     echo "${line} = $FQDNTMP" | tee -a "${CONFDIR}/resume" >/dev/null
+    sort -u "${CONFDIR}/resume" | grep -v notfound > /tmp/resume
+    cp /tmp/resume "${CONFDIR}/resume"
   fi
   FQDNTMP=""
 }
