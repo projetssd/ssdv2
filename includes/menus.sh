@@ -363,6 +363,9 @@ function menu_reinit_container() {
 
   launch_service ${line}
 
+  sort -u "${CONFDIR}/resume" | grep -v notfound > /tmp/resume
+  cp /tmp/resume "${CONFDIR}/resume"
+
   pause
   checking_errors $?
   echo""
