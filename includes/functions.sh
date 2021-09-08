@@ -1026,7 +1026,7 @@ function suppression_appli() {
   sousdomaine=$(get_from_account_yml sub.${APPSELECTED}.${APPSELECTED})
   domaine=$(get_from_account_yml user.domain)
   sort -u /home/${USER}/resume | grep -v ${sousdomaine}.${domaine} > /tmp/resume
-  cp /tmp/resume /home/user/resume
+  cp /tmp/resume /home/${USER}/resume
   APPSELECTED=$1
   DELETE=0
   if [[ $# -eq 2 ]]; then
