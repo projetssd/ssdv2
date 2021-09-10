@@ -506,6 +506,7 @@ function plexdrive() {
 
 function install_rclone() {
   echo -e "${BLUE}### RCLONE ###${NC}"
+  fusermount -uz /mnt/rclone >> /dev/null 2>&1
   create_dir /mnt/rclone
   create_dir /mnt/rclone/${USER}
   ${BASEDIR}/includes/config/scripts/rclone.sh

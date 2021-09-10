@@ -22,6 +22,8 @@ echo -e "${CRED}---------------------------------------------${CEND}"
 function detection() {
   ## detection drive ##
   i=1
+  sudo rm /tmp/team.txt >> /dev/null 2>&1
+  sudo rm /tmp/drive.txt >> /dev/null 2>&1
   grep "team_drive" ${RCLONE_CONFIG_FILE} | uniq >/tmp/drive.txt
   grep "team_drive" ${RCLONE_CONFIG_FILE} >/dev/null 2>&1
   if [ $? -eq 0 ]; then
@@ -83,7 +85,7 @@ function detection() {
         echo -e "${CCYAN}   Source séléctionnée: ${CGREEN}$remote${CEND}"
         echo ""
       fi
-      break
+      return 0
     else
       echo -e " ${CRED}* /!\ erreur de saisie /!\{NC}"
       echo ""
