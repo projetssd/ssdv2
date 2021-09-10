@@ -13,7 +13,7 @@ if [ "$USER" == "root" ]; then
   remote={{rclone.remote}}
   remote_backups=BACKUPS
   NB_MAX_BACKUP=3
-  CDAY=$(date +%d%m%Y-%H%M)
+  CDAY=$(date +%Y%m%d-%H%M)
   BACKUP_PARTITION=/var/backup/local
   BACKUP_FOLDER=$BACKUP_PARTITION/backup-$CDAY
   ARCHIVE=$BACKUP_FOLDER/backup-$CDAY.tar.gz

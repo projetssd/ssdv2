@@ -94,6 +94,7 @@
           plexdrive_service_running: "{{ (services['plexdrive.service'] is defined) and (services['plexdrive.service']['state'] == 'running') }}"
 
       - name: Stop plexdrive service
+        become: yes
         systemd:
           name: plexdrive
           state: stopped

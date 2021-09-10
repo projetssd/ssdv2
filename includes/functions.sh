@@ -1486,9 +1486,6 @@ function migrate() {
   echo "Merci de votre patience ..."
   echo "=================================================================================="
   sudo chown -R "${USER}": /opt/seedbox/status
-  sudo systemctl docker stop
-  sudo chown -R "${USER}": /opt/seedbox/docker
-  sudo systemctl docker start
   sudo chown -R "${USER}": /opt/seedbox/resume
   sudo chown -R "${USER}": ${HOME}/resume
   sudo chown -R ${USER}: ${CONFDIR}/status/*
@@ -1542,7 +1539,12 @@ function migrate() {
   conf_dir
   # cloudplow
   if [ -f "/etc/systemd/system/cloudplow.service" ]; then
+    # on sauvegarde l'ancienne config
+    cp /home/${USER}/scripts/cloudplow/config.json /tmp/cloudplow
     install_cloudplow
+    # on remet l'ancienne config
+    cp /home/${USER}/scripts/cloudplow/config.json /home/${USER}/scripts/cloudplow/config.json.ssdv2
+    cp /tmp/cloudplow /home/${USER}/scripts/cloudplow/config.json
     sudo chown -R ${USER}: /home/${USER}/scripts/cloudplow
 
   fi

@@ -264,7 +264,7 @@ function menu_install_rclone_vfs() {
   ${BASEDIR}/includes/config/scripts/fusermount.sh
   install_rclone
   unionfs_fuse
-  rm -rf /mnt/plexdrive
+  sudo rm -rf /mnt/plexdrive
   pause
 }
 

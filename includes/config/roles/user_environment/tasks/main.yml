@@ -4,6 +4,11 @@
   vars_files:
     - ["{{ lookup('env','CONFDIR') }}/variables/account.yml"]
   tasks:
+    - name: verify profile
+      file:
+        path: "/home/{{ lookup('env','USER') }}/.profile"
+        state: touch
+
     - name: Ajout alias
       lineinfile:
         path: "/home/{{ lookup('env','USER') }}/.profile"
