@@ -32,7 +32,7 @@
         minute: "0"
         hour: "3"
         weekday: "6"
-        job: "/usr/local/bin/backup"
+        job: "/usr/local/bin/backup >> /var/log/backup.log 2>&1"
 
 
 

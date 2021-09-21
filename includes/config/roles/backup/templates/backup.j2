@@ -66,7 +66,7 @@ if [ "$myid" -eq 0 ]; then
 
   echo -e "${CCYAN}> Envoie Archive vers Google Drive${CEND}"
   # Envoie Archive vers Google Drive
-  rclone --config "/home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf" copy "$BACKUP_FOLDER" "{{rclone.remote}}:/{{user.name}}/$remote_backups/backup-$CDAY" -v --log-file=/var/log/backup.log
+  rclone --config "/home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf" copy "$BACKUP_FOLDER" "{{rclone.remote}}:/{{user.name}}/$remote_backups/backup-$CDAY" --progress
 
   # Nombre de sauvegardes effectuées
   nbBackup=$(find $BACKUP_PARTITION -type d -name 'backup-*' | wc -l)
@@ -82,7 +82,7 @@ if [ "$myid" -eq 0 ]; then
 
     # Suppression Archive Google Drive
     echo -e "${CCYAN}> Suppression de l'archive la plus ancienne${CEND}"
-    rclone --config "/home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf" purge "{{rclone.remote}}:/{{user.name}}/$remote_backups/$oldestBackupFile" -v --log-file=/var/log/backup.log
+    rclone --config "/home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf" purge "{{rclone.remote}}:/{{user.name}}/$remote_backups/$oldestBackupFile" --progress
   fi
   echo ""
   echo -e "${CRED}-------------------------------------------------------${CEND}"
