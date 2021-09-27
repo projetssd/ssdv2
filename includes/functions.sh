@@ -1800,12 +1800,15 @@ function choix_appli_sauvegarde() {
     SERVICE=$(echo $SERVICEACTIVATED | cut -d\. -f1)
     TABSERVICES+=(${SERVICE//\"/} " ")
   done
-  line=$(
-    whiptail --title "App Manager" --menu \
-      "Sélectionner le container à sauvegarder" 19 45 11 \
-      "${TABSERVICES[@]}" 3>&1 1>&2 2>&3
-  )
-  sauve_one_appli ${line}
+  exitstatus=$?
+  if [ $exitstatus = 0 ]; then
+    line=$(
+      whiptail --title "App Manager" --menu \
+        "Sélectionner le container à sauvegarder" 19 45 11 \
+        "${TABSERVICES[@]}" 3>&1 1>&2 2>&3
+    )
+    sauve_one_appli ${line}
+  fi
 }
 
 function sauve_one_appli() {
