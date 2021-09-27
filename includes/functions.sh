@@ -1867,7 +1867,7 @@ function sauve_one_appli() {
 
   echo -e "${CCYAN}> Envoie Archive vers Google Drive${CEND}"
   # Envoie Archive vers Google Drive
-  rclone --config "/home/${USER}/.config/rclone/rclone.conf" copy "$BACKUP_PARTITION/$ARCHIVE" "$remote:/$remote_backups/" -v --progress
+  rclone --config "/home/${USER}/.config/rclone/rclone.conf" copy "$BACKUP_PARTITION/$ARCHIVE" "${remote}:/${USER}/${remote_backups}/" -v --progress
 
   # Nombre de sauvegardes effectuées
   nbBackup=$(find $BACKUP_PARTITION -type f -name $APPLI-* | wc -l)
