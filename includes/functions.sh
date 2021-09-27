@@ -506,7 +506,7 @@ function plexdrive() {
 
 function install_rclone() {
   echo -e "${BLUE}### RCLONE ###${NC}"
-  fusermount -uz /mnt/rclone >> /dev/null 2>&1
+  fusermount -uz /mnt/rclone >>/dev/null 2>&1
   create_dir /mnt/rclone
   create_dir /mnt/rclone/${USER}
   ${BASEDIR}/includes/config/scripts/rclone.sh
@@ -1001,7 +1001,7 @@ function launch_service() {
     FQDNTMP="${temp_subdomain}.$DOMAIN"
     echo "$FQDNTMP" >>$INSTALLEDFILE
     echo "${line} = $FQDNTMP" | tee -a "${CONFDIR}/resume" >/dev/null
-    sort -u "${CONFDIR}/resume" | grep -v notfound > /tmp/resume
+    sort -u "${CONFDIR}/resume" | grep -v notfound >/tmp/resume
     cp /tmp/resume "${CONFDIR}/resume"
   fi
   FQDNTMP=""
@@ -1791,4 +1791,103 @@ function log_statusbar() {
   tput cup $(($(tput lines) - 1)) 3 # go to last line
   echo $1
   tput rc # bring the cursor back to the last saved position
+}
+
+function choix_appli_sauvegarde() {
+  touch $SERVICESPERUSER
+  TABSERVICES=()
+  for SERVICEACTIVATED in $(docker ps --format "{{.Names}}"); do
+    SERVICE=$(echo $SERVICEACTIVATED | cut -d\. -f1)
+    TABSERVICES+=(${SERVICE//\"/} " ")
+  done
+  line=$(
+    whiptail --title "App Manager" --menu \
+      "Sélectionner le container à sauvegarder" 19 45 11 \
+      "${TABSERVICES[@]}" 3>&1 1>&2 2>&3
+  )
+  sauve_one_appli ${line}
+}
+
+function sauve_one_appli() {
+  #!/bin/bash
+
+  # Définition des variables de couleurs
+  CSI="\033["
+  CEND="${CSI}0m"
+  CRED="${CSI}1;31m"
+  CGREEN="${CSI}1;32m"
+  CYELLOW="${CSI}1;33m"
+  CCYAN="${CSI}0;36m"
+
+  # Variables
+  remote=$(get_from_account_yml rclone.remote)
+  APPLI=$1
+  SOURCE_DIR="/opt/seedbox/docker/${USER}"
+  remote_backups=BACKUPS
+  NB_MAX_BACKUP=3
+  CDAY=$(date +%Y%m%d-%H%M)
+  BACKUP_PARTITION=/var/backup/local
+  #BACKUP_FOLDER=$BACKUP_PARTITION/$APPLI-$CDAY
+  ARCHIVE=$APPLI-$CDAY.tar.gz
+
+  echo ""
+  echo -e "${CRED}-------------------------------------------------------${CEND}"
+  echo -e "${CRED} /!\ ATTENTION : SAUVEGARDE DE ${APPLI} IMMINENTE /!\ ${CEND}"
+  echo -e "${CRED}-------------------------------------------------------${CEND}"
+
+  # Stop Plex
+  echo -e "${CCYAN}> Arrêt de ${APPLI}${CEND}"
+  #docker stop `docker ps -q`
+  docker stop ${APPLI}
+  sleep 5
+
+  echo ""
+  echo -e "${CCYAN}#########################################################${CEND}"
+  echo ""
+  echo -e "${CCYAN}          DEMARRAGE DU SCRIPT DE SAUVEGARDE              ${CEND}"
+  echo ""
+  echo -e "${CCYAN}#########################################################${CEND}"
+  echo ""
+
+  echo -e "${CCYAN}> Création de l'archive${CEND}"
+  sudo tar -I pigz -cf $BACKUP_PARTITION/$ARCHIVE -P $SOURCE_DIR/$APPLI
+  sleep 2s
+
+  # Si une erreur survient lors de la compression
+  if [[ -s "$ERROR_FILE" ]]; then
+    echo -e "\n${CRED}/!\ ERREUR: Echec de la compression des fichiers système.${CEND}" | tee -a $LOG_FILE
+    echo -e "" | tee -a $LOG_FILE
+    exit 1
+  fi
+
+  # Restart Plex
+  echo -e "${CCYAN}> Lancement de ${APPLI}${CEND}"
+  docker start $APPLI
+  sleep 5
+
+  echo -e "${CCYAN}> Envoie Archive vers Google Drive${CEND}"
+  # Envoie Archive vers Google Drive
+  rclone --config "/home/${USER}/.config/rclone/rclone.conf" copy "$BACKUP_PARTITION/$ARCHIVE" "$remote:/$remote_backups/" -v --progress
+
+  # Nombre de sauvegardes effectuées
+  nbBackup=$(find $BACKUP_PARTITION -type f -name $APPLI-* | wc -l)
+
+  if [[ "$nbBackup" -gt "$NB_MAX_BACKUP" ]]; then
+
+    # Archive la plus ancienne
+    oldestBackupPath=$(find $BACKUP_PARTITION -type f -name $APPLI-* -printf '%T+ %p\n' | sort | head -n 1 | awk '{print $2}')
+    oldestBackupFile=$(find $BACKUP_PARTITION -type f -name $APPLI-* -printf '%T+ %p\n' | sort | head -n 1 | awk '{split($0,a,/\//); print a[5]}')
+
+    # Suppression du répertoire du backup
+    rm -rf "$oldestBackupPath"
+
+    # Suppression Archive Google Drive
+    echo -e "${CCYAN}> Suppression de l'archive la plus ancienne${CEND}"
+    rclone --config "/home/${USER}/.config/rclone/rclone.conf" purge "$remote:/$remote_backups/$oldestBackupFile" -v --log-file=/var/log/backup.log
+  fi
+  echo ""
+  echo -e "${CRED}-------------------------------------------------------${CEND}"
+  echo -e "${CRED}        SAUVEGARDE ${APPLI}  TERMINEE                 ${CEND}"
+  echo -e "${CRED}-------------------------------------------------------${CEND}"
+
 }
