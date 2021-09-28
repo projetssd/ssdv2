@@ -325,12 +325,14 @@ function menu_suppression_application() {
       "Sélectionner l'Appli à supprimer" 19 45 11 \
       "${TABSERVICES[@]}" 3>&1 1>&2 2>&3
   )
+  exitstatus=$?
+  if [ $exitstatus = 0 ]; then
+    echo -e " ${GREEN}   * $APPSELECTED${NC}"
 
-  echo -e " ${GREEN}   * $APPSELECTED${NC}"
-
-  suppression_appli ${APPSELECTED} 1
-  pause
-  affiche_menu_db
+    suppression_appli ${APPSELECTED} 1
+    pause
+    affiche_menu_db
+  fi
 }
 
 function menu_reinit_container() {
@@ -345,31 +347,34 @@ function menu_reinit_container() {
       "Sélectionner le container à réinitialiser" 19 45 11 \
       "${TABSERVICES[@]}" 3>&1 1>&2 2>&3
   )
+  exitstatus=$?
+  if [ $exitstatus = 0 ]; then
 
-  echo -e " ${GREEN}   * ${line}${NC}"
-  subdomain=$(get_from_account_yml "sub.${line}.${line}")
-  ###subdomain=$(grep "${line}" ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
+    echo -e " ${GREEN}   * ${line}${NC}"
+    subdomain=$(get_from_account_yml "sub.${line}.${line}")
+    ###subdomain=$(grep "${line}" ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
 
-  sed -i "/${line}/d" ${CONFDIR}/resume >/dev/null 2>&1
-  sed -i "/${line}/d" /home/${USER}/resume >/dev/null 2>&1
-  suppression_appli "${line}"
-  rm -f "${CONFDIR}/conf/${line}.yml"
-  rm -f "${CONFDIR}/vars/${line}.yml"
+    sed -i "/${line}/d" ${CONFDIR}/resume >/dev/null 2>&1
+    sed -i "/${line}/d" /home/${USER}/resume >/dev/null 2>&1
+    suppression_appli "${line}"
+    rm -f "${CONFDIR}/conf/${line}.yml"
+    rm -f "${CONFDIR}/vars/${line}.yml"
 
-  docker system prune -af >/dev/null 2>&1
-  docker volume rm $(docker volume ls -qf "dangling=true") >/dev/null 2>&1
-  echo ""
-  echo ${line} >>$SERVICESPERUSER
+    docker system prune -af >/dev/null 2>&1
+    docker volume rm $(docker volume ls -qf "dangling=true") >/dev/null 2>&1
+    echo ""
+    echo ${line} >>$SERVICESPERUSER
 
-  launch_service ${line}
+    launch_service ${line}
 
-  sort -u "${CONFDIR}/resume" | grep -v notfound > /tmp/resume
-  cp /tmp/resume "${CONFDIR}/resume"
+    sort -u "${CONFDIR}/resume" | grep -v notfound >/tmp/resume
+    cp /tmp/resume "${CONFDIR}/resume"
 
-  pause
-  checking_errors $?
-  echo""
-  echo -e "${BLUE}### Le Container ${line} a été Réinitialisé ###${NC}"
-  echo ""
-  pause
+    pause
+    checking_errors $?
+    echo""
+    echo -e "${BLUE}### Le Container ${line} a été Réinitialisé ###${NC}"
+    echo ""
+    pause
+  fi
 }
