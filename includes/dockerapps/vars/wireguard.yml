@@ -1,0 +1,23 @@
+---
+pgrole: 'wireguard'
+intport: '7878'
+image: 'ghcr.io/linuxserver/wireguard'
+pg_volumes:
+  - "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
+  - "/lib/modules:/lib/modules"
+pg_env:
+  PUID: '{{user.userid}}'
+  PGID: '{{user.groupid}}'
+  TZ: 'Europe/Paris'
+  SERVERPORT: 51820
+  PEERS: 1
+  PEERDNS: auto
+  INTERNAL_SUBNET: 10.13.13.0
+  ALLOWEDIPS: 0.0.0.0/0
+  SERVERURL: auto
+# tags spécifiques à ajouter à la construction du docker
+specific_docker_info:
+  ports:
+  - '51820:51820/udp'
+  sysctls:
+  - "net.ipv4.conf.all.src_valid_mark=1"
