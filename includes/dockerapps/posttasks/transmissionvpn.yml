@@ -1,5 +1,6 @@
-- debug:
-  msg: Une fois l'installation terminée, il faut patienter environ 5 mn pour l'interface Webui soit dispo !!
+- name:
+  debug:
+    msg: Une fois l'installation terminée, il faut patienter environ 5 mn pour l'interface Webui soit dispo !!
 
 - name: Prendre connaissance du message ci dessus
   wait_for:
