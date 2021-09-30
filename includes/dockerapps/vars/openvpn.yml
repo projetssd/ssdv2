@@ -1,5 +1,5 @@
 ---
-pgrole: 'openvpn '
+pgrole: 'openvpn'
 intport: '7878'
 image: 'ghcr.io/linuxserver/openvpn-as'
 pg_volumes:
