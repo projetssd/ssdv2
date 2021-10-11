@@ -55,6 +55,7 @@ if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
   ansible-playbook /opt/seedbox-compose/includes/config/roles/gen-sa/tasks/main.yml
   echo ""
   /opt/gen-sa/sa-gen
+  sudo chown -R ${USER} /opt/sa
   echo ""
   echo -e "${YELLOW}/!\ VERIFICATION /!\:${CEND}
 
