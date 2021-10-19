@@ -1,0 +1,41 @@
+---
+- name: 'Stop {{ pgrole }}'
+  docker_container:
+    name: '{{ pgrole }}'
+    state: stopped
+
+- name: Crete directory
+  file:
+    path: "/home/{{ lookup('env','USER') }}/local/{{pgrole}}"
+    state: directory
+
+- name: Set download location
+  lineinfile:
+    path: "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/config/rtorrent/.rtorrent.rc"
+    regexp: '#*directory.default.set\s*=.*'
+    line: "directory.default.set = /home/{{ lookup('env','USER') }}/local/{{pgrole}}"
+    state: present
+
+- name: Set download location
+  lineinfile:
+    path: "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/config/rutorrent_4/conf/config.php"
+    regexp: '\$topDirectory\s*=.*'
+    line: "$topDirectory = '/home/{{ lookup('env','USER') }}';"
+    state: present
+
+- name: Clone ratio color
+  git:
+    repo: https://github.com/Micdu70/rutorrent-ratiocolor.git
+    dest: "/opt/seedbox/docker/{{ lookup('env','USER') }}/rutorrent_4/config/custom_plugins/ratiocolor"
+
+- name: set fact
+  set_fact:
+    myusername: "{{ lookup('env','USER') }}"
+
+- name: Set MaterialDesign
+  shell: |
+        echo 'O:6:"rTheme":2:{s:4:"hash";s:9:"theme.dat";s:7:"current";s:14:"materialdesign";}' > /opt/seedbox/docker/{{myusername}}/rutorrent_4/config/rutorrent_4/share/settings/theme.dat
+- name: 'Restart {{ pgrole }}'
+  docker_container:
+    name: '{{ pgrole }}'
+    state: started
