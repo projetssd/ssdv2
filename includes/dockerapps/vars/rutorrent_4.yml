@@ -16,4 +16,4 @@ pg_env:
 # tags spécifiques à ajouter à la construction du docker
 specific_docker_info:
   ports:
-    - '45000:45000'
+    - '45004:45004'
