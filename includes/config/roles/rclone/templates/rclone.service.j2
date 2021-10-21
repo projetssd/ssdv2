@@ -4,6 +4,8 @@ AssertPathIsDirectory=/mnt/rclone
 After=network-online.target
 
 [Service]
+User={{ lookup('env','USER') }}
+Group={{ lookup('env','MYGIDNAME') }}
 Type=simple
 ExecStart=/usr/bin/rclone mount -vv \
   --config={{ lookup('env','HOME') }}/.config/rclone/rclone.conf \

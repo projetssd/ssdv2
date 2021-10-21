@@ -8,7 +8,6 @@ if [ "$myid" -eq 0 ]; then
   CGREEN="${CSI}1;32m"
   CYELLOW="${CSI}1;33m"
   CCYAN="${CSI}0;36m"
-  ISPLEX=0
 
   # Variables
   remote={{rclone.remote}}
@@ -25,11 +24,11 @@ if [ "$myid" -eq 0 ]; then
   echo -e "${CRED}-------------------------------------------------------${CEND}"
 
   # Stop Plex
-  if docker ps |grep -q plex; then
+  plex=$(docker ps -aq --format={{.Names}} | grep -x 'plex' 1> /dev/null 2>&1 && echo true || echo false)
+  if [[ ${plex} == "true" ]]; then
     echo -e "${CCYAN}> Arrêt de Plex${CEND}"
     docker stop plex
     sleep 5
-    ISPLEX=1
   else
     echo -e "Plex non présent"
   fi
@@ -57,7 +56,7 @@ if [ "$myid" -eq 0 ]; then
   fi
 
   # Restart Plex
-  if [ ${ISPLEX} -eq 1 ]; then
+   if [[ ${plex} == "true" ]]; then
     echo -e "${CCYAN}> Lancement de plex${CEND}"
     docker start plex
     sleep 5
@@ -84,6 +83,7 @@ if [ "$myid" -eq 0 ]; then
     echo -e "${CCYAN}> Suppression de l'archive la plus ancienne${CEND}"
     rclone --config "/home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf" purge "{{rclone.remote}}:/{{user.name}}/$remote_backups/$oldestBackupFile" --progress
   fi
+  chown {{ lookup('env','USER') }}: "/home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf"
   echo ""
   echo -e "${CRED}-------------------------------------------------------${CEND}"
   echo -e "${CRED}        SAUVEGARDE DU SERVEUR TERMINEE                 ${CEND}"
