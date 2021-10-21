@@ -16,7 +16,7 @@ ExecStart=/usr/bin/rclone mount -vv \
   --cache-dir={{ lookup('env','HOME') }}/.config/rclone/cache \
   {{rclone.remote}}: \
   /mnt/rclone/
-ExecStop=/bin/fusermount -uz /mnt/rclone/{{user.name}}
+ExecStop=/bin/fusermount -uz /mnt/rclone
 Restart=always
 RestartSec=5
 
