@@ -159,9 +159,7 @@ if [ $mode_install = "manuel" ]; then
     read -p "Votre choix : " CHOICE
     echo ""
     case $CHOICE in
-
-    \
-      1) ## Installation de la seedbox Rclone et Gdrive
+    1) ## Installation de la seedbox Rclone et Gdrive
 
       #check_dir "$PWD"
       if [[ ${IS_INSTALLED} -eq 0 ]]; then
@@ -255,7 +253,7 @@ if [ $mode_install = "manuel" ]; then
         # on remet le account.yml précédent qui a été écrasé par la restauration
         cp /opt/seedbox/variables/account.yml /opt/seedbox/variables/account.restore
         mv /opt/seebox/variables/account.temp /opt/seebox/variables/account.yml
-
+        stocke_public_ip
         ## reinitialisation de toutes les applis
         sqlite3 /opt/seedbox-compose/ssddb <<EOF >$SERVICESPERUSER
 select name from applications;
@@ -290,7 +288,7 @@ EOF
   git_branch=$(git rev-parse --abbrev-ref HEAD)
   if [ ${git_branch} == 'master' ]; then
     cd /opt/seedbox-compose
-    git fetch >> /dev/null 2>&1
+    git fetch >>/dev/null 2>&1
     current_hash=$(git rev-parse HEAD)
     distant_hash=$(git rev-parse master@{upstream})
     if [ ${current_hash} != ${distant_hash} ]; then
