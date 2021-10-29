@@ -35,8 +35,6 @@
         dest: /home/{{user.name}}/scripts/traktarr
         version: HEAD
         force: yes
-      become: yes
-      become_user: "{{user.name}}"
 
     - name: Install pip requirements
       pip:
@@ -128,6 +126,8 @@
         src: /opt/seedbox-compose/includes/config/roles/traktarr/templates/traktarr.service.j2
         dest: /etc/systemd/system/traktarr.service
         force: yes
+        owner: "{{user.userid}}"
+        group: "{{user.groupid}}"
       when: not traktarr_service.stat.exists
 
     - name: Load traktarr service
