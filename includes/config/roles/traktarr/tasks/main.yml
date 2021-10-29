@@ -25,6 +25,7 @@
       when: traktarr_service.stat.exists
 
     - name: Create traktarr directories
+      become: yes
       file: "path={{ item }} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}} recurse=yes"
       with_items:
         - /home/{{user.name}}/scripts/traktarr
