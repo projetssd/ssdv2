@@ -92,6 +92,7 @@
       when: (not traktarr_config.stat.exists) and (radarr_config.stat.exists)
 
     - name: Import default config
+      become: yes
       template:
         src: /opt/seedbox-compose/includes/config/roles/traktarr/templates/config.json.j2
         dest: /home/{{user.name}}/scripts/traktarr/config.json
@@ -102,6 +103,7 @@
       when: not traktarr_config.stat.exists
 
     - name: Set traktarr.py as executable
+      become: yes
       file:
         path: /home/{{user.name}}/scripts/traktarr/traktarr.py
         owner: "{{user.userid}}"
@@ -110,14 +112,17 @@
 
     - name: Set directory permissions
       file: "path=/home/{{user.name}}/scripts/traktarr state=directory owner=0 group=0 recurse=yes"
+      become: yes
 
     - name: "Create /usr/local/bin symlink"
+      become: yes
       file:
         src: "/home/{{user.name}}/scripts/traktarr/traktarr.py"
         dest: "/usr/local/bin/traktarr"
         state: link
 
     - name: Import traktarr service
+      become: yes
       template:
         src: /opt/seedbox-compose/includes/config/roles/traktarr/templates/traktarr.service.j2
         dest: /etc/systemd/system/traktarr.service
@@ -125,6 +130,7 @@
       when: not traktarr_service.stat.exists
 
     - name: Load traktarr service
+      become: yes
       systemd:
         name: traktarr
         state: "{{ traktarr_config.stat.exists | ternary('started','stopped') }}"
