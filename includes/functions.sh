@@ -218,7 +218,7 @@ function plex_dupefinder() {
   checking_errors $?
 }
 
-function traktarr() {
+function install_traktarr() {
   ##configuration traktarr avec ansible
   echo -e "${BLUE}### TRAKTARR ###${NC}"
   echo -e " ${BWHITE}* Installation traktarr${NC}"

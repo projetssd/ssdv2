@@ -90,7 +90,7 @@ menu_gestion_motd() {
 menu_gestion_traktarr() {
   clear
   echo ""
-  traktarr
+  install_traktarr
   pause
 }
 
