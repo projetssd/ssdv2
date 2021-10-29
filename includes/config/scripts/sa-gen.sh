@@ -8,15 +8,14 @@ source /opt/seedbox-compose/includes/variables.sh
     	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
 	echo ""
     	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
-    	echo -e "${CCYAN}https://github.com/laster13/patxav/wiki/Installations-Comptes-de-Service     ${CEND}"
+    	echo -e "${CCYAN}.    https://github.com/projetssd/ssdv2/wiki/Service-Account     	      ${CEND}"
     	echo -e "${CCYAN}                https://github.com/88lex/sa-gen                              ${CEND}"
     	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
 clear
 echo ""
 echo -e "${YELLOW}/!\ PRE REQUIS IMPORTANT /!\ ${CEND}
 
-${YELLOW}1. ${CEND}""${GREEN}Créer un groupe. Go to groups.google.com et créer un groupe sur ce modèle group_name@googlegroups.com
-   ou group_name@domaine.com si vous êtes admin du Gsuite (https://admin.google.com/ac/groups)
+${YELLOW}1. ${CEND}""${GREEN}Créer un groupe. Go to groups.google.com et créer un groupe sur ce modèle group_name@mondomaine.tld
 
 ${YELLOW}2. ${CEND}""${GREEN}Une fois le script terminé vérifier la présence des fichiers jsons dans le dossier /opt/sa
    Servez vous du fichier members.csv pour ajouter les adresses mail au groupe précédemment créé

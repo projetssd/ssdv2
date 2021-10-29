@@ -4,13 +4,13 @@
   gather_facts: false
   vars_prompt:
     - name: group
-      prompt: "nom du groupe (sans @googlegroups.com)"
+      prompt: "nom du groupe (exemple: compte-sa@mondomaine.tld)"
       private: no
     - name: projet
-      prompt: "nom du groupe + série de chiffre aléatoire"
+      prompt: "nom du groupe + -1 (exemple: compte-sa-1)"
       private: no
     - name: prefix
-      prompt: "nom du groupe + série de chiffre aléatoire (6 caractères minimum)"
+      prompt: "nom du groupe + -2 (exemple: compte-sa-2) (6 caractères minimum)"
       private: no
 
   tasks:
