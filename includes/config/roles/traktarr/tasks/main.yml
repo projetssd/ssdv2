@@ -20,6 +20,7 @@
       register: traktarr_service
 
     - name: Stop existing traktarr service
+      become: yes
       systemd: state=stopped name=traktarr
       when: traktarr_service.stat.exists
 
