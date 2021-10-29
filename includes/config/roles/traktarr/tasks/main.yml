@@ -111,7 +111,7 @@
         mode: a+x
 
     - name: Set directory permissions
-      file: "path=/home/{{user.name}}/scripts/traktarr state=directory owner=0 group=0 recurse=yes"
+      file: "path=/home/{{user.name}}/scripts/traktarr state=directory owner={{user.userid}} group={{user.groupid}} recurse=yes"
       become: yes
 
     - name: "Create /usr/local/bin symlink"
