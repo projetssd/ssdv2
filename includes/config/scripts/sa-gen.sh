@@ -1,5 +1,5 @@
 #!/bin/bash
-
+export CLOUDSDK_COMPUTE_REGION=europe-west1
 source /opt/seedbox-compose/includes/functions.sh
 source /opt/seedbox-compose/includes/variables.sh
 
