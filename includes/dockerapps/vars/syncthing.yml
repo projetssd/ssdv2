@@ -1,10 +1,22 @@
 ---
 pgrole: 'syncthing'
 intport: '8384'
-image: 'svenihoney/wetty:latest'
+image: 'linuxserver/syncthing'
+
+pg_volumes:
+  - "/home/{{lookup('env','USER')}}//Sync:/sync"
   - "/opt/seedbox/docker/{{lookup('env','USER')}}/{{pgrole}}/config:/config"
-  - "/opt/seedbox/docker/{{lookup('env','USER')}}/{{pgrole}}/sync:/sync"
-  - "/home/{{lookup('env','USER')}}:/home/{{lookup('env','USER')}}"
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+  - '/etc/localtime:/etc/localtime:ro'
+
 pg_env:
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
+  TZ: 'Europe/Paris'
+
+# tags spécifiques à ajouter à la construction du docker
+specific_docker_info:
+  ports:
+    - '8384:8384'
+    - '22000:22000'
+    - '21027:21027'
