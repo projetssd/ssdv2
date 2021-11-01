@@ -4,8 +4,8 @@ intport: '8384'
 image: 'linuxserver/syncthing'
 
 pg_volumes:
-  - "/home/{{lookup('env','USER')}}//Sync:/sync"
   - "/opt/seedbox/docker/{{lookup('env','USER')}}/{{pgrole}}/config:/config"
+  - "/opt/seedbox/docker/{{lookup('env','USER')}}/{{pgrole}}/sync:/sync"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
   - '/etc/localtime:/etc/localtime:ro'
 
