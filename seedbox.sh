@@ -190,7 +190,7 @@ if [ $mode_install = "manuel" ]; then
         update_seedbox_param "installed" 1
         echo "L'installation est maintenant terminée."
         echo "Pour le configurer ou modifier les applis, vous pouvez le relancer"
-        echo "cd /opt/seedbox-comose"
+        echo "cd /opt/seedbox-compose"
         echo "./seedbox.sh"
         exit 0
       else
