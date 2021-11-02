@@ -1,4 +1,11 @@
 ---
+- name: Create directory
+  file:
+    path: "/home/{{ lookup('env','USER') }}/Sync"
+    state: directory
+    owner: "{{ lookup('env','MYUID') }}"
+    group: "{{ lookup('env','MYGID') }}"
+
 - name: 'Configuring {{pgrole}} for first time use'
   block:
     - name: 'Wait 10 Seconds'
@@ -7,8 +14,8 @@
 
     - name: Replace default sync path in config file
       replace:
-        path: "{{ lookup('env',CONFDIR') }}/docker/{{ lookup('env',USER') }}/{{pgrole}}/config/config.xml"
-        regexp: <defaultFolderPath>~</defaultFolderPath>
-        replace: '<defaultFolderPath>/sync</defaultFolderPath>'
+        path: "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/config/config.xml"
+        regexp: 'path="~"'
+        replace: 'path="/sync"'
 
   when: not xmlcheck.stat.exists
