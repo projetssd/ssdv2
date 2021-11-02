@@ -1,23 +1,5 @@
 ---
-- name: 'Set Known Facts'
-  set_fact:
-    pgrole: 'syncthing'
-    intport: '8384'
-    extport: '8384'
-    intport2: '22000'
-    extport2: '22000'
-    intport3: '21027'
-    extport3: '21027'
-    image: 'linuxserver/syncthing'
-# EXTRA FOR RUTORRENT #########################################################
-- name: 'Create {{pgrole}} script directories'
-  file: "path={{item}} state=directory mode=0775 owner={{lookup('env','MYUID')}} group={{lookup('env','MYGID')}} recurse=yes"
-  with_items:
-    - "/opt/seedbox/docker/{{lookup('env','USER')}}/{{pgrole}}"
-    - "/opt/seedbox/docker/{{lookup('env','USER')}}/{{pgrole}}/sync"
-    - "/opt/seedbox/docker/{{lookup('env','USER')}}/{{pgrole}}/config"
-
   - name: xmlcheck
     stat:
-      path: '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config/config.xml'
+      path: "opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/config/config.xml"
     register: xmlcheck
