@@ -1,0 +1,10 @@
+---
+pgrole: 'pastebin'
+intport: '80'
+image: 'mkodockx/docker-pastebin'
+pg_volumes:
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
