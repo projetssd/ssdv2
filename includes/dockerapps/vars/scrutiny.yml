@@ -11,7 +11,9 @@ pg_env:
   PGID: "{{ lookup('env','MYGID') }}"
   UMASK: '002'
   ARGS: ""
-  DEBUG: "no"
+  SCRUTINY_WEB: "true"
+  SCRUTINY_COLLECTOR: "true"
+
 
 # tags spécifiques à ajouter à la construction du docker
 specific_docker_info:
