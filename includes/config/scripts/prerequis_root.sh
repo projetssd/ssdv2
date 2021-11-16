@@ -54,11 +54,14 @@ apt-get install -y --reinstall \
   python3-dev \
   python3-pip \
   python-dev \
-  python-apt \
   python3-venv \
   sqlite3 \
   apache2-utils \
-  dnsutils
+  dnsutils \
+  python3-apt-dbg \
+  python3-apt \
+  python-apt-doc \
+  python-apt-common
 
 rm -f /usr/bin/python
 
