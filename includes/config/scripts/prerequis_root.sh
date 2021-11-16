@@ -61,7 +61,11 @@ apt-get install -y --reinstall \
   python3-apt-dbg \
   python3-apt \
   python-apt-doc \
-  python-apt-common
+  python-apt-common \
+  ca-certificates \
+    curl \
+    gnupg \
+    lsb-release
 
 rm -f /usr/bin/python
 
