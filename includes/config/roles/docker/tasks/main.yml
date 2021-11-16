@@ -15,16 +15,6 @@
     - ['settings.yml']
   tasks:
 
-    - name: Add docker key
-      shell: |
-         curl -fsSL https://download.docker.com/linux/{{ ansible_distribution|lower }}/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-
-    - name: Add docker repository
-      shell: |
-          echo \
-          "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/{{ ansible_distribution|lower }} \
-          $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
     - name: Check filesystem of '/var/lib/' path
       shell: stat -f -c %T /var/lib/
       register: var_lib_file_system
