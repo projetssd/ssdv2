@@ -52,14 +52,7 @@
         - deb-src https://deb.debian.org/debian {{ ansible_distribution_release }}-backports main contrib non-free
       when: ansible_distribution == 'Debian'
 
-    - name: Add docker key
-      command: "curl -fsSL https://download.docker.com/linux/{{ ansible_distribution }}/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg"
 
-    - name: Add docker repository
-      shell: |
-          echo \
-          "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/{{ ansible_distribution }} \
-          $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
     - name: Install common packages
       become: yes
