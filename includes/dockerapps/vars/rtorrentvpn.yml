@@ -11,6 +11,7 @@ pg_volumes:
 
 
 pg_env:
+  VPN_PROV: custom
   VPN_ENABLED: "yes"
   VPN_PROV: "{{vpn}}"
   STRICT_PORT_FORWARD: "yes"
@@ -28,3 +29,10 @@ pg_env:
   UMASK: "000"
   PUID: "{{user.userid}}"
   PGID: "{{user.groupid}}"
+
+# tags spécifiques à ajouter à la construction du docker
+specific_docker_info:
+  sysctls:
+    net.ipv6.conf.all.disable_ipv6: 1
+    net.ipv4.conf.all.src_valid_mark: 1
+  privileged: true
