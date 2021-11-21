@@ -1,12 +1,19 @@
 ---
-vars_prompt:
-- name: vpn
-  prompt: "Nom du foursisseur VPN"
-  private: no
-- name: portforwarded
-  prompt: "Port forwarded proposé par le fournisseur vpn"
-  default: "8181"
-  private: no
-- name: reseau
-  prompt: "Plage reseau privé (ex: 192.168.1.0/24)"
-  private: no
+- pause:
+    prompt: "Nom du foursisseur VPN"
+    echo: yes
+  register: vpn
+- set_fact:
+    vpn: "{{ vpn.user_input }}"
+- pause:
+    prompt: "Port forwarded proposé par le fournisseur vpn (ex: 8181)"
+    echo: yes
+  register: portforwarded
+- set_fact:
+    portforwarded: "{{ portforwarded.user_input }}"
+- pause:
+    prompt: "Plage reseau privé (ex: 192.168.1.0/24)"
+    echo: yes
+  register: reseau
+- set_fact:
+    reseau: "{{ reseau.user_input }}"
