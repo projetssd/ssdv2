@@ -13,7 +13,7 @@ pg_volumes:
 pg_env:
   VPN_PROV: custom
   VPN_ENABLED: "yes"
-  VPN_PROV: "{{vpn}}"
+  VPN_CLIENT: "{{vpn}}"
   STRICT_PORT_FORWARD: "yes"
   ENABLE_PRIVOXY: "yes"
   ENABLE_AUTODL_IRSSI: "yes"
