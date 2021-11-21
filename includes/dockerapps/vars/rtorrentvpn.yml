@@ -1,0 +1,30 @@
+---
+pgrole: 'rtorrentvpn'
+intport: '9080'
+image: 'binhex/arch-rtorrentvpn:latest'
+pg_volumes:
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/rtorrentvpn/config:/config"
+  - "{{ lookup('env','CONFDIR') }}/{{ lookup('env','USER') }}/rtorrentvpn/data:/data"
+  - "/home/{{ lookup('env','USER') }}:/home/{{ lookup('env','USER') }}"
+  - "/etc/timezone:/etc/timezone:ro"
+  - "/etc/localtime:/etc/localtime:ro"
+
+
+pg_env:
+  VPN_ENABLED: "yes"
+  VPN_PROV: "{{vpn}}"
+  STRICT_PORT_FORWARD: "yes"
+  ENABLE_PRIVOXY: "yes"
+  ENABLE_AUTODL_IRSSI: "yes"
+  ENABLE_RPC2: "yes"
+  ENABLE_RPC2_AUTH: "yes"
+  RPC2_USER: "{{user.name}}"
+  RPC2_PASS: "{{user.pass}}"
+  ENABLE_WEBUI_AUTH: "no"
+  LAN_NETWORK: "{{reseau}}"
+  NAME_SERVERS: "209.222.18.222,84.200.69.80,37.235.1.174,1.1.1.1,209.222.18.218,37.235.1.177,84.200.70.40,1.0.0.1"
+  DEBUG: "false"
+  PHP_TZ: "Europe/Paris"
+  UMASK: "000"
+  PUID: "{{user.userid}}"
+  PGID: "{{user.groupid}}"

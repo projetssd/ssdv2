@@ -1,0 +1,12 @@
+---
+vars_prompt:
+- name: vpn
+  prompt: "Nom du foursisseur VPN"
+  private: no
+- name: portforwarded
+  prompt: "Port forwarded proposé par le fournisseur vpn"
+  default: "8181"
+  private: no
+- name: reseau
+  prompt: "Plage reseau privé (ex: 192.168.1.0/24)"
+  private: no
