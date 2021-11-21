@@ -1,6 +1,6 @@
 ---
 - pause:
-    prompt: "Nom du foursisseur VPN"
+    prompt: "Nom du fournisseur VPN"
     echo: yes
   register: vpn
 - set_fact:
