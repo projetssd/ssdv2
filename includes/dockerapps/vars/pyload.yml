@@ -1,7 +1,7 @@
 ---
 pgrole: 'pyload'
 intport: '8000'
-image: 'writl/pyload'
+image: 'linuxserver/pyload'
 pg_volumes:
   - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/opt/pyload/pyload-config"
   - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/downloads:/opt/pyload/Downloads"
