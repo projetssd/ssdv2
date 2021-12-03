@@ -1343,7 +1343,9 @@ function premier_lancement() {
   pip install wheel
   pip install ansible \
     docker \
-    shyaml
+    shyaml \
+    netaddr \
+    dnspython
 
   ##########################################
   # Pas de configuration existante

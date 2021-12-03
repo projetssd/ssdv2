@@ -13,6 +13,13 @@
     name: '{{pgrole}}'
     state: stopped
 
+- name: Apply rights
+  file:
+    path: "/opt/seedbox/docker/{{user.name}}/rtorrentvpn"
+    owner: "{{user.name}}"
+    group: "{{user.group}}"
+    recurse: yes
+
 - name: Set download location
   lineinfile:
     path: '/opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/rtorrent/config/rtorrent.rc'
