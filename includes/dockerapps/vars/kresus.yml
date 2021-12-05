@@ -5,7 +5,7 @@ image: 'bnjbvr/kresus'
 pg_volumes:
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:
-  LOCAL_USER_ID: "{{ lookup('env','MYGID') }}"
+  LOCAL_USER_ID: "{{ lookup('env','MYUID') }}"
   KRESUS_DB_TYPE: "postgres"
   KRESUS_DB_HOST: "db-{{pgrole}}"
   KRESUS_DB_PORT: "5432"
