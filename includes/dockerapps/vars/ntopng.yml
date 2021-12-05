@@ -7,5 +7,5 @@ pg_volumes:
   - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/var/lib/ntopng"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:
-  UID: "{{ lookup('env','MYGID') }}"
+  UID: "{{ lookup('env','MYUID') }}"
   GID: "{{ lookup('env','MYGID') }}"
