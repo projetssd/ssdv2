@@ -13,7 +13,7 @@ pg_env:
   FR_DB_NAME: "{{pgrole}}"
   FR_DB_USER: "{{pgrole}}"
   FR_DB_PASS: "{{pgrole}}"
-  APACHE_RUN_USER_ID: "{{ lookup('env','MYGID') }}"
+  APACHE_RUN_USER_ID: "{{ lookup('env','MYUID') }}"
   APACHE_RUN_GROUP: "{{ lookup('env','USER') }}"
   APACHE_RUN_GROUP_ID: "{{ lookup('env','MYGID') }}"
 
