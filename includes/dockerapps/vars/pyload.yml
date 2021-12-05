@@ -8,5 +8,5 @@ pg_volumes:
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:
-  UID: "{{ lookup('env','MYGID') }}"
+  UID: "{{ lookup('env','MYUID') }}"
   GID: "{{ lookup('env','MYGID') }}"
