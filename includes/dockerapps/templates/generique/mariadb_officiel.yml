@@ -19,7 +19,7 @@
       MYSQL_USER: "{{pgrole}}"
       MYSQL_PASSWORD: "{{pgrole}}"
       MYSQL_DATABASE: "{{pgrole}}"
-      PUID: "{{ lookup('env','MYGID') }}"
+      PUID: "{{ lookup('env','MYUID') }}"
       PGID: "{{ lookup('env','MYGID') }}"
     restart_policy: unless-stopped
     networks:
