@@ -1,11 +1,12 @@
 ---
 pgrole: 'picapport'
-intport: '8080'
+intport: '80'
 image: 'whatever4711/picapport'
 pg_volumes:
   - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/opt/picapport/.picapport:rw"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
   - '/etc/localtime:/etc/localtime:ro'
+  - "{{ lookup('env','HOME') }}/Medias/photos:/srv/photos"
 pg_env:
   XMS: "512m"
   XMX: "1g"
