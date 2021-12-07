@@ -1,15 +1,15 @@
 ---
 - name: Prepare configuration
-    template:
-       source: /opt/seedbox-compose/includes/dockerapps/templates/picapport/picapport.properties.j2
-       destination: "/opt/seedbox/docker/{{ lookup('env','USER') }}/picapport/config"
+  template:
+     source: /opt/seedbox-compose/includes/dockerapps/templates/picapport/picapport.properties.j2
+     destination: "/opt/seedbox/docker/{{ lookup('env','USER') }}/picapport/config"
 
-  - name: 'Stop {{ pgrole }}'
-    docker_container:
-      name: '{{ pgrole }}'
-      state: stopped
+- name: 'Stop {{ pgrole }}'
+  docker_container:
+    name: '{{ pgrole }}'
+    state: stopped
 
-  - name: 'Restart {{ pgrole }}'
-    docker_container:
-      name: '{{ pgrole }}'
-      state: started
+- name: 'Restart {{ pgrole }}'
+  docker_container:
+    name: '{{ pgrole }}'s
+    state: started
