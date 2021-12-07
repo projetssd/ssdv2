@@ -3,6 +3,7 @@
   template:
     src: /opt/seedbox-compose/includes/dockerapps/templates/picapport/picapport.properties.j2
     dest: "/opt/seedbox/docker/{{ user.name }}/picapport/config/picapport.properties"
+    become: yes
 
 - name: 'Stop {{ pgrole }}'
   docker_container:
