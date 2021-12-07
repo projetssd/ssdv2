@@ -12,3 +12,5 @@ pg_env:
   LC_ALL: "fr_FR.UTF-8"
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
+specific_docker_info:
+  user: "{{ user.name }}"
