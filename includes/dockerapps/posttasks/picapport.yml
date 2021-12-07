@@ -1,8 +1,8 @@
 ---
-- name: Prepare configuration
+- name: "Prepare configuration"
   template:
-     src: /opt/seedbox-compose/includes/dockerapps/templates/picapport/picapport.properties.j2
-     dest: "/opt/seedbox/docker/{{ user.name }}/picapport/config"
+    src: /opt/seedbox-compose/includes/dockerapps/templates/picapport/picapport.properties.j2
+    dest: "/opt/seedbox/docker/{{ user.name }}/picapport/config/picapport.properties"
 
 - name: 'Stop {{ pgrole }}'
   docker_container:
@@ -11,5 +11,5 @@
 
 - name: 'Restart {{ pgrole }}'
   docker_container:
-    name: '{{ pgrole }}'s
+    name: '{{ pgrole }}'
     state: started
