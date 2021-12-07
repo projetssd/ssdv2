@@ -1,8 +1,8 @@
 ---
 - name: Prepare configuration
   template:
-     source: /opt/seedbox-compose/includes/dockerapps/templates/picapport/picapport.properties.j2
-     destination: "/opt/seedbox/docker/{{ lookup('env','USER') }}/picapport/config"
+     src: /opt/seedbox-compose/includes/dockerapps/templates/picapport/picapport.properties.j2
+     dest: "/opt/seedbox/docker/{{ user.name }}/picapport/config"
 
 - name: 'Stop {{ pgrole }}'
   docker_container:
