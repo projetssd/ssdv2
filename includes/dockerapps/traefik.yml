@@ -146,7 +146,6 @@
       set_fact:
         command:
           - --global.checkNewVersion=true
-          - --global.checkNewVersion=true
           - --global.sendAnonymousUsage=true
           - --entryPoints.http.address=:80
           - --entryPoints.https.address=:443
