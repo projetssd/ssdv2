@@ -24,3 +24,11 @@ logpath = /opt/seedbox/docker/traefik/traefik.log
 maxretry = 10
 port = http,https
 banaction = iptables-multiport
+
+[apache-log4j]
+enabled  = true
+filter   = apache-log4j
+action = iptables-multiport
+logpath  = /opt/seedbox/docker/traefik/traefik.log
+bantime  = 3d
+maxretry = 1

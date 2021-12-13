@@ -1,0 +1,6 @@
+#
+# catch Log4j vulnerability as per CVE-2021-44228
+#
+
+[Definition]
+failregex = ^<HOST> -.*\$\{jndi:(ldap[s]?|rmi|dns):/[^\n]+
