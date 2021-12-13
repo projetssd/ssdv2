@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# on change tout de suis le path pour la suite
+# on change tout de suite le path pour la suite
 export PATH="$HOME/.local/bin:$PATH"
 export IFSORIGIN="${IFS}"
 
@@ -20,7 +20,7 @@ source "${SCRIPTPATH}/includes/functions.sh"
 source "${SCRIPTPATH}/includes/menus.sh"
 
 ################################################
-# récupération des parametre
+# récupération des parametres
 # valeurs par défaut
 FORCE_ROOT=0
 INI_FILE=${SCRIPTPATH}/autoinstall.ini
@@ -246,7 +246,7 @@ if [ $mode_install = "manuel" ]; then
         # mise en place de la sauvegarde
         sauve
 
-        ## On va garde ce qui a été saisi pour l'écraser plus tard
+        ## On va garder ce qui a été saisi pour l'écraser plus tard
         cp /opt/seedbox/variables/account.yml /opt/seebox/variables/account.temp
 
         sudo restore

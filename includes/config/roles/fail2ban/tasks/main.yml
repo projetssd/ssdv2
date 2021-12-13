@@ -42,12 +42,18 @@
         name: fail2ban
         state: stopped
 
-    
     - name: Import customs.conf 
       become: yes
       template:
         src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/fail2ban/templates/custom.conf.j2"
         dest: /etc/fail2ban/jail.d/custom.conf
+        force: yes
+
+    - name: Import regex LOG4J
+      become: yes
+      template:
+        src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/fail2ban/templates/apache-log4j.conf.j2"
+        dest: /etc/fail2ban/filter.d/apache-log4j.conf
         force: yes
 
     - name: Import traefik-auth.conf

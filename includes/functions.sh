@@ -37,7 +37,7 @@ function logo() {
 
 function update_system() {
   #Mise à jour systeme
-  echo -e "${BLUE}### MISE A JOUR DU SYTEME ###${NC}"
+  echo -e "${BLUE}### MISE A JOUR DU SYSTEME ###${NC}"
   ansible-playbook ${BASEDIR}/includes/config/roles/system/tasks/main.yml
   checking_errors $?
 }
