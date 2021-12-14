@@ -1,6 +1,11 @@
 #
 # catch Log4j vulnerability as per CVE-2021-44228
 #
+# jay@gooby.org
+# https://jay.gooby.org/2021/12/13/a-fail2ban-filter-for-the-log4j-cve-2021-44228
+# https://gist.github.com/jaygooby/3502143639e09bb694e9c0f3c6203949
+# Thanks to https://gist.github.com/kocour for a better regex
 
 [Definition]
-failregex = ^<HOST> -.*\$\{jndi:(ldap[s]?|rmi|dns):/[^\n]+
+#failregex = ^<HOST> -.*\$\{jndi:(ldap[s]?|rmi|dns):/[^\n]+
+failregex   = ^<HOST> .* "(HEAD|GET|POST) /.*jndi:(ldap[s]?|rmi|dns|nis|iiop|corba|nds|http[s]?).*".*?$
