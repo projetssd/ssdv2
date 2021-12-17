@@ -1,0 +1,22 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+
+    - name: Check yaml.nanorc exists
+      stat:
+        path: "/usr/share/nano/yaml.nanorc"
+      register: yaml_nanorc
+
+    - name: Installing yaml.nanorc (touch)
+      file:
+        path: "/usr/share/nano/yaml.nanorc"
+        state: touch
+        mode: 0600
+      when: yaml_nanorc.stat.exists == False
+
+    - name: Import yaml.nanorc
+      template:
+        src: "/opt/seedbox-compose/includes/config/roles/nano/templates/yaml.nanorc.j2"
+        dest: "/usr/share/nano/yaml.nanorc"
