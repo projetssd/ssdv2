@@ -22,7 +22,7 @@
 
 - name: Binary | Add official repository
   apt_repository:
-    repo: "deb [arch=amd64] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} {{ 'edge' if docker.repo is defined and docker.repo | lower == 'edge' else 'stable' }}"
+    repo: "deb [arch=amd64] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
     filename: docker
     update_cache: yes
 

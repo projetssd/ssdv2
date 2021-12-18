@@ -49,6 +49,14 @@
         mode: 0600
       when: acme_json.stat.exists == False
 
+    - name: Create directory
+      file:
+        path: "{{ item }}"
+        state: directory
+      with_items:
+        - "{{ lookup('env','CONFDIR') }}/docker/{{pgrole}}/"
+        - "{{ lookup('env','CONFDIR') }}/docker/{{pgrole}}/rules"
+
     - name: create an empty file traefik.log
       file:
         path: "{{ lookup('env','CONFDIR') }}/docker/{{pgrole}}/traefik.log"
@@ -64,7 +72,7 @@
         src: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/{{pgrole}}/middlewares.toml.j2"
         dest: "{{ lookup('env','CONFDIR') }}/docker/{{pgrole}}/rules/middlewares.toml"
 
-    - name: label {{pgrole}}with cloudflare
+    - name: label {{pgrole}} with cloudflare
       set_fact:
         labels:
           traefik.enable: 'true'
