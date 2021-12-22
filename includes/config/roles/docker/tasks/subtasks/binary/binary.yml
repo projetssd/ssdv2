@@ -17,7 +17,7 @@
 
 - name: Binary | Add official gpg signing key
   apt_key:
-    id: 0EBFCD88
+    #id: 0EBFCD88
     url: https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg
 
 - name: Binary | Add official repository
