@@ -98,10 +98,10 @@
           dest: /etc/fail2ban/action.d/cloudflare-apiv4.conf
           force: yes
 
-      - name: Import traefik_clouflare.conf
+      - name: Import traefik_cloudflare.conf
         template:
-          src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/fail2ban/templates/traefik_clouflare.conf.j2"
-          dest: /etc/fail2ban/jail.d/traefik_clouflare.conf
+          src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/fail2ban/templates/traefik_cloudflare.conf.j2"
+          dest: /etc/fail2ban/jail.d/traefik_cloudflare.conf
           force: yes
 
       when: cloudflare_enabled

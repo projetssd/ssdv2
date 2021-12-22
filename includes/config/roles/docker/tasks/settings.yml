@@ -1,5 +1,5 @@
 docker:
-  repo: edge
+  repo: stable
   version: latest
 mounts:
   unionfs: "cat /opt/seedbox/variables/unionfs"
