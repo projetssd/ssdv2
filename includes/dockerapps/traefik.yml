@@ -168,11 +168,12 @@
           - --providers.docker=true
           - --providers.docker.endpoint=unix:///var/run/docker.sock
           - --providers.docker.exposedByDefault=false
+          - --entrypoints.https.http.tls.certresolver=letsencrypt
           - --providers.docker.network=traefik_proxy
           - --providers.docker.swarmMode=false
           - --providers.file.directory=/rules
           - --providers.file.watch=true
-           - --certificatesResolvers.letsencrypt.acme.email='{{user.mail}}'
+          - --certificatesResolvers.letsencrypt.acme.email='{{user.mail}}'
           - --certificatesResolvers.letsencrypt.acme.storage=/acme.json
           - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
       when: not cloudflare_enabled
