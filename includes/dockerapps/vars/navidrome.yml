@@ -1,0 +1,15 @@
+---
+pgrole: 'navidrome'
+intport: '4533'
+image: 'deluan/navidrome:latest'
+pg_volumes:
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/data:rw"
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  ND_SCANSCHEDULE: 1h
+  ND_LOGLEVEL: info
+  ND_SESSIONTIMEOUT: 24h
+  ND_BASEURL: ""
+specific_docker_info:
+  user: "{{ lookup('env','MYUID') }}:{{ lookup('env','MYGID') }}"
