@@ -1,10 +1,10 @@
 ---
 - name: change directory rights
+  become: true
   file:
     path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config"
     owner: "{{ lookup('env','MYUID') }}"
     group: "{{ lookup('env','MYGID') }}"
-    become: true
 
 - name: 'Stop {{ pgrole }}'
   docker_container:
