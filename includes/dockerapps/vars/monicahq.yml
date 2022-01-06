@@ -1,0 +1,15 @@
+---
+pgrole: 'monicahq'
+intport: '80'
+image: 'monica:apache'
+pg_volumes:
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/var/www/html/storage"
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  WORDPRESS_DB_HOST: "db-{{ pgrole }}"
+  WORDPRESS_DB_USER: "{{ pgrole }}"
+  WORDPRESS_DB_PASSWORD: "{{ pgrole }}"
+  WORDPRESS_DB_NAME: "{{ pgrole }}"
