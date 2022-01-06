@@ -10,6 +10,6 @@ pg_env:
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
   DB_HOST: "db-{{ pgrole }}"
-  DB_USERNAME: "{{ pgrole }}"
-  DB_PASSWORD: "{{ pgrole }}"
+  DB_USERNAME: "root"
+  DB_PASSWORD: "{{user.pass}}"
   DB_NAME: "{{ pgrole }}"
