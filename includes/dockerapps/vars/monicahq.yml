@@ -9,7 +9,7 @@ pg_volumes:
 pg_env:
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
-  WORDPRESS_DB_HOST: "db-{{ pgrole }}"
-  WORDPRESS_DB_USER: "{{ pgrole }}"
-  WORDPRESS_DB_PASSWORD: "{{ pgrole }}"
-  WORDPRESS_DB_NAME: "{{ pgrole }}"
+  DB_HOST: "db-{{ pgrole }}"
+  DB_USERNAME: "{{ pgrole }}"
+  DB_PASSWORD: "{{ pgrole }}"
+  DB_NAME: "{{ pgrole }}"
