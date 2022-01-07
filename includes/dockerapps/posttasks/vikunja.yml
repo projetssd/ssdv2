@@ -10,12 +10,12 @@
     pg_labels:
       traefik.enable: 'true'
       ## HTTP Routers
-      traefik.http.routers.api-vikunja-rtr.entrypoints: 'https'
-      traefik.http.routers.api-vikunja-rtr.rule: 'Host(`api-vikunja.{{ user.domain }}`)'
-      traefik.http.routers.api-vikunja-rtr.tls: 'true'
+      traefik.http.routers.apivikunja-rtr.entrypoints: 'https'
+      traefik.http.routers.apivikunja-rtr.rule: 'Host(`apivikunja.{{ user.domain }}`)'
+      traefik.http.routers.apivikunja-rtr.tls: 'true'
       ## HTTP Services
-      traefik.http.routers.api-vikunja-rtr.service: 'api-vikunja-svc'
-      traefik.http.services.api-vikunja-svc.loadbalancer.server.port: "3456"
+      traefik.http.routers.apivikunja-rtr.service: 'apivikunja-svc'
+      traefik.http.services.apivikunja-svc.loadbalancer.server.port: "3456"
 
 - name: Deploy backend
   docker_container:
