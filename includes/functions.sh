@@ -1090,6 +1090,10 @@ function suppression_appli() {
     docker rm -f db-$APPSELECTED >/dev/null 2>&1
   fi
 
+  if docker ps | grep -q redis-$APPSELECTED; then
+      docker rm -f redis-$APPSELECTED >/dev/null 2>&1
+    fi
+
   docker system prune -af >/dev/null 2>&1
   checking_errors $?
   echo""

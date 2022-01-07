@@ -1,0 +1,14 @@
+---
+pgrole: 'glftpd'
+intport: '8112'
+image: 'jonarin/glftpd'
+pg_volumes:
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/glftpd/site:rw"
+  - "{{ lookup('env','HOME') }}:/glftpd/ftp-data"
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  GL_PORT: "1337"
+  TZ: "Europe/Paris"
+specific_docker_info:
+  ports:
+  - '1337:1337'
