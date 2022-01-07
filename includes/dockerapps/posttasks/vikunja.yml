@@ -12,6 +12,8 @@
     pull: yes
     restart_policy: unless-stopped
     state: started
+    networks:
+      - name: traefik_proxy
     env:
       VIKUNJA_DATABASE_HOST: "db-{{pgrole}}"
       VIKUNJA_DATABASE_PASSWORD: "{{pgrole}}"
@@ -20,4 +22,13 @@
       VIKUNJA_DATABASE_DATABASE: "{{pgrole}}"
     volumes:
     - "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/api:/app/vikunja/files"
+    labels:
+      traefik.enable: 'true'
+      ## HTTP Routers
+      traefik.http.routers.api-vikunja-rtr.entrypoints: 'https'
+      traefik.http.routers.api-vikunja-rtr.rule: 'Host(`api-vikunja.{{ user.domain }}`)'
+      traefik.http.routers.api-vikunja-rtr.tls: 'true'
+      ## HTTP Services
+      traefik.http.routers.api-vikunja-rtr.service: 'api-vikunja-svc'
+      traefik.http.services.api-vikunja-svc.loadbalancer.server.port: "3456"
 
