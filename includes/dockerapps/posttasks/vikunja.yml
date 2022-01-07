@@ -17,6 +17,12 @@
       traefik.http.routers.apivikunja-rtr.service: 'apivikunja-svc'
       traefik.http.services.apivikunja-svc.loadbalancer.server.port: "3456"
 
+- name: "Set DNS Record on CloudFlare"
+  include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
+  vars:
+    subdomain: "apivikunja"
+  when: cloudflare_enabled
+
 - name: Deploy backend
   docker_container:
     name: 'vikunja-api'
