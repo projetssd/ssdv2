@@ -18,10 +18,13 @@
         PUBLICHOST: "{{ network.ipv4 }}"
         UID: "{{ lookup('env','MYUID') }}"
         GID: "{{ lookup('env','MYGID') }}"
+        FTP_USER_NAME: "{{ user.name }}"
+        FTP_USER_PASS: "{{ user.pass }}"
+        FTP_USER_HOME: "/home/{{ lookup('env','USER') }}"
       state: started
       restart_policy: unless-stopped
       volumes:
       - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/pureftpd/config:/etc/pure-ftpd/passwd:rw"
-      - "/home:/home/ftpusers"
+      - "/home/{{ lookup('env','USER') }}:/home/{{ lookup('env','USER') }}"
       - '/etc/localtime:/etc/localtime:ro'
 
