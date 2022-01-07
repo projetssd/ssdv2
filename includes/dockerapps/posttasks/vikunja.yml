@@ -5,6 +5,18 @@
 - name: Launch postgresql
   include_tasks: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/mariadb_officiel.yml"
 
+- name: 'Adding Traefik'
+  set_fact:
+    pg_labels:
+      traefik.enable: 'true'
+      ## HTTP Routers
+      traefik.http.routers.api-vikunja-rtr.entrypoints: 'https'
+      traefik.http.routers.api-vikunja-rtr.rule: 'Host(`api-vikunja.{{ user.domain }}`)'
+      traefik.http.routers.api-vikunja-rtr.tls: 'true'
+      ## HTTP Services
+      traefik.http.routers.api-vikunja-rtr.service: 'api-vikunja-svc'
+      traefik.http.services.api-vikunja-svc.loadbalancer.server.port: "3456"
+
 - name: Deploy backend
   docker_container:
     name: 'vikunja-api'
@@ -23,13 +35,5 @@
       VIKUNJA_DATABASE_DATABASE: "{{pgrole}}"
     volumes:
     - "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/api:/app/vikunja/files"
-    labels:
-      traefik.enable: 'true'
-      ## HTTP Routers
-      traefik.http.routers.api-vikunja-rtr.entrypoints: 'https'
-      traefik.http.routers.api-vikunja-rtr.rule: 'Host(`api-vikunja.{{ user.domain }}`)'
-      traefik.http.routers.api-vikunja-rtr.tls: 'true'
-      ## HTTP Services
-      traefik.http.routers.api-vikunja-rtr.service: 'api-vikunja-svc'
-      traefik.http.services.api-vikunja-svc.loadbalancer.server.port: "3456"
+    labels: '{{pg_labels}}'
 
