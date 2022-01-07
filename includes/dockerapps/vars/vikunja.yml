@@ -8,5 +8,5 @@ pg_volumes:
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:
-  VIKUNJA_API_URL: "https://api-vikunja.{{ user.domain }}/api/v1"
+  VIKUNJA_API_URL: "https://apivikunja.{{ user.domain }}/api/v1"
 
