@@ -1,0 +1,27 @@
+---
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+  - /opt/seedbox/variables/account.yml
+  tasks:
+  - name: launch pure_ftp
+    docker_container:
+      image: stilliard/pure-ftpd:hardened
+      name: pureftpd
+      ports:
+      - "21:21"
+      - "30000-30099:30000-30099"
+      env:
+        FTP_MAX_CLIENTS: "50"
+        FTP_MAX_CONNECTIONS: "10"
+        FTP_PASSIVE_PORTS: "30000:30099"
+        PUBLICHOST: "{{ network.ipv4 }}"
+        UID: "{{ lookup('env','MYUID') }}"
+        GID: "{{ lookup('env','MYGID') }}"
+      state: started
+      restart_policy: unless-stopped
+      volumes:
+      - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/pureftpd/config:/etc/pure-ftpd/passwd:rw"
+      - "/home:/home/ftpusers"
+      - '/etc/localtime:/etc/localtime:ro'
+

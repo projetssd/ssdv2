@@ -9,12 +9,14 @@
       image: jonarin/glftpd
       name: glftpd
       network_mode: host
+      networks:
+      - name: host
       env:
         GL_PORT: "1337"
         TZ: "Europe/Paris"
       state: started
       restart_policy: unless-stopped
       volumes:
-      - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/glftpd/site:rw"
+      - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/glftpd/config:/glftpd/site:rw"
       - "{{ lookup('env','HOME') }}:/glftpd/ftp-data"
       - '/etc/localtime:/etc/localtime:ro'
