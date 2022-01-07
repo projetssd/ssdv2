@@ -1,0 +1,25 @@
+---
+- name: Create {{pgrole}}-net network
+  docker_network:
+    name: '{{pgrole}}-net'
+    state: present
+
+- name: 'Deploying redis'
+  docker_container:
+    name: 'redis-{{pgrole}}'
+    image: 'redis'
+    pull: yes
+    restart_policy: unless-stopped
+    networks:
+      - name: '{{pgrole}}-net'
+    state: started
+
+- name: Add '{{pgrole}}-net' to network
+  docker_network:
+    name: '{{pgrole}}-net'
+    connected:
+      - '{{ pgrole }}'
+    appends: yes
+
+
+

@@ -1,0 +1,23 @@
+---
+- name: Launch redis
+  include_tasks: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/redis.yml"
+
+- name: Launch postgresql
+  include_tasks: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/mariadb_officiel.yml"
+
+- name: Deploy backend
+    docker_container:
+      name: 'vinkunja-api'
+      image: 'vikunja/api'
+      pull: yes
+      restart_policy: unless-stopped
+      state: started
+      env:
+        VIKUNJA_DATABASE_HOST: "db-{{pgrole}}"
+        VIKUNJA_DATABASE_PASSWORD: "{{pgrole}}"
+        VIKUNJA_DATABASE_TYPE: "mysql"
+        VIKUNJA_DATABASE_USER: "{{pgrole}}"
+        VIKUNJA_DATABASE_DATABASE: "{{pgrole}}"
+      volumes:
+      - "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/api:/app/vikunja/files"
+
