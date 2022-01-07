@@ -7,7 +7,7 @@
 
 - name: Deploy backend
   docker_container:
-    name: 'vinkunja-api'
+    name: 'vikunja-api'
     image: 'vikunja/api'
     pull: yes
     restart_policy: unless-stopped
