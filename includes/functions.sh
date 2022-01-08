@@ -1084,6 +1084,9 @@ function suppression_appli() {
   petio)
     docker rm -f mongo >/dev/null 2>&1
     ;;
+  vinkunja)
+    docker rm -f vikunja-api > /dev/null 2>&1
+    ;;
   esac
 
   if docker ps | grep -q db-$APPSELECTED; then
