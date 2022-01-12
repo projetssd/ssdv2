@@ -17,3 +17,10 @@ pg_env:
 specific_docker_info:
   ports:
     - '45000:45000'
+#  Pour contourner l'authentification pour des outils de style nzb360, décommentez le pavé ci dessous
+#extra_labels:
+#  traefik.http.routers.rutorrent-rtr-bypass.rule: 'Path(`/RPC2`)'
+#  traefik.http.routers.rutorrent-rtr-bypass.priority: '100'
+#  traefik.http.routers.rutorrent-rtr-bypass.tls: 'true'
+#  traefik.http.routers.rutorrent-rtr-bypass.middlewares: 'chain-basic-auth@file'
+#  traefik.http.routers.rutorrent-rtr-bypass.service: 'rutorrent-svc'

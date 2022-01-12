@@ -17,3 +17,9 @@ pg_env:
 specific_docker_info:
   ports:
     - '45003:45003'
+#extra_labels:
+#  traefik.http.routers.rutorrent-rtr-bypass.rule: 'Path(`/RPC2`)'
+#  traefik.http.routers.rutorrent-rtr-bypass.priority: '100'
+#  traefik.http.routers.rutorrent-rtr-bypass.tls: 'true'
+#  traefik.http.routers.rutorrent-rtr-bypass.middlewares: 'chain-basic-auth@file'
+#  traefik.http.routers.rutorrent-rtr-bypass.service: 'rutorrent-svc'
