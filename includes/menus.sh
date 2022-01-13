@@ -104,7 +104,7 @@ menu_gestion_webtools() {
 menu_gestion_rtorrent_cleaner() {
   clear
   echo ""
-  rtorrent-cleaner
+  install-rtorrent-cleaner
   docker run -it --rm -v /home/${USER}/local/rutorrent:/home/${USER}/local/rutorrent -v /run/php:/run/php magicalex/rtorrent-cleaner
   pause
 }

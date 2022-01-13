@@ -174,7 +174,7 @@ function oauth() {
   echo ""
 }
 
-function rtorrent-cleaner() {
+function install-rtorrent-cleaner() {
   #configuration de rtorrent-cleaner avec ansible
   echo -e "${BLUE}### RTORRENT-CLEANER ###${NC}"
   echo ""
