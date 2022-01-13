@@ -182,8 +182,8 @@ function rtorrent-cleaner() {
 
   ## choix de l'utilisateur
   #SEEDUSER=$(ls ${CONFDIR}/media* | cut -d '-' -f2)
-  cp -r ${BASEDIR}/includes/config/rtorrent-cleaner/rtorrent-cleaner /usr/local/bin
-  sed -i "s|%SEEDUSER%|${USER}|g" /usr/local/bin/rtorrent-cleaner
+  sudo cp -r ${BASEDIR}/includes/config/rtorrent-cleaner/rtorrent-cleaner /usr/local/bin
+  sudo sed -i "s|%SEEDUSER%|${USER}|g" /usr/local/bin/rtorrent-cleaner
 }
 
 function motd() {
