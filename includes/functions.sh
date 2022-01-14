@@ -1907,3 +1907,14 @@ function sauve_one_appli() {
   echo -e "${CRED}-------------------------------------------------------${CEND}"
 
 }
+
+function change_password() {
+  echo "#############################################"
+  echo "Cette procédure va redéarrer traefik "
+  echo "Pendant cette opération, les interfaces web seront inaccessibles"
+  read -rp $'\e[33mSaisissez le nouveau password\e[0m : ' NEWPASS
+  manage_account_yml user.pass "${NEWPASS}"
+  manage_account_yml user.htpwd $(htpasswd -nb ${USER} ${NEWPASS})
+  docker rm -f traefik
+  launch_service traefik
+}
