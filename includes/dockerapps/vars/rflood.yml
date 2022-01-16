@@ -1,0 +1,18 @@
+---
+pgrole: 'rflood'
+intport: '3000'
+image: 'cr.hotio.dev/hotio/rflood'
+pg_volumes:
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+  - '/etc/localtime:/etc/localtime:ro'
+
+pg_env:
+  UID: '{{user.userid}}'
+  GID: '{{user.groupid}}'
+  TZ: 'Europe/Paris'
+  FLOOD_AUTH: 'false'
+# tags spécifiques à ajouter à la construction du docker
+specific_docker_info:
+  ports:
+    - 'xxx:xxx'
