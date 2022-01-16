@@ -1,0 +1,15 @@
+---
+- name: 'Stop {{ pgrole }}'
+  docker_container:
+    name: '{{ pgrole }}'
+    state: stopped
+
+- name: Crete directory
+  file:
+    path: "/home/{{ lookup('env','USER') }}/local/{{pgrole}}"
+    state: directory
+
+- name: 'Restart {{ pgrole }}'
+  docker_container:
+    name: '{{ pgrole }}'
+    state: started
