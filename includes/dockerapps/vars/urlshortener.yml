@@ -1,5 +1,5 @@
 ---
-pgrole: 'yourls'
+pgrole: 'urlshortener'
 intport: '1816'
 image: 'bmoorman/url-shortener'
 pg_volumes:
