@@ -6,4 +6,3 @@
 - name: Set 'fqdn' variable
   set_fact:
     fqdn: "{{ nom_court }}.{{ user.domain }}"
-

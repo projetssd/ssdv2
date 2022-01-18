@@ -1,8 +1,3 @@
 ---
-- name: Set 'nom_court' variable
-  set_fact:
-    nom_court: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
-
-- name: Set 'fqdn' variable
-  set_fact:
-    fqdn: "{{ nom_court }}.{{ user.domain }}"
+- name: Launch Pretask
+  include_tasks: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/mariadb.yml"
