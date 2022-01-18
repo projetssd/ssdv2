@@ -1,7 +1,7 @@
 - name:
   debug:
     msg:
-    - "Une fois l'installation terminée, il faut afficher les logs pour avoir le qrcode (commande docker logs -f wireguard)  !!"
+    - "Une fois l'installation terminée, il faut afficher les logs pour avoir le qrcode (commande docker logs -f wireguard puis faire entrée)  !!"
     - "Une fois que vous avez scanné le qrcode, ctrl+c pour sortir des logs"
 
 - name: Prendre connaissance du message ci dessus
