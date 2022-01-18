@@ -1,9 +1,9 @@
 ---
-- name: Set fqdn
+- name: Set 'nom_court' variable
   set_fact:
-    fqdn: "{% is sub_enabled %}{{ sub.pgrole.pgrole }}.{{ user.domain}}"{% else %}{{ pgrole }}.{{ user. domain}}{% endif %}"
+    nom_court: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
 
-
-
-
+- name: Set 'fqdn' variable
+  set_fact:
+    fqdn: "{{ nom_court }}.{{ user.domain }}"
 
