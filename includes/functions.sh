@@ -611,9 +611,8 @@ function subdomain_unitaire() {
     echo -e " ${CRED}--> NE PAS SAISIR LE NOM DE DOMAINE - LES POINTS NE SONT PAS ACCEPTES${NC}"
     echo ""
 
-    while [ -z "$SUBDOMAIN" ]; do
-      read -rp $'\e[32m* Sous domaine pour\e[0m '${line}': ' SUBDOMAIN
-    done
+    read -rp $'\e[32m* Sous domaine pour\e[0m '${line}': ' SUBDOMAIN
+
   else
     SUBDOMAIN=${line}
   fi
