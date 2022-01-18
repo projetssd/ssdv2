@@ -1,0 +1,15 @@
+---
+pgrole: 'yourls'
+intport: '80'
+image: 'yourls'
+pg_volumes:
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  YOURLS_DB_HOST: "db-{{ pgrole }}"
+  YOURLS_DB_USER: "{{ pgrole }}"
+  YOURLS_DB_PASS: "{{ pgrole }}"
+  YOURLS_USER: "{{ user.name }}"
+  YOURLS_PASS: "{{ user.pass }}"
+  YOURLS_SITE: "https://{{ fqdn }}"
