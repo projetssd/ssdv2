@@ -1085,7 +1085,7 @@ function suppression_appli() {
     docker rm -f mongo >/dev/null 2>&1
     ;;
   vinkunja)
-    docker rm -f vikunja-api > /dev/null 2>&1
+    docker rm -f vikunja-api >/dev/null 2>&1
     ;;
   esac
 
@@ -1094,8 +1094,12 @@ function suppression_appli() {
   fi
 
   if docker ps | grep -q redis-$APPSELECTED; then
-      docker rm -f redis-$APPSELECTED >/dev/null 2>&1
-    fi
+    docker rm -f redis-$APPSELECTED >/dev/null 2>&1
+  fi
+
+  if docker ps | grep -q memcached-$APPSELECTED; then
+    docker rm -f memcached-$APPSELECTED >/dev/null 2>&1
+  fi
 
   docker system prune -af >/dev/null 2>&1
   checking_errors $?

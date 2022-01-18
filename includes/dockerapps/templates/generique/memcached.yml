@@ -1,0 +1,30 @@
+---
+- name: Create {{pgrole}}-net network
+  docker_network:
+    name: '{{pgrole}}-net'
+    state: present
+
+- name: 'Deploying memcached-{{pgrole}}'
+  docker_container:
+    name: 'memcached-{{pgrole}}'
+    recreate: true
+    image: 'memcached'
+    pull: yes
+    restart_policy: unless-stopped
+    networks:
+      - name: '{{pgrole}}-net'
+    state: started
+
+- name: Wait for 10 seconds before continuing
+  wait_for:
+    timeout: 10
+
+- name: Add '{{pgrole}}-net' to network
+  docker_network:
+    name: '{{pgrole}}-net'
+    connected:
+      - '{{ pgrole }}'
+    appends: yes
+
+
+
