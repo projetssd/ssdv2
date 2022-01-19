@@ -1,8 +1,12 @@
 ---
+- name: 'Stop {{ pgrole }}'
+  docker_container:
+    name: '{{ pgrole }}'
+    state: stopped
 - name: Creating paths
   become: yes  
   file:
-    path: "/opt/seedbox/docker/{{ lookup('env','USER') }}/baikal/db"
+    path: "/opt/seedbox/docker/{{ lookup('env','USER') }}/baikal/Specific/db"
     state: directory
     mode: 0777
     owner: "{{user.userid}}"
