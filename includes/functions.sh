@@ -1828,7 +1828,12 @@ function choix_appli_sauvegarde() {
 }
 
 function sauve_one_appli() {
-  #!/bin/bash
+  #############################
+  # Parametres :
+  # $1 = nom de l'appli
+  # $2 ((optionnel) : nombre de backups à garder
+  # si $2 = 0 => pas de suppression des vieux backups
+  ##############################
 
   # Définition des variables de couleurs
   CSI="\033["
@@ -1841,9 +1846,26 @@ function sauve_one_appli() {
   # Variables
   remote=$(get_from_account_yml rclone.remote)
   APPLI=$1
+
+  NB_MAX_BACKUP=3
+  ALL_RETENTION=0
+  if [ $# == 2 ]; then
+    if [ "$2" == 0 ]; then
+      ALL_RETENTION=1
+    else
+      NB_MAX_BACKUP=$2
+    fi
+  fi
   SOURCE_DIR="/opt/seedbox/docker/${USER}"
   remote_backups=BACKUPS
-  NB_MAX_BACKUP=3
+
+  echo "Sauvegarde de l'application $1"
+  if [ $ALL_RETENTION -eq 0 ]; then
+    echo "Nombre de backups à garder : $NB_MAX_BACKUP"
+  else
+    echo "Pas de suppression des vieux backups"
+  fi
+
   CDAY=$(date +%Y%m%d-%H%M)
   BACKUP_PARTITION=/var/backup/local
   #BACKUP_FOLDER=$BACKUP_PARTITION/$APPLI-$CDAY
@@ -1890,19 +1912,20 @@ function sauve_one_appli() {
 
   # Nombre de sauvegardes effectuées
   nbBackup=$(find $BACKUP_PARTITION -type f -name $APPLI-* | wc -l)
+  if [ $ALL_RETENTION -eq 0 ]; then
+    if [[ "$nbBackup" -gt "$NB_MAX_BACKUP" ]]; then
 
-  if [[ "$nbBackup" -gt "$NB_MAX_BACKUP" ]]; then
+      # Archive la plus ancienne
+      oldestBackupPath=$(find $BACKUP_PARTITION -type f -name $APPLI-* -printf '%T+ %p\n' | sort | head -n 1 | awk '{print $2}')
+      oldestBackupFile=$(find $BACKUP_PARTITION -type f -name $APPLI-* -printf '%T+ %p\n' | sort | head -n 1 | awk '{split($0,a,/\//); print a[5]}')
 
-    # Archive la plus ancienne
-    oldestBackupPath=$(find $BACKUP_PARTITION -type f -name $APPLI-* -printf '%T+ %p\n' | sort | head -n 1 | awk '{print $2}')
-    oldestBackupFile=$(find $BACKUP_PARTITION -type f -name $APPLI-* -printf '%T+ %p\n' | sort | head -n 1 | awk '{split($0,a,/\//); print a[5]}')
+      # Suppression du répertoire du backup
+      rm -rf "$oldestBackupPath"
 
-    # Suppression du répertoire du backup
-    rm -rf "$oldestBackupPath"
-
-    # Suppression Archive Google Drive
-    echo -e "${CCYAN}> Suppression de l'archive la plus ancienne${CEND}"
-    rclone --config "/home/${USER}/.config/rclone/rclone.conf" purge "$remote:/$remote_backups/$oldestBackupFile" -v --log-file=/var/log/backup.log
+      # Suppression Archive Google Drive
+      echo -e "${CCYAN}> Suppression de l'archive la plus ancienne${CEND}"
+      rclone --config "/home/${USER}/.config/rclone/rclone.conf" purge "$remote:/$remote_backups/$oldestBackupFile" -v --log-file=/var/log/backup.log
+    fi
   fi
   echo ""
   echo -e "${CRED}-------------------------------------------------------${CEND}"
