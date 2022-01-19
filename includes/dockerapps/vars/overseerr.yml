@@ -10,7 +10,3 @@ pg_env:
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
   TZ: "Europe/Paris"
-  DOCKER_MODS: 'ghcr.io/gilbn/theme.park:overseerr'
-  TP_DOMAIN: 'theme-park.dev'
-  TP_THEME: 'plex'
-  #Remplacer 'plex' par le theme que vous souhaitez avoir (https://docs.theme-park.dev/theme-options/)
