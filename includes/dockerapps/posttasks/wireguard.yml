@@ -6,4 +6,4 @@
 
 - name: Prendre connaissance du message ci dessus
   pause:
-    prompt: "Prendre connaissance du message ci dessus"
+    prompt: "Prendre connaissance du message ci dessus, puis faire entrée"
