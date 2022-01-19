@@ -12,6 +12,8 @@ pg_env:
   DOCKER_MODS: 'ghcr.io/gilbn/theme.park:sonarr'
   TP_DOMAIN: 'theme-park.dev'
   TP_THEME: 'plex'
+  #Remplacer 'plex' par le theme que vous souhaitez avoir (https://docs.theme-park.dev/theme-options/) 
+  
 # Pour contourner l'authentification pour des outils de style nzb360, décommentez le pavé ci dessous
 # et remplacer CHANGEME par votre API sonarr
 #extra_labels:
