@@ -1833,6 +1833,7 @@ function sauve_one_appli() {
   # $1 = nom de l'appli
   # $2 ((optionnel) : nombre de backups à garder
   # si $2 = 0 => pas de suppression des vieux backups
+  # si $2 non renseigné, on reste à 3 backups à garder
   ##############################
 
   # Définition des variables de couleurs
