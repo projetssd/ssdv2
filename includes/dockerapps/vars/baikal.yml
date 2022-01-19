@@ -1,0 +1,12 @@
+---
+pgrole: 'baikal'
+intport: '80'
+image: 'ckulka/baikal:nginx'
+pg_volumes:
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/var/www/baikal/config:rw"
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/Specific:/var/www/baikal/Specific:rw"
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+  - "/etc/localtime:/etc/localtime:ro"
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
