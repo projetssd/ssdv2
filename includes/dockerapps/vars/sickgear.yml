@@ -1,5 +1,5 @@
 ---
-pgrole: 'sickchill'
+pgrole: 'sickgear'
 intport: '8081'
 image: 'linuxserver/sickgear:latest'
 pg_volumes:
