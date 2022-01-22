@@ -17,7 +17,8 @@ pg_env:
 specific_docker_info:
   ports:
     - '45004:45004'
-#extra_labels:
+extra_labels:
+   com.centurylinklabs.watchtower.enable: "false"
 #  traefik.http.routers.rutorrent-rtr-bypass.rule: 'Path(`/RPC2`)'
 #  traefik.http.routers.rutorrent-rtr-bypass.priority: '100'
 #  traefik.http.routers.rutorrent-rtr-bypass.tls: 'true'
