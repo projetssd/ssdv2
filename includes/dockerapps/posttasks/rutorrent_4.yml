@@ -23,10 +23,10 @@
     line: "$topDirectory = '/home/{{ lookup('env','USER') }}';"
     state: present
 
-- name: Clone ratio color
-  git:
-    repo: https://github.com/Micdu70/rutorrent-ratiocolor.git
-    dest: "/opt/seedbox/docker/{{ lookup('env','USER') }}/rutorrent/config/custom_plugins/ratiocolor"
+#- name: Clone ratio color
+  #git:
+    #repo: https://github.com/Micdu70/rutorrent-ratiocolor.git
+    #dest: "/opt/seedbox/docker/{{ lookup('env','USER') }}/rutorrent/config/custom_plugins/ratiocolor"
 
 - name: set fact
   set_fact:
