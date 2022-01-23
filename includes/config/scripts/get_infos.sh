@@ -71,7 +71,7 @@ fi
 #gestion du sous domaine s'il exsite
 SOUS_DOMAINE=$(get_from_account_yml user.sousDomain)
 if [ ${SOUS_DOMAINE} == notfound ]; then
-  if [ ${DOMAINE} -nq ${DOMAIN_PRINC} ]; then
+  if [ "${DOMAINE}" != "${DOMAIN_PRINC}" ]; then
     sousDomain="${DOMAINE//"$DOMAIN_PRINC"}"
   else 
     sousDomain=""
