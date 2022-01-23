@@ -70,7 +70,7 @@ else
 fi
 #gestion du sous domaine s'il exsite
 SOUS_DOMAINE=$(get_from_account_yml user.sousDomain)
-if [[ ${SOUS_DOMAINE} == notfound && ${DOMAINE} -nq ${DOMAIN_PRINC} ]]; then
+if [ ${SOUS_DOMAINE} == notfound ] && [ ${DOMAINE} -nq ${DOMAIN_PRINC} ]; then
   sousDomain="${DOMAINE//"$DOMAIN_PRINC"}"
   manage_account_yml user.sousDomain "$sousDomain"
   update_seedbox_param "sousDomain" $sousDomain
