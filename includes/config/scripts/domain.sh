@@ -14,7 +14,17 @@ manage_account_yml user.mail $CONTACTEMAIL
 
 DOMAIN=$(whiptail --title "Votre nom de Domaine" --inputbox \
   "Merci de taper le nouveau nom de Domaine :" 7 50 3>&1 1>&2 2>&3)
+DOMAIN_PRINC="${DOMAIN}"
+#on vérifie si on a taper un domaine principal ou un sous domaine. En cas de sous domaine on entre le domaine princ pour cloudflare
+res="${DOMAIN//[^.]}"
+if [ "${#res}" -ge "2" ]; then
+  DOMAIN_PRINC=$(
+  whiptail --title "Sous Domaine : Votre nom de Domaine principal" --inputbox \
+    "Vous avez saisie un domaine avec un sousdomain. Merci de taper votre nom de Domaine principal (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3
+)
+fi
 manage_account_yml user.domain $DOMAIN
+manage_account_yml user.domainPrinc "${DOMAIN_PRINC}"
 ###sed -i "/domain:/c\   domain: $DOMAIN" /opt/seedbox/variables/account.yml
 echo ""
 
