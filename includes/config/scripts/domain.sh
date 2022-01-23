@@ -23,8 +23,13 @@ if [ "${#res}" -ge "2" ]; then
     "Vous avez saisie un domaine avec un sousdomain. Merci de taper votre nom de Domaine principal (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3
 )
 fi
+SOUS_DOMAIN=""
+if [ ${DOMAIN} -nq ${DOMAIN_PRINC} ]; then
+  SOUS_DOMAIN="${DOMAIN//"$DOMAIN_PRINC"}"
+fi
 manage_account_yml user.domain $DOMAIN
 manage_account_yml user.domainPrinc "${DOMAIN_PRINC}"
+manage_account_yml user.sousDomain "${SOUS_DOMAIN}"
 ###sed -i "/domain:/c\   domain: $DOMAIN" /opt/seedbox/variables/account.yml
 echo ""
 

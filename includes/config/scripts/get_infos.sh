@@ -59,7 +59,7 @@ if [ ${DOMAINE} == notfound ]; then
 else
   echo -e "${BLUE}Domaine déjà renseigné${CEND}"
 fi
-
+#gestion d'un domaine princ pour la gestion des sous domaines
 DOMAIN_PRINC=$(get_from_account_yml user.domainPrinc)
 if [ ${DOMAIN_PRINC} == notfound ]; then
   read -p $'\e[32m↘️ Domaine principal | Appuyer sur [Enter]: \e[0m' domainPrinc </dev/tty
@@ -67,6 +67,19 @@ if [ ${DOMAIN_PRINC} == notfound ]; then
   update_seedbox_param "domainPrinc" $domainPrinc
 else
   echo -e "${BLUE}Domaine principal déjà renseigné${CEND}"
+fi
+#gestion du sous domaine s'il exsite
+SOUS_DOMAINE=$(get_from_account_yml user.sousDomaine)
+if [[ ${SOUS_DOMAINE} == notfound && ${DOMAINE} -nq ${DOMAIN_PRINC} ]]; then
+  sousDomain="${DOMAINE//"$DOMAIN_PRINC"}"
+  manage_account_yml user.sousDomain "$sousDomain"
+  update_seedbox_param "sousDomain" $sousDomain
+else if [ ${SOUS_DOMAINE} == notfound ]; then
+  sousDomain=""
+  manage_account_yml user.sousDomain "$sousDomain"
+  update_seedbox_param "sousDomain" $sousDomain
+else
+  echo -e "${BLUE}Sous domaine déjà renseigné${CEND}"
 fi
 
 echo -e "${BLUE}### Gestion des DNS ###${NC}"
