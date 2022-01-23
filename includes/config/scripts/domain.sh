@@ -24,7 +24,7 @@ if [ "${#res}" -ge "2" ]; then
 )
 fi
 SOUS_DOMAIN=""
-if [ ${DOMAIN} -nq ${DOMAIN_PRINC} ]; then
+if [ "${DOMAIN}" != "${DOMAIN_PRINC}" ]; then
   SOUS_DOMAIN="${DOMAIN//"$DOMAIN_PRINC"}"
 fi
 manage_account_yml user.domain $DOMAIN
