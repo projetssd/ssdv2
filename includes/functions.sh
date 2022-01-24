@@ -705,8 +705,6 @@ function define_parameters() {
     whiptail --title "Votre nom de Domaine" --inputbox \
       "Merci de taper votre nom de Domaine (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3
   )
-  
-  
   manage_account_yml user.domain $DOMAIN
   ###sed -i "s/domain:/domain: $DOMAIN/" ${CONFDIR}/variables/account.yml
   echo ""
@@ -748,25 +746,19 @@ function create_user_non_systeme() {
       "Merci de taper votre nom de Domaine (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3
   )
   DOMAIN_PRINC="${DOMAIN}"
-  SOUS_DOMAIN=""
   #on vérifie si on a taper un domaine principal ou un sous domaine. En cas de sous domaine on entre le domaine princ pour cloudflare
   res="${DOMAIN//[^.]}"
   if [ "${#res}" -ge "2" ]; then
     DOMAIN_PRINC=$(
     whiptail --title "Sous Domaine : Votre nom de Domaine principal" --inputbox \
       "Vous avez saisie un domaine avec un sousdomain. Merci de taper votre nom de Domaine principal (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3
-    #en cas de sous domaine nous devons le sortir
-    SOUS_DOMAIN="${DOMAIN//"$DOMAIN_PRINC"}"
   )
   fi
-  
   ###sed -i "s/domain:/domain: $DOMAIN/" ${CONFDIR}/variables/account.yml
   manage_account_yml user.domain "${DOMAIN}"
   manage_account_yml user.domainPrinc "${DOMAIN_PRINC}"
-  manage_account_yml user.sousDomain "${SOUS_DOMAIN}"
   update_seedbox_param "domain" "${DOMAIN}"
   update_seedbox_param "domainPrinc" "${DOMAIN_PRINC}"
-  update_seedbox_param "sousDomain" "${SOUS_DOMAIN}"
   echo ""
   return
 }
