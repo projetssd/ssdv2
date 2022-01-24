@@ -21,7 +21,7 @@ if [ ! -f ${ACCOUNT} ]; then
 fi
 
 echo ""
-echo -e "${BLUE}L'utilisateur et mot de passe demandés${NC}"Fsous
+echo -e "${BLUE}L'utilisateur et mot de passe demandés${NC}"
 echo -e "${BLUE}serviront à vous authentifier sur les différents services en mode web${NC}"
 
 USERNAME=$(get_from_account_yml user.name)
