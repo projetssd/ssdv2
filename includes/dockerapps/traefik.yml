@@ -87,7 +87,7 @@
           traefik.http.routers.traefik-rtr.tls: 'true'
           traefik.http.routers.traefik-rtr.tls.certresolver: 'letsencrypt'
           traefik.http.routers.traefik-rtr.tls.domains[0].main: '{{user.domain}}'
-          traefik.http.routers.traefik-rtr.tls.domains[0].sans: '*.{{user.domain}}'
+          traefik.http.routers.traefik-rtr.tls.domains[0].sans: '*.{{user.domainPrinc}}'
           ## Services - API
           traefik.http.routers.traefik-rtr.service: 'api@internal'
           ## Middlewares
