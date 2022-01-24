@@ -12,10 +12,6 @@
 - name: Set 'record' variable
   set_fact:
     record: "{{ (subdomain == user.domain) | ternary(user.domain,subdomain + '.' + user.domain) }}"
-- name: Display DNS Record
-  debug:
-    msg: "DNS Record for '{{ record }}' subdomain '{{ subdomain }}' subdomain '{{ subdomain }}' user.domain '{{ user.domain }}' user.domainPrinc '{{ user.domainPrinc }} user.sousDomain '{{ user.sousDomain }}'."
-
 
 - name: Set DNS Record
   cloudflare_dns:
