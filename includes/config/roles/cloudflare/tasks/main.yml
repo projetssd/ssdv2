@@ -21,7 +21,7 @@
     zone: "{{ user.domainPrinc }}"
     state: present
     solo: true
-    proxied: {{ proxied }}
+    proxied: "{{ proxied }}"
     type: A
     value: "{{ network.ipv4 }}"
     record: "{{ record }}"
@@ -39,7 +39,7 @@
       zone: "{{ user.domainPrinc }}"
       state: present
       solo: true
-      proxied: {{ proxied }}
+      proxied: "{{ proxied }}"
       type: AAAA
       value: "{{ network.ipv6 }}"
       record: "{{ record }}"
