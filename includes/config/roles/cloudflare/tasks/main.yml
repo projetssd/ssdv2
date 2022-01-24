@@ -12,6 +12,7 @@
 - name: Set 'record' variable
   set_fact:
     record: "{{ (subdomain == user.domain) | ternary(user.domain,subdomain + '.' + user.domain) }}"
+    proxied: "{{ (user.domain == user.domainPrinc) | ternary('yes', 'no') }}"
 
 - name: Set DNS Record
   cloudflare_dns:
@@ -20,7 +21,7 @@
     zone: "{{ user.domainPrinc }}"
     state: present
     solo: true
-    proxied: yes
+    proxied: {{ proxied }}
     type: A
     value: "{{ network.ipv4 }}"
     record: "{{ record }}"
@@ -38,7 +39,7 @@
       zone: "{{ user.domainPrinc }}"
       state: present
       solo: true
-      proxied: yes
+      proxied: {{ proxied }}
       type: AAAA
       value: "{{ network.ipv6 }}"
       record: "{{ record }}"
