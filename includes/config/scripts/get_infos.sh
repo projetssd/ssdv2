@@ -21,7 +21,7 @@ if [ ! -f ${ACCOUNT} ]; then
 fi
 
 echo ""
-echo -e "${BLUE}L'utilisateur et mot de passe demandés${NC}"
+echo -e "${BLUE}L'utilisateur et mot de passe demandés${NC}"Fsous
 echo -e "${BLUE}serviront à vous authentifier sur les différents services en mode web${NC}"
 
 USERNAME=$(get_from_account_yml user.name)
@@ -67,19 +67,6 @@ if [ ${DOMAIN_PRINC} == notfound ]; then
   update_seedbox_param "domainPrinc" $domainPrinc
 else
   echo -e "${BLUE}Domaine principal déjà renseigné${CEND}"
-fi
-#gestion du sous domaine s'il exsite
-SOUS_DOMAINE=$(get_from_account_yml user.sousDomain)
-if [ ${SOUS_DOMAINE} == notfound ]; then
-  if [ "${DOMAINE}" != "${DOMAIN_PRINC}" ]; then
-    sousDomain="${DOMAINE//"$DOMAIN_PRINC"}"
-  else 
-    sousDomain=""
-  fi
-  manage_account_yml user.sousDomain "$sousDomain"
-  update_seedbox_param "sousDomain" $sousDomain
-else
-  echo -e "${BLUE}Sous domaine déjà renseigné${CEND}"
 fi
 
 echo -e "${BLUE}### Gestion des DNS ###${NC}"
