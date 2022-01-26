@@ -1,8 +1,8 @@
 ---
-- name: Set 'nom_court' variable
+- name: Set 'secret_connect' variable
   set_fact:
     secret_connect: lookup('community.general.random_string', length=20)
 
-- name: Set 'fqdn' variable
+- name: Set 'url_public' variable
   set_fact:
     url_public: "http://{{ subdomain  }}.{{ user.domain }}"
