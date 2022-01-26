@@ -9,4 +9,8 @@ pg_env:
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
   Z: "Europe/Paris"
-  FF_SYNCSERVER_SECRET: "unsecrettrestresfacilepourletest"
+  FF_SYNCSERVER_SECRET: "{{ secret_connect }}"
+  SYNCSERVER_PUBLIC_URL: "{{ url_public }}"
+  SYNCSERVER_BATCH_UPLOAD_ENABLED: 'true'
+  SYNCSERVER_FORCE_WSGI_ENVIRON: 'false'
+  SYNCSERVER_DEBUG_ENABLED: 'true'
