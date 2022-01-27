@@ -1,0 +1,18 @@
+---
+pgrole: 'firefoxsyncserver'
+intport: '5000'
+image: 'crazymax/firefox-syncserver:latest'
+pg_volumes:
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/data:rw"
+  - "/etc/localtime:/etc/localtime:ro"
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  TZ: "Europe/Paris"
+  FF_SYNCSERVER_SECRET: "{{ secret_connect }}"
+  FF_SYNCSERVER_PUBLIC_URL: "{{ url_public }}"
+  SYNCSERVER_BATCH_UPLOAD_ENABLED: 'true'
+  FF_SYNCSERVER_FORCE_WSGI_ENVIRON: 'false'
+  SYNCSERVER_DEBUG_ENABLED: 'true'
+  FF_SYNCSERVER_ALLOW_NEW_USERS: 'true'
+  FF_SYNCSERVER_LOGLEVEL: info
