@@ -1,0 +1,13 @@
+---
+pgrole: 'davos'
+intport: '8080'
+image: 'lscr.io/linuxserver/davos'
+pg_volumes:
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/config"
+  - "/home/{{ lookup('env','USER') }}:/home/{{ lookup('env','USER') }}"
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+
+

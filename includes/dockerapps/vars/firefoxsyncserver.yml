@@ -8,5 +8,11 @@ pg_volumes:
 pg_env:
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
-  Z: "Europe/Paris"
-  FF_SYNCSERVER_SECRET: "unsecrettrestresfacilepourletest"
+  TZ: "Europe/Paris"
+  FF_SYNCSERVER_SECRET: "{{ secret_connect }}"
+  FF_SYNCSERVER_PUBLIC_URL: "{{ url_public }}"
+  SYNCSERVER_BATCH_UPLOAD_ENABLED: 'true'
+  FF_SYNCSERVER_FORCE_WSGI_ENVIRON: 'false'
+  SYNCSERVER_DEBUG_ENABLED: 'true'
+  FF_SYNCSERVER_ALLOW_NEW_USERS: 'true'
+  FF_SYNCSERVER_LOGLEVEL: info
