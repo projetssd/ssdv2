@@ -22,6 +22,7 @@ Plex-PlexMediaServer
 Portainer-LightweightManagementUI
 Prowlarr-indexermanager
 Qbittorrent-TorrentClient
+Qflood-TorrentClient
 Radarr-MoviesAutomation
 Radarr4k-MoviesAutomation
 Readarr-BookMagazineComicsEbookAudiobook
