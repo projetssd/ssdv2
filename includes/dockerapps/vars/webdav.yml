@@ -1,14 +1,14 @@
 ---
-#https://github.com/noodlefighter/docker-webdav
+#basé sur bytemark/webdav avec PUID fonctionnel
+#https://hub.docker.com/r/bytemark/webdav
 pgrole: 'webdav'
-intport: '443'
-image: 'sbytemark/webdav:latest'
+intport: '80'
+image: 'vladislavdp/webdav_vp'
 pg_volumes:
-  - '/etc/localtime:/var/lib/dav:ro'
-# - chemin/ver/user.passwd:/user.passwd 
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/var/lib/dav"
 pg_env:
-  AUTH_TYPE: 'Basic'
-  USERNAME: 'alice'
-  PASSWORD: 'secret1234'
-  PUID: "{{ lookup('env','MYUID') }}"
-  PGID: "{{ lookup('env','MYGID') }}"
+  #aucune authentification, on laisse le script la gerer par traefik
+  ANONYMOUS_METHODS: "ALL"
+  UID: "{{ lookup('env','MYUID') }}"
+  GID: "{{ lookup('env','MYUID') }}"
+
