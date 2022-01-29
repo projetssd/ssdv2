@@ -8,8 +8,8 @@ pg_volumes:
   - '/etc/localtime:/etc/localtime:ro'
 
 pg_env:
-  UID: '{{user.userid}}'
-  GID: '{{user.groupid}}'
+  PUID: '{{user.userid}}'
+  PGID: '{{user.groupid}}'
   TZ: 'Europe/Paris'
   FLOOD_AUTH: 'false'
 # tags spécifiques à ajouter à la construction du docker
