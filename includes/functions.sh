@@ -1945,3 +1945,25 @@ function change_password() {
   docker rm -f traefik
   launch_service traefik
 }
+
+function relance_container() {
+  touch $SERVICESPERUSER
+  TABSERVICES=()
+  for SERVICEACTIVATED in $(docker ps --format "{{.Names}}"); do
+    SERVICE=$(echo $SERVICEACTIVATED | cut -d\. -f1)
+    TABSERVICES+=(${SERVICE//\"/} " ")
+  done
+  line=$(
+    whiptail --title "App Manager" --menu \
+      "Sélectionner le container à réinitialiser" 19 45 11 \
+      "${TABSERVICES[@]}" 3>&1 1>&2 2>&3
+  )
+  exitstatus=$?
+  if [ $exitstatus = 0 ]; then
+    echo "###############################################"
+    echo "# Relance du container ${line} "
+    echo "###############################################"
+    docker rm -f ${line}
+    launch_service ${line}
+  fi
+}
