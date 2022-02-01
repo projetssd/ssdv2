@@ -1,0 +1,14 @@
+---
+#basé sur bytemark/webdav avec PUID fonctionnel
+#https://hub.docker.com/r/bytemark/webdav
+pgrole: 'webdav'
+intport: '80'
+image: 'vladislavdp/webdav_vp'
+pg_volumes:
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/var/lib/dav"
+pg_env:
+  #aucune authentification, on laisse le script la gerer par traefik
+  ANONYMOUS_METHODS: "ALL"
+  UID: "{{ lookup('env','MYUID') }}"
+  GID: "{{ lookup('env','MYUID') }}"
+
