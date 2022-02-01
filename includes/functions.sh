@@ -1355,7 +1355,8 @@ function premier_lancement() {
     docker \
     shyaml \
     netaddr \
-    dnspython
+    dnspython \
+    configparser
 
   ##########################################
   # Pas de configuration existante
