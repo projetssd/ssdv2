@@ -1,19 +1,25 @@
 #!/usr/bin/env python3
 """
-Script permettant de choisir un teamdrive
+Script permettant de choisir un google drive
 dans le rclone.conf
 """
+
 import ssd_rclone
+
+
+
+
+
 
 
 # Déclaration des variables
 dict_td = {}
 
 # Choix du team drive
-td = ssd_rclone.detect_td()
+td = ssd_rclone.detect_gd()
 
 
-print("   Shared drives disponibles : ")
+print("   Google drives disponibles : ")
 print("-------------------------------")
 for (i, item) in enumerate(td, start=1):
     print(i, item)
