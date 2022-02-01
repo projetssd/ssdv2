@@ -53,70 +53,13 @@ function detection() {
     ;;
 
   2)
-    i=1
-    grep "root_folder_id = ." ${RCLONE_CONFIG_FILE} | uniq >/tmp/drive.txt
-    grep "root_folder_id = ." ${RCLONE_CONFIG_FILE} >/dev/null 2>&1
-    if [ $? -eq 0 ]; then
-      echo -e " ${BWHITE}* Gdrives disponibles${NC}"
-      echo ""
-      while read line; do
-        team=$(grep -iC 6 "$line" ${RCLONE_CONFIG_FILE} | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
-        echo "$team" >>/tmp/team.txt
-        echo -e "${CGREEN}   $i. $team${CEND}"
-        let "i+=1"
-      done </tmp/drive.txt
-      nombre=$(wc -l /tmp/team.txt | cut -d ' ' -f1)
-    else
-      grep "token" ${RCLONE_CONFIG_FILE} >/tmp/drive.txt
-      grep "token" ${RCLONE_CONFIG_FILE} >/dev/null 2>&1
-      if [ $? -eq 0 ]; then
-        echo -e " ${BWHITE}* Remotes disponibles${NC}"
-        echo ""
-        while read line; do
-          team=$(grep -iC 5 "$line" ${RCLONE_CONFIG_FILE} | head -n 1 | sed "s/\[//g" | sed "s/\]//g")
-          echo "$team" >>/tmp/team.txt
-          echo -e "${CGREEN}   $i. $team${CEND}"
-          let "i+=1"
-        done </tmp/drive.txt
-        nombre=$(wc -l /tmp/team.txt | cut -d ' ' -f1)
-      fi
-    fi
-
-    while :; do
-      echo ""
-      read -rp $'\e[36m   Choisir le stockage principal associé à la Seedbox: \e[0m' RTYPE
-      echo ""
-
-      if [ "$RTYPE" -le "$nombre" -a "$RTYPE" -ge "1" ]; then
-        i="$RTYPE"
-        remote=$(sed -n "$i"p /tmp/team.txt)
-        root_folder_id=$(sed -n "$i"p /tmp/drive.txt | cut -d '=' -f2 | sed 's/ //g')
-        remotecrypt=$(grep -C2 "$root_folder_id" ${RCLONE_CONFIG_FILE} | tail -1 | sed "s/\[//g" | sed "s/\]//g")
-        echo -e "${CCYAN}   Source séléctionnée: ${CGREEN}$remote${CEND}"
-        echo ""
-        break
-      else
-        echo -e " ${CRED}* /!\ erreur de saisie /!\{NC}"
-        echo ""
-      fi
-    done
-    while :; do
-      echo ""
-      read -rp $'\e[36m   Choisir le stockage principal associé à la Seedbox: \e[0m' RTYPE
-      echo ""
-      if [ "$RTYPE" -le "$nombre" -a "$RTYPE" -ge "1" ]; then
-        i="$RTYPE"
-        remote=$(sed -n "$i"p /tmp/team.txt)
-        root_folder_id=$(sed -n "$i"p /tmp/drive.txt | cut -d '=' -f2 | sed 's/ //g')
-        remotecrypt=$(grep -C2 "$root_folder_id" ${RCLONE_CONFIG_FILE} | tail -1 | sed "s/\[//g" | sed "s/\]//g")
-        echo -e "${CCYAN}   Source séléctionnée: ${CGREEN}$remote${CEND}"
-        echo ""
-        break
-      else
-        echo -e " ${CRED}* /!\ erreur de saisie /!\{NC}"
-        echo ""
-      fi
-    done
+    rm -f /tmp/choix_crypt
+    rm -f /tmp/id_teamdrive
+    /opt/seedbox-compose/includes/config/scripts/rclone_list_gd.py
+    remotecrypt=$(cat /tmp/choix_crypt)
+    id_teamdrive=$(cat /tmp/id_teamdrive)
+    rm -f /tmp/choix_crypt
+    rm -f /tmp/id_teamdrive
     ;;
 
   *)
