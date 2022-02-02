@@ -1,8 +1,16 @@
-
+"""
+Bibliotheques pour gérer les fonctions python
+d'interaction avec rclone pour ssd
+"""
 import configparser
 import os
 
+
 def detect_td():
+    """
+    Fonction de choix d'un teamdrive
+    Génère une liste des td
+    """
     config = configparser.ConfigParser()
     config.read(os.environ['HOME'] + '/.config/rclone/rclone.conf')
 
@@ -15,7 +23,30 @@ def detect_td():
     return mytd
 
 
+def detect_gd():
+    """
+    Fonction de choix d'un google drive
+    Génère une liste des gd
+    """
+    config = configparser.ConfigParser()
+    config.read(os.environ['HOME'] + '/.config/rclone/rclone.conf')
+
+    mytd = []  # la liste des td
+
+    for section in config.sections():
+        if "team_drive" not in config[section]:
+            if config[section]['type'] != 'crypt' and config[section]['type'] != 'cache':
+                mytd.append(section)
+    return mytd
+
+
 def choix_td():
+    """
+    Juste la fonction d'input
+    teste si on a bien un integer, si oui, le retourne
+    sinon, revient sur elle même
+    :return: integer
+    """
     mystockage = input("Choisir le stockage principal associé à la seedbox : ")
     try:
         mystockage = int(mystockage)
@@ -25,6 +56,12 @@ def choix_td():
 
 
 def recherche_crypt(myremote):
+    """
+    Recherche si un remote de type crypt existe
+    pour le remote donné en parametre
+    :param myremote: nom du remote
+    :return: remote chiffré associé
+    """
     config = configparser.ConfigParser()
     config.read(os.environ['HOME'] + '/.config/rclone/rclone.conf')
     for section in config.sections():
@@ -35,6 +72,11 @@ def recherche_crypt(myremote):
 
 
 def get_id_teamdrive(myremote):
+    """
+    Cherche l'id du teamdrive associé au remote
+    :param myremote: nom du remote
+    :return: nom du team drive|False
+    """
     config = configparser.ConfigParser()
     config.read(os.environ['HOME'] + '/.config/rclone/rclone.conf')
     try:
@@ -45,15 +87,39 @@ def get_id_teamdrive(myremote):
     f2.write(id_teamdrive)
     f2.close()
 
-def detect_gd():
-    config = configparser.ConfigParser()
-    config.read(os.environ['HOME'] + '/.config/rclone/rclone.conf')
 
-    mytd = []  # la liste des td
+def affiche_drive(drives):
+    """
+    Affiche la liste des drives, et demande au user de choisir
+    :param drives: liste de remotes
+    :return:
+    """
+    dict_td = {}
+    print("-------------------------------")
+    for (i, item) in enumerate(drives, start=1):
+        print(i, item)
+        dict_td[i] = item
 
-    for section in config.sections():
-        if "team_drive" not in config[section]:
-            if config[section]['type'] != 'crypt' and config[section]['type'] != 'cache':
-                mytd.append(section)
+    stockage = 0
+    print("")
 
-    return mytd
+    stockage = choix_td()
+    while stockage not in dict_td:
+        stockage = choix_td()
+    remote = dict_td[stockage]
+    print("Source sélectionnée : " + remote)
+
+    get_id_teamdrive(remote)
+
+    # Recherche d'un remote de type crypt associé
+
+    crypt = recherche_crypt(remote)
+    if not crypt:
+        print("Erreur, aucun remote de type crypt trouvé, fallback sur le non chiffré")
+        crypt = remote
+    else:
+        print("le remote de type crypt est " + crypt)
+
+    f = open("/tmp/choix_crypt", "a")
+    f.write(crypt)
+    f.close()
