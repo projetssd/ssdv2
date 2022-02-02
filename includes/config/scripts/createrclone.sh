@@ -10,9 +10,9 @@ touch ${RCLONE_CONFIG_FILE}
 echo ""
 
 echo -e "${BLUE}---------------------------------------------------------------------------${CEND}"
-echo -e "${CGREEN} 🚀 SSD Clone - Client ID - Secret ID ~ https://github.com/laster13/patxav
+echo -e "${CGREEN} 🚀 SSD Clone - Client ID - Secret ID ~ https://github.com/projetssd/ssdv2
 
-  Visiter https://github.com/laster13/patxav/wiki pour créer le
+  Visiter https://github.com/projetssd/ssdv2/wiki pour créer le
   Client ID de votre nouveau project!${CEND}"
 echo -e "${BLUE}---------------------------------------------------------------------------${CEND}"
 echo ""
@@ -35,7 +35,7 @@ pgclonepublic=$(cat ${TMPDIR}/pgclone.public)
 pgclonesecret=$(cat ${TMPDIR}/pgclone.secret)
 
 echo -e "${BLUE}-------------------------------------------------------------------${CEND}"
-echo -e "${CGREEN} 🚀 Création du Shared Drive ~ https://github.com/laster13/patxav${CEND}"
+echo -e "${CGREEN} 🚀 Création du Shared Drive ~ https://github.com/projetssd/ssdv2${CEND}"
 echo -e "${BLUE}-------------------------------------------------------------------${CEND}"
 
 echo ""
@@ -64,7 +64,7 @@ chaine=$(cat ${TMPDIR}/pgclone.chaine)
     --header "Authorization: Bearer ${accesstoken}" \
     --header 'Accept: application/json' \
     --header 'Content-Type: application/json' \
-    --data '{"name":"'$nom'","backgroundImageLink":"https://pgblitz.com/styles/io_dark/images/pgblitz4.png"}' \
+    --data '{"name":"'$nom'"}' \
     --compressed > ${TMPDIR}/teamdrive.output
 
 #####################
@@ -81,7 +81,7 @@ echo "$id" > ${TMPDIR}/pgclone.teamid
 echo ""
 
 echo -e "${BLUE}-----------------------------------------------------------${CEND}"
-echo -e "${CGREEN} 🌎 Primary Password ~ https://github.com/laster13/patxav${CEND}"
+echo -e "${CGREEN} 🌎 Primary Password ~ https://github.com/projetssd/ssdv2${CEND}"
 echo -e "${BLUE}-----------------------------------------------------------${CEND}"
 
 echo ""
@@ -92,11 +92,11 @@ primarypassword=$typed
 echo ""
 
 echo -e "${BLUE}---------------------------------------------------------------${CEND}"
-echo -e "${CGREEN} 🌎 SALT (SALT Password) ~ https://github.com/laster13/patxav${CEND}"
+echo -e "${CGREEN} 🌎 SALT (SALT Password) ~ https://github.com/projetssd/ssdv2${CEND}"
 echo -e "${BLUE}---------------------------------------------------------------${CEND}"
 
 echo -e "${BWHITE}
-NOTE: Ne pas utiliser le même pot de passe!
+NOTE: Ne pas utiliser le même mot de passe!
 
 Définissez un mot de passe SALT pour le cryptage des données! 
 N'OUBLIEZ PAS le mot de passe! Sinon vous ne pourrez pas récupérer vos données!
@@ -111,7 +111,7 @@ secondarypassword=$typed
 echo ""
 
 echo -e "${BLUE}----------------------------------------------------${CEND}"
-echo -e "${CGREEN} 🌎 Passwords ~ https://github.com/laster13/patxav${CEND}"
+echo -e "${CGREEN} 🌎 Passwords ~ https://github.com/projetssd/ssdv2${CEND}"
 echo -e "${BLUE}----------------------------------------------------${CEND}"
 
 echo -e "${BWHITE}
@@ -123,7 +123,7 @@ echo $primarypassword > ${TMPDIR}/pgclone.password
 echo $secondarypassword > ${TMPDIR}/pgclone.salt
 
 echo -e "${BLUE}-------------------------------------------------------------${CEND}"
-echo -e "${CGREEN} 🌎 Procédure Complète ~ https://github.com/laster13/patxav${CEND}"
+echo -e "${CGREEN} 🌎 Procédure Complète ~ https://github.com/projetssd/ssdv2${CEND}"
 echo -e "${BLUE}-------------------------------------------------------------${CEND}"
 
 echo ""
@@ -136,7 +136,7 @@ pgclonesecret=$(cat ${TMPDIR}/pgclone.secret)
 echo ""
 
 echo -e "${BLUE}------------------------------------------------------${CEND}"
-echo -e "${CGREEN} 🚀 Google Auth ~ https://github.com/laster13/patxav${CEND}"
+echo -e "${CGREEN} 🚀 Google Auth ~ https://github.com/projetssd/ssdv2${CEND}"
 echo -e "${BLUE}------------------------------------------------------${CEND}"
 
 echo -e "${BWHITE}
@@ -193,7 +193,7 @@ echo "password2 = $ENC_SALT" >> ${RCLONE_CONFIG_FILE};
 echo ""
 
 echo -e "${BLUE}-------------------------------------------------------------${CEND}"
-echo -e "${CGREEN} 🌎 Procédure Terminée ~ https://github.com/laster13/patxav${CEND}"
+echo -e "${CGREEN} 🌎 Procédure Terminée ~ https://github.com/projetssd/ssdv2${CEND}"
 echo -e "${BLUE}-------------------------------------------------------------${CEND}"
 
 echo -e "${BWHITE}
