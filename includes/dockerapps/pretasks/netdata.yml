@@ -3,3 +3,9 @@
   getent:
     database: group
     key: docker
+
+- name: 'Creating netdata folder paths'
+  file: 'path={{item}} state=directory mode=0777 owner={{user.userid}} group={{user.groupid}}'
+  with_items:
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/var/lib"
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/var/cache"
