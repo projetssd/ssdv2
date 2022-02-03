@@ -29,13 +29,13 @@
       regexp: '(^blacklist\si915.*)'
       replace: '#\1'
 
-  - name: Hetzner | Hetzner GRUB files
+  - name: Hetzner | Hetzner GRUB templates
     set_fact:
       hetzner_grub_files:
         - "/etc/default/grub.d/hetzner.cfg"
         - "/etc/default/grub"
 
-  - name: Hetzner | Check status of GRUB files
+  - name: Hetzner | Check status of GRUB templates
     stat:
       path: "{{ item }}"
     loop: "{{ hetzner_grub_files }}"

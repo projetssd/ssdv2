@@ -141,7 +141,7 @@
     group: "root"
     mode: a+x
 
-- name: Set 'all files' as executable
+- name: Set 'all templates' as executable
   file:
     path: /opt/motd/motd/
     owner: "root"

@@ -1,0 +1,5 @@
+services:
+  plextraktsync:
+    image: ghcr.io/taxel/plextraktsync
+    volumes:
+      - "/opt/seedbox/docker/{% lookup('env','USER')  %}/plextraktsync/config:/app/config"

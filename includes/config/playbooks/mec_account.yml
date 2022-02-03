@@ -4,7 +4,7 @@
   roles:
     - kwoodson.yedit
   tasks:
-    - name: manage yaml files
+    - name: manage yaml templates
       yedit:
         src: /opt/seedbox-compose/includes/config/account.yml.sauve
         state: list

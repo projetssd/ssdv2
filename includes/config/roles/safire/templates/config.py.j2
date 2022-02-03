@@ -27,7 +27,7 @@ group_address = "{{group}}"
 dir = '/opt/safire/safire'
 #dir = f"{str(Path.home())}/safire"
 
-# These dirs and files are located below the path set as 'dir ='
+# These dirs and templates are located below the path set as 'dir ='
 sa_path = f"{dir}/svcaccts"
 data_path = f"{dir}/data"
 cred_path = f"{dir}/creds"
@@ -55,7 +55,7 @@ ADMIN = ["admin", "directory_v1"]
 SVCUSAGE = ["serviceusage", "v1"]
 svcs_to_enable = ["iam", "drive"]
 
-### Generate empty directories for key files if they do not exist
+### Generate empty directories for key templates if they do not exist
 if not os.path.isdir(dir):
     os.mkdir(dir)
 if not os.path.isdir(sa_path):

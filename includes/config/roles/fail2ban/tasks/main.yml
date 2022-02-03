@@ -70,7 +70,7 @@
         dest: /etc/fail2ban/filter.d/traefik-botsearch.conf
         force: yes
 
-    - name: "'files.conf when not Cloudflare exist' Tasks"
+    - name: "'templates.conf when not Cloudflare exist' Tasks"
       become: yes
       block:
 
@@ -88,7 +88,7 @@
       when: not cloudflare_enabled
 
 
-    - name: "'files.conf when Cloudflare exist' Tasks"
+    - name: "'templates.conf when Cloudflare exist' Tasks"
       become: yes
       block:
 
