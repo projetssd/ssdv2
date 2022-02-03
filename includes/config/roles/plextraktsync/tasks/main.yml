@@ -10,17 +10,17 @@
 
   - name: create directory
     file:
-      path: "{{ lookup('env','HOME') }}/scripts/plextraktsync.j2/docker-compose.yml"
+      path: "{{ lookup('env','HOME') }}/scripts/plextraktsync/"
       state: directory
 
   - name: copy docker-compose file
     template:
-      src: templates/docker-compose.yml.j2
-      dest:  "{{ lookup('env','HOME') }}/scripts/plextraktsync.j2/docker-compose.yml"
+      src: "docker-compose.yml.j2"
+      dest:  "{{ lookup('env','HOME') }}/scripts/plextraktsync/docker-compose.yml"
 
   - name: copy executable
     become: yes
     template:
-      src: templates/plextraktsync.j2
-      dest: /usr/local/bin/plextraktsync
+      src: "plextraktsync.j2"
+      dest: "/usr/local/bin/plextraktsync"
       mode: 0755
