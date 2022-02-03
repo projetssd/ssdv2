@@ -1,24 +1,26 @@
 ---
-- name: Install docker-compose from official github repo
-  become: yes
-  get_url:
-    url : https://github.com/docker/compose/releases/download/1.29.2/docker-compose-Linux-x86_64
-    dest: /usr/local/bin/docker-compose
-    mode: 'u+x,g+x'
+- hosts: localhost
+  tasks:
+  - name: Install docker-compose from official github repo
+    become: yes
+    get_url:
+      url : https://github.com/docker/compose/releases/download/1.29.2/docker-compose-Linux-x86_64
+      dest: /usr/local/bin/docker-compose
+      mode: 'u+x,g+x'
 
-- name: create directory
-  file:
-    path: "{{ lookup('env','HOME') }}/scripts/plextraktsync.j2/docker-compose.yml"
-    state: directory
+  - name: create directory
+    file:
+      path: "{{ lookup('env','HOME') }}/scripts/plextraktsync.j2/docker-compose.yml"
+      state: directory
 
-- name: copy docker-compose file
-  templates:
-    source: docker-compose.yml.j2
-    dest:  "{{ lookup('env','HOME') }}/scripts/plextraktsync.j2/docker-compose.yml"
+  - name: copy docker-compose file
+    templates:
+      source: docker-compose.yml.j2
+      dest:  "{{ lookup('env','HOME') }}/scripts/plextraktsync.j2/docker-compose.yml"
 
-- name: copy executable
-  become: yes
-  templates:
-    source: plextraktsync.j2
-    dest: /usr/local/bin/plextraktsync
-    mode: 0755
+  - name: copy executable
+    become: yes
+    templates:
+      source: plextraktsync.j2
+      dest: /usr/local/bin/plextraktsync
+      mode: 0755
