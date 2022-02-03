@@ -14,13 +14,13 @@
       state: directory
 
   - name: copy docker-compose file
-    templates:
+    template:
       source: docker-compose.yml.j2
       dest:  "{{ lookup('env','HOME') }}/scripts/plextraktsync.j2/docker-compose.yml"
 
   - name: copy executable
     become: yes
-    templates:
+    template:
       source: plextraktsync.j2
       dest: /usr/local/bin/plextraktsync
       mode: 0755
