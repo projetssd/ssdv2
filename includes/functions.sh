@@ -1971,6 +1971,9 @@ function relance_container() {
 
 function install_plextraktsync() {
   ansible-playbook ${BASEDIR}/includes/config/roles/plextraktsync/tasks/main.yml
-  echo "Vous pouvez maintenant taper plextraktsync pour lancer l'utilitaire"
+  echo "Préparation pour le premier lancement de configuration"
   echo "Assurez vous d'avoir les api Trakt avant de continuer (https://trakt.tv/oauth/applications/new)"
+  /usr/local/bin/plextraktsync
+  echo "L'outil est installé et se lancera automatiquement toutes les heures"
+  pause
 }

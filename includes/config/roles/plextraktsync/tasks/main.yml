@@ -28,3 +28,9 @@
       src: "/opt/seedbox-compose/includes/config/roles/plextraktsync/templates/plextraktsync.j2"
       dest: "/usr/local/bin/plextraktsync"
       mode: 0755
+
+  - name: set cron
+    cron:
+      name: "plextraktsync"
+      minute: "0"
+      job: "/usr/local/bin/plextraktsync"
