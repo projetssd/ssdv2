@@ -1,0 +1,24 @@
+---
+
+- name: 'Stopping {{ pgrole }}'
+  docker_container:
+    name: '{{ pgrole }}'
+    state: stopped
+
+- name: 'Creating metube folder paths'
+  become: yes
+  file:
+    path: "{{item}}"
+    state: "directory"
+    mode: "0777"
+    owner: "{{user.userid}}"
+    group: "{{user.groupid}}"
+    recurse: "yes"
+  with_items:
+    - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config"
+    - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/downloads:/downloads:rw"
+
+- name: Restart {{ pgrole }}
+  docker_container:
+    name: '{{ pgrole }}'
+    state: started
