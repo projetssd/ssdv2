@@ -1,0 +1,18 @@
+---
+pgrole: 'cypht'
+intport: '80'
+image: 'sailfrog/cypht-docker:latest'
+pg_volumes:
+  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}:/var/lib/hm3/users"
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  CYPHT_AUTH_USERNAME: "{{ user.name }}"
+  CYPHT_AUTH_PASSWORD: "{{ user.pass }}"
+  CYPHT_DB_HOST: "db-{{ pgrole }}"
+  CYPHT_DB_NAME: "{{ pgrole }}"
+  CYPHT_DB_USER: "{{ pgrole }}"
+  CYPHT_DB_PASS: "{{ pgrole }}"
+  CYPHT_SESSION_TYPE: "DB"
