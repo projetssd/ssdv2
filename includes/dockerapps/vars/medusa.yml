@@ -1,7 +1,7 @@
 ---
 pgrole: 'medusa'
 intport: '8081'
-image: 'linuxserver/medusa'
+image: 'lscr.io/linuxserver/medusa'
 pg_volumes:
   - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"

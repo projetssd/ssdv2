@@ -121,7 +121,7 @@
       docker_container:
         name: 'db-seafile'
         recreate: true
-        image: 'linuxserver/mariadb'
+        image: 'lscr.io/linuxserver/mariadb'
         pull: yes
         volumes:
           - "{{ lookup('env',CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-seafile:/config"

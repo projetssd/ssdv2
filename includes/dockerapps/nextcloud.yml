@@ -21,7 +21,7 @@
       set_fact:
         pgrole: 'nextcloud'
         intport: '443'
-        image: 'linuxserver/nextcloud'
+        image: 'lscr.io/linuxserver/nextcloud'
 
     - name: "Set DNS Record on CloudFlare"
       include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
@@ -65,7 +65,7 @@
     - name: Create and start '{{pgrole}}' container
       docker_container:
         name: '{{pgrole}}'
-        image: 'linuxserver/nextcloud'
+        image: 'lscr.io/linuxserver/nextcloud'
         pull: yes
         env: '{{pg_env}}'
         volumes: '{{pg_volumes}}'

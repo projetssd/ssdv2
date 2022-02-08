@@ -102,7 +102,7 @@
       docker_container:
         name: 'db-prestashop'
         recreate: true
-        image: 'linuxserver/mariadb'
+        image: 'lscr.io/linuxserver/mariadb'
         pull: yes
         volumes:
           - '/opt/seedbox/docker/{{user.name}}/prestashop/db-prestashop:/config'

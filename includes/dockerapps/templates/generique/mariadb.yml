@@ -8,7 +8,7 @@
   docker_container:
     name: 'db-{{pgrole}}'
     recreate: true
-    image: 'linuxserver/mariadb'
+    image: 'lscr.io/linuxserver/mariadb'
     pull: yes
     volumes:
       - "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}:/config"

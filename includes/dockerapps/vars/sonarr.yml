@@ -1,7 +1,7 @@
 ---
 pgrole: 'sonarr'
 intport: '8989'
-image: 'linuxserver/sonarr:latest'
+image: 'lscr.io/linuxserver/sonarr:latest'
 pg_volumes:
   - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"

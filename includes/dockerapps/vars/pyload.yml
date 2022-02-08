@@ -1,7 +1,7 @@
 ---
 pgrole: 'pyload'
 intport: '8000'
-image: 'linuxserver/pyload'
+image: 'lscr.io/linuxserver/pyload'
 pg_volumes:
   - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
   - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/downloads:/downloads:rw"

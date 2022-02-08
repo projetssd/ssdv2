@@ -1,7 +1,7 @@
 ---
 pgrole: 'ombi'
 intport: '3579'
-image: 'linuxserver/ombi'
+image: 'lscr.io/linuxserver/ombi'
 pg_volumes:
   - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
   - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/appsettings.json:/opt/{{ pgrole }}/appsettings.json"
