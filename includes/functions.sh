@@ -1050,10 +1050,10 @@ function suppression_appli() {
 
   docker rm -f "$APPSELECTED" >/dev/null 2>&1
   if [ $DELETE -eq 1 ]; then
-    log_write "Suppresion de ${$APPSELECTED}, données supprimées"
+    log_write "Suppresion de ${APPSELECTED}, données supprimées"
     sudo rm -rf ${CONFDIR}/docker/${USER}/$APPSELECTED
   else
-    log_write "Suppresion de ${$APPSELECTED}, données conservées"
+    log_write "Suppresion de ${APPSELECTED}, données conservées"
   fi
 
   rm ${CONFDIR}/conf/$APPSELECTED.yml >/dev/null 2>&1
