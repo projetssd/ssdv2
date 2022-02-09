@@ -1,0 +1,13 @@
+---
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+    - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
+    - "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/generique.yml"
+
+  tasks:
+  - name: "Set DNS Record on CloudFlare"
+    include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/uninstall.yml"
+    vars:
+      subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
+    when: cloudflare_enabled

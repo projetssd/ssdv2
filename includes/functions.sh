@@ -1118,6 +1118,8 @@ function suppression_appli() {
   sqlite3 ${SCRIPTPATH}/ssddb <<EOF
     $req
 EOF
+  # suppression des enregitrements cloudflare
+  ansible-playbook /opt/seedbox-compose/includes/config/roles/cloudflare/tasks/uninstall.yml
 }
 
 function uninstall_seedbox() {
