@@ -1119,7 +1119,7 @@ function suppression_appli() {
     $req
 EOF
   # suppression des enregitrements cloudflare
-  ansible-playbook /opt/seedbox-compose/includes/config/roles/cloudflare/tasks/uninstall.yml
+  ansible-playbook -e pgrole=${APPSELECTED} /opt/seedbox-compose/includes/config/playbooks/remove_cf_record.yml
 }
 
 function uninstall_seedbox() {
