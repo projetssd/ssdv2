@@ -1108,6 +1108,9 @@ function suppression_appli() {
 
   docker system prune -af >/dev/null 2>&1
   checking_errors $?
+
+  ansible-playbook -e pgrole=${APPSELECTED} /opt/seedbox-compose/includes/config/playbooks/remove_cf_record.yml
+
   echo""
   echo -e "${BLUE}### $APPSELECTED a été supprimé ###${NC}"
   echo ""
@@ -1119,7 +1122,7 @@ function suppression_appli() {
     $req
 EOF
   # suppression des enregitrements cloudflare
-  ansible-playbook -e pgrole=${APPSELECTED} /opt/seedbox-compose/includes/config/playbooks/remove_cf_record.yml
+
 }
 
 function uninstall_seedbox() {
