@@ -8,10 +8,6 @@
 #                   GNU General Public License v3.0                     #
 #########################################################################
 ---
-- name: Set 'record' variable
-  set_fact:
-    record: "{{ (subdomain == user.domain) | ternary(user.domain,subdomain + '.' + user.domain) }}"
-
 - name: Set DNS Record
   cloudflare_dns:
     account_api_token: "{{ cloudflare.api }}"
