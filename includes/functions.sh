@@ -945,8 +945,10 @@ function install_services() {
 }
 
 function launch_service() {
+
   INSTALLEDFILE="${HOME}/resume"
   line=$1
+  log_write "Installation de ${line}"
   error=0
   tempsubdomain=$(get_from_account_yml sub.${line}.${line})
   if [ "${tempsubdomain}" = notfound ]; then
@@ -991,7 +993,7 @@ function launch_service() {
       # puis on lance le générique avec ce qu'on vient de copier
       ansible-playbook ${BASEDIR}/includes/dockerapps/generique.yml --extra-vars "@${CONFDIR}/vars/${line}.yml"
     else
-      echo "Aucun fichier de configuration trouvé dans les sources, abandon"
+      log_write "Aucun fichier de configuration trouvé dans les sources, abandon"
       error=1
     fi
   fi
@@ -1029,6 +1031,7 @@ function manage_apps() {
 }
 
 function suppression_appli() {
+
   sousdomaine=$(get_from_account_yml sub.${APPSELECTED}.${APPSELECTED})
   domaine=$(get_from_account_yml user.domain)
   sort -u /home/${USER}/resume | grep -v ${sousdomaine}.${domaine} >/tmp/resume
@@ -1047,7 +1050,10 @@ function suppression_appli() {
 
   docker rm -f "$APPSELECTED" >/dev/null 2>&1
   if [ $DELETE -eq 1 ]; then
+    log_write "Suppresion de ${line}, données supprimées"
     sudo rm -rf ${CONFDIR}/docker/${USER}/$APPSELECTED
+  else
+    log_write "Suppresion de ${line}, données conservées"
   fi
 
   rm ${CONFDIR}/conf/$APPSELECTED.yml >/dev/null 2>&1
@@ -1464,6 +1470,13 @@ function usage() {
   echo "  gère la migration de la V1 vers la V2"
   echo ""
   exit 0
+}
+
+function log_write() {
+  DATE=$(date +'%F %T')
+  FILE=/opt/seedbox-compose/logs/seedbox.log
+  echo "${DATE} - ${1}" >> ${FILE}
+  echo "${1}"
 }
 
 function log_migrate() {
