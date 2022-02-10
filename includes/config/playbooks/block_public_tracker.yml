@@ -4,6 +4,7 @@
   tasks:
 
   - name: install ipset
+    become: yes
     apt:
       name: ipset
       state: present
