@@ -1,0 +1,27 @@
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+
+  - name: install ipset
+    apt:
+      name: ipset
+      state: present
+
+  - name: create directory
+    file:
+      path: "{{ lookup('env','HOME') }}/scripts/block_public_tracker"
+      state: directory
+
+  - name: Get repo
+    git:
+      repo: "https://github.com/Merrick28/block_public_tracker.git"
+      dest: "{{ lookup('env','HOME') }}/scripts/block_public_tracker"
+
+  - name: Add to cron
+    become: yes
+      cron:
+        name: "Block public trackers"
+        minute: "0"
+        hour: "0"
+        job: "{{ lookup('env','HOME') }}/scripts/block_public_tracker/block_ipset.sh"
