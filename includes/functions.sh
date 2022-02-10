@@ -1981,6 +1981,7 @@ function relance_container() {
   )
   exitstatus=$?
   if [ $exitstatus = 0 ]; then
+    log_write "Relance du container ${line}"
     echo "###############################################"
     echo "# Relance du container ${line} "
     echo "###############################################"

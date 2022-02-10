@@ -336,6 +336,7 @@ function menu_suppression_application() {
 }
 
 function menu_reinit_container() {
+
   touch $SERVICESPERUSER
   TABSERVICES=()
   for SERVICEACTIVATED in $(docker ps --format "{{.Names}}"); do
@@ -351,6 +352,7 @@ function menu_reinit_container() {
   if [ $exitstatus = 0 ]; then
 
     echo -e " ${GREEN}   * ${line}${NC}"
+    log_write "Reinit du container ${line}"
     subdomain=$(get_from_account_yml "sub.${line}.${line}")
     ###subdomain=$(grep "${line}" ${CONFDIR}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
 
