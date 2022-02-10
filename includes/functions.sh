@@ -1999,3 +1999,13 @@ function install_plextraktsync() {
   echo "L'outil est installé et se lancera automatiquement toutes les heures"
   pause
 }
+
+function install_block_public_tracker() {
+  echo "Block_public_tracker va bloquer les trackers publics (piratebay, etc...) sur votre machine au niveau réseau"
+  echo "Ces trackers ne seront plus accessibles"
+  echo "Appuyez sur entrée pour continer, ou ctrl+C pour sortir"
+  pause
+  ansible-playbook /opt/seedbox-compose/includes/config/playbooks/block_public_tracker.yml
+  echo "Block_public_tracker a été installé avec succès"
+  pause
+}
