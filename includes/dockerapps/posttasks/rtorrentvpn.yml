@@ -210,7 +210,7 @@
 
 - debug:
     msg:
-      - TRES IMPORTANT - Si le vpn exige une authentification, rajouter ces 2 lignes dans /opt/seedbox/conf/rutorrent-vpn.yml et réinitailiser
+      - TRES IMPORTANT - Si le vpn exige une authentification, rajouter ces 2 lignes dans /opt/seedbox/conf/rutorrent-vpn.yml et réinitialiser
       - VPN_USER=<vpn username>
       - VPN_PASS=<vpn password>
 
