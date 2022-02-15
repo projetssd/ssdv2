@@ -14,6 +14,7 @@
     state: stopped
 
 - name: Apply rights
+  become: yes
   file:
     path: "/opt/seedbox/docker/{{user.name}}/rtorrentvpn"
     owner: "{{user.name}}"
