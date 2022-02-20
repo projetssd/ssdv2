@@ -12,10 +12,11 @@ pg_env:
   PGID: '{{user.groupid}}'
   TZ: 'Europe/Paris'
   RT_INC_PORT: '50001'
+  RT_DHT_PORT: '6882'
 # tags spécifiques à ajouter à la construction du docker
 specific_docker_info:
   ports:
-    - '6881:6881'
+    - '6882:6882'
     - '50001:50001'
 #  Pour contourner l'authentification pour des outils de style nzb360, décommentez le pavé ci dessous
 #extra_labels:
