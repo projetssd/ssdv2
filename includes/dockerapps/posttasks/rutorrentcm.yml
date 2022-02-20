@@ -1,0 +1,24 @@
+---
+- name: 'Stop {{ pgrole }}'
+  docker_container:
+    name: '{{ pgrole }}'
+    state: stopped
+
+- name: Crete directory
+  file:
+    path: "/home/{{ lookup('env','USER') }}/local/{{pgrole}}"
+    state: directory
+
+- name: Set download location
+  lineinfile:
+    path: "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/data/rtorrent/.rtorrent.rc"
+    regexp: '#*directory.default.set\s*=.*'
+    line: "directory.default.set = /home/{{ lookup('env','USER') }}/local/{{pgrole}}"
+    state: present
+
+
+
+- name: 'Restart {{ pgrole }}'
+  docker_container:
+    name: '{{ pgrole }}'
+    state: started
