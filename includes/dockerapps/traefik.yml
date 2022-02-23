@@ -31,7 +31,13 @@
         state: absent
 
     - name: Create Basic Directories
-      file: "path={{item}} state=directory mode=0775"
+      become: yes
+      file:
+        path: "{{item}}"
+        state: "directory "
+        mode: "0775"
+        owner: "{{ lookup('env','USER') }}"
+        group: "{{ lookup('env','MYGIDNAME') }}"
       with_items:
         - "{{ lookup('env','CONFDIR') }}/docker/{{pgrole}}"
         - "{{ lookup('env','CONFDIR') }}/docker/{{pgrole}}/acme"
