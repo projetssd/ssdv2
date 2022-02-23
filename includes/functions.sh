@@ -1291,6 +1291,11 @@ function get_from_account_yml() {
     temp_return=notfound
   fi
   ansible-vault encrypt "${CONFDIR}/variables/account.yml" >/dev/null 2>&1
+  if [ "$1" == "network.ipv6" ]; then
+    if [[ "${temp_return}" == 'a['* ]]; then
+      temp_return=${temp_return:2:-1}
+    fi
+  fi
   echo $temp_return
 }
 
@@ -1480,7 +1485,7 @@ function usage() {
 function log_write() {
   DATE=$(date +'%F %T')
   FILE=/opt/seedbox-compose/logs/seedbox.log
-  echo "${DATE} - ${1}" >> ${FILE}
+  echo "${DATE} - ${1}" >>${FILE}
   echo "${1}"
 }
 
@@ -1652,7 +1657,7 @@ function stocke_public_ip() {
   IPV6=$(dig @resolver1.ipv6-sandbox.opendns.com AAAA myip.opendns.com +short -6)
   if [ $? -eq 0 ]; then
     echo "IPV6 = ${IPV6}"
-    manage_account_yml network.ipv6 ${IPV6}
+    manage_account_yml network.ipv6 "a[${IPV6}]"
   else
     echo "Aucune adresse ipv6 trouvée"
   fi
