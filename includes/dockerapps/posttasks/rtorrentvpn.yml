@@ -195,11 +195,6 @@
 
   when: not rccheck.stat.exists
 
-- name: Restart Docker Container
-  docker_container:
-    name: '{{pgrole}}'
-    state: started
-
 - debug:
     msg:
       - TRES IMPORTANT - Si le vpn exige une authentification, rajouter ces 2 lignes dans /opt/seedbox/conf/rutorrent-vpn.yml et réinitialiser
@@ -232,3 +227,8 @@
     owner: "root"
     group: "root"
   become: yes
+
+  - name: Restart Docker Container
+  docker_container:
+    name: '{{pgrole}}'
+    state: started
