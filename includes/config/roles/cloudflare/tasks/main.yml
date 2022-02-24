@@ -58,10 +58,9 @@
       value: "{{ ipv6 }}"
       record: "{{ subdomain }}"
     when: (network.ipv6 is defined) and (network.ipv6|length > 0)
-    #when: (ipv6.only is true)
-
+    
   - name: Display DNS Record ipv6
     debug:
       msg: "DNS Record for '{{ record }}' set to '{{ network.ipv6 }}'."
-    when: (network.ipv6 is defined) and (network.ipv6|length > 0) and (ipv6.only is true)
-    #when: (ipv6.only is true)
+    when: (network.ipv6 is defined) and (network.ipv6|length > 0)
+    
