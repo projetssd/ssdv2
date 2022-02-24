@@ -37,14 +37,14 @@
     set_fact:
       ipv6: "{{ network.ipv6 }}"
 
-  - name: correct ipv6
-    set_fact:
-      ipv6: "{{ ipv6 [2:-1]}}"
-    when: "{{ 'a[' in ipv6}}"
+  #- name: correct ipv6
+  #  set_fact:
+  #    ipv6: "{{ ipv6 [2:-1]}}"
+  #  when: "{{ 'a[' in ipv6}}"
 
-  - name: debug
-    debug:
-      msg: "IPV6 = {{ ipv6 }}"
+  #- name: debug
+  #  debug:
+  #    msg: "IPV6 = {{ ipv6 }}"
 
   - name: Set DNS Record ipv6
     cloudflare_dns:
@@ -57,9 +57,11 @@
       type: AAAA
       value: "{{ ipv6 }}"
       record: "{{ subdomain }}"
-    when: (network.ipv6 is defined) and (network.ipv6|length > 0) and (ipv6.only is true)
+    #when: (network.ipv6 is defined) and (network.ipv6|length > 0)
+    when: (ipv6.only is true)
 
   - name: Display DNS Record ipv6
     debug:
       msg: "DNS Record for '{{ record }}' set to '{{ network.ipv6 }}'."
-    when: (network.ipv6 is defined) and (network.ipv6|length > 0) and (ipv6.only is true)
+    #when: (network.ipv6 is defined) and (network.ipv6|length > 0) and (ipv6.only is true)
+    when: (ipv6.only is true)
