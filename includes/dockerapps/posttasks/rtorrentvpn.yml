@@ -228,7 +228,7 @@
     group: "root"
   become: yes
 
-  - name: Restart Docker Container
+- name: Restart Docker Container
   docker_container:
     name: '{{pgrole}}'
     state: started
