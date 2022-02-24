@@ -27,4 +27,5 @@
     proxied: yes
     type: AAAA
     record: "{{ subdomain }}"
-  
+
+
