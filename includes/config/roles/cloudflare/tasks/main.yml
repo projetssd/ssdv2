@@ -29,34 +29,34 @@
   debug:
     msg: "DNS Record for '{{ record }}' set to '{{ network.ipv4 }}'."
 
-- name: Set record for ipv6
-  block:
-  - name: get ipv6
-    set_fact:
-      ipv6: "{{ network.ipv6 }}"
-
-  - name: correct ipv6
-    set_fact:
-      ipv6: "{{ ipv6 [2:-1]}}"
-    when: "{{ 'a[' in ipv6}}"
-
-  - name: debug
-    debug:
-      msg: "IPV6 = {{ ipv6 }}"
-
-  - name: Set DNS Record ipv6
-    cloudflare_dns:
-      account_api_token: "{{ cloudflare.api }}"
-      account_email: "{{ cloudflare.login }}"
-      zone: "{{ user.domain }}"
-      state: present
-      solo: true
-      proxied: yes
-      type: AAAA
-      value: "{{ ipv6 }}"
-      record: "{{ subdomain }}"
-
-  - name: Display DNS Record ipv6
-    debug:
-      msg: "DNS Record for '{{ record }}' set to '{{ network.ipv6 }}'."
-  when: (network.ipv6 is defined) and (network.ipv6|length > 0)
+#- name: Set record for ipv6
+#  block:
+#  - name: get ipv6
+#    set_fact:
+#      ipv6: "{{ network.ipv6 }}"
+#
+#  - name: correct ipv6
+#    set_fact:
+#      ipv6: "{{ ipv6 [2:-1]}}"
+#    when: "{{ 'a[' in ipv6}}"
+#
+#  - name: debug
+#    debug:
+#      msg: "IPV6 = {{ ipv6 }}"
+#
+#  - name: Set DNS Record ipv6
+#    cloudflare_dns:
+#      account_api_token: "{{ cloudflare.api }}"
+#      account_email: "{{ cloudflare.login }}"
+#      zone: "{{ user.domain }}"
+#      state: present
+#      solo: true
+#      proxied: yes
+#      type: AAAA
+#      value: "{{ ipv6 }}"
+#      record: "{{ subdomain }}"
+#
+#  - name: Display DNS Record ipv6
+#    debug:
+#      msg: "DNS Record for '{{ record }}' set to '{{ network.ipv6 }}'."
+#  when: (network.ipv6 is defined) and (network.ipv6|length > 0)
