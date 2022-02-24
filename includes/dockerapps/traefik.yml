@@ -55,7 +55,7 @@
         mode: 0600
       when: acme_json.stat.exists == False
 
-     - name: Create directory
+    - name: Create directory
       file:
         path: "{{ item }}"
         state: directory
