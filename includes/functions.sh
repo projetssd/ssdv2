@@ -1654,7 +1654,8 @@ function stocke_public_ip() {
   IPV4=$(dig @resolver4.opendns.com myip.opendns.com +short -4)
   echo "IPV4 = ${IPV4}"
   manage_account_yml network.ipv4 ${IPV4}
-  IPV6=$(dig @resolver1.ipv6-sandbox.opendns.com AAAA myip.opendns.com +short -6)
+  #IPV6=$(dig @resolver1.ipv6-sandbox.opendns.com AAAA myip.opendns.com +short -6)
+  IPV6=$(curl -6 https://ifconfig.co)
   if [ $? -eq 0 ]; then
     echo "IPV6 = ${IPV6}"
     manage_account_yml network.ipv6 "a[${IPV6}]"
