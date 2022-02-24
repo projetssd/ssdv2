@@ -34,7 +34,7 @@
       become: yes
       file:
         path: "{{item}}"
-        state: "directory "
+        state: "directory"
         mode: "0775"
         owner: "{{ lookup('env','USER') }}"
         group: "{{ lookup('env','MYGIDNAME') }}"
