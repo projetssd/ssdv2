@@ -18,7 +18,7 @@
     type: A
     value: "{{ network.ipv4 }}"
     record: "{{ subdomain }}"
-
+  when: (ipv6.only is false)
 
 - name: Set record for ipv6
   cloudflare_dns:
@@ -30,4 +30,4 @@
     type: AAAA
     value: "{{ network.ipv6 }}"
     record: "{{ subdomain }}"
-  when: (network.ipv6 is defined) and (network.ipv6|length > 0)
+  when: (network.ipv6 is defined) and (network.ipv6|length > 0) and (ipv6.only is true)

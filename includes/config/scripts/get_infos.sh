@@ -87,6 +87,7 @@ if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
   else
     echo -e "${BLUE}Cloudflare login déjà renseigné${CEND}"
   fi
+
   CLOUD_API=$(get_from_account_yml cloudflare.api)
   if [ "$CLOUD_API" == notfound ]; then
     while [ -z "$cloud_api" ]; do
@@ -97,6 +98,18 @@ if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
     manage_account_yml cloudflare.api "$cloud_api"
   else
     echo -e "${BLUE}Cloudflare api déjà renseigné${CEND}"
+  fi
+  
+  IPV6_ONLY=$(get_from_account_yml ipv6.only)
+  if [ "$IPV6_ONLY" == notfound ]; then
+    while [ -z "$ipv6_only" ]; do
+      echo >&2 -n -e "${BWHITE}IPv6 only (yes OU no): ${CEND}"
+      read ipv6_only
+
+    done
+    manage_account_yml ipv6.only "$ipv6_only"
+  else
+    echo -e "${BLUE}IPV6 only déjà renseigné${CEND}"
   fi
 fi
 

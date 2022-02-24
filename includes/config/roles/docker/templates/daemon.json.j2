@@ -1,4 +1,8 @@
 {
+    "ipv6": true,
+    "fixed-cidr-v6": "fd00:dead:beef::/48",
+    "experimental": true,
+    "ip6tables": true,
     "storage-driver": "{{ ('zfs' in var_lib_file_system.stdout) | ternary('zfs','overlay2') }}",
     "userland-proxy": false,
     "log-driver": "json-file",

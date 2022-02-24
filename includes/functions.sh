@@ -86,9 +86,10 @@ function cloudflare() {
 
   if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
 
-    if [ -z "$cloud_email" ] || [ -z "$cloud_api" ]; then
+    if [ -z "$cloud_email" ] || [ -z "$cloud_api" || [ -z "$ipv6_only"  ]; then
       cloud_email=$1
       cloud_api=$2
+      ipv6_only=$3
     fi
 
     while [ -z "$cloud_email" ]; do
@@ -104,6 +105,12 @@ function cloudflare() {
       read cloud_api
       manage_account_yml cloudflare.api "$cloud_api"
       ###sed -i "/api:/c\   api: $cloud_api" ${CONFDIR}/variables/account.yml
+    done
+
+    while [ -z "$ipv6_only" ]; do
+      echo >&2 -n -e "${BWHITE}IPv6 only (yes OU no): ${CEND}"
+      read ipv6_only
+      manage_account_yml ipv6.only "$ipv6_only"
     done
   fi
   echo ""

@@ -55,14 +55,6 @@
         mode: 0600
       when: acme_json.stat.exists == False
 
-    - name: Create directory
-      file:
-        path: "{{ item }}"
-        state: directory
-      with_items:
-        - "{{ lookup('env','CONFDIR') }}/docker/{{pgrole}}/"
-        - "{{ lookup('env','CONFDIR') }}/docker/{{pgrole}}/rules"
-
     - name: create an empty file traefik.log
       file:
         path: "{{ lookup('env','CONFDIR') }}/docker/{{pgrole}}/traefik.log"
@@ -191,9 +183,12 @@
     - name: Deploy Traefik
       docker_container:
         name: '{{pgrole}}'
-        image: traefik:v2.4
+        image: traefik:v2.5
         pull: yes
         published_ports:
+          - "[::]:80:80"
+          - "[::]:443:443"
+          - "[::]:8080:8080"
           - "80:80"
           - "443:443"
           - "8080:8080"
@@ -214,6 +209,7 @@
         state: started
         networks:
           - name: traefik_proxy
+          - name: bridge
 
     - name: Google OAuth2 tasks
       include_tasks: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/{{pgrole}}/oauth.yml"

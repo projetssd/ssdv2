@@ -1,6 +1,6 @@
 ---
 - debug:
-    msg: Transférer maintenant (via ftp) le fichier opvn fournit par votre VPN dans /opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/openvpn !!
+    msg: Transférer maintenant (via ftp) le fichier opvn fournit par votre VPN dans /opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/{{vpn}} !!
 
 - name: Environ 2mn d'attente - config vpn et rutorrent en cours...
   wait_for:
@@ -12,14 +12,6 @@
   docker_container:
     name: '{{pgrole}}'
     state: stopped
-
-- name: Apply rights
-  become: yes
-  file:
-    path: "/opt/seedbox/docker/{{user.name}}/rtorrentvpn"
-    owner: "{{user.name}}"
-    group: "{{user.group}}"
-    recurse: yes
 
 - name: Set download location
   lineinfile:
@@ -217,3 +209,26 @@
 - name: Prenez 10s pour lire le message au dessus - Consulter les logs 'docker logs -f rtorrentvpn'
   wait_for:
     timeout: 10
+
+- name: Apply rights '/opt/seedbox/docker/{{user.name}}/rtorrentvpn'
+  file:
+    path: "/opt/seedbox/docker/{{user.name}}/rtorrentvpn"
+    owner: "{{user.userid}}"
+    group: "{{user.groupid}}"
+    recurse: yes
+  become: yes
+
+- name: Apply rights '/home/{{user.name}}/local/rtorrentvpn'
+  file:
+    path: "/home/{{user.name}}/local/rtorrentvpn"
+    owner: "{{user.userid}}"
+    group: "{{user.groupid}}"
+    recurse: yes
+  become: yes
+
+- name: Apply rights file '/opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/perms.txt'
+  file:
+    path: "/opt/seedbox/docker/{{user.name}}/rtorrentvpn/config/perms.txt"
+    owner: "root"
+    group: "root"
+  become: yes
