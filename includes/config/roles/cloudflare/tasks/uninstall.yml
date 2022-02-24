@@ -16,7 +16,6 @@
     state: absent
     proxied: yes
     type: A
-    value: "{{ network.ipv4 }}"
     record: "{{ subdomain }}"
 
 
@@ -28,6 +27,4 @@
     state: absent
     proxied: yes
     type: AAAA
-    value: "{{ network.ipv6 }}"
     record: "{{ subdomain }}"
-  when: (network.ipv6 is defined) and (network.ipv6|length > 0)
