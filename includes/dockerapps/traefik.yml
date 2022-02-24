@@ -55,6 +55,14 @@
         mode: 0600
       when: acme_json.stat.exists == False
 
+     - name: Create directory
+      file:
+        path: "{{ item }}"
+        state: directory
+      with_items:
+        - "{{ lookup('env','CONFDIR') }}/docker/{{pgrole}}/"
+        - "{{ lookup('env','CONFDIR') }}/docker/{{pgrole}}/rules"
+        
     - name: create an empty file traefik.log
       file:
         path: "{{ lookup('env','CONFDIR') }}/docker/{{pgrole}}/traefik.log"
