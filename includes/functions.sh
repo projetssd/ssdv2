@@ -1106,7 +1106,6 @@ function suppression_appli() {
     docker rm -f memcached-$APPSELECTED >/dev/null 2>&1
   fi
 
-  docker system prune -af >/dev/null 2>&1
   checking_errors $?
 
   ansible-playbook -e pgrole=${APPSELECTED} /opt/seedbox-compose/includes/config/playbooks/remove_cf_record.yml

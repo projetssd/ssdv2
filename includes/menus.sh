@@ -362,7 +362,6 @@ function menu_reinit_container() {
     rm -f "${CONFDIR}/conf/${line}.yml"
     rm -f "${CONFDIR}/vars/${line}.yml"
 
-    docker system prune -af >/dev/null 2>&1
     docker volume rm $(docker volume ls -qf "dangling=true") >/dev/null 2>&1
     echo ""
     echo ${line} >>$SERVICESPERUSER
