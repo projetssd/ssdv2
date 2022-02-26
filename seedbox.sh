@@ -254,6 +254,13 @@ if [ $mode_install = "manuel" ]; then
         cp /opt/seedbox/variables/account.yml /opt/seedbox/variables/account.restore
         mv /opt/seebox/variables/account.temp /opt/seebox/variables/account.yml
         stocke_public_ip
+        ## on remet les bonnes infos
+        userid=$(id -u)
+        grpid=$(id -g)
+
+        manage_account_yml user.userid "$userid"
+        manage_account_yml user.id "$userid"
+        manage_account_yml user.groupid "$grpid"
         ## reinitialisation de toutes les applis
         sqlite3 /opt/seedbox-compose/ssddb <<EOF >$SERVICESPERUSER
 select name from applications;
