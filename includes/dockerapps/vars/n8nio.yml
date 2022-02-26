@@ -13,4 +13,5 @@ pg_env:
   DB_MYSQLDB_USER: "{{ pgrole }}"
   DB_MYSQLDB_PASSWORD: "{{ pgrole }}"
   TZ: "Europe/Paris"
+  WEBHOOK_URL: "https://{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{ user.domain }}"
 
