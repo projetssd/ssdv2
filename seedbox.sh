@@ -319,3 +319,12 @@ EOF
 
   affiche_menu_db
 fi
+
+function relance_tous_services() {
+  sqlite3 /opt/seedbox-compose/ssddb <<EOF >$SERVICESPERUSER
+select name from applications;
+EOF
+
+  rm /home/${USER}/resume
+  install_services
+}
