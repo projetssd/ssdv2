@@ -262,13 +262,7 @@ if [ $mode_install = "manuel" ]; then
         manage_account_yml user.id "$userid"
         manage_account_yml user.groupid "$grpid"
         ## reinitialisation de toutes les applis
-        sqlite3 /opt/seedbox-compose/ssddb <<EOF >$SERVICESPERUSER
-select name from applications;
-EOF
-
-        #while read line; do echo $line | cut -d'.' -f1; done <"/home/${USER}/resume" >$SERVICESPERUSER
-        rm /home/${USER}/resume
-        install_services
+        relance_tous_services
         # on marque la seedbox comme installée
         update_seedbox_param "installed" 1
         affiche_menu_db
@@ -320,11 +314,3 @@ EOF
   affiche_menu_db
 fi
 
-function relance_tous_services() {
-  sqlite3 /opt/seedbox-compose/ssddb <<EOF >$SERVICESPERUSER
-select name from applications;
-EOF
-
-  rm /home/${USER}/resume
-  install_services
-}

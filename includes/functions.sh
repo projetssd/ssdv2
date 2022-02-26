@@ -2014,3 +2014,12 @@ function install_block_public_tracker() {
   echo "Block_public_tracker a été installé avec succès"
   pause
 }
+
+function relance_tous_services() {
+  sqlite3 /opt/seedbox-compose/ssddb <<EOF >$SERVICESPERUSER
+select name from applications;
+EOF
+
+  rm /home/${USER}/resume
+  install_services
+}
