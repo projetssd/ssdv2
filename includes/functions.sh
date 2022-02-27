@@ -2022,4 +2022,5 @@ EOF
 
   rm /home/${USER}/resume
   install_services
+  launch_service traefik
 }

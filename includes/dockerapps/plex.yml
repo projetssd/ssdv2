@@ -183,5 +183,12 @@
         echo "{{pgrole}}-{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> {{ lookup('env','CONFDIR') }}/temp.txt
 
 
-
+    - name: Insert plex into database
+      shell :
+        cmd: |
+          sqlite3 {{  lookup('env','BASEDIR') }}/ssddb << EOF
+              replace into applications (name,status,subdomain,port)
+              values
+              ('plex',2,'{{sub[pgrole][pgrole] if sub_enabled else pgrole}}',32400);
+          EOF
 
