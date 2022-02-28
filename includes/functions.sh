@@ -1118,9 +1118,10 @@ function suppression_appli() {
   req2="'"
   req=${req1}${APPSELECTED}${req2}
   sqlite3 ${SCRIPTPATH}/ssddb <<EOF
+
+  # suppression des enregitrements cloudflare
     $req
 EOF
-  # suppression des enregitrements cloudflare
 
 }
 
@@ -1264,13 +1265,22 @@ function manage_account_yml() {
   # pour supprimer une clé, il faut que le value soit égale à un espace
   # ex : manage_account_yml sub.toto.toto toto => va créer la clé sub.toto.toto et lui mettre à la valeur toto
   # ex : manage_account_yml sub.toto.toto " " => va supprimer la clé sub.toto.toto et toutes les sous clés
-  ansible-vault decrypt "${CONFDIR}/variables/account.yml" >/dev/null 2>&1
-  if [ "${2}" = " " ]; then
-    ansible-playbook "${BASEDIR}/includes/config/playbooks/manage_account_yml.yml" -e "account_key=${1} account_value=${2}  state=absent"
+  if [ -f /opt/seedbox/.account.lock ]; then
+    echo "Fichier account locké, impossible de continuer"
+    echo "----------------------------------------------"
+    echo "Présence du fichier /opt/seedbox/.account.lock"
+    exit 1
   else
-    ansible-playbook "${BASEDIR}/includes/config/playbooks/manage_account_yml.yml" -e "account_key=${1} account_value=${2} state=present"
+    touch /opt/seedbox/.account.lock
+    ansible-vault decrypt "${CONFDIR}/variables/account.yml" >/dev/null 2>&1
+    if [ "${2}" = " " ]; then
+      ansible-playbook "${BASEDIR}/includes/config/playbooks/manage_account_yml.yml" -e "account_key=${1} account_value=${2}  state=absent"
+    else
+      ansible-playbook "${BASEDIR}/includes/config/playbooks/manage_account_yml.yml" -e "account_key=${1} account_value=${2} state=present"
+    fi
+    ansible-vault encrypt "${CONFDIR}/variables/account.yml" >/dev/null 2>&1
+    rm -f
   fi
-  ansible-vault encrypt "${CONFDIR}/variables/account.yml" >/dev/null 2>&1
 }
 
 function get_from_account_yml() {
@@ -1278,24 +1288,33 @@ function get_from_account_yml() {
   # get_from_account_yml user.name
   # retourne la valeur trouvée
   # si la valeur est vide ou n'existe pas, retourn la chaine "notfound"
-  ansible-vault decrypt "${CONFDIR}/variables/account.yml" >/dev/null 2>&1
-  temp_return=$(shyaml -q get-value $1 <"${CONFDIR}/variables/account.yml")
-  if [ $? != 0 ]; then
-    temp_return=notfound
-  fi
-  if [ -z "$temp_return" ]; then
-    temp_return=notfound
-  fi
-  if [ "$temp_return" == "None" ]; then
-    temp_return=notfound
-  fi
-  ansible-vault encrypt "${CONFDIR}/variables/account.yml" >/dev/null 2>&1
-  if [ "$1" == "network.ipv6" ]; then
-    if [[ "${temp_return}" == 'a['* ]]; then
-      temp_return=${temp_return:2:-1}
+  if [ -f /opt/seedbox/.account.lock ]; then
+    echo "Fichier account locké, impossible de continuer"
+    echo "----------------------------------------------"
+    echo "Présence du fichier /opt/seedbox/.account.lock"
+    exit 1
+  else
+    touch /opt/seedbox/.account.lock
+    ansible-vault decrypt "${CONFDIR}/variables/account.yml" >/dev/null 2>&1
+    temp_return=$(shyaml -q get-value $1 <"${CONFDIR}/variables/account.yml")
+    if [ $? != 0 ]; then
+      temp_return=notfound
     fi
+    if [ -z "$temp_return" ]; then
+      temp_return=notfound
+    fi
+    if [ "$temp_return" == "None" ]; then
+      temp_return=notfound
+    fi
+    ansible-vault encrypt "${CONFDIR}/variables/account.yml" >/dev/null 2>&1
+    if [ "$1" == "network.ipv6" ]; then
+      if [[ "${temp_return}" == 'a['* ]]; then
+        temp_return=${temp_return:2:-1}
+      fi
+    fi
+    echo $temp_return
+    rm -f /opt/seedbox/.account.lock
   fi
-  echo $temp_return
 }
 
 function install_gui() {
