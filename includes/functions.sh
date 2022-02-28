@@ -1279,7 +1279,7 @@ function manage_account_yml() {
       ansible-playbook "${BASEDIR}/includes/config/playbooks/manage_account_yml.yml" -e "account_key=${1} account_value=${2} state=present"
     fi
     ansible-vault encrypt "${CONFDIR}/variables/account.yml" >/dev/null 2>&1
-    rm -f
+    rm -f /opt/seedbox/.account.lock
   fi
 }
 
