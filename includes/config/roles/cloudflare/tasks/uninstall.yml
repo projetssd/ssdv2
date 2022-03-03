@@ -8,7 +8,7 @@
 #                   GNU General Public License v3.0                     #
 #########################################################################
 ---
-- name: Set DNS Record
+- name: Remove DNS Record
   cloudflare_dns:
     account_api_token: "{{ cloudflare.api }}"
     account_email: "{{ cloudflare.login }}"
@@ -16,11 +16,10 @@
     state: absent
     proxied: yes
     type: A
-    value: "{{ network.ipv4 }}"
     record: "{{ subdomain }}"
 
 
-- name: Set record for ipv6
+- name: Remove record for ipv6
   cloudflare_dns:
     account_api_token: "{{ cloudflare.api }}"
     account_email: "{{ cloudflare.login }}"
@@ -28,6 +27,5 @@
     state: absent
     proxied: yes
     type: AAAA
-    value: "{{ network.ipv6 }}"
     record: "{{ subdomain }}"
   when: (network.ipv6 is defined) and (network.ipv6|length > 0)

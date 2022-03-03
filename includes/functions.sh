@@ -1119,8 +1119,7 @@ function suppression_appli() {
   req=${req1}${APPSELECTED}${req2}
   sqlite3 ${SCRIPTPATH}/ssddb <<EOF
 
-  # suppression des enregitrements cloudflare
-    $req
+
 EOF
 
 }
