@@ -7,6 +7,7 @@ if [[ ! -d "/opt/seedbox/docker/geerlingguy.security" ]]; then
 
 	echo "roles_path = /opt/seedbox/docker" >> "/etc/ansible/ansible.cfg"
 	#configuration ssh
+	mkdir -p /opt/seedbox/docker/geerlingguy.security/defaults
 	echo -e "${BLUE}### SSH GEERLINGGUY ###${NC}"
 	echo ""
 	ansible-galaxy install geerlingguy.security
@@ -27,6 +28,7 @@ else
 	echo ""
 	echo -e "\n${CCYAN} /!\ Par mesure de sécurité il est fortement conseillé de changer le port ssh /!\ ${CEND}"
 	echo ""
+	mkdir -p /opt/seedbox/docker/geerlingguy.security/defaults
 	cp "/opt/seedbox-compose/includes/dockerapps/templates/ssh/defaults/main.yml.j2" "/opt/seedbox/docker/geerlingguy.security/defaults/main.yml"
 	ansible-playbook /opt/seedbox/docker/geerlingguy.security/main.yml
 	echo ""
