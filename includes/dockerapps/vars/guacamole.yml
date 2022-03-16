@@ -12,4 +12,4 @@ pg_env:
   MYSQL_PASSWORD: "{{pgrole}}"
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
-  GUACD_HOSTNAME: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
+  GUACD_HOSTNAME: "guacd"

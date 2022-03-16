@@ -13,6 +13,7 @@ pg_volumes:
   - "/etc/passwd:/host/etc/passwd:ro"
   - "/etc/group:/host/etc/group:ro"
   - "/etc/os-release:/host/etc/os-release:ro"
+  - "/tmp:/tmp:rw"
 pg_env:
   PGID: "{{ getent_group['docker'][1] }}"
 # tags spécifiques à ajouter à la construction du docker
