@@ -18,21 +18,21 @@
 
 - name: Remove automove block 1
   lineinfile:
-    - path: "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/data/rtorrent/.rtorrent.rc"
-      line: 'method.insert = d.get_finished_dir, simple, "cat=$cfg.download_complete=,$d.custom1="'
-      state: absent
+    path: "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/data/rtorrent/.rtorrent.rc"
+    line: 'method.insert = d.get_finished_dir, simple, "cat=$cfg.download_complete=,$d.custom1="'
+    state: absent
 
 - name: Remove automove block 2
   lineinfile:
-    - path: "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/data/rtorrent/.rtorrent.rc"
-      line: 'method.insert = d.move_to_complete, simple, "d.directory.set=$argument.1=; execute=mkdir,-p,$argument.1=; execute=mv,-u,$argument.0=,$argument.1=; d.save_full_session="'
-      state: absent
+    path: "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/data/rtorrent/.rtorrent.rc"
+    line: 'method.insert = d.move_to_complete, simple, "d.directory.set=$argument.1=; execute=mkdir,-p,$argument.1=; execute=mv,-u,$argument.0=,$argument.1=; d.save_full_session="'
+    state: absent
 
 - name: Remove automove block 3
   lineinfile:
-    - path: "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/data/rtorrent/.rtorrent.rc"
-      line: 'method.set_key = event.download.finished,move_complete,"d.move_to_complete=$d.data_path=,$d.get_finished_dir="'
-      state: absent
+    path: "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/data/rtorrent/.rtorrent.rc"
+    line: 'method.set_key = event.download.finished,move_complete,"d.move_to_complete=$d.data_path=,$d.get_finished_dir="'
+    state: absent
 
 - name: 'Restart {{ pgrole }}'
   docker_container:
