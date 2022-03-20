@@ -2,7 +2,7 @@
 <br />
 
 
-[![Discord: https://discordapp.com/invite/HZNMGjDRhp](https://img.shields.io/badge/Discord-gray.svg?style=for-the-badge)](https://discordapp.com/invite/HZNMGjDRhp)
+[![Discord: https://discordapp.com/invite/HZNMGjDRhp](https://img.shields.io/badge/Discord-gray.svg?style=for-the-badge)](https://discordapp.com/invite/kkwEvV6dfj)
 
 ## Comment migrer de la v1 vers la v2 ?
 
