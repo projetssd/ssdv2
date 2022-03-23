@@ -122,7 +122,7 @@
             ADMIN_USER_EMAIL: "{{ user.mail }}"
             ADMIN_USER_NAME: "{{ user.name }}"
             ADMIN_USER_PWD: "{{ user.pass }}"
-            BASE_URL: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}"
+            BASE_URL: "https://{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}"
             SECRET_KEY_BASE: 'exolxzyz'
             DATABASE_URL: "http://db-{{pgrole}}:5432/plausible_dev"
             CLICKHOUSE_DATABASE_URL: "http://clickhouse-{{pgrole}}:8123/plausible_dev"
@@ -163,6 +163,17 @@
           state: started
           ulimits:
             - nofile:262144:262144
+
+      - name: 'Deploying {{pgrole}} smtp'
+        docker_container:
+          name: 'mail-{{pgrole}}'
+          image: 'bytemark/smtp'
+          pull: yes
+          restart_policy: unless-stopped
+          networks:
+            - name: "{{pgrole}}-net"
+          state: started
+
 
       - name: 'Deploying {{pgrole}}'
         docker_container:
