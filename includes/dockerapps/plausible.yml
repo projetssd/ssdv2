@@ -142,7 +142,7 @@
           volumes:
             - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db:/var/lib/postgresql/data"
           env:
-            - POSTGRES_PASSWORD: postgres
+            POSTGRES_PASSWORD: postgres
           restart_policy: unless-stopped
           networks:
             - name: "{{pgrole}}-net"
