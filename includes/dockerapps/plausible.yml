@@ -124,9 +124,17 @@
             ADMIN_USER_NAME: "{{ user.name }}"
             ADMIN_USER_PWD: "{{ user.pass }}"
             BASE_URL: "https://{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}"
-            SECRET_KEY_BASE: 'exolxzyz'
+            SECRET_KEY_BASE: '/Y7ao9bbVikUYbXmEcCy5w=='
             DATABASE_URL: "http://db-{{pgrole}}:5432/plausible_dev"
             CLICKHOUSE_DATABASE_URL: "http://clickhouse-{{pgrole}}:8123/plausible_dev"
+            ########################################################################
+            #MAILER_EMAIL:	hello@plausible.local	#The email id to use for as from address of all communications from Plausible.
+            #SMTP_HOST_ADDR:	localhost	#The host address of your smtp server.
+            #SMTP_HOST_PORT:	25	#The port of your smtp server.
+            #SMTP_USER_NAME:	--	#The username/email in case SMTP auth is enabled.
+            #SMTP_USER_PWD:	--	#The password in case SMTP auth is enabled.
+            #SMTP_HOST_SSL_ENABLED:	false	#If SSL is enabled for SMTP connection
+            #SMTP_RETRIES:	2	#Number of retries to make until mailer gives up.
   
       # MAIN DEPLOYMENT #############################################################
   
@@ -165,15 +173,7 @@
           ulimits:
             - nofile:262144:262144
 
-      - name: 'Deploying {{pgrole}} smtp'
-        docker_container:
-          name: 'mail-{{pgrole}}'
-          image: 'bytemark/smtp'
-          pull: yes
-          restart_policy: unless-stopped
-          networks:
-            - name: "{{pgrole}}-net"
-          state: started
+
 
 
       - name: 'Deploying {{pgrole}}'
