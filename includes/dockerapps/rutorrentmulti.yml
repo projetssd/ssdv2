@@ -37,7 +37,7 @@
       shell: /bin/bash
       uid: "{{ uidguid }}"
       createhome: yes
-      home: "{{ lookup('env','HOME') }}/{{ usermulti }}"
+      home: "/home/{{ usermulti }}"
   - name: Generate htpasswd
     command: "htpasswd -n -b {{ usermulti }} {{ passwordeuh }}"
     register: temphtpasswd
@@ -103,9 +103,9 @@
     become: yes
     file: "path={{item}} state=directory mode=0775 owner={{ uidguid }} group={{ uidguid }}"
     with_items:
-      - "{{ lookup('env','HOME') }}/{{ usermulti }}/docker/{{pgrole}}/config:/config"
-      - "{{ lookup('env','HOME') }}/{{ usermulti }}/docker/{{pgrole}}/data:/data"
-      - "{{ lookup('env','HOME') }}/{{ usermulti}}:{{ lookup('env','HOME') }}/{{ usermulti}}"
+      - "/home/{{ usermulti }}/docker/{{pgrole}}/config"
+      - "/home/{{ usermulti }}/docker/{{pgrole}}/data"
+      - "/home/{{ usermulti }}"
 
   # LABELS ######################################################################
 
@@ -149,10 +149,10 @@
       image: '{{image}}'
       pull: yes
       volumes:
-        - "{{ lookup('env','HOME') }}/{{ usermulti }}/docker/{{pgrole}}/config:/config"
-        - "{{ lookup('env','HOME') }}/{{ usermulti }}/docker/{{pgrole}}/data:/data"
-        - "{{ lookup('env','HOME') }}/{{ usermulti }}/docker/{{pgrole}}/sock:/run/rtorrent"
-        - "{{ lookup('env','HOME') }}/{{ usermulti}}:{{ lookup('env','HOME') }}/{{ usermulti}}"
+        - "/home/{{ usermulti }}/docker/{{pgrole}}/config:/config"
+        - "/home/{{ usermulti }}/docker/{{pgrole}}/data:/data"
+        - "/home/{{ usermulti }}/docker/{{pgrole}}/sock:/run/rtorrent"
+        - "/home/{{ usermulti}}:/home/{{ usermulti}}"
         - '/etc/localtime:/etc/localtime:ro'
       env: '{{pg_env}}'
       restart_policy: unless-stopped
@@ -170,7 +170,7 @@
   - name: Create directory
     become: yes
     file:
-      path: "{{ lookup('env','HOME') }}/{{ usermulti }}/local/{{pgrole}}"
+      path: "/home/{{ usermulti }}/local/{{pgrole}}"
       state: directory
       owner: "{{ uidguid }}"
       group: "{{ uidguid }}"
@@ -178,7 +178,7 @@
   - name: Set download location
     become: yes
     lineinfile:
-      path: "{{ lookup('env','HOME') }}/{{ usermulti }}/docker/{{pgrole}}/config/rtorrent/.rtorrent.rc"
+      path: "/home/{{ usermulti }}/docker/{{pgrole}}/config/rtorrent/.rtorrent.rc"
       regexp: '#*directory.default.set\s*=.*'
       line: "directory.default.set = {{ lookup('env','HOME') }}/{{ usermulti }}/local/{{pgrole}}"
       state: present
@@ -186,14 +186,14 @@
   - name: Set download location
     become: yes
     lineinfile:
-      path: "{{ lookup('env','HOME') }}/{{ usermulti }}/docker/{{pgrole}}/config/rutorrent/conf/config.php"
+      path: "/home/{ usermulti }}/docker/{{pgrole}}/config/rutorrent/conf/config.php"
       regexp: '\$topDirectory\s*=.*'
       line: "$topDirectory = '{{ lookup('env','HOME') }}/{{ usermulti }}/local/{{pgrole}}';"
       state: present
 
   - name: 'Restart {{ pgrole }}'
     docker_container:
-      name: '{{ pgrole }}}'
+      name: '{{ pgrole }}'
       state: started
 
 
