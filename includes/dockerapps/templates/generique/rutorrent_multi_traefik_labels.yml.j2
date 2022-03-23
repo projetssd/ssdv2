@@ -1,6 +1,5 @@
 {% set fqdn = pgrole ~ '.' ~ user.domain %}
 
-
 traefik.enable: 'true'
 ## middleware auth
 traefik.http.middlewares.{{pgrole}}-auth.basicauth.users: "{{ myhtpasswd }}"
