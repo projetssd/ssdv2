@@ -5,11 +5,11 @@
   register: usermulti
 - set_fact:
     usermulti: "{{ usermulti.user_input }}"
--pause:
+- pause:
     prompt: "Password pour l'utilisateur"
     echo: yes
   register: passwordeuh
--set_fact:
+- set_fact:
     passwordeuh: "{{ passwordeuh.user_input }}"
 - pause:
     prompt: "UID GUID choisi"
