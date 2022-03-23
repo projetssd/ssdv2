@@ -3,7 +3,7 @@
 
 traefik.enable: 'true'
 ## middleware auth
-traefik.http.middlewares.{{pgrole}}-auth.basicauth.user: "{{ myhtpasswd }}"
+traefik.http.middlewares.{{pgrole}}-auth.basicauth.users: "{{ myhtpasswd }}"
 ## HTTP Routers
 traefik.http.routers.{{pgrole}}-rtr.entrypoints: 'https'
 traefik.http.routers.{{pgrole}}-rtr.rule: 'Host(`{{ fqdn }}`)'
