@@ -176,6 +176,7 @@
       group: "{{ uidguid }}"
 
   - name: Set download location
+    become: yes
     lineinfile:
       path: "{{ lookup('env','HOME') }}/{{ usermulti }}/docker/{{pgrole}}/config/rtorrent/.rtorrent.rc"
       regexp: '#*directory.default.set\s*=.*'
