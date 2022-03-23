@@ -145,7 +145,7 @@
   # MAIN DEPLOYMENT #############################################################
   - name: 'Deploying {{pgrole}}'
     docker_container:
-      name: '{{pgrole}}-{{ usermulti }}'
+      name: '{{pgrole}}'
       image: '{{image}}'
       pull: yes
       volumes:
@@ -162,15 +162,18 @@
       labels: '{{pg_labels}}'
 
 
-  - name: 'Stop {{ pgrole }}-{{ usermulti }}'
+  - name: 'Stop {{ pgrole }}'
     docker_container:
-      name: '{{ pgrole }}-{{ usermulti }}'
+      name: '{{ pgrole }}'
       state: stopped
 
   - name: Create directory
+    become: yes
     file:
       path: "{{ lookup('env','HOME') }}/{{ usermulti }}/local/{{pgrole}}"
       state: directory
+      owner: "{{ uidguid }}"
+      group: "{{ uidguid }}"
 
   - name: Set download location
     lineinfile:
@@ -186,9 +189,9 @@
       line: "$topDirectory = '{{ lookup('env','HOME') }}/{{ usermulti }}/local/{{pgrole}}';"
       state: present
 
-  - name: 'Restart {{ pgrole }}-{{ usermulti }}'
+  - name: 'Restart {{ pgrole }}'
     docker_container:
-      name: '{{ pgrole }}-{{ usermulti }}'
+      name: '{{ pgrole }}}'
       state: started
 
 
