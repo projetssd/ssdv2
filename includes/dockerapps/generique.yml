@@ -93,9 +93,6 @@
 
     
     # POST TASKS ###################################################################
-    - name: On remet le vieux pgrole
-      set_fact:
-        pgrole: "{{ oldpgrole }}"
 
     - name: Check that posttasks file exists
       stat:
