@@ -93,10 +93,15 @@
         copy:
           src: "/opt/seedbox-compose/includes/dockerapps/templates/plausible/{{ item }}"
           dest:  "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/event/{{ item }}"
-
         with_items:
           - "clickhouse-config.xml"
           - "clickhouse-user-config.xml"
+
+      - name: Copy create table script
+        copy:
+          src: "/opt/seedbox-compose/includes/dockerapps/templates/plausible/create_db_clickhouse.sh"
+          dest: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/event/initdb/init-db.sh"
+
       # LABELS ######################################################################
       - name: 'Ajout label traefik'
         set_fact:
@@ -126,7 +131,7 @@
             BASE_URL: "https://{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}"
             SECRET_KEY_BASE: 'UUz8NoHVhXd3XDyS7MFshvfcWZTeQBWtpnomgJzUt2WvqceQq7kbSGXCLq2AisusGwoQ5ui'
             DATABASE_URL: "http://{{pgrole}}:{{pgrole}}@db-{{pgrole}}:5432/{{ pgrole }}"
-            CLICKHOUSE_DATABASE_URL: "http://clickhouse-{{pgrole}}:8123/plausible_dev"
+            CLICKHOUSE_DATABASE_URL: "http://clickhouse-{{pgrole}}:8123/plausible"
             ########################################################################
             #MAILER_EMAIL:	hello@plausible.local	#The email id to use for as from address of all communications from Plausible.
             #SMTP_HOST_ADDR:	localhost	#The host address of your smtp server.
@@ -166,6 +171,7 @@
           pull: yes
           volumes:
             - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/event/var/lib:/var/lib/clickhouse"
+            -  "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/event/initdb:/docker-entrypoint-initdb.d"
             - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/eventclickhouse-config.xml:/etc/clickhouse-server/config.d/logging.xml:ro"
             - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/clickhouse-user-config.xml:/etc/clickhouse-server/users.d/logging.xml:ro"
           restart_policy: unless-stopped
@@ -174,6 +180,7 @@
           state: started
           ulimits:
             - nofile:262144:262144
+
 
       - name: 'Deploying {{pgrole}}'
         docker_container:
@@ -188,7 +195,7 @@
             - name: "{{pgrole}}-net"
           state: started
           labels: '{{pg_labels}}'
-          command: sh -c "sleep 10 && /entrypoint.sh db createdb && /entrypoint.sh db migrate && /entrypoint.sh db init-admin && /entrypoint.sh run"
+          command: sh -c "sleep 10 && /entrypoint.sh db migrate && /entrypoint.sh db init-admin && /entrypoint.sh run"
 
       # Administratif pour ssd
       - name: add resume file
