@@ -115,7 +115,7 @@
             traefik.tcp.routers.plausible-tcp.tls.passthrough: 'true'
             ## HTTP Services
             traefik.tcp.routers.plausible-tcp.service: "{{pgrole}}-tcp-svc"
-            traefik.tcp.services.plausible-tcp-svc".loadbalancer.server.port: "{{ intport }}"
+            traefik.tcp.services.plausible-tcp-svc.loadbalancer.server.port: "{{ intport }}"
   
       - name: 'Setting PG Volumes'
         set_fact:
