@@ -109,13 +109,17 @@
           pg_labels:
             traefik.enable: 'true'
             ## TCP Routers
-            traefik.tcp.routers.plausible-tcp.entrypoints: 'https'
-            traefik.tcp.routers.plausible-tcp.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
-            traefik.tcp.routers.plausible-tcp.tls: 'true'
-            traefik.tcp.routers.plausible-tcp.tls.passthrough: 'true'
+            traefik.http.routers.plausible-rtr.entrypoints: 'https'
+            traefik.http.routers.plausible-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
+            traefik.http.routers.plausible-rtr.tls: 'true'
+            traefik.http.routers.plausible-rtr.tls.passthrough: 'true'
+            traefik.http.routers.plausible-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
+            else 'chain-basic-auth@file' if auth_enabled and sub[pgrole].auth == 'basique' | default(false)
+            else 'chain-oauth@file' if auth_enabled and sub[pgrole].auth == 'oauth' | default(false) 
+            else omit if auth_enabled and sub[pgrole].auth == 'aucune'}}"
             ## HTTP Services
-            traefik.tcp.routers.plausible-tcp.service: "{{pgrole}}-tcp-svc"
-            traefik.tcp.services.plausible-tcp-svc.loadbalancer.server.port: "{{ intport }}"
+            traefik.http.routers.plausible-rtr.service: "{{pgrole}}-svc"
+            traefik.http.services.plausible-svc.loadbalancer.server.port: "{{ intport }}"
   
       - name: 'Setting PG Volumes'
         set_fact:
