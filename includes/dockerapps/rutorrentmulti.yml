@@ -117,7 +117,7 @@
 
   - name: fill temp file with labels
     template:
-      src: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/rutorrent_mutli_traefik_labels.yml.j2"
+      src: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/rutorrent_multi_traefik_labels.yml.j2"
       dest: "{{ tempfile_1.path }}"
       force: yes
 
