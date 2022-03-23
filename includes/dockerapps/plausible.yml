@@ -90,10 +90,10 @@
 
       - name: Copy conf
         copy:
-          src: "/opt/seedbox-docker/includes/dockerapps/templates/plausible/{{ item }}"
+          src: "/opt/seedbox-compose/includes/dockerapps/templates/plausible/{{ item }}"
           dest:  "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/event/{{ item }}"
 
-        with_itmes:
+        with_items:
           - "clickhouse-config.xml"
           - "clickhouse-user-config.xml"
       # LABELS ######################################################################
