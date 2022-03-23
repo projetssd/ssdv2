@@ -186,7 +186,7 @@
   - name: Set download location
     become: yes
     lineinfile:
-      path: "/home/{ usermulti }}/docker/{{pgrole}}/config/rutorrent/conf/config.php"
+      path: "/home/{{ usermulti }}/docker/{{pgrole}}/config/rutorrent/conf/config.php"
       regexp: '\$topDirectory\s*=.*'
       line: "$topDirectory = '{{ lookup('env','HOME') }}/{{ usermulti }}/local/{{pgrole}}';"
       state: present
