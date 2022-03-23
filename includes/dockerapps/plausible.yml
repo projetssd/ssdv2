@@ -83,6 +83,7 @@
         when: cloudflare_enabled
     
       - name: Creating paths
+        become: yes
         file: "path={{item}} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID') }}"
         with_items:
           - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}"
