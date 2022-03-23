@@ -14,6 +14,15 @@
 
 
   tasks:
+    # PRE TASKS ###################################################################
+    - name: Check that pretasks file exists
+      stat:
+        path: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/pretasks/{{ pgrole }}.yml"
+      register: stat_result
+
+    - name: Launch Pretask
+      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/pretasks/{{ pgrole }}.yml"
+      when: stat_result.stat.exists
         
     # FACTS #######################################################################
 
@@ -34,15 +43,7 @@
       with_items:
         - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}"    
     
-    # PRE TASKS ###################################################################
-    - name: Check that pretasks file exists
-      stat:
-        path: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/pretasks/{{ pgrole }}.yml"
-      register: stat_result
-      
-    - name: Launch Pretask
-      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/pretasks/{{ pgrole }}.yml"
-      when: stat_result.stat.exists
+
 
     # LABELS ######################################################################
     - name: Create temp file
