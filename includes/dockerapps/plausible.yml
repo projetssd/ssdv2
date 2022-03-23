@@ -188,7 +188,7 @@
             - name: "{{pgrole}}-net"
           state: started
           labels: '{{pg_labels}}'
-          command: sh -c "sleep 10 && /entrypoint.sh db migrate && /entrypoint.sh db init-admin && /entrypoint.sh run"
+          command: sh -c "sleep 10 && /entrypoint.sh db createdb && /entrypoint.sh db migrate && /entrypoint.sh db init-admin && /entrypoint.sh run"
 
       # Administratif pour ssd
       - name: add resume file
