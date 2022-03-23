@@ -124,7 +124,7 @@
             ADMIN_USER_NAME: "{{ user.name }}"
             ADMIN_USER_PWD: "{{ user.pass }}"
             BASE_URL: "https://{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}"
-            SECRET_KEY_BASE: '/Y7ao9bbVikUYbXmEcCy5w=='
+            SECRET_KEY_BASE: 'UUz8NoHVhXd3XDyS7MFshvfcWZTeQBWtpnomgJzUt2WvqceQq7kbSGXCLq2AisusGwoQ5ui'
             DATABASE_URL: "http://db-{{pgrole}}:5432/plausible_dev"
             CLICKHOUSE_DATABASE_URL: "http://clickhouse-{{pgrole}}:8123/plausible_dev"
             ########################################################################
