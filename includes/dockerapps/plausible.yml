@@ -109,13 +109,13 @@
           pg_labels:
             traefik.enable: 'true'
             ## TCP Routers
-            traefik.tcp.routers.{{pgrole}}-tcp.entrypoints: 'https'
-            traefik.tcp.routers.{{pgrole}}-tcp.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
-            traefik.tcp.routers.{{pgrole}}-tcp.tls: 'true'
-            traefik.tcp.routers.{{pgrole}}-tcp.tls.passthrough: 'true'
+            traefik.tcp.routers.plausible-tcp.entrypoints: 'https'
+            traefik.tcp.routers.plausible-tcp.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
+            traefik.tcp.routers.plausible-tcp.tls: 'true'
+            traefik.tcp.routers.plausible-tcp.tls.passthrough: 'true'
             ## HTTP Services
-            traefik.tcp.routers."{{pgrole}}"-tcp.service: "{{pgrole}}-tcp-svc"
-            traefik.tcp.services."{{pgrole}}-tcp-svc".loadbalancer.server.port: "{{ intport }}"
+            traefik.tcp.routers.plausible-tcp.service: "{{pgrole}}-tcp-svc"
+            traefik.tcp.services.plausible-tcp-svc".loadbalancer.server.port: "{{ intport }}"
   
       - name: 'Setting PG Volumes'
         set_fact:
