@@ -1,0 +1,213 @@
+---
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+    - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
+    - "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/generique.yml"
+  tasks:
+  - pause:
+      prompt: "Nom de l'utilisateur voulu"
+      echo: yes
+    register: usermulti
+  - set_fact:
+      usermulti: "{{ usermulti.user_input }}"
+  - pause:
+      prompt: "Password pour l'utilisateur"
+      echo: yes
+    register: passwordeuh
+  - set_fact:
+      passwordeuh: "{{ passwordeuh.user_input }}"
+  - pause:
+      prompt: "UID GUID choisi"
+      echo: yes
+    register: uidguid
+  - set_fact:
+      uidguid: "{{ uidguid.user_input }}"
+  - pause:
+      prompt: "Port ( au delà de 46000)"
+      echo: yes
+    register: portrutorrent
+  - set_fact:
+      portrutorrent: "{{ portrutorrent.user_input }}"
+  - name: Create Users
+    become: true
+    user:
+      name: "{{ usermulti }}"
+      password: "{{ passwordeuh | password_hash('sha512') }}"
+      shell: /bin/bash
+      uid: "{{ uidguid }}"
+      createhome: yes
+      home: "{{ lookup('env','HOME') }}/{{ usermulti }}"
+  - name: Generate htpasswd
+    command: "htpasswd -n -b {{ usermulti }} {{ passwordeuh }}"
+    register: temphtpasswd
+  - name: register htpasswd
+    set_fact:
+      myhtpasswd: "{{ temphtpasswd.stdout }}"
+
+  # FACTS #######################################################################
+  - name: 'Set Known Facts'
+    set_fact:
+      pgrole: 'rutorrent-multi-{{ usermulti }}'
+      intport: '8080'
+      image: 'mondedie/rutorrent:2022.02.01'
+
+    - name: create {{ pgrole }} state
+      shell: |
+        echo "1" > {{ lookup('env','CONFDIR') }}/status/{{pgrole}}
+
+    - name: Checking for existing app data
+      stat:
+        path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/authelia/configuration.yml"
+      register: check
+
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
+            (cloudflare.login is undefined)
+            or
+            (cloudflare.login is none)
+            or
+            (cloudflare.login | trim | length == 0)
+            or
+            (cloudflare.api is undefined)
+            or
+            (cloudflare.api is none)
+            or
+            (cloudflare.api | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Variables | Set 'oauth_enabled' variable"
+      set_fact:
+        oauth_enabled: "false"
+
+    - name: "Variables | Set 'sub' variable"
+      set_fact:
+        sub_enabled: "{{ true if not(
+            (sub[pgrole][pgrole] is undefined)
+            or
+            (sub[pgrole][pgrole] is none)
+            or
+            (sub[pgrole][pgrole] | trim | length == 0)
+          )
+            else false }}"
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
+      vars:
+        subdomain: "{{ pgrole }}"
+      when: cloudflare_enabled
+
+    - name: Creating paths
+      become: yes
+      file: "path={{item}} state=directory mode=0775 owner={{ uidguid }} group={{ uidguid }}"
+      with_items:
+        - "{{ lookup('env','HOME') }}/{{ usermulti }}/docker/{{pgrole}}/config:/config"
+        - "{{ lookup('env','HOME') }}/{{ usermulti }}/docker/{{pgrole}}/data:/data"
+        - "{{ lookup('env','HOME') }}/{{ usermulti}}:{{ lookup('env','HOME') }}/{{ usermulti}}"
+
+    # LABELS ######################################################################
+
+
+    - name: Create temp file
+      tempfile:
+        state: file
+      register: tempfile_1
+
+    - name: fill temp file with labels
+      template:
+        src: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/rutorrent_mutli_traefik_labels.yml.j2"
+        dest: "{{ tempfile_1.path }}"
+        force: yes
+
+    - name: Import traefik labels
+      include_vars:
+        file: "{{ tempfile_1.path }}"
+        name: pg_labels
+
+    - name: Delete temp file
+      file:
+        path: "{{ tempfile_1.path }}"
+        state: absent
+
+    - name: 'Setting PG ENV'
+      set_fact:
+        pg_env:
+          UID: '{{uidguid}}'
+          GID: '{{uidguid}}'
+          TZ: 'Europe/Paris'
+          DHT_RTORRENT: 'off'
+          PORT_RTORRENT: '{{portrutorrent}}'
+          HTTP_AUTH: 'false'
+          CHECK_PERM_DATA: 'no'
+
+    # MAIN DEPLOYMENT #############################################################
+    - name: 'Deploying {{pgrole}}'
+      docker_container:
+        name: '{{pgrole}}-{{ usermulti }}'
+        image: '{{image}}'
+        pull: yes
+        volumes:
+          - "{{ lookup('env','HOME') }}/{{ usermulti }}/docker/{{pgrole}}/config:/config"
+          - "{{ lookup('env','HOME') }}/{{ usermulti }}/docker/{{pgrole}}/data:/data"
+          - "{{ lookup('env','HOME') }}/{{ usermulti }}/docker/{{pgrole}}/sock:/run/rtorrent"
+          - "{{ lookup('env','HOME') }}/{{ usermulti}}:{{ lookup('env','HOME') }}/{{ usermulti}}"
+          - '/etc/localtime:/etc/localtime:ro'
+        env: '{{pg_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+        state: started
+        labels: '{{pg_labels}}'
+
+
+    - name: 'Stop {{ pgrole }}-{{ usermulti }}'
+      docker_container:
+        name: '{{ pgrole }}-{{ usermulti }}'
+        state: stopped
+
+    - name: Create directory
+      file:
+        path: "{{ lookup('env','HOME') }}/{{ usermulti }}/local/{{pgrole}}"
+        state: directory
+
+    - name: Set download location
+      lineinfile:
+        path: "{{ lookup('env','HOME') }}/{{ usermulti }}/docker/{{pgrole}}/config/rtorrent/.rtorrent.rc"
+        regexp: '#*directory.default.set\s*=.*'
+        line: "directory.default.set = {{ lookup('env','HOME') }}/{{ usermulti }}/local/{{pgrole}}"
+        state: present
+
+    - name: Set download location
+      lineinfile:
+        path: "{{ lookup('env','HOME') }}/{{ usermulti }}/docker/{{pgrole}}/config/rutorrent/conf/config.php"
+        regexp: '\$topDirectory\s*=.*'
+        line: "$topDirectory = '{{ lookup('env','HOME') }}/{{ usermulti }}/local/{{pgrole}}';"
+        state: present
+
+    - name: 'Restart {{ pgrole }}-{{ usermulti }}'
+      docker_container:
+        name: '{{ pgrole }}-{{ usermulti }}'
+        state: started
+
+
+      # Administratif pour ssd
+    - name: add resume file
+      become: true
+      shell: |
+        echo "{{pgrole}}-{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> {{ lookup('env','CONFDIR') }}/temp.txt
+
+
+    - name: "Insert {{ pgrole}} into database"
+      shell :
+        cmd: |
+          sqlite3 {{  lookup('env','BASEDIR') }}/ssddb << EOF
+              replace into applications (name,status,subdomain,port)
+              values
+              ('{{ pgrole }}',2,'{{sub[pgrole][pgrole] if sub_enabled else pgrole}}',{{ intport }});
+          EOF
+
+
+
+
