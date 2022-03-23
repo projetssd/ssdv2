@@ -125,7 +125,7 @@
             ADMIN_USER_PWD: "{{ user.pass }}"
             BASE_URL: "https://{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}"
             SECRET_KEY_BASE: 'UUz8NoHVhXd3XDyS7MFshvfcWZTeQBWtpnomgJzUt2WvqceQq7kbSGXCLq2AisusGwoQ5ui'
-            DATABASE_URL: "http://db-{{pgrole}}:5432/plausible_dev"
+            DATABASE_URL: "http://{{pgrole}}:{{pgrole}}@db-{{pgrole}}:5432/{{ pgrole }}"
             CLICKHOUSE_DATABASE_URL: "http://clickhouse-{{pgrole}}:8123/plausible_dev"
             ########################################################################
             #MAILER_EMAIL:	hello@plausible.local	#The email id to use for as from address of all communications from Plausible.
@@ -151,7 +151,9 @@
           volumes:
             - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db:/var/lib/postgresql/data"
           env:
-            POSTGRES_PASSWORD: postgres
+            POSTGRES_PASSWORD: "{{ pgrole }}"
+            POSTGRES_USER: "{{ pgrole }}"
+            POSTGRES_DB: "{{ pgrole }}"
           restart_policy: unless-stopped
           networks:
             - name: "{{pgrole}}-net"
@@ -173,9 +175,6 @@
           ulimits:
             - nofile:262144:262144
 
-
-
-
       - name: 'Deploying {{pgrole}}'
         docker_container:
           name: '{{pgrole}}'
@@ -189,7 +188,7 @@
             - name: "{{pgrole}}-net"
           state: started
           labels: '{{pg_labels}}'
-          command: sh -c "sleep 10 && /entrypoint.sh db createdb && /entrypoint.sh db migrate && /entrypoint.sh db init-admin && /entrypoint.sh run"
+          command: sh -c "sleep 10 && /entrypoint.sh db migrate && /entrypoint.sh db init-admin && /entrypoint.sh run"
 
       # Administratif pour ssd
       - name: add resume file
