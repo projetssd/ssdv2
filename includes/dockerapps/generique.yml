@@ -46,6 +46,8 @@
 
 
     # LABELS ######################################################################
+
+
     - name: Create temp file
       tempfile:
         state: file
@@ -91,6 +93,10 @@
 
     
     # POST TASKS ###################################################################
+    - name: On remet le vieux pgrole
+      set_fact:
+        pgrole: "{{ oldpgrole }}"
+
     - name: Check that posttasks file exists
       stat:
         path: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/posttasks/{{ pgrole }}.yml"

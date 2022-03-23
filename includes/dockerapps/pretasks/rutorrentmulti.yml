@@ -33,5 +33,7 @@
     createhome: yes
     home: "{{ lookup('env','HOME') }}/{{ usermulti }}"
 
-        
+# On enregistre le pgrole pour après
+- set_fact:
+    oldpgrole: "{{ pgrole }}"
 
