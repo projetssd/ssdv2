@@ -1,5 +1,5 @@
 ---
-pgrole: 'rutorrentmulti-{{usermulti}}'
+pgrole: 'rutorrentmulti'
 intport: '8080'
 image: 'mondedie/rutorrent:2022.02.01'
 pg_volumes:
