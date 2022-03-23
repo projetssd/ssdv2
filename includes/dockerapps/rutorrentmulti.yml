@@ -48,7 +48,7 @@
   # FACTS #######################################################################
   - name: 'Set Known Facts'
     set_fact:
-      pgrole: 'rutorrent-multi-{{ usermulti }}'
+      pgrole: 'rutorrent{{ usermulti }}'
       intport: '8080'
       image: 'mondedie/rutorrent:2022.02.01'
 
