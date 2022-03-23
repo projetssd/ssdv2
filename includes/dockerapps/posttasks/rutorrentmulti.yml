@@ -1,0 +1,29 @@
+---
+- name: 'Stop {{ pgrole }}'
+  docker_container:
+    name: '{{ pgrole }}'
+    state: stopped
+
+- name: Create directory
+  file:
+    path: "{{ lookup('env','HOME') }}/{{ usermulti }}/local/{{pgrole}}"
+    state: directory
+
+- name: Set download location
+  lineinfile:
+    path: "{{ lookup('env','HOME') }}/{{ usermulti }}/docker/{{pgrole}}/config/rtorrent/.rtorrent.rc"
+    regexp: '#*directory.default.set\s*=.*'
+    line: "directory.default.set = {{ lookup('env','HOME') }}/{{ usermulti }}/local/{{pgrole}}"
+    state: present
+
+- name: Set download location
+  lineinfile:
+    path: "{{ lookup('env','HOME') }}/{{ usermulti }}/docker/{{pgrole}}/config/rutorrent/conf/config.php"
+    regexp: '\$topDirectory\s*=.*'
+    line: "$topDirectory = '{{ lookup('env','HOME') }}/{{ usermulti }}/local/{{pgrole}}';"
+    state: present
+
+- name: 'Restart {{ pgrole }}'
+  docker_container:
+    name: '{{ pgrole }}'
+    state: started
