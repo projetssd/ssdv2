@@ -47,6 +47,7 @@
 
 
   - name: Remove current sfstp
+    become: yes
     lineinfile:
       path: /etc/ssh/sshd_config
       regexp: '^Subsystem\s+sftp\s+/usr/lib/openssh/sftp-server'
