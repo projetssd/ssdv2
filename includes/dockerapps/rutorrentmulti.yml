@@ -44,17 +44,26 @@
       uid: "{{ uidguid }}"
       createhome: yes
       home: "/home/{{ usermulti }}"
-  - name: Verify sshd config
-    become: yes
-    blockinfile:
-      path: /etc/ssh/sshd_config
-      block: |
-         Subsystem       sftp    internal-sftp
-         Match Group groupe_restreint
-         ChrootDirectory /home/%u
-         ForceCommand internal-sftp
-         AllowTCPForwarding no
-         X11Forwarding no
+
+      # Subsystem      sftp    /usr/lib/openssh/sftp-server
+  - name: Modify sshd config
+    block:
+    - name: Remove current sfstp
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^Subsystem%sftp'
+        state: absent
+    - name: add block
+      become: yes
+      blockinfile:
+        path: /etc/ssh/sshd_config
+        block: |
+           Subsystem       sftp    internal-sftp
+           Match Group groupe_restreint
+           ChrootDirectory /home/%u
+           ForceCommand internal-sftp
+           AllowTCPForwarding no
+           X11Forwarding no
     register: sshchanged
   - name: Stop and Start ssh
     become: yes
