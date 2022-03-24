@@ -192,7 +192,8 @@
         - name: traefik_proxy
       state: started
       labels: '{{pg_labels}}'
-
+      ports:
+        - "{{portrutorrent}}:{{portrutorrent}}"
 
   - name: 'Stop {{ pgrole }}'
     docker_container:
