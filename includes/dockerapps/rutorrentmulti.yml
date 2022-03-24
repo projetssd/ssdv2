@@ -138,6 +138,10 @@
     with_items:
       - "/home/{{ usermulti }}/docker/{{pgrole}}/config"
       - "/home/{{ usermulti }}/docker/{{pgrole}}/data"
+  - name: Creating paths
+    become: yes
+    file: "path={{item}} state=directory mode=0775 owner=root group=root"
+    with_items:
       - "/home/{{ usermulti }}"
 
   # LABELS ######################################################################
