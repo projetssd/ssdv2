@@ -45,7 +45,6 @@
       createhome: yes
       home: "/home/{{ usermulti }}"
 
-      # Subsystem      sftp    /usr/lib/openssh/sftp-server
   - name: Modify sshd config
     block:
     - name: Remove current sfstp
