@@ -55,13 +55,13 @@
          ForceCommand internal-sftp
          AllowTCPForwarding no
          X11Forwarding no
-    register: ssh_changed
+    register: sshchanged
   - name: Stop and Start ssh
-    bcome: yes
+    become: yes
     service:
       name: ssh
       state: restarted
-    when: ssh_changed.changed
+    when: sshchanged.changed
   - name: Generate htpasswd
     command: "htpasswd -n -b {{ usermulti }} {{ passwordeuh }}"
     register: temphtpasswd
