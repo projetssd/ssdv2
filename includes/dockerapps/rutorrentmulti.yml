@@ -45,6 +45,7 @@
       createhome: yes
       home: "/home/{{ usermulti }}"
   - name: Verify sshd config
+    become: yes
     blockinfile:
       path: /etc/ssh/sshd_config
       block: |
@@ -56,6 +57,7 @@
          X11Forwarding no
     register: ssh_changed
   - name: Stop and Start ssh
+    bcome: yes
     service:
       name: ssh
       state: restarted
