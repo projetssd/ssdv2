@@ -49,7 +49,7 @@
   - name: Remove current sfstp
     lineinfile:
       path: /etc/ssh/sshd_config
-      regexp: '^Subsystem%sftp'
+      regexp: '^Subsystem\s+sftp\s+/usr/lib/openssh/sftp-server'
       state: absent
     register: sshchanged1
   - name: add block
