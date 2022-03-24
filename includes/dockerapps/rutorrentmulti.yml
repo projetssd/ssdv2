@@ -18,7 +18,7 @@
   - set_fact:
       passwordeuh: "{{ passwordeuh.user_input }}"
   - pause:
-      prompt: "UID GUID choisi"
+      prompt: "UID choisi"
       echo: yes
     register: uidguid
   - set_fact:
@@ -29,15 +29,37 @@
     register: portrutorrent
   - set_fact:
       portrutorrent: "{{ portrutorrent.user_input }}"
+  - name: Create group
+    become: true
+    group:
+      name: groupe_restreint
+      state: present
   - name: Create Users
     become: true
     user:
       name: "{{ usermulti }}"
+      group: groupe_restreint
       password: "{{ passwordeuh | password_hash('sha512') }}"
       shell: /bin/bash
       uid: "{{ uidguid }}"
       createhome: yes
       home: "/home/{{ usermulti }}"
+  - name: Verify sshd config
+    blockinfile:
+      path: /etc/ssh/sshd_config
+      block: |
+         Subsystem       sftp    internal-sftp
+         Match Group groupe_restreint
+         ChrootDirectory /home/%u
+         ForceCommand internal-sftp
+         AllowTCPForwarding no
+         X11Forwarding no
+    register: ssh_changed
+  - name: Stop and Start ssh
+    service:
+      name: ssh
+      state: restarted
+    when: ssh_changed.changed
   - name: Generate htpasswd
     command: "htpasswd -n -b {{ usermulti }} {{ passwordeuh }}"
     register: temphtpasswd
