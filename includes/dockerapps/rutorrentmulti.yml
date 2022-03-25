@@ -230,9 +230,11 @@
       state: present
 
   - name: Change directory owner
+    become: yes
     command: "chown root: /home/{{ usermulti }}"
 
   - name: Change directory rights
+    become: yes
     command: "chmod 755 /home/{{ usermulti }}"
 
   - name: 'Restart {{ pgrole }}'
