@@ -1010,6 +1010,12 @@ function launch_service() {
 }
 
 function copie_yml() {
+  echo "#########################################################"
+  echo "# ATTENTION                                             #"
+  echo "# Cette fonction va copier les fichiers yml choisis     #"
+  echo "# Afin de pouvoir les personnaliser                     #"
+  echo "# Mais ne lancera pas les services associés             #"
+  echo "#########################################################"
   choose_services
   for line in $(cat $SERVICESPERUSER); do
     copie_yml_unit "${line}"
