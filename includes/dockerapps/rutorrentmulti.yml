@@ -229,6 +229,12 @@
       line: "$topDirectory = '/home/{{ usermulti }}/local/{{pgrole}}';"
       state: present
 
+  - name: Change directory owner
+    command: "chown root: /home/{{ usermulti }}"
+
+  - name: Change directory rights
+    command: "chmod 755 /home/{{ usermulti }}"
+
   - name: 'Restart {{ pgrole }}'
     docker_container:
       name: '{{ pgrole }}'
