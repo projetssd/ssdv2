@@ -948,11 +948,7 @@ function launch_service() {
 
   INSTALLEDFILE="${HOME}/resume"
   line=$1
-  IS_ARG_SUPP=0
-  if [ "$#" -gt 1 ]; then
-    myusername=$2
-    IS_ARG_SUPP=1
-  fi
+
   log_write "Installation de ${line}"
   error=0
   tempsubdomain=$(get_from_account_yml sub.${line}.${line})
@@ -985,26 +981,15 @@ function launch_service() {
       ansible-playbook "${CONFDIR}/conf/${line}.yml"
     elif [[ -f "${CONFDIR}/vars/${line}.yml" ]]; then
       # il y a des variables persos, on les lance
-      if [ ${IS_ARG_SUPP} -eq 0 ]; then
-        ansible-playbook "${BASEDIR}/includes/dockerapps/generique.yml" --extra-vars "@${CONFDIR}/vars/${line}.yml"
-      else
-        ansible-playbook "${BASEDIR}/includes/dockerapps/generique.yml" --extra-vars "@${CONFDIR}/vars/${line}.yml" --extra-vars "{'usersupp': ${myusername} }"
-      fi
+      ansible-playbook "${BASEDIR}/includes/dockerapps/generique.yml" --extra-vars "@${CONFDIR}/vars/${line}.yml"
+
     elif [[ -f "${BASEDIR}/includes/dockerapps/${line}.yml" ]]; then
       # pas de playbook perso ni de vars perso
-      # Il y a un playbook spécifique pour cette appli, on le copie
-      cp "${BASEDIR}/includes/dockerapps/${line}.yml" "${CONFDIR}/conf/${line}.yml"
       # puis on le lance
       ansible-playbook "${CONFDIR}/conf/${line}.yml"
     elif [[ -f "${BASEDIR}/includes/dockerapps/vars/${line}.yml" ]]; then
-      # on copie les variables pour le user
-      cp "${BASEDIR}/includes/dockerapps/vars/${line}.yml" "${CONFDIR}/vars/${line}.yml"
       # puis on lance le générique avec ce qu'on vient de copier
-      if [ ${IS_ARG_SUPP} -eq 0 ]; then
-        ansible-playbook "${BASEDIR}/includes/dockerapps/generique.yml" --extra-vars "@${CONFDIR}/vars/${line}.yml"
-      else
-        ansible-playbook "${BASEDIR}/includes/dockerapps/generique.yml" --extra-vars "@${CONFDIR}/vars/${line}.yml" --extra-vars "{'usersupp': ${myusername} }"
-      fi
+      ansible-playbook "${BASEDIR}/includes/dockerapps/generique.yml" --extra-vars "@${CONFDIR}/vars/${line}.yml"
     else
       log_write "Aucun fichier de configuration trouvé dans les sources, abandon"
       error=1
@@ -1022,6 +1007,30 @@ function launch_service() {
     cp /tmp/resume "${CONFDIR}/resume"
   fi
   FQDNTMP=""
+}
+
+function copie_yml() {
+  choose_services
+  for line in $(cat $SERVICESPERUSER); do
+    copie_yml_unit "${line}"
+  done
+  choose_other_services
+  for line in $(cat $SERVICESPERUSER); do
+    copie_yml_unit "${line}"
+  done
+}
+
+function copie_yml_unit() {
+
+  if [[ -f "${BASEDIR}/includes/dockerapps/${line}.yml" ]]; then
+    # Il y a un playbook spécifique pour cette appli, on le copie
+    cp "${BASEDIR}/includes/dockerapps/${line}.yml" "${CONFDIR}/conf/${line}.yml"
+  elif [[ -f "${BASEDIR}/includes/dockerapps/vars/${line}.yml" ]]; then
+    # on copie les variables pour le user
+    cp "${BASEDIR}/includes/dockerapps/vars/${line}.yml" "${CONFDIR}/vars/${line}.yml"
+  else
+    log_write "Aucun fichier de configuration trouvé dans les sources, abandon"
+  fi
 }
 
 decompte() {
