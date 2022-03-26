@@ -986,10 +986,10 @@ function launch_service() {
     elif [[ -f "${BASEDIR}/includes/dockerapps/${line}.yml" ]]; then
       # pas de playbook perso ni de vars perso
       # puis on le lance
-      ansible-playbook "${CONFDIR}/conf/${line}.yml"
+      ansible-playbook "${BASEDIR}/includes/dockerapps/${line}.yml"
     elif [[ -f "${BASEDIR}/includes/dockerapps/vars/${line}.yml" ]]; then
       # puis on lance le générique avec ce qu'on vient de copier
-      ansible-playbook "${BASEDIR}/includes/dockerapps/generique.yml" --extra-vars "@${CONFDIR}/vars/${line}.yml"
+      ansible-playbook "${BASEDIR}/includes/dockerapps/generique.yml" --extra-vars "${BASEDIR}/includes/dockerapps/${line}.yml"
     else
       log_write "Aucun fichier de configuration trouvé dans les sources, abandon"
       error=1
