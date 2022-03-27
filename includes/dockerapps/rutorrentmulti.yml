@@ -134,7 +134,7 @@
 
   - name: Creating paths
     become: yes
-    file: "path={{item}} state=directory mode=0775 owner={{ uidguid }} group={{ uidguid }}"
+    file: "path={{item}} state=directory mode=0775 owner={{ uidguid }} group=groupe_restreint"
     with_items:
       - "/home/{{ usermulti }}/docker/{{pgrole}}/config"
       - "/home/{{ usermulti }}/docker/{{pgrole}}/data"
@@ -211,7 +211,7 @@
       path: "/home/{{ usermulti }}/local/{{pgrole}}"
       state: directory
       owner: "{{ uidguid }}"
-      group: "{{ uidguid }}"
+      group: "groupe_restreint"
 
   - name: Set download location
     become: yes
