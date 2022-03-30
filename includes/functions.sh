@@ -274,7 +274,7 @@ function install_cloudplow() {
   checking_errors $?
 }
 
-function filebot() {
+function install_filebot() {
   #configuration filebot avec ansible
   echo ""
   echo -e "${BLUE}### FILEBOT ###${NC}"
