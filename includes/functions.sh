@@ -274,15 +274,6 @@ function install_cloudplow() {
   checking_errors $?
 }
 
-function install_filebot() {
-  #configuration filebot avec ansible
-  echo ""
-  echo -e "${BLUE}### FILEBOT ###${NC}"
-  echo -e " ${BWHITE}* Installation filebot${NC}"
-  ansible-playbook ${BASEDIR}/includes/config/roles/filebot/tasks/main.yml
-  checking_errors $?
-  echo ""
-}
 
 function check_dir() {
   if [[ $1 != "${BASEDIR}" ]]; then

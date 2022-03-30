@@ -178,9 +178,6 @@ if [ $mode_install = "manuel" ]; then
         unionfs_fuse
         pause
 
-        # Installation de filebot
-        # TODO : à laisser ? Ou à mettre dans les applis ?
-        #filebot
 
         # mise en place de la sauvegarde
         sauve
@@ -239,9 +236,7 @@ if [ $mode_install = "manuel" ]; then
         unionfs_fuse
         pause
 
-        # Installation de filebot
-        # TODO : à laisser ? Ou à mettre dans les applis ?
-        #filebot
+
 
         # mise en place de la sauvegarde
         sauve
