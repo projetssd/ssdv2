@@ -100,7 +100,7 @@
           traefik.http.routers.traefik-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
             else 'chain-basic-auth@file' if auth_enabled and sub[pgrole].auth == 'basique' | default(false)
             else 'chain-oauth@file' if auth_enabled and sub[pgrole].auth == 'oauth' | default(false)
-            else omit if auth_enabled and sub[pgrole].auth == 'aucune'}}"
+            else 'chain-no-auth@file' if auth_enabled and sub[pgrole].auth == 'aucune'}}"
       when: cloudflare_enabled
 
     - name: label traefik without cloudflare
@@ -123,7 +123,7 @@
           traefik.http.routers.traefik-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
             else 'chain-basic-auth@file' if auth_enabled and sub[pgrole].auth == 'basique' | default(false)
             else 'chain-oauth@file' if auth_enabled and sub[pgrole].auth == 'oauth' | default(false)
-            else omit if auth_enabled and sub[pgrole].auth == 'aucune'}}"
+            else 'chain-no-auth@file' if auth_enabled and sub[pgrole].auth == 'aucune'}}"
       when: not cloudflare_enabled
 
     - name: command traefik with cloudflare
