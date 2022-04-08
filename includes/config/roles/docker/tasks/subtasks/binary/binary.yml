@@ -12,7 +12,7 @@
   pip:
     name: docker-py
     state: absent
-    virtualenv: '{{ settings.source }}/venv'
+    virtualenv: '{{ lookup('env','SETTINGS_SOURCE') }}/venv'
   ignore_errors: yes
 
 - name: Binary | Add official gpg signing key
