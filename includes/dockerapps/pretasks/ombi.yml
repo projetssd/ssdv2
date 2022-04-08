@@ -1,13 +1,13 @@
 ---
 - name: Check JSON exists
   stat:
-    path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/appsettings.json"
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/appsettings.json"
   register: jsonfile
 
 - name: 'Download {{ pgrole }} appsettings.json config file'
   get_url:
     url: https://raw.githubusercontent.com/tidusjar/Ombi/master/src/Ombi/appsettings.json
-    dest: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/appsettings.json"
+    dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/appsettings.json"
     owner: '{{ user.userid }}'
     group: '{{ user.groupid }}'
     force: no

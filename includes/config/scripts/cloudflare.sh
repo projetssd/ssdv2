@@ -12,14 +12,14 @@ rm ${TMPNAME} ${TMPDOMAIN} ${TMPGROUP}
     	echo -e "${CRED}---------------------------------------------------------------${CEND}"
 	echo ""
 
-## suppression des yml dans /opt/seedbox/conf
-rm /opt/seedbox/conf/* > /dev/null 2>&1
+## suppression des yml dans ${SETTINGS_STORAGE}/conf
+rm ${SETTINGS_STORAGE}/conf/* > /dev/null 2>&1
 
 ## suppression container
 docker rm -f $(docker ps -aq) > /dev/null 2>&1
 
 ## suppression traefik
-rm -rf /opt/seedbox/docker/traefik
+rm -rf ${SETTINGS_STORAGE}/docker/traefik
 
 ## cloudflare
 echo ""

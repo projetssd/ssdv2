@@ -19,9 +19,9 @@ rm -rf /etc/fail2ban > /dev/null 2>&1
 checking_errors $?
 
 echo ""
-echo -e "${BLUE}### SUPPRESSION "/opt/seedbox/conf" ###${NC}"
-## suppression des yml dans /opt/seedbox/conf
-rm /opt/seedbox/conf/* > /dev/null 2>&1
+echo -e "${BLUE}### SUPPRESSION "${SETTINGS_STORAGE}/conf" ###${NC}"
+## suppression des yml dans ${SETTINGS_STORAGE}/conf
+rm ${SETTINGS_STORAGE}/conf/* > /dev/null 2>&1
 checking_errors $?
 
 echo ""
@@ -33,7 +33,7 @@ checking_errors $?
 echo ""
 echo -e "${BLUE}### SUPPRESSION TRAEFIK 1.7 ###${NC}"
 ## suppression traefik
-rm -rf /opt/seedbox/docker/traefik
+rm -rf ${SETTINGS_STORAGE}/docker/traefik
 checking_errors $?
 
 echo ""

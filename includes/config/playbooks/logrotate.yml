@@ -5,6 +5,6 @@
   tasks:
   - name: Logrotate
     template:
-      src: "{{ lookup('env','BASEDIR') }}/includes/config/playbooks/templates/logrotate.j2"
+      src: "{{ settings.source }}/includes/config/playbooks/templates/logrotate.j2"
       dest: /etc/logrotate.d/ansible
       force: yes

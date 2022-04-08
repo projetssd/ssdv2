@@ -26,7 +26,7 @@ export NEWT_COLORS='
 
 if [ ! -f "${HOME}/.config/ssd/env" ]; then
   # pas de fichier d'environnement
-  if [ ! -f "${SCRIPTPATH}/ssddb" ]; then
+  if [ ! -f "/opt/seedbox-compose/ssddb" ]; then
     # la seedbox est installée, on va prendre les valeurs par défaut de la v1/2.0
     export SETTINGS_SOURCE=/opt/seedbox-compose/
     export SETTINGS_STORAGE=/opt/seedbox
@@ -40,8 +40,8 @@ if [ ! -f "${HOME}/.config/ssd/env" ]; then
     sourcedir=$(dirname "$(readlink -f "$0")")
     export SETTINGS_SOURCE=${sourcedir}
     echo "SETTINGS_SOURCE=${sourcedir}" >>"${HOME}/.config/ssd/env"
-    echo "Dans quel répertoire voulez vous stocker les réglages des containers ? (défaut : ${HOME}/seedbox/docker)"
-    read destdir
+    read -p "Dans quel répertoire voulez vous stocker les réglages des containers ? (défaut : ${HOME}/seedbox)" destdir
+    destdir=${destdir:-${HOME}/seedbox}
     export SETTINGS_STORAGE=${destdir}
     echo "SETTINGS_STORAGE=${destdir}/" >>"${HOME}/.config/ssd/env"
   fi
@@ -50,22 +50,20 @@ else
   source "${HOME}/.config/ssd/env"
 fi
 
-export BASEDIR=${SETTINGS_SOURCE}
-export CONFDIR=${SETTINGS_STORAGE}
-export SERVICESAVAILABLE="$BASEDIR/includes/config/services-available"
-export WEBSERVERAVAILABLE="$BASEDIR/includes/config/webserver-available"
-export PROJECTSAVAILABLE="$BASEDIR/includes/config/projects-available"
-export MEDIAVAILABLE="$BASEDIR/includes/config/media-available"
-export SERVICES="$BASEDIR/includes/config/services"
-export SERVICESUSER="$CONFDIR/services-"
+export SERVICESAVAILABLE="${SETTINGS_SOURCE}/includes/config/services-available"
+export WEBSERVERAVAILABLE="${SETTINGS_SOURCE}/includes/config/webserver-available"
+export PROJECTSAVAILABLE="${SETTINGS_SOURCE}/includes/config/projects-available"
+export MEDIAVAILABLE="${SETTINGS_SOURCE}/includes/config/media-available"
+export SERVICES="${SETTINGS_SOURCE}/includes/config/services"
+export SERVICESUSER="${SETTINGS_STORAGE}/services-"
 export SERVICESPERUSER="${SERVICESUSER}${USER}"
-export PROJECTUSER="$CONFDIR/projects-"
-export MEDIASUSER="${CONFDIR}/media-"
+export PROJECTUSER="${SETTINGS_STORAGE}/projects-"
+export MEDIASUSER="${SETTINGS_STORAGE}/media-"
 export MEDIASPERUSER=${MEDIASUSER}${USER}
-export PACKAGESFILE="$BASEDIR/includes/config/packages"
-export TMPDOMAIN=${BASEDIR}/tmp/domain
-export TMPNAME=${BASEDIR}/tmp/name
-export TMPGROUP=${BASEDIR}/tmp/group
+export PACKAGESFILE="${SETTINGS_SOURCE}/includes/config/packages"
+export TMPDOMAIN=${SETTINGS_SOURCE}/tmp/domain
+export TMPNAME=${SETTINGS_SOURCE}/tmp/name
+export TMPGROUP=${SETTINGS_SOURCE}/tmp/group
 
 # On risque d'avoir besoin de ces variables d'environnement par la suite
 export MYUID=$(id -u)

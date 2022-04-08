@@ -3,7 +3,7 @@
 - hosts: localhost
   gather_facts: false
   vars_files:
-    - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
+    - "{{ settings.storage }}/variables/account.yml"
   tasks:
 
     - name: Check if crop.service exists
@@ -46,7 +46,7 @@
 
       - name: "create crop state"
         shell: |
-          echo "0" > {{ lookup('env','CONFDIR') }}/status/crop
+          echo "0" > {{ settings.storage }}/status/crop
 
       when: crop_upload_service.stat.exists
 
@@ -115,7 +115,7 @@
 
     - name: Import default config
       template:
-        src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudplow/templates/config.json.j2"
+        src: "{{ settings.source }}/includes/config/roles/cloudplow/templates/config.json.j2"
         dest: /home/{{ lookup('env','USER') }}/scripts/cloudplow/config.json
         owner: "{{ lookup('env','MYUID') }}"
         group: "{{ lookup('env','MYGID') }}"
@@ -143,7 +143,7 @@
     - name: Import cloudplow service
       become: yes
       template:
-        src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudplow/templates/cloudplow.service.j2"
+        src: "{{ settings.source }}/includes/config/roles/cloudplow/templates/cloudplow.service.j2"
         dest: /etc/systemd/system/cloudplow.service
         force: yes
 
@@ -153,5 +153,5 @@
 
     - name: "create plex_autoscan state"
       shell: |
-        echo "2" > {{ lookup('env','CONFDIR') }}/status/cloudplow
+        echo "2" > {{ settings.storage }}/status/cloudplow
 

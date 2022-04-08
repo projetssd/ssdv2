@@ -10,13 +10,13 @@
 ---
 - name: Settings | DB Cache Size | Wait for Plex DB to be created
   wait_for:
-    path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db"
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db"
     state: present
     timeout: 600
 
 - name: Settings | DB Cache Size | Get Current Plex DB Cache Size
   shell: |
-    sqlite3 "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db" \
+    sqlite3 "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db" \
       "PRAGMA default_cache_size;"
   args:
     executable: /bin/bash
@@ -58,14 +58,14 @@
 
   - name: "Settings | DB Cache Size | Set Plex DB Cache Size"
     shell: |
-      sqlite3 "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db" \
+      sqlite3 "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db" \
         "PRAGMA default_cache_size = '{{ desired_db_cache_size | int }}';"
     args:
       executable: /bin/bash
 
   - name: Settings | DB Cache Size | Get New Plex DB Cache Size
     shell: |
-      sqlite3 "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db" \
+      sqlite3 "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db" \
         "PRAGMA default_cache_size;"
     args:
       executable: /bin/bash

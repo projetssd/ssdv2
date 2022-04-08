@@ -3,7 +3,7 @@ pgrole: 'filerun'
 intport: '80'
 image: 'filerun/filerun'
 pg_volumes:
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/html:/var/www/html"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/html:/var/www/html"
   - "/home/{{ lookup('env','USER') }}:/user-files"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:

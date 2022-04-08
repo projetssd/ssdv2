@@ -12,7 +12,7 @@
 
   - name: 'Pending XML Generation'
     wait_for:
-      path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config/config/system.xml"
+      path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config/config/system.xml"
       state: present
 
   - name: 'Wait 5 Seconds'
@@ -27,7 +27,7 @@
   - name: 'Turn Off Reporting'
     become: yes
     xml:
-      path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config/config/system.xml"
+      path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config/config/system.xml"
       xpath: /ServerConfiguration/EnableAnonymousUsageReporting
       value: 'false'
     ignore_errors: yes

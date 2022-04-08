@@ -13,15 +13,15 @@ rm ${TMPNAME} ${TMPDOMAIN} ${TMPGROUP}
     	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
 	echo ""
 
-## suppression des yml dans /opt/seedbox/conf
-rm /opt/seedbox/conf/* > /dev/null 2>&1
+## suppression des yml dans ${SETTINGS_STORAGE}/conf
+rm ${SETTINGS_STORAGE}/conf/* > /dev/null 2>&1
 
 ## suppression container
 docker rm -f $(docker ps -aq) > /dev/null 2>&1
 
 ## supression Authelia si installé
-rm -rf /opt/seedbox/docker/${USER}/authelia > /dev/null 2>&1
-rm /opt/seedbox/conf/authelia.yml > /dev/null 2>&1
+rm -rf ${SETTINGS_STORAGE}/docker/${USER}/authelia > /dev/null 2>&1
+rm ${SETTINGS_STORAGE}/conf/authelia.yml > /dev/null 2>&1
 sed -i '/authelia/d' /home/${USER}/resume > /dev/null 2>&1
 
 ## reinstallation traefik

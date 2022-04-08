@@ -3,7 +3,7 @@ pgrole: 'subsonic'
 intport: '8080'
 image: 'mbirth/subsonic'
 pg_volumes:
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/state:/data"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/state:/data"
   - "{{ lookup('env','HOME') }}}/Medias/Musiques:/music:ro"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:

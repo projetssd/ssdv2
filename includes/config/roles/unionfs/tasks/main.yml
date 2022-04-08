@@ -14,7 +14,7 @@
     unionfs: mergerfs
   vars_files:
     - ['settings.yml']
-    - ["{{ lookup('env','CONFDIR') }}/variables/account.yml"]
+    - ["{{ settings.storage }}/variables/account.yml"]
   tasks:
 
 # Stop Containers

@@ -3,9 +3,9 @@ pgrole: 'authelia'
 intport: '9091'
 image: 'authelia/authelia:latest'
 pg_volumes:
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/var/lib/authelia"
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/configuration.yml:/config/configuration.yml:ro"
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/users_database.yml:/etc/authelia/users_database.yml"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/var/lib/authelia"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/configuration.yml:/config/configuration.yml:ro"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/users_database.yml:/etc/authelia/users_database.yml"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:
   PUID: "{{ lookup('env','MYUID') }}"

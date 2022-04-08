@@ -3,8 +3,8 @@ pgrole: 'rtorrentvpn'
 intport: '9080'
 image: 'binhex/arch-rtorrentvpn:latest'
 pg_volumes:
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/rtorrentvpn/config:/config"
-  - "{{ lookup('env','CONFDIR') }}/{{ lookup('env','USER') }}/rtorrentvpn/data:/data"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/rtorrentvpn/config:/config"
+  - "{{ settings.storage }}/{{ lookup('env','USER') }}/rtorrentvpn/data:/data"
   - "/home/{{ lookup('env','USER') }}:/home/{{ lookup('env','USER') }}"
   - "/etc/timezone:/etc/timezone:ro"
   - "/etc/localtime:/etc/localtime:ro"

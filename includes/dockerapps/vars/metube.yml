@@ -3,8 +3,8 @@ pgrole: 'metube'
 intport: '8081'
 image: 'alexta69/metube:latest'
 pg_volumes:
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/downloads:/downloads:rw"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/downloads:/downloads:rw"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:
   TZ: 'Europe/Paris'

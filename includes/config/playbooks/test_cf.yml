@@ -4,7 +4,7 @@
 - hosts: localhost
   gather_facts: True
   vars_files:
-    - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
+    - "{{ settings.storage }}/variables/account.yml"
   tasks:
 
   
@@ -60,7 +60,7 @@
             else false }}"
 
     - name: "Set DNS Record on CloudFlare"
-      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
+      include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
       vars:
         subdomain: toto
       when: cloudflare_enabled

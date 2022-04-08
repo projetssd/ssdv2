@@ -6,7 +6,7 @@
   tasks:
   - name: "Gestion du fichier account.yml - clé {{ account_key }}"
     yedit:
-      src: "{{ lookup('env','CONFDIR') }}/variables/account.yml"
+      src: "{{ settings.storage }}/variables/account.yml"
       key: "{{ account_key }}"
       value: "{{ account_value }}"
       state: "{{ state }}"

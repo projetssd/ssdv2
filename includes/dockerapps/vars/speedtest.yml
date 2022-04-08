@@ -3,7 +3,7 @@ pgrole: 'speedtest'
 intport: '80'
 image: 'henrywhitaker3/speedtest-tracker'
 pg_volumes:
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:
   PUID: "{{ lookup('env','MYUID') }}"

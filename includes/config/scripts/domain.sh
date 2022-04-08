@@ -7,25 +7,25 @@ echo ""
 CONTACTEMAIL=$(whiptail --title "Adresse Email" --inputbox \
   "Merci de taper votre adresse Email :" 7 50 3>&1 1>&2 2>&3)
 manage_account_yml user.mail $CONTACTEMAIL
-###sed -i "/mail:/c\   mail: $CONTACTEMAIL" /opt/seedbox/variables/account.yml
+###sed -i "/mail:/c\   mail: $CONTACTEMAIL" ${SETTINGS_STORAGE}/variables/account.yml
 
 DOMAIN=$(whiptail --title "Votre nom de Domaine" --inputbox \
   "Merci de taper le nouveau nom de Domaine :" 7 50 3>&1 1>&2 2>&3)
 manage_account_yml user.domain $DOMAIN
-###sed -i "/domain:/c\   domain: $DOMAIN" /opt/seedbox/variables/account.yml
+###sed -i "/domain:/c\   domain: $DOMAIN" ${SETTINGS_STORAGE}/variables/account.yml
 echo ""
 
 echo -e " ${BWHITE}* Supression Containers docker${NC}"
 docker rm -f $(docker ps -aq) >/dev/null 2>&1
 
-## suppression des yml dans /opt/seedbox/conf
-rm /opt/seedbox/conf/* >/dev/null 2>&1
+## suppression des yml dans ${SETTINGS_STORAGE}/conf
+rm ${SETTINGS_STORAGE}/conf/* >/dev/null 2>&1
 
 ## suppression traefik
-rm -rf /opt/seedbox/docker/traefik >/dev/null 2>&1
+rm -rf ${SETTINGS_STORAGE}/docker/traefik >/dev/null 2>&1
 
 ## supression portainer
-rm -rf /opt/seedbox/docker/portainer
+rm -rf ${SETTINGS_STORAGE}/docker/portainer
 
 ## reinstallation traefik
 install_traefik

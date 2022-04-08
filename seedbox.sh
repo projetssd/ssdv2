@@ -202,7 +202,7 @@ if [ $mode_install = "manuel" ]; then
         choose_media_folder_plexdrive
         update_seedbox_param "installed" 1
         pause
-        touch "${CONFDIR}/media-$SEEDUSER"
+        touch "${SETTINGS_STORAGE}/media-$SEEDUSER"
         echo "L'installation est maintenant terminée."
         echo "Pour le configurer ou modifier les applis, vous pouvez le relancer"
         echo "cd ${SETTINGS_SOURCE}"
@@ -237,12 +237,12 @@ if [ $mode_install = "manuel" ]; then
         sauve
 
         ## On va garder ce qui a été saisi pour l'écraser plus tard
-        cp /opt/seedbox/variables/account.yml /opt/seebox/variables/account.temp
+        cp ${SETTINGS_STORAGE}/variables/account.yml ${SETTINGS_STORAGE}/variables/account.temp
 
         sudo restore
         # on remet le account.yml précédent qui a été écrasé par la restauration
-        cp /opt/seedbox/variables/account.yml /opt/seedbox/variables/account.restore
-        mv /opt/seebox/variables/account.temp /opt/seebox/variables/account.yml
+        cp ${SETTINGS_STORAGE}/variables/account.yml ${SETTINGS_STORAGE}/variables/account.restore
+        mv ${SETTINGS_STORAGE}/variables/account.temp ${SETTINGS_STORAGE}/variables/account.yml
         stocke_public_ip
         ## on remet les bonnes infos
         userid=$(id -u)

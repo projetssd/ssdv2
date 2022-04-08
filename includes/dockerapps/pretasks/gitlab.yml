@@ -2,6 +2,6 @@
 - name: Creating paths
   file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
   with_items:
-    - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config"
-    - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/logs"
-    - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data"
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config"
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/logs"
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data"

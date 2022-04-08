@@ -21,7 +21,7 @@
 
 
 - name: Launch Pretask
-  include_tasks: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/mariadb_officiel.yml"
+  include_tasks: "{{ settings.source }}/includes/dockerapps/templates/generique/mariadb_officiel.yml"
 
 - name: Wait for database to be up
   wait_for:

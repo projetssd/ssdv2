@@ -40,7 +40,7 @@
 - name: "MergerFS | Import 'mergerfs.service'"
   become: yes
   template:
-    src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/unionfs/templates/mergerfs.service.j2"
+    src: "{{ settings.source }}/includes/config/roles/unionfs/templates/mergerfs.service.j2"
     dest: /etc/systemd/system/mergerfs.service
 
 - name: "MergerFS | Start 'mergerfs.service'"

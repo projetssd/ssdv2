@@ -21,8 +21,8 @@ apt-get autoremove && apt-get autoclean
 ## Réinstallation docker
 ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/docker/tasks/main.yml
 
-## suppression des yml dans /opt/seedbox/conf
-rm /opt/seedbox/conf/* >/dev/null 2>&1
+## suppression des yml dans ${SETTINGS_STORAGE}/conf
+rm ${SETTINGS_STORAGE}/conf/* >/dev/null 2>&1
 
 ## reinstallation traefik
 install_traefik

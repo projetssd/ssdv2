@@ -38,29 +38,29 @@ function logo() {
 function update_system() {
   #Mise à jour systeme
   echo -e "${BLUE}### MISE A JOUR DU SYSTEME ###${NC}"
-  ansible-playbook ${BASEDIR}/includes/config/roles/system/tasks/main.yml
+  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/system/tasks/main.yml
   checking_errors $?
 }
 
 function status() {
 
   # Créé les fichiers de service, comme quoi rien n'est encore installé
-  create_dir ${CONFDIR}/status
-  sudo chown -R ${USER}: ${CONFDIR}/status
-  for app in $(cat ${BASEDIR}/includes/config/services-available); do
+  create_dir ${SETTINGS_STORAGE}/status
+  sudo chown -R ${USER}: ${SETTINGS_STORAGE}/status
+  for app in $(cat ${SETTINGS_SOURCE}/includes/config/services-available); do
     service=$(echo $app | tr '[:upper:]' '[:lower:]' | cut -d\- -f1)
-    echo "0" >${CONFDIR}/status/$service
+    echo "0" >${SETTINGS_STORAGE}/status/$service
   done
-  for app in $(cat ${BASEDIR}/includes/config/other-services-available); do
+  for app in $(cat ${SETTINGS_SOURCE}/includes/config/other-services-available); do
     service=$(echo $app | tr '[:upper:]' '[:lower:]' | cut -d\- -f1)
-    echo "0" >${CONFDIR}/status/$service
+    echo "0" >${SETTINGS_STORAGE}/status/$service
   done
 }
 
 function update_status() {
 
   for i in $(docker ps --format "{{.Names}}" --filter "network=traefik_proxy"); do
-    echo "2" >${CONFDIR}/status/${i}
+    echo "2" >${SETTINGS_STORAGE}/status/${i}
 
   done
 
@@ -95,7 +95,7 @@ function cloudflare() {
       echo >&2 -n -e "${BWHITE}Votre Email Cloudflare: ${CEND}"
       read cloud_email
       manage_account_yml cloudflare.login "$cloud_email"
-      ###sed -i "/login:/c\   login: $cloud_email" ${CONFDIR}/variables/account.yml
+      ###sed -i "/login:/c\   login: $cloud_email" ${SETTINGS_STORAGE}/variables/account.yml
       update_seedbox_param "cf_login" $cloud_email
     done
 
@@ -103,7 +103,7 @@ function cloudflare() {
       echo >&2 -n -e "${BWHITE}Votre API Cloudflare: ${CEND}"
       read cloud_api
       manage_account_yml cloudflare.api "$cloud_api"
-      ###sed -i "/api:/c\   api: $cloud_api" ${CONFDIR}/variables/account.yml
+      ###sed -i "/api:/c\   api: $cloud_api" ${SETTINGS_STORAGE}/variables/account.yml
     done
   fi
   echo ""
@@ -139,26 +139,26 @@ function oauth() {
       echo >&2 -n -e "${BWHITE}Oauth_client: ${CEND}"
       read oauth_client
       manage_account_yml oauth.client "$oauth_client"
-      ###sed -i "s/client:/client: $oauth_client/" ${CONFDIR}/variables/account.yml
+      ###sed -i "s/client:/client: $oauth_client/" ${SETTINGS_STORAGE}/variables/account.yml
     done
 
     while [ -z "$oauth_secret" ]; do
       echo >&2 -n -e "${BWHITE}Oauth_secret: ${CEND}"
       read oauth_secret
       manage_account_yml oauth.secret "$oauth_secret"
-      ###sed -i "s/secret:/secret: $oauth_secret/" ${CONFDIR}/variables/account.yml
+      ###sed -i "s/secret:/secret: $oauth_secret/" ${SETTINGS_STORAGE}/variables/account.yml
     done
 
     while [ -z "$email" ]; do
       echo >&2 -n -e "${BWHITE}Compte Gmail utilisé(s), séparés d'une virgule si plusieurs: ${CEND}"
       read email
       manage_account_yml oauth.account "$email"
-      ###sed -i "s/account:/account: $email/" ${CONFDIR}/variables/account.yml
+      ###sed -i "s/account:/account: $email/" ${SETTINGS_STORAGE}/variables/account.yml
     done
 
     openssl=$(openssl rand -hex 16)
     manage_account_yml oauth.openssl "$openssl"
-    ###sed -i "s/openssl:/openssl: $openssl/" ${CONFDIR}/variables/account.yml
+    ###sed -i "s/openssl:/openssl: $openssl/" ${SETTINGS_STORAGE}/variables/account.yml
 
     echo ""
     echo -e "${CRED}---------------------------------------------------------------${CEND}"
@@ -181,8 +181,8 @@ function install-rtorrent-cleaner() {
   echo -e " ${BWHITE}* Installation RTORRENT-CLEANER${NC}"
 
   ## choix de l'utilisateur
-  #SEEDUSER=$(ls ${CONFDIR}/media* | cut -d '-' -f2)
-  sudo cp -r ${BASEDIR}/includes/config/rtorrent-cleaner/rtorrent-cleaner /usr/local/bin
+  #SEEDUSER=$(ls ${SETTINGS_STORAGE}/media* | cut -d '-' -f2)
+  sudo cp -r ${SETTINGS_SOURCE}/includes/config/rtorrent-cleaner/rtorrent-cleaner /usr/local/bin
   sudo sed -i "s|%SEEDUSER%|${USER}|g" /usr/local/bin/rtorrent-cleaner
 }
 
@@ -190,7 +190,7 @@ function motd() {
   #configuration d'un motd avec ansible
   echo -e "${BLUE}### MOTD ###${NC}"
   echo -e " ${BWHITE}* Installation MOTD${NC}"
-  ansible-playbook ${BASEDIR}/includes/config/roles/motd/tasks/start.yml
+  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/motd/tasks/start.yml
   checking_errors $?
   echo ""
 }
@@ -200,7 +200,7 @@ function sauve() {
   #configuration Sauvegarde
   echo -e "${BLUE}### BACKUP ###${NC}"
   echo -e " ${BWHITE}* Mise en place Sauvegarde${NC}"
-  ansible-playbook ${BASEDIR}/includes/config/roles/backup/tasks/main.yml
+  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/backup/tasks/main.yml
   checking_errors $?
   echo ""
 }
@@ -214,7 +214,7 @@ function plex_dupefinder() {
   #configuration plex_dupefinder avec ansible
   echo -e "${BLUE}### PLEX_DUPEFINDER ###${NC}"
   echo -e " ${BWHITE}* Installation plex_dupefinder${NC}"
-  ansible-playbook ${BASEDIR}/includes/config/roles/plex_dupefinder/tasks/main.yml
+  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/plex_dupefinder/tasks/main.yml
   checking_errors $?
 }
 
@@ -222,19 +222,19 @@ function install_traktarr() {
   ##configuration traktarr avec ansible
   echo -e "${BLUE}### TRAKTARR ###${NC}"
   echo -e " ${BWHITE}* Installation traktarr${NC}"
-  ansible-playbook ${BASEDIR}/includes/config/roles/traktarr/tasks/main.yml
+  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/traktarr/tasks/main.yml
   checking_errors $?
 }
 
 function update_logrotate() {
-  ansible-playbook ${BASEDIR}/includes/config/playbooks/logrotate.yml
+  ansible-playbook ${SETTINGS_SOURCE}/includes/config/playbooks/logrotate.yml
 }
 
 function webtools() {
   ##configuration Webtools avec ansible
   echo -e "${BLUE}### WEBTOOLS ###${NC}"
   echo -e " ${BWHITE}* Installation Webtools${NC}"
-  ansible-playbook ${BASEDIR}/includes/config/roles/webtools/tasks/main.yml
+  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/webtools/tasks/main.yml
   docker restart plex
   checking_errors $?
 }
@@ -243,7 +243,7 @@ function plex_autoscan() {
   #configuration plex_autoscan avec ansible
   echo -e "${BLUE}### PLEX_AUTOSCAN ###${NC}"
   echo -e " ${BWHITE}* Installation plex_autoscan${NC}"
-  ansible-playbook ${BASEDIR}/includes/config/roles/plex_autoscan/tasks/main.yml
+  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/plex_autoscan/tasks/main.yml
   sudo chown -R ${USER} ${HOME}/scripts/plex_autoscan
   checking_errors $?
 }
@@ -252,16 +252,16 @@ function autoscan() {
   #configuration plex_autoscan avec ansible
   echo -e "${BLUE}### AUTOSCAN ###${NC}"
   echo -e " ${BWHITE}* Installation autoscan${NC}"
-  ansible-playbook ${BASEDIR}/includes/config/roles/autoscan/tasks/main.yml
+  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/autoscan/tasks/main.yml
   checking_errors $?
 }
 
 function crop() {
   #configuration crop avec ansible
   echo -e "${BLUE}### CROP ###${NC}"
-  ${BASEDIR}/includes/config/scripts/crop.sh
+  ${SETTINGS_SOURCE}/includes/config/scripts/crop.sh
   echo -e " ${BWHITE}* Installation crop${NC}"
-  ansible-playbook ${BASEDIR}/includes/config/roles/crop/tasks/main.yml
+  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/crop/tasks/main.yml
   checking_errors $?
 }
 
@@ -269,16 +269,16 @@ function install_cloudplow() {
   #configuration plex_autoscan avec ansible
   echo -e "${BLUE}### CLOUDPLOW ###${NC}"
   echo -e " ${BWHITE}* Installation cloudplow${NC}"
-  ansible-playbook ${BASEDIR}/includes/config/roles/cloudplow/tasks/main.yml
+  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/cloudplow/tasks/main.yml
   sudo chown -R ${USER} ${HOME}/scripts/cloudplow
   checking_errors $?
 }
 
 
 function check_dir() {
-  if [[ $1 != "${BASEDIR}" ]]; then
+  if [[ $1 != "${SETTINGS_SOURCE}" ]]; then
     # shellcheck disable=SC2164
-    cd "${BASEDIR}"
+    cd "${SETTINGS_SOURCE}"
   fi
 }
 
@@ -293,29 +293,29 @@ function insert_mod() {
 }
 
 function create_dir() {
-  ansible-playbook "${BASEDIR}/includes/config/playbooks/create_directory.yml" \
+  ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/create_directory.yml" \
     --extra-vars '{"DIRECTORY":"'${1}'"}'
 }
 
 function conf_dir() {
-  create_dir "${CONFDIR}"
+  create_dir "${SETTINGS_STORAGE}"
 }
 
 function create_file() {
   TMPMYUID=$(whoami)
   MYGID=$(id -g)
-  ansible-playbook "${BASEDIR}/includes/config/playbooks/create_file.yml" \
+  ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/create_file.yml" \
     --extra-vars '{"FILE":"'${1}'","UID":"'${TMPMYUID}'","GID":"'${MYGID}'"}'
 }
 
 function change_file_owner() {
-  ansible-playbook "${BASEDIR}/includes/config/playbooks/chown_file.yml" \
+  ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/chown_file.yml" \
     --extra-vars '{"FILE":"'${1}'"}'
 
 }
 
 function make_dir_writable() {
-  ansible-playbook "${BASEDIR}/includes/config/playbooks/change_rights.yml" \
+  ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/change_rights.yml" \
     --extra-vars '{"DIRECTORY":"'${1}'"}'
 
 }
@@ -325,7 +325,7 @@ function install_base_packages() {
   echo -e "${BLUE}### INSTALLATION DES PACKAGES ###${NC}"
   echo ""
   echo -e " ${BWHITE}* Installation apache2-utils, unzip, git, curl ...${NC}"
-  ansible-playbook "${BASEDIR}/includes/config/roles/install/tasks/main.yml"
+  ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/install/tasks/main.yml"
   checking_errors $?
   echo ""
 }
@@ -342,7 +342,7 @@ function checking_errors() {
 
 function install_fail2ban() {
   echo -e "${BLUE}### FAIL2BAN ###${NC}"
-  ansible-playbook "${BASEDIR}/includes/config/roles/fail2ban/tasks/main.yml"
+  ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/fail2ban/tasks/main.yml"
   checking_errors $?
   echo ""
 }
@@ -353,28 +353,28 @@ function install_ufw() {
   echo -e "${RED} UFW sera installé avec les valeurs par défaut uniquement ${CEND}"
   echo -e "${RED} et permettra les accès suivants : ${CEND}"
   echo -e "${RED} ssh, http, https, plex ${CEND}"
-  echo -e "${RED} Vous pourrez le modifier en éditant le fichier ${CONFDIR}/conf/ufw.yml ${CEND}"
+  echo -e "${RED} Vous pourrez le modifier en éditant le fichier ${SETTINGS_STORAGE}/conf/ufw.yml ${CEND}"
   echo -e "${RED} pour ajouter des ports/ip supplémentaires ${CEND}"
   echo -e "${RED} avant de relancer ce script ${CEND}"
   echo -e "${RED}---------------------------------------------------------------${CEND}"
   echo -e "${RED} Appuyez sur [Entrée] pour continer ${CEND}"
   read -r
   echo -e "${BLUE}### UFW ###${NC}"
-  ansible-playbook "${BASEDIR}/includes/config/roles/ufw/tasks/main.yml"
-  ansible-playbook "${CONFDIR}/conf/ufw.yml"
+  ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/ufw/tasks/main.yml"
+  ansible-playbook "${SETTINGS_STORAGE}/conf/ufw.yml"
   checking_errors $?
   echo ""
 }
 
 function install_traefik() {
-  create_dir "${CONFDIR}/docker/traefik/acme/"
+  create_dir "${SETTINGS_STORAGE}/docker/traefik/acme/"
   echo -e "${BLUE}### TRAEFIK ###${NC}"
 
-  ansible-playbook "${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml"
+  ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/templates/ansible/ansible.yml"
   DOMAIN=$(cat "${TMPDOMAIN}")
 
-  #  if grep "traefik:" ${CONFDIR}/variables/account.yml >/dev/null 2>&1; then
-  #    sed -i "/traefik/,+2d" ${CONFDIR}/variables/account.yml >/dev/null 2>&1
+  #  if grep "traefik:" ${SETTINGS_STORAGE}/variables/account.yml >/dev/null 2>&1; then
+  #    sed -i "/traefik/,+2d" ${SETTINGS_STORAGE}/variables/account.yml >/dev/null 2>&1
   #  fi
 
   # choix sous domaine traefik
@@ -418,11 +418,11 @@ function install_traefik() {
     ;;
   esac
   manage_account_yml sub.traefik.auth ${TYPE_AUTH}
-  ###sed -i "/traefik: ./a \ \ \ \ \ auth: ${TYPE_AUTH}" ${CONFDIR}/variables/account.yml
+  ###sed -i "/traefik: ./a \ \ \ \ \ auth: ${TYPE_AUTH}" ${SETTINGS_STORAGE}/variables/account.yml
 
   echo ""
   echo -e " ${BWHITE}* Installation Traefik${NC}"
-  ansible-playbook ${BASEDIR}/includes/dockerapps/traefik.yml
+  ansible-playbook ${SETTINGS_SOURCE}/includes/dockerapps/traefik.yml
   checking_errors $?
   if [[ ${CURRENT_ERROR} -eq 1 ]]; then
     echo "${RED}Cette étape peut ne pas aboutir lors d'une première installation${CEND}"
@@ -431,15 +431,15 @@ function install_traefik() {
     exit 1
   fi
 
-  # eviter les doublons dans  ${CONFDIR}/resume
-  grep "traefik" ${CONFDIR}/resume >/dev/null 2>&1
+  # eviter les doublons dans  ${SETTINGS_STORAGE}/resume
+  grep "traefik" ${SETTINGS_STORAGE}/resume >/dev/null 2>&1
   if [ $? -eq 1 ]; then
-    echo "traefik = ${SUBDOMAIN}.${DOMAIN}" >>${CONFDIR}/resume
+    echo "traefik = ${SUBDOMAIN}.${DOMAIN}" >>${SETTINGS_STORAGE}/resume
   fi
 
-  grep "oauth" ${CONFDIR}/resume >/dev/null 2>&1
+  grep "oauth" ${SETTINGS_STORAGE}/resume >/dev/null 2>&1
   if [ $? -eq 1 ]; then
-    echo "oauth = ${SUBDOMAIN}.${DOMAIN}" >>${CONFDIR}/resume
+    echo "oauth = ${SUBDOMAIN}.${DOMAIN}" >>${SETTINGS_STORAGE}/resume
   fi
 
   echo ""
@@ -448,7 +448,7 @@ function install_traefik() {
 function install_watchtower() {
   echo -e "${BLUE}### WATCHTOWER ###${NC}"
   echo -e " ${BWHITE}* Installation Watchtower${NC}"
-  ansible-playbook ${BASEDIR}/includes/dockerapps/watchtower.yml
+  ansible-playbook ${SETTINGS_SOURCE}/includes/dockerapps/watchtower.yml
   checking_errors $?
   echo ""
 }
@@ -458,7 +458,7 @@ function install_plexdrive() {
   echo ""
   sudo mkdir -p /mnt/plexdrive >/dev/null 2>&1
   sudo chown ${USER}: /mnt/plexdrive
-  ansible-playbook ${BASEDIR}/includes/config/roles/plexdrive/tasks/main.yml
+  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/plexdrive/tasks/main.yml
   systemctl stop plexdrive >/dev/null 2>&1
   echo ""
   clear
@@ -479,7 +479,7 @@ function plexdrive() {
   echo ""
   sudo mkdir -p /mnt/plexdrive >/dev/null 2>&1
   sudo chown ${USER}: /mnt/plexdrive
-  ansible-playbook ${BASEDIR}/includes/config/roles/plexdrive/tasks/plexdrive.yml
+  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/plexdrive/tasks/plexdrive.yml
   systemctl stop plexdrive >/dev/null 2>&1
   echo ""
   clear
@@ -500,8 +500,8 @@ function install_rclone() {
   fusermount -uz /mnt/rclone >>/dev/null 2>&1
   create_dir /mnt/rclone
   create_dir /mnt/rclone/${USER}
-  ${BASEDIR}/includes/config/scripts/rclone.sh
-  ansible-playbook ${BASEDIR}/includes/config/roles/rclone/tasks/main.yml
+  ${SETTINGS_SOURCE}/includes/config/scripts/rclone.sh
+  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml
   checking_errors $?
   echo ""
 }
@@ -520,15 +520,15 @@ function install_common() {
   ansible-galaxy install kwoodson.yedit
 
   # On vérifie que le user ait bien les droits d'écriture
-  make_dir_writable "${BASEDIR}"
+  make_dir_writable "${SETTINGS_SOURCE}"
   # on vérifie que le user ait bien les droits d'écriture dans la db
-  change_file_owner "${BASEDIR}/ssddb"
+  change_file_owner "${SETTINGS_SOURCE}/ssddb"
   # On crée le conf dir (par défaut /opt/seedbox) s'il n'existe pas
   conf_dir
 
   stocke_public_ip
   # On part à la pêche aux infos....
-  ${BASEDIR}/includes/config/scripts/get_infos.sh
+  ${SETTINGS_SOURCE}/includes/config/scripts/get_infos.sh
   pause
   echo ""
   # On crée les fichier de status à 0
@@ -553,7 +553,7 @@ function install_common() {
 function unionfs_fuse() {
   echo -e "${BLUE}### Unionfs-Fuse ###${NC}"
   echo -e " ${BWHITE}* Installation Mergerfs${NC}"
-  ansible-playbook ${BASEDIR}/includes/config/roles/unionfs/tasks/main.yml
+  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/unionfs/tasks/main.yml
   checking_errors $?
   echo ""
 }
@@ -563,7 +563,7 @@ function install_docker() {
   echo -e " ${BWHITE}* Installation Docker${NC}"
   file="/usr/bin/docker"
   if [ ! -e "$file" ]; then
-    ansible-playbook ${BASEDIR}/includes/config/roles/docker/tasks/main.yml
+    ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/docker/tasks/main.yml
   else
     echo -e " ${YELLOW}* docker est déjà installé !${NC}"
   fi
@@ -690,14 +690,14 @@ function define_parameters() {
       "Merci de taper votre adresse Email :" 7 50 3>&1 1>&2 2>&3
   )
   manage_account_yml user.mail $CONTACTEMAIL
-  ###sed -i "s/mail:/mail: $CONTACTEMAIL/" ${CONFDIR}/variables/account.yml
+  ###sed -i "s/mail:/mail: $CONTACTEMAIL/" ${SETTINGS_STORAGE}/variables/account.yml
 
   DOMAIN=$(
     whiptail --title "Votre nom de Domaine" --inputbox \
       "Merci de taper votre nom de Domaine (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3
   )
   manage_account_yml user.domain $DOMAIN
-  ###sed -i "s/domain:/domain: $DOMAIN/" ${CONFDIR}/variables/account.yml
+  ###sed -i "s/domain:/domain: $DOMAIN/" ${SETTINGS_STORAGE}/variables/account.yml
   echo ""
 }
 
@@ -729,14 +729,14 @@ function create_user_non_systeme() {
       "Merci de taper votre adresse Email :" 7 50 3>&1 1>&2 2>&3
   )
   manage_account_yml user.mail "${CONTACTEMAIL}"
-  ###sed -i "s/mail:/mail: $CONTACTEMAIL/" ${CONFDIR}/variables/account.yml
+  ###sed -i "s/mail:/mail: $CONTACTEMAIL/" ${SETTINGS_STORAGE}/variables/account.yml
   update_seedbox_param "mail" "${CONTACTEMAIL}"
 
   DOMAIN=$(
     whiptail --title "Votre nom de Domaine" --inputbox \
       "Merci de taper votre nom de Domaine (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3
   )
-  ###sed -i "s/domain:/domain: $DOMAIN/" ${CONFDIR}/variables/account.yml
+  ###sed -i "s/domain:/domain: $DOMAIN/" ${SETTINGS_STORAGE}/variables/account.yml
   manage_account_yml user.domain "${DOMAIN}"
   update_seedbox_param "domain" "${DOMAIN}"
   echo ""
@@ -744,7 +744,7 @@ function create_user_non_systeme() {
 }
 
 function projects() {
-  ansible-playbook "${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml"
+  ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/templates/ansible/ansible.yml"
   #SEEDUSER="${USER}"
   DOMAIN=$(cat "${TMPDOMAIN}")
   SEEDGROUP=$(cat "${TMPGROUP}")
@@ -826,7 +826,7 @@ function choose_other_services() {
     rm /tmp/menuservices.txt
   fi
 
-  for app in $(cat "${BASEDIR}/includes/config/other-services-available"); do
+  for app in $(cat "${SETTINGS_SOURCE}/includes/config/other-services-available"); do
     service=$(echo "${app}" | cut -d\- -f1)
     desc=$(echo "${app}" | cut -d\- -f2)
     echo "${service} ${desc} off" >>/tmp/menuservices.txt
@@ -913,18 +913,18 @@ function install_services() {
     INSTALLEDFILE="${HOME}/resume"
     touch "${INSTALLEDFILE}" >/dev/null 2>&1
 
-    if [[ ! -d "${CONFDIR}/conf" ]]; then
-      mkdir -p "${CONFDIR}/conf" >/dev/null 2>&1
+    if [[ ! -d "${SETTINGS_STORAGE}/conf" ]]; then
+      mkdir -p "${SETTINGS_STORAGE}/conf" >/dev/null 2>&1
     fi
 
-    if [[ ! -d "${CONFDIR}/vars" ]]; then
-      mkdir -p "${CONFDIR}/vars" >/dev/null 2>&1
+    if [[ ! -d "${SETTINGS_STORAGE}/vars" ]]; then
+      mkdir -p "${SETTINGS_STORAGE}/vars" >/dev/null 2>&1
     fi
 
-    create_file "${CONFDIR}/temp.txt"
+    create_file "${SETTINGS_STORAGE}/temp.txt"
 
     ## préparation installation
-    #for line in $(grep -l 2 ${CONFDIR}/status/*); do
+    #for line in $(grep -l 2 ${SETTINGS_STORAGE}/status/*); do
     #  basename=$(basename "${line}")
     #  launch_service "${basename}"
     #done
@@ -957,30 +957,30 @@ function launch_service() {
     echo -e " ${BWHITE}* Processing plex config file...${NC}"
     echo ""
     echo -e " ${GREEN}ATTENTION IMPORTANT - NE PAS FAIRE D'ERREUR - SINON DESINSTALLER ET REINSTALLER${NC}"
-    ${BASEDIR}/includes/config/roles/plex_autoscan/plex_token.sh
+    ${SETTINGS_SOURCE}/includes/config/roles/plex_autoscan/plex_token.sh
 
-    ansible-playbook ${BASEDIR}/includes/dockerapps/plex.yml
+    ansible-playbook ${SETTINGS_SOURCE}/includes/dockerapps/plex.yml
     choose_media_folder_plexdrive
-    cp "${BASEDIR}/includes/dockerapps/plex.yml" "${CONFDIR}/conf/plex.yml" >/dev/null 2>&1
-    echo "2" >"${CONFDIR}/status/plex"
+    cp "${SETTINGS_SOURCE}/includes/dockerapps/plex.yml" "${SETTINGS_STORAGE}/conf/plex.yml" >/dev/null 2>&1
+    echo "2" >"${SETTINGS_STORAGE}/status/plex"
   else
     # On est dans le cas générique
     # on regarde s'i y a un playbook existant
 
-    if [[ -f "${CONFDIR}/conf/${line}.yml" ]]; then
+    if [[ -f "${SETTINGS_STORAGE}/conf/${line}.yml" ]]; then
       # il y a déjà un playbook "perso", on le lance
-      ansible-playbook "${CONFDIR}/conf/${line}.yml"
-    elif [[ -f "${CONFDIR}/vars/${line}.yml" ]]; then
+      ansible-playbook "${SETTINGS_STORAGE}/conf/${line}.yml"
+    elif [[ -f "${SETTINGS_STORAGE}/vars/${line}.yml" ]]; then
       # il y a des variables persos, on les lance
-      ansible-playbook "${BASEDIR}/includes/dockerapps/generique.yml" --extra-vars "@${CONFDIR}/vars/${line}.yml"
+      ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/generique.yml" --extra-vars "@${SETTINGS_STORAGE}/vars/${line}.yml"
 
-    elif [[ -f "${BASEDIR}/includes/dockerapps/${line}.yml" ]]; then
+    elif [[ -f "${SETTINGS_SOURCE}/includes/dockerapps/${line}.yml" ]]; then
       # pas de playbook perso ni de vars perso
       # puis on le lance
-      ansible-playbook "${BASEDIR}/includes/dockerapps/${line}.yml"
-    elif [[ -f "${BASEDIR}/includes/dockerapps/vars/${line}.yml" ]]; then
+      ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/${line}.yml"
+    elif [[ -f "${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml" ]]; then
       # puis on lance le générique avec ce qu'on vient de copier
-      ansible-playbook "${BASEDIR}/includes/dockerapps/generique.yml" --extra-vars "@${BASEDIR}/includes/dockerapps/vars/${line}.yml"
+      ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/generique.yml" --extra-vars "@${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml"
     else
       log_write "Aucun fichier de configuration trouvé dans les sources, abandon"
       error=1
@@ -989,13 +989,13 @@ function launch_service() {
   if [ ${error} = 0 ]; then
     temp_subdomain=$(get_from_account_yml "sub.${line}.${line}")
     DOMAIN=$(get_from_account_yml user.domain)
-    echo "2" >"${CONFDIR}/status/${line}"
+    echo "2" >"${SETTINGS_STORAGE}/status/${line}"
 
     FQDNTMP="${temp_subdomain}.$DOMAIN"
     echo "$FQDNTMP" >>$INSTALLEDFILE
-    echo "${line} = $FQDNTMP" | tee -a "${CONFDIR}/resume" >/dev/null
-    sort -u "${CONFDIR}/resume" | grep -v notfound >/tmp/resume
-    cp /tmp/resume "${CONFDIR}/resume"
+    echo "${line} = $FQDNTMP" | tee -a "${SETTINGS_STORAGE}/resume" >/dev/null
+    sort -u "${SETTINGS_STORAGE}/resume" | grep -v notfound >/tmp/resume
+    cp /tmp/resume "${SETTINGS_STORAGE}/resume"
   fi
   FQDNTMP=""
 }
@@ -1019,12 +1019,12 @@ function copie_yml() {
 
 function copie_yml_unit() {
 
-  if [[ -f "${BASEDIR}/includes/dockerapps/${line}.yml" ]]; then
+  if [[ -f "${SETTINGS_SOURCE}/includes/dockerapps/${line}.yml" ]]; then
     # Il y a un playbook spécifique pour cette appli, on le copie
-    cp "${BASEDIR}/includes/dockerapps/${line}.yml" "${CONFDIR}/conf/${line}.yml"
-  elif [[ -f "${BASEDIR}/includes/dockerapps/vars/${line}.yml" ]]; then
+    cp "${SETTINGS_SOURCE}/includes/dockerapps/${line}.yml" "${SETTINGS_STORAGE}/conf/${line}.yml"
+  elif [[ -f "${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml" ]]; then
     # on copie les variables pour le user
-    cp "${BASEDIR}/includes/dockerapps/vars/${line}.yml" "${CONFDIR}/vars/${line}.yml"
+    cp "${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml" "${SETTINGS_STORAGE}/vars/${line}.yml"
   else
     log_write "Aucun fichier de configuration trouvé dans les sources, abandon"
   fi
@@ -1045,7 +1045,7 @@ function manage_apps() {
   echo -e "${BLUE}###          GESTION DES APPLIS        ###${NC}"
   echo -e "${BLUE}##########################################${NC}"
 
-  ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
+  ansible-playbook ${SETTINGS_SOURCE}/includes/dockerapps/templates/ansible/ansible.yml
 
 }
 
@@ -1064,20 +1064,20 @@ function suppression_appli() {
   fi
   manage_account_yml sub.${APPSELECTED} " "
 
-  sed -i "/$APPSELECTED/d" ${CONFDIR}/resume >/dev/null 2>&1
+  sed -i "/$APPSELECTED/d" ${SETTINGS_STORAGE}/resume >/dev/null 2>&1
   sed -i "/$APPSELECTED/d" /home/${USER}/resume >/dev/null 2>&1
 
   docker rm -f "$APPSELECTED" >/dev/null 2>&1
   if [ $DELETE -eq 1 ]; then
     log_write "Suppresion de ${APPSELECTED}, données supprimées"
-    sudo rm -rf ${CONFDIR}/docker/${USER}/$APPSELECTED
+    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/$APPSELECTED
   else
     log_write "Suppresion de ${APPSELECTED}, données conservées"
   fi
 
-  rm ${CONFDIR}/conf/$APPSELECTED.yml >/dev/null 2>&1
-  rm ${CONFDIR}/vars/$APPSELECTED.yml >/dev/null 2>&1
-  echo "0" >${CONFDIR}/status/$APPSELECTED
+  rm ${SETTINGS_STORAGE}/conf/$APPSELECTED.yml >/dev/null 2>&1
+  rm ${SETTINGS_STORAGE}/vars/$APPSELECTED.yml >/dev/null 2>&1
+  echo "0" >${SETTINGS_STORAGE}/status/$APPSELECTED
 
   case $APPSELECTED in
   seafile)
@@ -1086,21 +1086,21 @@ function suppression_appli() {
   varken)
     docker rm -f influxdb telegraf grafana >/dev/null 2>&1
     if [ $DELETE -eq 1 ]; then
-      sudo rm -rf ${CONFDIR}/docker/${USER}/telegraf
-      sudo rm -rf ${CONFDIR}/docker/${USER}/grafana
-      sudo rm -rf ${CONFDIR}/docker/${USER}/influxdb
+      sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/telegraf
+      sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/grafana
+      sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/influxdb
     fi
     ;;
   jitsi)
     docker rm -f prosody jicofo jvb
-    rm -rf ${CONFDIR}/docker/${USER}/.jitsi-meet-cfg
+    rm -rf ${SETTINGS_STORAGE}/docker/${USER}/.jitsi-meet-cfg
     ;;
   nextcloud)
     docker rm -f collabora coturn office
-    rm -rf ${CONFDIR}/docker/${USER}/coturn
+    rm -rf ${SETTINGS_STORAGE}/docker/${USER}/coturn
     ;;
   rtorrentvpn)
-    rm ${CONFDIR}/conf/rutorrent-vpn.yml
+    rm ${SETTINGS_STORAGE}/conf/rutorrent-vpn.yml
     ;;
   jackett)
     docker rm -f flaresolverr >/dev/null 2>&1
@@ -1143,109 +1143,6 @@ EOF
 
 }
 
-function uninstall_seedbox() {
-  clear
-  echo -e "${BLUE}##########################################${NC}"
-  echo -e "${BLUE}###       DESINSTALLATION SEEDBOX      ###${NC}"
-  echo -e "${BLUE}##########################################${NC}"
-  echo "Ceci va SUPPRIMER votre seedbox, êtes vous sur de continuer ?"
-  echo "Appuyer sur entrée pour SUPPRIMER la seedbox, ou ctrl+c pour sortir"
-  pause
-
-  ## variables
-  ansible-playbook ${BASEDIR}/includes/dockerapps/templates/ansible/ansible.yml
-  #SEEDUSER=$(cat ${TMPNAME})
-  DOMAIN=$(cat ${TMPDOMAIN})
-  SEEDGROUP=$(cat ${TMPGROUP})
-  rm ${TMPNAME} ${TMPDOMAIN} ${TMPGROUP}
-
-  USERHOMEDIR=${HOME}
-  PLEXDRIVE="/usr/bin/rclone"
-  PLEXSCAN="$USERHOMEDIR/scripts/plex_autoscan/scan.py"
-  CLOUDPLOW="$USERHOMEDIR/scripts/cloudplow/cloudplow.py"
-  CROP="$USERHOMEDIR/scripts/crop/crop"
-
-  if [[ -e "$PLEXDRIVE" ]]; then
-    systemctl stop plexdrive.service >/dev/null 2>&1
-    systemctl disable plexdrive.service >/dev/null 2>&1
-    rm /etc/systemd/system/plexdrive.service >/dev/null 2>&1
-    rm -rf /mnt/plexdrive >/dev/null 2>&1
-    rm -rf ${HOME}/.plexdrive >/dev/null 2>&1
-    rm /usr/bin/plexdrive >/dev/null 2>&1
-
-    if [[ -e "$PLEXSCAN" ]]; then
-      echo -e " ${BWHITE}* Suppression plex_autoscan${NC}"
-      systemctl stop plex_autoscan.service >/dev/null 2>&1
-      systemctl disable plex_autoscan.service >/dev/null 2>&1
-      rm /etc/systemd/system/plex_autoscan.service >/dev/null 2>&1
-      checking_errors $?
-    fi
-
-    echo -e " ${BWHITE}* Suppression rclone${NC}"
-    systemctl stop rclone.service >/dev/null 2>&1
-    systemctl disable rclone.service >/dev/null 2>&1
-    rm /etc/systemd/system/rclone.service >/dev/null 2>&1
-    rm /usr/bin/rclone >/dev/null 2>&1
-    rm -rf /mnt/rclone >/dev/null 2>&1
-    rm -rf ${HOME}/.config/rclone >/dev/null 2>&1
-    checking_errors $?
-
-    if [[ -e "$CLOUDPLOW" ]]; then
-      echo -e " ${BWHITE}* Suppression cloudplow${NC}"
-      systemctl stop cloudplow.service >/dev/null 2>&1
-      systemctl disable cloudplow.service >/dev/null 2>&1
-      rm /etc/systemd/system/cloudplow.service >/dev/null 2>&1
-      checking_errors $?
-    fi
-
-    if [[ -e "$CROP" ]]; then
-      echo -e " ${BWHITE}* Suppression crop${NC}"
-      systemctl stop crop_upload.service >/dev/null 2>&1
-      systemctl stop crop_sync.service >/dev/null 2>&1
-      systemctl stop crop_upload.timer >/dev/null 2>&1
-      systemctl stop crop_sync.timer >/dev/null 2>&1
-
-      systemctl disable crop_upload.service >/dev/null 2>&1
-      systemctl disable crop_sync.service >/dev/null 2>&1
-      systemctl disable crop_upload.timer >/dev/null 2>&1
-      systemctl disable crop_sync.service >/dev/null 2>&1
-
-      rm /etc/systemd/system/crop_upload.service >/dev/null 2>&1
-      rm /etc/systemd/system/crop_sync.service >/dev/null 2>&1
-      rm /etc/systemd/system/crop_upload.timer >/dev/null 2>&1
-      rm /etc/systemd/system/crop_sync.timer >/dev/null 2>&1
-
-      checking_errors $?
-    fi
-
-    echo -e " ${BWHITE}* Suppression unionfs/mergerfs${NC}"
-    service unionfs stop >/dev/null 2>&1
-    systemctl disable unionfs.service >/dev/null 2>&1
-    rm /etc/systemd/system/unionfs.service >/dev/null 2>&1
-
-    service mergerfs stop >/dev/null 2>&1
-    systemctl disable mergerfs.service >/dev/null 2>&1
-    rm /etc/systemd/system/mergerfs.service >/dev/null 2>&1
-    checking_errors $?
-  fi
-
-  echo -e " ${BWHITE}* Suppression Containers...${NC}"
-  docker rm -f $(docker ps -aq) >/dev/null 2>&1
-  docker volume rm $(docker volume ls -qf "dangling=true") >/dev/null 2>&1
-  checking_errors $?
-
-  echo -e " ${BWHITE}* Supression du dossier ${CONFDIR}...${NC}"
-  rm -Rf ${CONFDIR}
-  checking_errors $?
-  pause
-
-  echo -e " ${BWHITE}* Supression des données... (hors drive)${NC}"
-  rm -rf /opt/seedbox/docker
-  checking_errors $?
-  pause
-
-}
-
 function pause() {
   echo ""
   echo -e "${YELLOW}###  -->APPUYER SUR ENTREE POUR CONTINUER<--  ###${NC}"
@@ -1283,21 +1180,21 @@ function manage_account_yml() {
   # pour supprimer une clé, il faut que le value soit égale à un espace
   # ex : manage_account_yml sub.toto.toto toto => va créer la clé sub.toto.toto et lui mettre à la valeur toto
   # ex : manage_account_yml sub.toto.toto " " => va supprimer la clé sub.toto.toto et toutes les sous clés
-  if [ -f /opt/seedbox/.account.lock ]; then
+  if [ -f ${SETTINGS_STORAGE}/.account.lock ]; then
     echo "Fichier account locké, impossible de continuer"
     echo "----------------------------------------------"
-    echo "Présence du fichier /opt/seedbox/.account.lock"
+    echo "Présence du fichier ${SETTINGS_STORAGE}/.account.lock"
     exit 1
   else
-    touch /opt/seedbox/.account.lock
-    ansible-vault decrypt "${CONFDIR}/variables/account.yml" >/dev/null 2>&1
+    touch ${SETTINGS_STORAGE}/.account.lock
+    ansible-vault decrypt "${SETTINGS_STORAGE}/variables/account.yml" >/dev/null 2>&1
     if [ "${2}" = " " ]; then
-      ansible-playbook "${BASEDIR}/includes/config/playbooks/manage_account_yml.yml" -e "account_key=${1} account_value=${2}  state=absent"
+      ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/manage_account_yml.yml" -e "account_key=${1} account_value=${2}  state=absent"
     else
-      ansible-playbook "${BASEDIR}/includes/config/playbooks/manage_account_yml.yml" -e "account_key=${1} account_value=${2} state=present"
+      ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/manage_account_yml.yml" -e "account_key=${1} account_value=${2} state=present"
     fi
-    ansible-vault encrypt "${CONFDIR}/variables/account.yml" >/dev/null 2>&1
-    rm -f /opt/seedbox/.account.lock
+    ansible-vault encrypt "${SETTINGS_STORAGE}/variables/account.yml" >/dev/null 2>&1
+    rm -f ${SETTINGS_STORAGE}/.account.lock
   fi
 }
 
@@ -1306,15 +1203,15 @@ function get_from_account_yml() {
   # get_from_account_yml user.name
   # retourne la valeur trouvée
   # si la valeur est vide ou n'existe pas, retourn la chaine "notfound"
-  if [ -f /opt/seedbox/.account.lock ]; then
+  if [ -f ${SETTINGS_STORAGE}/.account.lock ]; then
     echo "Fichier account locké, impossible de continuer"
     echo "----------------------------------------------"
-    echo "Présence du fichier /opt/seedbox/.account.lock"
+    echo "Présence du fichier ${SETTINGS_STORAGE}/.account.lock"
     exit 1
   else
-    touch /opt/seedbox/.account.lock
-    ansible-vault decrypt "${CONFDIR}/variables/account.yml" >/dev/null 2>&1
-    temp_return=$(shyaml -q get-value $1 <"${CONFDIR}/variables/account.yml")
+    touch ${SETTINGS_STORAGE}/.account.lock
+    ansible-vault decrypt "${SETTINGS_STORAGE}/variables/account.yml" >/dev/null 2>&1
+    temp_return=$(shyaml -q get-value $1 <"${SETTINGS_STORAGE}/variables/account.yml")
     if [ $? != 0 ]; then
       temp_return=notfound
     fi
@@ -1324,14 +1221,14 @@ function get_from_account_yml() {
     if [ "$temp_return" == "None" ]; then
       temp_return=notfound
     fi
-    ansible-vault encrypt "${CONFDIR}/variables/account.yml" >/dev/null 2>&1
+    ansible-vault encrypt "${SETTINGS_STORAGE}/variables/account.yml" >/dev/null 2>&1
     if [ "$1" == "network.ipv6" ]; then
       if [[ "${temp_return}" == 'a['* ]]; then
         temp_return=${temp_return:2:-1}
       fi
     fi
     echo $temp_return
-    rm -f /opt/seedbox/.account.lock
+    rm -f ${SETTINGS_STORAGE}/.account.lock
   fi
 }
 
@@ -1350,7 +1247,7 @@ function install_gui() {
   set +a
   export gui_subdomain=$subdomain
   # On install nginx
-  ansible-playbook ${BASEDIR}/includes/config/roles/nginx/tasks/main.yml
+  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/nginx/tasks/main.yml
 
   echo -e "${CRED}---------------------------------------------------------------${CEND}"
   echo -e "${CRED}          /!\ INSTALLATION EFFECTUEE AVEC SUCCES /!\           ${CEND}"
@@ -1447,7 +1344,6 @@ EOF
   sqlite3 "${SETTINGS_SOURCE}/ssddb" <<EOF
     create table seedbox_params(param varchar(50) PRIMARY KEY, value varchar(50));
     replace into seedbox_params (param,value) values ('installed',0);
-    replace into seedbox_params (param,value) values ('seedbox_path','/opt/seedbox');
     create table applications(name varchar(50) PRIMARY KEY,
       status integer,
       subdomain varchar(50),
@@ -1458,19 +1354,18 @@ EOF
       FOREIGN KEY(appname) REFERENCES applications(name));
 EOF
 
-  export CONFDIR=/opt/seedbox
 
   ##################################################
   # Account.yml
   sudo mkdir "${SETTINGS_SOURCE}/logs"
   sudo chown -R ${user}: "${SETTINGS_SOURCE}/logs"
   sudo chmod 755 "${SETTINGS_SOURCE}/logs"
-  create_dir "${CONFDIR}"
-  create_dir "${CONFDIR}/variables"
-  create_dir "${CONFDIR}/conf"
-  create_dir "${CONFDIR}/vars"
-  if [ ! -f "${CONFDIR}/variables/account.yml" ]; then
-    cp ${SETTINGS_SOURCE}/includes/config/account.yml "${CONFDIR}/variables/account.yml"
+  create_dir "${SETTINGS_STORAGE}"
+  create_dir "${SETTINGS_STORAGE}/variables"
+  create_dir "${SETTINGS_STORAGE}/conf"
+  create_dir "${SETTINGS_STORAGE}/vars"
+  if [ ! -f "${SETTINGS_STORAGE}/variables/account.yml" ]; then
+    cp ${SETTINGS_SOURCE}/includes/config/account.yml "${SETTINGS_STORAGE}/variables/account.yml"
   fi
 
   if [[ -d "${HOME}/.cache" ]]; then
@@ -1563,11 +1458,11 @@ function migrate() {
   echo "Cette opération peut prendre du temps en fonction du nombre de fichiers à traiter"
   echo "Merci de votre patience ..."
   echo "=================================================================================="
-  sudo chown -R "${USER}": /opt/seedbox/status
-  sudo chown -R "${USER}": /opt/seedbox/resume
+  sudo chown -R "${USER}": ${SETTINGS_STORAGE}/status
+  sudo chown -R "${USER}": ${SETTINGS_STORAGE}/resume
   sudo chown -R "${USER}": ${HOME}/resume
-  sudo chown -R ${USER}: ${CONFDIR}/status/*
-  sudo chown ${USER} /opt/seedbox/variables/account.yml
+  sudo chown -R ${USER}: ${SETTINGS_STORAGE}/status/*
+  sudo chown ${USER} ${SETTINGS_STORAGE}/variables/account.yml
   premier_lancement
 
   # on revient dans le venv
@@ -1579,11 +1474,11 @@ function migrate() {
     exit 1
   fi
 
-  sudo chown -R "${USER}": /opt/seedbox/status
-  sudo chown -R "${USER}": /opt/seedbox/resume
+  sudo chown -R "${USER}": ${SETTINGS_STORAGE}/status
+  sudo chown -R "${USER}": ${SETTINGS_STORAGE}/resume
   sudo chown -R "${USER}": ${HOME}/resume
-  sudo chown -R ${USER}: ${CONFDIR}/status/*
-  sudo chown ${USER} /opt/seedbox/variables/account.yml
+  sudo chown -R ${USER}: ${SETTINGS_STORAGE}/status/*
+  sudo chown ${USER} ${SETTINGS_STORAGE}variables/account.yml
 
   echo "Assurez vous d'être connecté sur le bon utilisateur (celui qui va piloter la seedbox)"
   echo "en connection directe (pas de connection sur un autre user ou root, puis sudo)"
@@ -1599,11 +1494,11 @@ function migrate() {
   fi
   # copie du rclone de root
   mkdir -p "${HOME}/.config/rclone"
-  mkdir -p "${CONFDIR}/vars"
+  mkdir -p "${SETTINGS_STORAGE}/vars"
   sudo cp /root/.config/rclone/rclone.conf "${HOME}/.config/rclone/rclone.conf"
   sudo chown "${USER}" "${HOME}/.config/rclone/rclone.conf"
-  sudo chown -R "${USER}" /opt/seedbox/conf
-  sudo chown "${USER}": "${CONFDIR}/variables/account.yml"
+  sudo chown -R "${USER}" ${SETTINGS_STORAGE}/conf
+  sudo chown "${USER}": "${SETTINGS_STORAGE}/variables/account.yml"
 
   # remplacement du backup
   log_migrate "Mise à jour du script de sauvegarde"
@@ -1611,7 +1506,7 @@ function migrate() {
   # on relance l'install de rclone pour avoir le bon fichier service
   # on supprime le fichier de service existant
   if [ -f "/etc/systemd/system/rclone.service" ]; then
-    ansible-playbook ${BASEDIR}/includes/config/roles/rclone/tasks/main.yml
+    ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml
   fi
   # on met les bons droits sur le conf dir
   conf_dir
@@ -1645,8 +1540,8 @@ function migrate() {
 }
 
 function reinstall_appli_migrate() {
-  for appli in $(ls ${CONFDIR}/status/); do
-    temp=$(cat ${CONFDIR}/status/${appli})
+  for appli in $(ls ${SETTINGS_STORAGE}/status/); do
+    temp=$(cat ${SETTINGS_STORAGE}/status/${appli})
     if [ ${appli} != "traefik" ] && [ ${appli:0:3} != "db-" ] && [ ${appli} != "watchtower" ] && [ ${appli} != "flaresolverr" ] && [ ${appli} != "cloudplow" ] && [ ${appli} != "autoscan" ] && [ ${appli} != "collabora" ] && [ ${appli} != "office" ] && [ ${appli} != "plex" ]; then
       if [ "${temp:0:1}" = 2 ]; then
         echo "###########################################"
@@ -1654,7 +1549,7 @@ function reinstall_appli_migrate() {
         # appli à réinstaller
         # echo "L'appli ${appli} est à réinstaller"
         # on supprime les fichiers de conf existant
-        rm -f "/opt/seedbox/conf/${appli}.yml"
+        rm -f "${SETTINGS_STORAGE}/conf/${appli}.yml"
         launch_service ${appli}
       fi
     fi
@@ -1703,7 +1598,7 @@ function stocke_public_ip() {
 function install_environnement() {
   clear
   echo ""
-  ansible-playbook ${BASEDIR}/includes/config/roles/user_environment/tasks/main.yml
+  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/user_environment/tasks/main.yml
   echo "Pour bénéficer des changements, vous devez vous déconnecter/reconnecter"
   pause
 }
@@ -1920,7 +1815,7 @@ function sauve_one_appli() {
       NB_MAX_BACKUP=$2
     fi
   fi
-  SOURCE_DIR="/opt/seedbox/docker/${USER}"
+  SOURCE_DIR="${SETTINGS_STORAGE}/docker/${USER}"
   remote_backups=BACKUPS
 
   echo "Sauvegarde de l'application $1"
@@ -2033,7 +1928,7 @@ function relance_container() {
 }
 
 function install_plextraktsync() {
-  ansible-playbook ${BASEDIR}/includes/config/roles/plextraktsync/tasks/main.yml
+  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/plextraktsync/tasks/main.yml
   echo "Préparation pour le premier lancement de configuration"
   echo "Assurez vous d'avoir les api Trakt avant de continuer (https://trakt.tv/oauth/applications/new)"
   pause
@@ -2064,7 +1959,7 @@ EOF
 
 #####################################################
 # On finit de setter les variables
-source ${BASEDIR}/venv/bin/activate
+source ${SETTINGS_SOURCE}/venv/bin/activate
 emplacement_stockage=$(get_from_account_yml settings.storage)
 if [ "${emplacement_stockage}" == notfound ]; then
   manage_account_yml settings.storage "/opt/seedbox"

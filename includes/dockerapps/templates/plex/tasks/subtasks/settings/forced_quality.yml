@@ -18,7 +18,7 @@
 
 - name: Settings | Forced Quality | Wait for 'Preferences.xml' to be created by Plex
   wait_for:
-    path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
     state: present
 
 # 'forceAutoAdjustQuality' in Preferences.xml
@@ -27,7 +27,7 @@
 - name: "Settings | Forced Quality | Set 'forceAutoAdjustQuality' in 'Preferences.xml' to
     '{{ (plex.force_auto_adjust_quality|default(false,true)) | ternary('Enabled','Disabled') }}'."
   xml:
-    path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
     xpath: /Preferences
     attribute: forceAutoAdjustQuality
     value: "{{ (plex.force_auto_adjust_quality|default(false,true)) | ternary('1','0') }}"
@@ -41,7 +41,7 @@
 - name: "Settings | Forced Quality | Set 'AllowHighOutputBitrates' in 'Preferences.xml' to
     '{{ (plex.force_high_output_bitrates|default(false,true)) | ternary('Enabled','Disabled') }}'."
   xml:
-    path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
     xpath: /Preferences
     attribute: AllowHighOutputBitrates
     value: "{{ (plex.force_high_output_bitrates|default(false,true)) | ternary('1','0') }}"
@@ -51,7 +51,7 @@
 
 - name: "Settings Disable DLNA"
   xml:
-    path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
     xpath: /Preferences
     attribute: DlnaEnabled
     value: "0"
@@ -61,7 +61,7 @@
 
 - name: "Settings Disable GDM"
   xml:
-    path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
     xpath: /Preferences
     attribute: GdmEnabled
     value: "0"

@@ -1,9 +1,9 @@
 ---
 - name: Launch redis
-  include_tasks: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/redis.yml"
+  include_tasks: "{{ settings.source }}/includes/dockerapps/templates/generique/redis.yml"
 
 - name: Launch postgresql
-  include_tasks: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/mariadb_officiel.yml"
+  include_tasks: "{{ settings.source }}/includes/dockerapps/templates/generique/mariadb_officiel.yml"
 
 - name: 'Adding Traefik'
   set_fact:
@@ -18,7 +18,7 @@
       traefik.http.services.apivikunja-svc.loadbalancer.server.port: "3456"
 
 - name: "Set DNS Record on CloudFlare"
-  include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
+  include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
   vars:
     subdomain: "apivikunja"
   when: cloudflare_enabled

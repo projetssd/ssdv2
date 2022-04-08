@@ -7,9 +7,9 @@ pg_volumes:
   - '/sys:/host/sys:ro'
   - '/proc:/host/proc:ro'
   - '/var/run/docker.sock:/var/run/docker.sock:ro'
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/etc:/etc/netdata:rw"
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/var/lib:/var/lib/netdata:rw"
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/var/cache:/var/cache/netdata:rw"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/etc:/etc/netdata:rw"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/var/lib:/var/lib/netdata:rw"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/var/cache:/var/cache/netdata:rw"
   - "/etc/passwd:/host/etc/passwd:ro"
   - "/etc/group:/host/etc/group:ro"
   - "/etc/os-release:/host/etc/os-release:ro"

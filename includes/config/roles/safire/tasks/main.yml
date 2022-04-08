@@ -2,7 +2,7 @@
 ---
 - hosts: localhost
   vars_files:
-    - /opt/seedbox/variables/account.yml
+    - {{ lookup('env','SETTINGS_STORAGE') }}/variables/account.yml
   gather_facts: false
   vars_prompt:
     - name: group

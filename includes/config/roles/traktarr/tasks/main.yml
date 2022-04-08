@@ -11,7 +11,7 @@
 - hosts: localhost
   gather_facts: false
   vars_files:
-    - /opt/seedbox/variables/account.yml
+    - {{ lookup('env','SETTINGS_STORAGE') }}/variables/account.yml
   tasks:
 
     - name: Check if traktarr service exists
@@ -49,7 +49,7 @@
 
     - name: "Check if sonarr exists"
       stat:
-        path: "/opt/seedbox/docker/{{user.name}}/sonarr/config/config.xml"
+        path: "{{ settings.storage }}/docker/{{user.name}}/sonarr/config/config.xml"
       register: sonarr_config
       when: not traktarr_config.stat.exists
 
@@ -58,7 +58,7 @@
 
       - name: Pull sonarr api key
         xml:
-          path: "/opt/seedbox/docker/{{user.name}}/sonarr/config/config.xml"
+          path: "{{ settings.storage }}/docker/{{user.name}}/sonarr/config/config.xml"
           xpath: /Config/ApiKey
           content: text
         register: xmlresp
@@ -71,7 +71,7 @@
 
     - name: "Check if radarr exists"
       stat:
-        path: "/opt/seedbox/docker/{{user.name}}/radarr/config/config.xml"
+        path: "{{ settings.storage }}/docker/{{user.name}}/radarr/config/config.xml"
       register: radarr_config
       when: not traktarr_config.stat.exists
 
@@ -80,7 +80,7 @@
 
       - name: Pull radarr api key
         xml:
-          path: "/opt/seedbox/docker/{{user.name}}/radarr/config/config.xml"
+          path: "{{ settings.storage }}/docker/{{user.name}}/radarr/config/config.xml"
           xpath: /Config/ApiKey
           content: text
         register: xmlresp

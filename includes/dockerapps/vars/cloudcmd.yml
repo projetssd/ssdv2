@@ -3,7 +3,7 @@ pgrole: 'cloudcmd'
 intport: '8000'
 image: 'coderaiser/cloudcmd'
 pg_volumes:
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/root"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/root"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
   - "/:/SERVER"
   - '/etc/localtime:/etc/localtime:ro'

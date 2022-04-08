@@ -3,8 +3,8 @@ pgrole: 'logarr'
 intport: '80'
 image: 'monitorr/logarr-alpha'
 pg_volumes:
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/app"
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}:{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/app"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}:{{ settings.storage }}/docker/{{ lookup('env','USER') }}"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:

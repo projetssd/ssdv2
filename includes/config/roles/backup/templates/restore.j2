@@ -160,7 +160,7 @@ if [[ -s $ERROR_FILE ]]; then
     echo -e ""
     exit 1
 fi
-chown -R ${SUDO_USER} /opt/seedbox
+chown -R ${SUDO_USER} {{ settings.storage }}
 cd /root
 rm -rf "$ARCHIVE"
 fin

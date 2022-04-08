@@ -12,7 +12,7 @@
 - hosts: localhost
   gather_facts: false
   vars_files:
-    - /opt/seedbox/variables/account.yml
+    - {{ lookup('env','SETTINGS_STORAGE') }}/variables/account.yml
   tasks:
 
     - name: Stop and remove any existing container
@@ -23,17 +23,17 @@
     - name: Creating paths
       file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
       with_items:
-        - '/opt/seedbox/docker/{{user.name}}/plex_patrol'
+        - '{{ settings.storage }}/docker/{{user.name}}/plex_patrol'
 
     - name: Check config exists
       stat:
-        path: "/opt/seedbox/docker/{{user.name}}/plex_patrol/settings.ini"
+        path: "{{ settings.storage }}/docker/{{user.name}}/plex_patrol/settings.ini"
       register: plex_patrol_config
 
     - name: Import default config
       template:
         src: {{ settings.source }}/includes/config/roles/plex_patrol/templates/settings.ini.j2
-        dest: /opt/seedbox/docker/{{user.name}}/plex_patrol/settings.ini
+        dest: {{ settings.storage }}/docker/{{user.name}}/plex_patrol/settings.ini
         owner: "{{user.userid}}"
         group: "{{user.groupid}}"
         mode: 0775
@@ -48,7 +48,7 @@
         user: "{{user.userid}}:{{user.groupid}}"
         volumes:
           - "/etc/localtime:/etc/localtime:ro"
-          - "/opt/seedbox/docker/{{user.name}}/plex_patrol:/config"
+          - "{{ settings.storage }}/docker/{{user.name}}/plex_patrol:/config"
         networks:
           - name: traefik_proxy
         purge_networks: yes

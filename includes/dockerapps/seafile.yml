@@ -4,18 +4,18 @@
 - hosts: localhost
   gather_facts: false
   vars_files:
-    - /opt/seedbox/variables/account.yml
+    - {{ lookup('env','SETTINGS_STORAGE') }}/variables/account.yml
   tasks:
         
     # FACTS #######################################################################
 
     - name: create seafile state
       shell: |
-        echo "1" > /opt/seedbox/status/seafile
+        echo "1" > {{ settings.storage }}/status/seafile
 
     - name: Checking for existing app data
       stat:
-        path: '{{ lookup('env',CONFDIR') }}/docker/{{ lookup('env','USER') }}/authelia/configuration.yml'
+        path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/authelia/configuration.yml"
       register: check
 
     - name: "Variables | Set 'cloudflare_enabled' variable"
@@ -70,7 +70,7 @@
             else false }}"
 
     - name: "Set DNS Record on CloudFlare"
-      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
+      include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
       vars:
         subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
       when: cloudflare_enabled
@@ -88,7 +88,7 @@
     - name: Creating paths
       file: "path={{item}} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYUID') }}"
       with_items:
-        - "{{ lookup('env',CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}"
+        - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}"
 
     # LABELS #######################################################################
     - name: 'Ajout label traefik'
@@ -124,7 +124,7 @@
         image: 'lscr.io/linuxserver/mariadb'
         pull: yes
         volumes:
-          - "{{ lookup('env',CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-seafile:/config"
+          - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-seafile:/config"
           - '/etc/localtime:/etc/localtime:ro'
         env:
           PUID: '{{ lookup('env','MYUID') }}'
@@ -142,7 +142,7 @@
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
-          - '{{ lookup('env',CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/shared'
+          - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/shared"
 
     - name: 'Setting PG ENV'
       set_fact:

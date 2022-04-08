@@ -9,15 +9,15 @@
 # pour dire quelle info on veut ?
 ########################################
 
-source ${BASEDIR}/includes/functions.sh
-source ${BASEDIR}/includes/variables.sh
+source ${SETTINGS_SOURCE}/includes/functions.sh
+source ${SETTINGS_SOURCE}/includes/variables.sh
 
 echo -e "${BLUE}### INFORMATIONS UTILISATEURS ###${NC}"
 
-ACCOUNT=${CONFDIR}/variables/account.yml
+ACCOUNT=${SETTINGS_STORAGE}/variables/account.yml
 
 if [ ! -f ${ACCOUNT} ]; then
-  cp ${BASEDIR}/includes/config/account.yml ${ACCOUNT}
+  cp ${SETTINGS_SOURCE}/includes/config/account.yml ${ACCOUNT}
 fi
 
 echo ""

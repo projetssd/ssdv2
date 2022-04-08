@@ -3,7 +3,7 @@ pgrole: 'filebrowser'
 intport: '8080'
 image: 'hurlenko/filebrowser:latest'
 pg_volumes:
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config"
   - '/:/data'
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:

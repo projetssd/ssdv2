@@ -16,7 +16,7 @@
       prompt: "Entrer le port du serveur smtp"
       private: no
   vars_files:
-    - /opt/seedbox/variables/account.yml
+    - {{ lookup('env','SETTINGS_STORAGE') }}/variables/account.yml
   tasks:
         
     # FACTS #######################################################################
@@ -100,7 +100,7 @@
 
     - name: permissions
       shell: |
-        sudo chown -R 2000:2000 /opt/seedbox/docker/{{user.name}}/mattermost
+        sudo chown -R 2000:2000 {{ settings.storage }}/docker/{{user.name}}/mattermost
 
     - name: Import docker-compose.yml
       template:
@@ -110,7 +110,7 @@
     - name: Import config.json
       template:
         src: {{ settings.source }}/includes/dockerapps/templates/mattermost/config.json.j2
-        dest: /opt/seedbox/docker/{{user.name}}/{{pgrole}}/config/config.json
+        dest: {{ settings.storage }}/docker/{{user.name}}/{{pgrole}}/config/config.json
 
     - name: docker compose up -d
       command: docker-compose -f /tmp/mattermost-docker/mattermost.yml up -d

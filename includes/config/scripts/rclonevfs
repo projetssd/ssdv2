@@ -6,9 +6,6 @@ rm drive.txt team.txt >/dev/null 2>&1
 sed -i '/#Debut team source/,/#Fin team source/d' ${RCLONE_CONFIG_FILE} >/dev/null 2>&1
 sed -i '/#Debut team backup/,/#Fin team backup/d' ${RCLONE_CONFIG_FILE} >/dev/null 2>&1
 
-sed -i '/support*/d' /opt/seedbox/variables/account.yml >/dev/null 2>&1
-sed -i '/id_teamdrive*/d' /opt/seedbox/variables/account.yml >/dev/null 2>&1
-sed -i '/remote*/d' /opt/seedbox/variables/account.yml >/dev/null 2>&1
 
 clear
 
@@ -166,5 +163,4 @@ echo -e "${CRED}------------------------------------------------------${CEND}"
 echo -e "${CCYAN} /!\ Migration plexdrive ==> rclone vsf REUSSI!! /!\ ${CEND}"
 echo -e "${CRED}------------------------------------------------------${CEND}"
 pause
-ansible-vault encrypt /opt/seedbox/variables/account.yml >/dev/null 2>&1
 

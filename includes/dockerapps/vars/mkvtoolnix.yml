@@ -3,8 +3,8 @@ pgrole: 'mkvtoolnix'
 intport: '5800'
 image: 'jlesage/mkvtoolnix'
 pg_volumes:
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/storage:/storage:rw"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/storage:/storage:rw"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:

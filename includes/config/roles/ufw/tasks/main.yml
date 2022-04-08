@@ -13,7 +13,7 @@
     - name: copy yml file
       copy:
         src: {{ settings.source }}/includes/config/roles/ufw/templates/ufw.yml
-        dest: /opt/seedbox/conf/ufw.yml
+        dest: {{ settings.storage }}/conf/ufw.yml
         force: no
 
           

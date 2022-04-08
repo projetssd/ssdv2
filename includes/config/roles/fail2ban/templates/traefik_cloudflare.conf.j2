@@ -5,7 +5,7 @@ bantime = 600
 
 [traefik-auth]
 enabled = true
-logpath = /opt/seedbox/docker/traefik/traefik.log
+logpath = {{ settings.storage }}/docker/traefik/traefik.log
 port = http,https
 action = cloudflare-apiv4
          iptables-allports
@@ -13,7 +13,7 @@ maxretry = 10
 
 [traefik-botsearch]
 enabled = true
-logpath = /opt/seedbox/docker/traefik/traefik.log
+logpath = {{ settings.storage }}/docker/traefik/traefik.log
 maxretry = 10
 port = http,https
 action = cloudflare-apiv4
@@ -22,7 +22,7 @@ action = cloudflare-apiv4
 [traefik-badbots]
 enabled = true
 filter = apache-badbots
-logpath = /opt/seedbox/docker/traefik/traefik.log
+logpath = {{ settings.storage }}/docker/traefik/traefik.log
 maxretry = 10
 port = http,https
 action = cloudflare-apiv4

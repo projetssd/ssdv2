@@ -3,7 +3,7 @@ pgrole: 'ubooquity'
 intport: '2203'
 image: 'ghcr.io/linuxserver/ubooquity'
 pg_volumes:
-  - "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/{{pgrole}}:/config"
+  - "{{ settings.storage }}/docker/{{lookup('env','USER')}}/{{pgrole}}:/config"
   - "/home/{{lookup('env','USER')}}:/home/{{lookup('env','USER')}}"
   - "/home/{{lookup('env','USER')}}:/media"
   - '/etc/localtime:/etc/localtime:ro'

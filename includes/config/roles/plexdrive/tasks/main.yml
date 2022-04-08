@@ -2,7 +2,7 @@
 - hosts: localhost
   gather_facts: yes
   vars_files:
-    - /opt/seedbox/variables/account.yml
+    - {{ lookup('env','SETTINGS_STORAGE') }}/variables/account.yml
 
   tasks:
     - name: Creating paths

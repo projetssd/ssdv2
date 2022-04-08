@@ -2,8 +2,8 @@
 - hosts: localhost
   gather_facts: false
   vars_files:
-    - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
-    - "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/generique.yml"
+    - "{{ settings.storage }}/variables/account.yml"
+    - "{{ settings.source }}/includes/dockerapps/templates/generique/generique.yml"
   tasks:
   - pause:
       prompt: "Nom de l'utilisateur voulu"
@@ -87,11 +87,11 @@
 
   - name: create {{ pgrole }} state
     shell: |
-      echo "1" > {{ lookup('env','CONFDIR') }}/status/{{pgrole}}
+      echo "1" > {{ settings.storage }}/status/{{pgrole}}
 
   - name: Checking for existing app data
     stat:
-      path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/authelia/configuration.yml"
+      path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/authelia/configuration.yml"
     register: check
 
   - name: "Variables | Set 'cloudflare_enabled' variable"
@@ -127,7 +127,7 @@
           else false }}"
 
   - name: "Set DNS Record on CloudFlare"
-    include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
+    include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
     vars:
       subdomain: "{{ pgrole }}"
     when: cloudflare_enabled
@@ -154,7 +154,7 @@
 
   - name: fill temp file with labels
     template:
-      src: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/rutorrent_multi_traefik_labels.yml.j2"
+      src: "{{ settings.source }}/includes/dockerapps/templates/generique/rutorrent_multi_traefik_labels.yml.j2"
       dest: "{{ tempfile_1.path }}"
       force: yes
 
@@ -247,13 +247,13 @@
   - name: add resume file
     become: true
     shell: |
-      echo "{{pgrole}}-{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> {{ lookup('env','CONFDIR') }}/temp.txt
+      echo "{{pgrole}}-{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> {{ settings.storage }}/temp.txt
 
 
   - name: "Insert {{ pgrole}} into database"
     shell :
       cmd: |
-        sqlite3 {{  lookup('env','BASEDIR') }}/ssddb << EOF
+        sqlite3 {{  settings.source }}/ssddb << EOF
             replace into applications (name,status,subdomain,port)
             values
             ('{{ pgrole }}',2,'{{sub[pgrole][pgrole] if sub_enabled else pgrole}}',{{ intport }});

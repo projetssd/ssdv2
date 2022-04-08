@@ -2,11 +2,11 @@
 - hosts: localhost
   gather_facts: false
   vars_files:
-    - "/opt/seedbox/variables/account.yml"
+    - "{{ lookup('env','SETTINGS_STORAGE') }}/variables/account.yml"
   tasks:
     - name: make sure dir is present
       file:
-        path: "{{ lookup('env','BASEDIR') }}/tmp"
+        path: "{{ settings.source }}/tmp"
         state: directory
         owner: "{{ lookup('env','USER') }}"
     - name: make sure file is present

@@ -3,7 +3,7 @@
 - hosts: localhost
   gather_facts: false
   vars_files:
-    - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
+    - "{{ settings.storage }}/variables/account.yml"
   tasks:
 
     - name: Check if autoscan.service exists
@@ -33,7 +33,7 @@
       - name: "create autoscan state"
         become: yes
         shell: |
-          echo "0" > {{ lookup('env','CONFDIR') }}/status/autoscan
+          echo "0" > {{ settings.storage }}/status/autoscan
 
       when: autoscan_service.stat.exists
 
@@ -106,7 +106,7 @@
 
       - name: Import default config
         template:
-          src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/plex_autoscan/templates/config.json.j2"
+          src: "{{ settings.source }}/includes/config/roles/plex_autoscan/templates/config.json.j2"
           dest: "/home/{{ lookup('env','USER') }}/scripts/plex_autoscan/config/config.json"
           owner: "{{lookup('env','MYUID')}}"
           group: "{{lookup('env','MYGID')}}"
@@ -134,14 +134,14 @@
     - name: Import plex_autoscan service
       become: yes
       template:
-        src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/plex_autoscan/templates/plex_autoscan.service.j2"
+        src: "{{ settings.source }}/includes/config/roles/plex_autoscan/templates/plex_autoscan.service.j2"
         dest: /etc/systemd/system/plex_autoscan.service
         force: yes
 
     - name: Import plex_autoscan.sh
       become: yes
       template:
-        src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/plex_autoscan/templates/plex_autoscan.sh.j2"
+        src: "{{ settings.source }}/includes/config/roles/plex_autoscan/templates/plex_autoscan.sh.j2"
         dest: "/home/{{ lookup('env','USER') }}/scripts/plex_autoscan/plex_autoscan.sh"
         force: yes
         owner: "{{ lookup('env','USER') }}"
@@ -169,5 +169,5 @@
     - name: "create plex_autoscan state"
       become: yes
       shell: |
-        echo "2" > {{ lookup('env','CONFDIR') }}/status/plex_autoscan
+        echo "2" > {{ settings.storage }}/status/plex_autoscan
 

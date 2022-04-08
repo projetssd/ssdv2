@@ -2,7 +2,7 @@
 - hosts: localhost
   gather_facts: false
   vars_files:
-    - ["{{ lookup('env','CONFDIR') }}/variables/account.yml"]
+    - ["{{ settings.storage }}/variables/account.yml"]
   tasks:
     - name: verify profile
       file:
