@@ -48,6 +48,7 @@ if [ ! -f "${HOME}/.config/ssd/env" ]; then
     destdir=${destdir:-${HOME}/seedbox}
     export SETTINGS_STORAGE=${destdir}
     echo "SETTINGS_STORAGE=${destdir}/" >>"${HOME}/.config/ssd/env"
+    mkdir -p ${SETTINGS_STORAGE}
   fi
 
 else
