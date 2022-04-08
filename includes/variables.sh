@@ -55,6 +55,8 @@ else
   source "${HOME}/.config/ssd/env"
 fi
 
+export SETTINGS_SOURCE=${SETTINGS_SOURCE}
+export SETTINGS_STORAGE=${SETTINGS_STORAGE}
 export SERVICESAVAILABLE="${SETTINGS_SOURCE}/includes/config/services-available"
 export WEBSERVERAVAILABLE="${SETTINGS_SOURCE}/includes/config/webserver-available"
 export PROJECTSAVAILABLE="${SETTINGS_SOURCE}/includes/config/projects-available"
