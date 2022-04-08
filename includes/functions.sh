@@ -2064,6 +2064,7 @@ EOF
 
 #####################################################
 # On finit de setter les variables
+source ${BASEDIR}/venv/bin/activate
 emplacement_stockage=$(get_from_account_yml settings.storage)
 if [ "${emplacement_stockage}" == notfound ]; then
   manage_account_yml settings.storage "/opt/seedbox"
@@ -2079,3 +2080,4 @@ if [ "${emplacement_stockage}" == notfound ]; then
 else
   export SETTINGS_SOURCE=${emplacement_source}
 fi
+deactivate
