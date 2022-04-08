@@ -39,6 +39,9 @@ usermod -aG sudo seed # changez "seed" par le user que vous voulez
 ```
 Une fois que tout ça est fait, déconnectez vous de votre session root, et reconnectez vous avec le user qui vient d'être créé
 
+
+Pour la suite, on suppose que le répertoire qui va recevoir les sources est /opt/seedbox-compose, mais ce répertoire peut être changé
+
 Ensuite
 ```
 sudo apt-get update

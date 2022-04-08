@@ -7,23 +7,19 @@ export IFSORIGIN="${IFS}"
 # Absolute path to this script.
 CURRENT_SCRIPT=$(readlink -f "$0")
 # Absolute path this script is in.
-SCRIPTPATH=$(dirname "$CURRENT_SCRIPT")
+SETTINGS_SOURCE=$(dirname "$CURRENT_SCRIPT")
 export SCRIPTPATH
-cd ${SCRIPTPATH}
+cd ${SETTINGS_SOURCE}
 
-# shellcheck source=${BASEDIR}/includes/functions.sh
-source "${SCRIPTPATH}/includes/functions.sh"
-# shellcheck source=${BASEDIR}/includes/variables.sh
-source "${SCRIPTPATH}/includes/variables.sh"
-# shellcheck source=${BASEDIR}/includes/functions.sh
-source "${SCRIPTPATH}/includes/functions.sh"
-source "${SCRIPTPATH}/includes/menus.sh"
+source "${SETTINGS_SOURCE}/includes/variables.sh"
+source "${SETTINGS_SOURCE}/includes/functions.sh"
+source "${SETTINGS_SOURCE}/includes/menus.sh"
 
 ################################################
 # récupération des parametres
 # valeurs par défaut
 FORCE_ROOT=0
-INI_FILE=${SCRIPTPATH}/autoinstall.ini
+INI_FILE=${SETTINGS_SOURCE}/autoinstall.ini
 action=manuel
 export mode_install=manuel
 # lecture des parametres
@@ -83,16 +79,16 @@ done
 # Maintenant, on a toutes les infos
 #
 check_docker_group
-if [ ! -f "${SCRIPTPATH}/ssddb" ]; then
+if [ ! -f "${SETTINGS_SOURCE}/ssddb" ]; then
 
   premier_lancement
   # on ajoute le PATH qui va bien, au cas où il ne soit pas pris en compte par le ~/.profile
 fi
 
 # on contre le bug de debian et du venv qui ne trouve pas les paquets installés par galaxy
-source "${SCRIPTPATH}/venv/bin/activate"
-temppath=$(ls /opt/seedbox-compose/venv/lib)
-pythonpath=/opt/seedbox-compose/venv/lib/${temppath}/site-packages
+source "${SETTINGS_SOURCE}/venv/bin/activate"
+temppath=$(ls ${SETTINGS_SOURCE}/venv/lib)
+pythonpath=${SETTINGS_SOURCE}/venv/lib/${temppath}/site-packages
 export PYTHONPATH=${pythonpath}
 
 case "$action" in
@@ -134,7 +130,7 @@ if [ "$USER" == "root" ]; then
 fi
 
 # on met les droits comme il faut, au cas où il y ait eu un mauvais lancement
-#sudo chown -R ${USER}: ${SCRIPTPATH}
+#sudo chown -R ${USER}: ${SETTINGS_SOURCE}
 
 IS_INSTALLED=$(select_seedbox_param "installed")
 
@@ -187,7 +183,7 @@ if [ $mode_install = "manuel" ]; then
         update_seedbox_param "installed" 1
         echo "L'installation est maintenant terminée."
         echo "Pour le configurer ou modifier les applis, vous pouvez le relancer"
-        echo "cd /opt/seedbox-compose"
+        echo "cd ${SETTINGS_SOURCE}"
         echo "./seedbox.sh"
         exit 0
       else
@@ -210,7 +206,7 @@ if [ $mode_install = "manuel" ]; then
         touch "${CONFDIR}/media-$SEEDUSER"
         echo "L'installation est maintenant terminée."
         echo "Pour le configurer ou modifier les applis, vous pouvez le relancer"
-        echo "cd /opt/seedbox-compose"
+        echo "cd ${SETTINGS_SOURCE}"
         echo "./seedbox.sh"
         exit 0
       else
@@ -278,12 +274,12 @@ if [ $mode_install = "manuel" ]; then
   fi
   update_status
 
-  chmod 755 /opt/seedbox-compose/logs
+  chmod 755 ${SETTINGS_SOURCE}/logs
   #update_logrotate
   log_statusbar "Check de la dernière version sur git"
   git_branch=$(git rev-parse --abbrev-ref HEAD)
   if [ ${git_branch} == 'master' ]; then
-    cd /opt/seedbox-compose
+    cd ${SETTINGS_SOURCE}
     git fetch >>/dev/null 2>&1
     current_hash=$(git rev-parse HEAD)
     distant_hash=$(git rev-parse master@{upstream})

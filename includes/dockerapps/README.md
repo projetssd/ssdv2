@@ -24,12 +24,12 @@ C'est le cas des applis qui nécessitent une base de données (wordpress,...) ou
 ## Fonctionnement
 
 Au lancement, on regarde :
-- On lance TOUJOURS le /opt/seedbox-compose/includes/dockerapps/pretasks/<appli>.yml s'il existe
+- On lance TOUJOURS le ${SETTINGS_SOURCE}/includes/dockerapps/pretasks/<appli>.yml s'il existe
 - existe-t-il un playbook dans /opt/seedbox/conf/<appli.yml> ? Si oui on le lance et on passe au posttasks
-- existe-t-il un playbook dans /opt/seedbox-compose/includes/dockerapps/<appli.yml> ?
+- existe-t-il un playbook dans ${SETTINGS_SOURCE}/includes/dockerapps/<appli.yml> ?
 Si oui on le copie dans /opt/seedbox/conf/<appli.yml> et on le lance, et on passe au posttasks
 - existe-t-il un fichier de variables dans /opt/seedbox/vars/<appli.yml>  ? 
 Si oui on lance le générique avec ce fichier de variales, et on passe au posttasks
-- existe-t-il un fichier de variables dans /opt/seedbox-compose/includes/dockerapps/vars/<appli.yml> ?
+- existe-t-il un fichier de variables dans ${SETTINGS_SOURCE}/includes/dockerapps/vars/<appli.yml> ?
 Si oui, on le copie dans /opt/seedbox/vars/<appli.yml> et on le lance, et on passe au posttasks
-- on lance TOUJOURS le /opt/seedbox-compose/includes/dockerapps/posttasks/<appli>.yml s'il existe
+- on lance TOUJOURS le ${SETTINGS_SOURCE}/includes/dockerapps/posttasks/<appli>.yml s'il existe

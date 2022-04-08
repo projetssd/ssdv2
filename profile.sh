@@ -1,17 +1,21 @@
 #!/bin/bash
-export SCRIPTPATH=/opt/seedbox-compose
-export PATH="$HOME/.local/bin:$PATH"
-
-if [ -f "${SCRIPTPATH}/ssddb" ]; then
-    export BASEDIR="/opt/seedbox-compose"
-    export CONFDIR="/opt/seedbox"
-    source ${SCRIPTPATH}/venv/bin/activate
-
-    source ${SCRIPTPATH}/includes/variables.sh
-    source ${SCRIPTPATH}/includes/functions.sh
-    source ${SCRIPTPATH}/includes/menus.sh
 
 
-    PYTHONPATH=/opt/seedbox-compose/venv/lib/$(ls /opt/seedbox-compose/venv/lib)/site-packages
-    export PYTHONPATH
+# Si le fichier n'existe pas, on ne fait rien
+if [ -f "${HOME}/.config/ssd/env" ]; then
+  source "${HOME}/.config/ssd/env"
+  export PATH="$HOME/.local/bin:$PATH"
+  # On rentre dans le venv
+  source ${SETTINGS_SOURCE}/venv/bin/activate
+  # On charge les variables
+  source ${SETTINGS_SOURCE}/includes/variables.sh
+  # On charge les fonctions
+  source ${SETTINGS_SOURCE}/includes/functions.sh
+  # On charge les fonctions qui sont lancées par le menu
+  source ${SETTINGS_SOURCE}/includes/menus.sh
+
+  PYTHONPATH= ${SETTINGS_SOURCE}/venv/lib/$(ls ${SETTINGS_SOURCE}/venv/lib)/site-packages
+  export PYTHONPATH
 fi
+
+

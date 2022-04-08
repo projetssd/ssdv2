@@ -155,7 +155,7 @@ echo -e "${CCYAN}   Backup : ${CGREEN}$teamdrive_dest --> $teamdrive_b${CEND}"
 id=$(sed -n "$j"p /tmp/crop.txt)
 echo -e "#Debut team backup\n[$teamdrive_dest$dest] \ntype = drive\nscope = drive\nserver_side_across_configs = true\nservice_account_file_path = /opt/sa/\nservice_account_file = /opt/sa/1.json\n$id\n#Fin team backup\n" >> ${RCLONE_CONFIG_FILE}
 sed -i "/remote/a \ \ \ support_dest: $teamdrive_dest$dest" /opt/seedbox/variables/account.yml
-ansible-playbook /opt/seedbox-compose/includes/config/roles/sasync/tasks/main.yml
+ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/sasync/tasks/main.yml
 rm /tmp/team.txt /tmp/crop.txt > /dev/null 2>&1
 ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 echo ""

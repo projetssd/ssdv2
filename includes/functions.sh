@@ -509,8 +509,8 @@ function install_rclone() {
 function install_common() {
   source "${SCRIPTPATH}/venv/bin/activate"
   # on contre le bug de debian et du venv qui ne trouve pas les paquets installés par galaxy
-  temppath=$(ls /opt/seedbox-compose/venv/lib)
-  pythonpath=/opt/seedbox-compose/venv/lib/${temppath}/site-packages
+  temppath=$(ls ${SETTINGS_SOURCE}/venv/lib)
+  pythonpath=${SETTINGS_SOURCE}/venv/lib/${temppath}/site-packages
   export PYTHONPATH=${pythonpath}
   # toutes les installs communes
   # installation des dépendances, permet de créer les docker network via ansible
@@ -1127,7 +1127,7 @@ function suppression_appli() {
 
   checking_errors $?
 
-  ansible-playbook -e pgrole=${APPSELECTED} /opt/seedbox-compose/includes/config/playbooks/remove_cf_record.yml
+  ansible-playbook -e pgrole=${APPSELECTED} ${SETTINGS_SOURCE}/includes/config/playbooks/remove_cf_record.yml
 
   echo""
   echo -e "${BLUE}### $APPSELECTED a été supprimé ###${NC}"
@@ -1369,7 +1369,7 @@ function install_gui() {
 
 function premier_lancement() {
 
-  sudo chown -R ${USER}: /opt/seedbox-compose/
+  sudo chown -R ${USER}: ${SETTINGS_SOURCE}/
 
   echo "Certains composants doivent encore être installés/réglés"
   echo "Cette opération va prendre plusieurs minutes selon votre système "
@@ -1397,8 +1397,8 @@ function premier_lancement() {
   # activation du venv
   source ${SCRIPTPATH}/venv/bin/activate
 
-  temppath=$(ls /opt/seedbox-compose/venv/lib)
-  pythonpath=/opt/seedbox-compose/venv/lib/${temppath}/site-packages
+  temppath=$(ls ${SETTINGS_SOURCE}/venv/lib)
+  pythonpath=${SETTINGS_SOURCE}/venv/lib/${temppath}/site-packages
   export PYTHONPATH=${pythonpath}
 
   ## Constants
@@ -1470,7 +1470,7 @@ EOF
   create_dir "${CONFDIR}/conf"
   create_dir "${CONFDIR}/vars"
   if [ ! -f "${CONFDIR}/variables/account.yml" ]; then
-    cp /opt/seedbox-compose/includes/config/account.yml "${CONFDIR}/variables/account.yml"
+    cp ${SETTINGS_SOURCE}/includes/config/account.yml "${CONFDIR}/variables/account.yml"
   fi
 
   if [[ -d "${HOME}/.cache" ]]; then
@@ -1520,19 +1520,19 @@ function usage() {
 
 function log_write() {
   DATE=$(date +'%F %T')
-  FILE=/opt/seedbox-compose/logs/seedbox.log
+  FILE=${SETTINGS_SOURCE}/logs/seedbox.log
   echo "${DATE} - ${1}" >>${FILE}
   echo "${1}"
 }
 
 function log_migrate() {
-  LOG_MIGRATE=/opt/seedbox-compose/logs/migrate.log
+  LOG_MIGRATE=${SETTINGS_SOURCE}/logs/migrate.log
   echo $1 >>${LOG_MIGRATE}
   echo $1
 }
 
 function migrate() {
-  LOG_MIGRATE=/opt/seedbox-compose/logs/migrate.log
+  LOG_MIGRATE=${SETTINGS_SOURCE}/logs/migrate.log
   echo "Vous allez migrer de SSD V1 vers SSD V2"
   if [ "$USER" == "root" ]; then
     echo "Vous ne POUVEZ pas faire cette opération en root"
@@ -2047,13 +2047,13 @@ function install_block_public_tracker() {
   echo "Ces trackers ne seront plus accessibles"
   echo "Appuyez sur entrée pour continer, ou ctrl+C pour sortir"
   pause
-  ansible-playbook /opt/seedbox-compose/includes/config/playbooks/block_public_tracker.yml
+  ansible-playbook ${SETTINGS_SOURCE}/includes/config/playbooks/block_public_tracker.yml
   echo "Block_public_tracker a été installé avec succès"
   pause
 }
 
 function relance_tous_services() {
-  sqlite3 /opt/seedbox-compose/ssddb <<EOF >$SERVICESPERUSER
+  sqlite3 ${SETTINGS_SOURCE}/ssddb <<EOF >$SERVICESPERUSER
 select name from applications;
 EOF
 
@@ -2075,7 +2075,7 @@ fi
 
 emplacement_source=$(get_from_account_yml settings.source)
 if [ "${emplacement_source}" == notfound ]; then
-  manage_account_yml settings.source "/opt/seedbox-compose"
+  manage_account_yml settings.source "${SETTINGS_SOURCE}"
   export SETTINGS_SOURCE=/opt/seedbox
 else
   export SETTINGS_SOURCE=${emplacement_source}
