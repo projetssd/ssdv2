@@ -14,7 +14,7 @@ if [ "$myid" -eq 0 ]; then
   remote_backups=BACKUPS
   NB_MAX_BACKUP=3
   CDAY=$(date +%Y%m%d-%H%M)
-  BACKUP_PARTITION=/var/backup/local
+  BACKUP_PARTITION=/home/${SUDO_USER}/backup
   BACKUP_FOLDER=$BACKUP_PARTITION/backup-$CDAY
   ARCHIVE=$BACKUP_FOLDER/backup-$CDAY.tar.gz
 

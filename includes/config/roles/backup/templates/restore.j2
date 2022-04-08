@@ -14,11 +14,11 @@ CCYAN="${CSI}0;36m"
 
 backupList() {
 
-    local backups=(/var/backup/local/backup-*)
+    local backups=(/home/${SUDO_USER}/backup/backup-*)
     local i=0
     local n=""
 
-    if [[ ! -d /var/backup/local ]]; then
+    if [[ ! -d /home/${SUDO_USER}/backup ]]; then
 	echo ""
         echo -e "\n${CRED}/!\ ERREUR: Aucune sauvegarde locale existante.${CEND}\n" 1>&2
         exit 1
@@ -76,7 +76,7 @@ localRestoration() {
     read -r
 
     echo "> Récupération de l'archive locale"
-    cp /var/backup/local/"$ARCHIVEPATH"/*.tar.gz* .
+    cp /home/${SUDO_USER}/backup/"$ARCHIVEPATH"/*.tar.gz* .
 
 }
 
