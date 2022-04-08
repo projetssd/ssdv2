@@ -274,7 +274,6 @@ function install_cloudplow() {
   checking_errors $?
 }
 
-
 function check_dir() {
   if [[ $1 != "${SETTINGS_SOURCE}" ]]; then
     # shellcheck disable=SC2164
@@ -1354,12 +1353,22 @@ EOF
       FOREIGN KEY(appname) REFERENCES applications(name));
 EOF
 
-
   ##################################################
   # Account.yml
   sudo mkdir "${SETTINGS_SOURCE}/logs"
   sudo chown -R ${user}: "${SETTINGS_SOURCE}/logs"
   sudo chmod 755 "${SETTINGS_SOURCE}/logs"
+
+  mkdir -p "${HOME}/.config/ssd/"
+  # on prend le répertoire courant pour la source
+  sourcedir=$(dirname "$(readlink -f "$0")")
+  export SETTINGS_SOURCE=${sourcedir}
+  echo "SETTINGS_SOURCE=${sourcedir}" >>"${HOME}/.config/ssd/env"
+  read -p "Dans quel répertoire voulez vous stocker les réglages des containers ? (défaut : ${HOME}/seedbox)" destdir
+  destdir=${destdir:-${HOME}/seedbox}
+  export SETTINGS_STORAGE=${destdir}
+  echo "SETTINGS_STORAGE=${destdir}/" >>"${HOME}/.config/ssd/env"
+
   create_dir "${SETTINGS_STORAGE}"
   create_dir "${SETTINGS_STORAGE}/variables"
   create_dir "${SETTINGS_STORAGE}/conf"
@@ -1383,6 +1392,9 @@ EOF
   install_common
   # shellcheck disable=SC2162
   echo "Les composants sont maintenants tous installés/réglés, poursuite de l'installation"
+
+  manage_account_yml settings.storage "${SETTINGS_STORAGE}"
+  manage_account_yml settings.source "${SETTINGS_SOURCE}"
 
   read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
 
