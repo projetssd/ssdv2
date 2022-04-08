@@ -507,7 +507,7 @@ function install_rclone() {
 }
 
 function install_common() {
-  source "${SCRIPTPATH}/venv/bin/activate"
+  source "${SETTINGS_SOURCE}/venv/bin/activate"
   # on contre le bug de debian et du venv qui ne trouve pas les paquets installés par galaxy
   temppath=$(ls ${SETTINGS_SOURCE}/venv/lib)
   pythonpath=${SETTINGS_SOURCE}/venv/lib/${temppath}/site-packages
@@ -1136,7 +1136,7 @@ function suppression_appli() {
   req1="delete from applications where name='"
   req2="'"
   req=${req1}${APPSELECTED}${req2}
-  sqlite3 ${SCRIPTPATH}/ssddb <<EOF
+  sqlite3 ${SETTINGS_SOURCE}/ssddb <<EOF
 
 
 EOF
@@ -1254,14 +1254,14 @@ function pause() {
 }
 
 select_seedbox_param() {
-  if [ ! -f ${SCRIPTPATH}/ssddb ]; then
+  if [ ! -f ${SETTINGS_SOURCE}/ssddb ]; then
     # le fichier de base de données n'est pas là
     # on sort avant de faire une requête, sinon il va se créer
     # et les tests ne seront pas bons
     return 0
   fi
   request="select value from seedbox_params where param ='"${1}"'"
-  RETURN=$(sqlite3 ${SCRIPTPATH}/ssddb "${request}")
+  RETURN=$(sqlite3 ${SETTINGS_SOURCE}/ssddb "${request}")
   if [ $? != 0 ]; then
     echo 0
   else
@@ -1273,7 +1273,7 @@ select_seedbox_param() {
 function update_seedbox_param() {
   # shellcheck disable=SC2027
   request="replace into seedbox_params (param,value) values ('"${1}"','"${2}"')"
-  sqlite3 "${SCRIPTPATH}/ssddb" "${request}"
+  sqlite3 "${SETTINGS_SOURCE}/ssddb" "${request}"
 }
 
 function manage_account_yml() {
@@ -1378,7 +1378,7 @@ function premier_lancement() {
 
   # installation des paquets nécessaires
   # on passe le user en parametre pour pouvoir créer le /etc/sudoers.d/${USER}
-  sudo "${SCRIPTPATH}/includes/config/scripts/prerequis_root.sh" "${USER}"
+  sudo "${SETTINGS_SOURCE}/includes/config/scripts/prerequis_root.sh" "${USER}"
 
   # création d'un vault_pass vide
 
@@ -1392,10 +1392,10 @@ function premier_lancement() {
   fi
 
   # création d'un virtualenv
-  python3 -m venv ${SCRIPTPATH}/venv
+  python3 -m venv ${SETTINGS_SOURCE}/venv
 
   # activation du venv
-  source ${SCRIPTPATH}/venv/bin/activate
+  source ${SETTINGS_SOURCE}/venv/bin/activate
 
   temppath=$(ls ${SETTINGS_SOURCE}/venv/lib)
   pythonpath=${SETTINGS_SOURCE}/venv/lib/${temppath}/site-packages
@@ -1439,12 +1439,12 @@ EOF
   inventory = ~/.ansible/inventories/local
   interpreter_python=/usr/bin/python3
   vault_password_file = ~/.vault_pass
-  log_path=${SCRIPTPATH}/logs/ansible.log
+  log_path=${SETTINGS_SOURCE}/logs/ansible.log
 EOF
 
   echo "Création de la configuration en cours"
   # On créé la database
-  sqlite3 "${SCRIPTPATH}/ssddb" <<EOF
+  sqlite3 "${SETTINGS_SOURCE}/ssddb" <<EOF
     create table seedbox_params(param varchar(50) PRIMARY KEY, value varchar(50));
     replace into seedbox_params (param,value) values ('installed',0);
     replace into seedbox_params (param,value) values ('seedbox_path','/opt/seedbox');
@@ -1462,9 +1462,9 @@ EOF
 
   ##################################################
   # Account.yml
-  sudo mkdir "${SCRIPTPATH}/logs"
-  sudo chown -R ${user}: "${SCRIPTPATH}/logs"
-  sudo chmod 755 "${SCRIPTPATH}/logs"
+  sudo mkdir "${SETTINGS_SOURCE}/logs"
+  sudo chown -R ${user}: "${SETTINGS_SOURCE}/logs"
+  sudo chmod 755 "${SETTINGS_SOURCE}/logs"
   create_dir "${CONFDIR}"
   create_dir "${CONFDIR}/variables"
   create_dir "${CONFDIR}/conf"
@@ -1483,7 +1483,7 @@ EOF
     sudo chown -R "${USER}": "${HOME}/.ansible"
   fi
 
-  touch "${SCRIPTPATH}/.prerequis.lock"
+  touch "${SETTINGS_SOURCE}/.prerequis.lock"
 
   install_common
   # shellcheck disable=SC2162
@@ -1571,8 +1571,8 @@ function migrate() {
   premier_lancement
 
   # on revient dans le venv
-  sudo chown -R "${USER}": ${SCRIPTPATH}/venv
-  source ${SCRIPTPATH}/venv/bin/activate
+  sudo chown -R "${USER}": ${SETTINGS_SOURCE}/venv
+  source ${SETTINGS_SOURCE}/venv/bin/activate
   olduser=$(get_from_account_yml user.name)
   if [ "${olduser}" != "$USER" ]; then
     echo "Vous devez être connexté avec le même user que celui qui gérait la seedbox (${olduser}) pour effectuer cette action"
@@ -1726,7 +1726,7 @@ function debug_menu() {
 
   ## chargement des menus
   request="select * from menu where parent_id ${start_menu}"
-  sqlite3 "${SCRIPTPATH}/menu" "${request}" | while read -a db_select; do
+  sqlite3 "${SETTINGS_SOURCE}/menu" "${request}" | while read -a db_select; do
     texte_sep=""
     IFS='|'
     read -ra db_select2 <<<"$db_select"
@@ -1740,7 +1740,7 @@ function debug_menu() {
 
     # on regarde s'il y a des menus enfants
     request_cpt="select count(*) from menu where parent_id = ${db_select2[0]}"
-    cpt=$(sqlite3 ${SCRIPTPATH}/menu "$request_cpt")
+    cpt=$(sqlite3 ${SETTINGS_SOURCE}/menu "$request_cpt")
     if [ "${cpt}" -eq 0 ]; then
       # pas de sous menu, on va rester sur le même
       :
@@ -1762,19 +1762,19 @@ function calcul_niveau_menu() {
     fi
     depart="${1}"
     request_cpt="select parent_id from menu where id = ${depart}"
-    parent=$(sqlite3 "${SCRIPTPATH}/menu" "$request_cpt")
+    parent=$(sqlite3 "${SETTINGS_SOURCE}/menu" "$request_cpt")
     if [ -z "$parent" ]; then
 
       echo $niveau
     else
       request_cpt="select count(*) from menu where parent_id = ${parent}"
-      cpt=$(sqlite3 ${SCRIPTPATH}/menu "$request_cpt")
+      cpt=$(sqlite3 ${SETTINGS_SOURCE}/menu "$request_cpt")
       if [ "${cpt}" -eq 0 ]; then
         echo $niveau
       else
         niveau=$((niveau + 1))
         request_cpt="select parent_id from menu where id = ${depart}"
-        parent2=$(sqlite3 ${SCRIPTPATH}/menu "$request_cpt")
+        parent2=$(sqlite3 ${SETTINGS_SOURCE}/menu "$request_cpt")
         if [ -z "$parent2" ]; then
           echo $niveau
         fi
@@ -1809,7 +1809,7 @@ function affiche_menu_db() {
   logo
   ## chargement des menus
   request="select * from menu where parent_id ${start_menu}"
-  sqlite3 "${SCRIPTPATH}/menu" "${request}" | while read -a db_select; do
+  sqlite3 "${SETTINGS_SOURCE}/menu" "${request}" | while read -a db_select; do
     IFS='|'
     read -ra db_select2 <<<"$db_select"
     echo -e "${CGREEN}   ${db_select2[3]}) ${db_select2[1]}${CEND}"
@@ -1829,7 +1829,7 @@ function affiche_menu_db() {
   if [ "${PORT_CHOICE,,}" == "b" ]; then
 
     request2="select parent_id from menu where id ${start_menu}"
-    newchoice=$(sqlite3 ${SCRIPTPATH}/menu $request2)
+    newchoice=$(sqlite3 ${SETTINGS_SOURCE}/menu $request2)
     affiche_menu_db ${newchoice}
   elif [ "${PORT_CHOICE,,}" == "q" ]; then
     exit 0
@@ -1839,7 +1839,7 @@ function affiche_menu_db() {
   else
     # on va voir s'il y a une action à faire
     request_action="select action from menu where parent_id ${start_menu} and ordre = ${PORT_CHOICE}"
-    action=$(sqlite3 ${SCRIPTPATH}/menu "$request_action")
+    action=$(sqlite3 ${SETTINGS_SOURCE}/menu "$request_action")
     if [ -z "$action" ]; then
       : # pas d'action à effectuer
     else
@@ -1849,9 +1849,9 @@ function affiche_menu_db() {
     fi
 
     req_new_choice="select id from menu where parent_id ${start_menu} and ordre = ${PORT_CHOICE}"
-    newchoice=$(sqlite3 ${SCRIPTPATH}/menu "${req_new_choice}")
+    newchoice=$(sqlite3 ${SETTINGS_SOURCE}/menu "${req_new_choice}")
     request_cpt="select count(*) from menu where parent_id = ${newchoice}"
-    cpt=$(sqlite3 ${SCRIPTPATH}/menu "$request_cpt")
+    cpt=$(sqlite3 ${SETTINGS_SOURCE}/menu "$request_cpt")
     if [ "${cpt}" -eq 0 ]; then
       # pas de sous menu, on va rester sur le même
       newchoice=${precedent}

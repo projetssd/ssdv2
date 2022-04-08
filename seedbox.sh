@@ -8,7 +8,7 @@ export IFSORIGIN="${IFS}"
 CURRENT_SCRIPT=$(readlink -f "$0")
 # Absolute path this script is in.
 SETTINGS_SOURCE=$(dirname "$CURRENT_SCRIPT")
-export SCRIPTPATH
+export SETTINGS_SOURCE
 cd ${SETTINGS_SOURCE}
 
 source "${SETTINGS_SOURCE}/includes/variables.sh"
@@ -80,7 +80,6 @@ done
 #
 check_docker_group
 if [ ! -f "${SETTINGS_SOURCE}/ssddb" ]; then
-
   premier_lancement
   # on ajoute le PATH qui va bien, au cas où il ne soit pas pris en compte par le ~/.profile
 fi
