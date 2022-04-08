@@ -26,10 +26,14 @@ export NEWT_COLORS='
 
 if [ ! -f "${HOME}/.config/ssd/env" ]; then
   # pas de fichier d'environnement
-  if [ ! -f "/opt/seedbox-compose/ssddb" ]; then
+  if [ -f "/opt/seedbox-compose/ssddb" ]; then
     # la seedbox est installée, on va prendre les valeurs par défaut de la v1/2.0
-    export SETTINGS_SOURCE=/opt/seedbox-compose/
-    export SETTINGS_STORAGE=/opt/seedbox
+    if [ -z ${SETTINGS_SOURCE+x} ]; then
+      export SETTINGS_SOURCE=/opt/seedbox-compose/
+    fi
+    if [ -z ${SETTINGS_STORAGE+x} ]; then
+      export SETTINGS_STORAGE=/opt/seedbox
+    fi
     mkdir -p "${HOME}/.config/ssd/"
     echo "SETTINGS_SOURCE=/opt/seedbox-compose/" >>"${HOME}/.config/ssd/env"
     echo "SETTINGS_STORAGE=/opt/seedbox/" >>"${HOME}/.config/ssd/env"
