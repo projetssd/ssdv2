@@ -305,6 +305,11 @@ if [ $mode_install = "manuel" ]; then
     echo "==============================================="
     pause
   fi
+  log_statusbar "Verification de l'emplacement du stockage"
+  emplacement_stockage=$(get_from_account_yml settings.storage)
+  if [ "${emplacement_stockage}" == notfound ]; then
+    manage_account_yml settings.storage "/opt/seedbox"
+  fi
 
   affiche_menu_db
 fi
