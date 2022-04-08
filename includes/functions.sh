@@ -1388,13 +1388,13 @@ EOF
   fi
 
   touch "${SETTINGS_SOURCE}/.prerequis.lock"
-
+  manage_account_yml settings.storage "${SETTINGS_STORAGE}"
+  manage_account_yml settings.source "${SETTINGS_SOURCE}"
   install_common
   # shellcheck disable=SC2162
   echo "Les composants sont maintenants tous installés/réglés, poursuite de l'installation"
 
-  manage_account_yml settings.storage "${SETTINGS_STORAGE}"
-  manage_account_yml settings.source "${SETTINGS_SOURCE}"
+
 
   read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
 
