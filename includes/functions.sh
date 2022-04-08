@@ -518,6 +518,9 @@ function install_common() {
   # dépendence permettant de gérer les fichiers yml
   ansible-galaxy install kwoodson.yedit
 
+  manage_account_yml settings.storage "${SETTINGS_STORAGE}"
+  manage_account_yml settings.source "${SETTINGS_SOURCE}"
+
   # On vérifie que le user ait bien les droits d'écriture
   make_dir_writable "${SETTINGS_SOURCE}"
   # on vérifie que le user ait bien les droits d'écriture dans la db
@@ -1388,8 +1391,7 @@ EOF
   fi
 
   touch "${SETTINGS_SOURCE}/.prerequis.lock"
-  manage_account_yml settings.storage "${SETTINGS_STORAGE}"
-  manage_account_yml settings.source "${SETTINGS_SOURCE}"
+
   install_common
   # shellcheck disable=SC2162
   echo "Les composants sont maintenants tous installés/réglés, poursuite de l'installation"
