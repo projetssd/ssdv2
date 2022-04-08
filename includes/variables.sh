@@ -40,7 +40,7 @@ if [ ! -f "${HOME}/.config/ssd/env" ]; then
     sourcedir=$(dirname "$(readlink -f "$0")")
     export SETTINGS_SOURCE=${sourcedir}
     echo "SETTINGS_SOURCE=${sourcedir}" >>"${HOME}/.config/ssd/env"
-    echo "Dans quel répertoire voulez vous stocker les réglages des containers ? (défaut : ${HOME}/seedbox/docker")
+    echo "Dans quel répertoire voulez vous stocker les réglages des containers ? (défaut : ${HOME}/seedbox/docker)"
     read destdir
     export SETTINGS_STORAGE=${destdir}
     echo "SETTINGS_STORAGE=${destdir}/" >>"${HOME}/.config/ssd/env"
