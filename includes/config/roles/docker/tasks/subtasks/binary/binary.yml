@@ -45,5 +45,5 @@
   pip:
     name: docker
     state: latest
-    virtualenv: '{{ settings.source }}/venv'
+    virtualenv: '{{ lookup('env','SETTINGS_SOURCE') }}/venv'
   ignore_errors: yes
