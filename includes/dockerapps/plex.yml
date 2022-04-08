@@ -2,9 +2,10 @@
 - hosts: localhost
   gather_facts: true
   vars_files:
+    - "{{ lookup('env','SETTINGS_STORAGE') }}/variables/account.yml"
     - "{{ settings.source }}/includes/dockerapps/templates/plex/tasks/settings.yml"
     - "{{ settings.source }}/includes/dockerapps/templates/plex/defaults/main.yml"
-    - "{{ settings.storage }}/variables/account.yml"
+
 
   tasks:
 

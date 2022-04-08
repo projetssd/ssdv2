@@ -4,7 +4,7 @@
   gather_facts: false
   
   vars_files:
-    - "{{ settings.storage }}/variables/account.yml"
+    - "{{ lookup('env','SETTINGS_STORAGE') }}/variables/account.yml"
     - "{{ settings.source }}/includes/dockerapps/templates/generique/generique.yml"
 
   tasks:

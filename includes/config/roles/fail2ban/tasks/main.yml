@@ -3,7 +3,7 @@
   gather_facts: true
 
   vars_files:
-    - "{{ settings.storage }}/variables/account.yml"
+    - "{{ lookup('env','SETTINGS_STORAGE') }}/variables/account.yml"
   vars:
     - local_ip: "{{ ansible_env['SSH_CLIENT'].split() | first }}"
     - ssh_port: "{{ ansible_env['SSH_CLIENT'].split() | last }}"
