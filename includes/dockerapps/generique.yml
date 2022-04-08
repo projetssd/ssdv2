@@ -103,7 +103,11 @@
       include_tasks: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/posttasks/{{ pgrole }}.yml"
       when: stat_result_post.stat.exists
 
-    
+    - name: Launch Posttask from yml
+      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/posttasks/{{ item }}.yml"
+      with_items: "{{ posttasks }}"
+      when: posttasks is defined
+
     # Administratif pour ssd
     - name: add resume file
       become: true

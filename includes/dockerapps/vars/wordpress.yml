@@ -13,3 +13,6 @@ pg_env:
   WORDPRESS_DB_USER: "{{ pgrole }}"
   WORDPRESS_DB_PASSWORD: "{{ pgrole }}"
   WORDPRESS_DB_NAME: "{{ pgrole }}"
+
+posttasks:
+  - "mariadb"
