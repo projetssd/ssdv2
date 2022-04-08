@@ -1,8 +1,5 @@
 #!/bin/bash
 
-source /opt/seedbox-compose/includes/functions.sh
-source /opt/seedbox-compose/includes/variables.sh
-
 if [[ ! -d "/opt/seedbox/docker/geerlingguy.security" ]]; then
 
 	echo "roles_path = /opt/seedbox/docker" >> "/etc/ansible/ansible.cfg"
@@ -16,7 +13,7 @@ if [[ ! -d "/opt/seedbox/docker/geerlingguy.security" ]]; then
 	echo ""
 	echo -e "\n${CCYAN} /!\ Par mesure de sécurité il est fortement consseillé de changer le port ssh /!\ ${CEND}"
 	echo ""
-	cp "/opt/seedbox-compose/includes/dockerapps/templates/ssh/defaults/main.yml.j2" "/opt/seedbox/docker/geerlingguy.security/defaults/main.yml"
+	cp "${SETTINGS_SOURCE}/includes/dockerapps/templates/ssh/defaults/main.yml.j2" "/opt/seedbox/docker/geerlingguy.security/defaults/main.yml"
 	ansible-playbook /opt/seedbox/docker/geerlingguy.security/main.yml
 	echo ""
 	checking_errors $?
@@ -29,7 +26,7 @@ else
 	echo -e "\n${CCYAN} /!\ Par mesure de sécurité il est fortement conseillé de changer le port ssh /!\ ${CEND}"
 	echo ""
 	mkdir -p /opt/seedbox/docker/geerlingguy.security/defaults
-	cp "/opt/seedbox-compose/includes/dockerapps/templates/ssh/defaults/main.yml.j2" "/opt/seedbox/docker/geerlingguy.security/defaults/main.yml"
+	cp "${SETTINGS_SOURCE}/includes/dockerapps/templates/ssh/defaults/main.yml.j2" "/opt/seedbox/docker/geerlingguy.security/defaults/main.yml"
 	ansible-playbook /opt/seedbox/docker/geerlingguy.security/main.yml
 	echo ""
 	checking_errors $?

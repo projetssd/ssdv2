@@ -25,7 +25,7 @@
 
 - name: Time Zone | Import '/etc/timezone'
   template:
-    src: "/opt/seedbox-compose/includes/config/roles/system/templates/etc/timezone.j2"
+    src: "{{ settings.source }}/includes/config/roles/system/templates/etc/timezone.j2"
     dest: "/etc/timezone"
     mode: 0644
     force: yes

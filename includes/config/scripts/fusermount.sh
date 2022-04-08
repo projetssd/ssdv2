@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
+ansible-playbook ${SETTINGS_SOURCE}/includes/dockerapps/templates/ansible/ansible.yml
 USER=$(cat ${TMPNAME})
 fusermount -uz /mnt/rclone > /dev/null 2>&1
 fusermount -uz /mnt/plexdrive > /dev/null 2>&1

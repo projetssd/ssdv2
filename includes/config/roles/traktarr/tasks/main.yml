@@ -40,7 +40,7 @@
     - name: Install pip requirements
       pip:
         requirements: /home/{{user.name}}/scripts/traktarr/requirements.txt
-        virtualenv: '/opt/seedbox-compose/venv'
+        virtualenv: '{{ settings.source }}/venv'
 
     - name: Check if traktarr config exists
       stat:
@@ -94,7 +94,7 @@
     - name: Import default config
       become: yes
       template:
-        src: /opt/seedbox-compose/includes/config/roles/traktarr/templates/config.json.j2
+        src: {{ settings.source }}/includes/config/roles/traktarr/templates/config.json.j2
         dest: /home/{{user.name}}/scripts/traktarr/config.json
         owner: "{{user.userid}}"
         group: "{{user.groupid}}"
@@ -124,7 +124,7 @@
     - name: Import traktarr service
       become: yes
       template:
-        src: /opt/seedbox-compose/includes/config/roles/traktarr/templates/traktarr.service.j2
+        src: {{ settings.source }}/includes/config/roles/traktarr/templates/traktarr.service.j2
         dest: /etc/systemd/system/traktarr.service
         force: yes
         owner: "{{user.userid}}"

@@ -108,7 +108,7 @@
   pip:
     requirements: /opt/motd/requirements.txt
     executable: pip3
-    virtualenv: '/opt/seedbox-compose/venv'
+    virtualenv: '{{ settings.source }}/venv'
 
 
 - name: Check if 'config.json' exists
@@ -118,7 +118,7 @@
 
 - name: Import default 'config.json'
   template:
-    src: /opt/seedbox-compose/includes/config/roles/motd/templates/config.json.j2
+    src: {{ settings.source }}/includes/config/roles/motd/templates/config.json.j2
     dest: /opt/motd/config.json
     owner: "root"
     group: "root"

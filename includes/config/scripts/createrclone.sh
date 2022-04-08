@@ -1,6 +1,5 @@
 #!/bin/bash
 RCLONE_CONFIG_FILE=${HOME}/.config/rclone/rclone.conf
-source /opt/seedbox-compose/profile.sh
 
 TMPDIR=$(mktemp -d)
 

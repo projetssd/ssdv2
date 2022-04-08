@@ -1,16 +1,13 @@
 #!/bin/bash
 
-source /opt/seedbox-compose/includes/functions.sh
-source /opt/seedbox-compose/includes/variables.sh
-
-    	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
-    	echo -e "${CCYAN}          /!\ Installation de safire /!\                                     ${CEND}"
-    	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
-	echo ""
-    	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
-    	echo -e "${CCYAN}https://github.com/laster13/patxav/wiki/Installations-Comptes-de-Service     ${CEND}"
-    	echo -e "${CCYAN}           https://github.com/88lex/safire                                   ${CEND}"
-    	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
+echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
+echo -e "${CCYAN}          /!\ Installation de safire /!\                                     ${CEND}"
+echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
+echo ""
+echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
+echo -e "${CCYAN}https://github.com/laster13/patxav/wiki/Installations-Comptes-de-Service     ${CEND}"
+echo -e "${CCYAN}           https://github.com/88lex/safire                                   ${CEND}"
+echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
 clear
 echo ""
 echo -e "${YELLOW}/!\ IMPORTANT /!\ ${CEND}
@@ -31,7 +28,7 @@ sudo chown -R ${USER} /opt/safire
 cd /opt/safire
 pip install -r requirements.txt --user
 echo ""
-ansible-playbook /opt/seedbox-compose/includes/config/roles/safire/tasks/main.yml
+ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/safire/tasks/main.yml
 echo ""
 echo -e "${YELLOW}/!\ VERIFICATION /!\:${CEND}
 
@@ -42,9 +39,9 @@ ${GREEN}rclone touch remote:test123.txt --drive-service-account-file=/opt/sa/NUM
 ${GREEN}rclone deletefile remote:test123.txt --drive-service-account-file=/opt/sa/NUMBER.json
 ${CEND}"
 
-    	echo -e "${CRED}---------------------------------------------------------------${CEND}"
-    	echo -e "${CRED}     /!\ SAFIRE INSTALLES AVEC SUCCES /!\          ${CEND}"
-    	echo -e "${CRED}---------------------------------------------------------------${CEND}"
+echo -e "${CRED}---------------------------------------------------------------${CEND}"
+echo -e "${CRED}     /!\ SAFIRE INSTALLES AVEC SUCCES /!\          ${CEND}"
+echo -e "${CRED}---------------------------------------------------------------${CEND}"
 
 echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
 read -r

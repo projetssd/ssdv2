@@ -9,7 +9,7 @@ User={{ lookup('env','MYUID') }}
 Group={{ lookup('env','MYGID') }}
 Type=simple
 WorkingDirectory=/home/{{ lookup('env','USER') }}/scripts/plex_autoscan/
-ExecStart=/opt/seedbox-compose/venv/bin/python /home/{{ lookup('env','USER') }}/scripts/plex_autoscan/scan.py server --loglevel=INFO
+ExecStart={{ settings.source }}/venv/bin/python /home/{{ lookup('env','USER') }}/scripts/plex_autoscan/scan.py server --loglevel=INFO
 Restart=always
 RestartSec=10
 

@@ -2074,7 +2074,7 @@ else
 fi
 
 emplacement_source=$(get_from_account_yml settings.source)
-if [ "${emplacement_stockage}" == notfound ]; then
+if [ "${emplacement_source}" == notfound ]; then
   manage_account_yml settings.source "/opt/seedbox-compose"
   export SETTINGS_SOURCE=/opt/seedbox
 else

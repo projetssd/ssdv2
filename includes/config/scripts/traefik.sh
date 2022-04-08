@@ -1,11 +1,8 @@
 #!/bin/bash
 clear
-source /opt/seedbox-compose/includes/functions.sh
-source /opt/seedbox-compose/includes/variables.sh
-
 
 ## Variable
-ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
+ansible-playbook ${SETTINGS_SOURCE}/includes/dockerapps/templates/ansible/ansible.yml
 DOMAIN=$(cat ${TMPDOMAIN})
 SEEDGROUP=$(cat ${TMPGROUP})
 rm ${TMPNAME} ${TMPDOMAIN} ${TMPGROUP}
@@ -54,7 +51,7 @@ checking_errors $?
 echo ""
 echo -e "${BLUE}### REINSTALLATION FAIL2BAN ###${NC}"
 ## reinstallation fail2ban
-ansible-playbook /opt/seedbox-compose/includes/config/roles/fail2ban/tasks/main.yml
+ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/fail2ban/tasks/main.yml
 checking_errors $?
 
 echo ""

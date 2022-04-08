@@ -72,7 +72,7 @@ rm -f /usr/bin/python
 ln -s /usr/bin/python3 /usr/bin/python
 
 cat <<EOF >/etc/logrotate.d/ansible
-/opt/seedbox-compose/logs/*.log {
+${SETTINGS_SOURCE}/logs/*.log {
   rotate 7
   daily
   compress

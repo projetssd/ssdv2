@@ -32,7 +32,7 @@
 
     - name: Import default config
       template:
-        src: /opt/seedbox-compose/includes/config/roles/plex_patrol/templates/settings.ini.j2
+        src: {{ settings.source }}/includes/config/roles/plex_patrol/templates/settings.ini.j2
         dest: /opt/seedbox/docker/{{user.name}}/plex_patrol/settings.ini
         owner: "{{user.userid}}"
         group: "{{user.groupid}}"

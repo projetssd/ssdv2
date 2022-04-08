@@ -90,9 +90,7 @@
     - name: Install pip requirements
       pip:
         requirements: "/home/{{ lookup('env','USER') }}/scripts/plex_autoscan/requirements.txt"
-        #executable: pip
-        #extra_args: --user
-        virtualenv: '/opt/seedbox-compose/venv'
+        virtualenv: '{{ settings.source }}/venv'
 
     - name: Check config exists
       stat:

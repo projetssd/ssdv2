@@ -12,9 +12,9 @@
     - name: Ajout alias
       lineinfile:
         path: "/home/{{ lookup('env','USER') }}/.profile"
-        line: "alias seedbox='cd /opt/seedbox-compose && ./seedbox.sh'"
+        line: "alias seedbox='cd {{ settings.source }} && ./seedbox.sh'"
 
     - name: Ajout chargement venv
       lineinfile:
         path: "/home/{{ lookup('env','USER') }}/.profile"
-        line: "cd /opt/seedbox-compose && source profile.sh && cd /home/{{ lookup('env','USER') }}"
+        line: "cd {{ settings.source }} && source profile.sh && cd /home/{{ lookup('env','USER') }}"

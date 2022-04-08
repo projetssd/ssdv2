@@ -1,8 +1,5 @@
 #!/bin/bash
 
-source /opt/seedbox-compose/includes/functions.sh
-source /opt/seedbox-compose/includes/variables.sh
-
 RCLONE_CONFIG_FILE=${HOME}/.config/rclone/rclone.conf
 
 rm /tmp/team.txt /tmp/crop.txt >/dev/null 2>&1

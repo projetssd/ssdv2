@@ -6,13 +6,13 @@
     - name: copy plex ufw rules
       become: yes
       copy:
-        src: /opt/seedbox-compose/includes/config/roles/ufw/templates/plexmediaserver
+        src: {{ settings.source }}/includes/config/roles/ufw/templates/plexmediaserver
         dest: /etc/ufw/applications.d/plexmediaserver
         owner: root
         mode: 0755
     - name: copy yml file
       copy:
-        src: /opt/seedbox-compose/includes/config/roles/ufw/templates/ufw.yml
+        src: {{ settings.source }}/includes/config/roles/ufw/templates/ufw.yml
         dest: /opt/seedbox/conf/ufw.yml
         force: no
 

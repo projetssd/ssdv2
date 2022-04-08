@@ -117,7 +117,7 @@
 
     - name: Install common pip modules
       pip:
-        virtualenv: '/opt/seedbox-compose/venv'
+        virtualenv: '{{ settings.source }}/venv'
         state: present
         name:
           - passlib
@@ -143,7 +143,7 @@
     - name: Install pip glances
       pip:
         name: glances[action,browser,cloud,cpuinfo,docker,folders,gpu,graph,ip,raid,snmp,web]
-        virtualenv: '/opt/seedbox-compose/venv'
+        virtualenv: '{{ settings.source }}/venv'
       tags: glances
 
     - name: "Hetzner Tasks"

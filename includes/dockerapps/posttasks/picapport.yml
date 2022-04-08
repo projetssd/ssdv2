@@ -1,7 +1,7 @@
 ---
 - name: "Prepare configuration"
   template:
-    src: /opt/seedbox-compose/includes/dockerapps/templates/picapport/picapport.properties.j2
+    src: "{{ settings.source }}/includes/dockerapps/templates/picapport/picapport.properties.j2"
     dest: "{{ settings.storage }}/docker/{{ user.name }}/picapport/config/picapport.properties"
   become: yes
 

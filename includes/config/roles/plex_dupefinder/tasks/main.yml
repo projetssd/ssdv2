@@ -29,7 +29,7 @@
     - name: Install pip requirements
       pip:
         requirements: /home/{{ lookup('env','USER') }}/scripts/plex_dupefinder/requirements.txt
-        virtualenv: '/opt/seedbox-compose/venv'
+        virtualenv: '{{ settings.source }}/venv'
 
     - name: Check config exists
       stat:
@@ -38,7 +38,7 @@
 
     - name: Import default config
       template:
-        src: /opt/seedbox-compose/includes/config/roles/plex_dupefinder/templates/config.json.j2
+        src: {{ settings.source }}/includes/config/roles/plex_dupefinder/templates/config.json.j2
         dest: /home/{{ lookup('env','USER') }}/scripts/plex_dupefinder/config.json
         owner: "{{user.userid}}"
         group: "{{user.groupid}}"

@@ -1,8 +1,5 @@
 #!/bin/bash
 
-source /opt/seedbox-compose/includes/functions.sh
-source /opt/seedbox-compose/includes/variables.sh
-
 RCLONE_CONFIG_FILE=${HOME}/.config/rclone/rclone.conf
 
     	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
@@ -57,14 +54,14 @@ echo ""
 read -rp $'\e[36m   Souhaitez vous créer un Share Drive?: (o/n) ? \e[0m' OUI
 
 if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
-/opt/seedbox-compose/includes/config/scripts/createrclone.sh
+${SETTINGS_SOURCE}/includes/config/scripts/createrclone.sh
 fi
 echo ""
 
 if [[ ! -d "/opt/sa" ]]; then
   read -rp $'\e[36m   Souhaitez vous créer des comptes de services: (o/n) ? \e[0m' OUI
   if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
-    /opt/seedbox-compose/includes/config/scripts/sa-gen.sh
+    ${SETTINGS_SOURCE}/includes/config/scripts/sa-gen.sh
   fi
 echo ""
 fi

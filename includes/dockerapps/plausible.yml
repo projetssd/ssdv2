@@ -93,7 +93,7 @@
 
       - name: Copy conf
         copy:
-          src: "/opt/seedbox-compose/includes/dockerapps/templates/plausible/{{ item }}"
+          src: "{{ settings.source }}/includes/dockerapps/templates/plausible/{{ item }}"
           dest:  "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/event/{{ item }}"
         with_items:
           - "clickhouse-config.xml"
@@ -101,7 +101,7 @@
 
       - name: Copy create table script
         copy:
-          src: "/opt/seedbox-compose/includes/dockerapps/templates/plausible/create_db_clickhouse.sh"
+          src: "{{ settings.source }}/includes/dockerapps/templates/plausible/create_db_clickhouse.sh"
           dest: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/event/initdb/init-db.sh"
 
       # LABELS ######################################################################

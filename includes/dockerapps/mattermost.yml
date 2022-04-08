@@ -79,7 +79,7 @@
             else false }}"
 
     - name: "Set DNS Record on CloudFlare"
-      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      include_tasks: '{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
         subdomain: "{{sub.mattermost if sub_enabled else 'mattermost'}}"
       when: cloudflare_enabled
@@ -104,12 +104,12 @@
 
     - name: Import docker-compose.yml
       template:
-        src: /opt/seedbox-compose/includes/dockerapps/templates/mattermost/mattermost.yml.j2
+        src: {{ settings.source }}/includes/dockerapps/templates/mattermost/mattermost.yml.j2
         dest: /tmp/mattermost-docker/mattermost.yml
 
     - name: Import config.json
       template:
-        src: /opt/seedbox-compose/includes/dockerapps/templates/mattermost/config.json.j2
+        src: {{ settings.source }}/includes/dockerapps/templates/mattermost/config.json.j2
         dest: /opt/seedbox/docker/{{user.name}}/{{pgrole}}/config/config.json
 
     - name: docker compose up -d

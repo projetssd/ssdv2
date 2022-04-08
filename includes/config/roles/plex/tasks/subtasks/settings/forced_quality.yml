@@ -12,7 +12,7 @@
 ---
 - name: Settings | Forced Quality | Install lxml pip module
   pip:
-    virtualenv: '/opt/seedbox-compose/venv'
+    virtualenv: '{{ settings.source }}/venv'
     name: lxml
     state: present
 

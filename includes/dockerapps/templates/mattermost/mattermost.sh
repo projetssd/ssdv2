@@ -1,7 +1,7 @@
 #!/bin/bash
 
-source /opt/seedbox-compose/includes/functions.sh
-source /opt/seedbox-compose/includes/variables.sh
+source ${SETTINGS_SOURCE}/includes/functions.sh
+source ${SETTINGS_SOURCE}/includes/variables.sh
 
 ##install docker-compose
 curl -L "https://github.com/docker/compose/releases/download/1.25.5/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
@@ -78,4 +78,4 @@ echo -e "${CCYAN}Au cours de l'installation le script va vous demander le type d
 echo -e "\n${CCYAN}Prendre le temps de lire et appuyer ensuite sur la touche entrée${CEND} pour continuer..."
 read -r
 
-ansible-playbook /opt/seedbox-compose/includes/dockerapps/mattermost.yml
+ansible-playbook ${SETTINGS_SOURCE}/includes/dockerapps/mattermost.yml

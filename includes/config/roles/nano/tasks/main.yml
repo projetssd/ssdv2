@@ -18,5 +18,5 @@
 
     - name: Import yaml.nanorc
       template:
-        src: "/opt/seedbox-compose/includes/config/roles/nano/templates/yaml.nanorc.j2"
+        src: "{{ settings.source }}/includes/config/roles/nano/templates/yaml.nanorc.j2"
         dest: "/usr/share/nano/yaml.nanorc"

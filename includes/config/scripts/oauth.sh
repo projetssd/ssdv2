@@ -1,10 +1,7 @@
 #!/bin/bash
 
-source /opt/seedbox-compose/includes/functions.sh
-source /opt/seedbox-compose/includes/variables.sh
-
 ## Variable
-ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
+ansible-playbook ${SETTINGS_SOURCE}/includes/dockerapps/templates/ansible/ansible.yml
 DOMAIN=$(cat ${TMPDOMAIN})
 SEEDGROUP=$(cat ${TMPGROUP})
 rm ${TMPNAME} ${TMPDOMAIN} ${TMPGROUP}

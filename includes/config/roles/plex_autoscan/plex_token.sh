@@ -8,16 +8,6 @@
 #                           MIT License                                 #
 #########################################################################
 
-#if [ -z "$PLEX_LOGIN" ] || [ -z "$PLEX_PASSWORD" ]; then
-#    PLEX_LOGIN=$1
-#    PLEX_PASSWORD=$2
-#fi
-export SCRIPTPATH=/opt/seedbox-compose
-export PATH="$HOME/.local/bin:$PATH"
-source ${SCRIPTPATH}/includes/functions.sh
-source ${SCRIPTPATH}/includes/variables.sh
-source ${SCRIPTPATH}/includes/functions.sh
-
 
 >&2 echo -n 'Votre login Plex (e-mail or username): '
 read PLEX_LOGIN
