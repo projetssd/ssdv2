@@ -16,6 +16,8 @@ if [ -f "${HOME}/.config/ssd/env" ]; then
 
   PYTHONPATH=${SETTINGS_SOURCE}/venv/lib/$(ls ${SETTINGS_SOURCE}/venv/lib)/site-packages
   export PYTHONPATH
+  # le fonction nous a probablement fait sortir du venv, on le recharge
+  source ${SETTINGS_SOURCE}/venv/bin/activate
 fi
 
 
