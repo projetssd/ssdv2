@@ -14,7 +14,7 @@ if [ -f "${HOME}/.config/ssd/env" ]; then
   # On charge les fonctions qui sont lancées par le menu
   source ${SETTINGS_SOURCE}/includes/menus.sh
 
-  PYTHONPATH= ${SETTINGS_SOURCE}/venv/lib/$(ls ${SETTINGS_SOURCE}/venv/lib)/site-packages
+  PYTHONPATH=${SETTINGS_SOURCE}/venv/lib/$(ls ${SETTINGS_SOURCE}/venv/lib)/site-packages
   export PYTHONPATH
 fi
 
