@@ -3,7 +3,7 @@ pgrole: 'qbittorrent'
 intport: '8080'
 image: 'ghcr.io/linuxserver/qbittorrent'
 pg_volumes:
-  - "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
   - "{{ lookup('env','HOME') }}/local/{{pgrole}}/downloads:/downloads"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
 

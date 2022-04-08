@@ -12,7 +12,7 @@
 
     - name: Checking for existing app data
       stat:
-        path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
+        path: '{{ settings.storage }}/docker/{{user.name}}/authelia/configuration.yml'
       register: check
 
     - name: "Variables | Set 'cloudflare_enabled' variable"
@@ -105,7 +105,7 @@
         image: 'lscr.io/linuxserver/mariadb'
         pull: yes
         volumes:
-          - '/opt/seedbox/docker/{{user.name}}/prestashop/db-prestashop:/config'
+          - '{{ settings.storage }}/docker/{{user.name}}/prestashop/db-prestashop:/config'
           - '/etc/localtime:/etc/localtime:ro'
         env:
           PUID: '{{user.userid}}'

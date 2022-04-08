@@ -40,6 +40,6 @@
       VIKUNJA_DATABASE_USER: "{{pgrole}}"
       VIKUNJA_DATABASE_DATABASE: "{{pgrole}}"
     volumes:
-    - "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/api:/app/vikunja/templates"
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/api:/app/vikunja/templates"
     labels: '{{pg_labels}}'
 

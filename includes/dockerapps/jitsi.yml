@@ -39,7 +39,7 @@
 
       - name: Checking for existing app data
         stat:
-          path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
+          path: '{{ settings.storage }}/docker/{{user.name}}/authelia/configuration.yml'
         register: check
 
       - name: 'Set Known Facts'

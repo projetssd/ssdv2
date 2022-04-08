@@ -2,7 +2,7 @@
 - name: prepare directory
   become: yes
   file:
-    path: "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}/init"
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}/init"
     state: directory
     mode: 0777
     owner: "{{ lookup('env','MYUID') }}"
@@ -10,14 +10,14 @@
 
 - name: Prepare database dump
   shell: 
-    chdir: "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}/init"
+    chdir: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}/init"
     cmd: "docker run --rm guacamole/guacamole /opt/guacamole/bin/initdb.sh --mysql > /tmp/initdb.sql"
 
 - name: Copy file
   become: yes
   copy:
     src: /tmp/initdb.sql
-    dest: "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}/init/initdb.sql"
+    dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}/init/initdb.sql"
 
 
 - name: Launch Pretask

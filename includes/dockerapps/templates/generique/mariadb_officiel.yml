@@ -11,8 +11,8 @@
     image: 'mariadb:10.6.4'
     pull: yes
     volumes:
-      - "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}/data:/var/lib/mysql"
-      - "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}/init:/docker-entrypoint-initdb.d"
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}/data:/var/lib/mysql"
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}/init:/docker-entrypoint-initdb.d"
       - '/etc/localtime:/etc/localtime:ro'
     env:
       MYSQL_ROOT_PASSWORD: "{{user.pass}}"

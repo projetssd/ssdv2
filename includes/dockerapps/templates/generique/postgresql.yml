@@ -11,9 +11,9 @@
     image: 'postgres'
     pull: yes
     volumes:
-      - "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}:/var/lib/postgresql/data"
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}:/var/lib/postgresql/data"
       - '/etc/localtime:/etc/localtime:ro'
-      - "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/init:/docker-entrypoint-initdb.d"
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/init:/docker-entrypoint-initdb.d"
     env:
       POSTGRES_USER: "{{pgrole}}"
       POSTGRES_PASSWORD: "{{pgrole}}"

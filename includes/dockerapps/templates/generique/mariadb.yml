@@ -11,7 +11,7 @@
     image: 'lscr.io/linuxserver/mariadb'
     pull: yes
     volumes:
-      - "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}:/config"
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}:/config"
       - '/etc/localtime:/etc/localtime:ro'
     env:
       MYSQL_ROOT_PASSWORD: "{{user.pass}}"

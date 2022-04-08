@@ -4,8 +4,8 @@ intport: '8384'
 image: 'lscr.io/linuxserver/syncthing'
 
 pg_volumes:
-  - "/opt/seedbox/docker/{{lookup('env','USER')}}/{{pgrole}}/config:/config"
-  - "/opt/seedbox/docker/{{lookup('env','USER')}}/{{pgrole}}/sync:/sync"
+  - "{{ settings.storage }}/docker/{{lookup('env','USER')}}/{{pgrole}}/config:/config"
+  - "{{ settings.storage }}/docker/{{lookup('env','USER')}}/{{pgrole}}/sync:/sync"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
   - '/etc/localtime:/etc/localtime:ro'
 

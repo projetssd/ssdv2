@@ -24,7 +24,7 @@
 
     - name: Checking for existing app data
       stat:
-        path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
+        path: '{{ settings.storage }}/docker/{{user.name}}/authelia/configuration.yml'
       register: check
 
     - name: "Variables | Set 'cloudflare_enabled' variable"
@@ -91,12 +91,12 @@
     - name: Creating  paths
       file: 'path={{item}} state=directory mode=0775'
       with_items:
-        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/data'
-        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/logs'
-        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config'
-        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/plugins'
-        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/client-plugins'
-        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/db'
+        - '{{ settings.storage }}/docker/{{user.name}}/{{pgrole}}/data'
+        - '{{ settings.storage }}/docker/{{user.name}}/{{pgrole}}/logs'
+        - '{{ settings.storage }}/docker/{{user.name}}/{{pgrole}}/config'
+        - '{{ settings.storage }}/docker/{{user.name}}/{{pgrole}}/plugins'
+        - '{{ settings.storage }}docker/{{user.name}}/{{pgrole}}/client-plugins'
+        - '{{ settings.storage }}/docker/{{user.name}}/{{pgrole}}/db'
 
     - name: permissions
       shell: |

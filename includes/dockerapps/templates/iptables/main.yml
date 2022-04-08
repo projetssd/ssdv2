@@ -6,7 +6,7 @@
 
   tasks:
     - name: 'Register SSH'
-      shell: 'cat /opt/seedbox/variables/ssh'
+      shell: "cat {{ settings.storage }}/variables/ssh"
       register: ssh
       ignore_errors: True
 

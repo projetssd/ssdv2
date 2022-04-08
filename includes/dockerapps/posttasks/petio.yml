@@ -17,7 +17,7 @@
     image: 'mongo:latest'
     pull: yes
     volumes:
-      - "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}:/data/db"
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}:/data/db"
       - '/etc/localtime:/etc/localtime:ro'
     env: '{{mongo_env}}'
     restart_policy: unless-stopped

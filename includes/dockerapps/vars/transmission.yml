@@ -5,7 +5,7 @@ image: 'ghcr.io/linuxserver/transmission'
 pg_volumes:
   - "{{ lookup('env','HOME') }}/local/{{pgrole}}/downloads:/downloads"
   - "{{ lookup('env','HOME') }}/local/{{pgrole}}/watch:/watch"
-  - "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
 
 pg_env:

@@ -2061,3 +2061,21 @@ EOF
   install_services
   launch_service traefik
 }
+
+#####################################################
+# On finit de setter les variables
+emplacement_stockage=$(get_from_account_yml settings.storage)
+if [ "${emplacement_stockage}" == notfound ]; then
+  manage_account_yml settings.storage "/opt/seedbox"
+  export SETTINGS_STORAGE=/opt/seedbox
+else
+  export SETTINGS_STORAGE=${emplacement_stockage}
+fi
+
+emplacement_source=$(get_from_account_yml settings.source)
+if [ "${emplacement_stockage}" == notfound ]; then
+  manage_account_yml settings.source "/opt/seedbox-compose"
+  export SETTINGS_SOURCE=/opt/seedbox
+else
+  export SETTINGS_SOURCE=${emplacement_source}
+fi
