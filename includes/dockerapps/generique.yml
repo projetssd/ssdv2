@@ -23,6 +23,11 @@
     - name: Launch Pretask
       include_tasks: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/pretasks/{{ pgrole }}.yml"
       when: stat_result.stat.exists
+
+    - name: Launch Pretasks from yml
+      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/posttasks/{{ item }}.yml"
+      with_items: "{{ pretasks }}"
+      when: pretasks is defined
         
     # FACTS #######################################################################
 
