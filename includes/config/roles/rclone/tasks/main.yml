@@ -13,6 +13,7 @@
   gather_facts: false
   vars_files:
     - 'settings.yml'
+    - "{{ settings.storage }}/variables/account.yml"
   tasks:
 
     - name: Build URL Tasks
