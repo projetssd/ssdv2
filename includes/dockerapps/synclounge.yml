@@ -1,32 +1,28 @@
-#!/bin/bash
-
 ---
-  - hosts: localhost
-    gather_facts: false
-    vars_files:
-      - "{{ lookup('env','SETTINGS_STORAGE') }}/variables/account.yml"
-    tasks:
-          
-      # FACTS #######################################################################
+- hosts: localhost
+  gather_facts: false
+  tasks:
 
-      - name: create subsonic state
-        shell: |
-          echo "1" > {{ settings.storage }}/status/synclounge
+    # FACTS #######################################################################
 
-      - name: Checking for existing app data
-        stat:
-          path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/authelia/configuration.yml"
-        register: check
+    - name: create subsonic state
+      shell: |
+        echo "1" > {{ settings.storage }}/status/synclounge
 
-      - name: 'Set Known Facts'
-        set_fact:
-          pgrole: 'synclounge'
-          intport: '8088'
-          image: 'starbix/synclounge'
+    - name: Checking for existing app data
+      stat:
+        path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/authelia/configuration.yml"
+      register: check
 
-      - name: "Variables | Set 'cloudflare_enabled' variable"
-        set_fact:
-          cloudflare_enabled: "{{ true if not(
+    - name: 'Set Known Facts'
+      set_fact:
+        pgrole: 'synclounge'
+        intport: '8088'
+        image: 'starbix/synclounge'
+
+    - name: "Variables | Set 'cloudflare_enabled' variable"
+      set_fact:
+        cloudflare_enabled: "{{ true if not(
               (cloudflare.login is undefined)
               or
               (cloudflare.login is none)
@@ -40,10 +36,10 @@
               (cloudflare.api | trim | length == 0)
             )
               else false }}"
-  
-      - name: "Variables | Set 'oauth_enabled' variable"
-        set_fact:
-          oauth_enabled: "{{ true if not(
+
+    - name: "Variables | Set 'oauth_enabled' variable"
+      set_fact:
+        oauth_enabled: "{{ true if not(
               (oauth.client is undefined)
               or
               (oauth.client is none)
@@ -64,9 +60,9 @@
             )
               else false }}"
 
-      - name: "Variables | Set 'sub' variable"
-        set_fact:
-          sub_enabled: "{{ true if not(
+    - name: "Variables | Set 'sub' variable"
+      set_fact:
+        sub_enabled: "{{ true if not(
               (sub[pgrole][pgrole] is undefined)
               or
               (sub[pgrole][pgrole] is none)
@@ -75,68 +71,68 @@
             )
               else false }}"
 
-      - name: "Set DNS Record on CloudFlare"
-        include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
-        vars:
-          subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
-        when: cloudflare_enabled
-    
-      - name: Creating paths
-        file: "path={{item}} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID') }}"
-        with_items:
-          - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}"
-  
-      # LABELS ######################################################################
-      - name: 'Ajout label traefik'
-        set_fact:
-          pg_labels:
-            traefik.enable: 'true'
-            ## HTTP Routers
-            traefik.http.routers.synclounge-webui-rtr.entrypoints: 'https'
-            traefik.http.routers.synclounge-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
-            traefik.http.routers.synclounge-webui-rtr.tls: 'true'
-            traefik.http.routers.synclounge-slserver-rtr.entrypoints: 'https'
-            traefik.http.routers.synclounge-slserver-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`) && PathPrefix(`/slserver`)'
-            traefik.http.routers.synclounge-slserver-rtr.tls: 'true'
-            ## Middlewares
-            ## HTTP Services
-            traefik.http.routers.synclounge-webui-rtr.service: 'synclounge-webui-svc'
-            traefik.http.services.synclounge-webui-svc.loadbalancer.server.port: '8088'
-            traefik.http.routers.synclounge-slserver-rtr.service: 'synclounge-slserver-svc'
-            traefik.http.services.synclounge-slserver-svc.loadbalancer.server.port: '8089'
-  
-      - name: 'Setting PG Volumes'
-        set_fact:
-          pg_volumes:
-            - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
-            - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/sync:/sync"
-  
-      - name: 'Setting PG ENV'
-        set_fact:
-          pg_env:
-            UID: "{{ lookup('env','MYUID') }}"
-            GID: "{{ lookup('env','MYGID') }}"
-            DOMAIN: '{{pgrole}}.{{user.domain}}'
-  
-      # MAIN DEPLOYMENT #############################################################
-  
-      - name: 'Deploying {{pgrole}}'
-        docker_container:
-          name: '{{pgrole}}'
-          image: '{{image}}'
-          pull: yes
-          volumes: '{{pg_volumes}}'
-          env: '{{pg_env}}'
-          restart_policy: unless-stopped
-          networks:
-            - name: traefik_proxy
-          state: started
-          labels: '{{pg_labels}}'
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
+      vars:
+        subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
+      when: cloudflare_enabled
 
-      - name: add resume file
-        become: yes
-        shell: |
-          echo "{{pgrole}}-{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> {{ settings.storage }}/temp.txt
+    - name: Creating paths
+      file: "path={{item}} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID') }}"
+      with_items:
+        - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}"
+
+    # LABELS ######################################################################
+    - name: 'Ajout label traefik'
+      set_fact:
+        pg_labels:
+          traefik.enable: 'true'
+          ## HTTP Routers
+          traefik.http.routers.synclounge-webui-rtr.entrypoints: 'https'
+          traefik.http.routers.synclounge-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
+          traefik.http.routers.synclounge-webui-rtr.tls: 'true'
+          traefik.http.routers.synclounge-slserver-rtr.entrypoints: 'https'
+          traefik.http.routers.synclounge-slserver-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`) && PathPrefix(`/slserver`)'
+          traefik.http.routers.synclounge-slserver-rtr.tls: 'true'
+          ## Middlewares
+          ## HTTP Services
+          traefik.http.routers.synclounge-webui-rtr.service: 'synclounge-webui-svc'
+          traefik.http.services.synclounge-webui-svc.loadbalancer.server.port: '8088'
+          traefik.http.routers.synclounge-slserver-rtr.service: 'synclounge-slserver-svc'
+          traefik.http.services.synclounge-slserver-svc.loadbalancer.server.port: '8089'
+
+    - name: 'Setting PG Volumes'
+      set_fact:
+        pg_volumes:
+          - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
+          - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/sync:/sync"
+
+    - name: 'Setting PG ENV'
+      set_fact:
+        pg_env:
+          UID: "{{ lookup('env','MYUID') }}"
+          GID: "{{ lookup('env','MYGID') }}"
+          DOMAIN: '{{pgrole}}.{{user.domain}}'
+
+    # MAIN DEPLOYMENT #############################################################
+
+    - name: 'Deploying {{pgrole}}'
+      docker_container:
+        name: '{{pgrole}}'
+        image: '{{image}}'
+        pull: yes
+        volumes: '{{pg_volumes}}'
+        env: '{{pg_env}}'
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+        state: started
+        labels: '{{pg_labels}}'
+
+    - name: add resume file
+      become: yes
+      shell: |
+        echo "{{pgrole}}-{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> {{ settings.storage }}/temp.txt
 
 
 

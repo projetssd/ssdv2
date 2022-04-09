@@ -1,8 +1,6 @@
 ---
 - hosts: localhost
   gather_facts: yes
-  vars_files:
-    - {{ lookup('env','SETTINGS_STORAGE') }}/variables/account.yml
 
   tasks:
 

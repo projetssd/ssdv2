@@ -95,7 +95,6 @@ function cloudflare() {
       echo >&2 -n -e "${BWHITE}Votre Email Cloudflare: ${CEND}"
       read cloud_email
       manage_account_yml cloudflare.login "$cloud_email"
-      ###sed -i "/login:/c\   login: $cloud_email" ${SETTINGS_STORAGE}/variables/account.yml
       update_seedbox_param "cf_login" $cloud_email
     done
 
@@ -103,7 +102,6 @@ function cloudflare() {
       echo >&2 -n -e "${BWHITE}Votre API Cloudflare: ${CEND}"
       read cloud_api
       manage_account_yml cloudflare.api "$cloud_api"
-      ###sed -i "/api:/c\   api: $cloud_api" ${SETTINGS_STORAGE}/variables/account.yml
     done
   fi
   echo ""
@@ -139,26 +137,22 @@ function oauth() {
       echo >&2 -n -e "${BWHITE}Oauth_client: ${CEND}"
       read oauth_client
       manage_account_yml oauth.client "$oauth_client"
-      ###sed -i "s/client:/client: $oauth_client/" ${SETTINGS_STORAGE}/variables/account.yml
     done
 
     while [ -z "$oauth_secret" ]; do
       echo >&2 -n -e "${BWHITE}Oauth_secret: ${CEND}"
       read oauth_secret
       manage_account_yml oauth.secret "$oauth_secret"
-      ###sed -i "s/secret:/secret: $oauth_secret/" ${SETTINGS_STORAGE}/variables/account.yml
     done
 
     while [ -z "$email" ]; do
       echo >&2 -n -e "${BWHITE}Compte Gmail utilisé(s), séparés d'une virgule si plusieurs: ${CEND}"
       read email
       manage_account_yml oauth.account "$email"
-      ###sed -i "s/account:/account: $email/" ${SETTINGS_STORAGE}/variables/account.yml
     done
 
     openssl=$(openssl rand -hex 16)
     manage_account_yml oauth.openssl "$openssl"
-    ###sed -i "s/openssl:/openssl: $openssl/" ${SETTINGS_STORAGE}/variables/account.yml
 
     echo ""
     echo -e "${CRED}---------------------------------------------------------------${CEND}"
@@ -372,10 +366,6 @@ function install_traefik() {
   ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/templates/ansible/ansible.yml"
   DOMAIN=$(cat "${TMPDOMAIN}")
 
-  #  if grep "traefik:" ${SETTINGS_STORAGE}/variables/account.yml >/dev/null 2>&1; then
-  #    sed -i "/traefik/,+2d" ${SETTINGS_STORAGE}/variables/account.yml >/dev/null 2>&1
-  #  fi
-
   # choix sous domaine traefik
   echo ""
   echo -e "${BWHITE}Adresse par défault: https://traefik.${DOMAIN} ${CEND}"
@@ -417,7 +407,6 @@ function install_traefik() {
     ;;
   esac
   manage_account_yml sub.traefik.auth ${TYPE_AUTH}
-  ###sed -i "/traefik: ./a \ \ \ \ \ auth: ${TYPE_AUTH}" ${SETTINGS_STORAGE}/variables/account.yml
 
   echo ""
   echo -e " ${BWHITE}* Installation Traefik${NC}"
@@ -692,14 +681,12 @@ function define_parameters() {
       "Merci de taper votre adresse Email :" 7 50 3>&1 1>&2 2>&3
   )
   manage_account_yml user.mail $CONTACTEMAIL
-  ###sed -i "s/mail:/mail: $CONTACTEMAIL/" ${SETTINGS_STORAGE}/variables/account.yml
 
   DOMAIN=$(
     whiptail --title "Votre nom de Domaine" --inputbox \
       "Merci de taper votre nom de Domaine (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3
   )
   manage_account_yml user.domain $DOMAIN
-  ###sed -i "s/domain:/domain: $DOMAIN/" ${SETTINGS_STORAGE}/variables/account.yml
   echo ""
 }
 
@@ -731,14 +718,12 @@ function create_user_non_systeme() {
       "Merci de taper votre adresse Email :" 7 50 3>&1 1>&2 2>&3
   )
   manage_account_yml user.mail "${CONTACTEMAIL}"
-  ###sed -i "s/mail:/mail: $CONTACTEMAIL/" ${SETTINGS_STORAGE}/variables/account.yml
   update_seedbox_param "mail" "${CONTACTEMAIL}"
 
   DOMAIN=$(
     whiptail --title "Votre nom de Domaine" --inputbox \
       "Merci de taper votre nom de Domaine (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3
   )
-  ###sed -i "s/domain:/domain: $DOMAIN/" ${SETTINGS_STORAGE}/variables/account.yml
   manage_account_yml user.domain "${DOMAIN}"
   update_seedbox_param "domain" "${DOMAIN}"
   echo ""
@@ -1189,13 +1174,13 @@ function manage_account_yml() {
     exit 1
   else
     touch ${SETTINGS_STORAGE}/.account.lock
-    ansible-vault decrypt "${SETTINGS_STORAGE}/variables/account.yml" >/dev/null 2>&1
+    ansible-vault decrypt "${ANSIBLE_VARS}" >/dev/null 2>&1
     if [ "${2}" = " " ]; then
       ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/manage_account_yml.yml" -e "account_key=${1} account_value=${2}  state=absent"
     else
       ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/manage_account_yml.yml" -e "account_key=${1} account_value=${2} state=present"
     fi
-    ansible-vault encrypt "${SETTINGS_STORAGE}/variables/account.yml" >/dev/null 2>&1
+    ansible-vault encrypt "${ANSIBLE_VARS}l" >/dev/null 2>&1
     rm -f ${SETTINGS_STORAGE}/.account.lock
   fi
 }
@@ -1212,8 +1197,8 @@ function get_from_account_yml() {
     exit 1
   else
     touch ${SETTINGS_STORAGE}/.account.lock
-    ansible-vault decrypt "${SETTINGS_STORAGE}/variables/account.yml" >/dev/null 2>&1
-    temp_return=$(shyaml -q get-value $1 <"${SETTINGS_STORAGE}/variables/account.yml")
+    ansible-vault decrypt "${HOME}/.ansible/inventories/group_vars/all.yml" >/dev/null 2>&1
+    temp_return=$(shyaml -q get-value $1 <"${HOME}/.ansible/inventories/group_vars/all.yml")
     if [ $? != 0 ]; then
       temp_return=notfound
     fi
@@ -1223,7 +1208,7 @@ function get_from_account_yml() {
     if [ "$temp_return" == "None" ]; then
       temp_return=notfound
     fi
-    ansible-vault encrypt "${SETTINGS_STORAGE}/variables/account.yml" >/dev/null 2>&1
+    ansible-vault encrypt "${HOME}/.ansible/inventories/group_vars/all.yml" >/dev/null 2>&1
     if [ "$1" == "network.ipv6" ]; then
       if [[ "${temp_return}" == 'a['* ]]; then
         temp_return=${temp_return:2:-1}
@@ -1366,8 +1351,8 @@ EOF
   create_dir "${SETTINGS_STORAGE}/variables"
   create_dir "${SETTINGS_STORAGE}/conf"
   create_dir "${SETTINGS_STORAGE}/vars"
-  if [ ! -f "${SETTINGS_STORAGE}/variables/account.yml" ]; then
-    cp ${SETTINGS_SOURCE}/includes/config/account.yml "${SETTINGS_STORAGE}/variables/account.yml"
+  if [ ! -f "${ANSIBLE_VARS}" ]; then
+    cp ${SETTINGS_SOURCE}/includes/config/account.yml "${ANSIBLE_VARS}"
   fi
 
   if [[ -d "${HOME}/.cache" ]]; then
@@ -1466,7 +1451,7 @@ function migrate() {
   sudo chown -R "${USER}": ${SETTINGS_STORAGE}/resume
   sudo chown -R "${USER}": ${HOME}/resume
   sudo chown -R ${USER}: ${SETTINGS_STORAGE}/status/*
-  sudo chown ${USER} ${SETTINGS_STORAGE}/variables/account.yml
+  sudo chown ${USER} ${ANSIBLE_VARS}
   premier_lancement
 
   # on revient dans le venv
@@ -1482,7 +1467,7 @@ function migrate() {
   sudo chown -R "${USER}": ${SETTINGS_STORAGE}/resume
   sudo chown -R "${USER}": ${HOME}/resume
   sudo chown -R ${USER}: ${SETTINGS_STORAGE}/status/*
-  sudo chown ${USER} ${SETTINGS_STORAGE}variables/account.yml
+  sudo chown ${USER} ${ANSIBLE_VARS}
 
   echo "Assurez vous d'être connecté sur le bon utilisateur (celui qui va piloter la seedbox)"
   echo "en connection directe (pas de connection sur un autre user ou root, puis sudo)"
@@ -1502,7 +1487,7 @@ function migrate() {
   sudo cp /root/.config/rclone/rclone.conf "${HOME}/.config/rclone/rclone.conf"
   sudo chown "${USER}" "${HOME}/.config/rclone/rclone.conf"
   sudo chown -R "${USER}" ${SETTINGS_STORAGE}/conf
-  sudo chown "${USER}": "${SETTINGS_STORAGE}/variables/account.yml"
+  sudo chown "${USER}": "${ANSIBLE_VARS}"
 
   # remplacement du backup
   log_migrate "Mise à jour du script de sauvegarde"

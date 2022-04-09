@@ -71,6 +71,7 @@ export PACKAGESFILE="${SETTINGS_SOURCE}/includes/config/packages"
 export TMPDOMAIN=${SETTINGS_SOURCE}/tmp/domain
 export TMPNAME=${SETTINGS_SOURCE}/tmp/name
 export TMPGROUP=${SETTINGS_SOURCE}/tmp/group
+export ANSIBLE_VARS="${HOME}/.ansible/inventories/group_vars/all.yml"
 
 # On risque d'avoir besoin de ces variables d'environnement par la suite
 export MYUID=$(id -u)

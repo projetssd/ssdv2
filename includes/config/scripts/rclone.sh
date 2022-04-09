@@ -7,9 +7,7 @@ source "${SETTINGS_SOURCE}/includes/variables.sh"
 mkdir -p ${HOME}/.config/rclone
 RCLONE_CONFIG_FILE=${HOME}/.config/rclone/rclone.conf
 
-sed -i '/plexdrive/d' ${SETTINGS_STORAGE}/variables/account.yml >/dev/null 2>&1
-sed -i '/remote/d' ${SETTINGS_STORAGE}/variables/account.yml >/dev/null 2>&1
-sed -i '/id_teamdrive/d' ${SETTINGS_STORAGE}/variables/account.yml >/dev/null 2>&1
+
 cd /tmp
 rm drive.txt team.txt >/dev/null 2>&1
 
@@ -82,8 +80,6 @@ function verif() {
   detection
   manage_account_yml rclone.remote $remotecrypt
   manage_account_yml rclone.id_teamdrive $id_teamdrive
-  ###sed -i "/rclone/a \ \ \ remote: $remotecrypt" ${SETTINGS_STORAGE}/variables/account.yml > /dev/null 2>&1
-  ###sed -i "/rclone/a \ \ \ id_teamdrive: $id_teamdrive" ${SETTINGS_STORAGE}/variables/account.yml > /dev/null 2>&1
   exit
 }
 

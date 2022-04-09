@@ -4,7 +4,6 @@
   vars_files:
     - ['settings.yml']
     - ['../defaults/main.yml']
-    - [{{ lookup('env','SETTINGS_STORAGE') }}/variables/account.yml]
   tasks:
 
     - name: "Variables | Set 'cloudflare_enabled' variable"

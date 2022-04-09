@@ -7,12 +7,10 @@ echo ""
 CONTACTEMAIL=$(whiptail --title "Adresse Email" --inputbox \
   "Merci de taper votre adresse Email :" 7 50 3>&1 1>&2 2>&3)
 manage_account_yml user.mail $CONTACTEMAIL
-###sed -i "/mail:/c\   mail: $CONTACTEMAIL" ${SETTINGS_STORAGE}/variables/account.yml
 
 DOMAIN=$(whiptail --title "Votre nom de Domaine" --inputbox \
   "Merci de taper le nouveau nom de Domaine :" 7 50 3>&1 1>&2 2>&3)
 manage_account_yml user.domain $DOMAIN
-###sed -i "/domain:/c\   domain: $DOMAIN" ${SETTINGS_STORAGE}/variables/account.yml
 echo ""
 
 echo -e " ${BWHITE}* Supression Containers docker${NC}"

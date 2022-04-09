@@ -2,7 +2,6 @@
 - hosts: localhost
   gather_facts: True
   vars_files:
-    - "{{ lookup('env','SETTINGS_STORAGE') }}/variables/account.yml"
     - "{{ settings.source }}/includes/dockerapps/templates/generique/generique.yml"
   tasks:
 
@@ -229,7 +228,7 @@
       when: oauth_enabled
 
     - name: Insert traefik into database
-      shell :
+      shell:
         cmd: |
           sqlite3 {{  settings.source }}/ssddb << EOF
               replace into applications (name,status,subdomain,port)

@@ -15,8 +15,6 @@
     - name: mattermost_port
       prompt: "Entrer le port du serveur smtp"
       private: no
-  vars_files:
-    - {{ lookup('env','SETTINGS_STORAGE') }}/variables/account.yml
   tasks:
         
     # FACTS #######################################################################

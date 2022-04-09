@@ -26,7 +26,6 @@ menu_secu_system_ajout_adresse_oauth2() {
   echo ""
   echo >&2 -n -e "${BWHITE}Compte(s) Gmail utilisé(s), séparés d'une virgule si plusieurs: ${CEND}"
   read email
-  ###sed -i "/account:/c\   account: $email" ${SETTINGS_STORAGE}/variables/account.yml
   manage_account_yml oauth.email $email
   ansible-playbook ${SETTINGS_SOURCE}/includes/dockerapps/traefik.yml
 
@@ -354,7 +353,6 @@ function menu_reinit_container() {
     echo -e " ${GREEN}   * ${line}${NC}"
     log_write "Reinit du container ${line}"
     subdomain=$(get_from_account_yml "sub.${line}.${line}")
-    ###subdomain=$(grep "${line}" ${SETTINGS_STORAGE}/variables/account.yml | cut -d ':' -f2 | sed 's/ //g')
 
     sed -i "/${line}/d" ${SETTINGS_STORAGE}/resume >/dev/null 2>&1
     sed -i "/${line}/d" /home/${USER}/resume >/dev/null 2>&1

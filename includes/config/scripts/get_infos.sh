@@ -16,8 +16,8 @@ echo -e "${BLUE}### INFORMATIONS UTILISATEURS ###${NC}"
 
 ACCOUNT=${SETTINGS_STORAGE}/variables/account.yml
 
-if [ ! -f ${ACCOUNT} ]; then
-  cp ${SETTINGS_SOURCE}/includes/config/account.yml ${ACCOUNT}
+if [ ! -f ${ANSIBLE_VARS} ]; then
+  cp ${SETTINGS_SOURCE}/includes/config/account.yml ${ANSIBLE_VARS}
 fi
 
 echo ""

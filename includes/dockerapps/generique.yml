@@ -4,12 +4,10 @@
 # ansible-playbook ${settings.source}/includes/dockerapps/generique.yml --extra-vars "@${BASEDIR}/includes/dockerapps/vars/calibre.yml"
 #
 
-
 ---
 - hosts: localhost
   gather_facts: true
   vars_files:
-    - "{{ lookup('env','SETTINGS_STORAGE') }}/variables/account.yml"
     - "{{ settings.source }}/includes/dockerapps/templates/generique/generique.yml"
 
 

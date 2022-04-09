@@ -1,5 +1,3 @@
-#!/bin/bash
-
 ---
 - hosts: localhost
   gather_facts: false
@@ -9,7 +7,6 @@
       prompt: "Saisir la licence Maxmind"
       private: no
   vars_files:
-    - "{{ lookup('env','SETTINGS_STORAGE') }}/variables/account.yml"
     - "{{ settings.source }}/includes/dockerapps/templates/generique/generique.yml"
 
   tasks:

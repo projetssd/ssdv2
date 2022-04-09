@@ -234,12 +234,12 @@ if [ $mode_install = "manuel" ]; then
         sauve
 
         ## On va garder ce qui a été saisi pour l'écraser plus tard
-        cp ${SETTINGS_STORAGE}/variables/account.yml ${SETTINGS_STORAGE}/variables/account.temp
+        cp ${ANSIBLE_VARS} ${ANSIBLE_VARS}temp
 
         sudo restore
         # on remet le account.yml précédent qui a été écrasé par la restauration
-        cp ${SETTINGS_STORAGE}/variables/account.yml ${SETTINGS_STORAGE}/variables/account.restore
-        mv ${SETTINGS_STORAGE}/variables/account.temp ${SETTINGS_STORAGE}/variables/account.yml
+        cp ${ANSIBLE_VARS} ${ANSIBLE_VARS}.restore
+        mv ${ANSIBLE_VARS}.temp ${ANSIBLE_VARS}
         stocke_public_ip
         ## on remet les bonnes infos
         userid=$(id -u)
@@ -316,11 +316,21 @@ if [ $mode_install = "manuel" ]; then
     echo "==============================================="
     pause
   fi
+  # Verif compatibilité v2/0 => V2.1
+  # On regarder que settings.storage existe
   log_statusbar "Verification de l'emplacement du stockage"
   emplacement_stockage=$(get_from_account_yml settings.storage)
   if [ "${emplacement_stockage}" == notfound ]; then
     manage_account_yml settings.storage "/opt/seedbox"
   fi
+  # Verif compatibilité v2.1 => v2.2
+  # On regarde que le all.yml existe, sinon, on copie le account.yml
+  log_statusbar "Verification du group_vars/all.yml"
+  if [ ! -f "${HOME}/.ansible/inventories/group_vars/all.yml" ]; then
+    cp "${SETTINGS_STORAGE}/variables/account.yml" "${ANSIBLE_VARS}"
+  fi
+
+
 
   affiche_menu_db
 fi

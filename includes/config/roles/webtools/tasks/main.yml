@@ -10,8 +10,6 @@
 ---
 - hosts: localhost
   gather_facts: false
-  vars_files:
-    - {{ lookup('env','SETTINGS_STORAGE') }}/variables/account.yml
   tasks:
 
     - name: Check for previously installed WebTools
