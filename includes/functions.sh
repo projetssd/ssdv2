@@ -1352,6 +1352,7 @@ EOF
   create_dir "${SETTINGS_STORAGE}/conf"
   create_dir "${SETTINGS_STORAGE}/vars"
   if [ ! -f "${ANSIBLE_VARS}" ]; then
+    mkdir -p "${HOME}/.ansible/inventories/group_vars"
     cp ${SETTINGS_SOURCE}/includes/config/account.yml "${ANSIBLE_VARS}"
   fi
 

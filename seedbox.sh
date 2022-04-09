@@ -327,6 +327,7 @@ if [ $mode_install = "manuel" ]; then
   # On regarde que le all.yml existe, sinon, on copie le account.yml
   log_statusbar "Verification du group_vars/all.yml"
   if [ ! -f "${HOME}/.ansible/inventories/group_vars/all.yml" ]; then
+    mkdir -p "${HOME}/.ansible/inventories/group_vars"
     cp "${SETTINGS_STORAGE}/variables/account.yml" "${ANSIBLE_VARS}"
   fi
 
