@@ -1588,7 +1588,7 @@ function stocke_public_ip() {
 function install_environnement() {
   clear
   echo ""
-  source "${SETTINGS_STORAGE}/profile.sh"
+  source "${SETTINGS_SOURCE}/profile.sh"
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/user_environment/tasks/main.yml"
   echo "Pour bénéficer des changements, vous devez vous déconnecter/reconnecter"
   pause
