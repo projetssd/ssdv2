@@ -1,6 +1,7 @@
 ---
 - hosts: localhost
   gather_facts: false
+  vars_files:
     - "{{ settings.source }}/includes/dockerapps/templates/generique/generique.yml"
 
   tasks:
