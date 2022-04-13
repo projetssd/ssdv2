@@ -97,7 +97,8 @@ if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
   else
     echo -e "${BLUE}Cloudflare api déjà renseigné${CEND}"
   fi
-  # On met le ssl CF à full  ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/cf_force_full_ssl.yml"
+  # On met le ssl CF à full
+  ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/cf_force_full_ssl.yml"
 fi
 
 #echo ""
