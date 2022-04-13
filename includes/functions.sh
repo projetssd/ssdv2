@@ -1377,7 +1377,6 @@ EOF
   read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
 
   # fin du venv
-  deactivate
 }
 
 function usage() {
@@ -1424,8 +1423,6 @@ function migrate() {
     echo "Merci de vous connecter sur le bon user avant de relancer"
     exit 1
   fi
-  # on sort du venv car on va le retrouver juste après
-  deactivate >/dev/null 2>&1
 
   # on bouge le vault pass
   if sudo test -f /root/.vault_pass; then

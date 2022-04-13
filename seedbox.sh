@@ -316,7 +316,6 @@ if [ $mode_install = "manuel" ]; then
   if [ "${emplacement_source}" == notfound ]; then
     manage_account_yml settings.source "${SETTINGS_SOURCE}"
   fi
-  deactivate
   update_status
   # Verif compatibilité v2/0 => V2.1
   # On regarde que settings.storage existe
