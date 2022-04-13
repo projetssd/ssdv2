@@ -325,7 +325,8 @@ if [ $mode_install = "manuel" ]; then
   if [ "${emplacement_stockage}" == notfound ]; then
     manage_account_yml settings.storage "/opt/seedbox"
   fi
-
+  # On ressource l'environnement
+  source "${SETTINGS_SOURCE}/profile.sh"
 
 
 
