@@ -28,15 +28,11 @@ if [ ! -f "${HOME}/.config/ssd/env" ]; then
   # pas de fichier d'environnement
   if [ -f "/opt/seedbox-compose/ssddb" ]; then
     # la seedbox est installée, on va prendre les valeurs par défaut de la v1/2.0
-    if [ -z ${SETTINGS_SOURCE+x} ]; then
-      export SETTINGS_SOURCE=/opt/seedbox-compose/
-    fi
-    if [ -z ${SETTINGS_STORAGE+x} ]; then
-      export SETTINGS_STORAGE=/opt/seedbox
-    fi
+    export SETTINGS_SOURCE=/opt/seedbox-compose
+    export SETTINGS_STORAGE=/opt/seedbox
     mkdir -p "${HOME}/.config/ssd/"
-    echo "SETTINGS_SOURCE=/opt/seedbox-compose/" >>"${HOME}/.config/ssd/env"
-    echo "SETTINGS_STORAGE=/opt/seedbox/" >>"${HOME}/.config/ssd/env"
+    echo "SETTINGS_SOURCE=/opt/seedbox-compose" >>"${HOME}/.config/ssd/env"
+    echo "SETTINGS_STORAGE=/opt/seedbox" >>"${HOME}/.config/ssd/env"
   else
     # Si on est là, c'est que rien n'est installé, on va poser les questions
     mkdir -p "${HOME}/.config/ssd/"

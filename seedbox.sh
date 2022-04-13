@@ -273,18 +273,12 @@ if [ $mode_install = "manuel" ]; then
   source ${SETTINGS_SOURCE}/venv/bin/activate
   emplacement_stockage=$(get_from_account_yml settings.storage)
   if [ "${emplacement_stockage}" == notfound ]; then
-    manage_account_yml settings.storage "/opt/seedbox"
-    export SETTINGS_STORAGE=/opt/seedbox
-  else
-    export SETTINGS_STORAGE=${emplacement_stockage}
+    manage_account_yml settings.storage "${SETTINGS_STORAGE}"
   fi
 
   emplacement_source=$(get_from_account_yml settings.source)
   if [ "${emplacement_source}" == notfound ]; then
     manage_account_yml settings.source "${SETTINGS_SOURCE}"
-    export SETTINGS_SOURCE=/opt/seedbox
-  else
-    export SETTINGS_SOURCE=${emplacement_source}
   fi
   deactivate
   update_status
