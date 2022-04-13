@@ -268,20 +268,7 @@ if [ $mode_install = "manuel" ]; then
 
     esac
   fi
-  #####################################################
-  # On finit de setter les variables
-  source ${SETTINGS_SOURCE}/venv/bin/activate
-  emplacement_stockage=$(get_from_account_yml settings.storage)
-  if [ "${emplacement_stockage}" == notfound ]; then
-    manage_account_yml settings.storage "${SETTINGS_STORAGE}"
-  fi
 
-  emplacement_source=$(get_from_account_yml settings.source)
-  if [ "${emplacement_source}" == notfound ]; then
-    manage_account_yml settings.source "${SETTINGS_SOURCE}"
-  fi
-  deactivate
-  update_status
 
   chmod 755 ${SETTINGS_SOURCE}/logs
   #update_logrotate
@@ -310,13 +297,6 @@ if [ $mode_install = "manuel" ]; then
     echo "==============================================="
     pause
   fi
-  # Verif compatibilité v2/0 => V2.1
-  # On regarder que settings.storage existe
-  log_statusbar "Verification de l'emplacement du stockage"
-  emplacement_stockage=$(get_from_account_yml settings.storage)
-  if [ "${emplacement_stockage}" == notfound ]; then
-    manage_account_yml settings.storage "/opt/seedbox"
-  fi
   # Verif compatibilité v2.1 => v2.2
   # On regarde que le all.yml existe, sinon, on copie le account.yml
   log_statusbar "Verification du group_vars/all.yml"
@@ -324,6 +304,28 @@ if [ $mode_install = "manuel" ]; then
     mkdir -p "${HOME}/.ansible/inventories/group_vars"
     cp "${SETTINGS_STORAGE}/variables/account.yml" "${ANSIBLE_VARS}"
   fi
+  #####################################################
+  # On finit de setter les variables
+  source ${SETTINGS_SOURCE}/venv/bin/activate
+  emplacement_stockage=$(get_from_account_yml settings.storage)
+  if [ "${emplacement_stockage}" == notfound ]; then
+    manage_account_yml settings.storage "${SETTINGS_STORAGE}"
+  fi
+
+  emplacement_source=$(get_from_account_yml settings.source)
+  if [ "${emplacement_source}" == notfound ]; then
+    manage_account_yml settings.source "${SETTINGS_SOURCE}"
+  fi
+  deactivate
+  update_status
+  # Verif compatibilité v2/0 => V2.1
+  # On regarde que settings.storage existe
+  log_statusbar "Verification de l'emplacement du stockage"
+  emplacement_stockage=$(get_from_account_yml settings.storage)
+  if [ "${emplacement_stockage}" == notfound ]; then
+    manage_account_yml settings.storage "/opt/seedbox"
+  fi
+
 
 
 
