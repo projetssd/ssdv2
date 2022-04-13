@@ -1,5 +1,9 @@
 #!/bin/bash
 
+source "${SETTINGS_SOURCE}/includes/functions.sh"
+# shellcheck source=${BASEDIR}/includes/variables.sh
+source "${SETTINGS_SOURCE}/includes/variables.sh"
+
 RCLONE_CONFIG_FILE=${HOME}/.config/rclone/rclone.conf
 
 rm /tmp/team.txt /tmp/crop.txt >/dev/null 2>&1

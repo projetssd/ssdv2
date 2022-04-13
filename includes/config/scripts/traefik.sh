@@ -1,4 +1,7 @@
 #!/bin/bash
+source "${SETTINGS_SOURCE}/includes/functions.sh"
+# shellcheck source=${BASEDIR}/includes/variables.sh
+source "${SETTINGS_SOURCE}/includes/variables.sh"
 clear
 
 ## Variable

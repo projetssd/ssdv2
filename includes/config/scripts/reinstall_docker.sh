@@ -1,5 +1,9 @@
 #!/bin/bash
 
+source "${SETTINGS_SOURCE}/includes/functions.sh"
+# shellcheck source=${BASEDIR}/includes/variables.sh
+source "${SETTINGS_SOURCE}/includes/variables.sh"
+
 ## Variable
 ansible-playbook ${SETTINGS_SOURCE}e/includes/dockerapps/templates/ansible/ansible.yml
 

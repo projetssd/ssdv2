@@ -1,5 +1,9 @@
 #!/bin/bash
 
+source "${SETTINGS_SOURCE}/includes/functions.sh"
+# shellcheck source=${BASEDIR}/includes/variables.sh
+source "${SETTINGS_SOURCE}/includes/variables.sh"
+
 echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
 echo -e "${CCYAN}          /!\ Installation de safire /!\                                     ${CEND}"
 echo -e "${CRED}------------------------------------------------------------------------------${CEND}"

@@ -1,4 +1,9 @@
 #!/bin/bash
+
+source "${SETTINGS_SOURCE}/includes/functions.sh"
+# shellcheck source=${BASEDIR}/includes/variables.sh
+source "${SETTINGS_SOURCE}/includes/variables.sh"
+
 export CLOUDSDK_COMPUTE_REGION=europe-west1
 
 echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
