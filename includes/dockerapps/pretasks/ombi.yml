@@ -4,6 +4,11 @@
     path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/appsettings.json"
   register: jsonfile
 
+- name: Make sure directory is present
+  file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}"
+    state: directory
+
 - name: 'Download {{ pgrole }} appsettings.json config file'
   get_url:
     url: https://raw.githubusercontent.com/tidusjar/Ombi/master/src/Ombi/appsettings.json
