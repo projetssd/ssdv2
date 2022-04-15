@@ -8,7 +8,7 @@ services:
     container_name: db-mattermost
     restart: unless-stopped
     volumes:
-      - /opt/seedbox/docker/{{user.name}}/mattermost/db:/var/lib/postgresql/data
+      - {{ settings.storage }}/docker/{{user.name}}/mattermost/db:/var/lib/postgresql/data
       - /etc/localtime:/etc/localtime:ro
     environment:
       - POSTGRES_USER={{user.name}}
@@ -27,11 +27,11 @@ services:
     container_name: mattermost
     restart: unless-stopped
     volumes:
-      - /opt/seedbox/docker/{{user.name}}/mattermost/config:/mattermost/config:rw
-      - /opt/seedbox/docker/{{user.name}}/mattermost/data:/mattermost/data:rw
-      - /opt/seedbox/docker/{{user.name}}/mattermost/logs:/mattermost/logs:rw
-      - /opt/seedbox/docker/{{user.name}}/mattermost/plugins:/mattermost/plugins:rw
-      - /opt/seedbox/docker/{{user.name}}/mattermost/client-plugins:/mattermost/client/plugins:rw
+      - {{ settings.storage }}/docker/{{user.name}}/mattermost/config:/mattermost/config:rw
+      - {{ settings.storage }}/docker/{{user.name}}/mattermost/data:/mattermost/data:rw
+      - {{ settings.storage }}/docker/{{user.name}}/mattermost/logs:/mattermost/logs:rw
+      - {{ settings.storage }}/docker/{{user.name}}/mattermost/plugins:/mattermost/plugins:rw
+      - {{ settings.storage }}/docker/{{user.name}}/mattermost/client-plugins:/mattermost/client/plugins:rw
       - /etc/localtime:/etc/localtime:ro
     environment:
       - MM_USERNAME={{user.name}}

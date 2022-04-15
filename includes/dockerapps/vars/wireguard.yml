@@ -3,7 +3,7 @@ pgrole: 'wireguard'
 intport: '7878'
 image: 'ghcr.io/linuxserver/wireguard'
 pg_volumes:
-  - "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
   - "/lib/modules:/lib/modules"
 pg_env:
   PUID: '{{user.userid}}'

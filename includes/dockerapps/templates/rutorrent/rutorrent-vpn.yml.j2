@@ -12,8 +12,8 @@ services:
     networks:
       traefik_proxy:
     volumes:
-      - /opt/seedbox/docker/{{user.name}}/rtorrentvpn/config:/config
-      - /opt/seedbox/docker/{{user.name}}/rtorrentvpn/data:/data
+      - {{ settings.storage }}/docker/{{user.name}}/rtorrentvpn/config:/config
+      - {{ settings.storage }}/docker/{{user.name}}/rtorrentvpn/data:/data
       - /home/{{user.name}}:/home/{{user.name}}
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro

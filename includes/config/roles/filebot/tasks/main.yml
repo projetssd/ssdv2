@@ -8,8 +8,6 @@
 ---
 - hosts: localhost
   gather_facts: false
-  vars_files:
-    - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
   tasks:
 
     - name: change rights
@@ -23,13 +21,13 @@
     # FILEBOT ##############################################################
     - name: Check filebot
       stat:
-        path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.filebot"
+        path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/.filebot"
       register: filebot
 
     - name: Create Basic Directories
       file: "path={{item}} state=directory mode=0775 owner={{user.userid}} group={{lookup('env','MYGID')}}"
       with_items:
-        - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.filebot"
+        - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/.filebot"
       when:
         - filebot.stat.exists == False
 
@@ -44,14 +42,14 @@
     - name: Execute the zsh-installer.sh
       shell: /tmp/tar.sh
       args:
-        chdir: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.filebot"
+        chdir: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/.filebot"
       when:
         - filebot.stat.exists == False
 
     - name: Import default filebot-process.sh
       template:
-        src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/filebot/templates/filebot-process.sh.j2"
-        dest: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.filebot/filebot-process.sh"
+        src: "{{ settings.source }}/includes/config/roles/filebot/templates/filebot-process.sh.j2"
+        dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/.filebot/filebot-process.sh"
         owner: "{{user.userid}}"
         group: "{{lookup('env','MYGID')}}"
         mode: 0755
@@ -61,7 +59,7 @@
 
     - name: Set filebot.sh as executable
       file:
-        path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.filebot/filebot.sh"
+        path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/.filebot/filebot.sh"
         owner: "{{ lookup('env','USER') }}"
         group: "{{lookup('env','MYGID')}}"
         mode: a+x
@@ -72,6 +70,6 @@
       cron: 
         name: "filebot"
         minute: "*"
-        job: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.filebot/filebot-process.sh > /dev/null"
+        job: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/.filebot/filebot-process.sh > /dev/null"
           
 

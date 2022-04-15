@@ -15,8 +15,6 @@
     - name: mattermost_port
       prompt: "Entrer le port du serveur smtp"
       private: no
-  vars_files:
-    - /opt/seedbox/variables/account.yml
   tasks:
         
     # FACTS #######################################################################
@@ -24,7 +22,7 @@
 
     - name: Checking for existing app data
       stat:
-        path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
+        path: '{{ settings.storage }}/docker/{{user.name}}/authelia/configuration.yml'
       register: check
 
     - name: "Variables | Set 'cloudflare_enabled' variable"
@@ -79,7 +77,7 @@
             else false }}"
 
     - name: "Set DNS Record on CloudFlare"
-      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      include_tasks: '{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
         subdomain: "{{sub.mattermost if sub_enabled else 'mattermost'}}"
       when: cloudflare_enabled
@@ -91,26 +89,26 @@
     - name: Creating  paths
       file: 'path={{item}} state=directory mode=0775'
       with_items:
-        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/data'
-        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/logs'
-        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/config'
-        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/plugins'
-        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/client-plugins'
-        - '/opt/seedbox/docker/{{user.name}}/{{pgrole}}/db'
+        - '{{ settings.storage }}/docker/{{user.name}}/{{pgrole}}/data'
+        - '{{ settings.storage }}/docker/{{user.name}}/{{pgrole}}/logs'
+        - '{{ settings.storage }}/docker/{{user.name}}/{{pgrole}}/config'
+        - '{{ settings.storage }}/docker/{{user.name}}/{{pgrole}}/plugins'
+        - '{{ settings.storage }}docker/{{user.name}}/{{pgrole}}/client-plugins'
+        - '{{ settings.storage }}/docker/{{user.name}}/{{pgrole}}/db'
 
     - name: permissions
       shell: |
-        sudo chown -R 2000:2000 /opt/seedbox/docker/{{user.name}}/mattermost
+        sudo chown -R 2000:2000 {{ settings.storage }}/docker/{{user.name}}/mattermost
 
     - name: Import docker-compose.yml
       template:
-        src: /opt/seedbox-compose/includes/dockerapps/templates/mattermost/mattermost.yml.j2
+        src: {{ settings.source }}/includes/dockerapps/templates/mattermost/mattermost.yml.j2
         dest: /tmp/mattermost-docker/mattermost.yml
 
     - name: Import config.json
       template:
-        src: /opt/seedbox-compose/includes/dockerapps/templates/mattermost/config.json.j2
-        dest: /opt/seedbox/docker/{{user.name}}/{{pgrole}}/config/config.json
+        src: {{ settings.source }}/includes/dockerapps/templates/mattermost/config.json.j2
+        dest: {{ settings.storage }}/docker/{{user.name}}/{{pgrole}}/config/config.json
 
     - name: docker compose up -d
       command: docker-compose -f /tmp/mattermost-docker/mattermost.yml up -d

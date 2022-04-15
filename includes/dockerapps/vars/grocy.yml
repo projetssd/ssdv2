@@ -3,7 +3,7 @@ pgrole: 'grocy'
 intport: '80'
 image: 'lscr.io/linuxserver/grocy'
 pg_volumes:
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/config"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/config"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:
   PUID: "{{ lookup('env','MYUID') }}"

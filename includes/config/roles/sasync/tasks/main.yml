@@ -2,19 +2,17 @@
 ---
 - hosts: localhost
   gather_facts: false
-  vars_files:
-    - /opt/seedbox/variables/account.yml
   tasks:
 
     - name: Import default config
       template:
-        src: /opt/seedbox-compose/includes/config/roles/sasync/templates/sasync.conf.j2
+        src: {{ settings.source }}/includes/config/roles/sasync/templates/sasync.conf.j2
         dest: /opt/sasync/sasync.conf
         mode: 0644
 
     - name: Import set.file config
       template:
-        src: /opt/seedbox-compose/includes/config/roles/sasync/templates/set.file.j2
+        src: {{ settings.source }}/includes/config/roles/sasync/templates/set.file.j2
         dest: /opt/sasync/sets/set.file
 
     - name: install fclone latest

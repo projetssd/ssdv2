@@ -3,7 +3,7 @@ pgrole: 'openvpn'
 intport: '7878'
 image: 'ghcr.io/linuxserver/openvpn-as'
 pg_volumes:
-  - "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
 pg_env:
   PUID: '{{user.userid}}'

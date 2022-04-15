@@ -3,7 +3,7 @@ pgrole: 'qflood'
 intport: '8080'
 image: 'cr.hotio.dev/hotio/qflood'
 pg_volumes:
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
   - '/etc/localtime:/etc/localtime:ro'
 

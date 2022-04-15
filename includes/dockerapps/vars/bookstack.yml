@@ -3,7 +3,7 @@ pgrole: 'bookstack'
 intport: '80'
 image: 'lscr.io/linuxserver/bookstack'
 pg_volumes:
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:
   PUID: "{{ lookup('env','MYUID') }}"

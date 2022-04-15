@@ -10,12 +10,12 @@
 ---
 - name: Extra | Wait for 'Preferences.xml' to be created
   wait_for:
-    path: "/opt/seedbox/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
     state: present
 
 - name: Extra | Wait for Plex DB to be created
   wait_for:
-    path: "/opt/seedbox/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db"
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db"
     state: present
 
 - name: Extra | Wait for Plex Media Server executable to be created

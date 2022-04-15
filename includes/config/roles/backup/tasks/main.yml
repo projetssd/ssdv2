@@ -1,14 +1,12 @@
 ---
 - hosts: localhost
   gather_facts: false
-  vars_files:
-    - /opt/seedbox/variables/account.yml
   tasks:
 
     - name: 'Import backup config'
       become: yes
       template:
-        src: /opt/seedbox-compose/includes/config/roles/backup/templates/backup.j2
+        src: "{{ settings.source }}/includes/config/roles/backup/templates/backup.j2"
         dest: /usr/local/bin/backup
         owner: "root"
         group: "root"
@@ -18,7 +16,7 @@
     - name: 'Import restore config'
       become: yes
       template:
-        src: /opt/seedbox-compose/includes/config/roles/backup/templates/restore.j2
+        src: "{{ settings.source }}/includes/config/roles/backup/templates/restore.j2"
         dest: /usr/local/bin/restore
         owner: "root"
         group: "root"

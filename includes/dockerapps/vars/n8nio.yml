@@ -3,7 +3,7 @@ pgrole: 'n8nio'
 intport: '5678'
 image: 'n8nio/n8n'
 pg_volumes:
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/home/node/.n8n:rw"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/home/node/.n8n:rw"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:
   DB_TYPE: "mysqldb"

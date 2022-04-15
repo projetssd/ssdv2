@@ -1,16 +1,19 @@
 #!/bin/bash
-export CLOUDSDK_COMPUTE_REGION=europe-west1
-source /opt/seedbox-compose/includes/functions.sh
-source /opt/seedbox-compose/includes/variables.sh
 
-    	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
-    	echo -e "${CCYAN}          /!\ Installation des services account /!\                          ${CEND}"
-    	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
-	echo ""
-    	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
-    	echo -e "${CCYAN}.    https://github.com/projetssd/ssdv2/wiki/Service-Account     	      ${CEND}"
-    	echo -e "${CCYAN}                https://github.com/88lex/sa-gen                              ${CEND}"
-    	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
+source "${SETTINGS_SOURCE}/includes/functions.sh"
+# shellcheck source=${BASEDIR}/includes/variables.sh
+source "${SETTINGS_SOURCE}/includes/variables.sh"
+
+export CLOUDSDK_COMPUTE_REGION=europe-west1
+
+echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
+echo -e "${CCYAN}          /!\ Installation des services account /!\                          ${CEND}"
+echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
+echo ""
+echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
+echo -e "${CCYAN}.    https://github.com/projetssd/ssdv2/wiki/Service-Account     	      ${CEND}"
+echo -e "${CCYAN}                https://github.com/88lex/sa-gen                              ${CEND}"
+echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
 clear
 echo ""
 echo -e "${YELLOW}/!\ PRE REQUIS IMPORTANT /!\ ${CEND}
@@ -48,10 +51,10 @@ if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
   fi
   sudo git clone https://github.com/88lex/sa-gen.git /opt/gen-sa
   sudo chown -R ${USER} /opt/gen-sa
-  sudo mkdir /opt/sa > /dev/null 2>&1
+  sudo mkdir /opt/sa >/dev/null 2>&1
   sudo chown -R ${USER} /opt/sa
   echo ""
-  ansible-playbook /opt/seedbox-compose/includes/config/roles/gen-sa/tasks/main.yml
+  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/gen-sa/tasks/main.yml
   echo ""
   /opt/gen-sa/sa-gen
   sudo chown -R ${USER} /opt/sa
@@ -65,9 +68,9 @@ if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
   ${GREEN}rclone deletefile remote:test123.txt --drive-service-account-file=/opt/sa/NUMBER.json
   ${CEND}"
 
-    	echo -e "${CRED}---------------------------------------------------------------${CEND}"
-    	echo -e "${CRED}     /!\ COMPTES DE SERVICE INSTALLES AVEC SUCCES /!\          ${CEND}"
-    	echo -e "${CRED}---------------------------------------------------------------${CEND}"
+  echo -e "${CRED}---------------------------------------------------------------${CEND}"
+  echo -e "${CRED}     /!\ COMPTES DE SERVICE INSTALLES AVEC SUCCES /!\          ${CEND}"
+  echo -e "${CRED}---------------------------------------------------------------${CEND}"
 
   sleep 5s
 fi

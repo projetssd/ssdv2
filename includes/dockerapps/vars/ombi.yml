@@ -3,8 +3,8 @@ pgrole: 'ombi'
 intport: '3579'
 image: 'lscr.io/linuxserver/ombi'
 pg_volumes:
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/appsettings.json:/opt/{{ pgrole }}/appsettings.json"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/appsettings.json:/opt/{{ pgrole }}/appsettings.json"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:

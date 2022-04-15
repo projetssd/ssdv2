@@ -14,7 +14,7 @@
 
     - name: Replace default sync path in config file
       replace:
-        path: "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/config/config.xml"
+        path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config/config.xml"
         regexp: 'path="~"'
         replace: 'path="/sync"'
 

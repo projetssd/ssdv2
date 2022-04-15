@@ -3,8 +3,8 @@ pgrole: 'vikunja'
 intport: '80'
 image: 'vikunja/frontend'
 pg_volumes:
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/data:/data"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/data:/data"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:

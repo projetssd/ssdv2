@@ -1,8 +1,5 @@
 #!/bin/bash
 
-source /opt/seedbox-compose/includes/functions.sh
-source /opt/seedbox-compose/includes/variables.sh
-
 RCLONE_CONFIG_FILE=${HOME}/.config/rclone/rclone.conf
 
 rm /tmp/temp.txt /tmp/drive.txt > /dev/null 2>&1
@@ -33,7 +30,7 @@ sed -i '/#Debut team backup/,/#Fin team backup/d' ${RCLONE_CONFIG_FILE} > /dev/n
 read -rp $'\e[36m   Souhaitez vous créer un Share Drive?: (o/n) ? \e[0m' OUI
 
 if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
-/opt/seedbox-compose/includes/config/scripts/createrclone.sh
+${SETTINGS_SOURCE}/includes/config/scripts/createrclone.sh
 fi
 echo ""
 

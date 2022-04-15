@@ -19,5 +19,5 @@
     reseau: "{{ reseau.user_input }}"
 - name: Checking for existing app data
   stat:
-    path: '/opt/seedbox/docker/{{user.name}}/rtorrentvpn/rtorrent/config/rtorrent.rc'
+    path: '{{ settings.storage }}/docker/{{user.name}}/rtorrentvpn/rtorrent/config/rtorrent.rc'
   register: rccheck

@@ -3,7 +3,7 @@ pgrole: 'firefoxsyncserver'
 intport: '5000'
 image: 'crazymax/firefox-syncserver:latest'
 pg_volumes:
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/data:rw"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/data:rw"
   - "/etc/localtime:/etc/localtime:ro"
 pg_env:
   PUID: "{{ lookup('env','MYUID') }}"

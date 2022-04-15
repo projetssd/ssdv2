@@ -3,8 +3,6 @@
 ---
   - hosts: localhost
     gather_facts: false
-    vars_files:
-      - /opt/seedbox/variables/account.yml
     tasks:
 
       - name: 'JICOFO_COMPONENT_SECRET'
@@ -39,7 +37,7 @@
 
       - name: Checking for existing app data
         stat:
-          path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
+          path: '{{ settings.storage }}/docker/{{user.name}}/authelia/configuration.yml'
         register: check
 
       - name: 'Set Known Facts'
@@ -100,7 +98,7 @@
               else false }}"
   
       - name: "Set DNS Record on CloudFlare"
-        include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
+        include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
         vars:
           subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
         when: cloudflare_enabled
@@ -126,20 +124,20 @@
       - name: 'Setting jitsi Volumes'
         set_fact:
           jitsi_volumes:
-            - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.jitsi-meet-cfg/web:/config"
-            - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.jitsi-meet-cfg/web/letsencrypt:/etc/letsencrypt"
-            - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.jitsi-meet-cfg/transcripts:/usr/share/jitsi-meet/transcripts"
+            - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/.jitsi-meet-cfg/web:/config"
+            - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/.jitsi-meet-cfg/web/letsencrypt:/etc/letsencrypt"
+            - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/.jitsi-meet-cfg/transcripts:/usr/share/jitsi-meet/transcripts"
   
       - name: Creating scripts and plugins paths
         file: "path={{item}} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID') }}"
         with_items:
-          - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.jitsi-meet-cfg/"
-          - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.jitsi-meet-cfg/web"
+          - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/.jitsi-meet-cfg/"
+          - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/.jitsi-meet-cfg/web"
   
       - name: 'Import config.js'
         template:
-          src: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/jitsi/config.js.j2"
-          dest: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.jitsi-meet-cfg/web/config.js"
+          src: "{{ settings.source }}/includes/dockerapps/templates/jitsi/config.js.j2"
+          dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/.jitsi-meet-cfg/web/config.js"
   
       - name: 'Setting jitsi ENV'
         set_fact:
@@ -187,7 +185,7 @@
       - name: 'Setting prosody Volumes'
         set_fact:
           prosody_volumes:
-            - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.jitsi-meet-cfg/prosody:/config"
+            - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/.jitsi-meet-cfg/prosody:/config"
   
       - name: 'Setting prosody ENV'
         set_fact:
@@ -235,7 +233,7 @@
       - name: 'Setting jicofo Volumes'
         set_fact:
           jicofo_volumes:
-            - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.jitsi-meet-cfg/jicofo:/config"
+            - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/.jitsi-meet-cfg/jicofo:/config"
   
       - name: 'Setting jicofo ENV'
         set_fact:
@@ -271,7 +269,7 @@
       - name: 'Setting jvb Volumes'
         set_fact:
           jvb_volumes:
-            - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/.jitsi-meet-cfg/jvb:/config"
+            - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/.jitsi-meet-cfg/jvb:/config"
   
       - name: 'Setting jvb ENV'
         set_fact:
@@ -309,7 +307,7 @@
 
       - name: add resume file
         shell: |
-          echo "{{pgrole}}-{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> {{ lookup('env','CONFDIR') }}/temp.txt
+          echo "{{pgrole}}-{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> {{ settings.storage }}/temp.txt
 
 
 

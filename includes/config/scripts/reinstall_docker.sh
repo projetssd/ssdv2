@@ -1,19 +1,20 @@
 #!/bin/bash
 
-source /opt/seedbox-compose/includes/functions.sh
-source /opt/seedbox-compose/includes/variables.sh
+source "${SETTINGS_SOURCE}/includes/functions.sh"
+# shellcheck source=${BASEDIR}/includes/variables.sh
+source "${SETTINGS_SOURCE}/includes/variables.sh"
 
 ## Variable
-ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
+ansible-playbook ${SETTINGS_SOURCE}e/includes/dockerapps/templates/ansible/ansible.yml
 
 DOMAIN=$(cat ${TMPDOMAIN})
 SEEDGROUP=$(cat ${TMPGROUP})
 rm ${TMPNAME} ${TMPDOMAIN} ${TMPGROUP}
 
-    	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
-    	echo -e "${CCYAN}    /!\ Réinstallation Docker - traefik - Réinitialisation des Apllis /!\    ${CEND}"
-    	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
-	echo ""
+echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
+echo -e "${CCYAN}    /!\ Réinstallation Docker - traefik - Réinitialisation des Apllis /!\    ${CEND}"
+echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
+echo ""
 
 ## Désinstallation Docker
 apt-get remove --purge docker*
@@ -22,10 +23,10 @@ rm -rf /etc/docker
 apt-get autoremove && apt-get autoclean
 
 ## Réinstallation docker
-ansible-playbook /opt/seedbox-compose/includes/config/roles/docker/tasks/main.yml
+ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/docker/tasks/main.yml
 
-## suppression des yml dans /opt/seedbox/conf
-rm /opt/seedbox/conf/* > /dev/null 2>&1
+## suppression des yml dans ${SETTINGS_STORAGE}/conf
+rm ${SETTINGS_STORAGE}/conf/* >/dev/null 2>&1
 
 ## reinstallation traefik
 install_traefik
@@ -38,15 +39,14 @@ echo ""
 ## reinstallation application
 echo -e "${BLUE}### REINITIALISATION DES APPLICATIONS ###${NC}"
 echo -e " ${BWHITE}* Les fichiers de configuration ne seront pas effacés${NC}"
-while read line; do echo $line | cut -d'.' -f1; done < /home/${USER}/resume > $SERVICESPERUSER
+while read line; do echo $line | cut -d'.' -f1; done </home/${USER}/resume >$SERVICESPERUSER
 rm /home/${USER}/resume
 install_services
 
 rm $SERVICESUSER${USER}
-    	echo -e "${CRED}---------------------------------------------------------------${CEND}"
-    	echo -e "${CRED}     /!\ MISE A JOUR DU SERVEUR EFFECTUEE AVEC SUCCES /!\      ${CEND}"
-    	echo -e "${CRED}---------------------------------------------------------------${CEND}"
+echo -e "${CRED}---------------------------------------------------------------${CEND}"
+echo -e "${CRED}     /!\ MISE A JOUR DU SERVEUR EFFECTUEE AVEC SUCCES /!\      ${CEND}"
+echo -e "${CRED}---------------------------------------------------------------${CEND}"
 
 echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
 read -r
-

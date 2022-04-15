@@ -3,7 +3,7 @@ pgrole: 'deemixrr'
 intport: '5555'
 image: 'theultimatecoder/deemixrr:nightly'
 pg_volumes:
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config/.config/deemix"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config/.config/deemix"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
 pg_env:
   PUID: "{{ lookup('env','MYUID') }}"

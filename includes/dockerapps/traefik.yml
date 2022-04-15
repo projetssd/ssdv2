@@ -2,8 +2,7 @@
 - hosts: localhost
   gather_facts: True
   vars_files:
-    - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
-    - "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/generique.yml"
+    - "{{ settings.source }}/includes/dockerapps/templates/generique/generique.yml"
   tasks:
 
     - name: 'Set Known Facts'
@@ -12,15 +11,15 @@
 
     - name: create traefik state
       shell: |
-        echo "1" >  {{ lookup('env','CONFDIR') }}/status/{{pgrole}}
+        echo "1" >  {{ settings.storage }}/status/{{pgrole}}
 
     - name: Checking for existing app data
       stat:
-        path: "{{ lookup('env','CONFDIR') }}/docker/{{user.name}}/authelia/configuration.yml"
+        path: "{{ settings.storage }}/docker/{{user.name}}/authelia/configuration.yml"
       register: check
 
     - name: "Set DNS Record on CloudFlare"
-      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
+      include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
       vars:
         subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
       when: cloudflare_enabled
@@ -39,18 +38,18 @@
         owner: "{{ lookup('env','USER') }}"
         group: "{{ lookup('env','MYGIDNAME') }}"
       with_items:
-        - "{{ lookup('env','CONFDIR') }}/docker/{{pgrole}}"
-        - "{{ lookup('env','CONFDIR') }}/docker/{{pgrole}}/acme"
-        - "{{ lookup('env','CONFDIR') }}/docker/{{pgrole}}/rules"
+        - "{{ settings.storage }}/docker/{{pgrole}}"
+        - "{{ settings.storage }}/docker/{{pgrole}}/acme"
+        - "{{ settings.storage }}/docker/{{pgrole}}/rules"
 
     - name: Check acme.json exists
       stat:
-        path: " {{ lookup('env','CONFDIR') }}/docker/{{pgrole}}/acme/acme.json"
+        path: " {{ settings.storage }}/docker/{{pgrole}}/acme/acme.json"
       register: acme_json
 
     - name: Installing ACME (touch)
       file:
-        path: "{{ lookup('env','CONFDIR') }}/docker/{{pgrole}}/acme/acme.json"
+        path: "{{ settings.storage }}/docker/{{pgrole}}/acme/acme.json"
         state: touch
         mode: 0600
       when: acme_json.stat.exists == False
@@ -60,23 +59,23 @@
         path: "{{ item }}"
         state: directory
       with_items:
-        - "{{ lookup('env','CONFDIR') }}/docker/{{pgrole}}/"
-        - "{{ lookup('env','CONFDIR') }}/docker/{{pgrole}}/rules"
+        - "{{ settings.storage }}/docker/{{pgrole}}/"
+        - "{{ settings.storage }}/docker/{{pgrole}}/rules"
 
     - name: create an empty file traefik.log
       file:
-        path: "{{ lookup('env','CONFDIR') }}/docker/{{pgrole}}/traefik.log"
+        path: "{{ settings.storage }}/docker/{{pgrole}}/traefik.log"
         state: touch
 
     - name: Import middlewares-chains.toml
       template:
-        src: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/{{pgrole}}/middlewares-chains.toml.j2"
-        dest: "{{ lookup('env','CONFDIR') }}/docker/{{pgrole}}/rules/middlewares-chains.toml"
+        src: "{{ settings.source }}/includes/dockerapps/templates/{{pgrole}}/middlewares-chains.toml.j2"
+        dest: "{{ settings.storage }}/docker/{{pgrole}}/rules/middlewares-chains.toml"
 
     - name: Import middlewares.toml
       template:
-        src: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/{{pgrole}}/middlewares.toml.j2"
-        dest: "{{ lookup('env','CONFDIR') }}/docker/{{pgrole}}/rules/middlewares.toml"
+        src: "{{ settings.source }}/includes/dockerapps/templates/{{pgrole}}/middlewares.toml.j2"
+        dest: "{{ settings.storage }}/docker/{{pgrole}}/rules/middlewares.toml"
 
     - name: label {{pgrole}} with cloudflare
       set_fact:
@@ -206,9 +205,9 @@
         volumes:
           - "/var/run/docker.sock:/var/run/docker.sock:ro"
           - "/etc/localtime:/etc/localtime:ro"
-          - "{{ lookup('env','CONFDIR') }}/docker/{{pgrole}}/acme/acme.json:/acme.json"
-          - "{{ lookup('env','CONFDIR') }}/docker/{{pgrole}}/rules:/rules"
-          - "{{ lookup('env','CONFDIR') }}/docker/{{pgrole}}/traefik.log:/traefik.log"
+          - "{{ settings.storage }}/docker/{{pgrole}}/acme/acme.json:/acme.json"
+          - "{{ settings.storage }}/docker/{{pgrole}}/rules:/rules"
+          - "{{ settings.storage }}/docker/{{pgrole}}/traefik.log:/traefik.log"
         labels: '{{labels}}'
         restart_policy: unless-stopped
         state: started
@@ -216,22 +215,22 @@
           - name: traefik_proxy
 
     - name: Google OAuth2 tasks
-      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/{{pgrole}}/oauth.yml"
+      include_tasks: "{{ settings.source }}/includes/dockerapps/templates/{{pgrole}}/oauth.yml"
       when: oauth_enabled
 
     - name: create {{pgrole}}state
       shell: |
-        echo "2" >  {{ lookup('env','CONFDIR') }}/status/{{pgrole}}
+        echo "2" >  {{ settings.storage }}/status/{{pgrole}}
 
     - name: create {{pgrole}}state
       shell: |
-        echo "2" >  {{ lookup('env','CONFDIR') }}/status/oauth
+        echo "2" >  {{ settings.storage }}/status/oauth
       when: oauth_enabled
 
     - name: Insert traefik into database
-      shell :
+      shell:
         cmd: |
-          sqlite3 {{  lookup('env','BASEDIR') }}/ssddb << EOF
+          sqlite3 {{  settings.source }}/ssddb << EOF
               replace into applications (name,status,subdomain,port)
               values
               ('traefik',2,'{{sub[pgrole][pgrole] if sub_enabled else pgrole}}',443);

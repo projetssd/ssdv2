@@ -9,15 +9,14 @@
 # pour dire quelle info on veut ?
 ########################################
 
-source ${BASEDIR}/includes/functions.sh
-source ${BASEDIR}/includes/variables.sh
+source ${SETTINGS_SOURCE}/includes/functions.sh
+source ${SETTINGS_SOURCE}/includes/variables.sh
 
 echo -e "${BLUE}### INFORMATIONS UTILISATEURS ###${NC}"
 
-ACCOUNT=${CONFDIR}/variables/account.yml
-
-if [ ! -f ${ACCOUNT} ]; then
-  cp ${BASEDIR}/includes/config/account.yml ${ACCOUNT}
+if [ ! -f ${ANSIBLE_VARS} ]; then
+  mkdir -p "${HOME}/.ansible/inventories/group_vars"
+  cp ${SETTINGS_SOURCE}/includes/config/account.yml ${ANSIBLE_VARS}
 fi
 
 echo ""
@@ -98,6 +97,8 @@ if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
   else
     echo -e "${BLUE}Cloudflare api déjà renseigné${CEND}"
   fi
+  # On met le ssl CF à full
+  ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/cf_force_full_ssl.yml"
 fi
 
 #echo ""

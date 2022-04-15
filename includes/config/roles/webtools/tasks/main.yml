@@ -10,13 +10,11 @@
 ---
 - hosts: localhost
   gather_facts: false
-  vars_files:
-    - /opt/seedbox/variables/account.yml
   tasks:
 
     - name: Check for previously installed WebTools
       stat:
-        path: "/opt/seedbox/docker/{{user.name}}/plex/config/Library/Application Support/Plex Media Server/Plug-ins/WebTools.bundle"
+        path: "{{ settings.storage }}/docker/{{user.name}}/plex/config/Library/Application Support/Plex Media Server/Plug-ins/WebTools.bundle"
       register: webtools_bundle
 
     - name: Tasks for previously installed WebTools
@@ -27,7 +25,7 @@
           webtools_outdated: false
 
       - name: Check version of previously installed WebTools
-        shell: cat '/opt/seedbox/docker/{{user.name}}/plex/config/Library/Application Support/Plex Media Server/Plug-ins/WebTools.bundle/VERSION' |  head -n 1 | awk '{ print }'
+        shell: cat '{{ settings.storage }}/docker/{{user.name}}/plex/config/Library/Application Support/Plex Media Server/Plug-ins/WebTools.bundle/VERSION' |  head -n 1 | awk '{ print }'
         register: webtools_previously_installed_version
         ignore_errors: yes
 
@@ -50,7 +48,7 @@
 
       - name: Remove outdated WebTools
         file:
-          path: "/opt/seedbox/docker/{{user.name}}/plex/config/Library/Application Support/Plex Media Server/Plug-ins/WebTools.bundle"
+          path: "{{ settings.storage }}/docker/{{user.name}}/plex/config/Library/Application Support/Plex Media Server/Plug-ins/WebTools.bundle"
           state: absent
 
       - name: Get latest WebTools URL
@@ -63,7 +61,7 @@
       - name: Install WebTools
         unarchive:
           src: "{{ webtools_download_url.stdout | default('https://github.com/ukdtom/WebTools.bundle/releases/download/3.0.0/WebTools.bundle.zip',true) }}"
-          dest: "/opt/seedbox/docker/{{user.name}}/plex/config/Library/Application Support/Plex Media Server/Plug-ins"
+          dest: "{{ settings.storage }}/docker/{{user.name}}/plex/config/Library/Application Support/Plex Media Server/Plug-ins"
           copy: no
           owner: "{{user.userid}}"
           group: "{{user.groupid}}"
@@ -72,7 +70,7 @@
         ignore_errors: yes
 
       - name: Check version of newly installed WebTools
-        shell: cat '/opt/seedbox/docker/{{user.name}}/plex/config/Library/Application Support/Plex Media Server/Plug-ins/WebTools.bundle/VERSION' |  head -n 1 | awk '{ print }'
+        shell: cat '{{ settings.storage }}/docker/{{user.name}}/plex/config/Library/Application Support/Plex Media Server/Plug-ins/WebTools.bundle/VERSION' |  head -n 1 | awk '{ print }'
         register: webtools_newly_installed_version
         ignore_errors: yes
 

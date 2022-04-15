@@ -1,6 +1,6 @@
 ---
 - name: "Set DNS Record on CloudFlare"
-  include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+  include_tasks: '{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml'
   vars:
     subdomain: oauth
   when: cloudflare_enabled

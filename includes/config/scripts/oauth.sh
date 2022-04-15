@@ -1,10 +1,7 @@
 #!/bin/bash
 
-source /opt/seedbox-compose/includes/functions.sh
-source /opt/seedbox-compose/includes/variables.sh
-
 ## Variable
-ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
+ansible-playbook ${SETTINGS_SOURCE}/includes/dockerapps/templates/ansible/ansible.yml
 DOMAIN=$(cat ${TMPDOMAIN})
 SEEDGROUP=$(cat ${TMPGROUP})
 rm ${TMPNAME} ${TMPDOMAIN} ${TMPGROUP}
@@ -43,16 +40,16 @@ done
 openssl=$(openssl rand -hex 16)
 manage_account_yml oauth.openssl $openssl
 
-## suppression des yml dans /opt/seedbox/conf
-rm /opt/seedbox/conf/*
+## suppression des yml dans ${SETTINGS_STORAGE}/conf
+rm ${SETTINGS_STORAGE}/conf/*
 
 
 ## suppression container
 docker rm -f $(docker ps -aq) > /dev/null 2>&1
 
 ## supression Authelia si installé
-rm -rf /opt/seedbox/docker/${USER}/authelia > /dev/null 2>&1
-rm /opt/seedbox/conf/authelia.yml > /dev/null 2>&1
+rm -rf ${SETTINGS_STORAGE}/docker/${USER}/authelia > /dev/null 2>&1
+rm ${SETTINGS_STORAGE}/conf/authelia.yml > /dev/null 2>&1
 sed -i '/authelia/d' /home/${USER}/resume > /dev/null 2>&1
 
 ## reinstallation traefik
@@ -69,9 +66,9 @@ echo -e "${BLUE}### REINITIALISATION DES APPLICATIONS ###${NC}"
 echo -e " ${BWHITE}* Les fichiers de configuration ne seront pas effacés${NC}"
 sort -u /home/${USER}/resume |grep -v notfound > /tmp/resume
 cp /tmp/resume /home/${USER}/resume
-sort -u "${CONFDIR}/resume" | grep -v notfound > /tmp/resume
-    cp /tmp/resume "${CONFDIR}/resume"
-while read line; do echo $line | awk '{print $1}'; done < "${CONFDIR}/resume" > $SERVICESPERUSER
+sort -u "${SETTINGS_STORAGE}/resume" | grep -v notfound > /tmp/resume
+    cp /tmp/resume "${SETTINGS_STORAGE}/resume"
+while read line; do echo $line | awk '{print $1}'; done < "${SETTINGS_STORAGE}/resume" > $SERVICESPERUSER
 mv /home/${USER}/resume /tmp
 install_services
 mv /tmp/resume /home/${USER}/

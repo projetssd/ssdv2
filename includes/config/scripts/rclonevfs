@@ -1,7 +1,8 @@
 #!/bin/bash
 
-source /opt/seedbox-compose/includes/functions.sh
-source /opt/seedbox-compose/includes/variables.sh
+source "${SETTINGS_SOURCE}/includes/functions.sh"
+# shellcheck source=${BASEDIR}/includes/variables.sh
+source "${SETTINGS_SOURCE}/includes/variables.sh"
 
 RCLONE_CONFIG_FILE=${HOME}/.config/rclone/rclone.conf
 
@@ -9,9 +10,6 @@ rm drive.txt team.txt >/dev/null 2>&1
 sed -i '/#Debut team source/,/#Fin team source/d' ${RCLONE_CONFIG_FILE} >/dev/null 2>&1
 sed -i '/#Debut team backup/,/#Fin team backup/d' ${RCLONE_CONFIG_FILE} >/dev/null 2>&1
 
-sed -i '/support*/d' /opt/seedbox/variables/account.yml >/dev/null 2>&1
-sed -i '/id_teamdrive*/d' /opt/seedbox/variables/account.yml >/dev/null 2>&1
-sed -i '/remote*/d' /opt/seedbox/variables/account.yml >/dev/null 2>&1
 
 clear
 
@@ -128,24 +126,24 @@ echo ""
 read -rp $'\e[36m   Souhaitez vous créer un Share Drive?: (o/n) ? \e[0m' OUI
 
 if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
-  /opt/seedbox-compose/includes/config/scripts/createrclone.sh
+  ${SETTINGS_SOURCE}/includes/config/scripts/createrclone.sh
 fi
 echo ""
 clone
 verif
 echo ""
 echo -e "${BLUE}### RCLONE ###${NC}"
-ansible-playbook /opt/seedbox-compose/includes/config/roles/rclone/tasks/main.yml
+ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml
 echo ""
 echo -e "${BLUE}### Unionfs-Fuse ###${NC}"
 echo -e " ${BWHITE}* Installation Unionfs${NC}"
 echo ""
-ansible-playbook /opt/seedbox-compose/includes/config/roles/unionfs/tasks/main.yml
+ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/unionfs/tasks/main.yml
 echo ""
 echo -e "${BLUE}### Containers en cours de restart, merci de patienter ###${NC}"
 echo ""
 docker start $(docker ps -a -q --filter "status=exited") >/dev/null 2>&1
-ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
+ansible-playbook ${SETTINGS_SOURCE}/includes/dockerapps/templates/ansible/ansible.yml
 
 
 ######### configuration des services#######################
@@ -154,14 +152,14 @@ clear
 echo -e " ${BWHITE}* Reconfiguration automatique cloudplow, crop, plex_autoscan${NC}"
 echo ""
 if [[ -d "/home/${USER}/scripts/cloudplow" ]]; then
-  ansible-playbook /opt/seedbox-compose/includes/config/roles/cloudplow/tasks/main.yml
+  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/cloudplow/tasks/main.yml
 fi
 if [[ -d "/home/${USER}/scripts/crop" ]]; then
-  /opt/seedbox-compose/includes/config/scripts/crop.sh
-  ansible-playbook /opt/seedbox-compose/includes/config/roles/crop/tasks/main.yml
+  ${SETTINGS_SOURCE}/includes/config/scripts/crop.sh
+  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/crop/tasks/main.yml
 fi
 if [[ -d "/home/${USER}/scripts/plex_autoscan" ]]; then
-  ansible-playbook /opt/seedbox-compose/includes/config/roles/plex_autoscan/tasks/main.yml
+  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/plex_autoscan/tasks/main.yml
 fi
 
 ##fin
@@ -169,5 +167,4 @@ echo -e "${CRED}------------------------------------------------------${CEND}"
 echo -e "${CCYAN} /!\ Migration plexdrive ==> rclone vsf REUSSI!! /!\ ${CEND}"
 echo -e "${CRED}------------------------------------------------------${CEND}"
 pause
-ansible-vault encrypt /opt/seedbox/variables/account.yml >/dev/null 2>&1
 

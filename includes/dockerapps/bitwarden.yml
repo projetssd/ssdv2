@@ -2,8 +2,7 @@
 - hosts: localhost
   gather_facts: false
   vars_files:
-    - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
-    - "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/generique.yml"
+    - "{{ settings.source }}/includes/dockerapps/templates/generique/generique.yml"
 
   tasks:
         
@@ -12,7 +11,7 @@
 
     - name: Checking for existing app data
       stat:
-        path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/authelia/configuration.yml"
+        path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/authelia/configuration.yml"
       register: check
 
     - name: 'Set Known Facts'
@@ -21,7 +20,7 @@
         image: 'bitwardenrs/server:latest'
 
     - name: "Set DNS Record on CloudFlare"
-      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
+      include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
       vars:
         subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
       when: cloudflare_enabled
@@ -34,7 +33,7 @@
     - name: Creating paths
       file: "path={{item}} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID') }}"
       with_items:
-        - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}"
+        - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}"
 
     # LABELS ######################################################################
     - name: 'Ajout label traefik'
@@ -66,7 +65,7 @@
     - name: 'Setting PG Volumes'
       set_fact:
         pg_volumes:
-          - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/data"
+          - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/data"
           - '/var/log/docker:/var/log/docker'
           - '/etc/localtime:/etc/localtime:ro'
 
@@ -115,7 +114,7 @@
     - name: 'Setting Volumes'
       set_fact:
         bw_volumes:
-          - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/data"
+          - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/data"
           - '/etc/localtime:/etc/localtime:ro'
           - /mnt/storage/backup/backup_databases/bitwarden:/dbbackup
 
@@ -143,7 +142,7 @@
     - name: add resume file
       become: true
       shell: |
-        echo "{{pgrole}}-{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> {{ lookup('env','CONFDIR') }}/temp.txt
+        echo "{{pgrole}}-{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> {{ settings.storage }}/temp.txt
 
 
 

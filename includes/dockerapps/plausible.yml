@@ -1,11 +1,8 @@
-#!/bin/bash
-
 ---
   - hosts: localhost
     gather_facts: false
     vars_files:
-      - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
-      - "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/generique.yml"
+      - "{{ settings.source }}/includes/dockerapps/templates/generique/generique.yml"
     tasks:
           
       # FACTS #######################################################################
@@ -17,11 +14,11 @@
 
       - name: create {{ pgrole }} state
         shell: |
-          echo "1" > {{ lookup('env','CONFDIR') }}/status/{{pgrole}}
+          echo "1" > {{ settings.storage }}/status/{{pgrole}}
 
       - name: Checking for existing app data
         stat:
-          path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/authelia/configuration.yml"
+          path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/authelia/configuration.yml"
         register: check
 
 
@@ -78,7 +75,7 @@
               else false }}"
 
       - name: "Set DNS Record on CloudFlare"
-        include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
+        include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
         vars:
           subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
         when: cloudflare_enabled
@@ -87,22 +84,22 @@
         become: yes
         file: "path={{item}} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID') }}"
         with_items:
-          - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}"
-          - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/event/var/lib"
-          - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/event/initdb"
+          - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}"
+          - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/event/var/lib"
+          - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/event/initdb"
 
       - name: Copy conf
         copy:
-          src: "/opt/seedbox-compose/includes/dockerapps/templates/plausible/{{ item }}"
-          dest:  "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/event/{{ item }}"
+          src: "{{ settings.source }}/includes/dockerapps/templates/plausible/{{ item }}"
+          dest:  "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/event/{{ item }}"
         with_items:
           - "clickhouse-config.xml"
           - "clickhouse-user-config.xml"
 
       - name: Copy create table script
         copy:
-          src: "/opt/seedbox-compose/includes/dockerapps/templates/plausible/create_db_clickhouse.sh"
-          dest: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/event/initdb/init-db.sh"
+          src: "{{ settings.source }}/includes/dockerapps/templates/plausible/create_db_clickhouse.sh"
+          dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/event/initdb/init-db.sh"
 
       # LABELS ######################################################################
       - name: 'Ajout label traefik'
@@ -124,8 +121,8 @@
       - name: 'Setting PG Volumes'
         set_fact:
           pg_volumes:
-            - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
-            - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/sync:/sync"
+            - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
+            - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/sync:/sync"
   
       - name: 'Setting PG ENV'
         set_fact:
@@ -159,7 +156,7 @@
           image: 'postgres:12'
           pull: yes
           volumes:
-            - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db:/var/lib/postgresql/data"
+            - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db:/var/lib/postgresql/data"
           env:
             POSTGRES_PASSWORD: "{{ pgrole }}"
             POSTGRES_USER: "{{ pgrole }}"
@@ -175,10 +172,10 @@
           image: 'yandex/clickhouse-server:21.3.2.5'
           pull: yes
           volumes:
-            - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/event/var/lib:/var/lib/clickhouse"
-            -  "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/event/initdb:/docker-entrypoint-initdb.d"
-            - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/eventclickhouse-config.xml:/etc/clickhouse-server/config.d/logging.xml:ro"
-            - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/clickhouse-user-config.xml:/etc/clickhouse-server/users.d/logging.xml:ro"
+            - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/event/var/lib:/var/lib/clickhouse"
+            -  "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/event/initdb:/docker-entrypoint-initdb.d"
+            - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/eventclickhouse-config.xml:/etc/clickhouse-server/config.d/logging.xml:ro"
+            - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/clickhouse-user-config.xml:/etc/clickhouse-server/users.d/logging.xml:ro"
           restart_policy: unless-stopped
           networks:
             - name: "{{pgrole}}-net"
@@ -206,13 +203,13 @@
       - name: add resume file
         become: true
         shell: |
-          echo "{{pgrole}}-{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> {{ lookup('env','CONFDIR') }}/temp.txt
+          echo "{{pgrole}}-{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> {{ settings.storage }}/temp.txt
   
 
       - name: "Insert {{ pgrole}} into database"
         shell :
           cmd: |
-            sqlite3 {{  lookup('env','BASEDIR') }}/ssddb << EOF
+            sqlite3 {{  settings.source }}/ssddb << EOF
                 replace into applications (name,status,subdomain,port)
                 values
                 ('{{ pgrole }}',2,'{{sub[pgrole][pgrole] if sub_enabled else pgrole}}',{{ intport }});
