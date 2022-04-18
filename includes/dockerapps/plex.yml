@@ -139,8 +139,9 @@
           traefik.http.routers.plex-rtr.entrypoints: 'https'
           traefik.http.routers.plex-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.plex-rtr.tls: 'true'
-          ## HTTP Services
           traefik.http.routers.plex-rtr.service: 'plex-svc'
+          traefik.http.routers.plex-rtr.tls.certresolver: 'letsencrypt'
+          ## HTTP Services
           traefik.http.services.plex-svc.loadbalancer.server.port: '32400'
 
     - name: "Create and start container"
