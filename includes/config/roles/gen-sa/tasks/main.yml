@@ -16,5 +16,5 @@
   tasks:
     - name: Import default config
       template:
-        src: {{ settings.source }}/includes/config/roles/gen-sa/templates/sa-gen.j2
+        src: "{{ settings.source }}/includes/config/roles/gen-sa/templates/sa-gen.j2"
         dest: /opt/gen-sa/sa-gen

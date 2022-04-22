@@ -36,8 +36,8 @@
 
     - name: Import default config
       template:
-        src: {{ settings.source }}/includes/config/roles/plex_dupefinder/templates/config.json.j2
-        dest: /home/{{ lookup('env','USER') }}/scripts/plex_dupefinder/config.json
+        src: "{{ settings.source }}/includes/config/roles/plex_dupefinder/templates/config.json.j2"
+        dest: "/home/{{ lookup('env','USER') }}/scripts/plex_dupefinder/config.json"
         owner: "{{user.userid}}"
         group: "{{user.groupid}}"
         mode: 0775

@@ -92,8 +92,8 @@
     - name: Import default config
       become: yes
       template:
-        src: {{ settings.source }}/includes/config/roles/traktarr/templates/config.json.j2
-        dest: /home/{{user.name}}/scripts/traktarr/config.json
+        src: "{{ settings.source }}/includes/config/roles/traktarr/templates/config.json.j2"
+        dest: "/home/{{user.name}}/scripts/traktarr/config.json"
         owner: "{{user.userid}}"
         group: "{{user.groupid}}"
         mode: 0775
@@ -122,7 +122,7 @@
     - name: Import traktarr service
       become: yes
       template:
-        src: {{ settings.source }}/includes/config/roles/traktarr/templates/traktarr.service.j2
+        src: "{{ settings.source }}/includes/config/roles/traktarr/templates/traktarr.service.j2"
         dest: /etc/systemd/system/traktarr.service
         force: yes
         owner: "{{user.userid}}"

@@ -10,5 +10,5 @@
   tasks:
     - name: Import default config
       template:
-        src: {{ settings.source }}/includes/config/roles/safire/templates/default_config.py.j2
+        src: "{{ settings.source }}/includes/config/roles/safire/templates/default_config.py.j2"
         dest: /opt/safire/safire/default_config.py
