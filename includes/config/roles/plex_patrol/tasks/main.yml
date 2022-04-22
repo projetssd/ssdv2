@@ -30,8 +30,8 @@
 
     - name: Import default config
       template:
-        src: {{ settings.source }}/includes/config/roles/plex_patrol/templates/settings.ini.j2
-        dest: {{ settings.storage }}/docker/{{user.name}}/plex_patrol/settings.ini
+        src: "{{ settings.source }}/includes/config/roles/plex_patrol/templates/settings.ini.j2"
+        dest: "{{ settings.storage }}/docker/{{user.name}}/plex_patrol/settings.ini"
         owner: "{{user.userid}}"
         group: "{{user.groupid}}"
         mode: 0775
