@@ -14,7 +14,7 @@
   docker_container:
     name: 'mongo-{{pgrole}}'
     recreate: true
-    image: 'mongo:latest'
+    image: 'mongo:4.4'
     pull: yes
     volumes:
       - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}:/data/db"
