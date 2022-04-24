@@ -944,9 +944,9 @@ function launch_service() {
     echo -e " ${BWHITE}* Processing plex config file...${NC}"
     echo ""
     echo -e " ${GREEN}ATTENTION IMPORTANT - NE PAS FAIRE D'ERREUR - SINON DESINSTALLER ET REINSTALLER${NC}"
-    ${SETTINGS_SOURCE}/includes/config/roles/plex_autoscan/plex_token.sh
+   "${SETTINGS_SOURCE}/includes/config/roles/plex_autoscan/plex_token.sh"
 
-    ansible-playbook ${SETTINGS_SOURCE}/includes/dockerapps/plex.yml
+    ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/plex.yml"
     choose_media_folder_plexdrive
     cp "${SETTINGS_SOURCE}/includes/dockerapps/plex.yml" "${SETTINGS_STORAGE}/conf/plex.yml" >/dev/null 2>&1
     echo "2" >"${SETTINGS_STORAGE}/status/plex"

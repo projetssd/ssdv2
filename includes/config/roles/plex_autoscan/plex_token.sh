@@ -1,4 +1,9 @@
-#!/bin/bash -e
+#!/bin/bash
+
+source "${SETTINGS_SOURCE}/includes/functions.sh"
+# shellcheck source=${BASEDIR}/includes/variables.sh
+source "${SETTINGS_SOURCE}/includes/variables.sh"
+
 #########################################################################
 # Title:         Retrieve Plex Token                                    #
 # Author(s):     Werner Beroux (https://github.com/wernight)            #
