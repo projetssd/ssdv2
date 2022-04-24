@@ -2,6 +2,7 @@
 - hosts: localhost
   gather_facts: true
   vars_files:
+    - "{{ lookup('env','HOME') }}/.ansible/inventories/group_vars/all.yml"
     - "{{ settings.source }}/includes/dockerapps/templates/plex/tasks/settings.yml"
     - "{{ settings.source }}/includes/dockerapps/templates/plex/defaults/main.yml"
 
