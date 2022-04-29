@@ -20,6 +20,8 @@
 * [DNS Cloudflare](https://github.com/projetssd/ssdv2/wiki/Cloudflare)
 * [Création API Google Drive](https://github.com/projetssd/ssdv2/wiki/Cr%C3%A9ation-API-Google)
 
+Depuis les dernières version de rclone, vous avez aussi besoin d'un rclone local (sur une machine ayant accès à un navigateur) :  [installer rclone sur votre poste de travail](https://rclone.org/install/) 
+
 ###
 
 
