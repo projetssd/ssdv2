@@ -5,6 +5,12 @@
     state: directory
     mode: "0776"
 
+- name: Creating paths
+  file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}"
+    state: directory
+    mode: "0776"
+
 - name: 'Touch php.ini'
   file:
     path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/chevereto-php.ini"
