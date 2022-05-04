@@ -14,5 +14,3 @@ pg_env:
   PGID: "{{ lookup('env','MYGID') }}"
 specific_docker_info:
   privileged: true
-  devices:
-  - "/dev/kmsg:/dev/kmsg"
