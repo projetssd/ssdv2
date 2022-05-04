@@ -5,7 +5,7 @@ image: 'gcr.io/cadvisor/cadvisor'
 pg_volumes:
   - /:/rootfs:ro 
   - /var/run:/var/run:ro 
-  - sys:/sys:ro 
+  - /sys:/sys:ro 
   - /var/lib/docker/:/var/lib/docker:ro 
   - /dev/disk/:/dev/disk:ro 
   - /etc/localtime:/etc/localtime:ro
@@ -13,4 +13,5 @@ pg_env:
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
 specific_docker_info:
-  privileged: true
+  container_default_behavior: compatibility
+  privileged: yes
