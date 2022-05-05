@@ -1124,7 +1124,7 @@ function suppression_appli() {
   req2="'"
   req=${req1}${APPSELECTED}${req2}
   sqlite3 ${SETTINGS_SOURCE}/ssddb <<EOF
-
+$req
 
 EOF
 
