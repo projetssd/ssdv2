@@ -1,6 +1,6 @@
 ---
 pgrole: 'myhomepage'
-intport: '7575'
+intport: '80'
 image: 'ghcr.io/ajnart/mhp'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/app/data"
