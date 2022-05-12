@@ -1,0 +1,6 @@
+---
+- name: Create directory
+  file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config"
+    state: directory
+    mode: 0777
