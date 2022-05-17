@@ -1,0 +1,14 @@
+---
+- name: 'Stop {{ pgrole }}'
+  docker_container:
+    name: '{{ pgrole }}'
+    state: stopped
+
+- name: Change directory rights
+  command:
+    cmd: "chmod -R 777 {{ settings.storage }}/docker/{{user.name}}/{{pgrole}}"
+
+- name: 'Restart {{ pgrole }}'
+  docker_container:
+    name: '{{ pgrole }}'
+    state: started
