@@ -95,7 +95,7 @@
         - '{{ settings.storage }}/docker/{{user.name}}/{{pgrole}}/logs'
         - '{{ settings.storage }}/docker/{{user.name}}/{{pgrole}}/config'
         - '{{ settings.storage }}/docker/{{user.name}}/{{pgrole}}/plugins'
-        - '{{ settings.storage }}docker/{{user.name}}/{{pgrole}}/client-plugins'
+        - '{{ settings.storage }}/docker/{{user.name}}/{{pgrole}}/client-plugins'
         - '{{ settings.storage }}/docker/{{user.name}}/{{pgrole}}/db'
 
     - name: permissions
