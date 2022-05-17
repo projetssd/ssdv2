@@ -6,7 +6,7 @@
 
 - name: Copy conf
   template:
-    src: "{{ settings.source }}/includes/dockerapps/templates/plex_auto_languages/confg.yml.j2"
+    src: "{{ settings.source }}/includes/dockerapps/templates/plex_auto_languages/config.yml.j2"
     dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config/config.yml"
 
 - name: 'Restart {{ pgrole }}'
