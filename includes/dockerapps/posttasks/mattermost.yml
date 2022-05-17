@@ -5,6 +5,7 @@
     state: stopped
 
 - name: Change directory rights
+  become: yes
   command:
     cmd: "chmod -R 777 {{ settings.storage }}/docker/{{user.name}}/{{pgrole}}"
 
