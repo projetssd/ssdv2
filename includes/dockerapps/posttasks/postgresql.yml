@@ -1,3 +1,14 @@
 ---
+- name: 'Stop {{ pgrole }}'
+  docker_container:
+    name: '{{ pgrole }}'
+    state: stopped
+
 - name: Launch postgresql
   include_tasks: "{{ settings.source }}/includes/dockerapps/templates/generique/postgresql.yml"
+
+- name: 'Restart {{ pgrole }}'
+  docker_container:
+    name: '{{ pgrole }}'
+    state: started
+
