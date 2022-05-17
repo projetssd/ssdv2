@@ -19,4 +19,4 @@ pg_env:
 
 posttasks:
   - "postgresql"
-  - "mattermost"
+  - "mattermost_post"

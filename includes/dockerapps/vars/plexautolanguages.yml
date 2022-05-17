@@ -10,5 +10,4 @@ pg_env:
   PLEX_TOKEN: "{{ plex.token }}"
   TZ: "Europe/Paris"
 
-posttasks:
-  - "plexautolanguages"
+
