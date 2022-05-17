@@ -107,15 +107,13 @@
         - '{{ settings.storage }}/docker/{{user.name}}/{{pgrole}}/plugins'
         - '{{ settings.storage }}/docker/{{user.name}}/{{pgrole}}/client-plugins'
         - '{{ settings.storage }}/docker/{{user.name}}/{{pgrole}}/db'
+        - '/tmp/mattermost-docker'
+        - '/tmp/mattermost-docker/db'
+        - '/tmp/mattermost-docker/app'
 
     - name: permissions
       shell: |
         sudo chown -R 2000:2000 {{ settings.storage }}/docker/{{user.name}}/mattermost
-
-    - name: create temp directory
-      file:
-        path: /tmp/mattermost-docker
-        state: directory
 
     - name: Import docker-compose.yml
       template:
