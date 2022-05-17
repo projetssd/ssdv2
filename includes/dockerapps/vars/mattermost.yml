@@ -1,0 +1,21 @@
+---
+pgrole: 'mattermost'
+intport: '8065'
+image: 'mattermost/mattermost-team-edition:6.3'
+pg_volumes:
+  - '{{ settings.storage }}/docker/{{user.name}}/{{pgrole}}/config:/mattermost/config:rw'
+  - '{{ settings.storage }}/docker/{{user.name}}/{{pgrole}}/data:/mattermost/data:rw'
+  - '{{ settings.storage }}/docker/{{user.name}}/{{pgrole}}/logs:/mattermost/logs:rw'
+  - '{{ settings.storage }}/docker/{{user.name}}/{{pgrole}}/plugins:/mattermost/plugins:rw'
+  - '{{ settings.storage }}/docker/{{user.name}}/{{pgrole}}/client-plugins:/mattermost/client/plugins:rw'
+  - '{{ settings.storage }}/docker/{{user.name}}/{{pgrole}}/bleve-indexes:/mattermost/bleve-indexes:rw'
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  TZ: "Europe/Paris"
+  MM_SQLSETTINGS_DRIVERNAME: "postgres"
+  MM_SQLSETTINGS_DATASOURCE: "postgres://{{pgrole}}:{{pgrole}}@db-{{pgrole}}:5432/{{pgrole}}?sslmode=disable&connect_timeout=10"
+  MM_BLEVESETTINGS_INDEXDIR: "/mattermost/bleve-indexes"
+  MM_SERVICESETTINGS_SITEURL: "https://{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{ user.domain }}"
+
+posttasks:
+  - "postgresql"
