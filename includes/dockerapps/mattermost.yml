@@ -84,6 +84,10 @@
         subdomain: "{{sub.mattermost.mattermost if sub_enabled else 'mattermost'}}"
       when: cloudflare_enabled
 
+    - name: "Set sudomain var"
+      set_fact:
+        subdomain_mattermost: "{{sub.mattermost.mattermost if sub_enabled else 'mattermost'}}"
+
     - name: 'Set Known Facts'
       set_fact:
         pgrole: 'mattermost'
