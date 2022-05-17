@@ -89,7 +89,7 @@
         pgrole: 'mattermost'
 
     - name: Creating  paths
-      file: 'path={{item}} state=directory mode=0775'
+      file: 'path={{item}} state=directory mode=0777'
       with_items:
         - '{{ settings.storage }}/docker/{{user.name}}/{{pgrole}}/data'
         - '{{ settings.storage }}/docker/{{user.name}}/{{pgrole}}/logs'
