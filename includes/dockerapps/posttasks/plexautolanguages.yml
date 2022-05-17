@@ -8,7 +8,7 @@
   become: yes
   template:
     src: "{{ settings.source }}/includes/dockerapps/templates/plex_auto_languages/config.yml.j2"
-    dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config/config.yml"
+    dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config/config.yaml"
 
 - name: 'Restart {{ pgrole }}'
   docker_container:
