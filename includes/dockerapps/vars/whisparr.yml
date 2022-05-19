@@ -1,7 +1,7 @@
 ---
 pgrole: 'whisparr'
 intport: '6969'
-image: 'cr.hotio.dev/hotio/whisparr'
+image: 'cr.hotio.dev/hotio/whisparr:nightly'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
