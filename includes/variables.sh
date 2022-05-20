@@ -34,7 +34,22 @@ if [ ! -f "${HOME}/.config/ssd/env" ]; then
     echo "SETTINGS_SOURCE=/opt/seedbox-compose" >>"${HOME}/.config/ssd/env"
     echo "SETTINGS_STORAGE=/opt/seedbox" >>"${HOME}/.config/ssd/env"
   else
-    # Si on est là, c'est que rien n'est installé, on va poser les questions
+    # Si on est là, c'est que rien n'est installé, on va poser les questions*
+    echo "###################################################"
+      echo "# ATTENTION !!                                    #"
+      echo "###################################################"
+      echo "A l'heure actuelle, la restauration ne fonctionne "
+      echo "que si le script a été installé depuis le même      "
+      echo "répertoire que celui qui a servi à faire la       "
+      echo "sauvegarde, et a été installé sur la même destination "
+      echo "-------------------------------------------------------"
+      echo "Les chemins par défaut avant la v2.2 étaient "
+      echo "- source : /opt/seedbox-compose"
+      echo "- destination : /opt/seedbox"
+        echo ""
+  echo "###  -->APPUYER SUR ENTREE POUR CONTINUER<--  ###$"
+  read
+  echo ""
     mkdir -p "${HOME}/.config/ssd/"
     # on prend le répertoire courant pour la source
     sourcedir=$(dirname "$(readlink -f "$0")")
