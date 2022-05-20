@@ -234,7 +234,7 @@ if [ $mode_install = "manuel" ]; then
         sauve
 
         ## On va garder ce qui a été saisi pour l'écraser plus tard
-        cp ${ANSIBLE_VARS} ${ANSIBLE_VARS}temp
+        cp ${ANSIBLE_VARS} ${ANSIBLE_VARS}.temp
         ## on sauvegarde le mot de passe de chiffrement
         cp ${HOME}/.vault_pass ${HOME}/.vault_pass.temp
 
