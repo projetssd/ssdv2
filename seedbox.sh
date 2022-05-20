@@ -213,7 +213,22 @@ if [ $mode_install = "manuel" ]; then
       ;;
 
     3) ## restauration de la seedbox
-
+      echo "###################################################"
+      echo "# ATTENTION !!                                    #"
+      echo "###################################################"
+      echo "A l'heure actuelle, la restauration ne fonctionne "
+      echo "que si le script a été installé depuis le même      "
+      echo "répertoire que celui qui a servi à faire la       "
+      echo "sauvegarde, et a été installé sur la même destination "
+      echo "------------------------------------------------------"
+      echo "Si vous avez déjà installé le script depuis un mauvais répertoire "
+      echo "ou vers une mauvaise destination, il faudra supprimer le fichier "
+      echo "${HOME}/.config/ssd/env et refaire l'installation "
+      echo "-------------------------------------------------------"
+      echo "Les chemins par défaut avant la v2.2 étaient "
+      echo "- source : /opt/seedbox-compose"
+      echo "- destination : /opt/seedbox"
+      pause
       #check_dir "$PWD"
       if [[ ${IS_INSTALLED} -eq 0 ]]; then
         clear
