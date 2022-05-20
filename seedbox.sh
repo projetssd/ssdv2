@@ -235,11 +235,16 @@ if [ $mode_install = "manuel" ]; then
 
         ## On va garder ce qui a été saisi pour l'écraser plus tard
         cp ${ANSIBLE_VARS} ${ANSIBLE_VARS}temp
+        ## on sauvegarde le mot de passe de chiffrement
+        cp ${HOME}/.vault_pass ${HOME}/.vault_pass.temp
 
         sudo restore
         # on remet le account.yml précédent qui a été écrasé par la restauration
         cp ${ANSIBLE_VARS} ${ANSIBLE_VARS}.restore
         mv ${ANSIBLE_VARS}.temp ${ANSIBLE_VARS}
+        # pareil pour le mot de passe de chiffrement
+        cp ${HOME}/.vault_pass ${HOME}/.vault_pass.restore
+        mv ${HOME}/.vault_pass.temp ${HOME}/.vault_pass
         stocke_public_ip
         ## on remet les bonnes infos
         userid=$(id -u)
