@@ -243,11 +243,6 @@
 
 
     # Administratif pour ssd
-  - name: add resume file
-    become: true
-    shell: |
-      echo "{{pgrole}}-{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> {{ settings.storage }}/temp.txt
-
 
   - name: "Insert {{ pgrole}} into database"
     shell :

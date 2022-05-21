@@ -116,24 +116,6 @@
 
 ####################### Collabora #############################################################
 
-    - name: 'domain'
-      shell: | 
-        cat /home/"{{ lookup('env','USER') }}"/resume | tail -1 | cut -d. -f2
-      register: domain
-
-    - name: 'domain'
-      debug:
-        msg: '{{ domain.stdout }}'
-
-    - name: 'com'
-      shell: | 
-        cat /home/"{{ lookup('env','USER') }}"/resume | tail -1 | cut -d. -f3
-      register: com
-
-    - name: 'com'
-      debug:
-        msg: '{{ com.stdout }}'
-
     - name: "Set DNS Record on CloudFlare"
       include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
       vars:
@@ -158,7 +140,7 @@
         pull: yes
         env:
           extra_params: '--o:ssl.enable=false --o:ssl.termination=true'
-          domain: 'nextcloud\\.{{domain.stdout}}\\.{{com.stdout}}'
+          domain: 'nextcloud\\.{{user.domain}}'
           username: "{{ lookup('env','USER') }}"
           password: '{{user.pass}}'
           DONT_GEN_SSL_CERT: 'true'
@@ -202,10 +184,6 @@
         state: started
         labels: '{{off_labels}}'
 
-    - name: add resume file
-      become: true
-      shell: |
-        echo "{{pgrole}}-{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> "{{ settings.storage }}/temp.txt"
 
 
 

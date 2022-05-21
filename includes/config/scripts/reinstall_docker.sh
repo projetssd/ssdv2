@@ -39,9 +39,7 @@ echo ""
 ## reinstallation application
 echo -e "${BLUE}### REINITIALISATION DES APPLICATIONS ###${NC}"
 echo -e " ${BWHITE}* Les fichiers de configuration ne seront pas effacés${NC}"
-while read line; do echo $line | cut -d'.' -f1; done </home/${USER}/resume >$SERVICESPERUSER
-rm /home/${USER}/resume
-install_services
+relance_tous_services
 
 rm $SERVICESUSER${USER}
 echo -e "${CRED}---------------------------------------------------------------${CEND}"

@@ -179,12 +179,6 @@
       import_tasks: "{{ settings.source }}/includes/dockerapps/templates/plex/tasks/subtasks/extra.yml"
       ignore_errors: yes
 
-    - name: add resume file
-      become: yes
-      shell: |
-        echo "{{pgrole}}-{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> {{ settings.storage }}/temp.txt
-
-
     - name: Insert plex into database
       shell :
         cmd: |
