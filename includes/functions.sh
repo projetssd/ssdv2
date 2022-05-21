@@ -419,16 +419,6 @@ function install_traefik() {
     exit 1
   fi
 
-  # eviter les doublons dans  ${SETTINGS_STORAGE}/resume
-  grep "traefik" ${SETTINGS_STORAGE}/resume >/dev/null 2>&1
-  if [ $? -eq 1 ]; then
-    echo "traefik = ${SUBDOMAIN}.${DOMAIN}" >>${SETTINGS_STORAGE}/resume
-  fi
-
-  grep "oauth" ${SETTINGS_STORAGE}/resume >/dev/null 2>&1
-  if [ $? -eq 1 ]; then
-    echo "oauth = ${SUBDOMAIN}.${DOMAIN}" >>${SETTINGS_STORAGE}/resume
-  fi
 
   echo ""
 }
@@ -897,8 +887,6 @@ function choose_media_folder_plexdrive() {
 
 function install_services() {
   if [ -f "$SERVICESPERUSER" ]; then
-    INSTALLEDFILE="${HOME}/resume"
-    touch "${INSTALLEDFILE}" >/dev/null 2>&1
 
     if [[ ! -d "${SETTINGS_STORAGE}/conf" ]]; then
       mkdir -p "${SETTINGS_STORAGE}/conf" >/dev/null 2>&1
@@ -924,7 +912,7 @@ function install_services() {
 
 function launch_service() {
 
-  INSTALLEDFILE="${HOME}/resume"
+
   line=$1
 
   log_write "Installation de ${line}"
@@ -979,10 +967,7 @@ function launch_service() {
     echo "2" >"${SETTINGS_STORAGE}/status/${line}"
 
     FQDNTMP="${temp_subdomain}.$DOMAIN"
-    echo "$FQDNTMP" >>$INSTALLEDFILE
-    echo "${line} = $FQDNTMP" | tee -a "${SETTINGS_STORAGE}/resume" >/dev/null
-    sort -u "${SETTINGS_STORAGE}/resume" | grep -v notfound >/tmp/resume
-    cp /tmp/resume "${SETTINGS_STORAGE}/resume"
+
   fi
   FQDNTMP=""
 }
@@ -1040,8 +1025,7 @@ function suppression_appli() {
 
   sousdomaine=$(get_from_account_yml sub.${APPSELECTED}.${APPSELECTED})
   domaine=$(get_from_account_yml user.domain)
-  sort -u /home/${USER}/resume | grep -v ${sousdomaine}.${domaine} >/tmp/resume
-  cp /tmp/resume /home/${USER}/resume
+
   APPSELECTED=$1
   DELETE=0
   if [[ $# -eq 2 ]]; then
@@ -1050,9 +1034,6 @@ function suppression_appli() {
     fi
   fi
   manage_account_yml sub.${APPSELECTED} " "
-
-  sed -i "/$APPSELECTED/d" ${SETTINGS_STORAGE}/resume >/dev/null 2>&1
-  sed -i "/$APPSELECTED/d" /home/${USER}/resume >/dev/null 2>&1
 
   docker rm -f "$APPSELECTED" >/dev/null 2>&1
   if [ $DELETE -eq 1 ]; then
@@ -1446,8 +1427,6 @@ function migrate() {
   echo "Merci de votre patience ..."
   echo "=================================================================================="
   sudo chown -R "${USER}": ${SETTINGS_STORAGE}/status
-  sudo chown -R "${USER}": ${SETTINGS_STORAGE}/resume
-  sudo chown -R "${USER}": ${HOME}/resume
   sudo chown -R ${USER}: ${SETTINGS_STORAGE}/status/*
   sudo chown ${USER} ${ANSIBLE_VARS}
   premier_lancement
@@ -1462,8 +1441,6 @@ function migrate() {
   fi
 
   sudo chown -R "${USER}": ${SETTINGS_STORAGE}/status
-  sudo chown -R "${USER}": ${SETTINGS_STORAGE}/resume
-  sudo chown -R "${USER}": ${HOME}/resume
   sudo chown -R ${USER}: ${SETTINGS_STORAGE}/status/*
   sudo chown ${USER} ${ANSIBLE_VARS}
 
@@ -1940,7 +1917,6 @@ function relance_tous_services() {
 select name from applications;
 EOF
 
-  rm /home/${USER}/resume
   install_services
   launch_service traefik
 }

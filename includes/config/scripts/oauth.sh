@@ -53,7 +53,6 @@ docker rm -f $(docker ps -aq) > /dev/null 2>&1
 ## supression Authelia si installé
 rm -rf ${SETTINGS_STORAGE}/docker/${USER}/authelia > /dev/null 2>&1
 rm ${SETTINGS_STORAGE}/conf/authelia.yml > /dev/null 2>&1
-sed -i '/authelia/d' /home/${USER}/resume > /dev/null 2>&1
 
 ## reinstallation traefik
 echo ""
@@ -67,14 +66,9 @@ echo ""
 ## reinstallation application
 echo -e "${BLUE}### REINITIALISATION DES APPLICATIONS ###${NC}"
 echo -e " ${BWHITE}* Les fichiers de configuration ne seront pas effacés${NC}"
-sort -u /home/${USER}/resume |grep -v notfound > /tmp/resume
-cp /tmp/resume /home/${USER}/resume
-sort -u "${SETTINGS_STORAGE}/resume" | grep -v notfound > /tmp/resume
-    cp /tmp/resume "${SETTINGS_STORAGE}/resume"
-while read line; do echo $line | awk '{print $1}'; done < "${SETTINGS_STORAGE}/resume" > $SERVICESPERUSER
-mv /home/${USER}/resume /tmp
-install_services
-mv /tmp/resume /home/${USER}/
+
+relance_tous_services
+
 rm $SERVICESUSER${USER}
     	echo -e "${CRED}---------------------------------------------------------------${CEND}"
     	echo -e "${CRED}     /!\ MISE A JOUR DU SERVEUR EFFECTUEE AVEC SUCCES /!\      ${CEND}"

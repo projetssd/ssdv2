@@ -22,7 +22,6 @@ docker rm -f $(docker ps -aq) > /dev/null 2>&1
 ## supression Authelia si installé
 rm -rf ${SETTINGS_STORAGE}/docker/${USER}/authelia > /dev/null 2>&1
 rm ${SETTINGS_STORAGE}/conf/authelia.yml > /dev/null 2>&1
-sed -i '/authelia/d' /home/${USER}/resume > /dev/null 2>&1
 
 ## reinstallation traefik
 install_traefik
@@ -35,9 +34,9 @@ echo ""
 ## reinstallation application
 echo -e "${BLUE}### REINITIALISATION DES APPLICATIONS ###${NC}"
 echo -e " ${BWHITE}* Les fichiers de configuration ne seront pas effacés${NC}"
-while read line; do echo $line | cut -d'.' -f1; done < /home/${USER}/resume > $SERVICESPERUSER
-rm /home/${USER}/resume
-install_services
+
+relance_tous_services
+
 
 rm $SERVICESUSER${USER}
     	echo -e "${CRED}---------------------------------------------------------------${CEND}"

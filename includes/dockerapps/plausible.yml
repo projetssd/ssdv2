@@ -200,11 +200,6 @@
           command: sh -c "sleep 10 && /entrypoint.sh db migrate && /entrypoint.sh db init-admin && /entrypoint.sh run"
 
       # Administratif pour ssd
-      - name: add resume file
-        become: true
-        shell: |
-          echo "{{pgrole}}-{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> {{ settings.storage }}/temp.txt
-  
 
       - name: "Insert {{ pgrole}} into database"
         shell :

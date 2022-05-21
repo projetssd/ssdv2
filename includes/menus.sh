@@ -60,11 +60,6 @@ menu_change_sous_domaine() {
   #SEEDUSER=$(cat ${TMPNAME})
   rm ${TMPNAME}
   rm ${SETTINGS_STORAGE}/conf/* >/dev/null 2>&1
-
-  while read line; do
-    echo ${line} | cut -d'.' -f1
-  done </home/${USER}/resume >$SERVICESUSER${USER}
-  mv /home/${USER}/resume ${SETTINGS_STORAGE}/resume >/dev/null 2>&1
   subdomain
 
   grep "plex" $SERVICESPERUSER >/dev/null 2>&1
@@ -74,7 +69,6 @@ menu_change_sous_domaine() {
   fi
 
   install_services
-  mv ${SETTINGS_STORAGE}/resume /home/${USER}/resume >/dev/null 2>&1
   echo "Changement effectué"
   pause
 }
@@ -113,7 +107,6 @@ menu_gestion_plex_patrol() {
   #SEEDUSER=$(ls ${SETTINGS_STORAGE}/media* | cut -d '-' -f2)
   DOMAIN=$(get_from_account_yml user.domain)
   FQDNTMP="plex_patrol.$DOMAIN"
-  echo "$FQDNTMP" >>/home/${USER}/resume
   cp "${SETTINGS_SOURCE}/includes/config/roles/plex_patrol/tasks/main.yml" "${SETTINGS_STORAGE}/conf/plex_patrol.yml" >/dev/null 2>&1
   echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour revenir au menu principal..."
   read -r
@@ -303,7 +296,6 @@ function ajout_app_seedbox() {
 }
 
 function ajout_app_autres() {
-  echo -e " ${BWHITE}* Resume file: $USERRESUMEFILE${NC}"
   echo ""
   choose_other_services
 
@@ -354,8 +346,6 @@ function menu_reinit_container() {
     log_write "Reinit du container ${line}"
     subdomain=$(get_from_account_yml "sub.${line}.${line}")
 
-    sed -i "/${line}/d" ${SETTINGS_STORAGE}/resume >/dev/null 2>&1
-    sed -i "/${line}/d" /home/${USER}/resume >/dev/null 2>&1
     suppression_appli "${line}"
     rm -f "${SETTINGS_STORAGE}/conf/${line}.yml"
     rm -f "${SETTINGS_STORAGE}/vars/${line}.yml"
@@ -365,9 +355,6 @@ function menu_reinit_container() {
     echo ${line} >>$SERVICESPERUSER
 
     launch_service ${line}
-
-    sort -u "${SETTINGS_STORAGE}/resume" | grep -v notfound >/tmp/resume
-    cp /tmp/resume "${SETTINGS_STORAGE}/resume"
 
     pause
     checking_errors $?

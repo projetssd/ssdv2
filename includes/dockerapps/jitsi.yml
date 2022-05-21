@@ -305,9 +305,6 @@
       - name: "Containers | Restart Jitsi"
         shell: docker restart jitsi
 
-      - name: add resume file
-        shell: |
-          echo "{{pgrole}}-{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> {{ settings.storage }}/temp.txt
 
 
 

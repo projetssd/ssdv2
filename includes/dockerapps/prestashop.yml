@@ -143,9 +143,6 @@
         state: started
         labels: '{{pg_labels}}'
 
-    - name: add resume file
-      shell: |
-        echo "{{pgrole}}-{{sub.prestashop if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
 
 
 

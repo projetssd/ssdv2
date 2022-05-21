@@ -172,7 +172,5 @@
       import_tasks: "subtasks/extra.yml"
       ignore_errors: yes
 
-    - name: add resume file
-      shell: |
-        echo "{{pgrole}}-{{sub.media if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
+
 
