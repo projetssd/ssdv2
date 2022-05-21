@@ -265,6 +265,38 @@ if [ $mode_install = "manuel" ]; then
         userid=$(id -u)
         grpid=$(id -g)
 
+        # On cherche l'ancien chemin de stockage
+        ansible-vault decrypt --vault-password-file "${HOME}/.vault_pass.restore" "${ANSIBLE_VARS}.restore" >/dev/null 2>&1
+
+        old_path=$(shyaml -q get-value settings.storage <"${ANSIBLE_VARS}.restore")
+        new_path=$(get_from_account_yml settings.storage)
+
+        old_source=$(shyaml -q get-value settings.source <"${ANSIBLE_VARS}.restore")
+        new_source=$(get_from_account_yml settings.source)
+        # on supprime le .restore qui ne servira plus
+        rm -f "${ANSIBLE_VARS}.restore"
+        rm -f "${HOME}/.vault_pass.restore"
+
+        if [ "${old_source}" != "${new_source}" ]; then
+          echo "Les sources d'installation sont différents"
+          echo "Ancienne source : ${old_source}"
+          echo "Nouvelle source : ${new_source}"
+          echo "----------------------------------------"
+          echo "Le script va maintenant déplacer les données"
+          pause
+          mv "${old_source}/ssddb" "${new_source}/ssddb"
+        fi
+
+        if [ "${old_path}" != "${new_path}" ]; then
+          echo "Les destinations sont différentes"
+          echo "Ancienne destination : ${old_path}"
+          echo "Nouvelle destination : ${new_path}"
+          echo "----------------------------------------"
+          echo "Le script va maintenant déplacer les données"
+          pause
+          sudo mv "${old_path}/*" "${new_path}"
+        fi
+
         manage_account_yml user.userid "$userid"
         manage_account_yml user.id "$userid"
         manage_account_yml user.groupid "$grpid"
@@ -288,7 +320,6 @@ if [ $mode_install = "manuel" ]; then
 
     esac
   fi
-
 
   chmod 755 ${SETTINGS_SOURCE}/logs
   #update_logrotate
@@ -346,8 +377,6 @@ if [ $mode_install = "manuel" ]; then
   fi
   # On ressource l'environnement
   source "${SETTINGS_SOURCE}/profile.sh"
-
-
 
   affiche_menu_db
 fi
