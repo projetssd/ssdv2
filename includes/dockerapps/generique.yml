@@ -23,7 +23,7 @@
       when: stat_result.stat.exists
 
     - name: Launch Pretasks from yml
-      include_tasks: "{{ settings.source }}/includes/dockerapps/posttasks/{{ item }}.yml"
+      include_tasks: "{{ settings.source }}/includes/dockerapps/pretasks/{{ item }}.yml"
       with_items: "{{ pretasks }}"
       when: pretasks is defined
         
