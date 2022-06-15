@@ -1,0 +1,16 @@
+---
+pgrole: 'ttrss'
+intport: '80'
+image: 'nventiveux/ttrss'
+pg_volumes:
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  TTRSS_DB_HOST: "db-{{ pgrole }}"
+  TTRSS_DB_TYPE: "pgsql"
+  TTRSS_DB_USER: "{{ pgrole }}"
+  TTRSS_DB_PASS: "{{ pgrole }}"
+  TTRSS_SELF_URL_PATH: "https://{{ fqdn }}"
+pretasks:
+  - "yourls"
+posttasks:
+  - "postgresql"
