@@ -27,6 +27,12 @@
   set_fact:
     myusername: "{{ lookup('env','USER') }}"
 
+- name: Clone Ratio Color plugin
+  git:
+    repo: https://github.com/Micdu70/rutorrent-ratiocolor.git
+    dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config/custom_plugins/ratiocolor"
+    clone: yes
+
 - name: 'Restart {{ pgrole }}'
   docker_container:
     name: '{{ pgrole }}'
