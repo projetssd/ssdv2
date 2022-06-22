@@ -1,7 +1,7 @@
 ---
 - name: 'XML Check'
   stat:
-    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config/system.xml"
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config/config/system.xml"
   register: xmlcheck
 
 - name: 'Check'
