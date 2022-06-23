@@ -1,5 +1,6 @@
 ---
 - name: 'Configuring {{ pgrole }} for first time use'
+  become: true
   block:
 
   - name: 'Pending XML Generation'
