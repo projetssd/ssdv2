@@ -3,35 +3,23 @@
 
 function logo() {
 
-  color1='\033[1;31m' # light red
-  color2='\033[1;35m' # light purple
-  color3='\033[0;33m' # light yellow
+  color1='\033[1;31m' # Bold RED
+  color2='\033[1;35m' # Bold PURPLE
+  color3='\033[0;33m' # Regular YELLOW
   nocolor='\033[0m'   # no color
-  companyname='\033[1;34mSSD - V2.0\033[0m'
-  divisionname='\033[1;32mlaster13 - Merrick\033[0m'
-  descriptif='\033[1;31mHeimdall - Syncthing - sonerezh - Portainer - Nextcloud - Lidarr\033[0m'
-  appli='\033[0;36mPlex - Sonarr - Medusa - Rutorrent - Radarr - Jackett - Pyload - Traefik\033[0m'
+  colorp='\033[1;34m' # Bold BLUE
+  colora='\033[1;32m' # Bold GREEN
+  projetname='SSD - V2.0'
+  authors='Authors: laster13 - Merrick'
+  
   printf " \n"
-  printf " ${color1}███████╗ ${color2}███████╗ ${color3}██████╗  ${companyname}${nocolor}\n"
-  printf " ${color1}██╔════╝ ${color2}██╔════╝ ${color3}██╔══██╗ ${divisionname}${nocolor}\n"
+  printf " ${color1}███████╗ ${color2}███████╗ ${color3}██████╗  ${colorp}${projetname}${nocolor}\n"
+  printf " ${color1}██╔════╝ ${color2}██╔════╝ ${color3}██╔══██╗ ${colora}${authors}${nocolor}\n"
   printf " ${color1}███████╗ ${color2}███████╗ ${color3}██║  ██║ ${nocolor}\n"
   printf " ${color1}╚════██║ ${color2}╚════██║ ${color3}██║  ██║ $(uname -srmo)${nocolor}\n"
   printf " ${color1}███████║ ${color2}███████║ ${color3}██████╔╝ $(lsb_release -sd)${nocolor}\n"
-  printf " ${color1}╚══════╝ ${color2}╚══════╝ ${color3}╚═════╝  $(/usr/bin/uptime -p)${nocolor}\n"
+  printf " ${color1}╚══════╝ ${color2}╚══════╝ ${color3}╚═════╝  ${nocolor}Uptime: $(/usr/bin/uptime -p)${nocolor}\n"
   printf " \n"
-
-  #  printf "               ${color1}.-.${nocolor}\n"
-  #  printf "         ${color2}.-'\`\`${color1}(   )    ${companyname}${nocolor}\n"
-  #  printf "      ${color3},\`\\ ${color2}\\    ${color1}\`-\`${color2}.    ${divisionname}${nocolor}\n"
-  #  printf "     ${color3}/   \\ ${color2}'\`\`-.   \`   ${color3}$(lsb_release -sd)${nocolor}\n"
-  #  printf "   ${color2}.-.  ${color3},       ${color2}\`___:  ${nocolor}$(uname -srmo)${nocolor}\n"
-  #  printf "  ${color2}(   ) ${color3}:       ${color1} ___   ${nocolor}$(date +"%A, %e %B %Y, %r")${nocolor}\n"
-  #  printf "   ${color2}\`-\`  ${color3}\`      ${color1} ,   :${nocolor}  Seedbox docker\n"
-  #  printf "     ${color3}\\   / ${color1},..-\`   ,${nocolor}   ${descriptif} ${nocolor}\n"
-  #  printf "      ${color3}\`./${color1} /    ${color3}.-.${color1}\`${nocolor}    ${appli}\n"
-  #  printf "         ${color1}\`-..-${color3}(   )${nocolor}    Uptime: $(/usr/bin/uptime -p)\n"
-  #  printf "               ${color3}\`-\`${nocolor}\n"
-  #  echo ""
 
 }
 
