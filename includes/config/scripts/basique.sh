@@ -1,6 +1,9 @@
 #!/bin/bash
 
 
+source ${SETTINGS_SOURCE}/includes/functions.sh
+source ${SETTINGS_SOURCE}/includes/variables.sh
+
 ## Variable
 ansible-playbook ${SETTINGS_SOURCE}/includes/dockerapps/templates/ansible/ansible.yml
 #SEEDUSER=$(cat ${TMPNAME})
