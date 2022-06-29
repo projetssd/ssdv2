@@ -11,7 +11,7 @@ function logo() {
   colora='\033[1;32m' # Bold GREEN
   projetname='SSD - V2.0'
   authors='Authors: laster13 - Merrick'
-  
+
   printf " \n"
   printf " ${color1}███████╗ ${color2}███████╗ ${color3}██████╗  ${colorp}${projetname}${nocolor}\n"
   printf " ${color1}██╔════╝ ${color2}██╔════╝ ${color3}██╔══██╗ ${colora}${authors}${nocolor}\n"
@@ -406,7 +406,6 @@ function install_traefik() {
     echo "${RED}Cette erreur est bloquante, impossible de continuer${CEND}"
     exit 1
   fi
-
 
   echo ""
 }
@@ -900,7 +899,6 @@ function install_services() {
 
 function launch_service() {
 
-
   line=$1
 
   log_write "Installation de ${line}"
@@ -920,11 +918,15 @@ function launch_service() {
     echo -e " ${BWHITE}* Processing plex config file...${NC}"
     echo ""
     echo -e " ${GREEN}ATTENTION IMPORTANT - NE PAS FAIRE D'ERREUR - SINON DESINSTALLER ET REINSTALLER${NC}"
-   "${SETTINGS_SOURCE}/includes/config/roles/plex_autoscan/plex_token.sh"
+    "${SETTINGS_SOURCE}/includes/config/roles/plex_autoscan/plex_token.sh"
 
-    ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/plex.yml"
     choose_media_folder_plexdrive
-    cp "${SETTINGS_SOURCE}/includes/dockerapps/plex.yml" "${SETTINGS_STORAGE}/conf/plex.yml" >/dev/null 2>&1
+    if [[ -f "${SETTINGS_STORAGE}/conf/plex.yml" ]]; then
+      :
+    else
+      cp "${SETTINGS_SOURCE}/includes/dockerapps/plex.yml" "${SETTINGS_STORAGE}/conf/plex.yml" >/dev/null 2>&1
+    fi
+    ansible-playbook "${SETTINGS_STORAGE}/conf/plex.yml"
     echo "2" >"${SETTINGS_STORAGE}/status/plex"
   else
     # On est dans le cas générique
@@ -1340,8 +1342,6 @@ EOF
   install_common
   # shellcheck disable=SC2162
   echo "Les composants sont maintenants tous installés/réglés, poursuite de l'installation"
-
-
 
   read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
 
@@ -1908,5 +1908,3 @@ EOF
   install_services
   launch_service traefik
 }
-
-
