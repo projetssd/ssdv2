@@ -4,11 +4,10 @@ intport: '9080'
 image: 'binhex/arch-rtorrentvpn:latest'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/rtorrentvpn/config:/config"
-  - "{{ settings.storage }}/{{ lookup('env','USER') }}/rtorrentvpn/data:/data"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/rtorrentvpn/data:/data"
   - "/home/{{ lookup('env','USER') }}:/home/{{ lookup('env','USER') }}"
   - "/etc/timezone:/etc/timezone:ro"
   - "/etc/localtime:/etc/localtime:ro"
-
 
 pg_env:
   VPN_PROV: custom
@@ -22,17 +21,14 @@ pg_env:
   RPC2_USER: "{{user.name}}"
   RPC2_PASS: "{{user.pass}}"
   ENABLE_WEBUI_AUTH: "no"
-  LAN_NETWORK: "{{reseau}}"
+  LAN_NETWORK: "192.168.1.0/24"
   NAME_SERVERS: "209.222.18.222,84.200.69.80,37.235.1.174,1.1.1.1,209.222.18.218,37.235.1.177,84.200.70.40,1.0.0.1"
   DEBUG: "false"
   PHP_TZ: "Europe/Paris"
-  UMASK: "000"
+  UMASK: "002"
   PUID: "{{user.userid}}"
   PGID: "{{user.groupid}}"
 
 # tags spécifiques à ajouter à la construction du docker
 specific_docker_info:
-  sysctls:
-    net.ipv6.conf.all.disable_ipv6: 1
-    net.ipv4.conf.all.src_valid_mark: 1
-  privileged: true
+  "{{ vpn_specific[vpn] }}"

@@ -1,10 +1,23 @@
 ---
-- debug:
-    msg: Transférer maintenant (via ftp) le fichier opvn fournit par votre VPN dans {{ settings.storage }}/docker/{{user.name}}/rtorrentvpn/config/openvpn !!
+- name: Create directory local
+  file:
+    path: "/home/{{ lookup('env','USER') }}/local/{{pgrole}}"
+    state: directory
 
-- name: Environ 2mn d'attente - config vpn et rutorrent en cours...
+- name: Apply rights directory local
+  become: yes
+  file:
+    path: "/home/{{ lookup('env','USER') }}/local/{{pgrole}}"
+    owner: "{{user.name}}"
+    group: "{{user.name}}"
+    recurse: yes
+
+- debug:
+    msg: Transférer maintenant (via ftp ou ssh ) le fichier ovpn/conf fournit par votre VPN dans {{ settings.storage }}/docker/{{user.name}}/rtorrentvpn/config/{{vpn}} !!
+
+- name: Environ 2mn d'attente - config vpn et rutorrent en cours... Un peu long pas d'inquietude !
   wait_for:
-    path: '{{ settings.storage }}/docker/{{user.name}}/rtorrentvpn/config/rtorrent/config/rtorrent.rc'
+    path: '{{ settings.storage }}/docker/{{user.name}}/{{pgrole}}/config/rtorrent/config/rtorrent.rc'
     state: present
     msg: Echec création rtorrent.rc
 
@@ -13,13 +26,18 @@
     name: '{{pgrole}}'
     state: stopped
 
-- name: Apply rights
-  become: yes
-  file:
-    path: "{{ settings.storage }}/docker/{{user.name}}/rtorrentvpn"
-    owner: "{{user.name}}"
-    group: "{{user.group}}"
-    recurse: yes
+- name: Clone Ratio Color plugin
+  git:
+    repo: https://github.com/Micdu70/rutorrent-ratiocolor.git
+    dest: "{{ settings.storage }}/docker/{{user.name}}/rtorrentvpn/config/rutorrent/user-plugins/ratiocolor"
+    clone: yes
+
+- name: Clone MaterialDesign theme
+  git:
+    repo: https://github.com/phlooo/ruTorrent-MaterialDesign.git
+    dest: "{{ settings.storage }}/docker/{{user.name}}/rtorrentvpn/config/rutorrent/user-plugins/theme/themes/MaterialDesign"
+    clone: yes
+
 
 - name: Set download location
   lineinfile:
@@ -203,17 +221,15 @@
 
   when: not rccheck.stat.exists
 
+- name: Apply rights
+  become: yes
+  file:
+    path: "{{ settings.storage }}/docker/{{user.name}}/rtorrentvpn"
+    owner: "{{user.name}}"
+    group: "{{user.name}}"
+    recurse: yes
+
 - name: Restart Docker Container
   docker_container:
     name: '{{pgrole}}'
     state: started
-
-- debug:
-    msg:
-      - TRES IMPORTANT - Si le vpn exige une authentification, rajouter ces 2 lignes dans {{ settings.storage }}/conf/rutorrent-vpn.yml et réinitialiser
-      - VPN_USER=<vpn username>
-      - VPN_PASS=<vpn password>
-
-- name: Prenez 10s pour lire le message au dessus - Consulter les logs 'docker logs -f rtorrentvpn'
-  wait_for:
-    timeout: 10
