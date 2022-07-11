@@ -24,6 +24,8 @@
     networks:
       - name: '{{pgrole}}-net'
     state: started
+    container_default_behavior: "compatibility"
+    init: false
 
 - name: Wait for 10 seconds before continuing
   wait_for:
