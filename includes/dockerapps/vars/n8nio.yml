@@ -1,0 +1,20 @@
+---
+pgrole: 'n8nio'
+intport: '5678'
+image: 'n8nio/n8n'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/home/node/.n8n:rw"
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  DB_TYPE: "mysqldb"
+  DB_MYSQLDB_DATABASE: "{{ pgrole }}"
+  DB_MYSQLDB_HOST: "db-{{ pgrole }}"
+  DB_MYSQLDB_PORT: "3306"
+  DB_MYSQLDB_USER: "{{ pgrole }}"
+  DB_MYSQLDB_PASSWORD: "{{ pgrole }}"
+  TZ: "Europe/Paris"
+  WEBHOOK_URL: "https://{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{ user.domain }}"
+  N8N_BASIC_AUTH_ACTIVE: "true"
+  N8N_BASIC_AUTH_USER: "{{ user.name }}"
+  N8N_BASIC_AUTH_PASSWORD: "{{ user.pass }}"
+

@@ -2,4 +2,4 @@ docker:
   repo: stable
   version: latest
 mounts:
-  unionfs: "cat /opt/seedbox/variables/unionfs"
+  unionfs: "cat {{ settings.storage }}/variables/unionfs"

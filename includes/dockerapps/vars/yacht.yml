@@ -4,7 +4,7 @@ intport: '8000'
 image: 'selfhostedpro/yacht'
 pg_volumes:
   - "/etc/localtime:/etc/localtime:ro"
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ pgrole }}/config:/config"
+  - "{{ settings.storage }}/docker/{{ pgrole }}/config:/config"
   - "/var/run/docker.sock:/var/run/docker.sock"
 
 pg_env:

@@ -1,0 +1,12 @@
+---
+pgrole: 'nocodb'
+intport: '8080'
+image: 'nocodb/nocodb:latest'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}:/usr/app/data"
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  NC_DB: "mysql2://db-{{ pgrole }}:3306?u={{ pgrole }}&p={{ pgrole }}&d={{ pgrole }}"
+
+posttasks:
+  - "mariadb_restart"

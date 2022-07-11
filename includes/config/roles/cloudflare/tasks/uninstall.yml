@@ -1,0 +1,31 @@
+#########################################################################
+# Title:         Cloudbox: Cloudflare Role                              #
+# Author(s):     l3uddz, desimaniac                                     #
+# URL:           https://github.com/cloudbox/cloudbox                   #
+# --                                                                    #
+#         Part of the Cloudbox project: https://cloudbox.works          #
+#########################################################################
+#                   GNU General Public License v3.0                     #
+#########################################################################
+---
+- name: Remove DNS Record
+  cloudflare_dns:
+    account_api_token: "{{ cloudflare.api }}"
+    account_email: "{{ cloudflare.login }}"
+    zone: "{{ user.domain }}"
+    state: absent
+    proxied: yes
+    type: A
+    record: "{{ subdomain }}"
+
+
+- name: Remove record for ipv6
+  cloudflare_dns:
+    account_api_token: "{{ cloudflare.api }}"
+    account_email: "{{ cloudflare.login }}"
+    zone: "{{ user.domain }}"
+    state: absent
+    proxied: yes
+    type: AAAA
+    record: "{{ subdomain }}"
+  when: (network.ipv6 is defined) and (network.ipv6|length > 0)

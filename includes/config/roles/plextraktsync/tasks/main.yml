@@ -19,13 +19,13 @@
 
   - name: copy docker-compose file
     template:
-      src: "/opt/seedbox-compose/includes/config/roles/plextraktsync/templates/docker-compose.yml.j2"
+      src: "{{ settings.source }}/includes/config/roles/plextraktsync/templates/docker-compose.yml.j2"
       dest:  "{{ lookup('env','HOME') }}/scripts/plextraktsync/docker-compose.yml"
 
   - name: copy executable
     become: yes
     template:
-      src: "/opt/seedbox-compose/includes/config/roles/plextraktsync/templates/plextraktsync.j2"
+      src: "{{ settings.source }}/includes/config/roles/plextraktsync/templates/plextraktsync.j2"
       dest: "/usr/local/bin/plextraktsync"
       mode: 0755
 

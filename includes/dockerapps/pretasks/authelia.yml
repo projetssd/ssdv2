@@ -46,10 +46,10 @@
 
 - name: Import configuration.yml
   template:
-    src: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/authelia/configuration.yml.j2"
-    dest: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/configuration.yml"
+    src: "{{ settings.source }}/includes/dockerapps/templates/authelia/configuration.yml.j2"
+    dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/configuration.yml"
 
 - name: Import users_database.yml
   template:
-    src: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/authelia/users_database.yml.j2"
-    dest: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/users_database.yml"
+    src: "{{ settings.source }}/includes/dockerapps/templates/authelia/users_database.yml.j2"
+    dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/users_database.yml"

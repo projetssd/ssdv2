@@ -3,8 +3,8 @@ pgrole: 'transmissionvpn'
 intport: '9091'
 image: 'haugene/transmission-openvpn:latest'
 pg_volumes:
-  - "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/transmission/data:/data"
-  - "{{ lookup('env','CONFDIR') }}/docker/{{lookup('env','USER')}}/transmission/config:/config"
+  - "{{ settings.storage }}/docker/{{lookup('env','USER')}}/transmission/data:/data"
+  - "{{ settings.storage }}/docker/{{lookup('env','USER')}}/transmission/config:/config"
   - '/etc/localtime:/etc/localtime:ro'
   - "/home/{{lookup('env','USER')}}:/home/{{lookup('env','USER')}}"
 pg_env:

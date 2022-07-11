@@ -21,12 +21,12 @@
 
     - name: Create directory if needed
       file:
-        path: "{{ lookup('env','CONFDIR') }}/status"
+        path: "{{ settings.storage }}/status"
         state: directory
 
     - name: create watchtower state
       shell: |
-        echo "1" > "{{ lookup('env','CONFDIR') }}/status/watchtower"
+        echo "1" > "{{ settings.storage }}/status/watchtower"
 
     - name: Deploy watchtower
       docker_container:
@@ -45,7 +45,7 @@
     - name: Insert watchtower into database
       shell : 
         cmd: |
-          sqlite3 {{  lookup('env','BASEDIR') }}/ssddb << EOF
+          sqlite3 {{  settings.source }}/ssddb << EOF
               replace into applications (name,status,subdomain,port)
               values
               ('watchtower',2,'',0);

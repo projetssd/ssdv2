@@ -4,14 +4,13 @@
   gather_facts: false
   
   vars_files:
-    - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
-    - "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/generique.yml"
+    - "{{ settings.source }}/includes/dockerapps/templates/generique/generique.yml"
 
   tasks:
 
     - name: Checking for existing app data
       stat:
-        path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/authelia/configuration.yml"
+        path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/authelia/configuration.yml"
       register: check
 
     - name: 'Set Known Facts'
@@ -19,7 +18,7 @@
         pgrole: 'gui'
 
     - name: "Set DNS Record on CloudFlare"
-      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
+      include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
       vars:
         subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
       when: cloudflare_enabled
@@ -71,7 +70,7 @@
     - name: Import nginx default
       become: yes
       template:
-        src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/nginx/templates/default.j2"
+        src: "{{ settings.source }}/includes/config/roles/nginx/templates/default.j2"
         dest: /etc/nginx/sites-available/default
         force: yes
 
@@ -84,8 +83,8 @@
     - name: Import middlewares-chains.toml
       become: yes
       template:
-        src: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/traefik/nginx.toml.j2"
-        dest: "{{ lookup('env','CONFDIR') }}/docker/traefik/rules/nginx.toml"
+        src: "{{ settings.source }}/includes/dockerapps/templates/traefik/nginx.toml.j2"
+        dest: "{{ settings.storage }}/docker/traefik/rules/nginx.toml"
         force: yes
         owner: "{{ lookup('env','USER') }}"
         

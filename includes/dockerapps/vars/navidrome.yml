@@ -3,7 +3,7 @@ pgrole: 'navidrome'
 intport: '4533'
 image: 'deluan/navidrome:latest'
 pg_volumes:
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/data:rw"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/data:rw"
   - "{{ lookup('env','HOME') }}/Medias/Music:/music:ro"
 
   - '/etc/localtime:/etc/localtime:ro'

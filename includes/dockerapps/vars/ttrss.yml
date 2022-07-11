@@ -1,0 +1,16 @@
+---
+pgrole: 'ttrss'
+intport: '80'
+image: 'wangqiru/ttrss'
+pg_volumes:
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  DB_HOST: "db-{{ pgrole }}"
+  DB_TYPE: "pgsql"
+  DB_USER: "{{ pgrole }}"
+  DB_PASS: "{{ pgrole }}"
+  SELF_URL_PATH: "https://{{ fqdn }}"
+pretasks:
+  - "yourls"
+posttasks:
+  - "postgresql"

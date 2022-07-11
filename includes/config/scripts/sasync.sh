@@ -1,7 +1,8 @@
 #!/bin/bash
 
-source /opt/seedbox-compose/includes/functions.sh
-source /opt/seedbox-compose/includes/variables.sh
+source "${SETTINGS_SOURCE}/includes/functions.sh"
+# shellcheck source=${BASEDIR}/includes/variables.sh
+source "${SETTINGS_SOURCE}/includes/variables.sh"
 
 RCLONE_CONFIG_FILE=${HOME}/.config/rclone/rclone.conf
 
@@ -38,10 +39,6 @@ echo -e "${YELLOW}
 ${CEND}"
 echo ""
 
-ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
-sed -i '/#Debut team source/,/#Fin team source/d' ${RCLONE_CONFIG_FILE} > /dev/null 2>&1
-sed -i '/#Debut team backup/,/#Fin team backup/d' ${RCLONE_CONFIG_FILE} > /dev/null 2>&1
-sed -i '/support*/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
 rm /tmp/team.txt /tmp/crop.txt > /dev/null 2>&1
 
 read -rp $'\e[36m   Souhaitez vous poursuivre l installation: (o/n) ? \e[0m' OUI
@@ -57,20 +54,19 @@ echo ""
 read -rp $'\e[36m   Souhaitez vous créer un Share Drive?: (o/n) ? \e[0m' OUI
 
 if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
-/opt/seedbox-compose/includes/config/scripts/createrclone.sh
+${SETTINGS_SOURCE}/includes/config/scripts/createrclone.sh
 fi
 echo ""
 
 if [[ ! -d "/opt/sa" ]]; then
   read -rp $'\e[36m   Souhaitez vous créer des comptes de services: (o/n) ? \e[0m' OUI
   if [[ "$OUI" = "o" ]] || [[ "$OUI" = "O" ]]; then
-    /opt/seedbox-compose/includes/config/scripts/sa-gen.sh
+    ${SETTINGS_SOURCE}/includes/config/scripts/sa-gen.sh
   fi
 echo ""
 fi
 
 
-ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 rm /tmp/team.txt /tmp/crop.txt > /dev/null 2>&1
 i=1
 grep "token" ${RCLONE_CONFIG_FILE} | uniq > /tmp/crop.txt
@@ -107,7 +103,6 @@ i=1
 ## Stockage principal
 echo ""
 echo -e "${CCYAN}   Source : ${CGREEN}$gdrive${CEND}"
-sed -i "/remote/a \ \ \ support_source: $gdrive" /opt/seedbox/variables/account.yml
 echo ""
 rm /tmp/team.txt /tmp/crop.txt > /dev/null 2>&1
 grep "team_drive" ${RCLONE_CONFIG_FILE} | uniq > /tmp/crop.txt
@@ -157,10 +152,8 @@ echo ""
 echo -e "${CCYAN}   Backup : ${CGREEN}$teamdrive_dest --> $teamdrive_b${CEND}"
 id=$(sed -n "$j"p /tmp/crop.txt)
 echo -e "#Debut team backup\n[$teamdrive_dest$dest] \ntype = drive\nscope = drive\nserver_side_across_configs = true\nservice_account_file_path = /opt/sa/\nservice_account_file = /opt/sa/1.json\n$id\n#Fin team backup\n" >> ${RCLONE_CONFIG_FILE}
-sed -i "/remote/a \ \ \ support_dest: $teamdrive_dest$dest" /opt/seedbox/variables/account.yml
-ansible-playbook /opt/seedbox-compose/includes/config/roles/sasync/tasks/main.yml
+ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/sasync/tasks/main.yml
 rm /tmp/team.txt /tmp/crop.txt > /dev/null 2>&1
-ansible-vault encrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
 echo ""
 
 read -rp $'\e[36m   Souhaitez vous lancer la synchro maintenant?: (o/n) ? \e[0m' OUI

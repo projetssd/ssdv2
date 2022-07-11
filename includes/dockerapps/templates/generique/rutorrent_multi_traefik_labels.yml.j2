@@ -1,0 +1,14 @@
+{% set fqdn = pgrole ~ '.' ~ user.domain %}
+
+traefik.enable: 'true'
+## middleware auth
+traefik.http.middlewares.{{pgrole}}-auth.basicauth.users: "{{ myhtpasswd }}"
+## HTTP Routers
+traefik.http.routers.{{pgrole}}-rtr.entrypoints: 'https'
+traefik.http.routers.{{pgrole}}-rtr.rule: 'Host(`{{ fqdn }}`)'
+traefik.http.routers.{{pgrole}}-rtr.tls: 'true'
+## Middlewares
+traefik.http.routers.{{pgrole}}-rtr.middlewares: "{{pgrole}}-auth"
+## HTTP Services
+traefik.http.routers.{{pgrole}}-rtr.service: '{{pgrole}}-svc'
+traefik.http.services.{{pgrole}}-svc.loadbalancer.server.port: "{{ intport }}"

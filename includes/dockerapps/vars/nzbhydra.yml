@@ -1,9 +1,9 @@
 ---
 pgrole: 'nzbhydra'
 intport: '5076'
-image: 'linuxserver/nzbhydra2'
+image: 'lscr.io/linuxserver/nzbhydra2'
 pg_volumes:
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:

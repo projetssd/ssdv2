@@ -34,9 +34,8 @@ def detect_gd():
     mytd = []  # la liste des td
 
     for section in config.sections():
-        if "team_drive" not in config[section]:
-            if config[section]['type'] != 'crypt' and config[section]['type'] != 'cache':
-                mytd.append(section)
+        if config[section]['type'] == 'drive':
+            mytd.append(section)
     return mytd
 
 

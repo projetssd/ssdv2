@@ -16,7 +16,7 @@
 
 - name: "Daemon | Import 'daemon.json'"
   template:
-    src: /opt/seedbox-compose/includes/config/roles/docker/templates/daemon.json.j2
+    src: "{{ lookup('env','SETTINGS_SOURCE') }}/includes/config/roles/docker/templates/daemon.json.j2"
     dest: /etc/docker/daemon.json
     mode: 0775
     force: yes
@@ -29,7 +29,7 @@
 
 - name: "Daemon | Import override file"
   template:
-    src: /opt/seedbox-compose/includes/config/roles/docker/templates/override.conf.j2
+    src: "{{ lookup('env','SETTINGS_SOURCE') }}/includes/config/roles/docker/templates/override.conf.j2"
     dest: /etc/systemd/system/docker.service.d/override.conf
     mode: 0775
     force: no

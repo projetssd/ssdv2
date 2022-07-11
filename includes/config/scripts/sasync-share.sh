@@ -1,7 +1,8 @@
 #!/bin/bash
 
-source /opt/seedbox-compose/includes/functions.sh
-source /opt/seedbox-compose/includes/variables.sh
+source "${SETTINGS_SOURCE}/includes/functions.sh"
+# shellcheck source=${BASEDIR}/includes/variables.sh
+source "${SETTINGS_SOURCE}/includes/variables.sh"
 
 RCLONE_CONFIG_FILE=${HOME}/.config/rclone/rclone.conf
 
@@ -34,10 +35,7 @@ ${YELLOW}5. ${CEND}""${CRED}rclone.conf doit contenir le nouveau remote sharedri
 ${CEND}"
 
 rm /tmp/team.txt /tmp/crop.txt > /dev/null 2>&1
-ansible-vault decrypt /opt/seedbox/variables/account.yml > /dev/null 2>&1
-sed -i '/#Debut team source/,/#Fin team source/d' ${RCLONE_CONFIG_FILE} > /dev/null 2>&1
-sed -i '/#Debut team backup/,/#Fin team backup/d' ${RCLONE_CONFIG_FILE} > /dev/null 2>&1
-sed -i '/support*/d' /opt/seedbox/variables/account.yml > /dev/null 2>&1
+
 
 read -rp $'\e[36m   Souhaitez vous poursuivre l installation: (o/n) ? \e[0m' OUI
 
@@ -109,7 +107,6 @@ echo ""
 echo -e "${CCYAN}   Source : ${CGREEN}$teamdrive_sce --> $teamdrive_a${CEND}"
 id=$(sed -n "$i"p /tmp/crop.txt)
 echo -e "#Debut team source\n[$teamdrive_sce$source] \ntype = drive\nscope = drive\nserver_side_across_configs = true\nservice_account_file_path = /opt/sa/\nservice_account_file = /opt/sa/1.json\n$id\n#Fin team source\n" >> ${RCLONE_CONFIG_FILE}
-sed -i "/remote/a \ \ \ support_source: $teamdrive_sce$source" /opt/seedbox/variables/account.yml
 echo ""
 
 if [ "$nombre" -lt 2 ]; then
@@ -141,7 +138,6 @@ echo ""
 echo -e "${CCYAN}   Backup : ${CGREEN}$teamdrive_dest --> $teamdrive_b${CEND}"
 id=$(sed -n "$j"p /tmp/crop.txt)
 echo -e "#Debut team backup\n[$teamdrive_dest$dest] \ntype = drive\nscope = drive\nserver_side_across_configs = true\nservice_account_file_path = /opt/sa/\nservice_account_file = /opt/sa/1.json\n$id\n#Fin team backup\n" >> ${RCLONE_CONFIG_FILE}
-sed -i "/remote/a \ \ \ support_dest: $teamdrive_dest$dest" /opt/seedbox/variables/account.yml
 ansible-playbook /opt/seedbox-compose/includes/config/roles/sasync/tasks/main.yml
 rm /tmp/team.txt /tmp/crop.txt > /dev/null 2>&1
 echo ""

@@ -1,29 +1,41 @@
 #
 # A lancer avec un fichier vars
 # Ex :
-# ansible-playbook ${BASEDIR}/includes/dockerapps/generique.yml --extra-vars "@${BASEDIR}/includes/dockerapps/vars/calibre.yml"
+# ansible-playbook ${settings.source}/includes/dockerapps/generique.yml --extra-vars "@${BASEDIR}/includes/dockerapps/vars/calibre.yml"
 #
-
 
 ---
 - hosts: localhost
   gather_facts: true
   vars_files:
-    - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
-    - "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/generique.yml"
+    - "{{ settings.source }}/includes/dockerapps/templates/generique/generique.yml"
 
 
   tasks:
+    # PRE TASKS ###################################################################
+    - name: Check that pretasks file exists
+      stat:
+        path: "{{ settings.source }}/includes/dockerapps/pretasks/{{ pgrole }}.yml"
+      register: stat_result
+
+    - name: Launch Pretask
+      include_tasks: "{{ settings.source }}/includes/dockerapps/pretasks/{{ pgrole }}.yml"
+      when: stat_result.stat.exists
+
+    - name: Launch Pretasks from yml
+      include_tasks: "{{ settings.source }}/includes/dockerapps/pretasks/{{ item }}.yml"
+      with_items: "{{ pretasks }}"
+      when: pretasks is defined
         
     # FACTS #######################################################################
 
     - name: Checking for existing app data
       stat:
-        path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/authelia/configuration.yml"
+        path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/authelia/configuration.yml"
       register: check
 
     - name: "Set DNS Record on CloudFlare"
-      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
+      include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
       vars:
         subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
       when: cloudflare_enabled
@@ -32,19 +44,13 @@
       become: yes
       file: "path={{item}} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID') }}"
       with_items:
-        - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}"    
+        - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}"    
     
-    # PRE TASKS ###################################################################
-    - name: Check that pretasks file exists
-      stat:
-        path: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/pretasks/{{ pgrole }}.yml"
-      register: stat_result
-      
-    - name: Launch Pretask
-      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/pretasks/{{ pgrole }}.yml"
-      when: stat_result.stat.exists
+
 
     # LABELS ######################################################################
+
+
     - name: Create temp file
       tempfile:
         state: file
@@ -52,7 +58,7 @@
       
     - name: fill temp file with labels
       template:
-        src: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/traefik_labels.yml.j2"
+        src: "{{ settings.source }}/includes/dockerapps/templates/generique/traefik_labels.yml.j2"
         dest: "{{ tempfile_1.path }}"
         force: yes
     
@@ -90,27 +96,25 @@
 
     
     # POST TASKS ###################################################################
+
     - name: Check that posttasks file exists
       stat:
-        path: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/posttasks/{{ pgrole }}.yml"
+        path: "{{ settings.source }}/includes/dockerapps/posttasks/{{ pgrole }}.yml"
       register: stat_result_post
       
     - name: Launch Posttask
-      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/posttasks/{{ pgrole }}.yml"
+      include_tasks: "{{ settings.source }}/includes/dockerapps/posttasks/{{ pgrole }}.yml"
       when: stat_result_post.stat.exists
 
-    
-    # Administratif pour ssd
-    - name: add resume file
-      become: true
-      shell: |
-        echo "{{pgrole}}-{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> {{ lookup('env','CONFDIR') }}/temp.txt
-
+    - name: Launch Posttask from yml
+      include_tasks: "{{ settings.source }}/includes/dockerapps/posttasks/{{ item }}.yml"
+      with_items: "{{ posttasks }}"
+      when: posttasks is defined
 
     - name: "Insert {{ pgrole}} into database"
       shell : 
         cmd: |
-          sqlite3 {{  lookup('env','BASEDIR') }}/ssddb << EOF
+          sqlite3 {{  settings.source }}/ssddb << EOF
               replace into applications (name,status,subdomain,port)
               values
               ('{{ pgrole }}',2,'{{sub[pgrole][pgrole] if sub_enabled else pgrole}}',{{ intport }});

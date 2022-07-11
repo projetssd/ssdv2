@@ -8,10 +8,10 @@
   docker_container:
     name: 'db-{{pgrole}}'
     recreate: true
-    image: 'linuxserver/mariadb'
+    image: 'lscr.io/linuxserver/mariadb'
     pull: yes
     volumes:
-      - "/opt/seedbox/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}:/config"
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}:/config"
       - '/etc/localtime:/etc/localtime:ro'
     env:
       MYSQL_ROOT_PASSWORD: "{{user.pass}}"
@@ -24,6 +24,8 @@
     networks:
       - name: '{{pgrole}}-net'
     state: started
+    container_default_behavior: "compatibility"
+    init: false
 
 - name: Wait for 10 seconds before continuing
   wait_for:

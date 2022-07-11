@@ -3,8 +3,6 @@
 ---
 - hosts: localhost
   gather_facts: false
-  vars_files:
-    - /opt/seedbox/variables/account.yml
   tasks:
         
     # FACTS #######################################################################
@@ -12,7 +10,7 @@
 
     - name: Checking for existing app data
       stat:
-        path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
+        path: '{{ settings.storage }}/docker/{{user.name}}/authelia/configuration.yml'
       register: check
 
     - name: "Variables | Set 'cloudflare_enabled' variable"
@@ -67,7 +65,7 @@
             else false }}"
 
     - name: "Set DNS Record on CloudFlare"
-      include_tasks: '/opt/seedbox-compose/includes/config/roles/cloudflare/tasks/main.yml'
+      include_tasks: '{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml'
       vars:
         subdomain: "{{sub.prestashop if sub_enabled else 'prestashop'}}"
       when: cloudflare_enabled
@@ -102,10 +100,10 @@
       docker_container:
         name: 'db-prestashop'
         recreate: true
-        image: 'linuxserver/mariadb'
+        image: 'lscr.io/linuxserver/mariadb'
         pull: yes
         volumes:
-          - '/opt/seedbox/docker/{{user.name}}/prestashop/db-prestashop:/config'
+          - '{{ settings.storage }}/docker/{{user.name}}/prestashop/db-prestashop:/config'
           - '/etc/localtime:/etc/localtime:ro'
         env:
           PUID: '{{user.userid}}'
@@ -145,9 +143,6 @@
         state: started
         labels: '{{pg_labels}}'
 
-    - name: add resume file
-      shell: |
-        echo "{{pgrole}}-{{sub.prestashop if sub_enabled else pgrole}}.{{user.domain}}" >> /opt/temp.txt
 
 
 

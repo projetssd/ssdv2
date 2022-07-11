@@ -1,0 +1,11 @@
+---
+pgrole: 'speedtest'
+intport: '80'
+image: 'henrywhitaker3/speedtest-tracker'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config"
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  OOKLA_EULA_GDPR: "true"

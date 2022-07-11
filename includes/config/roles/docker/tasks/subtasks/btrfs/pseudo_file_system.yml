@@ -12,7 +12,7 @@
 
 - name: BTRFS | Pseudo-File-System | Install common pip modules
   pip:
-    virtualenv: '/opt/seedbox-compose/venv'
+    virtualenv: '{{ settings.source }}/venv'
     state: present
     name:
       - jmespath

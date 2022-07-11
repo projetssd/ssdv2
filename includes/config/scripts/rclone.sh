@@ -1,16 +1,13 @@
 #!/bin/bash
 
-# shellcheck source=${BASEDIR}/includes/functions.sh
-source "${SCRIPTPATH}/includes/functions.sh"
+source "${SETTINGS_SOURCE}/includes/functions.sh"
 # shellcheck source=${BASEDIR}/includes/variables.sh
-source "${SCRIPTPATH}/includes/variables.sh"
+source "${SETTINGS_SOURCE}/includes/variables.sh"
 
 mkdir -p ${HOME}/.config/rclone
 RCLONE_CONFIG_FILE=${HOME}/.config/rclone/rclone.conf
 
-sed -i '/plexdrive/d' ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-sed -i '/remote/d' ${CONFDIR}/variables/account.yml >/dev/null 2>&1
-sed -i '/id_teamdrive/d' ${CONFDIR}/variables/account.yml >/dev/null 2>&1
+
 cd /tmp
 rm drive.txt team.txt >/dev/null 2>&1
 
@@ -45,7 +42,7 @@ function detection() {
     #
     rm -f /tmp/choix_crypt
     rm -f /tmp/id_teamdrive
-    /opt/seedbox-compose/includes/config/scripts/rclone_list_td.py
+    ${SETTINGS_SOURCE}/includes/config/scripts/rclone_list_td.py
     remotecrypt=$(cat /tmp/choix_crypt)
     id_teamdrive=$(cat /tmp/id_teamdrive)
     rm -f /tmp/choix_crypt
@@ -55,7 +52,7 @@ function detection() {
   2)
     rm -f /tmp/choix_crypt
     rm -f /tmp/id_teamdrive
-    /opt/seedbox-compose/includes/config/scripts/rclone_list_gd.py
+    ${SETTINGS_SOURCE}/includes/config/scripts/rclone_list_gd.py
     remotecrypt=$(cat /tmp/choix_crypt)
     id_teamdrive=$(cat /tmp/id_teamdrive)
     rm -f /tmp/choix_crypt
@@ -83,8 +80,6 @@ function verif() {
   detection
   manage_account_yml rclone.remote $remotecrypt
   manage_account_yml rclone.id_teamdrive $id_teamdrive
-  ###sed -i "/rclone/a \ \ \ remote: $remotecrypt" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
-  ###sed -i "/rclone/a \ \ \ id_teamdrive: $id_teamdrive" ${CONFDIR}/variables/account.yml > /dev/null 2>&1
   exit
 }
 
@@ -117,7 +112,7 @@ function menu() {
   2) ## Création rclone.conf
     clone
     clear
-    ${BASEDIR}/includes/config/scripts/createrclone.sh
+    ${SETTINGS_SOURCE}/includes/config/scripts/createrclone.sh
     verif
     ;;
   3) ## Création rclone.conf

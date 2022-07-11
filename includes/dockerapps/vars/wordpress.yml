@@ -3,7 +3,7 @@ pgrole: 'wordpress'
 intport: '80'
 image: 'wordpress'
 pg_volumes:
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}:/var/www/html"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}:/var/www/html"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:
@@ -13,3 +13,6 @@ pg_env:
   WORDPRESS_DB_USER: "{{ pgrole }}"
   WORDPRESS_DB_PASSWORD: "{{ pgrole }}"
   WORDPRESS_DB_NAME: "{{ pgrole }}"
+
+posttasks:
+  - "mariadb"

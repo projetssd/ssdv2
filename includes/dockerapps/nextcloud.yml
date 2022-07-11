@@ -1,11 +1,8 @@
-#!/bin/bash
-
 ---
 - hosts: localhost
   gather_facts: false
   vars_files:
-    - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
-    - "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/generique.yml"
+    - "{{ settings.source }}/includes/dockerapps/templates/generique/generique.yml"
 
   tasks:
         
@@ -14,17 +11,17 @@
 
     - name: Checking for existing app data
       stat:
-        path: '/opt/seedbox/docker/{{user.name}}/authelia/configuration.yml'
+        path: '{{ settings.storage }}/docker/{{user.name}}/authelia/configuration.yml'
       register: check
 
     - name: 'Set Known Facts'
       set_fact:
         pgrole: 'nextcloud'
         intport: '443'
-        image: 'linuxserver/nextcloud'
+        image: 'lscr.io/linuxserver/nextcloud'
 
     - name: "Set DNS Record on CloudFlare"
-      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
+      include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
       vars:
         subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
       when: cloudflare_enabled
@@ -32,7 +29,7 @@
     - name: Creating paths
       file: "path={{item}} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID') }}"
       with_items:
-        - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}"    
+        - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}"    
 
     # LABELS ######################################################################
     - name: 'Adding Traefik'
@@ -52,8 +49,8 @@
       set_fact:
         pg_volumes:
           - '/etc/localtime:/etc/localtime:ro'
-          - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/data:/data"
-          - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/conf:/config"
+          - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/data:/data"
+          - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/conf:/config"
           - "/home/{{ lookup('env','USER') }}:/home/{{ lookup('env','USER') }}"
 
     - name: 'Setting PG ENV'
@@ -65,7 +62,7 @@
     - name: Create and start '{{pgrole}}' container
       docker_container:
         name: '{{pgrole}}'
-        image: 'linuxserver/nextcloud'
+        image: 'lscr.io/linuxserver/nextcloud'
         pull: yes
         env: '{{pg_env}}'
         volumes: '{{pg_volumes}}'
@@ -77,7 +74,7 @@
 
 
     - name: Launch Pretask
-      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/generique/mariadb.yml"
+      include_tasks: "{{ settings.source }}/includes/dockerapps/templates/generique/mariadb.yml"
 
 
 ######################### Coturn #############################################################
@@ -85,7 +82,7 @@
     - name: Creating paths
       file: "path={{item}} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID') }}"
       with_items:
-        - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/coturn"    
+        - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/coturn"    
 
     - name: 'SECRET'
       shell: | 
@@ -95,12 +92,12 @@
     - name: 'Setting PG Volumes'
       set_fact:
         coturn_volumes:
-          - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/coturn:/var/lib/coturn"
+          - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/coturn:/var/lib/coturn"
 
     - name: Import default config
       template:
-        src: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/{{pgrole}}/turnserver.conf.j2"
-        dest: "{{ lookup('env','CONFDIR') }}/docker/{{user.name}}/coturn/turnserver.conf"
+        src: "{{ settings.source }}/includes/dockerapps/templates/{{pgrole}}/turnserver.conf.j2"
+        dest: "{{ settings.storage }}/docker/{{user.name}}/coturn/turnserver.conf"
         force: yes
 
     - name: Create and start coturn container
@@ -119,26 +116,8 @@
 
 ####################### Collabora #############################################################
 
-    - name: 'domain'
-      shell: | 
-        cat /home/"{{ lookup('env','USER') }}"/resume | tail -1 | cut -d. -f2
-      register: domain
-
-    - name: 'domain'
-      debug:
-        msg: '{{ domain.stdout }}'
-
-    - name: 'com'
-      shell: | 
-        cat /home/"{{ lookup('env','USER') }}"/resume | tail -1 | cut -d. -f3
-      register: com
-
-    - name: 'com'
-      debug:
-        msg: '{{ com.stdout }}'
-
     - name: "Set DNS Record on CloudFlare"
-      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
+      include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
       vars:
         subdomain: collabora
       when: cloudflare_enabled
@@ -161,7 +140,7 @@
         pull: yes
         env:
           extra_params: '--o:ssl.enable=false --o:ssl.termination=true'
-          domain: 'nextcloud\\.{{domain.stdout}}\\.{{com.stdout}}'
+          domain: 'nextcloud\\.{{user.domain}}'
           username: "{{ lookup('env','USER') }}"
           password: '{{user.pass}}'
           DONT_GEN_SSL_CERT: 'true'
@@ -174,7 +153,7 @@
 #####################OnllyOffice###############################################################
 
     - name: "Set DNS Record on CloudFlare"
-      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
+      include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
       vars:
         subdomain: office
       when: cloudflare_enabled
@@ -205,10 +184,6 @@
         state: started
         labels: '{{off_labels}}'
 
-    - name: add resume file
-      become: true
-      shell: |
-        echo "{{pgrole}}-{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> "{{ lookup('env','CONFDIR') }}/temp.txt"
 
 
 

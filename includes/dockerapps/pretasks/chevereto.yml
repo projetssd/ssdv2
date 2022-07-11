@@ -5,14 +5,20 @@
     state: directory
     mode: "0776"
 
+- name: Creating paths
+  file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}"
+    state: directory
+    mode: "0776"
+
 - name: 'Touch php.ini'
   file:
-    path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/chevereto-php.ini"
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/chevereto-php.ini"
     state: touch
 
 - name: 'Insert php.ini'
   blockinfile:
-    path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/chevereto-php.ini"
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/chevereto-php.ini"
     block: |
       file_uploads = On
       memory_limit = 256M

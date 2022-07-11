@@ -1,14 +1,6 @@
 #!/bin/bash	
 
-source /opt/seedbox-compose/includes/functions.sh
-source /opt/seedbox-compose/includes/variables.sh
-
 RCLONE_CONFIG_FILE=${HOME}/.config/rclone/rclone.conf
-
-#ansible-playbook /opt/seedbox-compose/includes/dockerapps/templates/ansible/ansible.yml
-#USER=$(cat ${TMPNAME})
-
-
 
 sudo mkdir /mnt/rclone > /dev/null 2>&1
 sudo chown ${USER}: /mnt/plexdrive

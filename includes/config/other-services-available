@@ -4,6 +4,8 @@ Bookstack-WikiDdesignedCreatingDocumentation
 Bitwarden-BitwardenServerAPIImplementation
 Calibre-PowerfulAndEasyToUseEBookManager
 Calibreweb-PowerfulAndEasyToUseEBookManager
+Cadvisor-DockerMonitoring
+Cops-CalibreHtmlServer
 Chevereto-PowerfulAndFastImageHostingScript
 Cloudcmd-WebFileManager
 Codif-VSCodeRunningOnARemoteServer
@@ -11,7 +13,9 @@ Cypht-AllForEmailFromAllAccountOnOnePlace
 Deemixrr-ManagesYourArtistsAndPlaylists
 Dozzle-LogViewerForDocker
 Deemixrr-ManagesYourArtistsAndPlaylists
+Digikam-ImageManagement
 Duplicati-FreeBackupEncryptedBackupsOnline
+Fenrus-MagicHomePage
 Filebot-filebot
 Filebrowser-SelfHostedFileSyncAndSharing
 Filerun-SelfHostedFileSyncAndSharing
@@ -29,6 +33,7 @@ Jfago-ManageYourJellyfinUsers
 Jitsi-SecureVideoconferencingSolutions
 Kitana-ResponsivePlexPluginWebFrontend
 Kresus-ManageBankAccounts
+Kuma-UptimeManager
 Komga-MediaServerForComicsMangasBDs
 Logarr-SelfHostedPHPAppConsolidateLogs
 Mattermost-SelfHostableOnlineChatService
@@ -39,13 +44,16 @@ Minecraft-McMyAdminadministrateMinecraft
 Mkvtoolnix-ToolsToCreateAlterAndInspect
 MonicaHQ-PersonalCRM
 Monitorr-WebfrontLiveDisplayStatutWebapp
+N8nio-AutomationTool
 Netdata-MonitorYourServer
 Ntopng-HighSpeedWebBasedTrafficAnalysis
+Nocodb-AirtableAlternative
 Nowshowing-PlexMediaServer
 Openvpn-FullFeaturedSecureNetworkTunnelingVPN
 Pastebin-Pastebin
 Picapport-PicapportGestionPhotos
 Piwigo-ManageYourPhotoCollectionWithPiwigo
+Plausible-AlternativeToGoogleAnalytics
 Pureftpd-FTPServer
 Pyload-DownloadManager
 Radarr4k-MoviesAutomation-ForkRadarr4k
@@ -55,9 +63,11 @@ rutorrent_4-rutorrentsupplementaire
 Seafile-FileSyncAndShareSoftware
 Scrutiny-MonitorSmartDisks
 Sonarr4k-TVShowsAutomation4k
+Speedtest-MonitorBandwith
 Subsonic-WebBasedMediaServer
 Synclounge-WatchPlexInSyncWithYourFriends
 Syncthing-synchronizationClientServer
+Ttrss-RssReader
 Ubooquity-HomeServerForYourComicsAndEbooks
 Varken-CommandLineUtilityToAggregateData
 Vikunja-ToDoAppOrganizeLife

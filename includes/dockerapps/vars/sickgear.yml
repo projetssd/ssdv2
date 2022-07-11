@@ -1,9 +1,9 @@
 ---
 pgrole: 'sickgear'
 intport: '8081'
-image: 'linuxserver/sickgear:latest'
+image: 'lscr.io/linuxserver/sickgear:latest'
 pg_volumes:
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:

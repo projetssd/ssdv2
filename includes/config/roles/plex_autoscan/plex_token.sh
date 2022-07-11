@@ -1,4 +1,9 @@
-#!/bin/bash -e
+#!/bin/bash
+
+source "${SETTINGS_SOURCE}/includes/functions.sh"
+# shellcheck source=${BASEDIR}/includes/variables.sh
+source "${SETTINGS_SOURCE}/includes/variables.sh"
+
 #########################################################################
 # Title:         Retrieve Plex Token                                    #
 # Author(s):     Werner Beroux (https://github.com/wernight)            #
@@ -7,16 +12,6 @@
 #########################################################################
 #                           MIT License                                 #
 #########################################################################
-
-#if [ -z "$PLEX_LOGIN" ] || [ -z "$PLEX_PASSWORD" ]; then
-#    PLEX_LOGIN=$1
-#    PLEX_PASSWORD=$2
-#fi
-export SCRIPTPATH=/opt/seedbox-compose
-export PATH="$HOME/.local/bin:$PATH"
-source ${SCRIPTPATH}/includes/functions.sh
-source ${SCRIPTPATH}/includes/variables.sh
-source ${SCRIPTPATH}/includes/functions.sh
 
 
 >&2 echo -n 'Votre login Plex (e-mail or username): '

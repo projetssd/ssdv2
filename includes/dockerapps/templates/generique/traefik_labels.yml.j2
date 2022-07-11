@@ -17,9 +17,10 @@ traefik.http.routers.{{pgrole}}-rtr.tls: 'true'
 traefik.http.routers.{{pgrole}}-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
 else 'chain-basic-auth@file' if auth_enabled and sub[pgrole].auth == 'basique' | default(false)
 else 'chain-oauth@file' if auth_enabled and sub[pgrole].auth == 'oauth' | default(false) 
-else omit if auth_enabled and sub[pgrole].auth == 'aucune'}}"
-## HTTP Services
+else 'chain-no-auth@file' if auth_enabled and sub[pgrole].auth == 'aucune'}}"
 traefik.http.routers.{{pgrole}}-rtr.service: '{{pgrole}}-svc'
+traefik.http.routers.{{pgrole}}-rtr.tls.certresolver: 'letsencrypt' 
+## HTTP Services
 traefik.http.services.{{pgrole}}-svc.loadbalancer.server.port: "{{ intport }}"
 {# AJOUT DES SPECIFIQUES #}
 {% for ligne in extra_labels|list %}

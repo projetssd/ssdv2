@@ -11,4 +11,4 @@
     - geerlingguy.security
   tasks:
     - name: Set SSH variable
-      shell: echo "{{ security_ssh_port }}" > /opt/seedbox/variables/ssh
+      shell: echo "{{ security_ssh_port }}" > {{ settings.storage }}/variables/ssh

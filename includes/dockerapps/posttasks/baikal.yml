@@ -6,7 +6,7 @@
 - name: Creating paths
   become: yes  
   file:
-    path: "/opt/seedbox/docker/{{ lookup('env','USER') }}/baikal/Specific/db"
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/baikal/Specific/db"
     state: directory
     mode: 0777
     owner: "{{user.userid}}"
@@ -14,7 +14,7 @@
 - name: Rights
   become: yes 
   file: 
-    path: "/opt/seedbox/docker/{{ lookup('env','USER') }}/baikal/"
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/baikal/"
     state: directory
     recurse: yes
     mode: 0777

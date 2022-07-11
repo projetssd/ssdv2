@@ -3,7 +3,7 @@ pgrole: 'handbrake'
 intport: '5800'
 image: 'jlesage/handbrake'
 pg_volumes:
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
   - "{{ lookup('env','HOME') }}/local/{{pgrole}}/watch:/watch:rw"
   - "{{ lookup('env','HOME') }}/local/{{pgrole}}/output:/output:rw"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"

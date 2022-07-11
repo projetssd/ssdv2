@@ -1,0 +1,10 @@
+---
+pgrole: 'kuma'
+intport: '3001'
+image: 'louislam/uptime-kuma'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/app/data:rw"
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"

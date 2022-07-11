@@ -1,0 +1,258 @@
+---
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+    - "{{ settings.source }}/includes/dockerapps/templates/generique/generique.yml"
+  tasks:
+  - pause:
+      prompt: "Nom de l'utilisateur voulu"
+      echo: yes
+    register: usermulti
+  - set_fact:
+      usermulti: "{{ usermulti.user_input }}"
+  - pause:
+      prompt: "Password pour l'utilisateur"
+      echo: yes
+    register: passwordeuh
+  - set_fact:
+      passwordeuh: "{{ passwordeuh.user_input }}"
+  - pause:
+      prompt: "UID choisi"
+      echo: yes
+    register: uidguid
+  - set_fact:
+      uidguid: "{{ uidguid.user_input }}"
+  - pause:
+      prompt: "Port ( au delà de 46000)"
+      echo: yes
+    register: portrutorrent
+  - set_fact:
+      portrutorrent: "{{ portrutorrent.user_input }}"
+  - name: Create group
+    become: true
+    group:
+      name: groupe_restreint
+      state: present
+  - name: Create Users
+    become: true
+    user:
+      name: "{{ usermulti }}"
+      group: groupe_restreint
+      password: "{{ passwordeuh | password_hash('sha512') }}"
+      shell: /bin/bash
+      uid: "{{ uidguid }}"
+      createhome: yes
+      home: "/home/{{ usermulti }}"
+
+
+  - name: Remove current sfstp
+    become: yes
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: '^Subsystem\s+sftp\s+/usr/lib/openssh/sftp-server'
+      state: absent
+    register: sshchanged1
+  - name: add block
+    become: yes
+    blockinfile:
+      path: /etc/ssh/sshd_config
+      block: |
+         Subsystem       sftp    internal-sftp
+         Match Group groupe_restreint
+         ChrootDirectory /home/%u
+         ForceCommand internal-sftp
+         AllowTCPForwarding no
+         X11Forwarding no
+    register: sshchanged2
+  - name: Stop and Start ssh
+    become: yes
+    service:
+      name: ssh
+      state: restarted
+    when: sshchanged1.changed or sshchanged2.changed
+  - name: Generate htpasswd
+    command: "htpasswd -n -b {{ usermulti }} {{ passwordeuh }}"
+    register: temphtpasswd
+  - name: register htpasswd
+    set_fact:
+      myhtpasswd: "{{ temphtpasswd.stdout }}"
+
+  # FACTS #######################################################################
+  - name: 'Set Known Facts'
+    set_fact:
+      pgrole: 'rutorrent{{ usermulti }}'
+      intport: '8080'
+      image: 'mondedie/rutorrent:2022.02.01'
+
+  - name: create {{ pgrole }} state
+    shell: |
+      echo "1" > {{ settings.storage }}/status/{{pgrole}}
+
+  - name: Checking for existing app data
+    stat:
+      path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/authelia/configuration.yml"
+    register: check
+
+  - name: "Variables | Set 'cloudflare_enabled' variable"
+    set_fact:
+      cloudflare_enabled: "{{ true if not(
+          (cloudflare.login is undefined)
+          or
+          (cloudflare.login is none)
+          or
+          (cloudflare.login | trim | length == 0)
+          or
+          (cloudflare.api is undefined)
+          or
+          (cloudflare.api is none)
+          or
+          (cloudflare.api | trim | length == 0)
+        )
+          else false }}"
+
+  - name: "Variables | Set 'oauth_enabled' variable"
+    set_fact:
+      oauth_enabled: "false"
+
+  - name: "Variables | Set 'sub' variable"
+    set_fact:
+      sub_enabled: "{{ true if not(
+          (sub[pgrole][pgrole] is undefined)
+          or
+          (sub[pgrole][pgrole] is none)
+          or
+          (sub[pgrole][pgrole] | trim | length == 0)
+        )
+          else false }}"
+
+  - name: "Set DNS Record on CloudFlare"
+    include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
+    vars:
+      subdomain: "{{ pgrole }}"
+    when: cloudflare_enabled
+
+  - name: Creating paths
+    become: yes
+    file: "path={{item}} state=directory mode=0775 owner={{ uidguid }} group=groupe_restreint"
+    with_items:
+      - "/home/{{ usermulti }}/docker/{{pgrole}}/config"
+      - "/home/{{ usermulti }}/docker/{{pgrole}}/data"
+  - name: Creating paths
+    become: yes
+    file: "path={{item}} state=directory mode=0775 owner=root group=root"
+    with_items:
+      - "/home/{{ usermulti }}"
+
+  # LABELS ######################################################################
+
+
+  - name: Create temp file
+    tempfile:
+      state: file
+    register: tempfile_1
+
+  - name: fill temp file with labels
+    template:
+      src: "{{ settings.source }}/includes/dockerapps/templates/generique/rutorrent_multi_traefik_labels.yml.j2"
+      dest: "{{ tempfile_1.path }}"
+      force: yes
+
+  - name: Import traefik labels
+    include_vars:
+      file: "{{ tempfile_1.path }}"
+      name: pg_labels
+
+  - name: Delete temp file
+    file:
+      path: "{{ tempfile_1.path }}"
+      state: absent
+
+  - name: 'Setting PG ENV'
+    set_fact:
+      pg_env:
+        UID: '{{uidguid}}'
+        GID: '{{uidguid}}'
+        TZ: 'Europe/Paris'
+        DHT_RTORRENT: 'off'
+        PORT_RTORRENT: '{{portrutorrent}}'
+        HTTP_AUTH: 'false'
+        CHECK_PERM_DATA: 'no'
+
+  # MAIN DEPLOYMENT #############################################################
+  - name: 'Deploying {{pgrole}}'
+    docker_container:
+      name: '{{pgrole}}'
+      image: '{{image}}'
+      pull: yes
+      volumes:
+        - "/home/{{ usermulti }}/docker/{{pgrole}}/config:/config"
+        - "/home/{{ usermulti }}/docker/{{pgrole}}/data:/data"
+        - "/home/{{ usermulti }}/docker/{{pgrole}}/sock:/run/rtorrent"
+        - "/home/{{ usermulti}}:/home/{{ usermulti}}"
+        - '/etc/localtime:/etc/localtime:ro'
+      env: '{{pg_env}}'
+      restart_policy: unless-stopped
+      networks:
+        - name: traefik_proxy
+      state: started
+      labels: '{{pg_labels}}'
+      ports:
+        - "{{portrutorrent}}:{{portrutorrent}}"
+
+  - name: 'Stop {{ pgrole }}'
+    docker_container:
+      name: '{{ pgrole }}'
+      state: stopped
+
+  - name: Create directory
+    become: yes
+    file:
+      path: "/home/{{ usermulti }}/local/{{pgrole}}"
+      state: directory
+      owner: "{{ uidguid }}"
+      group: "groupe_restreint"
+
+  - name: Set download location
+    become: yes
+    lineinfile:
+      path: "/home/{{ usermulti }}/docker/{{pgrole}}/config/rtorrent/.rtorrent.rc"
+      regexp: '#*directory.default.set\s*=.*'
+      line: "directory.default.set = /home/{{ usermulti }}/local/{{pgrole}}"
+      state: present
+
+  - name: Set download location
+    become: yes
+    lineinfile:
+      path: "/home/{{ usermulti }}/docker/{{pgrole}}/config/rutorrent/conf/config.php"
+      regexp: '\$topDirectory\s*=.*'
+      line: "$topDirectory = '/home/{{ usermulti }}/local/{{pgrole}}';"
+      state: present
+
+  - name: Change directory owner
+    become: yes
+    command: "chown root: /home/{{ usermulti }}"
+
+  - name: Change directory rights
+    become: yes
+    command: "chmod 755 /home/{{ usermulti }}"
+
+  - name: 'Restart {{ pgrole }}'
+    docker_container:
+      name: '{{ pgrole }}'
+      state: started
+
+
+    # Administratif pour ssd
+
+  - name: "Insert {{ pgrole}} into database"
+    shell :
+      cmd: |
+        sqlite3 {{  settings.source }}/ssddb << EOF
+            replace into applications (name,status,subdomain,port)
+            values
+            ('{{ pgrole }}',2,'{{sub[pgrole][pgrole] if sub_enabled else pgrole}}',{{ intport }});
+        EOF
+
+
+
+

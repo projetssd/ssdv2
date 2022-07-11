@@ -1,11 +1,11 @@
 ---
 pgrole: 'tautulli'
 intport: '8181'
-image: 'linuxserver/tautulli'
+image: 'lscr.io/linuxserver/tautulli'
 pg_volumes:
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/plex/database/Library/Application Support/Plex Media Server/Logs:/logs"
-  - "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/scripts:/scripts:rw"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/plex/database/Library/Application Support/Plex Media Server/Logs:/logs"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/scripts:/scripts:rw"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:
   PUID: "{{ lookup('env','MYUID') }}"

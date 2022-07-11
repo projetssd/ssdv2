@@ -19,6 +19,7 @@ Organizr-OrganiseLinksWebApplications
 Overseerr-PlexRequestAndUserManagementSystem
 Petio-PlexRequestAndUserManagementSystem
 Plex-PlexMediaServer
+PlexAutoLanguages-LanguageManagementForPlex
 Portainer-LightweightManagementUI
 Prowlarr-indexermanager
 Qbittorrent-TorrentClient
@@ -29,6 +30,7 @@ Readarr-BookMagazineComicsEbookAudiobook
 Rflood-TorrentClient
 Rtorrentvpn-TorrentClient
 Rutorrent-TorrentClient
+Rutorrentcm-TorrentClientCrazyMax
 Sabnzbd-SabnzbdUsenet
 Sensorr-MoviesAutomation
 Sonarr-TVShowsAutomation
@@ -37,3 +39,4 @@ Transmissionvpn-TorrentClientVPN
 Transmission-TorrentClientVPN
 Sickchill-AutomaticVideoManagerTVShows
 Sickgear-AutomaticVideoManagerTVShows
+whisparr-MoviesAdultAutomation

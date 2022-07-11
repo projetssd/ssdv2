@@ -1,0 +1,216 @@
+---
+  - hosts: localhost
+    gather_facts: false
+    vars_files:
+      - "{{ settings.source }}/includes/dockerapps/templates/generique/generique.yml"
+    tasks:
+          
+      # FACTS #######################################################################
+      - name: 'Set Known Facts'
+        set_fact:
+          pgrole: 'plausible'
+          intport: '8000'
+          image: 'plausible/analytics:latest'
+
+      - name: create {{ pgrole }} state
+        shell: |
+          echo "1" > {{ settings.storage }}/status/{{pgrole}}
+
+      - name: Checking for existing app data
+        stat:
+          path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/authelia/configuration.yml"
+        register: check
+
+
+
+      - name: "Variables | Set 'cloudflare_enabled' variable"
+        set_fact:
+          cloudflare_enabled: "{{ true if not(
+              (cloudflare.login is undefined)
+              or
+              (cloudflare.login is none)
+              or
+              (cloudflare.login | trim | length == 0)
+              or
+              (cloudflare.api is undefined)
+              or
+              (cloudflare.api is none)
+              or
+              (cloudflare.api | trim | length == 0)
+            )
+              else false }}"
+  
+      - name: "Variables | Set 'oauth_enabled' variable"
+        set_fact:
+          oauth_enabled: "{{ true if not(
+              (oauth.client is undefined)
+              or
+              (oauth.client is none)
+              or
+              (oauth.client | trim | length == 0)
+              or
+              (oauth.secret is undefined)
+              or
+              (oauth.secret is none)
+              or
+              (oauth.secret | trim | length == 0)
+              or
+              (oauth.account is undefined)
+              or
+              (oauth.account is none)
+              or
+              (oauth.account | trim | length == 0)
+            )
+              else false }}"
+
+      - name: "Variables | Set 'sub' variable"
+        set_fact:
+          sub_enabled: "{{ true if not(
+              (sub[pgrole][pgrole] is undefined)
+              or
+              (sub[pgrole][pgrole] is none)
+              or
+              (sub[pgrole][pgrole] | trim | length == 0)
+            )
+              else false }}"
+
+      - name: "Set DNS Record on CloudFlare"
+        include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
+        vars:
+          subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
+        when: cloudflare_enabled
+    
+      - name: Creating paths
+        become: yes
+        file: "path={{item}} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID') }}"
+        with_items:
+          - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}"
+          - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/event/var/lib"
+          - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/event/initdb"
+
+      - name: Copy conf
+        copy:
+          src: "{{ settings.source }}/includes/dockerapps/templates/plausible/{{ item }}"
+          dest:  "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/event/{{ item }}"
+        with_items:
+          - "clickhouse-config.xml"
+          - "clickhouse-user-config.xml"
+
+      - name: Copy create table script
+        copy:
+          src: "{{ settings.source }}/includes/dockerapps/templates/plausible/create_db_clickhouse.sh"
+          dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/event/initdb/init-db.sh"
+
+      # LABELS ######################################################################
+      - name: 'Ajout label traefik'
+        set_fact:
+          pg_labels:
+            traefik.enable: 'true'
+            ## TCP Routers
+            traefik.http.routers.plausible-rtr.entrypoints: 'https'
+            traefik.http.routers.plausible-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
+            traefik.http.routers.plausible-rtr.tls: 'true'
+            traefik.http.routers.plausible-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
+              else 'chain-basic-auth@file' if auth_enabled and sub[pgrole].auth == 'basique' | default(false)
+              else 'chain-oauth@file' if auth_enabled and sub[pgrole].auth == 'oauth' | default(false)
+              else 'chain-no-auth@file' if auth_enabled and sub[pgrole].auth == 'aucune'}}"
+            ## HTTP Services
+            traefik.http.routers.plausible-rtr.service: "{{pgrole}}-svc"
+            traefik.http.services.plausible-svc.loadbalancer.server.port: "{{ intport }}"
+  
+      - name: 'Setting PG Volumes'
+        set_fact:
+          pg_volumes:
+            - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
+            - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/sync:/sync"
+  
+      - name: 'Setting PG ENV'
+        set_fact:
+          pg_env:
+            ADMIN_USER_EMAIL: "{{ user.mail }}"
+            ADMIN_USER_NAME: "{{ user.name }}"
+            ADMIN_USER_PWD: "{{ user.pass }}"
+            BASE_URL: "https://{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}"
+            SECRET_KEY_BASE: 'UUz8NoHVhXd3XDyS7MFshvfcWZTeQBWtpnomgJzUt2WvqceQq7kbSGXCLq2AisusGwoQ5ui'
+            DATABASE_URL: "http://{{pgrole}}:{{pgrole}}@db-{{pgrole}}:5432/{{ pgrole }}"
+            CLICKHOUSE_DATABASE_URL: "http://clickhouse-{{pgrole}}:8123/plausible"
+            ########################################################################
+            #MAILER_EMAIL:	hello@plausible.local	#The email id to use for as from address of all communications from Plausible.
+            #SMTP_HOST_ADDR:	localhost	#The host address of your smtp server.
+            #SMTP_HOST_PORT:	25	#The port of your smtp server.
+            #SMTP_USER_NAME:	--	#The username/email in case SMTP auth is enabled.
+            #SMTP_USER_PWD:	--	#The password in case SMTP auth is enabled.
+            #SMTP_HOST_SSL_ENABLED:	false	#If SSL is enabled for SMTP connection
+            #SMTP_RETRIES:	2	#Number of retries to make until mailer gives up.
+  
+      # MAIN DEPLOYMENT #############################################################
+  
+      - name: Create backend network
+        docker_network:
+          name: '{{pgrole}}-net'
+          state: present
+
+      - name: 'Deploying {{pgrole}} DB'
+        docker_container:
+          name: 'db-{{pgrole}}'
+          image: 'postgres:12'
+          pull: yes
+          volumes:
+            - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db:/var/lib/postgresql/data"
+          env:
+            POSTGRES_PASSWORD: "{{ pgrole }}"
+            POSTGRES_USER: "{{ pgrole }}"
+            POSTGRES_DB: "{{ pgrole }}"
+          restart_policy: unless-stopped
+          networks:
+            - name: "{{pgrole}}-net"
+          state: started
+
+      - name: 'Deploying {{pgrole}} clickhouse'
+        docker_container:
+          name: 'clickhouse-{{pgrole}}'
+          image: 'yandex/clickhouse-server:21.3.2.5'
+          pull: yes
+          volumes:
+            - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/event/var/lib:/var/lib/clickhouse"
+            -  "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/event/initdb:/docker-entrypoint-initdb.d"
+            - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/eventclickhouse-config.xml:/etc/clickhouse-server/config.d/logging.xml:ro"
+            - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/clickhouse-user-config.xml:/etc/clickhouse-server/users.d/logging.xml:ro"
+          restart_policy: unless-stopped
+          networks:
+            - name: "{{pgrole}}-net"
+          state: started
+          ulimits:
+            - nofile:262144:262144
+
+
+      - name: 'Deploying {{pgrole}}'
+        docker_container:
+          name: '{{pgrole}}'
+          image: '{{image}}'
+          pull: yes
+          volumes: '{{pg_volumes}}'
+          env: '{{pg_env}}'
+          restart_policy: unless-stopped
+          networks:
+            - name: traefik_proxy
+            - name: "{{pgrole}}-net"
+          state: started
+          labels: '{{pg_labels}}'
+          command: sh -c "sleep 10 && /entrypoint.sh db migrate && /entrypoint.sh db init-admin && /entrypoint.sh run"
+
+      # Administratif pour ssd
+
+      - name: "Insert {{ pgrole}} into database"
+        shell :
+          cmd: |
+            sqlite3 {{  settings.source }}/ssddb << EOF
+                replace into applications (name,status,subdomain,port)
+                values
+                ('{{ pgrole }}',2,'{{sub[pgrole][pgrole] if sub_enabled else pgrole}}',{{ intport }});
+            EOF
+
+
+
+
+  

@@ -1,8 +1,6 @@
 ---
 - hosts: localhost
   gather_facts: false
-  vars_files:
-    - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
 
   tasks:
 
@@ -43,7 +41,7 @@
 
       - name: "create plex_autoscan state"
         shell: |
-          echo "0" > {{ lookup('env','CONFDIR') }}/status/cloudplow
+          echo "0" > {{ settings.storage }}/status/cloudplow
 
       when: cloudplow_service.stat.exists
 
@@ -103,7 +101,7 @@
 
     - name: Import default config
       template:
-        src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/crop/templates/config.yaml.j2"
+        src: "{{ settings.source }}/includes/config/roles/crop/templates/config.yaml.j2"
         dest: "/home/{{ lookup('env','USER') }}/scripts/crop/config.yaml"
         mode: 0600
         force: yes
@@ -113,25 +111,25 @@
     - name: Import default crop_sync.service
       become: yes
       template:
-        src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/crop/templates/systemd/crop_sync.service.j2"
+        src: "{{ settings.source }}/includes/config/roles/crop/templates/systemd/crop_sync.service.j2"
         dest: /etc/systemd/system/crop_sync.service
 
     - name: Import default crop_upload.service
       become: yes
       template:
-        src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/crop/templates/systemd/crop_upload.service.j2"
+        src: "{{ settings.source }}/includes/config/roles/crop/templates/systemd/crop_upload.service.j2"
         dest: /etc/systemd/system/crop_upload.service
 
     - name: Import default crop_upload.timer
       become: yes
       template:
-        src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/crop/templates/systemd/crop_upload.timer.j2"
+        src: "{{ settings.source }}/includes/config/roles/crop/templates/systemd/crop_upload.timer.j2"
         dest: /etc/systemd/system/crop_upload.timer
 
     - name: Import default crop_sync.timer
       become: yes
       template:
-        src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/crop/templates/systemd/crop_sync.timer.j2"
+        src: "{{ settings.source }}/includes/config/roles/crop/templates/systemd/crop_sync.timer.j2"
         dest: /etc/systemd/system/crop_sync.timer
 
     - name: Wait for 5 seconds before continuing
@@ -156,7 +154,7 @@
 
     - name: Import crapper
       template:
-        src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/crop/templates/crapper.j2"
+        src: "{{ settings.source }}/includes/config/roles/crop/templates/crapper.j2"
         dest: "/home/{{ lookup('env','USER') }}/scripts/crop/crapper"
         mode: 0755
         force: yes
@@ -165,7 +163,7 @@
 
     - name: Import crapper.env
       template:
-        src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/crop/templates/crapper.env.j2"
+        src: "{{ settings.source }}/includes/config/roles/crop/templates/crapper.env.j2"
         dest: "/home/{{ lookup('env','USER') }}/scripts/crop/crapper.env"
         mode: 0755
         force: yes
@@ -174,7 +172,7 @@
 
     - name: "create plex_autoscan state"
       shell: |
-        echo "2" > {{ lookup('env','CONFDIR') }}/status/crop
+        echo "2" > {{ settings.storage }}/status/crop
 
 
 

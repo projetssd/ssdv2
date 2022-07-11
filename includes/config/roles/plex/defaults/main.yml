@@ -1,26 +1,17 @@
-##########################################################################
-# Title:         Cloudbox: Plex | Default Variables                      #
-# Author(s):     desimaniac                                              #
-# URL:           https://github.com/cloudbox/cloudbox                    #
-# --                                                                     #
-#         Part of the Cloudbox project: https://cloudbox.works           #
-##########################################################################
-#                   GNU General Public License v3.0                      #
-##########################################################################
 ---
 ################################
 # Folders
 ################################
 
 plex_folders:
-  - "/opt/seedbox/docker/{{ lookup('env','USER') }}/plex"
-  - "/opt/seedbox/docker/{{ lookup('env','USER') }}/plex/config"
-  - "/opt/seedbox/docker/{{ lookup('env','USER') }}/plex/config/Library"
-  - "/opt/seedbox/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support"
-  - "/opt/seedbox/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server"
-  - "/opt/seedbox/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Plug-ins"
-  - "/opt/seedbox/docker/{{ lookup('env','USER') }}/plex/config/Library/Logs"
-  - "/opt/seedbox/docker/{{ lookup('env','USER') }}/plex/config/Library/Logs/Plex Media Server"
+  - "{{ settings.storage/docker/{{ lookup('env','USER') }}/plex"
+  - "{{ settings.storage/docker/{{ lookup('env','USER') }}/plex/config"
+  - "{{ settings.storage/docker/{{ lookup('env','USER') }}/plex/config/Library"
+  - "{{ settings.storage/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support"
+  - "{{ settings.storage/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server"
+  - "{{ settings.storage/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Plug-ins"
+  - "{{ settings.storage/docker/{{ lookup('env','USER') }}/plex/config/Library/Logs"
+  - "{{ settings.storage/docker/{{ lookup('env','USER') }}/plex/config/Library/Logs/Plex Media Server"
   - "{{ plex.transcodes }}/plex"
 
 ################################
@@ -63,7 +54,7 @@ plex_docker_volumes:
   - "/etc/localtime:/etc/localtime:ro"
   - "/home/{{lookup('env','USER')}}:/home/{{lookup('env','USER')}}"
   - "/home/{{lookup('env','USER')}}/Medias:/data"
-  - "/opt/seedbox/docker/{{lookup('env','USER')}}/plex/config:/config"
+  - "{{ setting.storage/docker/{{lookup('env','USER')}}/plex/config:/config"
   - "/tmp:/tmp"
   - "/dev/shm:/dev/shm"
   - "{{ plex.transcodes }}/plex:/transcode"

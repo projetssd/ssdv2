@@ -2,9 +2,10 @@
 - hosts: localhost
   gather_facts: true
   vars_files:
-    - "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/plex/tasks/settings.yml"
-    - "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/plex/defaults/main.yml"
-    - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
+    - "{{ lookup('env','HOME') }}/.ansible/inventories/group_vars/all.yml"
+    - "{{ settings.source }}/includes/dockerapps/templates/plex/tasks/settings.yml"
+    - "{{ settings.source }}/includes/dockerapps/templates/plex/defaults/main.yml"
+
 
   tasks:
 
@@ -53,7 +54,7 @@
 
 
     - name: "Set DNS Record on CloudFlare"
-      include_tasks: "{{ lookup('env','BASEDIR') }}/includes/config/roles/cloudflare/tasks/main.yml"
+      include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
       vars:
         subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
       when: cloudflare_enabled
@@ -81,7 +82,7 @@
 
     - name: "Check if 'Preferences.xml' exists"
       stat:
-        path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
+        path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
       register: preferences_xml
 
     - name: "'Preferences.xml' Tasks"
@@ -89,7 +90,7 @@
 
       - name: Get 'Preferences.xml' XML data
         xml:
-          path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
+          path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
           xpath: /Preferences
           content: attribute
         register: preferences_xml_resp
@@ -97,7 +98,7 @@
 
       - name: "Remove 'Preferences.xml' if malformed"
         file:
-          path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
+          path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
           state: absent
         when: (preferences_xml_resp is failed)
 
@@ -109,7 +110,7 @@
 
       - name: "Fix 'TranscoderTempDirectory'"
         xml:
-          path: "{{ lookup('env','CONFDIR') }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
+          path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
           xpath: /Preferences
           attribute: TranscoderTempDirectory
           value: "/transcode"
@@ -127,7 +128,7 @@
         - (preferences_xml.stat.exists)
 
     - name: Claim Plex Server
-      import_tasks: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/plex/tasks/subtasks/claim_server.yml"
+      import_tasks: "{{ settings.source }}/includes/dockerapps/templates/plex/tasks/subtasks/claim_server.yml"
       when:
         - (not preferences_xml.stat.exists) or (preferences_xml.stat.exists and not plex_server_claimed)
 
@@ -139,8 +140,9 @@
           traefik.http.routers.plex-rtr.entrypoints: 'https'
           traefik.http.routers.plex-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.plex-rtr.tls: 'true'
-          ## HTTP Services
           traefik.http.routers.plex-rtr.service: 'plex-svc'
+          traefik.http.routers.plex-rtr.tls.certresolver: 'letsencrypt'
+          ## HTTP Services
           traefik.http.services.plex-svc.loadbalancer.server.port: '32400'
 
     - name: "Create and start container"
@@ -174,14 +176,15 @@
         recurse: yes
 
     - name: Extra Tasks
-      import_tasks: "{{ lookup('env','BASEDIR') }}/includes/dockerapps/templates/plex/tasks/subtasks/extra.yml"
+      import_tasks: "{{ settings.source }}/includes/dockerapps/templates/plex/tasks/subtasks/extra.yml"
       ignore_errors: yes
 
-    - name: add resume file
-      become: yes
-      shell: |
-        echo "{{pgrole}}-{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}" >> {{ lookup('env','CONFDIR') }}/temp.txt
-
-
-
+    - name: Insert plex into database
+      shell :
+        cmd: |
+          sqlite3 {{  settings.source }}/ssddb << EOF
+              replace into applications (name,status,subdomain,port)
+              values
+              ('plex',2,'{{sub[pgrole][pgrole] if sub_enabled else pgrole}}',32400);
+          EOF
 

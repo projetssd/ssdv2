@@ -1,23 +1,24 @@
 ---
 - pause:
-    prompt: "Nom du fournisseur VPN"
+    prompt: "Serveur VPN utilisé ( openvpn ou wireguard uniquement )"
     echo: yes
   register: vpn
 - set_fact:
     vpn: "{{ vpn.user_input }}"
 - pause:
-    prompt: "Port forwarded proposé par le fournisseur vpn (ex: 8181)"
+    prompt: "Port forwarded ouvert sur votr serveur vpn pour rtorrent (ex: 45000)"
     echo: yes
   register: portforwarded
 - set_fact:
     portforwarded: "{{ portforwarded.user_input }}"
-- pause:
-    prompt: "Plage reseau privé (ex: 192.168.1.0/24)"
-    echo: yes
-  register: reseau
-- set_fact:
-    reseau: "{{ reseau.user_input }}"
 - name: Checking for existing app data
   stat:
-    path: '/opt/seedbox/docker/{{user.name}}/rtorrentvpn/rtorrent/config/rtorrent.rc'
+    path: '{{ settings.storage }}/docker/{{user.name}}/rtorrentvpn/rtorrent/config/rtorrent.rc'
   register: rccheck
+- set_fact:
+    vpn_specific:
+      openvpn:
+        capabilities: "NET_ADMIN"
+      wireguard:
+        sysctls: "net.ipv4.conf.all.src_valid_mark=1"
+        privileged: true

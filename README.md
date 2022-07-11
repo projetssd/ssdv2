@@ -2,7 +2,7 @@
 <br />
 
 
-[![Discord: https://discordapp.com/invite/HZNMGjDRhp](https://img.shields.io/badge/Discord-gray.svg?style=for-the-badge)](https://discordapp.com/invite/HZNMGjDRhp)
+[![Discord: https://discord.gg/EyV5f5ZyYF](https://img.shields.io/badge/Discord-gray.svg?style=for-the-badge)](https://discordapp.com/invite/kkwEvV6dfj)
 
 ## Comment migrer de la v1 vers la v2 ?
 
@@ -19,6 +19,8 @@
 * [Un abonnement à cloud workspace](https://github.com/projetssd/ssdv2/wiki/Les-offres-Cloud-Google)
 * [DNS Cloudflare](https://github.com/projetssd/ssdv2/wiki/Cloudflare)
 * [Création API Google Drive](https://github.com/projetssd/ssdv2/wiki/Cr%C3%A9ation-API-Google)
+
+Depuis les dernières version de rclone, vous avez aussi besoin d'un rclone local (sur une machine ayant accès à un navigateur) :  [installer rclone sur votre poste de travail](https://rclone.org/install/) 
 
 ###
 
@@ -39,16 +41,24 @@ usermod -aG sudo seed # changez "seed" par le user que vous voulez
 ```
 Une fois que tout ça est fait, déconnectez vous de votre session root, et reconnectez vous avec le user qui vient d'être créé
 
+
+Pour la suite, on suppose que le répertoire qui va recevoir les sources est /home/${USER}/seedbox-compose, mais ce répertoire peut être changé
+
 Ensuite
 ```
-sudo apt-get update
+sudo apt-get update && sudo apt upgrade -y
 ```
 ```
 sudo apt install -y git
-sudo git clone https://github.com/projetssd/ssdv2.git /opt/seedbox-compose
-sudo chown -R ${USER}: /opt/seedbox-compose
-cd /opt/seedbox-compose
-./seedbox.sh
+```
+```
+sudo git clone https://github.com/projetssd/ssdv2.git /home/${USER}/seedbox-compose
+```
+```
+sudo chown -R ${USER}: /home/${USER}/seedbox-compose
+```
+```
+cd /home/${USER}/seedbox-compose && ./seedbox.sh
 ```
 ### Vous aurez ce message : 
 ```
@@ -60,7 +70,7 @@ Il a été ajouté, mais vous devez vous déconnecter/reconnecter pour que la su
 ```
 Alors déconnexion puis Reconnexion et on continue avec la même commande
 ```
-cd /opt/seedbox-compose && ./seedbox.sh
+cd /home/${USER}/seedbox-compose && ./seedbox.sh
 ```
 
 [![Discord: https://discordapp.com/invite/kkwEvV6dfj](https://img.shields.io/badge/Discord-gray.svg?style=for-the-badge)](https://discordapp.com/invite/kkwEvV6dfj)

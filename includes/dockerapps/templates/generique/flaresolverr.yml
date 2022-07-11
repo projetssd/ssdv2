@@ -7,8 +7,6 @@
       CAPTCHA_SOLVER: 'harvester'
       HARVESTER_ENDPOINT: 'https://127.0.0.1:5000/token'
       LOG_LEVEL: 'info'
-    published_ports:
-      - '8191:8191'
     pull: yes
     restart_policy: unless-stopped
     networks:

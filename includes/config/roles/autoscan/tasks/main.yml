@@ -2,8 +2,6 @@
 - hosts: localhost
   gather_facts: false
 
-  vars_files:
-    - "{{ lookup('env','CONFDIR') }}/variables/account.yml"
   tasks:
 
     - name: Check if plex_autoscan.service exists
@@ -51,7 +49,7 @@
 
       - name: "create plex_autoscan state"
         shell: |
-          echo "0" > {{ lookup('env','CONFDIR') }}/status/plex_autoscan
+          echo "0" > {{ settings.storage }}/status/plex_autoscan
 
       when: plex_autoscan_service.stat.exists
 
@@ -97,12 +95,12 @@
 
     - name: Import default config
       template:
-        src: "{{ lookup('env','BASEDIR') }}/includes/config/roles/autoscan/templates/config.yml.j2"
+        src: "{{ settings.source }}/includes/config/roles/autoscan/templates/config.yml.j2"
         dest: "/home/{{ lookup('env','USER') }}/scripts/autoscan/config.yml"
         mode: 0600
         force: yes
 
     - name: "create plex_autoscan state"
       shell: |
-        echo "2" > {{ lookup('env','CONFDIR') }}/status/autoscan
+        echo "2" > {{ settings.storage }}/status/autoscan
 

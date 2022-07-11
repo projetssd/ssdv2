@@ -7,23 +7,19 @@ export IFSORIGIN="${IFS}"
 # Absolute path to this script.
 CURRENT_SCRIPT=$(readlink -f "$0")
 # Absolute path this script is in.
-SCRIPTPATH=$(dirname "$CURRENT_SCRIPT")
-export SCRIPTPATH
-cd ${SCRIPTPATH}
+SETTINGS_SOURCE=$(dirname "$CURRENT_SCRIPT")
+export SETTINGS_SOURCE
+cd ${SETTINGS_SOURCE}
 
-# shellcheck source=${BASEDIR}/includes/functions.sh
-source "${SCRIPTPATH}/includes/functions.sh"
-# shellcheck source=${BASEDIR}/includes/variables.sh
-source "${SCRIPTPATH}/includes/variables.sh"
-# shellcheck source=${BASEDIR}/includes/functions.sh
-source "${SCRIPTPATH}/includes/functions.sh"
-source "${SCRIPTPATH}/includes/menus.sh"
+source "${SETTINGS_SOURCE}/includes/variables.sh"
+source "${SETTINGS_SOURCE}/includes/functions.sh"
+source "${SETTINGS_SOURCE}/includes/menus.sh"
 
 ################################################
 # récupération des parametres
 # valeurs par défaut
 FORCE_ROOT=0
-INI_FILE=${SCRIPTPATH}/autoinstall.ini
+INI_FILE=${SETTINGS_SOURCE}/autoinstall.ini
 action=manuel
 export mode_install=manuel
 # lecture des parametres
@@ -83,16 +79,15 @@ done
 # Maintenant, on a toutes les infos
 #
 check_docker_group
-if [ ! -f "${SCRIPTPATH}/ssddb" ]; then
-
+if [ ! -f "${SETTINGS_SOURCE}/ssddb" ]; then
   premier_lancement
   # on ajoute le PATH qui va bien, au cas où il ne soit pas pris en compte par le ~/.profile
 fi
 
 # on contre le bug de debian et du venv qui ne trouve pas les paquets installés par galaxy
-source "${SCRIPTPATH}/venv/bin/activate"
-temppath=$(ls /opt/seedbox-compose/venv/lib)
-pythonpath=/opt/seedbox-compose/venv/lib/${temppath}/site-packages
+source "${SETTINGS_SOURCE}/venv/bin/activate"
+temppath=$(ls ${SETTINGS_SOURCE}/venv/lib)
+pythonpath=${SETTINGS_SOURCE}/venv/lib/${temppath}/site-packages
 export PYTHONPATH=${pythonpath}
 
 case "$action" in
@@ -134,7 +129,7 @@ if [ "$USER" == "root" ]; then
 fi
 
 # on met les droits comme il faut, au cas où il y ait eu un mauvais lancement
-#sudo chown -R ${USER}: ${SCRIPTPATH}
+#sudo chown -R ${USER}: ${SETTINGS_SOURCE}
 
 IS_INSTALLED=$(select_seedbox_param "installed")
 
@@ -178,10 +173,6 @@ if [ $mode_install = "manuel" ]; then
         unionfs_fuse
         pause
 
-        # Installation de filebot
-        # TODO : à laisser ? Ou à mettre dans les applis ?
-        #filebot
-
         # mise en place de la sauvegarde
         sauve
         # Affichage du résumé
@@ -190,7 +181,7 @@ if [ $mode_install = "manuel" ]; then
         update_seedbox_param "installed" 1
         echo "L'installation est maintenant terminée."
         echo "Pour le configurer ou modifier les applis, vous pouvez le relancer"
-        echo "cd /opt/seedbox-compose"
+        echo "cd ${SETTINGS_SOURCE}"
         echo "./seedbox.sh"
         exit 0
       else
@@ -210,10 +201,10 @@ if [ $mode_install = "manuel" ]; then
         choose_media_folder_plexdrive
         update_seedbox_param "installed" 1
         pause
-        touch "${CONFDIR}/media-$SEEDUSER"
+        touch "${SETTINGS_STORAGE}/media-$SEEDUSER"
         echo "L'installation est maintenant terminée."
         echo "Pour le configurer ou modifier les applis, vous pouvez le relancer"
-        echo "cd /opt/seedbox-compose"
+        echo "cd ${SETTINGS_SOURCE}"
         echo "./seedbox.sh"
         exit 0
       else
@@ -222,7 +213,22 @@ if [ $mode_install = "manuel" ]; then
       ;;
 
     3) ## restauration de la seedbox
-
+      echo "###################################################"
+      echo "# ATTENTION !!                                    #"
+      echo "###################################################"
+      echo "A l'heure actuelle, la restauration ne fonctionne "
+      echo "que si le script a été installé depuis le même      "
+      echo "répertoire que celui qui a servi à faire la       "
+      echo "sauvegarde, et a été installé sur la même destination "
+      echo "------------------------------------------------------"
+      echo "Si vous avez déjà installé le script depuis un mauvais répertoire "
+      echo "ou vers une mauvaise destination, il faudra supprimer le fichier "
+      echo "${HOME}/.config/ssd/env et refaire l'installation "
+      echo "-------------------------------------------------------"
+      echo "Les chemins par défaut avant la v2.2 étaient "
+      echo "- source : /opt/seedbox-compose"
+      echo "- destination : /opt/seedbox"
+      pause
       #check_dir "$PWD"
       if [[ ${IS_INSTALLED} -eq 0 ]]; then
         clear
@@ -239,29 +245,31 @@ if [ $mode_install = "manuel" ]; then
         unionfs_fuse
         pause
 
-        # Installation de filebot
-        # TODO : à laisser ? Ou à mettre dans les applis ?
-        #filebot
-
         # mise en place de la sauvegarde
         sauve
 
         ## On va garder ce qui a été saisi pour l'écraser plus tard
-        cp /opt/seedbox/variables/account.yml /opt/seebox/variables/account.temp
+        cp ${ANSIBLE_VARS} ${ANSIBLE_VARS}.temp
+        ## on sauvegarde le mot de passe de chiffrement
+        cp ${HOME}/.vault_pass ${HOME}/.vault_pass.temp
 
         sudo restore
         # on remet le account.yml précédent qui a été écrasé par la restauration
-        cp /opt/seedbox/variables/account.yml /opt/seedbox/variables/account.restore
-        mv /opt/seebox/variables/account.temp /opt/seebox/variables/account.yml
+        cp ${ANSIBLE_VARS} ${ANSIBLE_VARS}.restore
+        mv ${ANSIBLE_VARS}.temp ${ANSIBLE_VARS}
+        # pareil pour le mot de passe de chiffrement
+        cp ${HOME}/.vault_pass ${HOME}/.vault_pass.restore
+        mv ${HOME}/.vault_pass.temp ${HOME}/.vault_pass
         stocke_public_ip
-        ## reinitialisation de toutes les applis
-        sqlite3 /opt/seedbox-compose/ssddb <<EOF >$SERVICESPERUSER
-select name from applications;
-EOF
+        ## on remet les bonnes infos
+        userid=$(id -u)
+        grpid=$(id -g)
 
-        #while read line; do echo $line | cut -d'.' -f1; done <"/home/${USER}/resume" >$SERVICESPERUSER
-        rm /home/${USER}/resume
-        install_services
+        manage_account_yml user.userid "$userid"
+        manage_account_yml user.id "$userid"
+        manage_account_yml user.groupid "$grpid"
+        ## reinitialisation de toutes les applis
+        relance_tous_services
         # on marque la seedbox comme installée
         update_seedbox_param "installed" 1
         affiche_menu_db
@@ -280,14 +288,14 @@ EOF
 
     esac
   fi
-  update_status
 
-  chmod 755 /opt/seedbox-compose/logs
+
+  chmod 755 ${SETTINGS_SOURCE}/logs
   #update_logrotate
   log_statusbar "Check de la dernière version sur git"
   git_branch=$(git rev-parse --abbrev-ref HEAD)
   if [ ${git_branch} == 'master' ]; then
-    cd /opt/seedbox-compose
+    cd ${SETTINGS_SOURCE}
     git fetch >>/dev/null 2>&1
     current_hash=$(git rev-parse HEAD)
     distant_hash=$(git rev-parse master@{upstream})
@@ -309,6 +317,37 @@ EOF
     echo "==============================================="
     pause
   fi
+  # Verif compatibilité v2.1 => v2.2
+  # On regarde que le all.yml existe, sinon, on copie le account.yml
+  log_statusbar "Verification du group_vars/all.yml"
+  if [ ! -f "${HOME}/.ansible/inventories/group_vars/all.yml" ]; then
+    mkdir -p "${HOME}/.ansible/inventories/group_vars"
+    cp "${SETTINGS_STORAGE}/variables/account.yml" "${ANSIBLE_VARS}"
+  fi
+  #####################################################
+  # On finit de setter les variables
+  source ${SETTINGS_SOURCE}/venv/bin/activate
+  emplacement_stockage=$(get_from_account_yml settings.storage)
+  if [ "${emplacement_stockage}" == notfound ]; then
+    manage_account_yml settings.storage "${SETTINGS_STORAGE}"
+  fi
+
+  emplacement_source=$(get_from_account_yml settings.source)
+  if [ "${emplacement_source}" == notfound ]; then
+    manage_account_yml settings.source "${SETTINGS_SOURCE}"
+  fi
+  update_status
+  # Verif compatibilité v2/0 => V2.1
+  # On regarde que settings.storage existe
+  log_statusbar "Verification de l'emplacement du stockage"
+  emplacement_stockage=$(get_from_account_yml settings.storage)
+  if [ "${emplacement_stockage}" == notfound ]; then
+    manage_account_yml settings.storage "/opt/seedbox"
+  fi
+  # On ressource l'environnement
+  source "${SETTINGS_SOURCE}/profile.sh"
+
+
 
   affiche_menu_db
 fi
