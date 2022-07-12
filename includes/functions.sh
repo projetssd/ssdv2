@@ -1908,3 +1908,17 @@ EOF
   install_services
   launch_service traefik
 }
+
+function correct_init() {
+  echo "###################################"
+  echo "# ATTENTION !!! Cette opération va redémarrer le démon docker"
+  echo "# Cette opération peut prendre quelques minutes et certaines appliactions"
+  echo "# risquent de ne pas redémarrer"
+  echo "####################################"
+  echo "# Ne continuez que si vous avez le bug 'init'"
+  echo "# Si vous n'êtes pas sur, faites ctrl+c pour sortir"
+  pause
+  sudo rm -f /etc/docker/daemon.json
+  sudo systemctl restart docker
+
+}

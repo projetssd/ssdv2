@@ -14,12 +14,12 @@
     state: directory
     mode: 0775
 
-- name: "Daemon | Import 'daemon.json'"
-  template:
-    src: "{{ lookup('env','SETTINGS_SOURCE') }}/includes/config/roles/docker/templates/daemon.json.j2"
-    dest: /etc/docker/daemon.json
-    mode: 0775
-    force: yes
+#- name: "Daemon | Import 'daemon.json'"
+#  template:
+#    src: "{{ lookup('env','SETTINGS_SOURCE') }}/includes/config/roles/docker/templates/daemon.json.j2"
+#    dest: /etc/docker/daemon.json
+#    mode: 0775
+#    force: yes
 
 - name: "Daemon | Create override directory"
   file:
