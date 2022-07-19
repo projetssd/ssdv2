@@ -84,6 +84,7 @@ storage:
 # For local storage, uncomment lines below and comment out mysql. https://docs.authelia.com/configuration/storage/sqlite.html
 #  local:
 #    path: /var/lib/authelia/db.sqlite3
+  encryption_key: "{{ my_random_key }}"
   mysql:
   # MySQL allows running multiple authelia instances. Create database and enter details below.
     host: db-authelia

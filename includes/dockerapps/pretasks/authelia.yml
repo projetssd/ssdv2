@@ -44,6 +44,11 @@
     docker run --rm authelia/authelia:latest authelia hash-password {{user.pass}} | cut -d: -f2 | sed 's/ //g'
   register: password
 
+- name: Generate random key
+  set_fact:
+    my_random_key: lookup('community.general.random_string', length=20)
+
+
 - name: Import configuration.yml
   template:
     src: "{{ settings.source }}/includes/dockerapps/templates/authelia/configuration.yml.j2"
