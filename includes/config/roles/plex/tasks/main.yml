@@ -123,7 +123,7 @@
         - (preferences_xml.stat.exists)
 
     - name: Claim Plex Server
-      import_tasks: subtasks/claim_server.yml
+      import_tasks: "{{ settings.source }}/includes/config/roles/plex/tasks/subtasks/claim_server.yml"
       when:
         - (not preferences_xml.stat.exists) or (preferences_xml.stat.exists and not plex_server_claimed)
 
