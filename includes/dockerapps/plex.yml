@@ -128,7 +128,7 @@
         - (preferences_xml.stat.exists)
 
     - name: Claim Plex Server
-      import_tasks: "{{ settings.source }}/includes/dockerapps/templates/plex/tasks/subtasks/claim_server.yml"
+      import_tasks: "{{ lookup('env','SETTINGS_SOURCE') }}/includes/dockerapps/templates/plex/tasks/subtasks/claim_server.yml"
       when:
         - (not preferences_xml.stat.exists) or (preferences_xml.stat.exists and not plex_server_claimed)
 
