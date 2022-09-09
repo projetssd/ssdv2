@@ -166,6 +166,7 @@ function install-rtorrent-cleaner() {
   #SEEDUSER=$(ls ${SETTINGS_STORAGE}/media* | cut -d '-' -f2)
   sudo cp -r ${SETTINGS_SOURCE}/includes/config/rtorrent-cleaner/rtorrent-cleaner /usr/local/bin
   sudo sed -i "s|%SEEDUSER%|${USER}|g" /usr/local/bin/rtorrent-cleaner
+  sudo sed -i "s|%SETTINGS_STORAGE%|${SETTINGS_STORAGE}|g" /usr/local/bin/rtorrent-cleaner
 }
 
 function motd() {
