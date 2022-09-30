@@ -228,7 +228,6 @@
           traefik.http.routers.error-pages-rtr.priority: '10'
           traefik.http.routers.error-pages-rtr.entrypoints: 'https'
           traefik.http.routers.error-pages-rtr.tls: 'true'
-          traefik.http.routers.error-pages-rtr.tls.options: 'mintls12@file'
           traefik.http.routers.error-pages-rtr.middlewares: 'error-pages-middleware'
           traefik.http.middlewares.error-pages-middleware.errors.status: '400-599'
           traefik.http.middlewares.error-pages-middleware.errors.service: 'error-pages-svc'
