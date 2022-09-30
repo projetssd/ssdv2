@@ -8,6 +8,7 @@
     - name: 'Set Known Facts'
       set_fact:
         pgrole: 'traefik'
+        pgerro: 'error-pages'
 
     - name: create traefik state
       shell: |
@@ -27,6 +28,11 @@
     - name: Remove {{pgrole}}
       docker_container:
         name: '{{pgrole}}'
+        state: absent
+
+    - name: Remove {{ pgerro }}
+      docker_container:
+        name: '{{ pgerro }}'
         state: absent
 
     - name: Create Basic Directories
@@ -96,7 +102,7 @@
           ## Services - API
           traefik.http.routers.traefik-rtr.service: 'api@internal'
           ## Middlewares
-          traefik.http.routers.traefik-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
+          traefik.http.routers.traefik-rtr.middlewares: "error-pages-middleware,{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
             else 'chain-basic-auth@file' if auth_enabled and sub[pgrole].auth == 'basique' | default(false)
             else 'chain-oauth@file' if auth_enabled and sub[pgrole].auth == 'oauth' | default(false)
             else 'chain-no-auth@file' if auth_enabled and sub[pgrole].auth == 'aucune'}}"
@@ -119,7 +125,7 @@
           ## Services - API
           traefik.http.routers.traefik-rtr.service: 'api@internal'
           ## Middlewares
-          traefik.http.routers.traefik-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
+          traefik.http.routers.traefik-rtr.middlewares: "error-pages-middleware,{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
             else 'chain-basic-auth@file' if auth_enabled and sub[pgrole].auth == 'basique' | default(false)
             else 'chain-oauth@file' if auth_enabled and sub[pgrole].auth == 'oauth' | default(false)
             else 'chain-no-auth@file' if auth_enabled and sub[pgrole].auth == 'aucune'}}"
@@ -132,7 +138,7 @@
           - --global.sendAnonymousUsage=true
           - --entryPoints.http.address=:80
           - --entryPoints.https.address=:443
-          - --entryPoints.traefik.address=:8080
+          #- --entryPoints.traefik.address=:8080
           - --entrypoints.https.forwardedHeaders.trustedIPs=173.245.48.0/20,103.21.244.0/22,103.22.200.0/22,103.31.4.0/22,141.101.64.0/18,108.162.192.0/18,190.93.240.0/20,188.114.96.0/20,197.234.240.0/22,198.41.128.0/17,162.158.0.0/15,104.16.0.0/12,172.64.0.0/13,131.0.72.0/22
           - --api=true
           - --log=true
@@ -140,7 +146,7 @@
           - --accessLog=true
           - --accessLog.filePath=/traefik.log
           - --accessLog.bufferingSize=100
-          - --accessLog.filters.statusCodes=400-499
+          #- --accessLog.filters.statusCodes=400-499
           - --providers.docker=true
           - --providers.docker.endpoint=unix:///var/run/docker.sock
           - --providers.docker.exposedByDefault=false
@@ -162,14 +168,14 @@
           - --global.sendAnonymousUsage=true
           - --entryPoints.http.address=:80
           - --entryPoints.https.address=:443
-          - --entryPoints.traefik.address=:8080
+          #- --entryPoints.traefik.address=:8080
           - --api=true
           - --log=true
           - --log.level=DEBUG
           - --accessLog=true
           - --accessLog.filePath=/traefik.log
           - --accessLog.bufferingSize=100
-          - --accessLog.filters.statusCodes=400-499
+          #- --accessLog.filters.statusCodes=400-499
           - --providers.docker=true
           - --providers.docker.endpoint=unix:///var/run/docker.sock
           - --providers.docker.exposedByDefault=false
@@ -190,12 +196,12 @@
     - name: Deploy Traefik
       docker_container:
         name: '{{pgrole}}'
-        image: traefik:v2.4
+        image: traefik:latest
         pull: yes
         published_ports:
           - "80:80"
           - "443:443"
-          - "8080:8080"
+          #- "8080:8080"
         command: '{{command}}'
         security_opts:
           - no-new-privileges:true
@@ -213,6 +219,35 @@
         state: started
         networks:
           - name: traefik_proxy
+
+    - name: set labels error-page
+      set_fact:
+        labelserror:
+          traefik.enable: 'true'
+          traefik.http.routers.error-pages-rtr.rule: 'HostRegexp(`{host:.+}`)'
+          traefik.http.routers.error-pages-rtr.priority: '10'
+          traefik.http.routers.error-pages-rtr.entrypoints: 'https'
+          traefik.http.routers.error-pages-rtr.tls: 'true'
+          traefik.http.routers.error-pages-rtr.middlewares: 'error-pages-middleware'
+          traefik.http.middlewares.error-pages-middleware.errors.status: '400-599'
+          traefik.http.middlewares.error-pages-middleware.errors.service: 'error-pages-svc'
+          traefik.http.middlewares.error-pages-middleware.errors.query: '/{status}.html'
+          traefik.http.services.error-pages-svc.loadbalancer.server.port: '8080'
+
+    - name: Deploy tarampampam/error-pages
+      docker_container:
+        name: '{{ pgerro }}'
+        image: tarampampam/error-pages:latest
+        pull: yes
+        env:
+          TEMPLATE_NAME: app-down
+        labels: '{{labelserror}}'
+        restart_policy: unless-stopped
+        state: started
+        purge_networks: yes
+        networks:
+          - name: traefik_proxy
+
 
     - name: Google OAuth2 tasks
       include_tasks: "{{ settings.source }}/includes/dockerapps/templates/{{pgrole}}/oauth.yml"
