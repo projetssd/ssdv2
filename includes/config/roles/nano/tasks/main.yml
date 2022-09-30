@@ -2,6 +2,7 @@
 - hosts: localhost
   connection: local
   gather_facts: false
+  become: true
   tasks:
 
     - name: Check yaml.nanorc exists
@@ -20,3 +21,11 @@
       template:
         src: "{{ settings.source }}/includes/config/roles/nano/templates/yaml.nanorc.j2"
         dest: "/usr/share/nano/yaml.nanorc"
+
+    - name: change rights
+      file:
+        path: "/usr/share/nano/yaml.nanorc"
+        state: touch
+        owner: "{{ lookup('env','MYUID') }}"
+        mode: 0755
+
