@@ -481,7 +481,7 @@ function install_common() {
   # toutes les installs communes
   # installation des dépendances, permet de créer les docker network via ansible
   ansible-galaxy collection install community.general
-  ansible-galaxy collection install community.docker
+  #ansible-galaxy collection install community.docker
   # dépendence permettant de gérer les fichiers yml
   ansible-galaxy install kwoodson.yedit
 
