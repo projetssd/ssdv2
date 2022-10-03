@@ -102,10 +102,10 @@
           ## Services - API
           traefik.http.routers.traefik-rtr.service: 'api@internal'
           ## Middlewares
-          traefik.http.routers.traefik-rtr.middlewares: "error-pages-middleware,{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
-            else 'chain-basic-auth@file' if auth_enabled and sub[pgrole].auth == 'basique' | default(false)
+          traefik.http.routers.traefik-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
+            else 'chain-basic-auth@file,error-pages-middleware' if auth_enabled and sub[pgrole].auth == 'basique' | default(false)
             else 'chain-oauth@file' if auth_enabled and sub[pgrole].auth == 'oauth' | default(false)
-            else 'chain-no-auth@file' if auth_enabled and sub[pgrole].auth == 'aucune'}}"
+            else 'chain-no-auth@file,error-pages-middleware' if auth_enabled and sub[pgrole].auth == 'aucune'}}"
       when: cloudflare_enabled
 
     - name: label traefik without cloudflare
@@ -125,10 +125,10 @@
           ## Services - API
           traefik.http.routers.traefik-rtr.service: 'api@internal'
           ## Middlewares
-          traefik.http.routers.traefik-rtr.middlewares: "error-pages-middleware,{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
-            else 'chain-basic-auth@file' if auth_enabled and sub[pgrole].auth == 'basique' | default(false)
+          traefik.http.routers.traefik-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
+            else 'chain-basic-auth@file,error-pages-middleware' if auth_enabled and sub[pgrole].auth == 'basique' | default(false)
             else 'chain-oauth@file' if auth_enabled and sub[pgrole].auth == 'oauth' | default(false)
-            else 'chain-no-auth@file' if auth_enabled and sub[pgrole].auth == 'aucune'}}"
+            else 'chain-no-auth@file,error-pages-middleware' if auth_enabled and sub[pgrole].auth == 'aucune'}}"
       when: not cloudflare_enabled
 
     - name: command traefik with cloudflare

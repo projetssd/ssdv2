@@ -19,34 +19,41 @@
         state: absent
 
     - name: Creating paths
-      file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
+      file: 'path={{item}} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID') }}'
       with_items:
-        - '{{ settings.storage }}/docker/{{user.name}}/plex_patrol'
+        - '{{ lookup('env','SETTINGS_STORAGE') }}/docker/{{ lookup('env','USER') }}/plex_patrol'
 
     - name: Check config exists
       stat:
-        path: "{{ settings.storage }}/docker/{{user.name}}/plex_patrol/settings.ini"
+        path: "{{ lookup('env','SETTINGS_STORAGE') }}/docker/{{ lookup('env','USER') }}/plex_patrol/settings.ini"
       register: plex_patrol_config
 
     - name: Import default config
       template:
-        src: "{{ settings.source }}/includes/config/roles/plex_patrol/templates/settings.ini.j2"
-        dest: "{{ settings.storage }}/docker/{{user.name}}/plex_patrol/settings.ini"
-        owner: "{{user.userid}}"
-        group: "{{user.groupid}}"
+        src: "{{ lookup('env','SETTINGS_SOURCE') }}/includes/config/roles/plex_patrol/templates/settings.ini.j2"
+        dest: "{{ lookup('env','SETTINGS_STORAGE') }}/docker/{{ lookup('env','USER') }}/plex_patrol/settings.ini"
+        owner: "{{ lookup('env','MYUID') }}"
+        group: "{{ lookup('env','MYGID') }}"
         mode: 0775
         force: yes
       when: not plex_patrol_config.stat.exists
+
+    - name: 'Set Know Facts'
+      set_fact:
+        pg_volumes:
+          - "{{ lookup('env','SETTINGS_STORAGE') }}/docker/{{ lookup('env','USER') }}/plex_patrol:/config"
+          - '/etc/localtime:/etc/localtime:ro'
+        pg_env:
+          PUID: "{{ lookup('env','MYUID') }}"
+          PGID: "{{ lookup('env','MYGID') }}"
 
     - name: Create and start container
       docker_container:
         name: plex_patrol
         image: "cloudb0x/plex_patrol:latest"
         pull: yes
-        user: "{{user.userid}}:{{user.groupid}}"
-        volumes:
-          - "/etc/localtime:/etc/localtime:ro"
-          - "{{ settings.storage }}/docker/{{user.name}}/plex_patrol:/config"
+        env: "{{ pg_env }}"
+        volumes: "{{ pg_volumes }}"
         networks:
           - name: traefik_proxy
         purge_networks: yes
