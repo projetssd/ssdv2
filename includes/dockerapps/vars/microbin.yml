@@ -1,0 +1,6 @@
+---
+pgrole: 'microbin'
+intport: '8080'
+image: 'microbin-docker'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/app/pasta_data"

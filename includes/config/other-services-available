@@ -1,5 +1,6 @@
 Autoindex-NginxWebServer
 Baikal-CalDAVCardDAVServer
+Benphelps-CustomHomePage
 Bookstack-WikiDdesignedCreatingDocumentation
 Bitwarden-BitwardenServerAPIImplementation
 Calibre-PowerfulAndEasyToUseEBookManager
@@ -21,6 +22,7 @@ Filebrowser-SelfHostedFileSyncAndSharing
 Filerun-SelfHostedFileSyncAndSharing
 Firefox-MozillaFirefoxFreeOpenSourceWebBrowser
 Firefoxsyncserver-MozillaFirefoxSynchronisationServer
+Foptimum- exporterForInternetConnection
 Freshrss-SelfHostableAggregator
 Gitlab-GitLabDockerImages
 Gitea-GitCommunityLightweightCode
@@ -41,6 +43,7 @@ Mattermost-SelfHostableOnlineChatService
 Mediawiki-FreeAndOpenSourceWikiSoftware
 Mellow-CanCommunicateWithSeveralAPIs
 Metube-WebUIforYoutubeDL
+Microbin-PasteBinLike
 Minecraft-McMyAdminadministrateMinecraft
 Mkvtoolnix-ToolsToCreateAlterAndInspect
 MonicaHQ-PersonalCRM
