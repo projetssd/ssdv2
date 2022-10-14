@@ -3,7 +3,7 @@ pgrole: 'wizarr'
 intport: '5690'
 image: 'ghcr.io/wizarrrr/wizarr'
 pg_volumes:
-  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/data/database:"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/data/database"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:
   APP_URL: "{{ fqdn }}"
