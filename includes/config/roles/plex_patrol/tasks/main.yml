@@ -19,9 +19,9 @@
         state: absent
 
     - name: Creating paths
-      file: 'path={{item}} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID') }}'
+      file: path={{item}} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID') }}
       with_items:
-        - '{{ lookup('env','SETTINGS_STORAGE') }}/docker/{{ lookup('env','USER') }}/plex_patrol'
+        - "{{ lookup('env','SETTINGS_STORAGE') }}/docker/{{ lookup('env','USER') }}/plex_patrol"
 
     - name: Check config exists
       stat:
