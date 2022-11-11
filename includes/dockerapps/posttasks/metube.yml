@@ -16,8 +16,8 @@
     recurse: "yes"
   with_items:
     - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config"
-    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/downloads/videos"
-    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/downloads/audios"
+    - "{{ lookup('env','HOME') }}/{{ pgrole }}/videos"
+    - "{{ lookup('env','HOME') }}/{{ pgrole }}/audios"
 
 - name: Restart {{ pgrole }}
   docker_container:
