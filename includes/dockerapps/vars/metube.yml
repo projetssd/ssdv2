@@ -4,13 +4,18 @@ intport: '8081'
 image: 'alexta69/metube:latest'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
-  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/downloads:/downloads:rw"
+  - "{{ lookup('env','HOME') }}/{{ pgrole }}:/downloads:rw"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:
+  UID: "{{ lookup('env','MYUID') }}"
+  GID: "{{ lookup('env','MYGID') }}"
   TZ: 'Europe/Paris'
   DOWNLOAD_DIR: '/downloads/videos'
   AUDIO_DOWNLOAD_DIR: '/downloads/audios'
+  CUSTOM_DIRS: 'true'
+  CREATE_CUSTOM_DIRS: 'true'
   STATE_DIR: '/config'
   OUTPUT_TEMPLATE: '%(uploader)s/%(title)s.%(ext)s'
-specific_docker_info:
-  user: "{{ lookup('env','MYUID') }}:{{ lookup('env','MYGID') }}"
+#  YTDL_OPTIONS: '{"writesubtitles": true,"subtitleslangs": ["fr","-live_chat"],"writethumbnail": true,"postprocessors":[{"key": "FFmpegEmbedSubtitle", "already_have_subtitle": false},{"key": "FFmpegMetadata", "add_chapters": true},{"key": "SponsorBlock"},{"key": "ModifyChapters", "remove_sponsor_segments": ["sponsor"]}]}'
+#specific_docker_info:
+#  user: "{{ lookup('env','MYUID') }}:{{ lookup('env','MYGID') }}"
