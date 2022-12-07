@@ -1,0 +1,12 @@
+---
+pgrole: 'librespeed'
+intport: '80'
+image: 'scr.io/linuxserver/librespeed:latest'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config:rw"
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  PASSWORD: 'PASSWORD'
