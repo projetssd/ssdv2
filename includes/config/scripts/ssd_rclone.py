@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Bibliotheques pour gérer les fonctions python
 d'interaction avec rclone pour ssd
