@@ -1158,7 +1158,7 @@ function manage_account_yml() {
 }
 
 function get_from_account_yml() {
-  tempresult=$(ansible-playbook ${SETTINGS_SOURCE}/includes/config/playbooks/tget_var.yml -e myvar=$1 -e tempfile=${tempfile}|grep "##RESULT##"|awk -F'##RESULT##' '{print $2}')
+  tempresult=$(ansible-playbook ${SETTINGS_SOURCE}/includes/config/playbooks/get_var.yml -e myvar=$1 -e tempfile=${tempfile}|grep "##RESULT##"|awk -F'##RESULT##' '{print $2}')
   echo $tempresult
 }
 
