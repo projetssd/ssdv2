@@ -1,0 +1,11 @@
+---
+pgrole: 'vnstat'
+intport: '8685'
+image: 'vergoh/vnstat'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/etc/ntopng"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/var/lib/ntopng"
+  - '/etc/localtime:/etc/localtime:ro'
+  - '/etc/timezone:/etc/timezone:to'
+pg_env:
+  HTTP_PORT: "8685"

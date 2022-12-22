@@ -45,15 +45,8 @@ if [ "$myid" -eq 0 ]; then
   mkdir -p $BACKUP_FOLDER
 
   echo -e "${CCYAN}> Création de l'archive${CEND}"
-  tar cvzf $ARCHIVE -P {{ settings.storage }} /home/{{ lookup('env','USER') }}/.config/ssd /home/{{ lookup('env','USER') }}/.vault_pass /home/{{ lookup('env','USER') }}/scripts /home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf /etc/systemd {{ settings.source }}/ssddb /opt/sa /opt/gen-sa --ignore-failed-read
+  tar cvzf $ARCHIVE -P {{ settings.storage }} /home/{{ lookup('env','USER') }}/.config/ssd /home/{{ lookup('env','USER') }}/.ansible /home/{{ lookup('env','USER') }}/.vault_pass /home/{{ lookup('env','USER') }}/scripts /home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf /etc/systemd {{ settings.source }}/ssddb /opt/sa /opt/gen-sa --ignore-failed-read
   sleep 2s
-
-  # Si une erreur survient lors de la compression
-  if [[ -s "$ERROR_FILE" ]]; then
-      echo -e "\n${CRED}/!\ ERREUR: Echec de la compression des fichiers système.${CEND}" | tee -a $LOG_FILE
-      echo -e "" | tee -a $LOG_FILE
-      exit 1
-  fi
 
   # Restart Plex
    if [[ ${plex} == "true" ]]; then
