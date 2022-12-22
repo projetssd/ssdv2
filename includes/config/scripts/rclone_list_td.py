@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Script permettant de choisir un teamdrive
 dans le rclone.conf
