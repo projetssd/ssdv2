@@ -1,0 +1,30 @@
+---
+- hosts: localhost
+  gather_facts: false
+
+
+  tasks:
+  - name: split vars
+    set_fact:
+      myindexes: "{{ myvar | split('.') }}"
+
+  - name: init result
+    set_fact:
+      myresult: "{{ vars }}"
+
+  - name: loop block
+    block:
+    - name: set variables
+      set_fact:
+        myresult: "{{ myresult[item] }}"
+      with_items: "{{ myindexes }}"
+
+    rescue:
+    - name: set empty var
+      set_fact:
+        myresult: "notfound"
+
+  - name: debug
+    debug:
+      msg: "##RESULT##{{ myresult }}##RESULT##"
+    
