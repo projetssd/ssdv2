@@ -12,10 +12,8 @@ Liste non exhaustive :
 
 ## Comment l'installer ?
 
-Le projet se trouve ici : https://github.com/projetssd/ssdv2
+[Les étapes d'installation](https://github.com/projetssd/ssdv2/wiki/pas-%C3%A0-pas)
 
-Les étapes d'installation : https://github.com/projetssd/ssdv2/wiki/pas-%C3%A0-pas
+[Le wiki](https://github.com/projetssd/ssdv2/wiki)
 
-Le wiki : https://github.com/projetssd/ssdv2/wiki
-
-Le discord pour le support : https://discordapp.com/invite/kkwEvV6dfj
+[Le discord pour le support](https://discordapp.com/invite/kkwEvV6dfj)
