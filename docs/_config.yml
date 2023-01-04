@@ -1,0 +1,10 @@
+lsi: false
+safe: true
+source: https://github.com/projetssd/ssdv2
+incremental: false
+highlighter: rouge
+gist:
+  noscript: false
+kramdown:
+  math_engine: mathjax
+  syntax_highlighter: rouge
