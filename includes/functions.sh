@@ -9,7 +9,7 @@ function logo() {
   nocolor='\033[0m'   # no color
   colorp='\033[1;34m' # Bold BLUE
   colora='\033[1;32m' # Bold GREEN
-  projetname='SSD - V2.0'
+  projetname='SSD - V2.2'
   authors='Authors: laster13 - Merrick'
 
   printf " \n"
@@ -1543,7 +1543,7 @@ function check_docker_group() {
 
 function stocke_public_ip() {
   echo "Stockage des adresses ip publiques"
-  IPV4=$(dig @resolver4.opendns.com myip.opendns.com +short -4)
+  IPV4=$(curl https://ip.mn83.fr)
   echo "IPV4 = ${IPV4}"
   manage_account_yml network.ipv4 ${IPV4}
   #IPV6=$(dig @resolver1.ipv6-sandbox.opendns.com AAAA myip.opendns.com +short -6)
