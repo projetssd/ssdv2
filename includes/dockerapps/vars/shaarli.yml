@@ -1,0 +1,9 @@
+---
+pgrole: 'shaarli'
+intport: '80'
+image: 'shaarli/shaarli:latest'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/cache:/var/www/shaarli/cache:rw"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/var/www/shaarli/data:rw"
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+  - '/etc/localtime:/etc/localtime:ro'
