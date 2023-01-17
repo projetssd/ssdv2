@@ -13,9 +13,6 @@
     curl -s https://api.github.com/repos/trapexit/mergerfs/releases/latest \
       | jq -r ".assets[] | select(.name | test(\"{{ ansible_distribution|lower }}-{{ ansible_distribution_release|lower }}_amd64\")) \
       | .browser_download_url"
-  args:
-    executable: /bin/bash
-    warn: no
   register: mergerfs_download_url
   ignore_errors: yes
 
