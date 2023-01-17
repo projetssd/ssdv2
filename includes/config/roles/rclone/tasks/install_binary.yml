@@ -25,8 +25,7 @@
 - name: Install Binary | Cleanup rclone tmp path
   become: yes
   shell: rm -rf /tmp/rclone-*-linux-amd64
-  args:
-    warn: no
+
 
 - name: Install Binary | Display rclone version being installed
   become: yes

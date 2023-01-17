@@ -29,15 +29,11 @@
 
 - name: "CPU Frequency | Install 'linux-tools-{{ ansible_kernel }}'"
   shell: "apt-get install -qq $(apt-cache search -n linux-tools-{{ ansible_kernel }} | awk '{print $1}' | tail -n 1)"
-  args:
-    warn: false
   ignore_errors: yes
   when: ansible_distribution == 'Ubuntu'
 
 - name: "CPU Frequency | Install 'linux-perf-{{ ansible_kernel }}'"
   shell: "apt-get install -qq $(apt-cache search -n linux-perf-{{ ansible_kernel }} | awk '{print $1}' | tail -n 1)"
-  args:
-    warn: false
   ignore_errors: yes
   when: ansible_distribution == 'Debian'
 
