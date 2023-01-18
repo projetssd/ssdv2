@@ -13,6 +13,7 @@ pg_env:
   UID: '{{user.userid}}'
   GID: '{{user.groupid}}'
   TZ: 'Europe/Paris'
+  DOWNLOAD_DIRECTORY: "{{ lookup('env','HOME') }}/local/rutorrent_2"
 # tags spécifiques à ajouter à la construction du docker
 specific_docker_info:
   ports:

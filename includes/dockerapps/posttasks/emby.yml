@@ -32,8 +32,6 @@
       value: 'false'
     ignore_errors: yes
 
-  - name: 'Restart {{ pgrole }}'
-    docker_container:
-      name: '{{ pgrole }}'
-      state: started
+  - name: 'Deploying {{pgrole}}'
+    docker_container: "{{ docker_info }}"
   when: not xmlcheck.stat.exists

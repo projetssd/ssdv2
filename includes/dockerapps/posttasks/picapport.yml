@@ -10,7 +10,5 @@
     name: '{{ pgrole }}'
     state: stopped
 
-- name: 'Restart {{ pgrole }}'
-  docker_container:
-    name: '{{ pgrole }}'
-    state: started
+- name: 'Deploying {{pgrole}}'
+  docker_container: "{{ docker_info }}"

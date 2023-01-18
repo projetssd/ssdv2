@@ -9,7 +9,5 @@
   command:
     cmd: "chmod -R 777 {{ settings.storage }}/docker/{{user.name}}/{{pgrole}}"
 
-- name: 'Restart {{ pgrole }}'
-  docker_container:
-    name: '{{ pgrole }}'
-    state: started
+- name: 'Deploying {{pgrole}}'
+  docker_container: "{{ docker_info }}"

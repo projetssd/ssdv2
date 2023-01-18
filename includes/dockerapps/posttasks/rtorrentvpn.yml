@@ -229,7 +229,5 @@
     group: "{{user.name}}"
     recurse: yes
 
-- name: Restart Docker Container
-  docker_container:
-    name: '{{pgrole}}'
-    state: started
+- name: 'Deploying {{pgrole}}'
+  docker_container: "{{ docker_info }}"

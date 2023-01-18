@@ -19,7 +19,5 @@
     - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/downloads/videos"
     - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/downloads/audios"
 
-- name: Restart {{ pgrole }}
-  docker_container:
-    name: '{{ pgrole }}'
-    state: started
+- name: 'Deploying {{pgrole}}'
+  docker_container: "{{ docker_info }}"

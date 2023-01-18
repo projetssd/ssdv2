@@ -34,7 +34,5 @@
     line: 'method.set_key = event.download.finished,move_complete,"d.move_to_complete=$d.data_path=,$d.get_finished_dir="'
     state: absent
 
-- name: 'Restart {{ pgrole }}'
-  docker_container:
-    name: '{{ pgrole }}'
-    state: started
+- name: 'Deploying {{pgrole}}'
+  docker_container: "{{ docker_info }}"

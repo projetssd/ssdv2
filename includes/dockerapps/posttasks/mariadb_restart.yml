@@ -7,7 +7,5 @@
 - name: Launch Pretask
   include_tasks: "{{ settings.source }}/includes/dockerapps/templates/generique/mariadb.yml"
 
-- name: 'Restart {{ pgrole }}'
-  docker_container:
-    name: '{{ pgrole }}'
-    state: started
+- name: 'Deploying {{pgrole}}'
+  docker_container: "{{ docker_info }}"
