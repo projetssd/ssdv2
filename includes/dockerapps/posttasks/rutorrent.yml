@@ -33,7 +33,5 @@
     dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config/custom_plugins/ratiocolor"
     clone: yes
 
-- name: 'Restart {{ pgrole }}'
-  docker_container:
-    name: '{{ pgrole }}'
-    state: started
+- name: 'Deploying {{pgrole}}'
+  docker_container: "{{ docker_info }}"
