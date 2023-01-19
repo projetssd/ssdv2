@@ -1,0 +1,9 @@
+---
+pgrole: 'statping'
+intport: '8080'
+image: 'statping/statping'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/app:/app"
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  DB_CONN: "sqlite"
