@@ -6,9 +6,7 @@ pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}:/data"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
   - '/etc/localtime:/etc/localtime:ro'
-specific_docker_info:
-  links:
-    - 'db-{{pgrole}}:sismics_reader_hsqldb'
+
 
 posttasks:
   - "hsqldb"

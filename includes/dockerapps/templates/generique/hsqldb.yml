@@ -6,7 +6,7 @@
 
 - name: 'Deploying db-{{pgrole}}'
   docker_container:
-    name: 'db-{{pgrole}}'
+    name: 'sismics_reader_hsqldb'
     recreate: true
     image: 'sismics/hsqldb:2.3.0'
     pull: yes
