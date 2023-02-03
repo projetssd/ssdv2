@@ -14,7 +14,7 @@
       - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}:/data"
       - '/etc/localtime:/etc/localtime:ro'
     env:
-      DN_NAME: "reader"
+      DB_NAME: "reader"
     restart_policy: unless-stopped
     networks:
       - name: '{{pgrole}}-net'
