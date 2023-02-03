@@ -8,7 +8,7 @@ pg_volumes:
   - '/etc/localtime:/etc/localtime:ro'
 specific_docker_info:
   links:
-    - 'db-{{pgrole}}:db'
+    - 'db-{{pgrole}}:sismics_reader_hsqldb'
 
 posttasks:
   - "hsqldb"
