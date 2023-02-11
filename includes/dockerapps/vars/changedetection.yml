@@ -1,0 +1,9 @@
+pgrole: 'changedetection'
+intport: '5000'
+image: 'lscr.io/linuxserver/changedetection.io:latest'
+pg_volumes:
+  - '/etc/localtime:/etc/localtime:ro'
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
