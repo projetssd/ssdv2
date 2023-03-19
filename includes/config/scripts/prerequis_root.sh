@@ -65,7 +65,9 @@ apt-get install -y --reinstall \
   ca-certificates \
     curl \
     gnupg \
-    lsb-release
+    lsb-release \
+    fuse3 \
+    apparmor
 
 rm -f /usr/bin/python
 
