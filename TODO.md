@@ -1,0 +1,2 @@
+- outils sans interface web (cloudplow, autoscan...) : container ?
+- mettre un container dédié aux envois de mail (qui fait vers un relais existant = https://hub.docker.com/r/turgon37/smtp-relay ?)

@@ -26,7 +26,7 @@
 
 - name: Mounts | Install 'fuse'
   apt:
-    name: fuse
+    name: fuse3
     state: present
 
 - name: Mounts | Import 'fuse.conf'
