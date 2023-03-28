@@ -1,0 +1,17 @@
+---
+pgrole: 'wireguard-ui'
+intport: '5000'
+image: 'ngoduykhanh/wireguard-ui:latest'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/wireguard/config:/config"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/db:/app/db"
+pg_env:
+
+  TZ: 'Europe/Paris'
+  WGUI_LOG_LEVEL: "DEBUG"
+
+# tags spécifiques à ajouter à la construction du docker
+specific_docker_info:
+  capabilities:
+  - NET_ADMIN
+
