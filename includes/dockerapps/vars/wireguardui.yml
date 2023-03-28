@@ -1,5 +1,5 @@
 ---
-pgrole: 'wireguard-ui'
+pgrole: 'wireguardui'
 intport: '5000'
 image: 'ngoduykhanh/wireguard-ui:latest'
 pg_volumes:
