@@ -107,7 +107,7 @@
           pg_labels:
             traefik.enable: 'true'
             ## TCP Routers
-            traefik.http.routers.plausible-rtr.entrypoints: 'https'
+            traefik.http.routers.plausible-rtr.entrypoints: 'http,https'
             traefik.http.routers.plausible-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
             traefik.http.routers.plausible-rtr.tls: 'true'
             traefik.http.routers.plausible-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)

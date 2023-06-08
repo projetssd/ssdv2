@@ -12,7 +12,7 @@ pg_env:
 # Pour contourner l'authentification pour des outils de style nzb360, décommentez le pavé ci dessous
 # et remplacer API par votre API prowlarr
 #extra_labels:
-#  traefik.http.routers.prowlarr-rtr-bypass.entrypoints: 'https'
+#  traefik.http.routers.prowlarr-rtr-bypass.entrypoints: 'http,https'
 #  traefik.http.routers.prowlarr-rtr-bypass.rule: 'Headers(`X-Api-Key`, `API`)'
 #  traefik.http.routers.prowlarr-rtr-bypass.priority: '100'
 #  traefik.http.routers.prowlarr-rtr-bypass.tls: 'true'

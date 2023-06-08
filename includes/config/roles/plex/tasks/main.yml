@@ -132,7 +132,7 @@
         default_labels:
           traefik.enable: 'true'
           ## HTTP Routers
-          traefik.http.routers.plex-rtr.entrypoints: 'https'
+          traefik.http.routers.plex-rtr.entrypoints: 'http,https'
           traefik.http.routers.plex-rtr.rule: 'Host(`{{sub.media if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.plex-rtr.tls: 'true'
           ## HTTP Services

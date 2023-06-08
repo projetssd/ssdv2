@@ -37,7 +37,7 @@ services:
       - PGID={{user.groupid}}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.rtorrentvpn-rtr.entrypoints=https"
+      - "traefik.http.routers.rtorrentvpn-rtr.entrypoints=http,https"
       - "traefik.http.routers.rtorrentvpn-rtr.rule=Host(`{{sub.rtorrentvpn if sub_enabled else pgrole}}.{{user.domain}}`)"
       - "traefik.http.routers.rtorrentvpn-rtr.tls=true"
       - "traefik.http.routers.rtorrentvpn-rtr.middlewares={{ 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"

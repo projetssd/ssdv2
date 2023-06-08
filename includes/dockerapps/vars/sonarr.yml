@@ -17,7 +17,7 @@ pg_env:
 # Pour contourner l'authentification pour des outils de style nzb360, décommentez le pavé ci dessous
 # et remplacer CHANGEME par votre API sonarr
 #extra_labels:
-#  traefik.http.routers.sonarr-rtr-bypass.entrypoints: 'https'
+#  traefik.http.routers.sonarr-rtr-bypass.entrypoints: 'http,https'
 #  traefik.http.routers.sonarr-rtr-bypass.rule: 'Headers(`X-Api-Key`, `CHANGEME`)'
 #  traefik.http.routers.sonarr-rtr-bypass.priority: '100'
 #  traefik.http.routers.sonarr-rtr-bypass.tls: 'true'

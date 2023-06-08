@@ -88,10 +88,10 @@
         pg_labels:
           traefik.enable: 'true'
           ## HTTP Routers
-          traefik.http.routers.synclounge-webui-rtr.entrypoints: 'https'
+          traefik.http.routers.synclounge-webui-rtr.entrypoints: 'http,https'
           traefik.http.routers.synclounge-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.synclounge-webui-rtr.tls: 'true'
-          traefik.http.routers.synclounge-slserver-rtr.entrypoints: 'https'
+          traefik.http.routers.synclounge-slserver-rtr.entrypoints: 'http,https'
           traefik.http.routers.synclounge-slserver-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`) && PathPrefix(`/slserver`)'
           traefik.http.routers.synclounge-slserver-rtr.tls: 'true'
           ## Middlewares

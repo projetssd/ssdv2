@@ -24,7 +24,7 @@
   set_fact:
     oauth_labels:
       traefik.enable: 'true'
-      traefik.http.routers.oauth-rtr.entrypoints: 'https'
+      traefik.http.routers.oauth-rtr.entrypoints: 'http,https'
       traefik.http.routers.oauth-rtr.rule: 'Host(`oauth.{{user.domain}}`)'
       traefik.http.routers.oauth-rtr.tls: 'true'
       traefik.http.routers.oauth-rtr.tls.certresolver: 'letsencrypt' 

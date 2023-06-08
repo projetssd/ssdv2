@@ -37,7 +37,7 @@
         nextcloud_labels:
           traefik.enable: 'true'
           ## TCP Routers
-          traefik.tcp.routers.{{pgrole}}-tcp.entrypoints: 'https'
+          traefik.tcp.routers.{{pgrole}}-tcp.entrypoints: 'http,https'
           traefik.tcp.routers.{{pgrole}}-tcp.rule: 'HostSNI(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.tcp.routers.{{pgrole}}-tcp.tls: 'true'
           traefik.tcp.routers.{{pgrole}}-tcp.tls.passthrough: 'true'
@@ -126,7 +126,7 @@
       set_fact:
         co_labels:
           traefik.enable: 'true'
-          traefik.http.routers.collabora-rtr.entrypoints: 'https'
+          traefik.http.routers.collabora-rtr.entrypoints: 'http,https'
           traefik.http.routers.collabora-rtr.rule: 'Host(`collabora.{{user.domain}}`)'
           traefik.http.routers.collabora-rtr.tls: 'true'
           ## HTTP Services
@@ -162,7 +162,7 @@
       set_fact:
         off_labels:
           traefik.enable: 'true'
-          traefik.http.routers.office-rtr.entrypoints: 'https'
+          traefik.http.routers.office-rtr.entrypoints: 'http,https'
           traefik.http.routers.office-rtr.rule: 'Host(`office.{{user.domain}}`)'
           traefik.http.routers.office-rtr.tls: 'true'
           traefik.http.routers.office-rtr.service: 'office-svc'

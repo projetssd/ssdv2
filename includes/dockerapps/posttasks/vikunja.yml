@@ -10,7 +10,7 @@
     pg_labels:
       traefik.enable: 'true'
       ## HTTP Routers
-      traefik.http.routers.apivikunja-rtr.entrypoints: 'https'
+      traefik.http.routers.apivikunja-rtr.entrypoints: 'http,https'
       traefik.http.routers.apivikunja-rtr.rule: 'Host(`apivikunja.{{ user.domain }}`)'
       traefik.http.routers.apivikunja-rtr.tls: 'true'
       ## HTTP Services

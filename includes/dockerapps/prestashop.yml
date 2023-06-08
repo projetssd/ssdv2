@@ -87,7 +87,7 @@
         pg_labels:
           traefik.enable: 'true'
           ## HTTP Routers
-          traefik.http.routers.prestashop-rtr.entrypoints: 'https'
+          traefik.http.routers.prestashop-rtr.entrypoints: 'http,https'
           traefik.http.routers.prestashop-rtr.rule: 'Host(`{{sub.prestashop if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.prestashop-rtr.tls: 'true'
           ## Middlewares

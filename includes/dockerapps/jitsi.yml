@@ -113,7 +113,7 @@
           pg_labels:
             traefik.enable: 'true'
             ## HTTP Routers
-            traefik.http.routers.jitsi-rtr.entrypoints: 'https'
+            traefik.http.routers.jitsi-rtr.entrypoints: 'http,https'
             traefik.http.routers.jitsi-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
             traefik.http.routers.jitsi-rtr.tls: 'true'
             ## Middlewares

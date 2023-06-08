@@ -123,7 +123,7 @@
         grafana_labels:
           traefik.enable: 'true'
           ## HTTP Routers
-          traefik.http.routers.grafana-rtr.entrypoints: 'https'
+          traefik.http.routers.grafana-rtr.entrypoints: 'http,https'
           traefik.http.routers.grafana-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.grafana-rtr.tls: 'true'
           ## HTTP Services

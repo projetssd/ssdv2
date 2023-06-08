@@ -41,7 +41,7 @@
         pg_labels:
           traefik.enable: 'true'
           ## HTTP Routers
-          traefik.http.routers.bitwarden-rtr.entrypoints: 'https'
+          traefik.http.routers.bitwarden-rtr.entrypoints: 'http,https'
           traefik.http.routers.bitwarden-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.bitwarden-rtr.priority: '1'
           traefik.http.routers.bitwarden-rtr.tls: 'true'
@@ -49,14 +49,14 @@
           traefik.http.routers.bitwarden-rtr.service: 'bitwarden-svc'
           traefik.http.services.bitwarden-svc.loadbalancer.server.port: '80'
           ## Bitwarden WebSocket
-          traefik.http.routers.bitwardenHub-rtr.entrypoints: 'https'
+          traefik.http.routers.bitwardenHub-rtr.entrypoints: 'http,https'
           traefik.http.routers.bitwardenHub-rtr.rule: '(Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`) && Path(`/notifications/hub`))'
           traefik.http.routers.bitwardenHub-rtr.priority: '2'
           traefik.http.routers.bitwardenHub-rtr.tls: 'true'
           traefik.http.routers.bitwardenHub-rtr.service: 'bitwardenHub-svc'
           traefik.http.services.bitwardenHub-svc.loadbalancer.server.port: '3012'
 #         ## Admin Page - Used when DISABLE_ADMIN_TOKEN=true above
-          traefik.http.routers.bitwardenAdmin-rtr.entrypoints: 'https'
+          traefik.http.routers.bitwardenAdmin-rtr.entrypoints: 'http,https'
           traefik.http.routers.bitwardenAdmin-rtr.rule: '(Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`) && Path(`/admin`))'
           traefik.http.routers.bitwardenAdmin-rtr.priority: '3'
           traefik.http.routers.bitwardenAdmin-rtr.tls: 'true'

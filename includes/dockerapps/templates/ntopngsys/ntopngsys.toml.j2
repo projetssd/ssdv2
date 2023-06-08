@@ -1,6 +1,6 @@
 [http.routers]
   [http.routers.ntopngsys-rtr]
-      entryPoints = ["https"]
+      entryPoints = ["http,https"]
       rule = "Host(`{{sub.ntopngsys.ntopngsys if sub_enabled else pgrole}}.{{user.domain}}`)"
       tls = true
       {% if check.stat.exists and sub[pgrole].auth == 'authelia' %}

@@ -1,6 +1,6 @@
 [http.routers]
   [http.routers.nginx-rtr]
-      entryPoints = ["https"]
+      entryPoints = ["http,https"]
       rule = "Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)"
       service = "nginx-svc"
       middlewares = ["{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)

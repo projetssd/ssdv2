@@ -93,7 +93,7 @@
           traefik.http.routers.http-catchall.middlewares: 'redirect-to-https'
           traefik.http.middlewares.redirect-to-https.redirectscheme.scheme: 'https'
           ## HTTP Routers
-          traefik.http.routers.traefik-rtr.entrypoints: 'https'
+          traefik.http.routers.traefik-rtr.entrypoints: 'http,https'
           traefik.http.routers.traefik-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.traefik-rtr.tls: 'true'
           traefik.http.routers.traefik-rtr.tls.certresolver: 'letsencrypt'
@@ -118,7 +118,7 @@
           traefik.http.routers.http-catchall.middlewares: 'redirect-to-https'
           traefik.http.middlewares.redirect-to-https.redirectscheme.scheme: 'https'
           ## HTTP Routers
-          traefik.http.routers.traefik-rtr.entrypoints: 'https'
+          traefik.http.routers.traefik-rtr.entrypoints: 'http,https'
           traefik.http.routers.traefik-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.traefik-rtr.tls: 'true'
           traefik.http.routers.traefik-rtr.tls.certresolver: 'letsencrypt'
@@ -226,7 +226,7 @@
           traefik.enable: 'true'
           traefik.http.routers.error-pages-rtr.rule: 'HostRegexp(`{host:.+}`)'
           traefik.http.routers.error-pages-rtr.priority: '10'
-          traefik.http.routers.error-pages-rtr.entrypoints: 'https'
+          traefik.http.routers.error-pages-rtr.entrypoints: 'http,https'
           traefik.http.routers.error-pages-rtr.tls: 'true'
           traefik.http.routers.error-pages-rtr.middlewares: 'error-pages-middleware'
           traefik.http.middlewares.error-pages-middleware.errors.status: '400-599'

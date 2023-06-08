@@ -94,10 +94,10 @@
         pg_labels:
           traefik.enable: 'true'
           ## HTTP Routers
-          traefik.http.routers.seafile-rtr.entrypoints: 'https'
+          traefik.http.routers.seafile-rtr.entrypoints: 'http,https'
           traefik.http.routers.seafile-rtr.rule: 'Host(`{{sub.seafile if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.seafile-rtr.tls: 'true'
-          traefik.http.routers.seafile-secure-rtr.entrypoints: 'https'
+          traefik.http.routers.seafile-secure-rtr.entrypoints: 'http,https'
           traefik.http.routers.seafile-secure-rtr.rule: 'Host(`seafile.{{user.domain}}`)'
           traefik.http.routers.seafile-secure-rtr.tls: 'true'
           ## Middlewares
