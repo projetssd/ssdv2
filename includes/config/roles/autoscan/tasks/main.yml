@@ -47,10 +47,6 @@
         - "/home/{{ lookup('env','USER') }}/scripts/plex_autoscan"
         when: plex_autoscan_service_running
 
-      - name: "create plex_autoscan state"
-        shell: |
-          echo "0" > {{ settings.storage }}/status/plex_autoscan
-
       when: plex_autoscan_service.stat.exists
 
     - name: 'Set Known Facts'
@@ -100,7 +96,5 @@
         mode: 0600
         force: yes
 
-    - name: "create plex_autoscan state"
-      shell: |
-        echo "2" > {{ settings.storage }}/status/autoscan
+
 

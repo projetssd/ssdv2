@@ -149,7 +149,4 @@
       become: yes
       systemd: state=started name=cloudplow daemon_reload=yes enabled=yes
 
-    - name: "create plex_autoscan state"
-      shell: |
-        echo "2" > {{ settings.storage }}/status/cloudplow
 

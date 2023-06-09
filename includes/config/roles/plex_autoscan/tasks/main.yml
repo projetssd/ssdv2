@@ -28,11 +28,6 @@
           path: "/home/{{ lookup('env','USER') }}/scripts/autoscan"
           state: absent
 
-      - name: "create autoscan state"
-        become: yes
-        shell: |
-          echo "0" > {{ settings.storage }}/status/autoscan
-
       when: autoscan_service.stat.exists
 
     - name: Check if plex_autoscan.service exists
@@ -164,8 +159,5 @@
       ignore_errors: yes
       tags: plex_autoscan_update_sections
 
-    - name: "create plex_autoscan state"
-      become: yes
-      shell: |
-        echo "2" > {{ settings.storage }}/status/plex_autoscan
+
 
