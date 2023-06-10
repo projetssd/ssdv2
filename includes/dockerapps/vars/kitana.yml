@@ -10,5 +10,3 @@ pg_volumes:
 pg_env:
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
-  PLEX_URL: "http://plex:32400"
-  PLEX_TOKEN: "{{ plex.token }}"
