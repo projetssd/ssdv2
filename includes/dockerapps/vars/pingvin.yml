@@ -1,0 +1,11 @@
+---
+pgrole: 'pingvin'
+intport: '3000'
+image: 'stonith404/pingvin-share'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/data:/opt/app/backend/data"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/img:/opt/app/frontend/public/img"
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
