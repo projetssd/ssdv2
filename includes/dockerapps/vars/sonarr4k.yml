@@ -19,7 +19,7 @@ pg_env:
 # et remplacer API par votre API sonarr
 #extra_labels:
 #  traefik.http.routers.sonarr4k-rtr-bypass.entrypoints: 'http,https'
-#  traefik.http.routers.sonarr4k-rtr-bypass.rule: 'Headers(`X-Api-Key`, `ajouter_`)'
+#  traefik.http.routers.sonarr4k-rtr-bypass.rule: 'Header(`X-Api-Key`, `ajouter_`)'
 #  traefik.http.routers.sonarr4k-rtr-bypass.priority: '100'
 #  traefik.http.routers.sonarr4k-rtr-bypass.tls: 'true'
 #  traefik.http.routers.sonarr4k-rtr-bypass.middlewares: 'chain-no-auth@file'

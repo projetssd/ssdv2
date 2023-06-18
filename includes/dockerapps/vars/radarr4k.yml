@@ -19,7 +19,7 @@ pg_env:
 # et remplacer API par votre API radarr4k
 #extra_labels:
 #  traefik.http.routers.radarr4k-rtr-bypass.entrypoints: 'http,https'
-#  traefik.http.routers.radarr4k-rtr-bypass.rule: 'Headers(`X-Api-Key`, `API`)'
+#  traefik.http.routers.radarr4k-rtr-bypass.rule: 'Header(`X-Api-Key`, `API`)'
 #  traefik.http.routers.radarr4k-rtr-bypass.priority: '100'
 #  traefik.http.routers.radarr4k-rtr-bypass.tls: 'true'
 #  traefik.http.routers.radarr4k-rtr-bypass.middlewares: 'chain-no-auth@file'

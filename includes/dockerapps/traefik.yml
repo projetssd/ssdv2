@@ -87,11 +87,6 @@
       set_fact:
         labels:
           traefik.enable: 'true'
-          ## HTTP-to-HTTPS Redirect
-          traefik.http.routers.http-catchall.entrypoints: 'http'
-          traefik.http.routers.http-catchall.rule: 'HostRegexp(`{host:.+}`)'
-          traefik.http.routers.http-catchall.middlewares: 'redirect-to-https'
-          traefik.http.middlewares.redirect-to-https.redirectscheme.scheme: 'https'
           ## HTTP Routers
           traefik.http.routers.traefik-rtr.entrypoints: 'http,https'
           traefik.http.routers.traefik-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
@@ -112,11 +107,6 @@
       set_fact:
         labels:
           traefik.enable: 'true'
-          ## HTTP-to-HTTPS Redirect
-          traefik.http.routers.http-catchall.entrypoints: 'http'
-          traefik.http.routers.http-catchall.rule: 'HostRegexp(`{host:.+}`)'
-          traefik.http.routers.http-catchall.middlewares: 'redirect-to-https'
-          traefik.http.middlewares.redirect-to-https.redirectscheme.scheme: 'https'
           ## HTTP Routers
           traefik.http.routers.traefik-rtr.entrypoints: 'http,https'
           traefik.http.routers.traefik-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
@@ -138,6 +128,8 @@
           - --global.sendAnonymousUsage=true
           - --entryPoints.http.address=:80
           - --entryPoints.https.address=:443
+          - --entrypoints.web.http.redirections.entrypoint.to=https
+          - --entrypoints.web.http.redirections.entrypoint.scheme=https
           #- --entryPoints.traefik.address=:8080
           - --entrypoints.https.forwardedHeaders.trustedIPs=173.245.48.0/20,103.21.244.0/22,103.22.200.0/22,103.31.4.0/22,141.101.64.0/18,108.162.192.0/18,190.93.240.0/20,188.114.96.0/20,197.234.240.0/22,198.41.128.0/17,162.158.0.0/15,104.16.0.0/12,172.64.0.0/13,131.0.72.0/22
           - --api=true
@@ -168,6 +160,8 @@
           - --global.sendAnonymousUsage=true
           - --entryPoints.http.address=:80
           - --entryPoints.https.address=:443
+          - --entrypoints.web.http.redirections.entrypoint.to=https
+          - --entrypoints.web.http.redirections.entrypoint.scheme=https
           #- --entryPoints.traefik.address=:8080
           - --api=true
           - --log=true
@@ -196,7 +190,7 @@
     - name: Deploy Traefik
       docker_container:
         name: '{{pgrole}}'
-        image: traefik:v2.10.1
+        image: traefik:v3.0.0-beta2
         pull: yes
         published_ports:
           - "80:80"

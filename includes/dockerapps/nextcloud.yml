@@ -169,7 +169,7 @@
           traefik.http.services.office-svc.loadbalancer.server.port: '80'
           traefik.http.services.office-svc.loadbalancer.passhostheader: 'true'
           traefik.http.routers.office-rtr.middlewares: 'office-sslheaders'
-          traefik.http.middlewares.office-sslheaders.headers.customrequestheaders.X-Forwarded-Proto: 'https'
+          traefik.http.middlewares.office-sslheaders.header.customrequestheaders.X-Forwarded-Proto: 'https'
 
     - name: Create and start office container
       docker_container:

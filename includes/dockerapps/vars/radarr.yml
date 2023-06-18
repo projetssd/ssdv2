@@ -18,7 +18,7 @@ pg_env:
 # et remplacer API par votre API radarr
 #extra_labels:
 #  traefik.http.routers.radarr-rtr-bypass.entrypoints: 'http,https'
-#  traefik.http.routers.radarr-rtr-bypass.rule: 'Headers(`X-Api-Key`, `API`)'
+#  traefik.http.routers.radarr-rtr-bypass.rule: 'Header(`X-Api-Key`, `API`)'
 #  traefik.http.routers.radarr-rtr-bypass.priority: '100'
 #  traefik.http.routers.radarr-rtr-bypass.tls: 'true'
 #  traefik.http.routers.radarr-rtr-bypass.middlewares: 'chain-no-auth@file'
