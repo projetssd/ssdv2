@@ -196,7 +196,7 @@
     - name: Deploy Traefik
       docker_container:
         name: '{{pgrole}}'
-        image: traefik:latest
+        image: traefik:v2.10.1
         pull: yes
         published_ports:
           - "80:80"
