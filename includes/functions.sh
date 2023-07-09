@@ -1152,7 +1152,7 @@ function manage_account_yml() {
     else
       ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/manage_account_yml.yml" -e "account_key=${1} account_value=${2} state=present"
     fi
-    ansible-vault encrypt "${ANSIBLE_VARS}l" >/dev/null 2>&1
+    ansible-vault encrypt "${ANSIBLE_VARS}" >/dev/null 2>&1
     rm -f ${SETTINGS_STORAGE}/.account.lock
   fi
 }
