@@ -1,7 +1,7 @@
 ---
 pgrole: 'filerun'
 intport: '80'
-image: 'filerun/filerun'
+image: 'filerun/filerun:8.1'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/html:/var/www/html"
   - "/home/{{ lookup('env','USER') }}:/user-files"
