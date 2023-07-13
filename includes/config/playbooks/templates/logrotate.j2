@@ -1,4 +1,4 @@
-{{ settings.source }}/logs/*.log {
+{{ lookup('env','SETTINGS_SOURCE') }}/logs/*.log {
   rotate 7
   daily
   compress
