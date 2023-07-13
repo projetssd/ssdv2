@@ -3,8 +3,8 @@ pgrole: 'kasm'
 intport: '443'
 image: 'lscr.io/linuxserver/kasm:latest'
 pg_volumes:
-  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/opt:/opt:rw"
-  - - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/profiles:/profiles:rw"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/opt:/opt"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/profiles:/profiles"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:
