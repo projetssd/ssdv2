@@ -8,7 +8,7 @@ pg_volumes:
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:
-  KASM_PORT: 443
+  KASM_PORT: "443"
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
 specific_docker_info:
