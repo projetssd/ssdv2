@@ -155,7 +155,10 @@ if [ $mode_install = "manuel" ]; then
     echo ""
     case $CHOICE in
     1) ## Installation de la seedbox Rclone et Gdrive
-
+      # on stocke les patchs pour ne pas les appliquer
+      for patch in $(ls ${SETTINGS_SOURCE}/patches); do
+        echo "${patch}" >>"${HOME}/.config/kubeseed/patches"
+      done
       #check_dir "$PWD"
       if [[ ${IS_INSTALLED} -eq 0 ]]; then
 
@@ -192,6 +195,10 @@ if [ $mode_install = "manuel" ]; then
     2) ## Installation de la seedbox classique
 
       check_dir "$PWD"
+      # on stocke les patchs pour ne pas les appliquer
+      for patch in $(ls ${SETTINGS_SOURCE}/patches); do
+        echo "${patch}" >>"${HOME}/.config/kubeseed/patches"
+      done
       if [[ ${IS_INSTALLED} -eq 0 ]]; then
         # Install de watchtower
         install_watchtower
@@ -282,13 +289,9 @@ if [ $mode_install = "manuel" ]; then
       exit 0
       ;;
 
-    999) ## Installation seedbox webui
-      install_gui
-      ;;
-
     esac
-  fi
 
+  fi
 
   chmod 755 ${SETTINGS_SOURCE}/logs
   #update_logrotate
@@ -346,8 +349,7 @@ if [ $mode_install = "manuel" ]; then
   fi
   # On ressource l'environnement
   source "${SETTINGS_SOURCE}/profile.sh"
-
-
+  apply_patches
 
   affiche_menu_db
 fi

@@ -1931,3 +1931,17 @@ function correct_init() {
   sudo systemctl restart docker
 
 }
+
+function apply_patches() {
+  touch "${HOME}/.config/kubeseed/patches"
+  for patch in $(ls ${SETTINGS_SOURCE}/patches); do
+    if grep -q "${patch}" "${HOME}/.config/kubeseed/patches"; then
+      # parch déjà appliqué, on ne fait rien
+      :
+    else
+      # on applique le patch
+      bash "${SETTINGS_SOURCE}/patches/${patch}"
+      echo "${patch}" >>"${HOME}/.config/kubeseed/patches"
+    fi
+  done
+}
