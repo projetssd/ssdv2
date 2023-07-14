@@ -10,10 +10,11 @@ import yaml
 from yaml.loader import SafeLoader
 # menus
 from simple_term_menu import TerminalMenu
+import gettext
 
 settings_source = os.environ['SETTINGS_SOURCE']
 settings_storage = os.environ['SETTINGS_STORAGE']
-generique_bash = settings_source + "/includes/scripts/generique.sh"
+generique_bash = settings_source + "/includes/config/scripts/generique.sh"
 
 gettext.bindtextdomain('ks', settings_source + '/i18n')
 gettext.textdomain('ks')
@@ -35,12 +36,12 @@ def choix_appli_lance():
                 # C'est un fichier yaml
                 with open(basepath + entry) as f:
                     data = yaml.load(f, Loader=SafeLoader)
-                    application = data['application']
+                    application = data['pgrole']
                     # on gère le cas où il n'y a pas de description
                     try:
                         description = data['description']
                     except:
-                        description = data['application']
+                        description = data['pgrole']
                 # On crée un tuple (appli - desc, appli)
                 list_applis.append((application + ' - ' + description, application))
     # On fait la liste des applis persos
@@ -51,13 +52,13 @@ def choix_appli_lance():
                 # C'est un fichier yaml
                 with open(basepath + entry) as f:
                     data = yaml.load(f, Loader=SafeLoader)
-                    application = data['application']
+                    application = data['pgrole']
                     # on gère le cas où il n'y a pas de description
 
                     try:
                         old_description = data['description']
                     except:
-                        old_description = data['application']
+                        old_description = data['pgrole']
                     description = '[PERSO] - ' + old_description
                 # On regarde si on a déjà cette appli dans la première liste
                 if (application + ' - ' + old_description, application) in list_applis:
@@ -81,4 +82,4 @@ def lance_applis(list_applis):
     """
     for my_appli in list_applis:
         subprocess.run(
-            [generique_bash, "ks_launch_service", my_appli])
+            [generique_bash, "launch_service", my_appli])
