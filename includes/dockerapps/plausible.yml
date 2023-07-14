@@ -209,8 +209,3 @@
                 values
                 ('{{ pgrole }}',2,'{{sub[pgrole][pgrole] if sub_enabled else pgrole}}',{{ intport }});
             EOF
-
-
-
-
-  

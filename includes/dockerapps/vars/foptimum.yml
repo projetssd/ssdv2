@@ -8,3 +8,5 @@ pg_env:
   SPEEDTEST_INTERVAL: "900"
   PING_INTERVAL: "15"
   SERVER_LIST: "1.1.1.1,8.8.8.8"
+
+description: "exporterForInternetConnection"

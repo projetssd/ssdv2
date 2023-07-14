@@ -12,3 +12,5 @@ pg_env:
   UID: "{{ lookup('env','MYUID') }}"
   GID: "{{ lookup('env','MYUID') }}"
 
+
+description: "SimpleWebDavServer"

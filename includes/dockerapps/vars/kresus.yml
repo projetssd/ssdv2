@@ -11,3 +11,5 @@ pg_env:
   KRESUS_DB_PORT: "5432"
   KRESUS_DB_USERNAME: "{{pgrole}}"
   KRESUS_DB_PASSWORD: "{{pgrole}}"
+
+description: "ManageBankAccounts"

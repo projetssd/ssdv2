@@ -128,9 +128,3 @@
           - name: traefik_proxy
         state: started
         labels: '{{pg_labels}}'
-
-
-
-
-
-  

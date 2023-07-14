@@ -10,3 +10,5 @@ pg_volumes:
 
 posttasks:
   - "hsqldb"
+
+description: "RSSReader"

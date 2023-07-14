@@ -16,3 +16,5 @@ pg_env:
   SYNCSERVER_DEBUG_ENABLED: 'true'
   FF_SYNCSERVER_ALLOW_NEW_USERS: 'true'
   FF_SYNCSERVER_LOGLEVEL: info
+
+description: "MozillaFirefoxSynchronisationServer"

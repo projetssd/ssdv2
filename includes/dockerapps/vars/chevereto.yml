@@ -13,3 +13,5 @@ pg_env:
   CHEVERETO_DB_PASSWORD: "{{ pgrole }}"
   CHEVERETO_DB_NAME: "{{ pgrole }}"
   CHEVERETO_DB_PREFIX: "chv_"
+
+description: "PowerfulAndFastImageHostingScript"

@@ -20,3 +20,4 @@ pg_env:
 posttasks:
   - "postgresql"
   - "mattermost_post"
+description: "SelfHostableOnlineChatService"

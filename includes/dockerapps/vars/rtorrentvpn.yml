@@ -32,3 +32,5 @@ pg_env:
 # tags spécifiques à ajouter à la construction du docker
 specific_docker_info:
   "{{ vpn_specific[vpn] }}"
+
+description: "TorrentClient"

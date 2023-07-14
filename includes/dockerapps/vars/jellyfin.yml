@@ -11,3 +11,4 @@ pg_env:
   UID: "{{ lookup('env','MYUID') }}"
   GID: "{{ lookup('env','MYGID') }}" 
   JELLYFIN_PublishedServerUrl: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}"
+description: "EmbyMediaServer"

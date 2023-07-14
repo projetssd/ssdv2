@@ -16,3 +16,4 @@ pg_env:
   CYPHT_DB_USER: "{{ pgrole }}"
   CYPHT_DB_PASS: "{{ pgrole }}"
   CYPHT_SESSION_TYPE: "DB"
+description: "AllForEmailFromAllAccountOnOnePlace"

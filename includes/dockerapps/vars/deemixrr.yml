@@ -26,3 +26,7 @@ pg_env:
   DelayConfiguration__CreateArtistBackgroundJob_FromUserDelay: '1000'
   DelayConfiguration__CreateArtistBackgroundJob_FromCsvDelay: '1000'
   DelayConfiguration__CreatePlaylistBackgroundJob_FromCsvDelay: '1000'
+
+description: "ManagesYourArtistsAndPlaylists"
+
+description: "ManagesYourArtistsAndPlaylists"

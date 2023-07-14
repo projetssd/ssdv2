@@ -10,3 +10,5 @@ pg_env:
   DISABLE_BUILTIN_AUTH: "true"
 pretasks:
   - "yourls"
+
+description: "AutomaticInvitationForPlex"

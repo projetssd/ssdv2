@@ -11,3 +11,5 @@ pg_env:
   PGID: "{{ lookup('env','MYGID') }}"
   GOTIFY_DEFAULTUSER_NAME: "{{ user.name }}"
   GOTIFY_DEFAULTUSER_PASS: "{{ user.pass }}"
+
+description: "serverforsendingandreceivingmessages"

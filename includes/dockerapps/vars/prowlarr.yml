@@ -18,3 +18,5 @@ pg_env:
 #  traefik.http.routers.prowlarr-rtr-bypass.tls: 'true'
 #  traefik.http.routers.prowlarr-rtr-bypass.middlewares: 'chain-no-auth@file'
 #  traefik.http.routers.prowlarr-rtr-bypass.service: 'prowlarr-svc'
+
+description: "indexermanager"

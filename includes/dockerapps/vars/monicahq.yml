@@ -13,3 +13,5 @@ pg_env:
   DB_USERNAME: "root"
   DB_PASSWORD: "{{user.pass}}"
   DB_NAME: "{{ pgrole }}"
+
+description: "PersonalCRM"

@@ -24,3 +24,5 @@ pg_env:
 #  traefik.http.routers.sonarr4k-rtr-bypass.tls: 'true'
 #  traefik.http.routers.sonarr4k-rtr-bypass.middlewares: 'chain-no-auth@file'
 #  traefik.http.routers.sonarr4k-rtr-bypass.service: 'sonarr4k-svc'
+
+description: "TVShowsAutomation4k"

@@ -10,3 +10,5 @@ pg_volumes:
 pg_env:
   VIKUNJA_API_URL: "https://apivikunja.{{ user.domain }}/api/v1"
 
+
+description: "ToDoAppOrganizeLife"

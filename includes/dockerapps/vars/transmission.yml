@@ -21,3 +21,5 @@ pg_env:
 specific_docker_info:
   ports:
     - '51413:51413'
+
+description: "TorrentClientVPN"

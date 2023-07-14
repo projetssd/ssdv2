@@ -12,3 +12,5 @@ pg_env:
   VPN_ENABLED: 'yes'
   VPN_TYPE: 'openvpn'
   LAN_NETWORK: '172.18.0.0/16'
+
+description: "TorrentProvidersVPN"

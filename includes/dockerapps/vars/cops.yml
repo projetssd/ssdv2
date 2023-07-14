@@ -12,3 +12,5 @@ pg_env:
   TZ: "Europe/Paris"
 
 
+
+description: "CalibreHtmlServer"

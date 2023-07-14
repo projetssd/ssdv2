@@ -20,3 +20,4 @@ pg_env:
 specific_docker_info:
   capabilities:
   - SYS_PTRACE
+description: "MonitorYourServer"

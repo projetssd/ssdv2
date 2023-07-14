@@ -16,3 +16,5 @@ pg_env:
 specific_docker_info:
   ports:
     - '50000:50000'
+
+description: "TorrentClient"

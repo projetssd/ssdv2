@@ -18,3 +18,5 @@ pg_env:
   N8N_BASIC_AUTH_USER: "{{ user.name }}"
   N8N_BASIC_AUTH_PASSWORD: "{{ user.pass }}"
 
+
+description: "AutomationTool"

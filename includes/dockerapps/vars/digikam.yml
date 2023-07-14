@@ -11,3 +11,5 @@ pg_env:
   PGID: "{{ lookup('env','MYGID') }}"
   KEYBOARD: 'fr-fr-azerty- French'
 
+
+description: "ImageManagement"

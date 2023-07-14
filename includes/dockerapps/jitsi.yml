@@ -304,9 +304,3 @@
   
       - name: "Containers | Restart Jitsi"
         shell: docker restart jitsi
-
-
-
-
-
-  

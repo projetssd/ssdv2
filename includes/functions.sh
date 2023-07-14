@@ -1274,7 +1274,11 @@ function premier_lancement() {
     shyaml \
     netaddr \
     dnspython \
-    configparser
+    configparser \
+    inquirer \
+    pyyaml \
+    ansible-runner \
+    simple-term-menu
 
   ##########################################
   # Pas de configuration existante

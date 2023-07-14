@@ -18,3 +18,5 @@ pg_env:
   APACHE_RUN_GROUP_ID: "{{ lookup('env','MYGID') }}"
 
 
+
+description: "SelfHostedFileSyncAndSharing"

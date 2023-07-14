@@ -10,3 +10,4 @@ pg_volumes:
 pg_env:
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
+description: "SelfHostedPHPAppConsolidateLogs"

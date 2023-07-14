@@ -15,3 +15,4 @@ pg_env:
 specific_docker_info:
   container_default_behavior: compatibility
   privileged: yes
+description: "DockerMonitoring"

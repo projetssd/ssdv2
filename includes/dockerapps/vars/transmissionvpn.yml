@@ -19,3 +19,5 @@ pg_env:
   OPENVPN_OPTS: '--inactive 3600 --ping 10 --ping-exit 60'
   TRANSMISSION_DOWNLOAD_DIR: "/home/{{lookup('env','USER')}}/transmission"
   TZ: 'Europe/Paris'
+
+description: "TorrentClientVPN"

@@ -10,3 +10,5 @@ pg_env:
   TZ: 'Europe/Paris'
 specific_docker_info:
   user: "{{ lookup('env','MYUID') }}:{{ lookup('env','MYGID') }}"
+
+description: "SelfHostedFileSyncAndSharing"

@@ -16,3 +16,5 @@ pg_env:
 #specific_docker_info:
   #ports:
     #- 'xxx:xxx'
+
+description: "filebot"

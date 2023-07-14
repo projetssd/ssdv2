@@ -13,3 +13,5 @@ pg_env:
   YOURLS_USER: "{{ user.name }}"
   YOURLS_PASS: "{{ user.pass }}"
   YOURLS_SITE: "https://{{ fqdn }}"
+
+description: "URLShortener"

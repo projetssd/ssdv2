@@ -12,3 +12,4 @@ pg_env:
   API_URL: "https://{{ fqdn }}"
 pretasks:
   - "yourls"
+description: "SelfHostedFileSharing"

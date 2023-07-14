@@ -8,3 +8,4 @@ pg_volumes:
 pg_env:
   USER_UID: "{{ lookup('env','MYUID') }}"
   USER_GID: "{{ lookup('env','MYGID') }}"
+description: "GitCommunityLightweightCode"

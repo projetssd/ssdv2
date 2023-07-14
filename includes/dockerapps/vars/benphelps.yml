@@ -5,3 +5,5 @@ image: 'ghcr.io/benphelps/homepage:latest'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/app/config"
   - '/var/run/docker.sock:/var/run/docker.sock:/var/run/docker.sock:/var/run/docker.sock:ro'
+
+description: "CustomHomePage"

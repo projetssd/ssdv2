@@ -7,3 +7,4 @@ pg_volumes:
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:
   DB_CONN: "sqlite"
+description: "AppStatusMonitoring"

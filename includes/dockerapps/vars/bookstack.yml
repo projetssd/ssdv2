@@ -13,3 +13,5 @@ pg_env:
   DB_PASS: "{{ pgrole }}"
   DB_DATABASE: "{{ pgrole }}"
   APP_URL: "http://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{user.domain}}"
+
+description: "WikiDdesignedCreatingDocumentation"

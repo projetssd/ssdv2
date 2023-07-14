@@ -320,7 +320,3 @@
           - name: traefik_proxy
         state: started
         labels: '{{grafana_labels}}'
-
-
-
-

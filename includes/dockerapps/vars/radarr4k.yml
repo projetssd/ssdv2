@@ -24,3 +24,7 @@ pg_env:
 #  traefik.http.routers.radarr4k-rtr-bypass.tls: 'true'
 #  traefik.http.routers.radarr4k-rtr-bypass.middlewares: 'chain-no-auth@file'
 #  traefik.http.routers.radarr4k-rtr-bypass.service: 'radarr4k-svc'
+
+description: "MoviesAutomation"
+
+description: "MoviesAutomation"

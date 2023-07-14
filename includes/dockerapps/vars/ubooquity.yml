@@ -11,3 +11,5 @@ pg_env:
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
   TZ: 'Europe/Paris'
+
+description: "HomeServerForYourComicsAndEbooks"
