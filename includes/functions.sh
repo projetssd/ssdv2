@@ -1941,15 +1941,16 @@ function correct_init() {
 }
 
 function apply_patches() {
-  touch "${HOME}/.config/kubeseed/patches"
+  mkdir -p "${HOME}/.config/ssdv2"
+  touch "${HOME}/.config/ssdv2/patches"
   for patch in $(ls ${SETTINGS_SOURCE}/patches); do
-    if grep -q "${patch}" "${HOME}/.config/kubeseed/patches"; then
+    if grep -q "${patch}" "${HOME}/.config/ssdv2/patches"; then
       # parch déjà appliqué, on ne fait rien
       :
     else
       # on applique le patch
       bash "${SETTINGS_SOURCE}/patches/${patch}"
-      echo "${patch}" >>"${HOME}/.config/kubeseed/patches"
+      echo "${patch}" >>"${HOME}/.config/ssdv2/patches"
     fi
   done
 }

@@ -156,8 +156,9 @@ if [ $mode_install = "manuel" ]; then
     case $CHOICE in
     1) ## Installation de la seedbox Rclone et Gdrive
       # on stocke les patchs pour ne pas les appliquer
+      mkdir -p "${HOME}/.config/ssdv2"
       for patch in $(ls ${SETTINGS_SOURCE}/patches); do
-        echo "${patch}" >>"${HOME}/.config/kubeseed/patches"
+        echo "${patch}" >>"${HOME}/.config/ssdv2/patches"
       done
       #check_dir "$PWD"
       if [[ ${IS_INSTALLED} -eq 0 ]]; then
