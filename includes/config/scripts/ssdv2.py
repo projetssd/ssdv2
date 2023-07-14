@@ -27,7 +27,7 @@ def choix_appli_lance():
     """
     list_applis = []
     basepath = settings_source + '/includes/dockerapps/vars/'
-    persopath = settings_storage + '/app_persos/'
+    persopath = settings_storage + '/vars/'
     # On fait la liste des applis officielles
     for entry in os.listdir(basepath):
         if os.path.isfile(os.path.join(basepath, entry)):

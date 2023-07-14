@@ -750,6 +750,10 @@ function projects() {
 }
 
 function choose_services() {
+  python3 "${SETTINGS_SOURCE}/includes/config/scripts/generique_python.py" choix_appli_lance
+}
+
+function choose_services_deprecated() {
   echo -e "${BLUE}### SERVICES ###${NC}"
   echo "DEBUG ${SERVICESAVAILABLE}"
   echo -e " ${BWHITE}--> Services en cours d'installation : ${NC}"
