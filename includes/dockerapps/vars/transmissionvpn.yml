@@ -15,7 +15,7 @@ pg_env:
   OPENVPN_USERNAME: '{{username}}'
   OPENVPN_PASSWORD: '{{password}}'
   OPENVPN_CONFIG: '{{config}}'
-  LOCAL_NETWORK: '{{network}}'
+  LOCAL_NETWORK: '{{mynetwork}}'
   OPENVPN_OPTS: '--inactive 3600 --ping 10 --ping-exit 60'
   TRANSMISSION_DOWNLOAD_DIR: "/home/{{lookup('env','USER')}}/transmission"
   TZ: 'Europe/Paris'

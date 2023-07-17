@@ -30,7 +30,7 @@
   register: myregister
 - name: set var
   set_fact:
-    network: "{{ myregister.user_input }}"
+    mynetwork: "{{ myregister.user_input }}"
 - name: prompt for config
   pause:
     prompt: "Enter value for OPENVPN_CONFIG (Nom fichier sans la terminaison opvn)"
