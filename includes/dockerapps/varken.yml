@@ -11,10 +11,6 @@
 
   tasks:
 
-    - name: create varken state
-      shell: |
-        echo "1" > {{ settings.storage }}/status/varken
-
     - name: Check config Ombi exists
       stat:
         path: "{{ settings.storage }}/docker/{{lookup('env','USER')}}/ombi/OmbiSettings.db"
