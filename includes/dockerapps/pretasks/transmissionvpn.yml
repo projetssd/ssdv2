@@ -3,7 +3,7 @@
   pause:
     prompt: "Enter value for OPENVPN_PROVIDER"
     echo: "yes"
-    register: myregister
+  register: myregister
 - name: set var
   set_fact:
     provider: "{{ myregister.user_input }}"
@@ -11,7 +11,7 @@
   pause:
     prompt: "Enter value for OPENVPN_USERNAME"
     echo: "yes"
-    register: myregister
+  register: myregister
 - name: set var
   set_fact:
     username: "{{ myregister.user_input }}"
@@ -19,7 +19,7 @@
   pause:
     prompt: "Enter value for OPENVPN_PASSWORD"
     echo: "yes"
-    register: myregister
+  register: myregister
 - name: set var
   set_fact:
     password: "{{ myregister.user_input }}"
@@ -27,7 +27,7 @@
   pause:
     prompt: "Enter value for LOCAL_NETWORK (ex 192.168.1.0/24)"
     echo: "yes"
-    register: myregister
+  register: myregister
 - name: set var
   set_fact:
     network: "{{ myregister.user_input }}"
@@ -35,7 +35,7 @@
   pause:
     prompt: "Enter value for OPENVPN_CONFIG (Nom fichier sans la terminaison opvn)"
     echo: "yes"
-    register: myregister
+  register: myregister
 - name: set var
   set_fact:
     config: "{{ myregister.user_input }}"
