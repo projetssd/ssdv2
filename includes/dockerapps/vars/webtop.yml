@@ -6,9 +6,9 @@ pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
   - "/etc/localtime:/etc/localtime:ro"
   - "/var/run/docker.sock:/var/run/docker.sock"
-pg_labels:
+extra_labels:
   com.centurylinklabs.watchtower.enable: "false"
-mpg_env:
+pg_env:
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
   TZ: "Europe/Paris"
