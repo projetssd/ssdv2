@@ -1,0 +1,21 @@
+---
+pgrole: 'webtop'
+intport: '3000'
+image: 'lscr.io/linuxserver/webtop:ubuntu-icewm'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
+  - "/etc/localtime:/etc/localtime:ro"
+  - "/var/run/docker.sock:/var/run/docker.sock"
+pg_labels:
+  com.centurylinklabs.watchtower.enable: "false"
+mpg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  TZ: "Europe/Paris"
+  SUBFOLDER: "/"
+  KEYBOARD: "fr-fr-azerty"
+
+specific_docker_info:
+  privileged: yes
+  security_opt: "seccomp:unconfined"
+  shm_size: '1G'
