@@ -17,5 +17,5 @@ pg_env:
 
 specific_docker_info:
   privileged: yes
-  security_opt: "seccomp:unconfined"
+  security_opts: "seccomp:unconfined"
   shm_size: '1G'
