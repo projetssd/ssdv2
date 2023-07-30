@@ -1,0 +1,3 @@
+if [ "$( docker container inspect -f '{{.State.Running}}' n8nio )" == "true" ]; then
+docker run --rm -it -v "${SETTINGS_STORAGE}/node/.n8n" --entrypoint chown n8nio/base:16 -R node:node /home/node/.n8n >> ${SETTINGS_STORAGE}/logs/patch.log 2>&1
+fi
