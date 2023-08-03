@@ -11,7 +11,7 @@
 
 - name: Check config Tautulli exists
   stat:
-    path: "{{ settings.storage }}/docker/{{user.name}}/tautulli/config.ini"
+    path: "{{ settings.storage }}/docker/{{user.name}}/tautulli/config/config.ini"
   register: tautulli_config
 
 - name: Check if plex_autoscan.service exists
@@ -21,7 +21,7 @@
 
 - name: 'ApiKey Tautulli'
   shell: |
-    grep "api_key" {{ settings.storage }}/docker/{{user.name}}/tautulli/config.ini | cut -d '=' -f2 | sed 's/ //g' | head -1
+    grep "api_key" {{ settings.storage }}/docker/{{user.name}}/tautulli/config/config.ini | cut -d '=' -f2 | sed 's/ //g' | head -1
   register: tautulli
   when: tautulli_config.stat.exists
 

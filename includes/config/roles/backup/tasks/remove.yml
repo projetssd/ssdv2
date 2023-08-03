@@ -1,0 +1,19 @@
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+
+
+    - name: Set cron
+      become: yes
+      cron:
+        name: "backup"
+        minute: "0"
+        hour: "3"
+        weekday: "6"
+        job: "/usr/local/bin/backup >> /var/log/backup.log 2>&1"
+        state: absent
+
+
+
+

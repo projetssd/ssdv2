@@ -1945,3 +1945,17 @@ function apply_patches() {
     fi
   done
 }
+
+function sortie_cloud() {
+  echo "Attention, cette fonction n'est à utiliser que si vous n'utilisez plus de stockage cloud"
+  echo "Appuyez sur ctrl + c si vous souhaitez annuler"
+  pause
+  ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/backup/tasks/remove.yml"
+  sudo systemctl disable cloudplow
+  sudo systemctl stop cloudplow
+  sudo systemctl disable rclone
+  sudo systemctl stop rclone
+  sudo systemctl restart mergerfs
+  relance_tous_services
+
+}
