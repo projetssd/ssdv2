@@ -53,7 +53,6 @@ apt-get install -y --reinstall \
   libffi-dev \
   python3-dev \
   python3-pip \
-  python-dev \
   python3-venv \
   sqlite3 \
   apache2-utils \
