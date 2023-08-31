@@ -3,11 +3,10 @@ pgrole: 'wgeasy'
 intport: '51821'
 image: 'weejewel/wg-easy'
 pg_volumes:
-  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/wireguard/config:/etc/wireguard"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/etc/wireguard"
 pg_env:
-
   TZ: 'Europe/Paris'
-  WG_HOST: "{{ fqdn }}"
+  WG_HOST: "{{ network.ipv4 }}"
 
 # tags spécifiques à ajouter à la construction du docker
 specific_docker_info:
@@ -19,6 +18,3 @@ specific_docker_info:
     net.ipv4.conf.all.src_valid_mark: "1"
   ports:
     - '51820:51820'
-
-pretasks:
-  - yourls
