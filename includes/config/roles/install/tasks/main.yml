@@ -22,37 +22,35 @@
           - ca-certificates
           - software-properties-common
 
-    - name: Add Ubuntu repositories
-      become: yes
-      apt_repository:
-        repo: "{{ item }}"
-        state: present
-        update_cache: yes
-      with_items:
-        - 'deb http://archive.ubuntu.com/ubuntu {{ ansible_distribution_release }} multiverse'
-        - 'deb-src http://archive.ubuntu.com/ubuntu {{ ansible_distribution_release }} multiverse'
-        - 'deb http://archive.ubuntu.com/ubuntu {{ ansible_distribution_release }}-updates multiverse'
-        - 'deb-src http://archive.ubuntu.com/ubuntu {{ ansible_distribution_release }}-updates multiverse'
-      when: ansible_distribution == 'Ubuntu'
+    #- name: Add Ubuntu repositories
+    #  become: yes
+    #  apt_repository:
+    #    repo: "{{ item }}"
+    #    state: present
+    #    update_cache: yes
+    #  with_items:
+    #    - 'deb http://archive.ubuntu.com/ubuntu {{ ansible_distribution_release }} multiverse'
+    #    - 'deb-src http://archive.ubuntu.com/ubuntu {{ ansible_distribution_release }} multiverse'
+    #    - 'deb http://archive.ubuntu.com/ubuntu {{ ansible_distribution_release }}-updates multiverse'
+    #    - 'deb-src http://archive.ubuntu.com/ubuntu {{ ansible_distribution_release }}-updates multiverse'
+    #  when: ansible_distribution == 'Ubuntu'
 
-    - name: Add Debian repositories
-      become: yes
-      apt_repository:
-        repo: "{{ item }}"
-        state: present
-        update_cache: yes
-      with_items:
-        - deb https://deb.debian.org/debian {{ ansible_distribution_release }} main contrib non-free
-        - deb-src https://deb.debian.org/debian {{ ansible_distribution_release }} main contrib non-free
-        - deb https://deb.debian.org/debian-security/ {{ ansible_distribution_release }}/updates main contrib non-free
-        - deb-src https://deb.debian.org/debian-security/ {{ ansible_distribution_release }}/updates main contrib non-free
-        - deb https://deb.debian.org/debian {{ ansible_distribution_release }}-updates main contrib non-free
-        - deb-src https://deb.debian.org/debian {{ ansible_distribution_release }}-updates main contrib non-free
-        - deb https://deb.debian.org/debian {{ ansible_distribution_release }}-backports main contrib non-free
-        - deb-src https://deb.debian.org/debian {{ ansible_distribution_release }}-backports main contrib non-free
-      when: ansible_distribution == 'Debian'
-
-
+    #- name: Add Debian repositories
+    #  become: yes
+    #  apt_repository:
+    #    repo: "{{ item }}"
+    #    state: present
+    #    update_cache: yes
+    #  with_items:
+    #    - deb https://deb.debian.org/debian {{ ansible_distribution_release }} main contrib non-free
+    #    - deb-src https://deb.debian.org/debian {{ ansible_distribution_release }} main contrib non-free
+    #    - deb https://deb.debian.org/debian-security/ {{ ansible_distribution_release }}/updates main contrib non-free
+    #    - deb-src https://deb.debian.org/debian-security/ {{ ansible_distribution_release }}/updates main contrib non-free
+    #    - deb https://deb.debian.org/debian {{ ansible_distribution_release }}-updates main contrib non-free
+    #    - deb-src https://deb.debian.org/debian {{ ansible_distribution_release }}-updates main contrib non-free
+    #    - deb https://deb.debian.org/debian {{ ansible_distribution_release }}-backports main contrib non-free
+    #    - deb-src https://deb.debian.org/debian {{ ansible_distribution_release }}-backports main contrib non-free
+    #  when: ansible_distribution == 'Debian'
 
     - name: Install common packages
       become: yes

@@ -27,22 +27,27 @@ apt-get install -y --reinstall \
   sudo
 ## Add apt repos
 osname=$(lsb_release -si)
+osversion=$(lsb_release -sr)
 
-if echo "$osname" "Debian" &>/dev/null; then
-  {
-    add-apt-repository main
-    add-apt-repository non-free
-    add-apt-repository contrib
-  } >>/dev/null 2>&1
-elif echo "$osname" "Ubuntu" &>/dev/null; then
-  {
-    add-apt-repository main
-    add-apt-repository universe
-    add-apt-repository restricted
-    add-apt-repository multiverse
-  } >>/dev/null 2>&1
+if [[ "$osname" == "Debian" ]]; then
+  # Si c'est Debian, nous vérifions la version
+  if [[ "$osversion" == "11" ]]; then
+    # Si c'est Debian 11, nous installons python3-apt-dbg
+    apt-get install -y --reinstall python3-apt-dbg
+  fi
 
+  # Ajout des dépôts
+  add-apt-repository main
+  add-apt-repository non-free
+  add-apt-repository contrib
+elif [[ "$osname" == "Ubuntu" ]]; then
+  # Ajout des dépôts pour Ubuntu
+  add-apt-repository main
+  add-apt-repository universe
+  add-apt-repository restricted
+  add-apt-repository multiverse
 fi
+
 apt-get update
 
 ## Install apt Dependencies
@@ -57,16 +62,16 @@ apt-get install -y --reinstall \
   sqlite3 \
   apache2-utils \
   dnsutils \
-  python3-apt-dbg \
   python3-apt \
   python-apt-doc \
   python-apt-common \
   ca-certificates \
-    curl \
-    gnupg \
-    lsb-release \
-    fuse3 \
-    apparmor
+  curl \
+  gnupg \
+  lsb-release \
+  fuse3 \
+  apparmor
+
 
 rm -f /usr/bin/python
 
