@@ -37,15 +37,15 @@ if [[ "$osname" == "Debian" ]]; then
   fi
 
   # Ajout des dépôts
-  add-apt-repository main
-  add-apt-repository non-free
-  add-apt-repository contrib
+  add-apt-repository main <<< 'yes'
+  add-apt-repository non-free <<< 'yes'
+  add-apt-repository contrib <<< 'yes'
 elif [[ "$osname" == "Ubuntu" ]]; then
   # Ajout des dépôts pour Ubuntu
-  add-apt-repository main
-  add-apt-repository universe
-  add-apt-repository restricted
-  add-apt-repository multiverse
+  add-apt-repository main <<< 'yes'
+  add-apt-repository universe <<< 'yes'
+  add-apt-repository restricted <<< 'yes'
+  add-apt-repository multiverse <<< 'yes'
 fi
 
 apt-get update
