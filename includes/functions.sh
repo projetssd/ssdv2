@@ -1936,7 +1936,7 @@ function apply_patches() {
   touch "${HOME}/.config/ssd/patches"
   for patch in $(ls ${SETTINGS_SOURCE}/patches); do
     if grep -q "${patch}" "${HOME}/.config/ssd/patches"; then
-      # parch déjà appliqué, on ne fait rien
+      # patch déjà appliqué, on ne fait rien
       :
     else
       # on applique le patch

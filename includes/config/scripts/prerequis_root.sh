@@ -65,6 +65,7 @@ apt-get install -y --reinstall \
   python3-apt \
   python-apt-doc \
   python-apt-common \
+  python3-lxml \
   ca-certificates \
   curl \
   gnupg \
