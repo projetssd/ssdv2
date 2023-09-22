@@ -1547,13 +1547,13 @@ function stocke_public_ip() {
   echo "IPV4 = ${IPV4}"
   manage_account_yml network.ipv4 ${IPV4}
   #IPV6=$(dig @resolver1.ipv6-sandbox.opendns.com AAAA myip.opendns.com +short -6)
-  IPV6=$(curl -6 https://ip6.mn83.fr)
-  if [ $? -eq 0 ]; then
-    echo "IPV6 = ${IPV6}"
-    manage_account_yml network.ipv6 "a[${IPV6}]"
-  else
-    echo "Aucune adresse ipv6 trouvée"
-  fi
+  #IPV6=$(curl -6 https://ip6.mn83.fr)
+  #if [ $? -eq 0 ]; then
+  #  echo "IPV6 = ${IPV6}"
+  #  manage_account_yml network.ipv6 "a[${IPV6}]"
+  #else
+  #  echo "Aucune adresse ipv6 trouvée"
+  #fi
 }
 
 function install_environnement() {
