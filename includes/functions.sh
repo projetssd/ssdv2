@@ -1543,7 +1543,7 @@ function check_docker_group() {
 
 function stocke_public_ip() {
   echo "Stockage des adresses ip publiques"
-  IPV4=$(curl -4 https://ip4.mn83.fr)
+  IPV4=$(curl -s -4 https://ip4.mn83.fr)
   echo "IPV4 = ${IPV4}"
   manage_account_yml network.ipv4 ${IPV4}
   #IPV6=$(dig @resolver1.ipv6-sandbox.opendns.com AAAA myip.opendns.com +short -6)
