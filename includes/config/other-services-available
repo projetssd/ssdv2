@@ -75,7 +75,8 @@ Shaarli-BookmarkManager
 Sismicsreader-RSSReader
 Scrutiny-MonitorSmartDisks
 Sonarr4k-TVShowsAutomation4k
-Speedtest-MonitorBandwith
+Speedtest-DeprecatedMonitorBandwidth
+Speedtesttracker-MonitorBandwidth
 Statping-AppStatusMonitoring
 Subsonic-WebBasedMediaServer
 Synclounge-WatchPlexInSyncWithYourFriends
