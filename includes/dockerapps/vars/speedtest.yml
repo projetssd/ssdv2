@@ -1,4 +1,5 @@
 ---
+### DEPRECATED ###
 pgrole: 'speedtest'
 intport: '80'
 image: 'henrywhitaker3/speedtest-tracker'
