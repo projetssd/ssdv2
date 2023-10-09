@@ -1,6 +1,6 @@
 pgrole: 'gethomepage'
 intport: '3000'
-image: 'ghcr.io/benphelps/homepage:latest'
+image: 'ghcr.io/gethomepage/homepage:latest'
 pg_volumes:
   - "/etc/localtime:/etc/localtime:ro"
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/app/config:rw"
