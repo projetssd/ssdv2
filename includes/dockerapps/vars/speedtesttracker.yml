@@ -16,7 +16,6 @@ pg_env:
   DB_DATABASE: '{{ pgrole }}'
   DB_USERNAME: '{{ pgrole }}'
   DB_PASSWORD: '{{ pgrole }}'
-  TZ: 'Europe/Paris'
 
 posttasks:
   - mariadb_officiel
