@@ -1,0 +1,29 @@
+[Unit]
+Description=Zurg
+AssertPathIsDirectory={{ lookup('env','HOME') }}/seedbox/zurg
+After=network-online.target
+
+[Service]
+User={{ lookup('env','USER') }}
+Group={{ lookup('env','MYGIDNAME') }}
+Type=simple
+ExecStart=/usr/bin/rclone mount -vv \
+  --config={{ lookup('env','HOME') }}/.config/rclone/rclone.conf \
+  --allow-other --gid {{user.groupid}} --uid {{user.userid}} \
+  --umask=002 \
+  --allow-empty \
+  --timeout=1h \
+  --poll-interval=15s \
+  --dir-cache-time=10s \
+  --vfs-cache-mode=full \
+  --vfs-cache-max-size=250G \
+  --vfs-cache-max-age=24h \
+  --cache-dir={{ lookup('env','HOME') }}/.config/rclone/cache \
+  zurg: \
+  {{ lookup('env','HOME') }}/seedbox/zurg
+ExecStop=/bin/fusermount -uz {{ lookup('env','HOME') }}/seedbox/zurg
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target
