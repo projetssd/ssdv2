@@ -1,0 +1,17 @@
+[Unit]
+Description=Zurg
+After=network-online.target
+
+[Service]
+User={{ lookup('env','USER') }}
+Group={{ lookup('env','MYGIDNAME') }}
+Type=simple
+
+WorkingDirectory={{ lookup('env','HOME') }}/scripts/zurg
+ExecStart={{ lookup('env','HOME') }}/scripts/zurg/zurg
+ExecStop=killall zurg
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,58 @@
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Generate conf
+      template:
+        dest: "{{ lookup('env', 'HOME') }}/scripts/zurg/config.yml"
+        src: "{{ lookup('env', 'SETTINGS_SOURCE') }}/includes/config/playbooks/templates/zurg.conf"
+        owner: "{{ user.name }}"
+        group: "{{ user.groupid }}"
+
+    - name: Modify rclone.conf
+      blockinfile:
+        path: "{{ lookup('env', 'HOME') }}/.config/rclone/rclone.conf"
+        block: |
+          [zurg]
+          type = webdav
+          url = http://localhost:9999
+          vendor = other
+          pacer_min_sleep = 0
+          
+          [zurghttp]
+          type = http
+          url = http://localhost:9999/http
+          no_head = false
+          no_slash = false
+
+    - name: Create directory
+      file:
+        path: "{{ lookup('env', 'HOME') }}/seedbox/zurg"
+        state: directory
+
+    - name: Create service file
+      become: yes
+      template:
+        dest: "/etc/systemd/system/zurg.service"
+        src: "{{ lookup('env', 'SETTINGS_SOURCE') }}/includes/playbooks/templates/zurg.service.j2"
+
+    - name: Launch zurg
+      become: yes
+      service:
+        daemon-reload: true
+        name: zurg
+        state: started
+
+    - name: Create service file
+      become: yes
+      template:
+        dest: "/etc/systemd/system/zurg-mount.service"
+        src: "{{ lookup('env', 'SETTINGS_SOURCE') }}/includes/playbooks/templates/zurg-mount.service.j2"
+
+    - name: Launch mount
+      become: yes
+      service:
+        daemon-reload: true
+        name: zurg-mount
+        state: started
+

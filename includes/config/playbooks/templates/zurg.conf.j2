@@ -1,0 +1,24 @@
+# Zurg configuration version
+zurg: v1
+
+token: {{ zurg.token }}
+mount_point: /app/mnt # should match the one on docker-compose.yml
+host: "[::]" # do not change this if you are running it inside a docker container
+port: 9999 # do not change this if you are running it inside a docker container
+concurrent_workers: 200
+check_for_changes_every_secs: 15
+info_cache_time_hours: 12
+
+enable_repair: true # BEWARE! THERE CAN ONLY BE 1 INSTANCE OF ZURG THAT SHOULD REPAIR YOUR TORRENTS
+retain_folder_name_extension: false # if true, zurg won't modify the filenames from real-debrid
+on_library_update: |
+  echo "hook"
+
+network_buffer_size: 1048576 # 1 MiB
+
+# List of directory definitions and their filtering rules
+directories:
+  torrents:
+    group: 1           # notice the group now is "all", which means it will have all the torrents of shows+movies combined because this directory is alone in this group
+    filters:
+      - regex: /.*/

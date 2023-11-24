@@ -1959,3 +1959,24 @@ function sortie_cloud() {
   relance_tous_services
 
 }
+
+function install_zurg() {
+  architecture=$(dpkg --print-architecture)
+  sudo systemctl stop zurg > /dev/null 2>&1
+  wget "https://github.com/debridmediamanager/zurg-testing/raw/main/releases/v0.9.0/zurg-v0.9.0-linux-${architecture}.zip?download=" -O zurg.zip
+  unzip -o zurg.zip
+  mkdir -p "${HOME}/scripts/zurg"
+  cp "zurg-linux-${architecture}" "${HOME}/scripts/zurg/zurg"
+  ZURG_TOKEN=$(get_from_account_yml zorg.token)
+  if [ ${ZURG_TOKEN} == notfound ]; then
+    read -p $'\eToken API pour Zurg (https://real-debrid.com/apitoken) | Appuyer sur [Enter]: \e[0m' ZURG_TOKEN </dev/tty
+    manage_account_yml zurg.token "${ZURG_TOKEN}"
+  else
+    echo -e "${BLUE}Toek Zurg déjà renseigné${CEND}"
+  fi
+  # launch zurg
+  ansible-playbook "${SETTINGS_SOURCE}/includes/playbooks/zurg.yml"
+  launch_service rdtclient
+
+
+}
