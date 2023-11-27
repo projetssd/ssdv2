@@ -1290,7 +1290,7 @@ function premier_lancement() {
   # Pour le user courant uniquement
   ###################################
   mkdir -p /etc/ansible/inventories/ 1>/dev/null 2>&1
-  cat <<EOF >~/.ansible/inventories/local
+  cat << EOF >~/.ansible/inventories/local
   [local]
   127.0.0.1 ansible_connection=local
 EOF
@@ -1975,7 +1975,7 @@ function install_zurg() {
     echo -e "${BLUE}Toek Zurg déjà renseigné${CEND}"
   fi
   # launch zurg
-  ansible-playbook "${SETTINGS_SOURCE}/includes/playbooks/zurg.yml"
+  ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/zurg.yml"
   launch_service rdtclient
 
 
