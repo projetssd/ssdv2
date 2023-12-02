@@ -22,7 +22,7 @@ Filebot-filebot
 Filebrowser-SelfHostedFileSyncAndSharing
 Filerun-SelfHostedFileSyncAndSharing
 Firefox-MozillaFirefoxFreeOpenSourceWebBrowser
-Firefoxsyncserver-MozillaFirefoxSynchronisationServer
+Firefoxsyncserver-MozillaFirefoxSynchroServer
 Foptimum-exporterForInternetConnection
 Freshrss-SelfHostableAggregator
 GetHomePage-OrganiseLinksWebApplications
@@ -58,7 +58,7 @@ Netdata-MonitorYourServer
 Ntopng-HighSpeedWebBasedTrafficAnalysis
 Nocodb-AirtableAlternative
 Nowshowing-PlexMediaServer
-Openvpn-FullFeaturedSecureNetworkTunnelingVPN
+Openvpn-FullFeaturedSecureTunnelingVPN
 Pastebin-Pastebin
 Picapport-PicapportGestionPhotos
 Pingvin-SelfHostedFileSharing

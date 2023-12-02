@@ -173,117 +173,6 @@ menu_gestoutils_dupefinder() {
   pause
 }
 
-function menu_sa_gen() {
-  ${SETTINGS_SOURCE}/includes/config/scripts/sa-gen.sh
-}
-
-function menu_safire() {
-  ${SETTINGS_SOURCE}/includes/config/scripts/safire.sh
-}
-
-function menu_migr_donnees() {
-  clear
-  ${SETTINGS_SOURCE}/includes/config/scripts/migration.sh
-}
-
-function menu_copier_donnees() {
-  clear
-  ${SETTINGS_SOURCE}/includes/config/scripts/sasync.sh
-}
-
-function menu_migration_compte_diff_deplace() {
-  clear
-  ${SETTINGS_SOURCE}/includes/config/scripts/migration.sh
-  pause
-}
-
-function menu_migration_compte_diff_copie() {
-  clear
-  ${SETTINGS_SOURCE}/includes/config/scripts/sasync-bwlimit.sh
-  pause
-}
-
-function menu_migr_share2share_autre_compte_copie() {
-  clear
-  logo
-  echo ""
-  echo -e "${CGREEN} /!\ Vous pouvez directement le faire à partir de l'interface UI /!\ ${CEND}"
-  echo ""
-  read -rp $'\e[36m   Poursuivre malgré tout avec rclone: (o/n) ? \e[0m' OUI
-  if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
-    echo ""
-    ${SETTINGS_SOURCE}/includes/config/scripts/sasync-share.sh
-  fi
-  pause
-}
-
-function menu_migr_share2share_autre_compte_copie_2() {
-  ${SETTINGS_SOURCE}/includes/config/scripts/sasync-share.sh
-  pause
-}
-
-function menu_migr_share2share_deplacer() {
-  clear
-  logo
-  echo ""
-  echo -e "${CGREEN} /!\ Vous pouvez directement le faire à partir de l'interface UI /!\ ${CEND}"
-  echo ""
-  read -rp $'\e[36m   Poursuivre malgré tout avec rclone: (o/n) ? \e[0m' OUI
-
-  if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
-    echo ""
-    ${SETTINGS_SOURCE}/includes/config/scripts/sasync-share.sh
-  fi
-  pause
-}
-
-function menu_migr_share2share_copier_10() {
-  clear
-  logo
-  echo ""
-  echo -e "${CGREEN} /!\ Vous pouvez directement le faire à partir de l'interface UI /!\ ${CEND}"
-  echo ""
-  read -rp $'\e[36m   Poursuivre malgré tout avec rclone: (o/n) ? \e[0m' OUI
-
-  if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
-    echo ""
-    ${SETTINGS_SOURCE}/includes/config/scripts/sasync-share.sh
-  fi
-  pause
-}
-
-function menu_install_rclone_vfs() {
-  ${SETTINGS_SOURCE}/includes/config/scripts/fusermount.sh
-  install_rclone
-  unionfs_fuse
-  sudo rm -rf /mnt/plexdrive
-  pause
-}
-
-function menu_install_plexdrive() {
-  clear
-  ${SETTINGS_SOURCE}/includes/config/scripts/fusermount.sh
-  ${SETTINGS_SOURCE}/includes/config/scripts/rclone.sh
-  ${SETTINGS_SOURCE}/includes/config/scripts/plexdrive.sh
-  install_plexdrive
-  pause
-}
-
-function menu_install_vfs_plexdrive() {
-  clear
-  ${SETTINGS_SOURCE}/includes/config/scripts/fusermount.sh
-  install_rclone
-  unionfs_fuse
-  ${SETTINGS_SOURCE}/includes/config/scripts/plexdrive.sh
-
-  plexdrive
-  pause
-}
-
-function menu_create_rclone() {
-  ${SETTINGS_SOURCE}/includes/config/scripts/createrclone.sh
-}
-
 ########################
 function ajout_app_seedbox() {
   echo -e " ${BWHITE}* Resume file: $USERRESUMEFILE${NC}"
@@ -307,7 +196,7 @@ function ajout_app_autres() {
 function menu_suppression_application() {
   echo -e " ${BWHITE}* Application en cours de suppression${NC}"
   TABSERVICES=()
-  for SERVICEACTIVATED in $(docker ps --format "{{.Names}}" | cut -d'-' -f2 | sort -u); do
+  for SERVICEACTIVATED in $(docker ps --format "{{.Names}}" | cut -d'-' -f2 | sort -u | grep -v "tor"); do
     SERVICE=$(echo $SERVICEACTIVATED | cut -d\. -f1)
     TABSERVICES+=(${SERVICE//\"/} " ")
   done
@@ -330,7 +219,7 @@ function menu_reinit_container() {
 
   touch $SERVICESPERUSER
   TABSERVICES=()
-  for SERVICEACTIVATED in $(docker ps --format "{{.Names}}"); do
+  for SERVICEACTIVATED in $(docker ps --format "{{.Names}}" | grep -v "tor"); do
     SERVICE=$(echo $SERVICEACTIVATED | cut -d\. -f1)
     TABSERVICES+=(${SERVICE//\"/} " ")
   done

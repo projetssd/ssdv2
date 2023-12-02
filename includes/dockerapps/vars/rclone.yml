@@ -1,0 +1,22 @@
+---
+pgrole: 'rclone'
+image: 'rclone/rclone:latest'
+pg_volumes:
+  - /mnt/zurg:/data:rshared
+  - "{{ lookup('env','HOME') }}/.config/rclone/rclone.conf:/config/rclone/rclone.conf"
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+devices: '
+  - /dev/fuse:/dev/fuse:rwm'
+security_opts:
+  - apparmor:unconfined
+command: "mount {{rclone.remote}}: /data --allow-non-empty --allow-other --uid={{PUID}} --gid={{PGID}} --dir-cache-time 10s --read-only"
+
+# tags spécifiques à ajouter à la construction du docker
+specific_docker_info:
+  capabilities:
+  - SYS_ADMIN
+
+
+

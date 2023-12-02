@@ -2,6 +2,7 @@ Authelia-opensourceauthenticationand
 Bazarr-CompanionApplicationToSonarrRadarr
 Davos-AutomateFtpSearch
 Deluge-TorrentClient
+Dmm-MediaLibraryManager
 Emby-EmbyMediaServer
 Heimdall-OrganiseLinksWebApplications
 Jackett-TorrentProviders
@@ -28,6 +29,7 @@ Radarr-MoviesAutomation
 Radarr4k-MoviesAutomation
 Readarr-BookMagazineComicsEbookAudiobook
 Rflood-TorrentClient
+Rdtclient-AutomateDownloadTorrent
 Rtorrentvpn-TorrentClient
 Rutorrent-TorrentClient
 Rutorrentcm-TorrentClientCrazyMax
@@ -41,3 +43,4 @@ Sickchill-AutomaticVideoManagerTVShows
 Sickgear-AutomaticVideoManagerTVShows
 Wizarr-AutomaticInvitationForPlex
 whisparr-MoviesAdultAutomation
+zurg-RealDebridWebdavServer

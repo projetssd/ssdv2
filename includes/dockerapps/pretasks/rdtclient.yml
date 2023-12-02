@@ -1,0 +1,8 @@
+---
+- name: Architecture system
+  shell: dpkg --print-architecture
+  register: architecture
+
+- name: set fact
+  set_fact:
+    architecture: "{{ architecture.stdout }}"

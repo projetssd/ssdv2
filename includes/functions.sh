@@ -419,54 +419,9 @@ function install_watchtower() {
   echo ""
 }
 
-function install_plexdrive() {
-  echo -e "${BLUE}### PLEXDRIVE ###${NC}"
-  echo ""
-  sudo mkdir -p /mnt/plexdrive >/dev/null 2>&1
-  sudo chown ${USER}: /mnt/plexdrive
-  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/plexdrive/tasks/main.yml
-  systemctl stop plexdrive >/dev/null 2>&1
-  echo ""
-  clear
-  echo -e " ${BWHITE}* Dès que le message ${NC}${CCYAN}"First cache build process started" apparait à l'écran, taper ${NC}${CCYAN}CTRL + C${NC}${BWHITE} pour poursuivre le script !${NC}"
-  teamdrive=$(get_from_account_yml rclone.id_teamdrive)
-  if [ "${teamdrive}" != notfound ]; then
-    /usr/bin/plexdrive mount -v 3 --drive-id="${teamdrive}" --refresh-interval=1m --chunk-check-threads=8 --chunk-load-threads=8 --chunk-load-ahead=4 --max-chunks=100 --fuse-options=allow_other,read_only /mnt/plexdrive
-    systemctl start plexdrive >/dev/null 2>&1
-  else
-    /usr/bin/plexdrive mount -v 3 --refresh-interval=1m --chunk-check-threads=8 --chunk-load-threads=8 --chunk-load-ahead=4 --max-chunks=100 --fuse-options=allow_other,read_only /mnt/plexdrive
-    systemctl start plexdrive >/dev/null 2>&1
-  fi
-
-}
-
-function plexdrive() {
-  echo -e "${BLUE}### PLEXDRIVE ###${NC}"
-  echo ""
-  sudo mkdir -p /mnt/plexdrive >/dev/null 2>&1
-  sudo chown ${USER}: /mnt/plexdrive
-  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/plexdrive/tasks/plexdrive.yml
-  systemctl stop plexdrive >/dev/null 2>&1
-  echo ""
-  clear
-  echo -e " ${BWHITE}* Dès que le message ${NC}${CCYAN}"First cache build process started" apparait à l'écran, taper ${NC}${CCYAN}CTRL + C${NC}${BWHITE} pour poursuivre le script !${NC}"
-  teamdrive=$(get_from_account_yml rclone.id_teamdrive)
-  if [ "${teamdrive}" != notfound ]; then
-    /usr/bin/plexdrive mount -v 3 --drive-id="${teamdrive}" --refresh-interval=1m --chunk-check-threads=8 --chunk-load-threads=8 --chunk-load-ahead=4 --max-chunks=100 --fuse-options=allow_other,read_only /mnt/plexdrive
-    systemctl start plexdrive >/dev/null 2>&1
-  else
-    /usr/bin/plexdrive mount -v 3 --refresh-interval=1m --chunk-check-threads=8 --chunk-load-threads=8 --chunk-load-ahead=4 --max-chunks=100 --fuse-options=allow_other,read_only /mnt/plexdrive
-    systemctl start plexdrive >/dev/null 2>&1
-  fi
-
-}
-
 function install_rclone() {
   echo -e "${BLUE}### RCLONE ###${NC}"
-  fusermount -uz /mnt/rclone >>/dev/null 2>&1
-  create_dir /mnt/rclone
-  create_dir /mnt/rclone/${USER}
-  ${SETTINGS_SOURCE}/includes/config/scripts/rclone.sh
+  fusermount -uz ${SETTINGS_STORAGE} }}/seedbox/zurg >>/dev/null 2>&1
   ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml
   checking_errors $?
   echo ""
@@ -708,47 +663,6 @@ function create_user_non_systeme() {
   return
 }
 
-function projects() {
-  ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/templates/ansible/ansible.yml"
-  #SEEDUSER="${USER}"
-  DOMAIN=$(cat "${TMPDOMAIN}")
-  SEEDGROUP=$(cat "${TMPGROUP}")
-  rm -f "${TMPNAME}" "${TMPDOMAIN}" "${TMPGROUP}"
-
-  echo -e "${BLUE}### SERVICES ###${NC}"
-  echo -e " ${BWHITE}--> Services en cours d'installation : ${NC}"
-  PROJECTPERUSER="$PROJECTUSER${USER}"
-  rm -Rf "${PROJECTPERUSER}" >/dev/null 2>&1
-  projects="/tmp/projects.txt"
-
-  if [[ -e "$projects" ]]; then
-    rm ${projects}
-  fi
-  for app in $(cat ${PROJECTSAVAILABLE}); do
-    service=$(echo "${app}" | cut -d\- -f1)
-    desc=$(echo "${app}" | cut -d\- -f2)
-    echo "$service $desc off" >>/tmp/projects.txt
-  done
-
-  SERVICESTOINSTALL=$(
-    whiptail --title "Gestion des Applications" --checklist \
-      "\nChoisir vos Applications" 18 47 10 \
-      $(cat /tmp/projects.txt) 3>&1 1>&2 2>&3
-  )
-  [[ "$?" == 1 ]] && rm /tmp/projects.txt
-  PROJECTPERUSER="${PROJECTUSER}${USER}"
-  touch "${PROJECTPERUSER}"
-
-  for PROJECTS in ${SERVICESTOINSTALL}; do
-    echo -e "	${GREEN}* $(echo "${PROJECTS}" | tr -d '"')${NC}"
-    echo $(echo ${PROJECTS,,} | tr -d '"') >>"${PROJECTPERUSER}"
-  done
-
-  for line in $(cat ${PROJECTPERUSER}); do
-    ${line}
-  done
-}
-
 function choose_services() {
   echo -e "${BLUE}### SERVICES ###${NC}"
   echo "DEBUG ${SERVICESAVAILABLE}"
@@ -798,7 +712,7 @@ function choose_other_services() {
   done
   SERVICESTOINSTALL=$(
     whiptail --title "Gestion des Applications" --checklist \
-      "Appuyer sur la barre espace pour la sélection" 28 64 21 \
+      "Appuyer sur la barre espace pour la sélection" 28 70 21 \
       $(cat /tmp/menuservices.txt) 3>&1 1>&2 2>&3
   )
   exitstatus=$?
@@ -812,65 +726,6 @@ function choose_other_services() {
   else
     return
   fi
-}
-
-function choose_media_folder_classique() {
-  echo -e "${BLUE}### DOSSIERS MEDIAS ###${NC}"
-  echo -e " ${BWHITE}--> Création des dossiers Medias : ${NC}"
-  mkdir -p "${HOME}/filebot"
-  mkdir -p "${HOME}/local/{Films,Series,Musiques,Animes}"
-  checking_errors $?
-  echo ""
-}
-
-function choose_media_folder_plexdrive() {
-  echo -e "${BLUE}### DOSSIERS MEDIAS ###${NC}"
-  USERSEED=$(get_from_account_yml user.name)
-  FOLDER="/mnt/rclone/${USERSEED}"
-
-  # si le dossier /mnt/rclone/user n'est pas vide
-  mkdir -p "${HOME}/Medias"
-  if [ "$(ls -A /mnt/rclone/${USERSEED})" ]; then
-    cd "/mnt/rclone/${USERSEED}"
-    ls -Ad */ | sed 's,/$,,g' >"${MEDIASPERUSER}"
-
-    echo -e " ${BWHITE}--> Récupération des dossiers Utilisateur à partir de Gdrive... : ${NC}"
-    for line in $(cat $MEDIASPERUSER); do
-      mkdir -p ${HOME}/local/${line}
-      echo -e "	${GREEN}--> Le dossier ${NC}${YELLOW}${line}${NC}${GREEN} a été ajouté avec succès !${NC}"
-    done
-
-  else
-    echo -e " ${BWHITE}--> Création des dossiers Medias ${NC}"
-    echo ""
-    echo -e " ${YELLOW}--> ### Veuillez patienter, création en cours des dossiers sur Gdrive ### ${NC}"
-    for media in $(cat $MEDIAVAILABLE); do
-      service=$(echo $media | cut -d\- -f1)
-      desc=$(echo $media | cut -d\- -f2)
-      echo "$service $desc off" >>/tmp/menumedia.txt
-    done
-    MEDIASTOINSTALL=$(
-      whiptail --title "Gestion des dossiers Medias" --checklist \
-        "Medias à ajouter pour ${USER} (Barre espace pour la sélection)" 28 60 17 \
-        $(cat /tmp/menumedia.txt) 3>&1 1>&2 2>&3
-    )
-    exitstatus=$?
-    if [ $exitstatus = 0 ]; then
-      touch "$MEDIASPERUSER"
-      for MEDDOCKER in $MEDIASTOINSTALL; do
-        echo -e "	${GREEN}* $(echo $MEDDOCKER | tr -d '"')${NC}"
-        echo $(echo ${MEDDOCKER} | tr -d '"') >>$MEDIASPERUSER
-      done
-      for line in $(cat $MEDIASPERUSER); do
-        line=$(echo ${line} | sed 's/\(.\)/\U\1/')
-        create_dir "${HOME}/local/${line}"
-        create_dir "/mnt/rclone/${USER}/${line}"
-      done
-      rm /tmp/menumedia.txt
-    fi
-  fi
-  mkdir -p "${HOME}/filebot"
-  echo ""
 }
 
 function install_services() {
@@ -993,15 +848,6 @@ function copie_yml_unit() {
   fi
 }
 
-decompte() {
-  i=$1
-  while [[ $i -ge 0 ]]; do
-    echo -e "\033[1;37m\r * "$var ""$i""s" \c\033[0m"
-    sleep 1
-    i=$(expr $i - 1)
-  done
-  echo -e ""
-}
 
 function manage_apps() {
   echo -e "${BLUE}##########################################${NC}"
@@ -1070,6 +916,12 @@ function suppression_appli() {
   vinkunja)
     docker rm -f vikunja-api >/dev/null 2>&1
     ;;
+  dmm)
+    docker rm -f tor >/dev/null 2>&1
+    ;;
+  zurg)
+    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/zurg
+    ;;
   esac
 
   if docker ps | grep -q db-$APPSELECTED; then
@@ -1087,6 +939,7 @@ function suppression_appli() {
   checking_errors $?
 
   ansible-playbook -e pgrole=${APPSELECTED} ${SETTINGS_SOURCE}/includes/config/playbooks/remove_cf_record.yml
+  docker system prune -af >/dev/null 2>&1
 
   echo""
   echo -e "${BLUE}### $APPSELECTED a été supprimé ###${NC}"
@@ -1274,6 +1127,9 @@ function premier_lancement() {
     shyaml \
     netaddr \
     dnspython \
+    docker-compose \
+    pyyaml  \
+    jsondiff \
     configparser
 
   ##########################################
@@ -1385,136 +1241,6 @@ function log_write() {
   FILE=${SETTINGS_SOURCE}/logs/seedbox.log
   echo "${DATE} - ${1}" >>${FILE}
   echo "${1}"
-}
-
-function log_migrate() {
-  LOG_MIGRATE=${SETTINGS_SOURCE}/logs/migrate.log
-  echo $1 >>${LOG_MIGRATE}
-  echo $1
-}
-
-function migrate() {
-  LOG_MIGRATE=${SETTINGS_SOURCE}/logs/migrate.log
-  echo "Vous allez migrer de SSD V1 vers SSD V2"
-  if [ "$USER" == "root" ]; then
-    echo "Vous ne POUVEZ pas faire cette opération en root"
-    echo "Merci de vous connecter sur le bon user avant de relancer"
-    exit 1
-  fi
-
-  # on bouge le vault pass
-  if sudo test -f /root/.vault_pass; then
-    sudo cp /root/.vault_pass ${HOME}/.vault_pass
-    sudo chown ${USER}: ${HOME}/.vault_pass
-  else
-    # pas de vault_pass trouvé en root ?
-    if [ -f "${HOME}/.vault_pass" ]; then
-      :
-    else
-      # pas de vault_pass dans le user, on en créé un
-      mypass=$(
-        tr -dc A-Za-z0-9 </dev/urandom | head -c 25
-        echo ''
-      )
-      echo "$mypass" >"${HOME}/.vault_pass"
-    fi
-  fi
-  echo "Application des droits pour le nouveau user"
-  echo "Cette opération peut prendre du temps en fonction du nombre de fichiers à traiter"
-  echo "Merci de votre patience ..."
-  echo "=================================================================================="
-  sudo chown -R "${USER}": ${SETTINGS_STORAGE}/status
-  sudo chown -R ${USER}: ${SETTINGS_STORAGE}/status/*
-  sudo chown ${USER} ${ANSIBLE_VARS}
-  premier_lancement
-
-  # on revient dans le venv
-  sudo chown -R "${USER}": ${SETTINGS_SOURCE}/venv
-  source ${SETTINGS_SOURCE}/venv/bin/activate
-  olduser=$(get_from_account_yml user.name)
-  if [ "${olduser}" != "$USER" ]; then
-    echo "Vous devez être connexté avec le même user que celui qui gérait la seedbox (${olduser}) pour effectuer cette action"
-    exit 1
-  fi
-
-  sudo chown -R "${USER}": ${SETTINGS_STORAGE}/status
-  sudo chown -R ${USER}: ${SETTINGS_STORAGE}/status/*
-  sudo chown ${USER} ${ANSIBLE_VARS}
-
-  echo "Assurez vous d'être connecté sur le bon utilisateur (celui qui va piloter la seedbox)"
-  echo "en connection directe (pas de connection sur un autre user ou root, puis sudo)"
-  echo "Cela va provoquer des coupures de service"
-  echo "--------------------------------------------"
-  echo "Les données vont être conservées, mais les éventuelles personnalisations peuvent être perdues"
-  echo "(personnalisations = modifications manuelles des fichiers de service ou des playbooks)"
-  read -p "Appuyez sur entrée pour lancer la procédure"
-  # copie éventuelle du rclone existant
-  if [ -f "${HOME}/.config/rclone/rclone.conf" ]; then
-    mv "${HOME}/.config/rclone/rclone.conf" "${HOME}/.config/rclone/rclone.conf.backup_migration"
-    log_migrate "Le fichier rclone existant a été copié sur ${HOME}/.config/rclone/rclone.conf.backup_migration"
-  fi
-  # copie du rclone de root
-  mkdir -p "${HOME}/.config/rclone"
-  mkdir -p "${SETTINGS_STORAGE}/vars"
-  sudo cp /root/.config/rclone/rclone.conf "${HOME}/.config/rclone/rclone.conf"
-  sudo chown "${USER}" "${HOME}/.config/rclone/rclone.conf"
-  sudo chown -R "${USER}" ${SETTINGS_STORAGE}/conf
-  sudo chown "${USER}": "${ANSIBLE_VARS}"
-
-  # remplacement du backup
-  log_migrate "Mise à jour du script de sauvegarde"
-  sauve
-  # on relance l'install de rclone pour avoir le bon fichier service
-  # on supprime le fichier de service existant
-  if [ -f "/etc/systemd/system/rclone.service" ]; then
-    ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml
-  fi
-  # on met les bons droits sur le conf dir
-  conf_dir
-  # cloudplow
-  if [ -f "/etc/systemd/system/cloudplow.service" ]; then
-    # on sauvegarde l'ancienne config
-    cp /home/${USER}/scripts/cloudplow/config.json /tmp/cloudplow
-    install_cloudplow
-    # on remet l'ancienne config
-    cp /home/${USER}/scripts/cloudplow/config.json /home/${USER}/scripts/cloudplow/config.json.ssdv2
-    cp /tmp/cloudplow /home/${USER}/scripts/cloudplow/config.json
-    sudo chown -R ${USER}: /home/${USER}/scripts/cloudplow
-
-  fi
-  # crop
-  if [ -f "/etc/systemd/system/crop_upload.service" ]; then
-    crop
-  fi
-  # plexdrive
-  if [ -f "/etc/systemd/system/plexdrive.service" ]; then
-    plexdrive
-  fi
-  # Resintall des applis
-  log_migrate "Prérequis de migration terminés, passage à la réinstallation des applications"
-  pause
-  reinstall_appli_migrate
-
-  # on marque la seedbox comme installée
-  update_seedbox_param "installed" 1
-  log_migrate "Migration terminée, il est conseillé de redémarrer la seedbox"
-}
-
-function reinstall_appli_migrate() {
-  for appli in $(ls ${SETTINGS_STORAGE}/status/); do
-    temp=$(cat ${SETTINGS_STORAGE}/status/${appli})
-    if [ ${appli} != "traefik" ] && [ ${appli:0:3} != "db-" ] && [ ${appli} != "watchtower" ] && [ ${appli} != "flaresolverr" ] && [ ${appli} != "cloudplow" ] && [ ${appli} != "autoscan" ] && [ ${appli} != "collabora" ] && [ ${appli} != "office" ] && [ ${appli} != "plex" ]; then
-      if [ "${temp:0:1}" = 2 ]; then
-        echo "###########################################"
-        echo "# Migration de l'application ${appli}"
-        # appli à réinstaller
-        # echo "L'appli ${appli} est à réinstaller"
-        # on supprime les fichiers de conf existant
-        rm -f "${SETTINGS_STORAGE}/conf/${appli}.yml"
-        launch_service ${appli}
-      fi
-    fi
-  done
 }
 
 function check_docker_group() {
@@ -1978,5 +1704,23 @@ function install_zurg() {
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/zurg.yml"
   launch_service rdtclient
 
+}
+
+function create_folders() {
+echo ""
+create_dir "${HOME}/local"
+create_dir "${HOME}/local/radarr"
+create_dir "${HOME}/local/sonarr"
+create_dir "${HOME}/Medias"
+echo -e "\e[32mNoms de dossiers à créer dans Medias ex: Films, Series, Films d'animation etc ..\e[0m \e[36m[Enter] | Taper "stop" une fois terminé\e[0m"   				
+while :
+do		
+  read -p "" EXCLUDEPATH
+  mkdir -p ${HOME}/Medias/$EXCLUDEPATH
+  if [[ "$EXCLUDEPATH" = "STOP" ]] || [[ "$EXCLUDEPATH" = "stop" ]]; then
+    rm -rf ${HOME}/Medias/$EXCLUDEPATH
+    break
+  fi
+done
 
 }
