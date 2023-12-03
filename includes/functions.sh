@@ -420,8 +420,10 @@ function install_watchtower() {
 }
 
 function install_rclone() {
-  echo -e "${BLUE}### RCLONE ###${NC}"
   fusermount -uz ${SETTINGS_STORAGE} }}/seedbox/zurg >>/dev/null 2>&1
+  echo -e "\e[32mINSTALLATION ZURG\e[0m"   				
+  ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/generique.yml" --extra-vars "@${SETTINGS_SOURCE}/includes/dockerapps/vars/zurg.yml"
+  echo -e "\e[32mINSTALLATION RCLONE\e[0m"   				
   ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml
   checking_errors $?
   echo ""
@@ -439,6 +441,7 @@ function install_common() {
   #ansible-galaxy collection install community.docker
   # dépendence permettant de gérer les fichiers yml
   ansible-galaxy install kwoodson.yedit
+  ansible-galaxy role install geerlingguy.docker
 
   manage_account_yml settings.storage "${SETTINGS_STORAGE}"
   manage_account_yml settings.source "${SETTINGS_SOURCE}"
@@ -1127,9 +1130,6 @@ function premier_lancement() {
     shyaml \
     netaddr \
     dnspython \
-    docker-compose \
-    pyyaml  \
-    jsondiff \
     configparser
 
   ##########################################
@@ -1723,4 +1723,11 @@ do
   fi
 done
 
+}
+
+function install_gluetun {
+  source ${SETTINGS_SOURCE}/includes/config/scripts/gluetun.sh
+  # launch gluetun
+  # ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/gluetun.yml"
+  launch_service gluetun
 }

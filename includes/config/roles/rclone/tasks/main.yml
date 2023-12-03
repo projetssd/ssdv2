@@ -43,12 +43,12 @@
           state: stopped
         when: rclone_service_running
 
+      when: rclone_service.stat.exists
+
     - name: Create a file
       file:
         path: "{{ lookup('env', 'HOME') }}/.config/rclone/rclone.conf"
         state: touch
-
-      when: rclone_service.stat.exists
 
     - name: Modify rclone.conf
       blockinfile:

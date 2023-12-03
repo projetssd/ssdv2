@@ -1,0 +1,40 @@
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+  - name: gluetun
+    docker_container:
+      image: ghcr.io/qdm12/gluetun
+      name: gluetun
+      capabilities:
+        - NET_ADMIN
+      ports:
+        - 8888:8888/tcp # HTTP proxy
+      devices:
+        - /dev/net/tun:/dev/net/tun
+      volumes:
+        - "{{settings.storage }}/gluetun:/gluetun"
+      env:
+        PUID: "{{ lookup('env','MYUID') }}"
+        PGID: "{{ lookup('env','MYGID') }}"
+        VPN_SERVICE_PROVIDER: "{{ vpn.service_provider if vpn.service_provider is defined else none }}"
+        VPN_TYPE: "{{ vpn.type if vpn.service_provider is defined else none }}"
+        #OPENVPN_USER: 'undtevfhtgbc'
+        #OPENVPN_PASSWORD: 'h&B8P0L85pJQ'
+        OPENVPN_USER: "{{vpn.openvpn_user if vpn.openvpn_user is defined else none}}"
+        OPENVPN_PASSWORD: "{{vpn.openvpn_password if vpn.openvpn_password is defined else none}}"
+        VPN_ENDPOINT_IP: "{{ vpn.endpoint if vpn.endpoint is defined else none }}"
+        VPN_ENDPOINT_PORT: "{{ vpn.port if vpn.port is defined else none }}"
+        WIREGUARD_PUBLIC_KEY: "{{ vpn.wireguard_publique if vpn.wireguard_publique is defined else none }}"
+        WIREGUARD_PRIVATE_KEY: "{{ vpn.wireguard_prive if vpn.wireguard_prive is defined else none }}"
+        WIREGUARD_PRESHARED_KEY: "{{ vpn.wireguard_preshared if vpn.wireguard_preshared is defined else none }}"
+        WIREGUARD_ADDRESSES: "{{ vpn.adresse if vpn.adresse is defined else none }}"
+        OPENVPN_CUSTOM_CONFIG: "{{ vpn.config if vpn.config is defined else none }}"
+        SERVER_COUNTRIES: "{{ vpn.country if vpn.country is defined else none }}"
+        OPENVPN_VERBOSITY: "4"
+        TZ: Europe/Paris
+      state: started
+      restart_policy: unless-stopped
+      networks:
+        - name: traefik_proxy
+

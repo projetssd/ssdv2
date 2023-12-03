@@ -18,7 +18,7 @@
 - name: Import config.xlm zurg
   become: yes
   template:
-    src: "{{ settings.source }}/includes/dockerapps/templates/{{pgrole}}/config.yml"
+    src: "{{ settings.source }}/includes/dockerapps/templates/{{pgrole}}/config.yml.j2"
     dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config.yml"
     owner: "{{lookup('env','MYUID')}}"
     group: "{{lookup('env','MYGID')}}"

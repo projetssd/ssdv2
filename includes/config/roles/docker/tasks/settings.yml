@@ -1,5 +1,0 @@
-docker:
-  repo: stable
-  version: latest
-mounts:
-  unionfs: "cat {{ settings.storage }}/variables/unionfs"
