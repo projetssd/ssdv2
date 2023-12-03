@@ -19,8 +19,6 @@
         PGID: "{{ lookup('env','MYGID') }}"
         VPN_SERVICE_PROVIDER: "{{ vpn.service_provider if vpn.service_provider is defined else none }}"
         VPN_TYPE: "{{ vpn.type if vpn.service_provider is defined else none }}"
-        #OPENVPN_USER: 'undtevfhtgbc'
-        #OPENVPN_PASSWORD: 'h&B8P0L85pJQ'
         OPENVPN_USER: "{{vpn.openvpn_user if vpn.openvpn_user is defined else none}}"
         OPENVPN_PASSWORD: "{{vpn.openvpn_password if vpn.openvpn_password is defined else none}}"
         VPN_ENDPOINT_IP: "{{ vpn.endpoint if vpn.endpoint is defined else none }}"
