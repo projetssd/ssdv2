@@ -1110,6 +1110,9 @@ function premier_lancement() {
     echo "$mypass" >"${HOME}/.vault_pass"
 
   fi
+  
+  # docker-compose pour ansible avant de rentrer dans le venv
+  pip install docker-compose
 
   # création d'un virtualenv
   python3 -m venv ${SETTINGS_SOURCE}/venv
@@ -1179,7 +1182,7 @@ EOF
 
   ##################################################
   # Account.yml
-  sudo mkdir "${SETTINGS_SOURCE}/logs"
+  sudo mkdir "${SETTINGS_SOURCE}/logs" > /dev/null 2>&1
   sudo chown -R ${user}: "${SETTINGS_SOURCE}/logs"
   sudo chmod 755 "${SETTINGS_SOURCE}/logs"
 
