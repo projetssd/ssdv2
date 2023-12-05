@@ -420,6 +420,11 @@ function install_watchtower() {
 }
 
 function install_rclone() {
+architecture=$(dpkg --print-architecture)
+RCLONE_VERSION=$(get_from_account_yml rclone.architecture)
+  if [ ${RCLONE_VERSION} == notfound ]; then
+    manage_account_yml rclone.architecture "${architecture}"
+  fi
   fusermount -uz ${SETTINGS_STORAGE} }}/seedbox/zurg >>/dev/null 2>&1
   architecture=$(dpkg --print-architecture)
   manage_account_yml rclone.architecture "${architecture}"
@@ -1693,6 +1698,10 @@ function sortie_cloud() {
 
 function install_zurg() {
   architecture=$(dpkg --print-architecture)
+  RCLONE_VERSION=$(get_from_account_yml rclone.architecture)
+  if [ ${RCLONE_VERSION} == notfound ]; then
+    manage_account_yml rclone.architecture "${architecture}"
+  fi
   rm -rf "${HOME}/scripts/zurg" > /dev/null 2>&1
   docker rm -f zurg > /dev/null 2>&1
   docker system prune -af > /dev/null 2>&1
