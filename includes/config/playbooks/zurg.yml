@@ -51,6 +51,11 @@
         owner: "{{ user.name }}"
         group: "{{ user.groupid }}"
 
+    - name: Create a file
+      file:
+        path: "{{ lookup('env', 'HOME') }}/.config/rclone/rclone.conf"
+        state: touch
+
     - name: Modify rclone.conf
       blockinfile:
         path: "{{ lookup('env', 'HOME') }}/.config/rclone/rclone.conf"
