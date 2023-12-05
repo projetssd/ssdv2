@@ -421,6 +421,8 @@ function install_watchtower() {
 
 function install_rclone() {
   fusermount -uz ${SETTINGS_STORAGE} }}/seedbox/zurg >>/dev/null 2>&1
+  architecture=$(dpkg --print-architecture)
+  manage_account_yml rclone.architecture "${architecture}"
   echo -e "\e[32mINSTALLATION ZURG\e[0m"   				
   install_zurg
   echo -e "\e[32mINSTALLATION RCLONE\e[0m"   				
@@ -1697,7 +1699,7 @@ function install_zurg() {
   mkdir -p "${HOME}/scripts/zurg" && cd ${HOME}/scripts/zurg
   wget https://github.com/debridmediamanager/zurg-testing/raw/main/releases/v0.9.2/zurg-v0.9.2-linux-$architecture.zip
   unzip zurg-v0.9.2-linux-$architecture.zip
-  rm zurg-v0.9.2-linux-architecture.zip
+  rm zurg-v0.9.2-linux-$architecture.zip
   ZURG_TOKEN=$(get_from_account_yml zurg.token)
   if [ ${ZURG_TOKEN} == notfound ]; then
     read -p $'\eToken API pour Zurg (https://real-debrid.com/apitoken) | Appuyer sur [Enter]: \e[0m' ZURG_TOKEN </dev/tty
