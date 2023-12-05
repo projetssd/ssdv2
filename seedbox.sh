@@ -163,7 +163,7 @@ if [ $mode_install = "manuel" ]; then
 
         clear
         # Installation et configuration de rclone
-        install_rclone
+        install_zurg
         # Install de watchtower
         install_watchtower
         # Install fail2ban
