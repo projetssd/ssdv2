@@ -56,13 +56,13 @@
 - name: Build URL | Set vars for current version
   set_fact:
     rclone_version_specified: "{{ 'latest' if (github_rate_limited) else 'rclone.version' }}"
-    rclone_download_url: "https://downloads.rclone.org/rclone-current-linux-"{{rclone.architecture }}".zip"
+    rclone_download_url: "https://downloads.rclone.org/rclone-current-linux-"{{ rclone.architecture }}".zip"
   when: (not rclone_version_is_specified) or (rclone.version == 'latest') or (rclone.version == 'current') or (github_rate_limited)
 
 - name: Build URL | Set vars for beta version
   set_fact:
     rclone_version_specified: "{{ rclone.version }}"
-    rclone_download_url: "https://beta.rclone.org/rclone-beta-latest-linux-"{{rclone.architecture }}".zip"
+    rclone_download_url: "https://beta.rclone.org/rclone-beta-latest-linux-"{{ rclone.architecture }}".zip"
   when: (rclone_version_is_specified) and (rclone.version == 'beta')
 
 - name: Build URL | Specified version tasks
@@ -86,7 +86,7 @@
   - name: Build URL | Set vars for specified version if available
     set_fact:
       rclone_version_specified: "{{ rclone_version_specified0 }}"
-      rclone_download_url: 'https://downloads.rclone.org/v{{ rclone_version_specified0 }}/rclone-v{{ rclone_version_specified0 }}-linux-"{{rclone.architecture }}".zip'
+      rclone_download_url: 'https://downloads.rclone.org/v{{ rclone_version_specified0 }}/rclone-v{{ rclone_version_specified0 }}-linux-"{{ rclone.architecture }}".zip'
     when: (rclone_version_specified0_check.stdout | trim | length > 0)
 
   - name: Build URL | Display message if specified version is not available
@@ -97,7 +97,7 @@
   - name: Build URL | Set vars for specified version if not available
     set_fact:
       rclone_version_specified: "latest"
-      rclone_download_url: "https://downloads.rclone.org/rclone-current-linux-"{{rclone.architecture }}".zip"
+      rclone_download_url: "https://downloads.rclone.org/rclone-current-linux-"{{ rclone.architecture }}".zip"
     when: (rclone_version_specified0_check.stdout | trim | length == 0)
 
   when:
