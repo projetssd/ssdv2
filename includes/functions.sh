@@ -1696,8 +1696,8 @@ function install_zurg() {
   docker system prune -af > /dev/null 2>&1
   mkdir -p "${HOME}/scripts/zurg" && cd ${HOME}/scripts/zurg
   wget https://github.com/debridmediamanager/zurg-testing/raw/main/releases/v0.9.2/zurg-v0.9.2-linux-$architecture.zip
-  unzip zurg-v0.9.2-linux-amd64.zip
-  rm zurg-v0.9.2-linux-amd64.zip
+  unzip zurg-v0.9.2-linux-$architecture.zip
+  rm zurg-v0.9.2-linux-architecture.zip
   ZURG_TOKEN=$(get_from_account_yml zurg.token)
   if [ ${ZURG_TOKEN} == notfound ]; then
     read -p $'\eToken API pour Zurg (https://real-debrid.com/apitoken) | Appuyer sur [Enter]: \e[0m' ZURG_TOKEN </dev/tty
