@@ -422,7 +422,7 @@ function install_watchtower() {
 function install_rclone() {
   fusermount -uz ${SETTINGS_STORAGE} }}/seedbox/zurg >>/dev/null 2>&1
   echo -e "\e[32mINSTALLATION ZURG\e[0m"   				
-  ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/generique.yml" --extra-vars "@${SETTINGS_SOURCE}/includes/dockerapps/vars/zurg.yml"
+  install_zurg
   echo -e "\e[32mINSTALLATION RCLONE\e[0m"   				
   ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml
   checking_errors $?
@@ -1691,23 +1691,42 @@ function sortie_cloud() {
 
 function install_zurg() {
   architecture=$(dpkg --print-architecture)
-  sudo systemctl stop zurg > /dev/null 2>&1
-  wget "https://github.com/debridmediamanager/zurg-testing/raw/main/releases/v0.9.0/zurg-v0.9.0-linux-${architecture}.zip?download=" -O zurg.zip
-  unzip -o zurg.zip
-  mkdir -p "${HOME}/scripts/zurg"
-  cp "zurg-linux-${architecture}" "${HOME}/scripts/zurg/zurg"
-  ZURG_TOKEN=$(get_from_account_yml zorg.token)
+  rm -rf "${HOME}/scripts/zurg" > /dev/null 2>&1
+  docker rm -f zurg > /dev/null 2>&1
+  docker system prune -af > /dev/null 2>&1
+  mkdir -p "${HOME}/scripts/zurg" && cd ${HOME}/scripts/zurg
+  wget https://github.com/debridmediamanager/zurg-testing/raw/main/releases/v0.9.2/zurg-v0.9.2-linux-$architecture.zip
+  unzip zurg-v0.9.2-linux-amd64.zip
+  rm zurg-v0.9.2-linux-amd64.zip
+  ZURG_TOKEN=$(get_from_account_yml zurg.token)
   if [ ${ZURG_TOKEN} == notfound ]; then
     read -p $'\eToken API pour Zurg (https://real-debrid.com/apitoken) | Appuyer sur [Enter]: \e[0m' ZURG_TOKEN </dev/tty
     manage_account_yml zurg.token "${ZURG_TOKEN}"
   else
-    echo -e "${BLUE}Toek Zurg déjà renseigné${CEND}"
+    echo -e "${BLUE}Token Zurg déjà renseigné${CEND}"
   fi
   # launch zurg
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/zurg.yml"
+  ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml"
   launch_service rdtclient
 
 }
+
+function install_zurg_docker() {
+  rm -rf "${HOME}/scripts/zurg" > /dev/null 2>&1
+  ZURG_TOKEN=$(get_from_account_yml zurg.token)
+  if [ ${ZURG_TOKEN} == notfound ]; then
+    read -p $'\eToken API pour Zurg (https://real-debrid.com/apitoken) | Appuyer sur [Enter]: \e[0m' ZURG_TOKEN </dev/tty
+    manage_account_yml zurg.token "${ZURG_TOKEN}"
+  else
+    echo -e "${BLUE}Token Zurg déjà renseigné${CEND}"
+  fi
+  # launch zurg
+  ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/generique.yml" --extra-vars "@${SETTINGS_SOURCE}/includes/dockerapps/vars/zurg.yml"
+  ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml"
+  launch_service rdtclient
+}
+
 
 function create_folders() {
 echo ""
@@ -1730,7 +1749,18 @@ done
 
 function install_gluetun {
   source ${SETTINGS_SOURCE}/includes/config/scripts/gluetun.sh
-  # launch gluetun
-  # ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/gluetun.yml"
   launch_service gluetun
+}
+
+function install_dmm() {
+DMM_TOKEN=$(get_from_account_yml dmm.token)
+  if [ ${DMM_TOKEN} == notfound ]; then
+    read -p $'\eToken MYSQL pour DEBRIDMEDIAMANAGER | Appuyer sur [Enter]: \e[0m' DMM_TOKEN </dev/tty
+    manage_account_yml dmm.token "${DMM_TOKEN}"
+  else
+    echo -e "${BLUE}Mysql debridmediamanager déjà renseigné${CEND}"
+  fi
+
+# installation debridmediamanager
+  ansible-playbook ${SETTINGS_SOURCE}/includes/dockerapps/dmm.yml
 }

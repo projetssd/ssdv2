@@ -27,22 +27,10 @@
         path: "/etc/systemd/system/rclone.service"
       register: rclone_service
 
-    - name: Service Tasks
-      block:
-
-      - name: Populate Service Facts
-        service_facts:
-
-      - name: Get rclone service state
-        set_fact:
-          rclone_service_running: "{{ (services['rclone.service'] is defined) and (services['rclone.service']['state'] == 'running') }}"
-
-      - name: Stop rclone service
-        systemd:
-          name: rclone
-          state: stopped
-        when: rclone_service_running
-
+    - name: Stop rclone service
+      systemd:
+        name: rclone
+        state: stopped
       when: rclone_service.stat.exists
 
     - name: Create a file
@@ -56,10 +44,15 @@
         block: |
           [zurg]
           type = webdav
-          url = http://localhost:9999
+          url = http://localhost:9999/dav
           vendor = other
           pacer_min_sleep = 0
-
+          
+          [zurghttp]
+          type = http
+          url = http://localhost:9999/http
+          no_head = false
+          no_slash = false
 
     - name: Import systemd rclone.service
       template:

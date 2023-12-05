@@ -242,9 +242,12 @@ function menu_reinit_container() {
     docker volume rm $(docker volume ls -qf "dangling=true") >/dev/null 2>&1
     echo ""
     echo ${line} >>$SERVICESPERUSER
-
-    launch_service ${line}
-
+    if [[ "${line}" = zurg ]]; then
+      launch_service ${line}
+      ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml"
+    else
+      launch_service ${line}
+    fi
     pause
     checking_errors $?
     echo""

@@ -8,14 +8,6 @@
 
     # FACTS #######################################################################
 
-    - pause:
-        prompt: "Token mysql pour dmm (ex: mysql://0jfm9tx1v...accept=strict) | Appuyer sur [Enter]"
-        echo: yes
-      register: token
-
-    - set_fact:
-        token: "{{ token.user_input }}"
-
     - name: 'Set Known Facts'
       set_fact:
         pgrole: 'dmm'

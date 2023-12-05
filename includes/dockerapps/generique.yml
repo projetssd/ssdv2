@@ -3,10 +3,11 @@
 # Ex :
 # ansible-playbook ${settings.source}/includes/dockerapps/generique.yml --extra-vars "@${BASEDIR}/includes/dockerapps/vars/calibre.yml"
 #
-
 ---
 - hosts: localhost
   gather_facts: true
+  roles:
+    - kwoodson.yedit
   vars_files:
     - "{{ settings.source }}/includes/dockerapps/templates/generique/generique.yml"
 

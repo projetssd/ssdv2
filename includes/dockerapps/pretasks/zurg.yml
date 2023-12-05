@@ -1,11 +1,51 @@
 ---
-- pause:
-    prompt: "Token API pour Zurg (https://real-debrid.com/apitoken) | Appuyer sur [Enter]"
-    echo: yes
-  register: token
+- name: Supression du dossier zurgdata par precaution s'il existe
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+  - "/home/{{user.name}}/seedbox/docker/{{user.name}}/zurg"
 
-- set_fact:
-    token: "{{ token.user_input }}"
+- name: Check zurg.service si present
+  stat:
+    path: /etc/systemd/system/zurg.service
+  register: zurg_status
+
+- name: Stop zurg.service
+  become: yes
+  systemd:
+    name: zurg
+    state: stopped
+    enabled: no
+  when: zurg_status.stat.exists
+
+- name: suppression zurg service
+  become: yes
+  file:
+    path: "/etc/systemd/system/zurg.service"
+    state: absent
+  when: zurg_status.stat.exists
+
+- name: Check rclone.service si present
+  stat:
+    path: /etc/systemd/system/zurg.service
+  register: rclone_status
+
+- name: stop rclone.service
+  become: yes
+  systemd:
+    name: rclone
+    state: stopped
+    enabled: no
+  when: rclone_status.stat.exists
+
+- name: suppression rclone service
+  become: yes
+  file:
+    path: "/etc/systemd/system/rclone.service"
+    state: absent
+  when: rclone_status.stat.exists
 
 - name: Creating paths
   become: yes
