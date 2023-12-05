@@ -1745,6 +1745,7 @@ create_dir "${HOME}/local"
 create_dir "${HOME}/local/radarr"
 create_dir "${HOME}/local/sonarr"
 create_dir "${HOME}/Medias"
+create_dir "${HOME}/.config/rclone"
 echo -e "\e[32mNoms de dossiers à créer dans Medias ex: Films, Series, Films d'animation etc ..\e[0m \e[36m[Enter] | Taper "stop" une fois terminé\e[0m"   				
 while :
 do		
