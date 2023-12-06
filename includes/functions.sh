@@ -1711,7 +1711,7 @@ function install_zurg() {
   rm zurg-${ZURG_VERSION}-linux-${ARCHITECTURE}.zip > /dev/null 2>&1
   ZURG_TOKEN=$(get_from_account_yml zurg.token)
   if [ ${ZURG_TOKEN} == notfound ]; then
-    read -p $'\eToken API pour Zurg (https://real-debrid.com/apitoken) | Appuyer sur [Enter]: \e[0m' ZURG_TOKEN </dev/tty
+    read -p $'\e[32mToken API pour Zurg (https://real-debrid.com/apitoken) | Appuyer sur [Enter]: \e[0m' ZURG_TOKEN </dev/tty
     manage_account_yml zurg.token "${ZURG_TOKEN}"
   else
     echo -e "${BLUE}Token Zurg déjà renseigné${CEND}"
@@ -1779,9 +1779,10 @@ DMM_TOKEN=$(get_from_account_yml dmm.token)
 function update_release_zurg() {
   wget https://api.github.com/repos/debridmediamanager/zurg-testing/commits > /dev/null 2>&1
   CURRENT_VERSION=$(get_from_account_yml zurg.version)
-  LATEST_VERSION=$(jq '.[0] | .commit.message' commits | tr -d '"')
+  LATEST_VERSION=$(jq '.[] | .commit.message' commits | tr -d '"' | grep -m 1 "Release")
+  
   if [[ ${CURRENT_VERSION} == notfound ]] || [[ ${LATEST_VERSION} == *"Release"* ]]; then
-      LATEST_VERSION=$(jq '.[0] | .commit.message' commits | cut -d ' ' -f 2 | tr -d '"')
+      LATEST_VERSION=$(jq '.[] | .commit.message' commits | grep -m 1 "Release" | cut -d ' ' -f 2 | tr -d '"' )
       if [[ ${LATEST_VERSION} != ${CURRENT_VERSION} ]]; then
         manage_account_yml zurg.version "${LATEST_VERSION}"
         echo -e  "${BLUE}Version Zurg: $LATEST_VERSION${CEND}"

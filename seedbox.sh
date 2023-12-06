@@ -85,10 +85,11 @@ if [ ! -f "${SETTINGS_SOURCE}/ssddb" ]; then
 fi
 
 # on contre le bug de debian et du venv qui ne trouve pas les paquets installés par galaxy
-source "${SETTINGS_SOURCE}/venv/bin/activate"
+
+source "${SETTINGS_SOURCE}/venv/bin/activate" > /dev/null 2>&1
 temppath=$(ls ${SETTINGS_SOURCE}/venv/lib)
 pythonpath=${SETTINGS_SOURCE}/venv/lib/${temppath}/site-packages
-export PYTHONPATH=${pythonpath}
+export PYTHONPATH=${pythonpath} > /dev/null 2>&1
 
 case "$action" in
 install_gui)
