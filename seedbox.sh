@@ -212,7 +212,7 @@ if [ $mode_install = "manuel" ]; then
       if [[ ${IS_INSTALLED} -eq 0 ]]; then
         clear
         # Installation et configuration de rclone
-        install_rclone
+        install_zurg
         # Install de watchtower
         install_watchtower
         # Install fail2ban

@@ -420,14 +420,13 @@ function install_watchtower() {
 }
 
 function install_rclone() {
-architecture=$(dpkg --print-architecture)
+ARCHITECTURE=$(dpkg --print-architecture)
 RCLONE_VERSION=$(get_from_account_yml rclone.architecture)
   if [ ${RCLONE_VERSION} == notfound ]; then
-    manage_account_yml rclone.architecture "${architecture}"
+    manage_account_yml rclone.architecture "${ARCHITECTURE}"
   fi
   fusermount -uz ${SETTINGS_STORAGE} }}/seedbox/zurg >>/dev/null 2>&1
-  architecture=$(dpkg --print-architecture)
-  manage_account_yml rclone.architecture "${architecture}"
+  manage_account_yml rclone.architecture "${ARCHITECTURE}"
   echo -e "\e[32mINSTALLATION ZURG\e[0m"   				
   install_zurg
   echo -e "\e[32mINSTALLATION RCLONE\e[0m"   				
@@ -1697,18 +1696,21 @@ function sortie_cloud() {
 }
 
 function install_zurg() {
-  architecture=$(dpkg --print-architecture)
+  update_release_zurg
+  ARCHITECTURE=$(dpkg --print-architecture)
   RCLONE_VERSION=$(get_from_account_yml rclone.architecture)
+  ZURG_VERSION=$(get_from_account_yml zurg.version)
+  create_dir "${HOME}/.config/rclone"
   if [ ${RCLONE_VERSION} == notfound ]; then
-    manage_account_yml rclone.architecture "${architecture}"
+    manage_account_yml rclone.architecture "${ARCHITECTURE}"
   fi
   rm -rf "${HOME}/scripts/zurg" > /dev/null 2>&1
   docker rm -f zurg > /dev/null 2>&1
   docker system prune -af > /dev/null 2>&1
   mkdir -p "${HOME}/scripts/zurg" && cd ${HOME}/scripts/zurg
-  wget https://github.com/debridmediamanager/zurg-testing/raw/main/releases/v0.9.2/zurg-v0.9.2-linux-$architecture.zip > /dev/null 2>&1
-  unzip zurg-v0.9.2-linux-$architecture.zip > /dev/null 2>&1
-  rm zurg-v0.9.2-linux-$architecture.zip
+  wget https://github.com/debridmediamanager/zurg-testing/raw/main/releases/${ZURG_VERSION}/zurg-${ZURG_VERSION}-linux-${ARCHITECTURE}.zip > /dev/null 2>&1
+  unzip zurg-${ZURG_VERSION}-linux-${ARCHITECTURE}.zip > /dev/null 2>&1
+  rm zurg-${ZURG_VERSION}-linux-${ARCHITECTURE}.zip > /dev/null 2>&1
   ZURG_TOKEN=$(get_from_account_yml zurg.token)
   if [ ${ZURG_TOKEN} == notfound ]; then
     read -p $'\eToken API pour Zurg (https://real-debrid.com/apitoken) | Appuyer sur [Enter]: \e[0m' ZURG_TOKEN </dev/tty
@@ -1745,7 +1747,6 @@ create_dir "${HOME}/local"
 create_dir "${HOME}/local/radarr"
 create_dir "${HOME}/local/sonarr"
 create_dir "${HOME}/Medias"
-create_dir "${HOME}/.config/rclone"
 echo -e "\e[32mNoms de dossiers à créer dans Medias ex: Films, Series, Films d'animation etc ..\e[0m \e[36m[Enter] | Taper "stop" une fois terminé\e[0m"   				
 while :
 do		
@@ -1775,4 +1776,20 @@ DMM_TOKEN=$(get_from_account_yml dmm.token)
 
 # installation debridmediamanager
   ansible-playbook ${SETTINGS_SOURCE}/includes/dockerapps/dmm.yml
+}
+
+function update_release_zurg() {
+  wget https://api.github.com/repos/debridmediamanager/zurg-testing/commits > /dev/null 2>&1
+  CURRENT_VERSION=$(get_from_account_yml zurg.version)
+  LATEST_VERSION=$(jq '.[0] | .commit.message' commits | tr -d '"')
+  if [[ ${CURRENT_VERSION} == notfound ]] || [[ ${LATEST_VERSION} == *"Release"* ]]; then
+      LATEST_VERSION=$(jq '.[0] | .commit.message' commits | cut -d ' ' -f 2 | tr -d '"')
+      if [[ ${LATEST_VERSION} != ${CURRENT_VERSION} ]]; then
+        manage_account_yml zurg.version "${LATEST_VERSION}"
+        echo -e  "${BLUE}Version Zurg: $LATEST_VERSION${CEND}"
+      else 
+        echo -e "${BLUE}Version Zurg: ${CURRENT_VERSION}${CEND}"
+      fi
+  fi
+  rm commits
 }
