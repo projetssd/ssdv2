@@ -462,12 +462,12 @@ function install_common() {
   stocke_public_ip
   # On part à la pêche aux infos....
   ${SETTINGS_SOURCE}/includes/config/scripts/get_infos.sh
-  pause
+  #pause
   echo ""
   # On crée les fichier de status à 0
   status
   # Mise à jour du système
-  update_system
+  #update_system
   # Installation des packages de base
   install_base_packages
   # Installation de docker
@@ -1215,10 +1215,8 @@ EOF
 
   install_common
   # shellcheck disable=SC2162
-  echo "Les composants sont maintenants tous installés/réglés, poursuite de l'installation"
-
-  read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
-
+  echo -e "\e[33mLes composants sont maintenants tous installés/réglés, poursuite de l'installation\e[0m"
+  echo""
   # fin du venv
 }
 

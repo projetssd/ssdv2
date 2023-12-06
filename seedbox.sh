@@ -140,15 +140,8 @@ if [ $mode_install = "manuel" ]; then
   if [[ ${IS_INSTALLED} -eq 0 ]]; then
     # Si on est là, c'est que le prérequis sont installés, mais c'est tout
     # On propose donc l'install de la seedbox
-    clear
-    logo
-    echo -e "${CCYAN}INSTALLATION SEEDBOX DOCKER${CEND}"
-    echo -e "${CGREEN}${CEND}"
-    echo -e "${CGREEN}   1) Installation Seedbox rclone && zurg${CEND}"
+    echo -e "${CGREEN}   1) Poursuivre l'installation${CEND}"
     echo -e "${CGREEN}   2) Restauration Seedbox${CEND}"
-    #echo -e "${CGREEN}   999) Installer la GUI${CEND}"
-    echo -e "${CGREEN}   9) Sortir du script${CEND}"
-
     echo -e ""
     read -p "Votre choix : " CHOICE
     echo ""
@@ -173,8 +166,6 @@ if [ $mode_install = "manuel" ]; then
         # Installation de mergerfs
         # Cette install a une incidence sur docker (dépendances dans systemd)
         # unionfs_fuse # non utile pour install zurg mais fonction laissée
-        pause
-
         # mise en place de la sauvegarde
         sauve
         # Affichage du résumé
