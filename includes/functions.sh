@@ -467,7 +467,7 @@ function install_common() {
   # On crée les fichier de status à 0
   status
   # Mise à jour du système
-  #update_system
+  update_system
   # Installation des packages de base
   install_base_packages
   # Installation de docker
@@ -1727,7 +1727,7 @@ function install_zurg_docker() {
   rm -rf "${HOME}/scripts/zurg" > /dev/null 2>&1
   ZURG_TOKEN=$(get_from_account_yml zurg.token)
   if [ ${ZURG_TOKEN} == notfound ]; then
-    read -p $'\eToken API pour Zurg (https://real-debrid.com/apitoken) | Appuyer sur [Enter]: \e[0m' ZURG_TOKEN </dev/tty
+    read -p $'\e[32mToken API pour Zurg (https://real-debrid.com/apitoken) | Appuyer sur [Enter]: \e[0m' ZURG_TOKEN </dev/tty
     manage_account_yml zurg.token "${ZURG_TOKEN}"
   else
     echo -e "${BLUE}Token Zurg déjà renseigné${CEND}"
@@ -1789,5 +1789,5 @@ function update_release_zurg() {
         echo -e "${BLUE}Version Zurg: ${CURRENT_VERSION}${CEND}"
       fi
   fi
-  rm commits
+  #rm commits
 }
