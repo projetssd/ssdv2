@@ -785,7 +785,6 @@ function launch_service() {
     echo -e " ${GREEN}ATTENTION IMPORTANT - NE PAS FAIRE D'ERREUR - SINON DESINSTALLER ET REINSTALLER${NC}"
     "${SETTINGS_SOURCE}/includes/config/roles/plex_autoscan/plex_token.sh"
 
-    choose_media_folder_plexdrive
     if [[ -f "${SETTINGS_STORAGE}/conf/plex.yml" ]]; then
       :
     else
@@ -1766,7 +1765,7 @@ function install_gluetun {
 function install_dmm() {
 DMM_TOKEN=$(get_from_account_yml dmm.token)
   if [ ${DMM_TOKEN} == notfound ]; then
-    read -p $'\eToken MYSQL pour DEBRIDMEDIAMANAGER | Appuyer sur [Enter]: \e[0m' DMM_TOKEN </dev/tty
+    read -p $'\e[32mToken MYSQL pour Debridmediamanager | Appuyer sur [Enter]: \e[0m' DMM_TOKEN </dev/tty
     manage_account_yml dmm.token "${DMM_TOKEN}"
   else
     echo -e "${BLUE}Mysql debridmediamanager déjà renseigné${CEND}"
@@ -1780,7 +1779,6 @@ function update_release_zurg() {
   wget https://api.github.com/repos/debridmediamanager/zurg-testing/commits > /dev/null 2>&1
   CURRENT_VERSION=$(get_from_account_yml zurg.version)
   LATEST_VERSION=$(jq '.[] | .commit.message' commits | tr -d '"' | grep -m 1 "Release")
-  
   if [[ ${CURRENT_VERSION} == notfound ]] || [[ ${LATEST_VERSION} == *"Release"* ]]; then
       LATEST_VERSION=$(jq '.[] | .commit.message' commits | grep -m 1 "Release" | cut -d ' ' -f 2 | tr -d '"' )
       if [[ ${LATEST_VERSION} != ${CURRENT_VERSION} ]]; then
