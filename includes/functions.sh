@@ -1788,5 +1788,5 @@ function update_release_zurg() {
         echo -e "${BLUE}Version Zurg: ${CURRENT_VERSION}${CEND}"
       fi
   fi
-  #rm commits
+  rm commits
 }
