@@ -80,36 +80,12 @@ menu_gestion_motd() {
   pause
 }
 
-menu_gestion_traktarr() {
-  clear
-  echo ""
-  install_traktarr
-  pause
-}
-
-menu_gestion_webtools() {
-  clear
-  echo ""
-  webtools
-  pause
-}
-
 menu_gestion_rtorrent_cleaner() {
   clear
   echo ""
   install-rtorrent-cleaner
   docker run -it --rm -v /home/${USER}/local/rutorrent:/home/${USER}/local/rutorrent -v /run/php:/run/php magicalex/rtorrent-cleaner
   pause
-}
-
-menu_gestion_plex_patrol() {
-  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/plex_patrol/tasks/main.yml
-  #SEEDUSER=$(ls ${SETTINGS_STORAGE}/media* | cut -d '-' -f2)
-  DOMAIN=$(get_from_account_yml user.domain)
-  FQDNTMP="plex_patrol.$DOMAIN"
-  cp "${SETTINGS_SOURCE}/includes/config/roles/plex_patrol/tasks/main.yml" "${SETTINGS_STORAGE}/conf/plex_patrol.yml" >/dev/null 2>&1
-  echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour revenir au menu principal..."
-  read -r
 }
 
 menu_gestion_ufw() {
@@ -137,13 +113,6 @@ function menu_gestion_install_filebot() {
 
 }
 
-menu_gestoutils_plexautoscan() {
-  clear
-  echo ""
-  plex_autoscan
-  pause
-}
-
 menu_gestoutils_autoscan() {
   clear
   echo ""
@@ -156,13 +125,6 @@ menu_gestoutils_cloudplow() {
   logo
   echo ""
   install_cloudplow
-  pause
-}
-
-menu_gestoutils_crop() {
-  clear
-  crop
-  echo ""
   pause
 }
 

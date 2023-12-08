@@ -248,7 +248,6 @@
         networks:
           - name: traefik_proxy
 
-
     - name: Google OAuth2 tasks
       include_tasks: "{{ settings.source }}/includes/dockerapps/templates/{{pgrole}}/oauth.yml"
       when: oauth_enabled

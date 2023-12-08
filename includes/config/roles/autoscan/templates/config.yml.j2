@@ -18,13 +18,9 @@ triggers:
 
       # rewrite inotify path to unified filesystem
       rewrite:
-        - from: ^/home/{{ lookup('env','USER') }}/local/
+        - from: ^/home/{{ lookup('env','USER') }}/Medias/
           to: /home/{{ lookup('env','USER') }}/Medias/
 
-      # local filesystem paths to monitor
-      paths:
-        - path: /home/{{ lookup('env','USER') }}/local/Series
-        - path: /home/{{ lookup('env','USER') }}/local/Films
   sonarr:
     - name: sonarr-docker
       priority: 3
