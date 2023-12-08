@@ -201,34 +201,8 @@ function plex_dupefinder() {
   checking_errors $?
 }
 
-function install_traktarr() {
-  ##configuration traktarr avec ansible
-  echo -e "${BLUE}### TRAKTARR ###${NC}"
-  echo -e " ${BWHITE}* Installation traktarr${NC}"
-  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/traktarr/tasks/main.yml
-  checking_errors $?
-}
-
 function update_logrotate() {
   ansible-playbook ${SETTINGS_SOURCE}/includes/config/playbooks/logrotate.yml
-}
-
-function webtools() {
-  ##configuration Webtools avec ansible
-  echo -e "${BLUE}### WEBTOOLS ###${NC}"
-  echo -e " ${BWHITE}* Installation Webtools${NC}"
-  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/webtools/tasks/main.yml
-  docker restart plex
-  checking_errors $?
-}
-
-function plex_autoscan() {
-  #configuration plex_autoscan avec ansible
-  echo -e "${BLUE}### PLEX_AUTOSCAN ###${NC}"
-  echo -e " ${BWHITE}* Installation plex_autoscan${NC}"
-  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/plex_autoscan/tasks/main.yml
-  sudo chown -R ${USER} ${HOME}/scripts/plex_autoscan
-  checking_errors $?
 }
 
 function autoscan() {
@@ -236,15 +210,6 @@ function autoscan() {
   echo -e "${BLUE}### AUTOSCAN ###${NC}"
   echo -e " ${BWHITE}* Installation autoscan${NC}"
   ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/autoscan/tasks/main.yml
-  checking_errors $?
-}
-
-function crop() {
-  #configuration crop avec ansible
-  echo -e "${BLUE}### CROP ###${NC}"
-  ${SETTINGS_SOURCE}/includes/config/scripts/crop.sh
-  echo -e " ${BWHITE}* Installation crop${NC}"
-  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/crop/tasks/main.yml
   checking_errors $?
 }
 
@@ -427,11 +392,15 @@ RCLONE_VERSION=$(get_from_account_yml rclone.architecture)
   fi
   fusermount -uz ${SETTINGS_STORAGE} }}/seedbox/zurg >>/dev/null 2>&1
   manage_account_yml rclone.architecture "${ARCHITECTURE}"
-  echo -e "\e[32mINSTALLATION ZURG\e[0m"   				
-  install_zurg
-  echo -e "\e[32mINSTALLATION RCLONE\e[0m"   				
-  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml
-  checking_errors $?
+  if [ ! -f  "${SETTINGS_STORAGE}/status/rclone" ]; then
+    echo -e "\e[32mINSTALLATION ZURG\e[0m"   				
+    install_zurg
+    ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml"
+  else
+    echo -e "\e[32mINSTALLATION RCLONE\e[0m"   				
+    ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml"
+  fi
+    checking_errors $?
   echo ""
 }
 

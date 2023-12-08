@@ -129,30 +129,25 @@ if [ "$USER" == "root" ]; then
   fi
 fi
 
-# on met les droits comme il faut, au cas où il y ait eu un mauvais lancement
-#sudo chown -R ${USER}: ${SETTINGS_SOURCE}
-
 IS_INSTALLED=$(select_seedbox_param "installed")
-
-#clear
 
 if [ $mode_install = "manuel" ]; then
 
   if [[ ${IS_INSTALLED} -eq 0 ]]; then
     # Si on est là, c'est que le prérequis sont installés, mais c'est tout
     # On propose donc l'install de la seedbox
-    echo -e "${CGREEN}   1) Poursuivre l'installation${CEND}"
-    echo -e "${CGREEN}   2) Restauration Seedbox${CEND}"
+    echo -e "${CGREEN}   1) Installation zurg - rclone - RDTclient${CEND}"
+    echo -e "${CGREEN}   2) Installation Minimale sans zurg${CEND}"
+    echo -e "${CGREEN}   3) Restauration Seedbox${CEND}"
     echo -e ""
     read -p "Votre choix : " CHOICE
     echo ""
     case $CHOICE in
-    1) ## Installation de la seedbox Rclone et Gdrive
+    1) ## Installation de la seedbox Zurg et rclone
       # on stocke les patchs pour ne pas les appliquer
       for patch in $(ls ${SETTINGS_SOURCE}/patches); do
         echo "${patch}" >>"${HOME}/.config/ssd/patches"
       done
-      #check_dir "$PWD"
       if [[ ${IS_INSTALLED} -eq 0 ]]; then
 
         clear
@@ -170,7 +165,38 @@ if [ $mode_install = "manuel" ]; then
         # mise en place de la sauvegarde
         sauve
         # Affichage du résumé
-        #pause
+        # on marque la seedbox comme installée
+        update_seedbox_param "installed" 1
+        echo "L'installation est maintenant terminée."
+        echo "Pour le configurer ou modifier les applis, vous pouvez le relancer"
+        echo "cd ${SETTINGS_SOURCE}"
+        echo "./seedbox.sh"
+        exit 0
+      else
+        affiche_menu_db
+      fi
+      ;;
+
+    2) ## Installation personnalisée traefik - Cloudflare
+      echo "###################################################"
+      echo "# Installation minimale sans Zurg                 #"
+      echo "###################################################"
+      echo "Pour une installation at home sans zurg"
+      # on stocke les patchs pour ne pas les appliquer
+      touch "${SETTINGS_STORAGE}/status/rclone"
+      for patch in $(ls ${SETTINGS_SOURCE}/patches); do
+        echo "${patch}" >>"${HOME}/.config/ssd/patches"
+      done
+      if [[ ${IS_INSTALLED} -eq 0 ]]; then
+        # Install de watchtower
+        install_watchtower
+        # Install fail2ban
+        install_fail2ban
+        # Install rclone si dropbox
+        install_rclone
+        # Choix des dossiers et création de l'arborescence
+        create_folders
+        sauve
         # on marque la seedbox comme installée
         update_seedbox_param "installed" 1
         echo "L'installation est maintenant terminée."
