@@ -1719,7 +1719,6 @@ function install_zurg() {
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/zurg.yml"
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml"
   launch_service rdtclient
-
 }
 
 function install_zurg_docker() {
@@ -1739,21 +1738,21 @@ function install_zurg_docker() {
 
 
 function create_folders() {
-echo ""
-create_dir "${HOME}/local"
-create_dir "${HOME}/local/radarr"
-create_dir "${HOME}/local/sonarr"
-create_dir "${HOME}/Medias"
-echo -e "\e[32mNoms de dossiers à créer dans Medias ex: Films, Series, Films d'animation etc ..\e[0m \e[36m[Enter] | Taper "stop" une fois terminé\e[0m"   				
-while :
-do		
-  read -p "" EXCLUDEPATH
-  mkdir -p ${HOME}/Medias/$EXCLUDEPATH
-  if [[ "$EXCLUDEPATH" = "STOP" ]] || [[ "$EXCLUDEPATH" = "stop" ]]; then
-    rm -rf ${HOME}/Medias/$EXCLUDEPATH
-    break
-  fi
-done
+  echo ""
+  create_dir "${HOME}/local"
+  create_dir "${HOME}/local/radarr"
+  create_dir "${HOME}/local/sonarr"
+  create_dir "${HOME}/Medias"
+  echo -e "\e[32mNoms de dossiers à créer dans Medias ex: Films, Series, Films d'animation etc ..\e[0m \e[36m[Enter] | Taper "stop" une fois terminé\e[0m"		
+  while :
+  do		
+    read -p "" EXCLUDEPATH
+    mkdir -p ${HOME}/Medias/$EXCLUDEPATH
+    if [[ "$EXCLUDEPATH" = "STOP" ]] || [[ "$EXCLUDEPATH" = "stop" ]]; then
+      rm -rf ${HOME}/Medias/$EXCLUDEPATH
+      break
+    fi
+  done
 
 }
 
@@ -1763,7 +1762,7 @@ function install_gluetun {
 }
 
 function install_dmm() {
-DMM_TOKEN=$(get_from_account_yml dmm.token)
+  DMM_TOKEN=$(get_from_account_yml dmm.token)
   if [ ${DMM_TOKEN} == notfound ]; then
     read -p $'\e[32mToken MYSQL pour Debridmediamanager | Appuyer sur [Enter]: \e[0m' DMM_TOKEN </dev/tty
     manage_account_yml dmm.token "${DMM_TOKEN}"
@@ -1789,4 +1788,44 @@ function update_release_zurg() {
       fi
   fi
   rm commits
+}
+
+function choose_version_zurg() {
+  echo ""
+  wget https://api.github.com/repos/debridmediamanager/zurg-testing/commits > /dev/null 2>&1
+  jq '.[] | .commit.message' commits | tr -d '"' | grep -m 20 "Release" | uniq | cat -n | sed 's/[ ]\+/ /g' | tr " " " " | tr "\t" " " > temp
+
+  while read LIGNE
+  do echo -e "\e[32m$LIGNE\e[0m"
+  done < temp
+  echo ""
+  read -p $'\e[36mChoisir le numéro de la Version : \e[0m' NUMERO_LIGNE </dev/tty
+  VERSION=$(sed -n "${NUMERO_LIGNE}p" temp | cut -d ' ' -f 4) 
+  manage_account_yml zurg.version "${VERSION}"
+  echo -e  "${BLUE}Version Zurg: $VERSION${CEND}"
+  ARCHITECTURE=$(dpkg --print-architecture)
+  RCLONE_VERSION=$(get_from_account_yml rclone.architecture)
+  ZURG_VERSION=$(get_from_account_yml zurg.version)
+  create_dir "${HOME}/.config/rclone"
+  if [ ${RCLONE_VERSION} == notfound ]; then
+    manage_account_yml rclone.architecture "${ARCHITECTURE}"
+  fi
+  rm -rf "${HOME}/scripts/zurg" > /dev/null 2>&1
+  docker rm -f zurg > /dev/null 2>&1
+  docker system prune -af > /dev/null 2>&1
+  mkdir -p "${HOME}/scripts/zurg" && cd ${HOME}/scripts/zurg
+  wget https://github.com/debridmediamanager/zurg-testing/raw/main/releases/${ZURG_VERSION}/zurg-${ZURG_VERSION}-linux-${ARCHITECTURE}.zip > /dev/null 2>&1
+  unzip zurg-${ZURG_VERSION}-linux-${ARCHITECTURE}.zip > /dev/null 2>&1
+  rm zurg-${ZURG_VERSION}-linux-${ARCHITECTURE}.zip > /dev/null 2>&1
+  ZURG_TOKEN=$(get_from_account_yml zurg.token)
+  if [ ${ZURG_TOKEN} == notfound ]; then
+    read -p $'\e[32mToken API pour Zurg (https://real-debrid.com/apitoken) | Appuyer sur [Enter]: \e[0m' ZURG_TOKEN </dev/tty
+    manage_account_yml zurg.token "${ZURG_TOKEN}"
+  else
+    echo -e "${BLUE}Token Zurg déjà renseigné${CEND}"
+  fi
+  # launch zurg
+  ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/zurg.yml"
+  ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml"
+  launch_service rdtclient
 }
