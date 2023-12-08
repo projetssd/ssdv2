@@ -1,0 +1,43 @@
+version: '3.9'
+services:
+
+  tor:
+    image: debridmediamanager/tor
+    container_name: tor
+    deploy:
+      replicas: 1
+    networks:
+      traefik_proxy:
+
+  dmm:
+    image: debridmediamanager/debrid-media-manager:latest
+    container_name: dmm
+    env_file:
+      - .env.local
+    depends_on:
+      - tor
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure    
+    labels:
+      traefik.enable: 'true'
+      ## HTTP Routers
+      traefik.http.routers.{{pgrole}}-rtr.entrypoints: 'http,https'
+      traefik.http.routers.{{pgrole}}-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
+      traefik.http.routers.{{pgrole}}-rtr.tls: 'true'
+      ## Middlewares
+      traefik.http.routers.{{pgrole}}-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
+      else 'chain-basic-auth@file' if auth_enabled and sub[pgrole].auth == 'basique' | default(false)
+      else 'chain-oauth@file' if auth_enabled and sub[pgrole].auth == 'oauth' | default(false) 
+      else 'chain-no-auth@file' if auth_enabled and sub[pgrole].auth == 'aucune'}}"
+      traefik.http.routers.{{pgrole}}-rtr.service: '{{pgrole}}-svc'
+      traefik.http.routers.{{pgrole}}-rtr.tls.certresolver: 'letsencrypt' 
+      ## HTTP Services
+      traefik.http.services.{{pgrole}}-svc.loadbalancer.server.port: "{{ intport }}"
+    networks:
+      traefik_proxy:
+
+networks:
+  traefik_proxy:
+    external: true

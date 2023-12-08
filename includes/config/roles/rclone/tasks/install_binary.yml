@@ -24,7 +24,7 @@
 
 - name: Install Binary | Cleanup rclone tmp path
   become: yes
-  shell: rm -rf /tmp/rclone-*-linux-amd64
+  shell: "rm -rf /tmp/rclone-*-linux-{{ rclone.architecture }}"
 
 
 - name: Install Binary | Display rclone version being installed
@@ -42,7 +42,7 @@
     validate_certs: no
 
 - name: Install Binary | Find rclone tmp dir
-  shell: ls -d /tmp/rclone-*-linux-amd64
+  shell: "ls -d /tmp/rclone-*-linux-{{ rclone.architecture }}"
   register: rclone_tmp_dir
 
 - name: Install Binary | Copy binary to /usr/bin/rclone

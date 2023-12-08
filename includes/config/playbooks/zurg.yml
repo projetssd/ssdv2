@@ -2,12 +2,59 @@
 - hosts: localhost
   gather_facts: false
   tasks:
+
+    - name: Supression du dossier zurg par precaution s'il existe
+      become: yes
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+      - "/home/{{user.name}}/seedbox/docker/{{user.name}}/zurg"
+
+    - name: Check zurg.service si present
+      stat:
+        path: /etc/systemd/system/zurg.service
+      register: zurg_status
+
+    - name: Stop zurg.service
+      become: yes
+      systemd:
+        name: zurg
+        state: stopped
+        enabled: no
+      when: zurg_status.stat.exists
+
+    - name: suppression zurg service
+      become: yes
+      file:
+        path: "/etc/systemd/system/zurg.service"
+        state: absent
+      when: zurg_status.stat.exists
+ 
+    - name: Check rclone.service si present
+      stat:
+        path: /etc/systemd/system/zurg.service
+      register: rclone_status
+
+    - name: stop rclone.service
+      become: yes
+      systemd:
+        name: rclone
+        state: stopped
+        enabled: no
+      when: rclone_status.stat.exists
+
     - name: Generate conf
       template:
         dest: "{{ lookup('env', 'HOME') }}/scripts/zurg/config.yml"
-        src: "{{ lookup('env', 'SETTINGS_SOURCE') }}/includes/config/playbooks/templates/zurg.conf"
+        src: "{{ lookup('env', 'SETTINGS_SOURCE') }}/includes/dockerapps/templates/zurg/config.yml.j2"
         owner: "{{ user.name }}"
         group: "{{ user.groupid }}"
+
+    - name: Create a file
+      file:
+        path: "{{ lookup('env', 'HOME') }}/.config/rclone/rclone.conf"
+        state: touch
 
     - name: Modify rclone.conf
       blockinfile:
@@ -15,7 +62,7 @@
         block: |
           [zurg]
           type = webdav
-          url = http://localhost:9999
+          url = http://localhost:9999/dav
           vendor = other
           pacer_min_sleep = 0
           
@@ -34,25 +81,13 @@
       become: yes
       template:
         dest: "/etc/systemd/system/zurg.service"
-        src: "{{ lookup('env', 'SETTINGS_SOURCE') }}/includes/playbooks/templates/zurg.service.j2"
+        src: "{{ lookup('env', 'SETTINGS_SOURCE') }}/includes/config/playbooks/templates/zurg.service.j2"
 
     - name: Launch zurg
       become: yes
       service:
-        daemon-reload: true
+        daemon-reload: yes
         name: zurg
         state: started
-
-    - name: Create service file
-      become: yes
-      template:
-        dest: "/etc/systemd/system/zurg-mount.service"
-        src: "{{ lookup('env', 'SETTINGS_SOURCE') }}/includes/playbooks/templates/zurg-mount.service.j2"
-
-    - name: Launch mount
-      become: yes
-      service:
-        daemon-reload: true
-        name: zurg-mount
-        state: started
+        enabled: yes
 

@@ -85,6 +85,7 @@ if [ ! -f "${SETTINGS_SOURCE}/ssddb" ]; then
 fi
 
 # on contre le bug de debian et du venv qui ne trouve pas les paquets installés par galaxy
+
 source "${SETTINGS_SOURCE}/venv/bin/activate"
 temppath=$(ls ${SETTINGS_SOURCE}/venv/lib)
 pythonpath=${SETTINGS_SOURCE}/venv/lib/${temppath}/site-packages
@@ -140,16 +141,8 @@ if [ $mode_install = "manuel" ]; then
   if [[ ${IS_INSTALLED} -eq 0 ]]; then
     # Si on est là, c'est que le prérequis sont installés, mais c'est tout
     # On propose donc l'install de la seedbox
-    clear
-    logo
-    echo -e "${CCYAN}INSTALLATION SEEDBOX DOCKER${CEND}"
-    echo -e "${CGREEN}${CEND}"
-    echo -e "${CGREEN}   1) Installation Seedbox rclone && gdrive${CEND}"
-    echo -e "${CGREEN}   2) Installation Seedbox Classique ${CEND}"
-    echo -e "${CGREEN}   3) Restauration Seedbox${CEND}"
-    #echo -e "${CGREEN}   999) Installer la GUI${CEND}"
-    echo -e "${CGREEN}   9) Sortir du script${CEND}"
-
+    echo -e "${CGREEN}   1) Poursuivre l'installation${CEND}"
+    echo -e "${CGREEN}   2) Restauration Seedbox${CEND}"
     echo -e ""
     read -p "Votre choix : " CHOICE
     echo ""
@@ -164,51 +157,22 @@ if [ $mode_install = "manuel" ]; then
 
         clear
         # Installation et configuration de rclone
-        install_rclone
+        install_zurg
         # Install de watchtower
         install_watchtower
         # Install fail2ban
         install_fail2ban
         # Choix des dossiers et création de l'arborescence
-        choose_media_folder_plexdrive
+        create_folders
         # Installation de mergerfs
         # Cette install a une incidence sur docker (dépendances dans systemd)
-        unionfs_fuse
-        pause
-
+        # unionfs_fuse # non utile pour install zurg mais fonction laissée
         # mise en place de la sauvegarde
         sauve
         # Affichage du résumé
         #pause
         # on marque la seedbox comme installée
         update_seedbox_param "installed" 1
-        echo "L'installation est maintenant terminée."
-        echo "Pour le configurer ou modifier les applis, vous pouvez le relancer"
-        echo "cd ${SETTINGS_SOURCE}"
-        echo "./seedbox.sh"
-        exit 0
-      else
-        affiche_menu_db
-      fi
-      ;;
-
-    2) ## Installation de la seedbox classique
-
-      check_dir "$PWD"
-      # on stocke les patchs pour ne pas les appliquer
-      for patch in $(ls ${SETTINGS_SOURCE}/patches); do
-        echo "${patch}" >>"${HOME}/.config/ssd/patches"
-      done
-      if [[ ${IS_INSTALLED} -eq 0 ]]; then
-        # Install de watchtower
-        install_watchtower
-        # Install fail2ban
-        install_fail2ban
-        # Choix des dossiers et création de l'arborescence
-        choose_media_folder_plexdrive
-        update_seedbox_param "installed" 1
-        pause
-        touch "${SETTINGS_STORAGE}/media-$SEEDUSER"
         echo "L'installation est maintenant terminée."
         echo "Pour le configurer ou modifier les applis, vous pouvez le relancer"
         echo "cd ${SETTINGS_SOURCE}"
@@ -240,16 +204,16 @@ if [ $mode_install = "manuel" ]; then
       if [[ ${IS_INSTALLED} -eq 0 ]]; then
         clear
         # Installation et configuration de rclone
-        install_rclone
+        install_zurg
         # Install de watchtower
         install_watchtower
         # Install fail2ban
         install_fail2ban
         # Choix des dossiers et création de l'arborescence
-        choose_media_folder_plexdrive
+        create_folders
         # Installation de mergerfs
         # Cette install a une incidence sur docker (dépendances dans systemd)
-        unionfs_fuse
+        # unionfs_fuse # non utile pour install zurg mais fonction laissée
         pause
 
         # mise en place de la sauvegarde
@@ -319,13 +283,6 @@ if [ $mode_install = "manuel" ]; then
     echo "= git checkout master"
     echo "==============================================="
     pause
-  fi
-  # Verif compatibilité v2.1 => v2.2
-  # On regarde que le all.yml existe, sinon, on copie le account.yml
-  log_statusbar "Verification du group_vars/all.yml"
-  if [ ! -f "${HOME}/.ansible/inventories/group_vars/all.yml" ]; then
-    mkdir -p "${HOME}/.ansible/inventories/group_vars"
-    cp "${SETTINGS_STORAGE}/variables/account.yml" "${ANSIBLE_VARS}"
   fi
   #####################################################
   # On finit de setter les variables

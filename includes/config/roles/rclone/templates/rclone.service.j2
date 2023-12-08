@@ -1,6 +1,6 @@
 [Unit]
-Description=Google Drive (rclone-cache)
-AssertPathIsDirectory=/mnt/rclone
+Description=Zurg
+AssertPathIsDirectory={{ lookup('env','HOME') }}/seedbox/zurg
 After=network-online.target
 
 [Service]
@@ -11,12 +11,11 @@ ExecStart=/usr/bin/rclone mount -vv \
   --config={{ lookup('env','HOME') }}/.config/rclone/rclone.conf \
   --allow-other --gid {{user.groupid}} --uid {{user.userid}} \
   --allow-non-empty \
-  --vfs-cache-mode full \
-  --vfs-cache-max-size 150G \
-  --cache-dir={{ lookup('env','HOME') }}/.config/rclone/cache \
-  {{rclone.remote}}: \
-  /mnt/rclone/
-ExecStop=/bin/fusermount -uz /mnt/rclone
+  --dir-cache-time=20s \
+  --cache-dir={{ lookup('env','HOME') }}/.cache/rclone \
+  zurg: \
+  {{ lookup('env','HOME') }}/seedbox/zurg
+ExecStop=/bin/fusermount -uz {{ lookup('env','HOME') }}/seedbox/zurg
 Restart=always
 RestartSec=5
 

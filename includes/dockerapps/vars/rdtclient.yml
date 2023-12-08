@@ -1,10 +1,11 @@
 ---
 pgrole: 'rdtclient'
 intport: '6500'
-image: 'laster13/rdtclient:latest'
+image: "laster13/rdtclient:{{architecture}}"
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/data/db:rw"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+  - "{{ lookup('env','HOME') }}/local:/data/downloads"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:
   PUID: "{{ lookup('env','MYUID') }}"

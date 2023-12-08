@@ -22,114 +22,37 @@
     - name: Install Binary Tasks
       import_tasks: "install_binary.yml"
 
-    - name: Check if mergerfs_plexdrive.service exists
-      stat:
-        path: "/etc/systemd/system/mergerfs_plexdrive.service"
-      register: mergerfs_plexdrive_service
-
-    - name: Service Tasks
-      block:
-
-      - name: Populate Service Facts
-        service_facts:
-
-      - name: Get plexdrive service state
-        set_fact:
-          mergerfs_plexdrive_service_running: "{{ (services['mergerfs_plexdrive.service'] is defined) and (services['mergerfs_plexdrive.service']['state'] == 'running') }}"
-
-      - name: Stop mergerfs_plexdrive service
-        systemd:
-          name: mergerfs_plexdrive
-          state: stopped
-          enabled: no
-        when: mergerfs_plexdrive_service_running
-
-      - name: delete mergerfs_plexdrive.service
-        shell: |
-          rm /etc/systemd/system/mergerfs_plexdrive.service
-
-      when: mergerfs_plexdrive_service.stat.exists
-
-    - name: Check if rclone_plexdrive.service exists
-      stat:
-        path: "/etc/systemd/system/rclone_plexdrive.service"
-      register: rclone_plexdrive_service
-
-    - name: Service Tasks
-      block:
-
-      - name: Populate Service Facts
-        service_facts:
-
-      - name: Get rclone_plexdrive service state
-        set_fact:
-          rclone_plexdrive_service_running: "{{ (services['rclone_plexdrive.service'] is defined) and (services['rclone_plexdrive.service']['state'] == 'running') }}"
-
-      - name: Stop rclone_plexdrive service
-        systemd:
-          name: rclone_plexdrive
-          state: stopped
-          enabled: no
-        when: rclone_plexdrive_service_running
-
-      - name: delete rclone_plexdrive.service
-        shell: |
-          rm /etc/systemd/system/rclone_plexdrive.service
-
-      when: rclone_plexdrive_service.stat.exists
-
-    - name: Check if plexdrive.service exists
-      stat:
-        path: "/etc/systemd/system/plexdrive.service"
-      register: plexdrive_service
-
-    - name: Service Tasks
-      block:
-
-      - name: Populate Service Facts
-        service_facts:
-
-      - name: Get plexdrive service state
-        set_fact:
-          plexdrive_service_running: "{{ (services['plexdrive.service'] is defined) and (services['plexdrive.service']['state'] == 'running') }}"
-
-      - name: Stop plexdrive service
-        become: yes
-        systemd:
-          name: plexdrive
-          state: stopped
-          enabled: no
-        when: plexdrive_service_running
-
-      - name: delete plexdrive.service
-        shell: |
-          rm /etc/systemd/system/plexdrive.service
-        when: plexdrive_service_running
-
-      when: plexdrive_service.stat.exists
-
     - name: Check if rclone.service exists
       stat:
         path: "/etc/systemd/system/rclone.service"
       register: rclone_service
 
-    - name: Service Tasks
-      block:
-
-      - name: Populate Service Facts
-        service_facts:
-
-      - name: Get rclone service state
-        set_fact:
-          rclone_service_running: "{{ (services['rclone.service'] is defined) and (services['rclone.service']['state'] == 'running') }}"
-
-      - name: Stop rclone service
-        systemd:
-          name: rclone
-          state: stopped
-        when: rclone_service_running
-
+    - name: Stop rclone service
+      systemd:
+        name: rclone
+        state: stopped
       when: rclone_service.stat.exists
+
+    - name: Create a file
+      file:
+        path: "{{ lookup('env', 'HOME') }}/.config/rclone/rclone.conf"
+        state: touch
+
+    - name: Modify rclone.conf
+      blockinfile:
+        path: "{{ lookup('env', 'HOME') }}/.config/rclone/rclone.conf"
+        block: |
+          [zurg]
+          type = webdav
+          url = http://localhost:9999/dav
+          vendor = other
+          pacer_min_sleep = 0
+          
+          [zurghttp]
+          type = http
+          url = http://localhost:9999/http
+          no_head = false
+          no_slash = false
 
     - name: Import systemd rclone.service
       template:

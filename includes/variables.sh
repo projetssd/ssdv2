@@ -83,9 +83,6 @@ export TMPDOMAIN=${SETTINGS_SOURCE}/tmp/domain
 export TMPNAME=${SETTINGS_SOURCE}/tmp/name
 export TMPGROUP=${SETTINGS_SOURCE}/tmp/group
 export ANSIBLE_VARS="${HOME}/.ansible/inventories/group_vars/all.yml"
-temppath=$(ls ${SETTINGS_SOURCE}/venv/lib)
-pythonpath=${SETTINGS_SOURCE}/venv/lib/${temppath}/site-packages
-export PYTHONPATH=${pythonpath}
 # On risque d'avoir besoin de ces variables d'environnement par la suite
 export MYUID=$(id -u)
 export MYGID=$(id -g)
