@@ -152,8 +152,8 @@
         pull: yes
         published_ports: "{{ plex_main_ports }}"
         env:
-          PLEX_UID: "{{ lookup('env','MYUID')}}"
-          PLEX_GID: "{{ lookup('env','MYGID')}}"
+          PUID: "{{ lookup('env','MYUID')}}"
+          GUID: "{{ lookup('env','MYGID')}}"
           PLEX_CLAIM: "{{ (plex_claim_code) | default(omit) }}"
           TZ: "Europe/Paris"
         volumes: "{{ plex_docker_volumes }}"
