@@ -752,7 +752,7 @@ function launch_service() {
     echo -e " ${BWHITE}* Processing plex config file...${NC}"
     echo ""
     echo -e " ${GREEN}ATTENTION IMPORTANT - NE PAS FAIRE D'ERREUR - SINON DESINSTALLER ET REINSTALLER${NC}"
-    "${SETTINGS_SOURCE}/includes/config/roles/plex_autoscan/plex_token.sh"
+    "${SETTINGS_SOURCE}/includes/config/scripts/plex_token.sh"
 
     if [[ -f "${SETTINGS_STORAGE}/conf/plex.yml" ]]; then
       :

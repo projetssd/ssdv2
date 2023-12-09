@@ -45,7 +45,7 @@ if [ "$myid" -eq 0 ]; then
   mkdir -p $BACKUP_FOLDER
 
   echo -e "${CCYAN}> Création de l'archive${CEND}"
-  tar cvzf $ARCHIVE -P {{ settings.storage }} /home/{{ lookup('env','USER') }}/.config/ssd /home/{{ lookup('env','USER') }}/.ansible /home/{{ lookup('env','USER') }}/.vault_pass /home/{{ lookup('env','USER') }}/scripts /home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf /etc/systemd {{ settings.source }}/ssddb /opt/sa /opt/gen-sa --ignore-failed-read
+  tar cvzf $ARCHIVE -P --exclude={{ settings.storage }}zurg {{ settings.storage }} /home/{{ lookup('env','USER') }}/.config/ssd /home/{{ lookup('env','USER') }}/.ansible /home/{{ lookup('env','USER') }}/.vault_pass /home/{{ lookup('env','USER') }}/scripts /home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf /etc/systemd {{ settings.source }}/ssddb --ignore-failed-read --exclude={{ settings.storage }}/zurg
   sleep 2s
 
   # Restart Plex
@@ -56,9 +56,9 @@ if [ "$myid" -eq 0 ]; then
   fi
 
 
-  echo -e "${CCYAN}> Envoie Archive vers Google Drive${CEND}"
+  # echo -e "${CCYAN}> Envoie Archive vers Google Drive${CEND}"
   # Envoie Archive vers Google Drive
-  rclone --config "/home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf" copy "$BACKUP_FOLDER" "{{rclone.remote}}:/{{user.name}}/$remote_backups/backup-$CDAY" --progress
+  # rclone --config "/home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf" copy "$BACKUP_FOLDER" "{{rclone.remote}}:/{{user.name}}/$remote_backups/backup-$CDAY" --progress
 
   # Nombre de sauvegardes effectuées
   nbBackup=$(find $BACKUP_PARTITION -type d -name 'backup-*' | wc -l)
@@ -73,8 +73,8 @@ if [ "$myid" -eq 0 ]; then
       rm -rf "$oldestBackupPath"
 
     # Suppression Archive Google Drive
-    echo -e "${CCYAN}> Suppression de l'archive la plus ancienne${CEND}"
-    rclone --config "/home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf" purge "{{rclone.remote}}:/{{user.name}}/$remote_backups/$oldestBackupFile" --progress
+    # echo -e "${CCYAN}> Suppression de l'archive la plus ancienne${CEND}"
+    # rclone --config "/home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf" purge "{{rclone.remote}}:/{{user.name}}/$remote_backups/$oldestBackupFile" --progress
   fi
   chown {{ lookup('env','USER') }}:{{ lookup('env','MYGIDNAME') }} "/home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf"
   echo ""
