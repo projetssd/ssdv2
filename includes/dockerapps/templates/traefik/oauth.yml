@@ -36,7 +36,7 @@
   docker_container:
     name: 'oauth'
     hostname: 'oauth'
-    image: 'thomseddon/traefik-forward-auth{% if "arm" in system.architecture %}:2.2.0-arm{% endif %}'
+    image: 'thomseddon/traefik-forward-auth{% if "arm" in system.arch %}:2.2.0-arm{% endif %}'
     pull: yes
     env: '{{oauth_env}}'
     restart_policy: unless-stopped
