@@ -1,0 +1,4 @@
+#!/bin/bash
+source "${HOME}/.config/ssd/env"
+source "${SETTINGS_SOURCE}/profile.sh"
+get_architecture

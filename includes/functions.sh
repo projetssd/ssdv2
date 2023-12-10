@@ -1798,3 +1798,8 @@ function choose_version_zurg() {
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml"
   launch_service rdtclient
 }
+
+function get_architecture() {
+  architecture=$(dpkg --print-architecture)
+  manage_account_yml system.arch "${architecture}"
+}

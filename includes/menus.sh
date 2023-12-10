@@ -6,7 +6,8 @@ menu_ajout_supp_applis() {
 menu_secu_system_oauth2() {
   clear
   echo ""
-  ${SETTINGS_SOURCE}/includes/config/scripts/oauth.sh
+  get_architecture
+  "${SETTINGS_SOURCE}/includes/config/scripts/oauth.sh"
 }
 
 menu_secu_system_auth_classique() {
