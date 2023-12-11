@@ -13,7 +13,7 @@ ExecStart=/usr/bin/rclone mount -vv \
   --allow-non-empty \
   --dir-cache-time=20s \
   --cache-dir={{ lookup('env','HOME') }}/.cache/rclone \
-  --vfs-cache-mode full
+  --vfs-cache-mode full \
   zurg: \
   {{ lookup('env','HOME') }}/seedbox/zurg
 ExecStop=/bin/fusermount -uz {{ lookup('env','HOME') }}/seedbox/zurg
