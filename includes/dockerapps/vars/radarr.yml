@@ -1,7 +1,7 @@
 ---
 pgrole: 'radarr'
 intport: '7878'
-image: 'lscr.io/linuxserver/radarr:lastest'
+image: 'lscr.io/linuxserver/radarr:latest'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
