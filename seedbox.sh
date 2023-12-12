@@ -167,6 +167,8 @@ if [ $mode_install = "manuel" ]; then
         # Affichage du résumé
         # on marque la seedbox comme installée
         update_seedbox_param "installed" 1
+        # installation environnement
+        install_environnement
         echo "L'installation est maintenant terminée."
         echo "Pour le configurer ou modifier les applis, vous pouvez le relancer"
         echo "cd ${SETTINGS_SOURCE}"

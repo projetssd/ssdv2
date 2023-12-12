@@ -37,10 +37,7 @@
         src: "{{ settings.source }}/includes/dockerapps/templates/dmm/.env.local.yml.j2"
 
     - name: deploy Docker Compose stack
-      community.docker.docker_compose:
-        project_src: "{{ settings.storage }}/vars/"
-        files:
-        - dmm.yml
+      command: docker compose -f "{{ settings.storage }}/vars/dmm.yml" up -d
 
     - name: Remove a file, if present
       file:

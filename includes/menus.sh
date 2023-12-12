@@ -159,7 +159,7 @@ function ajout_app_autres() {
 function menu_suppression_application() {
   echo -e " ${BWHITE}* Application en cours de suppression${NC}"
   TABSERVICES=()
-  for SERVICEACTIVATED in $(docker ps --format "{{.Names}}" | cut -d'-' -f2 | sort -u | grep -v "tor"); do
+  for SERVICEACTIVATED in $(docker ps --format "{{.Names}}" | cut -d'-' -f2 | sort -u); do
     SERVICE=$(echo $SERVICEACTIVATED | cut -d\. -f1)
     TABSERVICES+=(${SERVICE//\"/} " ")
   done
@@ -182,7 +182,7 @@ function menu_reinit_container() {
 
   touch $SERVICESPERUSER
   TABSERVICES=()
-  for SERVICEACTIVATED in $(docker ps --format "{{.Names}}" | grep -v "tor"); do
+  for SERVICEACTIVATED in $(docker ps --format "{{.Names}}"); do
     SERVICE=$(echo $SERVICEACTIVATED | cut -d\. -f1)
     TABSERVICES+=(${SERVICE//\"/} " ")
   done
