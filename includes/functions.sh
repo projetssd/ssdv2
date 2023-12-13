@@ -1817,10 +1817,10 @@ function install_applis_perso() {
       echo -e "\e[32mUne fois personnaliée, elle s'installera comme toutes les autres applications\e[0m" 
     fi
   else
-    echo -e "\e[32mApplication non référencée dans la base,\e[0m \e[36m${NOUVELLE}.yml\e[0m \e[32ma été créé ds le dossier ${SETTINGS_STORAGE}conf.\e[0m" 
+    echo -e "\e[32mApplication non référencée dans la base,\e[0m \e[36m${NOUVELLE}.yml\e[0m \e[32ma été créé ds le dossier ${SETTINGS_STORAGE}vars.\e[0m" 
     echo -e "\e[32mUne fois personnaliée, elle s'installera comme toutes les autres applications\e[0m" 
-    create_file "${SETTINGS_STORAGE}/conf/${NOUVELLE}.yml"
-    cp "${SETTINGS_SOURCE}/includes/dockerapps/vars/exemple.yml" "${SETTINGS_STORAGE}conf/${NOUVELLE}.yml"
+    create_file "${SETTINGS_STORAGE}/vars/${NOUVELLE}.yml"
+    cp "${SETTINGS_SOURCE}/includes/dockerapps/vars/exemple.yml" "${SETTINGS_STORAGE}vars/${NOUVELLE}.yml"
     sed -i "1i${NOUVELLE}-AppliPerso" "${SETTINGS_SOURCE}/includes/config/services-available"
   fi
   rm temp
