@@ -1805,13 +1805,13 @@ function install_applis_perso() {
       cp "${SETTINGS_SOURCE}/includes/dockerapps/vars/${NOUVELLE}.yml" "${SETTINGS_STORAGE}vars/${NOUVELLE}.yml"
       echo -e "\e[32mApplication déja référencée dans la base\e[0m"
       echo -e "\e[32mLe fichier ${NOUVELLE}.yml a été copié dans le dossier ${SETTINGS_STORAGE}var\e[0m"
-      echo -e "\e[32mAfin d'être personnalisée.\e[0m"
+      echo -e "\e[32mAfin d'être personnalisé.\e[0m"
     elif [ -n "$(find ${SETTINGS_SOURCE}/includes/dockerapps -type f -name ${NOUVELLE}.yml)" ]; then
       # Il y a un playbook spécifique pour cette appli, on le copie
-      cp "${SETTINGS_SOURCE}/includes/dockerapps/${NOUVELLE}.yml" "${SETTINGS_STORAGE}vars/${NOUVELLE}.yml"
+      cp "${SETTINGS_SOURCE}/includes/dockerapps/${NOUVELLE}.yml" "${SETTINGS_STORAGE}conf/${NOUVELLE}.yml"
       echo -e "\e[32mApplication déja dans la base.\e[0m"
-      echo -e "\e[32mLe fichier ${NOUVELLE}.yml a été copié dans le dossier ${SETTINGS_STORAGE}var\e[0m"
-      echo -e "\e[32mAfin d'être personnalisée.\e[0m"
+      echo -e "\e[32mLe fichier ${NOUVELLE}.yml a été copié dans le dossier ${SETTINGS_STORAGE}conf\e[0m"
+      echo -e "\e[32mAfin d'être personnalisé.\e[0m"
     else
       echo -e "\e[32m${NOUVELLE}.yml a déjà été créée dans le dossier ${SETTINGS_STORAGE}conf.\e[0m"
       echo -e "\e[32mUne fois personnaliée, elle s'installera comme toutes les autres applications\e[0m" 
