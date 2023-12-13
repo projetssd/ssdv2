@@ -795,37 +795,6 @@ function launch_service() {
   FQDNTMP=""
 }
 
-function copie_yml() {
-  echo "#########################################################"
-  echo "# ATTENTION                                             #"
-  echo "# Cette fonction va copier les fichiers yml choisis     #"
-  echo "# Afin de pouvoir les personnaliser                     #"
-  echo "# Mais ne lancera pas les services associés             #"
-  echo "#########################################################"
-  choose_services
-  for line in $(cat $SERVICESPERUSER); do
-    copie_yml_unit "${line}"
-  done
-  choose_other_services
-  for line in $(cat $SERVICESPERUSER); do
-    copie_yml_unit "${line}"
-  done
-}
-
-function copie_yml_unit() {
-
-  if [[ -f "${SETTINGS_SOURCE}/includes/dockerapps/${line}.yml" ]]; then
-    # Il y a un playbook spécifique pour cette appli, on le copie
-    cp "${SETTINGS_SOURCE}/includes/dockerapps/${line}.yml" "${SETTINGS_STORAGE}/conf/${line}.yml"
-  elif [[ -f "${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml" ]]; then
-    # on copie les variables pour le user
-    cp "${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml" "${SETTINGS_STORAGE}/vars/${line}.yml"
-  else
-    log_write "Aucun fichier de configuration trouvé dans les sources, abandon"
-  fi
-}
-
-
 function manage_apps() {
   echo -e "${BLUE}##########################################${NC}"
   echo -e "${BLUE}###          GESTION DES APPLIS        ###${NC}"
@@ -1263,7 +1232,6 @@ function install_environnement() {
   source "${SETTINGS_SOURCE}/profile.sh"
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/user_environment/tasks/main.yml"
   echo "Pour bénéficer des changements, vous devez vous déconnecter/reconnecter"
-  pause
 }
 
 function debug_menu() {
@@ -1802,4 +1770,59 @@ function choose_version_zurg() {
 function get_architecture() {
   architecture=$(dpkg --print-architecture)
   manage_account_yml system.arch "${architecture}"
+}
+
+function install_applis_perso() {
+  clear
+  echo "###########################################################"
+  echo "# ATTENTION                                               #"
+  echo "# Cette fonction va copier/créer les fichiers yml choisis #"
+  echo "# Afin de pouvoir les personnaliser                       #"
+  echo "# Mais ne lancera pas les services associés               #"
+  echo "###########################################################"
+  echo ""
+
+  # Liste des fichiers déjà personnalisés
+  ls ${SETTINGS_STORAGE}conf/ | tr " " " " | tr "\t" " " >> temp
+  ls ${SETTINGS_STORAGE}vars/ | tr " " " " | tr "\t" " " >> temp
+  if [ -s temp ]; then
+    echo -e "\e[36mListe des Applis déjà personnalisée\e[0m"
+    while read APPLIS
+    do echo -e "\e[32m${APPLIS}\e[0m"
+    done < temp
+    echo ""
+    rm temp
+  fi
+
+  read -p $'\e[36mNouvelle Appli à personnaliser : \e[0m' NOUVELLE  </dev/tty
+  echo ""
+  cat "${SETTINGS_SOURCE}/includes/config/services-available" | tr ‘[A-Z]’ ‘[a-z] | cut -d'-' -f1 | uniq >> temp
+  cat "${SETTINGS_SOURCE}/includes/config/other-services-available" | tr ‘[A-Z]’ ‘[a-z] | cut -d'-' -f1 | uniq >> temp
+  NOUVELLE=$(echo $NOUVELLE | tr ‘[A-Z]’ ‘[a-z])
+  if grep -q ${NOUVELLE} temp; then
+    if [ -n "$(find ${SETTINGS_SOURCE}/includes/dockerapps/vars -type f -name ${NOUVELLE}.yml)" ]; then
+      # on copie les variables pour le user
+      cp "${SETTINGS_SOURCE}/includes/dockerapps/vars/${NOUVELLE}.yml" "${SETTINGS_STORAGE}vars/${NOUVELLE}.yml"
+      echo -e "\e[32mApplication déja référencée dans la base\e[0m"
+      echo -e "\e[32mLe fichier ${NOUVELLE}.yml a été copié dans le dossier ${SETTINGS_STORAGE}var\e[0m"
+      echo -e "\e[32mAfin d'être personnalisée.\e[0m"
+    elif [ -n "$(find ${SETTINGS_SOURCE}/includes/dockerapps -type f -name ${NOUVELLE}.yml)" ]; then
+      # Il y a un playbook spécifique pour cette appli, on le copie
+      cp "${SETTINGS_SOURCE}/includes/dockerapps/${NOUVELLE}.yml" "${SETTINGS_STORAGE}vars/${NOUVELLE}.yml"
+      echo -e "\e[32mApplication déja dans la base.\e[0m"
+      echo -e "\e[32mLe fichier ${NOUVELLE}.yml a été copié dans le dossier ${SETTINGS_STORAGE}var\e[0m"
+      echo -e "\e[32mAfin d'être personnalisée.\e[0m"
+    else
+      echo -e "\e[32m${NOUVELLE}.yml a déjà été créée dans le dossier ${SETTINGS_STORAGE}conf.\e[0m"
+      echo -e "\e[32mUne fois personnaliée, elle s'installera comme toutes les autres applications\e[0m" 
+    fi
+  else
+    echo -e "\e[32mApplication non référencée dans la base,\e[0m \e[36m${NOUVELLE}.yml\e[0m \e[32ma été créé ds le dossier ${SETTINGS_STORAGE}conf.\e[0m" 
+    echo -e "\e[32mUne fois personnaliée, elle s'installera comme toutes les autres applications\e[0m" 
+    create_file "${SETTINGS_STORAGE}/conf/${NOUVELLE}.yml"
+    cp "${SETTINGS_SOURCE}/includes/dockerapps/vars/exemple.yml" "${SETTINGS_STORAGE}conf/${NOUVELLE}.yml"
+    sed -i "1i${NOUVELLE}-AppliPerso" "${SETTINGS_SOURCE}/includes/config/services-available"
+  fi
+  rm temp
+  pause
 }

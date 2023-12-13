@@ -1,0 +1,22 @@
+##################################################
+# Exemple de fichier pour ajouter une nouvelle
+# application
+##################################################
+# Modifier les éléments ci dessous
+# nom de l appli
+# port
+# nom de l'image
+# Modifier les volumes si nécessaire
+##################################################
+
+---
+pgrole: 'nom de l appli'
+intport: 'port'
+image: 'nom de l'image'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
