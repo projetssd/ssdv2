@@ -643,67 +643,11 @@ function create_user_non_systeme() {
 
 function choose_services() {
   echo -e "${BLUE}### SERVICES ###${NC}"
-  echo "DEBUG ${SERVICESAVAILABLE}"
-  echo -e " ${BWHITE}--> Services en cours d'installation : ${NC}"
+  echo -e " ${BWHITE}--> Services en cours d'installation :${NC}"
   rm -Rf "${SERVICESPERUSER}" >/dev/null 2>&1
-  menuservices="/tmp/menuservices.txt"
-  if [[ -e "${menuservices}" ]]; then
-    rm "${menuservices}"
-  fi
-
-  for app in $(cat ${SERVICESAVAILABLE}); do
-    service=$(echo ${app} | cut -d\- -f1)
-    desc=$(echo ${app} | cut -d\- -f2)
-    echo "${service} ${desc} off" >>/tmp/menuservices.txt
-  done
-  SERVICESTOINSTALL=$(
-    whiptail --title "Gestion des Applications" --checklist \
-      "Appuyer sur la barre espace pour la sélection" 28 64 21 \
-      $(cat /tmp/menuservices.txt) 3>&1 1>&2 2>&3
-  )
-  exitstatus=$?
-  if [ $exitstatus = 0 ]; then
-    rm /tmp/menuservices.txt
-    touch $SERVICESPERUSER
-    for APPDOCKER in $SERVICESTOINSTALL; do
-      echo -e "	${GREEN}* $(echo $APPDOCKER | tr -d '"')${NC}"
-      echo $(echo ${APPDOCKER,,} | tr -d '"') >>"${SERVICESPERUSER}"
-    done
-  else
-    return
-  fi
-}
-
-function choose_other_services() {
-  echo -e "${BLUE}### SERVICES ###${NC}"
-  echo -e " ${BWHITE}--> Services en cours d'installation : ${NC}"
-  rm -Rf "${SERVICESPERUSER}" >/dev/null 2>&1
-  menuservices="/tmp/menuservices.txt"
-  if [[ -e "${menuservices}" ]]; then
-    rm /tmp/menuservices.txt
-  fi
-
-  for app in $(cat "${SETTINGS_SOURCE}/includes/config/other-services-available"); do
-    service=$(echo "${app}" | cut -d\- -f1)
-    desc=$(echo "${app}" | cut -d\- -f2)
-    echo "${service} ${desc} off" >>/tmp/menuservices.txt
-  done
-  SERVICESTOINSTALL=$(
-    whiptail --title "Gestion des Applications" --checklist \
-      "Appuyer sur la barre espace pour la sélection" 28 70 21 \
-      $(cat /tmp/menuservices.txt) 3>&1 1>&2 2>&3
-  )
-  exitstatus=$?
-  if [ $exitstatus = 0 ]; then
-    rm /tmp/menuservices.txt
-    touch "${SERVICESPERUSER}"
-    for APPDOCKER in $SERVICESTOINSTALL; do
-      echo -e "	${GREEN}* $(echo "${APPDOCKER}" | tr -d '"')${NC}"
-      echo $(echo "${APPDOCKER,,}" | tr -d '"') >>"${SERVICESPERUSER}"
-    done
-  else
-    return
-  fi
+  touch $SERVICESPERUSER
+  jq -r '.selected_lines[] | split("-")[0] | gsub("\""; "")' output.json > $SERVICESPERUSER
+  echo -e "${GREEN}$(cat $SERVICESPERUSER)${NC}"
 }
 
 function install_services() {
@@ -719,23 +663,17 @@ function install_services() {
 
     create_file "${SETTINGS_STORAGE}/temp.txt"
 
-    ## préparation installation
-    #for line in $(grep -l 2 ${SETTINGS_STORAGE}/status/*); do
-    #  basename=$(basename "${line}")
-    #  launch_service "${basename}"
-    #done
-
     for line in $(cat $SERVICESPERUSER); do
       launch_service "${line}"
     done
   fi
+  rm $SERVICESPERUSER
 }
 
 function launch_service() {
 
   line=$1
-
-  log_write "Installation de ${line}"
+  log_write "Installation de ${line}" >/dev/null 2>&1
   error=0
   tempsubdomain=$(get_from_account_yml sub.${line}.${line})
   if [ "${tempsubdomain}" = notfound ]; then
@@ -764,19 +702,18 @@ function launch_service() {
   else
     # On est dans le cas générique
     # on regarde s'i y a un playbook existant
-
     if [[ -f "${SETTINGS_STORAGE}/conf/${line}.yml" ]]; then
       # il y a déjà un playbook "perso", on le lance
       ansible-playbook "${SETTINGS_STORAGE}/conf/${line}.yml"
     elif [[ -f "${SETTINGS_STORAGE}/vars/${line}.yml" ]]; then
       # il y a des variables persos, on les lance
       ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/generique.yml" --extra-vars "@${SETTINGS_STORAGE}/vars/${line}.yml"
-
     elif [[ -f "${SETTINGS_SOURCE}/includes/dockerapps/${line}.yml" ]]; then
       # pas de playbook perso ni de vars perso
       # puis on le lance
       ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/${line}.yml"
     elif [[ -f "${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml" ]]; then
+      echo 
       # puis on lance le générique avec ce qu'on vient de copier
       ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/generique.yml" --extra-vars "@${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml"
     else
@@ -820,10 +757,10 @@ function suppression_appli() {
 
   docker rm -f "$APPSELECTED" >/dev/null 2>&1
   if [ $DELETE -eq 1 ]; then
-    log_write "Suppresion de ${APPSELECTED}, données supprimées"
+    log_write "Suppresion de ${APPSELECTED}, données supprimées" >/dev/null 2>&1
     sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/$APPSELECTED
   else
-    log_write "Suppresion de ${APPSELECTED}, données conservées"
+    log_write "Suppresion de ${APPSELECTED}, données conservées" >/dev/null 2>&1
   fi
 
   rm ${SETTINGS_STORAGE}/conf/$APPSELECTED.yml >/dev/null 2>&1
@@ -922,7 +859,6 @@ select_seedbox_param() {
   else
     echo $RETURN
   fi
-
 }
 
 function update_seedbox_param() {
@@ -1398,22 +1334,8 @@ function log_statusbar() {
 }
 
 function choix_appli_sauvegarde() {
-  touch $SERVICESPERUSER
-  TABSERVICES=()
-  for SERVICEACTIVATED in $(docker ps --format "{{.Names}}"); do
-    SERVICE=$(echo $SERVICEACTIVATED | cut -d\. -f1)
-    TABSERVICES+=(${SERVICE//\"/} " ")
-  done
-
-  line=$(
-    whiptail --title "App Manager" --menu \
-      "Sélectionner le container à sauvegarder" 19 45 11 \
-      "${TABSERVICES[@]}" 3>&1 1>&2 2>&3
-  )
-  exitstatus=$?
-  if [ $exitstatus = 0 ]; then
-    sauve_one_appli ${line}
-  fi
+  line=$1
+  sauve_one_appli ${line}
 }
 
 function sauve_one_appli() {
@@ -1496,10 +1418,6 @@ function sauve_one_appli() {
   docker start $APPLI
   sleep 5
 
-  echo -e "${CCYAN}> Envoie Archive vers Google Drive${CEND}"
-  # Envoie Archive vers Google Drive
-  rclone --config "/home/${USER}/.config/rclone/rclone.conf" copy "$BACKUP_PARTITION/$ARCHIVE" "${remote}:/${USER}/${remote_backups}/" -v --progress
-
   # Nombre de sauvegardes effectuées
   nbBackup=$(find $BACKUP_PARTITION -type f -name $APPLI-* | wc -l)
   if [ $ALL_RETENTION -eq 0 ]; then
@@ -1511,17 +1429,13 @@ function sauve_one_appli() {
 
       # Suppression du répertoire du backup
       rm -rf "$oldestBackupPath"
-
-      # Suppression Archive Google Drive
-      echo -e "${CCYAN}> Suppression de l'archive la plus ancienne${CEND}"
-      rclone --config "/home/${USER}/.config/rclone/rclone.conf" purge "$remote:/$remote_backups/$oldestBackupFile" -v --log-file=/var/log/backup.log
     fi
   fi
   echo ""
   echo -e "${CRED}-------------------------------------------------------${CEND}"
   echo -e "${CRED}        SAUVEGARDE ${APPLI}  TERMINEE                 ${CEND}"
   echo -e "${CRED}-------------------------------------------------------${CEND}"
-
+  pause
 }
 
 function change_password() {
@@ -1536,26 +1450,15 @@ function change_password() {
 }
 
 function relance_container() {
-  touch $SERVICESPERUSER
-  TABSERVICES=()
-  for SERVICEACTIVATED in $(docker ps --format "{{.Names}}"); do
-    SERVICE=$(echo $SERVICEACTIVATED | cut -d\. -f1)
-    TABSERVICES+=(${SERVICE//\"/} " ")
-  done
-  line=$(
-    whiptail --title "App Manager" --menu \
-      "Sélectionner le container à réinitialiser" 19 45 11 \
-      "${TABSERVICES[@]}" 3>&1 1>&2 2>&3
-  )
-  exitstatus=$?
-  if [ $exitstatus = 0 ]; then
-    log_write "Relance du container ${line}"
-    echo "###############################################"
-    echo "# Relance du container ${line} "
-    echo "###############################################"
-    docker rm -f ${line}
-    launch_service ${line}
-  fi
+  line=$1
+  log_write "Relance du container ${line}" >/dev/null 2>&1
+  echo -e "\e[32mLes volumes ne seront pas supprimés\e[0m" 
+  echo -e "\e[32mL'image sera mise à jour si nécessaire\e[0m" 
+  docker rm -f ${line} > /dev/null 2>&1
+  docker rmi $(docker images | grep "$line" | tr -s ' ' | cut -d ' ' -f 3) > /dev/null 2>&1
+  echo ""
+  launch_service ${line}
+  pause
 }
 
 function install_plextraktsync() {
@@ -1598,7 +1501,6 @@ function correct_init() {
   pause
   sudo rm -f /etc/docker/daemon.json
   sudo systemctl restart docker
-
 }
 
 function apply_patches() {
@@ -1626,7 +1528,6 @@ function sortie_cloud() {
   sudo systemctl stop rclone
   sudo systemctl restart mergerfs
   relance_tous_services
-
 }
 
 function install_zurg() {
@@ -1690,7 +1591,6 @@ function create_folders() {
       break
     fi
   done
-
 }
 
 function install_gluetun {
@@ -1772,8 +1672,31 @@ function get_architecture() {
   manage_account_yml system.arch "${architecture}"
 }
 
-function install_applis_perso() {
+function liste_perso() {
   clear
+  echo "##############################################################"
+  echo "# Liste des applis déjà personnalisées                       #"
+  echo "# Vous pouvez à tout moment décider de modifier les fichiers #"
+  echo "# Relancer ensuite le container                              #"
+  echo "##############################################################"
+  echo ""
+
+  folder_path="${SETTINGS_STORAGE}/vars"
+  files=$(ls -p "$folder_path" | grep -v /)
+  echo -e "\e[32mApplications Personnalisées\e[0m"
+  if [ -n "$files" ]; then
+    echo -e "\e[36m$files\e[0m"
+    echo
+  else
+    echo -e "\e[36mAucune application personnalisée.\e[0m"
+    echo
+  fi
+}
+
+function applis_perso_create() {
+  clear
+  liste_perso
+  # Liste des fichiers déjà personnalisés
   echo "###########################################################"
   echo "# ATTENTION                                               #"
   echo "# Cette fonction va copier/créer les fichiers yml choisis #"
@@ -1781,48 +1704,64 @@ function install_applis_perso() {
   echo "# Mais ne lancera pas les services associés               #"
   echo "###########################################################"
   echo ""
-
-  # Liste des fichiers déjà personnalisés
-  ls ${SETTINGS_STORAGE}conf/ | tr " " " " | tr "\t" " " >> temp
-  ls ${SETTINGS_STORAGE}vars/ | tr " " " " | tr "\t" " " >> temp
-  if [ -s temp ]; then
-    echo -e "\e[36mListe des Applis déjà personnalisée\e[0m"
-    while read APPLIS
-    do echo -e "\e[32m${APPLIS}\e[0m"
-    done < temp
+  
+  # Nouvelle appli
+  echo -e "\e[32mSouhaitez-vous configurer une nouvelle application ? (O/N) \e[0m"
+  read choice
+  if [[ "$choice" = "O" ]] || [[ "$choice" = "o" ]]; then
+    read -p $'\e[36mNouvelle Appli à personnaliser : \e[0m' NOUVELLE  </dev/tty
     echo ""
-    rm temp
-  fi
-
-  read -p $'\e[36mNouvelle Appli à personnaliser : \e[0m' NOUVELLE  </dev/tty
-  echo ""
-  cat "${SETTINGS_SOURCE}/includes/config/services-available" | tr ‘[A-Z]’ ‘[a-z] | cut -d'-' -f1 | uniq >> temp
-  cat "${SETTINGS_SOURCE}/includes/config/other-services-available" | tr ‘[A-Z]’ ‘[a-z] | cut -d'-' -f1 | uniq >> temp
-  NOUVELLE=$(echo $NOUVELLE | tr ‘[A-Z]’ ‘[a-z])
-  if grep -q ${NOUVELLE} temp; then
-    if [ -n "$(find ${SETTINGS_SOURCE}/includes/dockerapps/vars -type f -name ${NOUVELLE}.yml)" ]; then
-      # on copie les variables pour le user
-      cp "${SETTINGS_SOURCE}/includes/dockerapps/vars/${NOUVELLE}.yml" "${SETTINGS_STORAGE}vars/${NOUVELLE}.yml"
-      echo -e "\e[32mApplication déja référencée dans la base\e[0m"
-      echo -e "\e[32mLe fichier ${NOUVELLE}.yml a été copié dans le dossier ${SETTINGS_STORAGE}var\e[0m"
-      echo -e "\e[32mAfin d'être personnalisé.\e[0m"
-    elif [ -n "$(find ${SETTINGS_SOURCE}/includes/dockerapps -type f -name ${NOUVELLE}.yml)" ]; then
-      # Il y a un playbook spécifique pour cette appli, on le copie
-      cp "${SETTINGS_SOURCE}/includes/dockerapps/${NOUVELLE}.yml" "${SETTINGS_STORAGE}conf/${NOUVELLE}.yml"
-      echo -e "\e[32mApplication déja dans la base.\e[0m"
-      echo -e "\e[32mLe fichier ${NOUVELLE}.yml a été copié dans le dossier ${SETTINGS_STORAGE}conf\e[0m"
-      echo -e "\e[32mAfin d'être personnalisé.\e[0m"
+    cat "${SETTINGS_SOURCE}/includes/config/services-available" | tr ‘[A-Z]’ ‘[a-z] | cut -d'-' -f1 | uniq >> temp
+    NOUVELLE=$(echo $NOUVELLE | tr ‘[A-Z]’ ‘[a-z])
+    if grep -q ${NOUVELLE} temp; then
+      if [ -n "$(find ${SETTINGS_SOURCE}/includes/dockerapps/vars -type f -name ${NOUVELLE}.yml)" ]; then
+        # on copie les variables pour le user
+        cp "${SETTINGS_SOURCE}/includes/dockerapps/vars/${NOUVELLE}.yml" "${SETTINGS_STORAGE}vars/${NOUVELLE}.yml"
+        echo -e "\e[32mApplication déja référencée dans la base\e[0m"
+        echo -e "\e[32mLe fichier ${NOUVELLE}.yml a été copiée dans le dossier ${SETTINGS_STORAGE}vars\e[0m"
+        echo -e "\e[32mAfin d'être personnalisé.\e[0m"
+      fi
     else
-      echo -e "\e[32m${NOUVELLE}.yml a déjà été créée dans le dossier ${SETTINGS_STORAGE}conf.\e[0m"
-      echo -e "\e[32mUne fois personnaliée, elle s'installera comme toutes les autres applications\e[0m" 
+      echo -e "\e[32mApplication non référencée dans la base,\e[0m \e[36m${NOUVELLE}.yml\e[0m \e[32ma été créé ds le dossier ${SETTINGS_STORAGE}vars.\e[0m" 
+      echo -e "\e[32mUne fois personnaliée, elle s'installera à partir du menu Application perso\e[0m" 
+      create_file "${SETTINGS_STORAGE}/vars/${NOUVELLE}.yml"
+      cp "${SETTINGS_SOURCE}/includes/dockerapps/vars/exemple.yml" "${SETTINGS_STORAGE}vars/${NOUVELLE}.yml"
     fi
-  else
-    echo -e "\e[32mApplication non référencée dans la base,\e[0m \e[36m${NOUVELLE}.yml\e[0m \e[32ma été créé ds le dossier ${SETTINGS_STORAGE}vars.\e[0m" 
-    echo -e "\e[32mUne fois personnaliée, elle s'installera comme toutes les autres applications\e[0m" 
-    create_file "${SETTINGS_STORAGE}/vars/${NOUVELLE}.yml"
-    cp "${SETTINGS_SOURCE}/includes/dockerapps/vars/exemple.yml" "${SETTINGS_STORAGE}vars/${NOUVELLE}.yml"
-    sed -i "1i${NOUVELLE}-AppliPerso" "${SETTINGS_SOURCE}/includes/config/services-available"
-  fi
-  rm temp
-  pause
+    rm temp
+    pause
+  fi  
+}
+
+function reinit_container() {
+  clear
+  liste_perso
+  python3 "${SETTINGS_SOURCE}/includes/config/scripts/generique_python.py" reinit_container
+}
+
+function install_applis() {
+  clear
+  python3 "${SETTINGS_SOURCE}/includes/config/scripts/generique_python.py" install_applis
+}
+
+function suppression_applis() {
+  clear  
+  liste_perso
+  python3 "${SETTINGS_SOURCE}/includes/config/scripts/generique_python.py" suppression_application
+}
+
+function relance_applis() {
+  clear
+  liste_perso
+  python3 "${SETTINGS_SOURCE}/includes/config/scripts/generique_python.py" relance_applis
+}
+
+function sauvegarde_applis() {
+  clear
+  liste_perso
+  python3 "${SETTINGS_SOURCE}/includes/config/scripts/generique_python.py" sauvegarde_applis
+}
+
+function install_applis_perso() {
+  clear
+  python3 "${SETTINGS_SOURCE}/includes/config/scripts/generique_python.py" install_applis_perso
 }

@@ -10,7 +10,7 @@
 ##################################################
 
 ---
-pgrole: 'nom de l appli'
+pgrole: 'nom de l appli' # doit être identique au nom du fichier yml
 intport: 'port'
 image: 'nom de l'image'
 pg_volumes:

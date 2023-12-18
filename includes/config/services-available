@@ -1,45 +1,141 @@
-Authelia-opensourceauthenticationand
-Bazarr-CompanionApplicationToSonarrRadarr
-Davos-AutomateFtpSearch
-Deluge-TorrentClient
-Emby-EmbyMediaServer
-Heimdall-OrganiseLinksWebApplications
-Jackett-TorrentProviders
-JackettVPN-TorrentProvidersVPN
-Jdownloader-DownloadManagement
-Jellyfin-EmbyMediaServer
-Lidarr-MusicCollectionManager
-Mango-MangaServer
-Medusa-TVShowsAutomation
-Navidrome-AudioStreaming
-Nextcloud-SafeHomeForAllYourData
-NZBHydra-NzbIndexer
-Ombi-PlexRequestAndUserManagementSystem
-Organizr-OrganiseLinksWebApplications
-Overseerr-PlexRequestAndUserManagementSystem
-Petio-PlexRequestAndUserManagementSystem
-Plex-PlexMediaServer
-PlexAutoLanguages-LanguageManagementForPlex
-Portainer-LightweightManagementUI
-Prowlarr-indexermanager
-Qbittorrent-TorrentClient
-Qflood-TorrentClient
-Radarr-MoviesAutomation
-Radarr4k-MoviesAutomation
-Readarr-BookMagazineComicsEbookAudiobook
-Rflood-TorrentClient
-Rdtclient-AutomateDownloadTorrent
-Rtorrentvpn-TorrentClient
-Rutorrent-TorrentClient
-Rutorrentcm-TorrentClientCrazyMax
-Sabnzbd-SabnzbdUsenet
-Sensorr-MoviesAutomation
-Sonarr-TVShowsAutomation
-Sonarr4k-TVShowsAutomation
-Tautulli-FeatureRichDashboardOfStatistics
-Transmissionvpn-TorrentClientVPN
-Transmission-TorrentClientVPN
-Sickchill-AutomaticVideoManagerTVShows
-Sickgear-AutomaticVideoManagerTVShows
-Wizarr-AutomaticInvitationForPlex
-whisparr-MoviesAdultAutomation
+authelia - Authentification applications Web
+autoindex - Générateur de liste de répertoires
+baikal - logiciel de calendrier simple
+bazarr - Gestion de sous-titres Sonarr/Radarr
+benphelps - Intégrations Docker et API de service
+bitwarden - Gestionnaire de mots de passeL
+bookstack - Wiki gratuit et open source
+cadvisor - Gestion des ressources docker
+calibre - Gestionnaire de livres électroniques
+calibreweb - Gestionnaire de livres électroniques
+changesetection - Gestion sites Web
+chevereto - Auto-hébergement photos en ligne
+cloudcmd - Gestionnaire de fichiers pour le web
+codif -  VS Code exécuté sur un serveur distant
+cops - COPS est lié à vos données Calibre
+cypht - Centraliser plusieurs comptes mails
+davos - Outils de programmation
+deemixrr - Streamer de la musique depuis deezer
+deluge - Gestionnaire de torrent
+digikam - Gestion de photos numériques
+dozzle - Affichage des logs de conteneurs
+duplicati - Application de sauvegarde
+emby - Serveur multimédia
+fenrus - Passerelle vers le monde des sorciers
+filebot - Organiser vos films, séries et anime
+filebrowser - Gestion fichiers via une interface
+filerun - Gestion documents bureautiques, photos
+firefox - Un navigateur dans votre navigateur
+firefoxsyncserver - Navigateur Firefox
+foptimum - Performances serveur
+freshrss - Agrégateur de flux open source
+getHomePage - Gestion d'application
+gitea - Hébergement de développement logiciel
+gitlab - Hébergement de développement logiciel
+glftpd - Serveur FTP
+gotify - Envoyer et recevoir des messages
+grocy - Gestion de recettes
+guacamole - Accès à distance via portail Web
+handbrake - Transcoder une source vidéo
+heimdall - Organiser vos applications Web
+jackett - Indexeur de scraping
+jackettVPN - Indexeur de scraping
+jdownloader - Gestionnaire de téléchargements
+jellyfin - Serveur multimédia
+jfago - Gestion des utilisateurs Jellyfin
+jitsi - Plateformes de visioconférence
+kasm - Streaming de conteneurs Docker
+kavita - application de gestion PDF, eBook
+kitana - Plugin Plex
+komga - Gestion de bandes dessinées/mangas
+kresus - Gestionnaire de données personnelles
+kuma - Outil de surveillancer
+librespeed - Speedtest auto-hébergé pour HTML5
+lidarr - Gestionnaire de musiques
+linkding - Gestionnaire de favoris
+logarr - Gestion des logs
+mango - Serveur de mangas auto-hébergé
+Mattermost - Plateforme de collaboration
+mediawiki - plateforme pour Wikipédia
+medusa - Gestionnaire de de séries, animes
+mellow - client proxy
+metube - Téléchargement YouTube auto-hébergé
+microbin - Application Web paste bin
+minecraft - Jeu d'aventure immersif
+mkvtoolnix - Gestion de fichiers MKV
+monicaHQ - CRM pour votre vie personnelle
+monitorr - Gérer votre système et réseau
+n8nio - Outil de Workflow open-source
+navidrome - Serveur de streaming musical
+netdata - Serveur de surveillance systeme
+nextcloud - Stockage et partage de fichiers
+nocodb - Plateforme NoCode open source
+nowshowing - Addon Plex
+ntopng - Surveiller réseau informatique
+nZBHydra - Indexeurs newznab
+ombi - Gestion de contenu Plex/Emby
+openvpn - Protocole de chiffrement de VPN
+organizr - Gestion des applications
+overseerr -  Gestion de contenu Plex/Emby
+pastebin - Mettre en ligne du texte
+petio - Gestion de contenu Plex/Emby
+picapport - Serveur photo avec galerie Web
+pingvin - Partage de fichiers auto-hébergée
+piwigo - Gestion d'albums photo
+plausible - Alternative  à Google Analytics
+plexAutoLanguages ​​- Adon plex
+plex - Serveur multimédia
+portainer - Gestion docker
+prowlarr - Indexeur de scraping
+pureftpd - Serveur FTP
+pyload - Gestionnaire de téléchargement
+qbittorrent - Gestionnaire de torrent
+qflood - Gestionnaire de torrent
+radarr4k - Gestion Films-4K Usenet-BitTorrent
+radarr - Gestion Films Usenet-BitTorrent
+rdtclient - Clients Real debrid
+readarr - Gestion ebook Usenet-BitTorrent
+rflood - Un gestionnaire de torrent
+rtorrentvpn - Gestionnaire de torrent VPN
+rutorrent_2 - Un gestionnaire de torrent
+rutorrent_3 - Un gestionnaire de torrent
+rutorrent_4 - Un gestionnaire de torrent
+rutorrentcm - Un gestionnaire de torrent
+rutorrent - Un gestionnaire de torrent
+sabnzbd - Téléchargement de newsgroups
+scrutiny  - Solution de monitoring
+seafile - Stockage cloud open source
+sensorr - Enregistreur vidéo numérique
+shaarli - Bookmarking personnel
+sickchill - Gestion Films/Séries
+sickgear - Gestionnaire Films/Séries
+sismicsreader - Agrégateur flux Web
+sonarr4k - Gestion Séries 4K
+sonarr - Gestion Séries Usenet et BitTorren
+speedtest - Teste vitesse Internet
+speedtesttracker - Teste vitesse Internet
+statping - Surveillance de vos sites Web
+subsonic - Serveur multimédia
+synclounge - Adon Plex
+syncthing - Synchronisation de fichiers
+tautulli - Monitoring de Plex
+transmission - Gestionnaire de torrent
+transmissionvpn - Gestionnaire de torrent VPN
+ttrss - Agrégateur de flux d'actualités
+ubooquity - Gestion ebooks
+varken - Ecosystème Plex dans InfluxDB/Grafana
+vaultwarden - Serveur compatible Bitwarden
+vikunja - Application de liste de tâches 
+webdav - Service d'hébergement de fichiers
+webtop - Gestion d'environnements
+wetty - Terminal sur HTTP et https
+wgeasy - Gestion WireGuard
+whisparr - Gestionnaire de films pour adultes
+wikijs - Une application wiki moderne
+wireGuardUI - Interface Web gestion/WireGuard
+wireGuard - Protocole de communication (VPN).
+wizarr - Invitation utilisateurs Plex et Jellyfin
+wordpress - Gestion de contenu (CMS)
+xteve - Proxy M3U pour Plex DVR et Emby Live TV
+yacht - Gestion des conteneurs Docker
+yourls - Gestion de liens

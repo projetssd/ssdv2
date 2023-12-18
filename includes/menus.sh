@@ -136,86 +136,42 @@ menu_gestoutils_dupefinder() {
   pause
 }
 
-########################
 function ajout_app_seedbox() {
-  echo -e " ${BWHITE}* Resume file: $USERRESUMEFILE${NC}"
   echo ""
   choose_services
-
-  install_services
-  echo "Installations terminées"
-  pause
-}
-
-function ajout_app_autres() {
-  echo ""
-  choose_other_services
-
   install_services
   echo "Installations terminées"
   pause
 }
 
 function menu_suppression_application() {
-  echo -e " ${BWHITE}* Application en cours de suppression${NC}"
-  TABSERVICES=()
-  for SERVICEACTIVATED in $(docker ps --format "{{.Names}}" | cut -d'-' -f2 | sort -u); do
-    SERVICE=$(echo $SERVICEACTIVATED | cut -d\. -f1)
-    TABSERVICES+=(${SERVICE//\"/} " ")
-  done
-  APPSELECTED=$(
-    whiptail --title "App Manager" --menu \
-      "Sélectionner l'Appli à supprimer" 19 45 11 \
-      "${TABSERVICES[@]}" 3>&1 1>&2 2>&3
-  )
-  exitstatus=$?
-  if [ $exitstatus = 0 ]; then
-    echo -e " ${GREEN}   * $APPSELECTED${NC}"
-
-    suppression_appli ${APPSELECTED} 1
-    pause
-    affiche_menu_db
-  fi
+  line=$1
+  suppression_appli ${line} 1
+  pause
+  affiche_menu_db
 }
 
 function menu_reinit_container() {
+  line=$1
+  log_write "Reinit du container ${line}" >/dev/null 2>&1
+  echo -e "\e[32mLes volumes ne seront pas supprimés\e[0m" 
+  subdomain=$(get_from_account_yml "sub.${line}.${line}")
 
-  touch $SERVICESPERUSER
-  TABSERVICES=()
-  for SERVICEACTIVATED in $(docker ps --format "{{.Names}}"); do
-    SERVICE=$(echo $SERVICEACTIVATED | cut -d\. -f1)
-    TABSERVICES+=(${SERVICE//\"/} " ")
-  done
-  line=$(
-    whiptail --title "App Manager" --menu \
-      "Sélectionner le container à réinitialiser" 19 45 11 \
-      "${TABSERVICES[@]}" 3>&1 1>&2 2>&3
-  )
-  exitstatus=$?
-  if [ $exitstatus = 0 ]; then
-
-    echo -e " ${GREEN}   * ${line}${NC}"
-    log_write "Reinit du container ${line}"
-    subdomain=$(get_from_account_yml "sub.${line}.${line}")
-
-    suppression_appli "${line}"
-    rm -f "${SETTINGS_STORAGE}/conf/${line}.yml"
-    rm -f "${SETTINGS_STORAGE}/vars/${line}.yml"
-
-    docker volume rm $(docker volume ls -qf "dangling=true") >/dev/null 2>&1
-    echo ""
-    echo ${line} >>$SERVICESPERUSER
-    if [[ "${line}" = zurg ]]; then
-      launch_service ${line}
-      ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml"
-    else
-      launch_service ${line}
-    fi
-    pause
-    checking_errors $?
-    echo""
-    echo -e "${BLUE}### Le Container ${line} a été Réinitialisé ###${NC}"
-    echo ""
-    pause
+  suppression_appli "${line}"
+  rm -f "${SETTINGS_STORAGE}/conf/${line}.yml"
+  rm -f "${SETTINGS_STORAGE}/vars/${line}.yml"
+  docker volume rm $(docker volume ls -qf "dangling=true") >/dev/null 2>&1
+  echo ""
+  echo ${line} >>$SERVICESPERUSER
+  if [[ "${line}" = zurg ]]; then
+    launch_service ${line}
+    ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml"
+  else
+    launch_service ${line}
   fi
+  checking_errors $?
+  echo""
+  echo -e "${BLUE}### Le Container ${line} a été Réinitialisé ###${NC}"
+  echo ""
+  pause
 }
