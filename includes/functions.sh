@@ -990,9 +990,6 @@ function premier_lancement() {
 
   fi
   
-  # docker-compose pour ansible avant de rentrer dans le venv
-  pip install docker-compose
-
   # création d'un virtualenv
   python3 -m venv ${SETTINGS_SOURCE}/venv
 
@@ -1012,7 +1009,10 @@ function premier_lancement() {
     shyaml \
     netaddr \
     dnspython \
-    configparser
+    configparser \
+    inquirer \
+    jsons \
+    colorama 
 
   ##########################################
   # Pas de configuration existante
