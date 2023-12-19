@@ -31,17 +31,11 @@ function update_system() {
 }
 
 function status() {
-
   # Créé les fichiers de service, comme quoi rien n'est encore installé
   create_dir ${SETTINGS_STORAGE}/status
   sudo chown -R ${USER}: ${SETTINGS_STORAGE}/status
-  for app in $(cat ${SETTINGS_SOURCE}/includes/config/services-available); do
-    service=$(echo $app | tr '[:upper:]' '[:lower:]' | cut -d\- -f1)
-    echo "0" >${SETTINGS_STORAGE}/status/$service
-  done
-  for app in $(cat ${SETTINGS_SOURCE}/includes/config/other-services-available); do
-    service=$(echo $app | tr '[:upper:]' '[:lower:]' | cut -d\- -f1)
-    echo "0" >${SETTINGS_STORAGE}/status/$service
+  for app in $(cat "${SETTINGS_SOURCE}/includes/config/services-available" | cut -d' ' -f1); do
+    echo "0" >${SETTINGS_STORAGE}/status/$app
   done
 }
 
