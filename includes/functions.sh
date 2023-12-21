@@ -1667,7 +1667,6 @@ function get_architecture() {
 }
 
 function liste_perso() {
-  clear
   echo "##############################################################"
   echo "# Liste des applis déjà personnalisées                       #"
   echo "# Vous pouvez à tout moment décider de modifier les fichiers #"
@@ -1728,34 +1727,40 @@ function applis_perso_create() {
 
 function reinit_container() {
   clear
+  logo
   liste_perso
   python3 "${SETTINGS_SOURCE}/includes/config/scripts/generique_python.py" reinit_container
 }
 
 function install_applis() {
   clear
+  logo
   python3 "${SETTINGS_SOURCE}/includes/config/scripts/generique_python.py" install_applis
 }
 
 function suppression_applis() {
   clear  
+  logo
   liste_perso
   python3 "${SETTINGS_SOURCE}/includes/config/scripts/generique_python.py" suppression_application
 }
 
 function relance_applis() {
   clear
+  logo
   liste_perso
   python3 "${SETTINGS_SOURCE}/includes/config/scripts/generique_python.py" relance_applis
 }
 
 function sauvegarde_applis() {
   clear
+  logo
   liste_perso
   python3 "${SETTINGS_SOURCE}/includes/config/scripts/generique_python.py" sauvegarde_applis
 }
 
 function install_applis_perso() {
   clear
+  logo
   python3 "${SETTINGS_SOURCE}/includes/config/scripts/generique_python.py" install_applis_perso
 }
