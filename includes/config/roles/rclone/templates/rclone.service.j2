@@ -7,7 +7,7 @@ After=network-online.target
 User={{ lookup('env','USER') }}
 Group={{ lookup('env','MYGIDNAME') }}
 Type=simple
-ExecStart=/usr/bin/rclone mount -vv \
+ExecStart=/usr/bin/rclone mount \
   --config={{ lookup('env','HOME') }}/.config/rclone/rclone.conf \
   --allow-other --gid {{user.groupid}} --uid {{user.userid}} \
   --allow-non-empty \
