@@ -4,11 +4,11 @@ from colorama import Fore, Style, init
 def install_applis():
     file_path = 'includes/config/services-available'
     output_path = 'output.json'
-    print(f"{Fore.CYAN}Appuyer sur 'Entrer' pour revenir au menu précédent{Style.RESET_ALL}")  
+    print(f"{Fore.CYAN}Entrée -> {Style.RESET_ALL}{Fore.YELLOW}Menu précédent && {Style.RESET_ALL}{Fore.CYAN}Barre espace -> {Style.RESET_ALL}{Fore.YELLOW}Sélection{Style.RESET_ALL}")  
 
     try:
         selected_lines = inquirer.prompt([
-            inquirer.Checkbox('selected_lines', message=f'{Fore.GREEN}Sélectionnez les Applications à installer{Style.RESET_ALL}',
+            inquirer.Checkbox('selected_lines', message=f'{Fore.GREEN}Sélection des Applications à installer{Style.RESET_ALL}',
                               choices=[line.strip() for line in open(file_path, 'r') if os.path.exists(file_path)])
         ])['selected_lines']
 
@@ -25,7 +25,7 @@ def install_applis():
 def reinit_container():
     init(autoreset=True)
     client = docker.from_env()
-    print(f"{Fore.GREEN}Sélectionner 'Quitter le script' pour revenir au menu précédent{Style.RESET_ALL}")  
+    print(f"{Fore.CYAN}Sélectionner 'Quitter le script' pour revenir au menu précédent{Style.RESET_ALL}")  
     choices = [container.name for container in client.containers.list()] + ['Quitter le script'] 
     selected_container = inquirer.prompt([
         inquirer.List('container',
@@ -41,7 +41,7 @@ def reinit_container():
 def suppression_application():
     init(autoreset=True)
     client = docker.from_env()
-    print(f"{Fore.GREEN}Sélectionner 'Quitter le script' pour revenir au menu précédent{Style.RESET_ALL}")  
+    print(f"{Fore.CYAN}Sélectionner 'Quitter le script' pour revenir au menu précédent{Style.RESET_ALL}")  
     choices = [container.name for container in client.containers.list()] + ['Quitter le script']  
     selected_container = inquirer.prompt([
         inquirer.List('container',
@@ -57,7 +57,7 @@ def suppression_application():
 def relance_applis():
     init(autoreset=True)
     client = docker.from_env()
-    print(f"{Fore.GREEN}Sélectionner 'Quitter le script' pour revenir au menu précédent{Style.RESET_ALL}")    
+    print(f"{Fore.CYAN}Sélectionner 'Quitter le script' pour revenir au menu précédent{Style.RESET_ALL}")    
     choices = [container.name for container in client.containers.list()] + ['Quitter le script']
 
     selected_container = inquirer.prompt([
@@ -75,7 +75,7 @@ def relance_applis():
 def sauvegarde_applis():
     init(autoreset=True)
     client = docker.from_env()
-    print(f"{Fore.GREEN}Sélectionner 'Quitter le script' pour revenir au menu précédent{Style.RESET_ALL}")    
+    print(f"{Fore.CYAN}Sélectionner 'Quitter le script' pour revenir au menu précédent{Style.RESET_ALL}")    
     choices = [container.name for container in client.containers.list()] + ['Quitter le script']
     selected_container = inquirer.prompt([
         inquirer.List('container',
@@ -106,13 +106,13 @@ def install_applis_perso():
     if files:
         question = inquirer.List(
             'selected_file',
-            message=f"{Fore.GREEN}Sélectionnez une Appli perso à installer{Style.RESET_ALL}",
+            message=f"{Fore.CYAN}Sélectionnez une Appli perso à installer{Style.RESET_ALL}",
             choices=choices,
         )
 
         selected_file = inquirer.prompt([question])['selected_file']
 
-        # Vérifier si l'option 'Quitter' a été choisie
+        # Vérifier si l'option 'Quitter le script' a été choisie
         if selected_file == 'Quitter le script':
             print("Vous avez choisi de quitter le script.")
             return
@@ -129,3 +129,48 @@ def install_applis_perso():
             return
         else:
             print("Continuer le script...")
+
+def create_applis_perso():    
+    print(f"{Fore.CYAN}Sélectionner 'Quitter le script' pour revenir au menu précédent{Style.RESET_ALL}")
+    choices = ['Applis déjà dans la base', 'Nouvelle Appli', 'Quitter le script']
+
+    questions = [
+        inquirer.List('selected_option',  # Ajout du nom de la question ('selected_option')
+                      message=f"{Fore.GREEN}Type d'applis à créer/copier{Style.RESET_ALL}",
+                      choices=choices)
+    ]
+
+    answers = inquirer.prompt(questions)
+
+    selected_option = answers['selected_option']
+    if selected_option == 'Quitter le script':
+        return
+
+    elif selected_option == 'Applis déjà dans la base':
+        os.system('clear')
+        subprocess.run(['includes/config/scripts/generique.sh', 'logo'])
+        copie_applis()
+    else:
+        subprocess.run(['includes/config/scripts/generique.sh', 'applis_perso_create', selected_option])
+
+def copie_applis():
+    file_path = 'includes/config/services-available'
+    output_path = 'output.json'
+    print(f"{Fore.CYAN}Entrée -> {Style.RESET_ALL}{Fore.YELLOW}Menu précédent && {Style.RESET_ALL}{Fore.CYAN}Barre espace -> {Style.RESET_ALL}{Fore.YELLOW}Sélection{Style.RESET_ALL}")  
+
+    try:
+        selected_lines = inquirer.prompt([
+            inquirer.Checkbox('selected_lines', message=f'{Fore.GREEN}Sélection des Applications à copier dans le dossier vars{Style.RESET_ALL}',
+                              choices=[line.strip() for line in open(file_path, 'r') if os.path.exists(file_path)])
+        ])['selected_lines']
+
+        if selected_lines:
+            with open(output_path, 'w') as output_file:
+                json.dump({'selected_lines': selected_lines}, output_file, indent=2)
+            subprocess.run(['includes/config/scripts/generique.sh', 'copie_applis', *selected_lines])
+
+        else:
+            print('Aucune application sélectionnée')
+    except Exception as e:
+        print(f'Une erreur s\'est produite : {e}')
+

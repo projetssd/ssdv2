@@ -1484,17 +1484,18 @@ EOF
   launch_service traefik
 }
 
-function correct_init() {
-  echo "###################################"
-  echo "# ATTENTION !!! Cette opération va redémarrer le démon docker"
-  echo "# Cette opération peut prendre quelques minutes et certaines appliactions"
-  echo "# risquent de ne pas redémarrer"
-  echo "####################################"
-  echo "# Ne continuez que si vous avez le bug 'init'"
-  echo "# Si vous n'êtes pas sur, faites ctrl+c pour sortir"
-  pause
-  sudo rm -f /etc/docker/daemon.json
-  sudo systemctl restart docker
+function relance_zurg() {
+clear
+logo
+echo -e "\e[36m## Relance de Zurg ##\e[0m"  
+sudo systemctl stop zurg
+sudo systemctl stop rclone
+rm -rf "${SETTINGS_STORAGE}/scripts/zurg"
+sudo systemctl start zurg
+sudo systemctl start rclone
+docker restart rdtclient radarr sonarr plex
+echo -e "\e[36m## Relance de Zurg terminée ##\e[0m"
+pause
 }
 
 function apply_patches() {
@@ -1688,6 +1689,7 @@ function liste_perso() {
 
 function applis_perso_create() {
   clear
+  logo
   liste_perso
   # Liste des fichiers déjà personnalisés
   echo "###########################################################"
@@ -1699,30 +1701,36 @@ function applis_perso_create() {
   echo ""
   
   # Nouvelle appli
-  echo -e "\e[32mSouhaitez-vous configurer une nouvelle application ? (O/N) \e[0m"
+  echo -e "\e[32mConfigurer une nouvelle application ? (O/N) \e[0m"
   read choice
   if [[ "$choice" = "O" ]] || [[ "$choice" = "o" ]]; then
     read -p $'\e[36mNouvelle Appli à personnaliser : \e[0m' NOUVELLE  </dev/tty
     echo ""
-    cat "${SETTINGS_SOURCE}/includes/config/services-available" | tr ‘[A-Z]’ ‘[a-z] | cut -d'-' -f1 | uniq >> temp
-    NOUVELLE=$(echo $NOUVELLE | tr ‘[A-Z]’ ‘[a-z])
-    if grep -q ${NOUVELLE} temp; then
-      if [ -n "$(find ${SETTINGS_SOURCE}/includes/dockerapps/vars -type f -name ${NOUVELLE}.yml)" ]; then
-        # on copie les variables pour le user
-        cp "${SETTINGS_SOURCE}/includes/dockerapps/vars/${NOUVELLE}.yml" "${SETTINGS_STORAGE}vars/${NOUVELLE}.yml"
-        echo -e "\e[32mApplication déja référencée dans la base\e[0m"
-        echo -e "\e[32mLe fichier ${NOUVELLE}.yml a été copiée dans le dossier ${SETTINGS_STORAGE}vars\e[0m"
-        echo -e "\e[32mAfin d'être personnalisé.\e[0m"
-      fi
-    else
-      echo -e "\e[32mApplication non référencée dans la base,\e[0m \e[36m${NOUVELLE}.yml\e[0m \e[32ma été créé ds le dossier ${SETTINGS_STORAGE}vars.\e[0m" 
-      echo -e "\e[32mUne fois personnaliée, elle s'installera à partir du menu Application perso\e[0m" 
+      echo -e "\e[32mApplication non référencée dans la base existante,\e[0m \e[36m${NOUVELLE}.yml\e[0m \e[32ma été créée ds le dossier ${SETTINGS_STORAGE}vars.\e[0m" 
+      echo -e "\e[32mUne fois personnalisée, elle s'installera à partir du menu Application perso\e[0m" 
       create_file "${SETTINGS_STORAGE}/vars/${NOUVELLE}.yml"
       cp "${SETTINGS_SOURCE}/includes/dockerapps/vars/exemple.yml" "${SETTINGS_STORAGE}vars/${NOUVELLE}.yml"
-    fi
-    rm temp
     pause
   fi  
+}
+
+function copie_applis() {
+  rm -Rf "${SERVICESPERUSER}" >/dev/null 2>&1
+  touch $SERVICESPERUSER
+  jq -r '.selected_lines[] | split("-")[0] | gsub("\""; "")' output.json | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' > "$SERVICESPERUSER"
+  echo -e "\e[36m## Copie des fichiers dans le dossier vars ##\e[0m"  
+  while IFS= read -r line; do
+    if [ -e "${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml" ]; then
+      cp "${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml" "${SETTINGS_STORAGE}vars/${line}.yml"
+      echo -e "\e[32mCopie effectuée pour\e[0m \e[36m$line\e[0m" 
+    else
+      cp "${SETTINGS_SOURCE}/includes/dockerapps/${line}.yml" "${SETTINGS_STORAGE}vars/${line}.yml"
+      echo -e "\e[32mCopie effectuée pour\e[0m \e[36m$line\e[0m"
+    fi
+  done < "$SERVICESPERUSER"
+  rm output.json
+  rm $SERVICESPERUSER
+  pause
 }
 
 function reinit_container() {
@@ -1736,6 +1744,7 @@ function install_applis() {
   clear
   logo
   python3 "${SETTINGS_SOURCE}/includes/config/scripts/generique_python.py" install_applis
+  rm output.json
 }
 
 function suppression_applis() {
@@ -1743,6 +1752,7 @@ function suppression_applis() {
   logo
   liste_perso
   python3 "${SETTINGS_SOURCE}/includes/config/scripts/generique_python.py" suppression_application
+  pause
 }
 
 function relance_applis() {
@@ -1763,4 +1773,12 @@ function install_applis_perso() {
   clear
   logo
   python3 "${SETTINGS_SOURCE}/includes/config/scripts/generique_python.py" install_applis_perso
+  pause
 }
+
+function create_applis_perso() {
+  clear
+  logo
+  python3 "${SETTINGS_SOURCE}/includes/config/scripts/generique_python.py" create_applis_perso
+}
+

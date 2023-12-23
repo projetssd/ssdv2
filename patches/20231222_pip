@@ -1,0 +1,8 @@
+#!/bin/bash
+source "${HOME}/.config/ssd/env"
+source "${SETTINGS_SOURCE}/profile.sh"
+
+pip install inquirer
+pip install jsons 
+pip install colorama 
+
