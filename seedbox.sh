@@ -122,9 +122,9 @@ if [ "$USER" == "root" ]; then
     echo -e "${CCYAN}-----------------------${CEND}"
     echo -e "${CCYAN}[  Lancement en root  ]${CEND}"
     echo -e "${CCYAN}-----------------------${CEND}"
-    echo -e "${CCYAN}Pour des raisons de sécurité, il n'est pas conseillé de lancer ce script en root${CEND}"
+    echo -e "${CCYAN}"$(gettext "Pour des raisons de sécurité, il n'est pas conseillé de lancer ce script en root")"${CEND}"
     echo -e "${CCYAN}-----------------------${CEND}"
-    echo -e "${CCYAN}Vous pouvez continuer en root en passant l'option --force-root en parametre${CEND}"
+    echo -e "${CCYAN}"$(gettext "Vous pouvez continuer en root en passant l'option --force-root en parametre")"${CEND}"
     exit 1
   fi
 fi
@@ -136,9 +136,9 @@ if [ $mode_install = "manuel" ]; then
   if [[ ${IS_INSTALLED} -eq 0 ]]; then
     # Si on est là, c'est que le prérequis sont installés, mais c'est tout
     # On propose donc l'install de la seedbox
-    echo -e "${CGREEN}   1) Installation zurg - rclone - RDTclient${CEND}"
-    echo -e "${CGREEN}   2) Installation Minimale sans zurg${CEND}"
-    echo -e "${CGREEN}   3) Restauration Seedbox${CEND}"
+    echo -e "${CGREEN}"   $(gettext "1) Installation zurg - rclone - RDTclient")"${CEND}"
+    echo -e "${CGREEN}"   $(gettext "2) Installation Minimale sans zurg")"${CEND}"
+    echo -e "${CGREEN}"   $(gettext "3) Restauration Seedbox")"${CEND}"
     echo -e ""
     read -p "Votre choix : " CHOICE
     echo ""
@@ -169,8 +169,8 @@ if [ $mode_install = "manuel" ]; then
         update_seedbox_param "installed" 1
         # installation environnement
         install_environnement
-        echo "L'installation est maintenant terminée."
-        echo "Pour le configurer ou modifier les applis, vous pouvez le relancer"
+        echo $(gettext "L'installation est maintenant terminée.")
+        echo $(gettext "Pour le configurer ou modifier les applis, vous pouvez le relancer")
         echo "cd ${SETTINGS_SOURCE}"
         echo "./seedbox.sh"
         exit 0
@@ -201,8 +201,8 @@ if [ $mode_install = "manuel" ]; then
         sauve
         # on marque la seedbox comme installée
         update_seedbox_param "installed" 1
-        echo "L'installation est maintenant terminée."
-        echo "Pour le configurer ou modifier les applis, vous pouvez le relancer"
+        echo $(gettext "L'installation est maintenant terminée.")
+        echo $(gettext "Pour le configurer ou modifier les applis, vous pouvez le relancer")
         echo "cd ${SETTINGS_SOURCE}"
         echo "./seedbox.sh"
         exit 0
@@ -334,6 +334,8 @@ if [ $mode_install = "manuel" ]; then
   fi
   # On ressource l'environnement
   source "${SETTINGS_SOURCE}/profile.sh"
+  export TEXTDOMAIN=ks
+  export TEXTDOMAINDIR="${SETTINGS_SOURCE}/i18n"
   apply_patches
 
   affiche_menu_db

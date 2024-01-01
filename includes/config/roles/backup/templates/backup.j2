@@ -19,9 +19,9 @@ if [ "$myid" -eq 0 ]; then
   ARCHIVE=$BACKUP_FOLDER/backup-$CDAY.tar.gz
 
   echo ""
-  echo -e "${CRED}-------------------------------------------------------${CEND}"
-  echo -e "${CRED} /!\ ATTENTION : SAUVEGARDE DU SERVEUR IMMINENTE /!\ ${CEND}"
-  echo -e "${CRED}-------------------------------------------------------${CEND}"
+  echo -e "${CRED}---------------------------------------------${CEND}"
+  echo -e "${CRED}"$(gettext "ATTENTION : SAUVEGARDE DU SERVEUR IMMINENTE")"${CEND}"
+  echo -e "${CRED}---------------------------------------------${CEND}"
 
   # Stop Plex
   plex=$(docker ps -aq --format={{ '{{' }}.Names{{ '}}' }} | grep -x 'plex' 1> /dev/null 2>&1 && echo true || echo false)
@@ -36,7 +36,7 @@ if [ "$myid" -eq 0 ]; then
   echo ""
   echo -e "${CCYAN}#########################################################${CEND}"
   echo ""
-  echo -e "${CCYAN}          DEMARRAGE DU SCRIPT DE SAUVEGARDE              ${CEND}"
+  echo -e "${CCYAN}"$(gettext "DEMARRAGE DU SCRIPT DE SAUVEGARDE")"${CEND}"
   echo ""
   echo -e "${CCYAN}#########################################################${CEND}"
   echo ""
@@ -50,7 +50,7 @@ if [ "$myid" -eq 0 ]; then
 
   # Restart Plex
    if [[ ${plex} == "true" ]]; then
-    echo -e "${CCYAN}> Lancement de plex${CEND}"
+    echo -e "${CCYAN}>" $(gettext "Lancement de plex")"${CEND}"
     docker start plex
     sleep 5
   fi
@@ -79,10 +79,10 @@ if [ "$myid" -eq 0 ]; then
   chown {{ lookup('env','USER') }}:{{ lookup('env','MYGIDNAME') }} "/home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf"
   echo ""
   echo -e "${CRED}-------------------------------------------------------${CEND}"
-  echo -e "${CRED}        SAUVEGARDE DU SERVEUR TERMINEE                 ${CEND}"
+  echo -e "${CRED}"$(gettext "SAUVEGARDE DU SERVEUR TERMINEE")"${CEND}"
   echo -e "${CRED}-------------------------------------------------------${CEND}"
 else
   echo -e "${CRED}-------------------------------------------------------${CEND}"
-  echo -e "${CRED}  LA SAUVEGARDE DOIT ETRE LANCEE EN ROOT - ABANDON                 ${CEND}"
+  echo -e "${CRED}"$(gettext "LA SAUVEGARDE DOIT ETRE LANCEE EN ROOT - ABANDON")"${CEND}"
   echo -e "${CRED}-------------------------------------------------------${CEND}"
 fi

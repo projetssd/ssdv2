@@ -1,9 +1,6 @@
 ---
 - hosts: localhost
   tasks:
-  - name: Verification des API
-    pause:
-      prompt: "Assurez vous d'avoir les API créées chez Trakt.tv (https://trakt.tv/oauth/applications/new) avant de continuer"
 
   - name: Install docker-compose from official github repo
     become: yes

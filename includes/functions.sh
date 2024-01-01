@@ -25,7 +25,7 @@ function logo() {
 
 function update_system() {
   #Mise à jour systeme
-  echo -e "${BLUE}### MISE A JOUR DU SYSTEME ###${NC}"
+  echo -e "${BLUE}###" $(gettext "MISE A JOUR DU SYSTEME") "###${NC}"
   ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/system/tasks/main.yml
   checking_errors $?
 }
@@ -53,20 +53,21 @@ function cloudflare() {
   # Récupère les infos de cloudflare
   # Pour utilisation ultérieure
   ######################################
-  echo -e "${BLUE}### Gestion des DNS ###${NC}"
+  echo -e "${BLUE}###" $(gettext "Gestion des DNS") "###${NC}"
   echo ""
   echo -e "${CCYAN}------------------------------------------------------------------${CEND}"
-  echo -e "${CCYAN}   CloudFlare protège et accélère les sites internet.             ${CEND}"
-  echo -e "${CCYAN}   CloudFlare optimise automatiquement la déliverabilité          ${CEND}"
-  echo -e "${CCYAN}   de vos pages web afin de diminuer le temps de chargement       ${CEND}"
-  echo -e "${CCYAN}   et d’améliorer les performances. CloudFlare bloque aussi       ${CEND}"
-  echo -e "${CCYAN}   les menaces et empêche certains robots illégitimes de          ${CEND}"
-  echo -e "${CCYAN}   consommer votre bande passante et les ressources serveur.      ${CEND}"
+  echo -e "${CCYAN}"   $(gettext "CloudFlare protège et accélère les sites internet.")      "${CEND}"
+  echo -e "${CCYAN}"   $(gettext "CloudFlare optimise automatiquement la déliverabilité")   "${CEND}"
+  echo -e "${CCYAN}"   $(gettext "de vos pages web afin de diminuer le temps de chargement")"${CEND}"
+  echo -e "${CCYAN}"   $(gettext "et d’améliorer les performances. CloudFlare bloque aussi")"${CEND}"
+  echo -e "${CCYAN}"   $(gettext "les menaces et empêche certains robots illégitimes de")   "${CEND}"
+  echo -e "${CCYAN}"   $(gettext "consommer votre bande passante et les ressources serveur.")"${CEND}"
   echo -e "${CCYAN}------------------------------------------------------------------${CEND}"
   echo ""
-  read -rp $'\e[33mSouhaitez vous utiliser les DNS Cloudflare ? (o/n)\e[0m :' OUI
+  echo >&2 -n -e "${BWHITE}"$(gettext "Souhaitez vous utiliser les DNS Cloudflare ? (y/n)") "${CEND}"
+  read OUI
 
-  if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
+  if [[ "$OUI" == "y" ]] || [[ "$OUI" == "Y" ]]; then
 
     if [ -z "$cloud_email" ] || [ -z "$cloud_api" ]; then
       cloud_email=$1
@@ -74,14 +75,14 @@ function cloudflare() {
     fi
 
     while [ -z "$cloud_email" ]; do
-      echo >&2 -n -e "${BWHITE}Votre Email Cloudflare: ${CEND}"
+      echo >&2 -n -e "${BWHITE}"$(gettext "Votre Email Cloudflare:") "${CEND}"
       read cloud_email
       manage_account_yml cloudflare.login "$cloud_email"
       update_seedbox_param "cf_login" $cloud_email
     done
 
     while [ -z "$cloud_api" ]; do
-      echo >&2 -n -e "${BWHITE}Votre API Cloudflare: ${CEND}"
+      echo >&2 -n -e "${BWHITE}"$(gettext "Votre API Cloudflare:") "${CEND}"
       read cloud_api
       manage_account_yml cloudflare.api "$cloud_api"
     done
@@ -94,21 +95,22 @@ function oauth() {
   # Récupère les infos oauth
   #######################################
 
-  echo -e "${BLUE}### Google OAuth2 avec Traefik – Secure SSO pour les services Docker ###${NC}"
+  echo -e "${BLUE}###" $(gettext "Google OAuth2 avec Traefik – Secure SSO pour les services Docker") "###${NC}"
   echo ""
   echo -e "${CCYAN}------------------------------------------------------------------${CEND}"
-  echo -e "${CCYAN}    Protocole d'identification via Google OAuth2		   ${CEND}"
-  echo -e "${CCYAN}    Securisation SSO pour les services Docker			   ${CEND}"
+  echo -e "${CCYAN}"$(gettext "Protocole d'identification via Google OAuth2")    "${CEND}"
+  echo -e "${CCYAN}"$(gettext "Securisation SSO pour les services Docker")       "${CEND}"
   echo -e "${CCYAN}------------------------------------------------------------------${CEND}"
   echo ""
-  echo -e "${CRED}-------------------------------------------------------------------${CEND}"
-  echo -e "${CRED}    /!\ IMPORTANT: Au préalable créer un projet et vos identifiants${CEND}"
-  echo -e "${CRED}    https://github.com/laster13/patxav/wiki /!\ 		   ${CEND}"
-  echo -e "${CRED}-------------------------------------------------------------------${CEND}"
+  echo -e "${CRED}------------------------------------------------------------------${CEND}"
+  echo -e "${CRED}"IMPORTANT: $(gettext "Au préalable créer un projet et vos identifiants")"${CEND}"
+  echo -e "${CRED}https://github.com/laster13/patxav/wiki 		             ${CEND}"
+  echo -e "${CRED}------------------------------------------------------------------${CEND}"
   echo ""
-  read -rp $'\e[33mSouhaitez vous sécuriser vos Applis avec Google OAuth2 ? (o/n)\e[0m :' OUI
+  echo >&2 -n -e "${BWHITE}"$(gettext "Souhaitez vous sécuriser vos Applis avec Google OAuth2 ? (y/n)") "${CEND}"
+  read OUI
 
-  if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
+  if [[ "$OUI" == "y" ]] || [[ "$OUI" == "Y" ]]; then
     if [ -z "$oauth_client" ] || [ -z "$oauth_secret" ] || [ -z "$email" ]; then
       oauth_client=$1
       oauth_secret=$2
@@ -128,7 +130,7 @@ function oauth() {
     done
 
     while [ -z "$email" ]; do
-      echo >&2 -n -e "${BWHITE}Compte Gmail utilisé(s), séparés d'une virgule si plusieurs: ${CEND}"
+      echo >&2 -n -e "${BWHITE}"$(gettext "Compte Gmail utilisé(s), séparés d'une virgule si plusieurs:") "${CEND}"
       read email
       manage_account_yml oauth.account "$email"
     done
@@ -138,12 +140,12 @@ function oauth() {
 
     echo ""
     echo -e "${CRED}---------------------------------------------------------------${CEND}"
-    echo -e "${CCYAN}    IMPORTANT:	Avant la 1ere connexion			       ${CEND}"
-    echo -e "${CCYAN}    		- Nettoyer l'historique de votre navigateur    ${CEND}"
-    echo -e "${CCYAN}    		- déconnection de tout compte google	       ${CEND}"
+    echo -e "${CCYAN}"    IMPORTANT:	$(gettext "Avant la 1ere connexion")"${CEND}"
+    echo -e "${CCYAN}"    		- $(gettext "Nettoyer l'historique de votre navigateur")"${CEND}"
+    echo -e "${CCYAN}"   		- $(gettext "déconnection de tout compte google")"${CEND}"
     echo -e "${CRED}---------------------------------------------------------------${CEND}"
     echo ""
-    echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+    echo -e "\n $(gettext "Appuyer sur") ${CCYAN}[$(gettext "ENTREE")]${CEND} $(gettext "pour continuer")"
     read -r
   fi
 
@@ -154,7 +156,7 @@ function install-rtorrent-cleaner() {
   #configuration de rtorrent-cleaner avec ansible
   echo -e "${BLUE}### RTORRENT-CLEANER ###${NC}"
   echo ""
-  echo -e " ${BWHITE}* Installation RTORRENT-CLEANER${NC}"
+  echo -e " ${BWHITE}"* $(gettext "Installation") RTORRENT-CLEANER"${NC}"
 
   ## choix de l'utilisateur
   #SEEDUSER=$(ls ${SETTINGS_STORAGE}/media* | cut -d '-' -f2)
@@ -163,20 +165,11 @@ function install-rtorrent-cleaner() {
   sudo sed -i "s|%SETTINGS_STORAGE%|${SETTINGS_STORAGE}|g" /usr/local/bin/rtorrent-cleaner
 }
 
-function motd() {
-  #configuration d'un motd avec ansible
-  echo -e "${BLUE}### MOTD ###${NC}"
-  echo -e " ${BWHITE}* Installation MOTD${NC}"
-  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/motd/tasks/start.yml
-  checking_errors $?
-  echo ""
-}
-
 function sauve() {
   create_dir "/var/backup/local"
   #configuration Sauvegarde
   echo -e "${BLUE}### BACKUP ###${NC}"
-  echo -e " ${BWHITE}* Mise en place Sauvegarde${NC}"
+  echo -e " ${BWHITE}"* $(gettext "Mise en place Sauvegarde")"${NC}"
   ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/backup/tasks/main.yml
   checking_errors $?
   echo ""
@@ -190,7 +183,7 @@ function debug() {
 function plex_dupefinder() {
   #configuration plex_dupefinder avec ansible
   echo -e "${BLUE}### PLEX_DUPEFINDER ###${NC}"
-  echo -e " ${BWHITE}* Installation plex_dupefinder${NC}"
+  echo -e " ${BWHITE}"* $(gettext "Installation") plex_dupefinder"${NC}"
   ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/plex_dupefinder/tasks/main.yml
   checking_errors $?
 }
@@ -202,7 +195,7 @@ function update_logrotate() {
 function autoscan() {
   #configuration plex_autoscan avec ansible
   echo -e "${BLUE}### AUTOSCAN ###${NC}"
-  echo -e " ${BWHITE}* Installation autoscan${NC}"
+  echo -e " ${BWHITE}"* $(gettext "Installation") autoscan"${NC}"
   ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/autoscan/tasks/main.yml
   checking_errors $?
 }
@@ -210,7 +203,7 @@ function autoscan() {
 function install_cloudplow() {
   #configuration plex_autoscan avec ansible
   echo -e "${BLUE}### CLOUDPLOW ###${NC}"
-  echo -e " ${BWHITE}* Installation cloudplow${NC}"
+  echo -e " ${BWHITE}"* $(gettext "Installation") cloudplow"${NC}"
   ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/cloudplow/tasks/main.yml
   sudo chown -R ${USER} ${HOME}/scripts/cloudplow
   checking_errors $?
@@ -221,16 +214,6 @@ function check_dir() {
     # shellcheck disable=SC2164
     cd "${SETTINGS_SOURCE}"
   fi
-}
-
-function insert_mod() {
-  sed -i 's/\/etc\/update-motd.d/\/opt\/motd\/motd/g' /opt/motd/motd/04-load-average
-  sed -i 's/\/etc\/update-motd.d/\/opt\/motd\/motd/g' /opt/motd/motd/10-plex-stats
-  sed -i 's/\/etc\/update-motd.d/\/opt\/motd\/motd/g' /opt/motd/motd/12-rtorrent-stats
-  /opt/motd/motd/01-banner
-  /opt/motd/motd/04-load-average
-  /opt/motd/motd/10-plex-stats
-  /opt/motd/motd/12-rtorrent-stats
 }
 
 function create_dir() {
@@ -263,9 +246,9 @@ function make_dir_writable() {
 
 function install_base_packages() {
   echo ""
-  echo -e "${BLUE}### INSTALLATION DES PACKAGES ###${NC}"
+  echo -e "${BLUE}"### $(gettext "INSTALLATION DES") PACKAGES ###"${NC}"
   echo ""
-  echo -e " ${BWHITE}* Installation apache2-utils, unzip, git, curl ...${NC}"
+  echo -e " ${BWHITE}"* $(gettext "Installation") apache2-utils, unzip, git, curl ..."${NC}"
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/install/tasks/main.yml"
   checking_errors $?
   echo ""
@@ -289,16 +272,16 @@ function install_fail2ban() {
 }
 
 function install_ufw() {
-  clear
-  echo -e "${RED}---------------------------------------------------------------${CEND}"
-  echo -e "${RED} UFW sera installé avec les valeurs par défaut uniquement ${CEND}"
-  echo -e "${RED} et permettra les accès suivants : ${CEND}"
-  echo -e "${RED} ssh, http, https, plex ${CEND}"
-  echo -e "${RED} Vous pourrez le modifier en éditant le fichier ${SETTINGS_STORAGE}/conf/ufw.yml ${CEND}"
-  echo -e "${RED} pour ajouter des ports/ip supplémentaires ${CEND}"
-  echo -e "${RED} avant de relancer ce script ${CEND}"
-  echo -e "${RED}---------------------------------------------------------------${CEND}"
-  echo -e "${RED} Appuyez sur [Entrée] pour continer ${CEND}"
+  #clear
+  echo -e "${CCYAN}---------------------------------------------------------------${CEND}"
+  echo -e "${CCYAN}" $(gettext "UFW sera installé avec les valeurs par défaut uniquement") "${CEND}"
+  echo -e "${CCYAN}" $(gettext "et permettra les accès suivants :") "${CEND}"
+  echo -e "${CCYAN} ssh, http, https, plex ${CEND}"
+  echo -e "${CCYAN}" $(gettext "Vous pourrez le modifier en éditant le fichier")" ${SETTINGS_STORAGE}/conf/ufw.yml ""${CEND}"
+  echo -e "${CCYAN}" $(gettext "pour ajouter des ports/ip supplémentaires") "${CEND}"
+  echo -e "${CCYAN}" $(gettext "avant de relancer ce script") "${CEND}"
+  echo -e "${CCYAN}---------------------------------------------------------------${CEND}"
+  echo -e "\n $(gettext "Appuyer sur") ${GREEN}[$(gettext "ENTREE")]${CEND} $(gettext "pour continuer")"
   read -r
   echo -e "${BLUE}### UFW ###${NC}"
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/ufw/tasks/main.yml"
@@ -316,13 +299,15 @@ function install_traefik() {
 
   # choix sous domaine traefik
   echo ""
-  echo -e "${BWHITE}Adresse par défault: https://traefik.${DOMAIN} ${CEND}"
+  echo -e "${BWHITE}"$(gettext "Adresse par défault:") "https://traefik.${DOMAIN} ${CEND}"
   echo ""
-  read -rp $'\e[33mSouhaitez vous personnaliser le sous domaine? (o/n)\e[0m: ' OUI
-  if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
+  echo >&2 -n -e "${BWHITE}"$(gettext "Souhaitez vous personnaliser le sous domaine ? (y/n)") "${CEND}"
+  read OUI
+
+  if [[ "$OUI" == "y" ]] || [[ "$OUI" == "Y" ]]; then
 
     while [ -z "$SUBDOMAIN" ]; do
-      echo >&2 -n -e "${BWHITE}Sous Domaine: ${CEND}"
+      echo >&2 -n -e "${BWHITE}"$(gettext "Sous Domaine:") "${CEND}"
       read SUBDOMAIN
     done
 
@@ -335,7 +320,8 @@ function install_traefik() {
 
   # choix authentification traefik
   echo ""
-  read -rp $'\e\033[1;37mChoix de Authentification pour traefik [ Enter ] 1 => basique | 2 => oauth | 3 => authelia: ' AUTH
+  echo >&2 -n -e "${BWHITE}"$(gettext "Choix de Authentification pour traefik") "[ Enter ] 1 => basique | 2 => oauth | 3 => authelia :${CEND}"
+  read AUTH
   case $AUTH in
   1)
     TYPE_AUTH=basique
@@ -351,19 +337,19 @@ function install_traefik() {
 
   *)
     TYPE_AUTH=basique
-    echo "Pas de choix sélectionné, on passe sur une auth basique"
+    echo -e "${BWHITE}"$(gettext "Pas de choix sélectionné, on passe sur une auth basique")"${CEND}"
     ;;
   esac
   manage_account_yml sub.traefik.auth ${TYPE_AUTH}
 
   echo ""
-  echo -e " ${BWHITE}* Installation Traefik${NC}"
+  echo -e " ${BWHITE}"* $(gettext "Installation") Traefik"${NC}"
   ansible-playbook ${SETTINGS_SOURCE}/includes/dockerapps/traefik.yml
   checking_errors $?
   if [[ ${CURRENT_ERROR} -eq 1 ]]; then
-    echo "${RED}Cette étape peut ne pas aboutir lors d'une première installation${CEND}"
-    echo "${RED}Suite à l'installation de docker, il faut se déloguer/reloguer pour que cela fonctionne${CEND}"
-    echo "${RED}Cette erreur est bloquante, impossible de continuer${CEND}"
+    echo -e "${CCYAN}"$(gettext "Cette étape peut ne pas aboutir lors d'une première installation")"${CEND}"
+    echo -e "${CCYAN}"$(gettext "Suite à l'installation de docker, il faut se déloguer/reloguer pour que cela fonctionne")"${CEND}"
+    echo -e "${CCYAN}"$(gettext "Cette erreur est bloquante, impossible de continuer")"${CEND}"
     exit 1
   fi
 
@@ -372,7 +358,7 @@ function install_traefik() {
 
 function install_watchtower() {
   echo -e "${BLUE}### WATCHTOWER ###${NC}"
-  echo -e " ${BWHITE}* Installation Watchtower${NC}"
+  echo -e " ${BWHITE}"* $(gettext "Installation") Watchtower"${NC}"
   ansible-playbook ${SETTINGS_SOURCE}/includes/dockerapps/watchtower.yml
   checking_errors $?
   echo ""
@@ -387,11 +373,11 @@ RCLONE_VERSION=$(get_from_account_yml rclone.architecture)
   fusermount -uz ${SETTINGS_STORAGE} }}/seedbox/zurg >>/dev/null 2>&1
   manage_account_yml rclone.architecture "${ARCHITECTURE}"
   if [ ! -f  "${SETTINGS_STORAGE}/status/rclone" ]; then
-    echo -e "\e[32mINSTALLATION ZURG\e[0m"   				
+    echo -e "\e[32m"$(gettext "INSTALLATION") ZURG"\e[0m"   				
     install_zurg
     ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml"
   else
-    echo -e "\e[32mINSTALLATION RCLONE\e[0m"   				
+    echo -e "\e[32m"$(gettext "INSTALLATION") RCLONE"\e[0m"   				
     ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml"
   fi
     checking_errors $?
@@ -448,7 +434,7 @@ function install_common() {
 
 function unionfs_fuse() {
   echo -e "${BLUE}### Unionfs-Fuse ###${NC}"
-  echo -e " ${BWHITE}* Installation Mergerfs${NC}"
+  echo -e " ${BWHITE}"* $(gettext "Installation") Mergerfs"${NC}"
   ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/unionfs/tasks/main.yml
   checking_errors $?
   echo ""
@@ -456,12 +442,12 @@ function unionfs_fuse() {
 
 function install_docker() {
   echo -e "${BLUE}### DOCKER ###${NC}"
-  echo -e " ${BWHITE}* Installation Docker${NC}"
+  echo -e " ${BWHITE}"* $(gettext "Installation") Docker"${NC}"
   file="/usr/bin/docker"
   if [ ! -e "$file" ]; then
     ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/docker/tasks/main.yml
   else
-    echo -e " ${YELLOW}* docker est déjà installé !${NC}"
+    echo -e " ${YELLOW}"* $(gettext "docker est déjà installé !")"${NC}"
   fi
   echo ""
 }
@@ -469,15 +455,18 @@ function install_docker() {
 function subdomain() {
 
   echo ""
-  read -rp $'\e\033[1;37m --> Personnaliser les sous domaines: (o/N) ? ' OUI
+  echo >&2 -n -e "${BWHITE}-->" $(gettext "Personnaliser les sous domaines: (y/n) ?") "${CEND}"
+  read OUI
+
   echo ""
-  if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
-    echo -e " ${CRED}--> NE PAS SAISIR LE NOM DE DOMAINE - LES POINTS NE SONT PAS ACCEPTES${NC}"
+  if [[ "$OUI" == "y" ]] || [[ "$OUI" == "Y" ]]; then
+    echo -e " ${CRED}-->"$(gettext "NE PAS SAISIR LE NOM DE DOMAINE - LES POINTS NE SONT PAS ACCEPTES")"${NC}"
     echo ""
     for line in $(cat $SERVICESPERUSER); do
 
       while [ -z "$SUBDOMAIN" ]; do
-        read -rp $'\e[32m* Sous domaine pour\e[0m '${line}': ' SUBDOMAIN
+        echo >&2 -n -e "${BWHITE}"$(gettext "Sous domaine pour") ${line} "${CEND}"
+        read SUBDOMAIN
       done
       manage_account_yml sub.${line}.${line} $SUBDOMAIN
     done
@@ -492,14 +481,15 @@ function subdomain() {
 function subdomain_unitaire() {
   line=$1
   echo ""
-  read -rp $'\e\033[1;37m --> Personnaliser le sous domaines pour '${line}' : (o/N) ? ' OUI
+  echo >&2 -n -e "${BWHITE}-->" $(gettext "Personnaliser le sous domaine pour") "${line} : (y/n) ?" "${CEND}"
+  read OUI
+
   echo ""
-  if [[ "$OUI" == "o" ]] || [[ "$OUI" == "O" ]]; then
-    echo -e " ${CRED}--> NE PAS SAISIR LE NOM DE DOMAINE - LES POINTS NE SONT PAS ACCEPTES${NC}"
+  if [[ "$OUI" == "y" ]] || [[ "$OUI" == "Y" ]]; then
+    echo -e " ${CRED}-->"$(gettext "NE PAS SAISIR LE NOM DE DOMAINE - LES POINTS NE SONT PAS ACCEPTES")"${NC}"
     echo ""
-
-    read -rp $'\e[32m* Sous domaine pour\e[0m '${line}': ' SUBDOMAIN
-
+    echo >&2 -n -e "${BWHITE}-->" $(gettext "Sous domaine pour") "${line} : " "${CEND}"
+    read SUBDOMAIN
   else
     SUBDOMAIN=${line}
   fi
@@ -533,8 +523,7 @@ function auth() {
 
     *)
       TYPE_AUTH=basique
-      echo "Pas de choix sélectionné, on passe sur une auth basique"
-
+      echo -e "${BWHITE}"$(gettext "Pas de choix sélectionné, on passe sur une auth basique")"${CEND}"
       ;;
     esac
 
@@ -568,8 +557,7 @@ function auth_unitaire() {
 
   *)
     TYPE_AUTH=basique
-    echo "Pas de choix sélectionné, on passe sur une auth basique"
-
+    echo -e "${BWHITE}"$(gettext "Pas de choix sélectionné, on passe sur une auth basique")"${CEND}"
     ;;
   esac
 
@@ -577,67 +565,9 @@ function auth_unitaire() {
 
 }
 
-function define_parameters() {
-  echo -e "${BLUE}### INFORMATIONS UTILISATEURS ###${NC}"
-
-  create_user
-  CONTACTEMAIL=$(
-    whiptail --title "Adresse Email" --inputbox \
-      "Merci de taper votre adresse Email :" 7 50 3>&1 1>&2 2>&3
-  )
-  manage_account_yml user.mail $CONTACTEMAIL
-
-  DOMAIN=$(
-    whiptail --title "Votre nom de Domaine" --inputbox \
-      "Merci de taper votre nom de Domaine (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3
-  )
-  manage_account_yml user.domain $DOMAIN
-  echo ""
-}
-
-function create_user_non_systeme() {
-  # nouvelle version de define_parameters()
-  echo -e "${BLUE}### INFORMATIONS UTILISATEURS ###${NC}"
-
-  #  SEEDUSER=$(whiptail --title "Administrateur" --inputbox \
-  #    "Nom d'Administrateur de la Seedbox :" 7 50 3>&1 1>&2 2>&3)
-  #  [[ "$?" == 1 ]] && script_plexdrive
-  PASSWORD=$(
-    whiptail --title "Password" --passwordbox \
-      "Mot de passe :" 7 50 3>&1 1>&2 2>&3
-  )
-
-  manage_account_yml user.htpwd $(htpasswd -nb ${USER} $PASSWORD)
-  manage_account_yml user.name ${USER}
-  manage_account_yml user.pass $PASSWORD
-  manage_account_yml user.userid $(id -u)
-  manage_account_yml user.groupid $(id -g)
-
-  update_seedbox_param "name" "${user}"
-  update_seedbox_param "userid" "$(id -u)"
-  update_seedbox_param "groupid" "$(id -g)"
-  update_seedbox_param "htpwd" "${htpwd}"
-
-  CONTACTEMAIL=$(
-    whiptail --title "Adresse Email" --inputbox \
-      "Merci de taper votre adresse Email :" 7 50 3>&1 1>&2 2>&3
-  )
-  manage_account_yml user.mail "${CONTACTEMAIL}"
-  update_seedbox_param "mail" "${CONTACTEMAIL}"
-
-  DOMAIN=$(
-    whiptail --title "Votre nom de Domaine" --inputbox \
-      "Merci de taper votre nom de Domaine (exemple: nomdedomaine.fr) :" 7 50 3>&1 1>&2 2>&3
-  )
-  manage_account_yml user.domain "${DOMAIN}"
-  update_seedbox_param "domain" "${DOMAIN}"
-  echo ""
-  return
-}
-
 function choose_services() {
   echo -e "${BLUE}### SERVICES ###${NC}"
-  echo -e " ${BWHITE}--> Services en cours d'installation :${NC}"
+  echo -e " ${BWHITE}-->" $(gettext "Services en cours d'installation") ":${NC}"
   rm -Rf "${SERVICESPERUSER}" >/dev/null 2>&1
   touch $SERVICESPERUSER
   jq -r '.selected_lines[] | split("-")[0] | gsub("\""; "")' output.json > $SERVICESPERUSER
@@ -683,7 +613,7 @@ function launch_service() {
     echo -e "${BLUE}### CONFIG POST COMPOSE PLEX ###${NC}"
     echo -e " ${BWHITE}* Processing plex config file...${NC}"
     echo ""
-    echo -e " ${GREEN}ATTENTION IMPORTANT - NE PAS FAIRE D'ERREUR - SINON DESINSTALLER ET REINSTALLER${NC}"
+    echo -e " ${GREEN}"$(gettext "ATTENTION IMPORTANT - NE PAS FAIRE D'ERREUR - SINON DESINSTALLER ET REINSTALLER")"${NC}"
     "${SETTINGS_SOURCE}/includes/config/scripts/plex_token.sh"
 
     if [[ -f "${SETTINGS_STORAGE}/conf/plex.yml" ]]; then
@@ -727,9 +657,9 @@ function launch_service() {
 }
 
 function manage_apps() {
-  echo -e "${BLUE}##########################################${NC}"
-  echo -e "${BLUE}###          GESTION DES APPLIS        ###${NC}"
-  echo -e "${BLUE}##########################################${NC}"
+  echo -e "${BLUE}#################################${NC}"
+  echo -e "${BLUE}"$(gettext "GESTION DES APPLIS")"${NC}"
+  echo -e "${BLUE}#################################${NC}"
 
   ansible-playbook ${SETTINGS_SOURCE}/includes/dockerapps/templates/ansible/ansible.yml
 
@@ -819,7 +749,7 @@ function suppression_appli() {
   docker system prune -af >/dev/null 2>&1
 
   echo""
-  echo -e "${BLUE}### $APPSELECTED a été supprimé ###${NC}"
+  echo -e "${BLUE}### $APPSELECTED" $(gettext "a été supprimée") "###${NC}"
   echo ""
 
   req1="delete from applications where name='"
@@ -834,7 +764,7 @@ EOF
 
 function pause() {
   echo ""
-  echo -e "${YELLOW}###  -->APPUYER SUR ENTREE POUR CONTINUER<--  ###${NC}"
+  echo -e "${YELLOW}###  --> "$(gettext "APPUYER SUR ENTREE POUR CONTINUER")" <--  ###${NC}"
   read
   echo ""
 }
@@ -869,9 +799,9 @@ function manage_account_yml() {
   # ex : manage_account_yml sub.toto.toto toto => va créer la clé sub.toto.toto et lui mettre à la valeur toto
   # ex : manage_account_yml sub.toto.toto " " => va supprimer la clé sub.toto.toto et toutes les sous clés
   if [ -f ${SETTINGS_STORAGE}/.account.lock ]; then
-    echo "Fichier account locké, impossible de continuer"
+    echo $(gettext "Fichier account locké, impossible de continuer")
     echo "----------------------------------------------"
-    echo "Présence du fichier ${SETTINGS_STORAGE}/.account.lock"
+    echo $(gettext "Présence du fichier") "${SETTINGS_STORAGE}/.account.lock"
     exit 1
   else
     touch ${SETTINGS_STORAGE}/.account.lock
@@ -892,40 +822,6 @@ function get_from_account_yml() {
     tempresult=notfound
   fi
   echo $tempresult
-}
-
-function get_from_account_yml_old() {
-  # usage
-  # get_from_account_yml user.name
-  # retourne la valeur trouvée
-  # si la valeur est vide ou n'existe pas, retourn la chaine "notfound"
-  if [ -f ${SETTINGS_STORAGE}/.account.lock ]; then
-    echo "Fichier account locké, impossible de continuer"
-    echo "----------------------------------------------"
-    echo "Présence du fichier ${SETTINGS_STORAGE}/.account.lock"
-    exit 1
-  else
-    touch ${SETTINGS_STORAGE}/.account.lock
-    ansible-vault decrypt "${HOME}/.ansible/inventories/group_vars/all.yml" >/dev/null 2>&1
-    temp_return=$(shyaml -q get-value $1 <"${HOME}/.ansible/inventories/group_vars/all.yml")
-    if [ $? != 0 ]; then
-      temp_return=notfound
-    fi
-    if [ -z "$temp_return" ]; then
-      temp_return=notfound
-    fi
-    if [ "$temp_return" == "None" ]; then
-      temp_return=notfound
-    fi
-    ansible-vault encrypt "${HOME}/.ansible/inventories/group_vars/all.yml" >/dev/null 2>&1
-    if [ "$1" == "network.ipv6" ]; then
-      if [[ "${temp_return}" == 'a['* ]]; then
-        temp_return=${temp_return:2:-1}
-      fi
-    fi
-    echo $temp_return
-    rm -f ${SETTINGS_STORAGE}/.account.lock
-  fi
 }
 
 function install_gui() {
@@ -964,10 +860,10 @@ function premier_lancement() {
 
   sudo chown -R ${USER}: ${SETTINGS_SOURCE}/
 
-  echo "Certains composants doivent encore être installés/réglés"
-  echo "Cette opération va prendre plusieurs minutes selon votre système "
+  echo $(gettext "Certains composants doivent encore être installés/réglés")
+  echo $(gettext "Cette opération va prendre plusieurs minutes selon votre système")
   echo "=================================================================="
-  read -p "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir"
+  echo $(gettext "Appuyez sur entrée pour continuer, ou ctrl+c pour sortir")
 
   # installation des paquets nécessaires
   # on passe le user en parametre pour pouvoir créer le /etc/sudoers.d/${USER}
@@ -1013,7 +909,7 @@ function premier_lancement() {
   # On installe les prérequis
   ##########################################
 
-  echo "Installation en cours ...."
+  echo $(gettext "Installation en cours ....")
 
   mkdir -p ~/.ansible/inventories
 
@@ -1038,7 +934,7 @@ EOF
   log_path=${SETTINGS_SOURCE}/logs/ansible.log
 EOF
 
-  echo "Création de la configuration en cours"
+  echo $(gettex "Création de la configuration en cours")
   # On créé la database
   sqlite3 "${SETTINGS_SOURCE}/ssddb" <<EOF
     create table seedbox_params(param varchar(50) PRIMARY KEY, value varchar(50));
@@ -1082,7 +978,7 @@ EOF
 
   install_common
   # shellcheck disable=SC2162
-  echo -e "\e[33mLes composants sont maintenants tous installés/réglés, poursuite de l'installation\e[0m"
+  echo -e "\e[33m"$(gettext "Les composants sont maintenants tous installés/réglés, poursuite de l'installation")"\e[0m"
   echo""
   # fin du venv
 }
@@ -1134,15 +1030,15 @@ function check_docker_group() {
   if [ "${error}" = 1 ]; then
     echo "IMPORTANT !"
     echo "==================================================="
-    echo "Votre utilisateur n'était pas dans le groupe docker"
-    echo "Il a été ajouté, mais vous devez vous déconnecter/reconnecter pour que la suite du process puisse fonctionner"
+    echo $(gettext "Votre utilisateur n'était pas dans le groupe docker")
+    echo $(gettext "Il a été ajouté, mais vous devez vous déconnecter/reconnecter pour que la suite du process puisse fonctionner")
     echo "===================================================="
     exit 1
   fi
 }
 
 function stocke_public_ip() {
-  echo "Stockage des adresses ip publiques"
+  echo $(gettext "Stockage des adresses ip publiques")
   IPV4=$(curl -s -4 https://ip4.mn83.fr)
   echo "IPV4 = ${IPV4}"
   manage_account_yml network.ipv4 ${IPV4}
@@ -1152,7 +1048,7 @@ function stocke_public_ip() {
   #  echo "IPV6 = ${IPV6}"
   #  manage_account_yml network.ipv6 "a[${IPV6}]"
   #else
-  #  echo "Aucune adresse ipv6 trouvée"
+  #  echo $(gettext "Aucune adresse ipv6 trouvée")
   #fi
 }
 
@@ -1161,86 +1057,7 @@ function install_environnement() {
   echo ""
   source "${SETTINGS_SOURCE}/profile.sh"
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/user_environment/tasks/main.yml"
-  echo "Pour bénéficer des changements, vous devez vous déconnecter/reconnecter"
-}
-
-function debug_menu() {
-  if [ -z "$OLDIFS" ]; then
-    OLDIFS=${IFS}
-  fi
-  IFS=$'\n'
-  start_menu="is null"
-  precedent=""
-  if [[ $# -ne 0 ]]; then
-    if [ -z "$1" ]; then
-      :
-    else
-      start_menu="=${1}"
-      precedent="${1}"
-    fi
-  fi
-
-  ## chargement des menus
-  request="select * from menu where parent_id ${start_menu}"
-  sqlite3 "${SETTINGS_SOURCE}/menu" "${request}" | while read -a db_select; do
-    texte_sep=""
-    IFS='|'
-    read -ra db_select2 <<<"$db_select"
-    separateur=$(calcul_niveau_menu "${db_select2[0]}")
-    IFS=$'\n'
-    for i in $(seq 1 ${separateur}); do
-      texte_sep="${texte_sep} ==> "
-    done
-
-    echo -e "${texte_sep}${db_select2[0]}-${db_select2[3]}) ${db_select2[1]} | ${db_select2[4]}"
-
-    # on regarde s'il y a des menus enfants
-    request_cpt="select count(*) from menu where parent_id = ${db_select2[0]}"
-    cpt=$(sqlite3 ${SETTINGS_SOURCE}/menu "$request_cpt")
-    if [ "${cpt}" -eq 0 ]; then
-      # pas de sous menu, on va rester sur le même
-      :
-    else
-      debug_menu "${db_select2[0]}"
-
-    fi
-    IFS=$'\n'
-  done
-
-  IFS=${OLDFIFS}
-}
-
-function calcul_niveau_menu() {
-  if [[ $# -ne 0 ]]; then
-    niveau=${2}
-    if [ -z $niveau ]; then
-      niveau=1
-    fi
-    depart="${1}"
-    request_cpt="select parent_id from menu where id = ${depart}"
-    parent=$(sqlite3 "${SETTINGS_SOURCE}/menu" "$request_cpt")
-    if [ -z "$parent" ]; then
-
-      echo $niveau
-    else
-      request_cpt="select count(*) from menu where parent_id = ${parent}"
-      cpt=$(sqlite3 ${SETTINGS_SOURCE}/menu "$request_cpt")
-      if [ "${cpt}" -eq 0 ]; then
-        echo $niveau
-      else
-        niveau=$((niveau + 1))
-        request_cpt="select parent_id from menu where id = ${depart}"
-        parent2=$(sqlite3 ${SETTINGS_SOURCE}/menu "$request_cpt")
-        if [ -z "$parent2" ]; then
-          echo $niveau
-        fi
-        niveau=$(calcul_niveau_menu ${parent} ${niveau})
-      fi
-      echo $niveau
-    fi
-  else
-    echo 0
-  fi
+  echo $(gettext "Pour bénéficer des changements, vous devez vous déconnecter/reconnecter")
 }
 
 function affiche_menu_db() {
@@ -1268,17 +1085,17 @@ function affiche_menu_db() {
   sqlite3 "${SETTINGS_SOURCE}/menu" "${request}" | while read -a db_select; do
     IFS='|'
     read -ra db_select2 <<<"$db_select"
-    echo -e "${CGREEN}   ${db_select2[3]}) ${db_select2[1]}${CEND}"
+    echo -e "${CGREEN}""   ${db_select2[3]})" "$(gettext "${db_select2[1]}")" "${CEND}"
     IFS=$'\n'
   done
   echo -e "${CGREEN}---------------------------------------${CEND}"
   if [ "${precedent}" = "" ]; then
     :
   else
-    echo -e "${CGREEN}   H) Retour au menu principal${CEND}"
-    echo -e "${CGREEN}   B) Retour au menu précédent${CEND}"
+    echo -e "${CGREEN}"   $(gettext "  H) Retour au menu principal")"${CEND}"
+    echo -e "${CGREEN}"   $(gettext "  B) Retour au menu précédent")"${CEND}"
   fi
-  echo -e "${CGREEN}   Q) Quitter${CEND}"
+  echo -e "${CGREEN}"   $(gettext "  Q) Quitter")"${CEND}"
   echo -e "${CGREEN}---------------------------------------${CEND}"
   read -p "Votre choix : " PORT_CHOICE
 
@@ -1365,11 +1182,11 @@ function sauve_one_appli() {
   SOURCE_DIR="${SETTINGS_STORAGE}/docker/${USER}"
   remote_backups=BACKUPS
 
-  echo "Sauvegarde de l'application $1"
+  echo $(gettext "Sauvegarde de l'application") "$1"
   if [ $ALL_RETENTION -eq 0 ]; then
-    echo "Nombre de backups à garder : $NB_MAX_BACKUP"
+    echo $(gettext "Nombre de backups à garder") : "$NB_MAX_BACKUP"
   else
-    echo "Pas de suppression des vieux backups"
+    echo $(gettext "Pas de suppression des vieux backups")
   fi
 
   CDAY=$(date +%Y%m%d-%H%M)
@@ -1379,11 +1196,11 @@ function sauve_one_appli() {
 
   echo ""
   echo -e "${CRED}-------------------------------------------------------${CEND}"
-  echo -e "${CRED} /!\ ATTENTION : SAUVEGARDE DE ${APPLI} IMMINENTE /!\ ${CEND}"
+  echo -e "${CRED} /!\ ATTENTION :" $(gettext "SAUVEGARDE IMMINENTE DE") "${APPLI} /!\ ${CEND}"
   echo -e "${CRED}-------------------------------------------------------${CEND}"
 
   # Stop Plex
-  echo -e "${CCYAN}> Arrêt de ${APPLI}${CEND}"
+  echo -e "${CCYAN}>" $(gettext "Arrêt de") "${APPLI}${CEND}"
   #docker stop `docker ps -q`
   docker stop ${APPLI}
   sleep 5
@@ -1391,24 +1208,24 @@ function sauve_one_appli() {
   echo ""
   echo -e "${CCYAN}#########################################################${CEND}"
   echo ""
-  echo -e "${CCYAN}          DEMARRAGE DU SCRIPT DE SAUVEGARDE              ${CEND}"
+  echo -e "${CCYAN}"         $(gettext "DEMARRAGE DU SCRIPT DE SAUVEGARDE")"${CEND}"
   echo ""
   echo -e "${CCYAN}#########################################################${CEND}"
   echo ""
 
-  echo -e "${CCYAN}> Création de l'archive${CEND}"
+  echo -e "${CCYAN}>" $(gettext "Création de l'archive")"${CEND}"
   sudo tar -I pigz -cf $BACKUP_PARTITION/$ARCHIVE -P $SOURCE_DIR/$APPLI
   sleep 2s
 
   # Si une erreur survient lors de la compression
   if [[ -s "$ERROR_FILE" ]]; then
-    echo -e "\n${CRED}/!\ ERREUR: Echec de la compression des fichiers système.${CEND}" | tee -a $LOG_FILE
+    echo -e "\n${CRED}/!\ ERREUR:" $(gettext "Echec de la compression des fichiers système.")"${CEND}" | tee -a $LOG_FILE
     echo -e "" | tee -a $LOG_FILE
     exit 1
   fi
 
   # Restart Plex
-  echo -e "${CCYAN}> Lancement de ${APPLI}${CEND}"
+  echo -e "${CCYAN}>" $(gettext "Lancement de") "${APPLI}${CEND}"
   docker start $APPLI
   sleep 5
 
@@ -1427,16 +1244,17 @@ function sauve_one_appli() {
   fi
   echo ""
   echo -e "${CRED}-------------------------------------------------------${CEND}"
-  echo -e "${CRED}        SAUVEGARDE ${APPLI}  TERMINEE                 ${CEND}"
+  echo -e "${CRED}"        $(gettext "SAUVEGARDE TERMINEE POUR")        "${APPLI}${CEND}"
   echo -e "${CRED}-------------------------------------------------------${CEND}"
   pause
 }
 
 function change_password() {
   echo "#############################################"
-  echo "Cette procédure va redéarrer traefik "
-  echo "Pendant cette opération, les interfaces web seront inaccessibles"
-  read -rp $'\e[33mSaisissez le nouveau password\e[0m : ' NEWPASS
+  echo $(gettext "Cette procédure va redéarrer traefik")
+  echo $(gettext "Pendant cette opération, les interfaces web seront inaccessibles")
+  echo >&2 -n -e "${BWHITE}"$(gettext "Saisissez le nouveau password :") "${CEND}"
+  read NEWPASS
   manage_account_yml user.pass "${NEWPASS}"
   manage_account_yml user.htpwd $(htpasswd -nb ${USER} ${NEWPASS})
   docker rm -f traefik
@@ -1446,8 +1264,8 @@ function change_password() {
 function relance_container() {
   line=$1
   log_write "Relance du container ${line}" >/dev/null 2>&1
-  echo -e "\e[32mLes volumes ne seront pas supprimés\e[0m" 
-  echo -e "\e[32mL'image sera mise à jour si nécessaire\e[0m" 
+  echo -e "\e[32m"$(gettext "Les volumes ne seront pas supprimés")"\e[0m" 
+  echo -e "\e[32m"$(gettext "L'image sera mise à jour si nécessaire")"\e[0m" 
   docker rm -f ${line} > /dev/null 2>&1
   docker rmi $(docker images | grep "$line" | tr -s ' ' | cut -d ' ' -f 3) > /dev/null 2>&1
   echo ""
@@ -1456,22 +1274,21 @@ function relance_container() {
 }
 
 function install_plextraktsync() {
+  echo -e "\e[32m"$(gettext "Préparation pour le premier lancement de configuration")"\e[0m" 
+  echo -e "\e[32m"$(gettext "Assurez vous d'avoir les api Trakt avant de continuer") "https://trakt.tv/oauth/applications/new)""\e[0m" 
   ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/plextraktsync/tasks/main.yml
-  echo "Préparation pour le premier lancement de configuration"
-  echo "Assurez vous d'avoir les api Trakt avant de continuer (https://trakt.tv/oauth/applications/new)"
   pause
   /usr/local/bin/plextraktsync
-  echo "L'outil est installé et se lancera automatiquement toutes les heures"
+  echo $(gettext "L'outil est installé et se lancera automatiquement toutes les heures")
   pause
 }
 
 function install_block_public_tracker() {
-  echo "Block_public_tracker va bloquer les trackers publics (piratebay, etc...) sur votre machine au niveau réseau"
-  echo "Ces trackers ne seront plus accessibles"
-  echo "Appuyez sur entrée pour continer, ou ctrl+C pour sortir"
+  echo -e "\e[32m"$(gettext "Block_public_tracker va bloquer les trackers publics (piratebay, etc...) sur votre machine au niveau réseau")"\e[0m"
+  echo -e "\e[32m"$(gettext "Ces trackers ne seront plus accessibles")"\e[0m"
   pause
   ansible-playbook ${SETTINGS_SOURCE}/includes/config/playbooks/block_public_tracker.yml
-  echo "Block_public_tracker a été installé avec succès"
+  echo -e "\e[32m"$(gettext "Block_public_tracker a été installé avec succès")"\e[0m"
   pause
 }
 
@@ -1487,14 +1304,14 @@ EOF
 function relance_zurg() {
 clear
 logo
-echo -e "\e[36m## Relance de Zurg ##\e[0m"  
+echo -e "\e[36m##" $(gettext "Relance de Zurg") "##\e[0m"  
 sudo systemctl stop zurg
 sudo systemctl stop rclone
 rm -rf "${SETTINGS_STORAGE}/scripts/zurg"
 sudo systemctl start zurg
 sudo systemctl start rclone
 docker restart rdtclient radarr sonarr plex
-echo -e "\e[36m## Relance de Zurg terminée ##\e[0m"
+echo -e "\e[36m##" $(gettext "Relance de Zurg terminée") "##\e[0m"
 pause
 }
 
@@ -1513,8 +1330,8 @@ function apply_patches() {
 }
 
 function sortie_cloud() {
-  echo "Attention, cette fonction n'est à utiliser que si vous n'utilisez plus de stockage cloud"
-  echo "Appuyez sur ctrl + c si vous souhaitez annuler"
+  echo $(gettext "Attention, cette fonction n'est à utiliser que si vous n'utilisez plus de stockage cloud")
+  echo $(gettext "Appuyez sur CTRL^C si vous souhaitez annuler")
   pause
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/backup/tasks/remove.yml"
   sudo systemctl disable cloudplow
@@ -1543,10 +1360,11 @@ function install_zurg() {
   rm zurg-${ZURG_VERSION}-linux-${ARCHITECTURE}.zip > /dev/null 2>&1
   ZURG_TOKEN=$(get_from_account_yml zurg.token)
   if [ ${ZURG_TOKEN} == notfound ]; then
-    read -p $'\e[32mToken API pour Zurg (https://real-debrid.com/apitoken) | Appuyer sur [Enter]: \e[0m' ZURG_TOKEN </dev/tty
+    echo >&2 -n -e "${BLUE}"$(gettext "Token API pour Zurg (https://real-debrid.com/apitoken) | Appuyer sur [Enter]:") "${CEND}"
+    read ZURG_TOKEN
     manage_account_yml zurg.token "${ZURG_TOKEN}"
   else
-    echo -e "${BLUE}Token Zurg déjà renseigné${CEND}"
+    echo -e "${BLUE}"$(gettext "Token Zurg déjà renseigné")"${CEND}"
   fi
   # launch zurg
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/zurg.yml"
@@ -1558,10 +1376,11 @@ function install_zurg_docker() {
   rm -rf "${HOME}/scripts/zurg" > /dev/null 2>&1
   ZURG_TOKEN=$(get_from_account_yml zurg.token)
   if [ ${ZURG_TOKEN} == notfound ]; then
-    read -p $'\e[32mToken API pour Zurg (https://real-debrid.com/apitoken) | Appuyer sur [Enter]: \e[0m' ZURG_TOKEN </dev/tty
+    echo >&2 -n -e "${BLUE}"$(gettext "Token API pour Zurg (https://real-debrid.com/apitoken) | Appuyer sur [Enter]:") "${CEND}"
+    read ZURG_TOKEN
     manage_account_yml zurg.token "${ZURG_TOKEN}"
   else
-    echo -e "${BLUE}Token Zurg déjà renseigné${CEND}"
+    echo -e "${BLUE}"$(gettext "Token Zurg déjà renseigné")"${CEND}"
   fi
   # launch zurg
   ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/generique.yml" --extra-vars "@${SETTINGS_SOURCE}/includes/dockerapps/vars/zurg.yml"
@@ -1576,7 +1395,7 @@ function create_folders() {
   create_dir "${HOME}/local/radarr"
   create_dir "${HOME}/local/sonarr"
   create_dir "${HOME}/Medias"
-  echo -e "\e[32mNoms de dossiers à créer dans Medias ex: Films, Series, Films d'animation etc ..\e[0m \e[36m[Enter] | Taper "stop" une fois terminé\e[0m"		
+  echo -e "\e[36m"$(gettext "Noms de dossiers à créer dans Medias ex: Films, Series, Films d'animation etc .. [Enter] | Taper stop une fois terminé")"\e[0m"		
   while :
   do		
     read -p "" EXCLUDEPATH
@@ -1596,10 +1415,11 @@ function install_gluetun {
 function install_dmm() {
   DMM_TOKEN=$(get_from_account_yml dmm.token)
   if [ ${DMM_TOKEN} == notfound ]; then
-    read -p $'\e[32mToken MYSQL pour Debridmediamanager | Appuyer sur [Enter]: \e[0m' DMM_TOKEN </dev/tty
+    echo >&2 -n -e "${BLUE}"$(gettext "Token MYSQL pour Debridmediamanager | Appuyer sur [Enter] :") "${CEND}"
+    read DMM_TOKEN
     manage_account_yml dmm.token "${DMM_TOKEN}"
   else
-    echo -e "${BLUE}Mysql debridmediamanager déjà renseigné${CEND}"
+    echo -e "${BLUE}"$(gettext "Mysql debridmediamanager déjà renseigné")"${CEND}"
   fi
 
 # installation debridmediamanager
@@ -1614,9 +1434,9 @@ function update_release_zurg() {
       LATEST_VERSION=$(jq '.[] | .commit.message' commits | grep -m 1 "Release" | cut -d ' ' -f 2 | tr -d '"' )
       if [[ ${LATEST_VERSION} != ${CURRENT_VERSION} ]]; then
         manage_account_yml zurg.version "${LATEST_VERSION}"
-        echo -e  "${BLUE}Version Zurg: $LATEST_VERSION${CEND}"
+        echo -e  "${BLUE}"$(gettext "Version Zurg :") "$LATEST_VERSION${CEND}"
       else 
-        echo -e "${BLUE}Version Zurg: ${CURRENT_VERSION}${CEND}"
+        echo -e  "${BLUE}"$(gettext "Version Zurg :") "$LATEST_VERSION${CEND}"
       fi
   fi
   rm commits
@@ -1631,10 +1451,11 @@ function choose_version_zurg() {
   do echo -e "\e[32m$LIGNE\e[0m"
   done < temp
   echo ""
-  read -p $'\e[36mChoisir le numéro de la Version : \e[0m' NUMERO_LIGNE </dev/tty
+  echo >&2 -n -e "${CCYAN}"$(gettext "Choisir le numéro de la Version :") "${CEND}"
+  read NUMERO_LIGNE
   VERSION=$(sed -n "${NUMERO_LIGNE}p" temp | cut -d ' ' -f 4) 
   manage_account_yml zurg.version "${VERSION}"
-  echo -e  "${BLUE}Version Zurg: $VERSION${CEND}"
+  echo -e  "${BLUE}"$(gettext "Version Zurg :") "$VERSION${CEND}"
   ARCHITECTURE=$(dpkg --print-architecture)
   RCLONE_VERSION=$(get_from_account_yml rclone.architecture)
   ZURG_VERSION=$(get_from_account_yml zurg.version)
@@ -1651,10 +1472,11 @@ function choose_version_zurg() {
   rm zurg-${ZURG_VERSION}-linux-${ARCHITECTURE}.zip > /dev/null 2>&1
   ZURG_TOKEN=$(get_from_account_yml zurg.token)
   if [ ${ZURG_TOKEN} == notfound ]; then
-    read -p $'\e[32mToken API pour Zurg (https://real-debrid.com/apitoken) | Appuyer sur [Enter]: \e[0m' ZURG_TOKEN </dev/tty
+    echo >&2 -n -e "\e[32m"$(gettext "Token API pour Zurg (https://real-debrid.com/apitoken) | Appuyer sur [Enter]:") " \e[0m"
+    read ZURG_TOKEN
     manage_account_yml zurg.token "${ZURG_TOKEN}"
   else
-    echo -e "${BLUE}Token Zurg déjà renseigné${CEND}"
+    echo -e "${BLUE}"$(gettext "Token Zurg déjà renseigné")"${CEND}"
   fi
   # launch zurg
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/zurg.yml"
@@ -1668,21 +1490,21 @@ function get_architecture() {
 }
 
 function liste_perso() {
-  echo "##############################################################"
-  echo "# Liste des applis déjà personnalisées                       #"
-  echo "# Vous pouvez à tout moment décider de modifier les fichiers #"
-  echo "# Relancer ensuite le container                              #"
-  echo "##############################################################"
+  echo "####################################################"
+  echo $(gettext "Liste des applis déjà personnalisées")                     
+  echo $(gettext "Vous pouvez à tout moment décider de modifier les fichiers")
+  echo $(gettext "Relancer ensuite le container")                             
+  echo "####################################################"
   echo ""
 
   folder_path="${SETTINGS_STORAGE}/vars"
   files=$(ls -p "$folder_path" | grep -v /)
-  echo -e "\e[32mApplications Personnalisées\e[0m"
+  echo -e "\e[32m"$(gettext "Applications Personnalisées")"\e[0m"
   if [ -n "$files" ]; then
     echo -e "\e[36m$files\e[0m"
     echo
   else
-    echo -e "\e[36mAucune application personnalisée.\e[0m"
+    echo -e "\e[36m"$(gettext "Aucune application personnalisée.")"\e[0m"
     echo
   fi
 }
@@ -1692,22 +1514,23 @@ function applis_perso_create() {
   logo
   liste_perso
   # Liste des fichiers déjà personnalisés
-  echo "###########################################################"
-  echo "# ATTENTION                                               #"
-  echo "# Cette fonction va copier/créer les fichiers yml choisis #"
-  echo "# Afin de pouvoir les personnaliser                       #"
-  echo "# Mais ne lancera pas les services associés               #"
-  echo "###########################################################"
+  echo "####################################################"
+  echo "ATTENTION"
+  echo $(gettext "Cette fonction va copier/créer les fichiers yml choisis")
+  echo $(gettext "Afin de pouvoir les personnaliser")
+  echo $(gettext "Mais ne lancera pas les services associés")
+  echo "####################################################"
   echo ""
   
   # Nouvelle appli
-  echo -e "\e[32mConfigurer une nouvelle application ? (O/N) \e[0m"
+  echo -e "\e[32m"$(gettext "Configurer une nouvelle application ? (y/n)") "\e[0m"
   read choice
-  if [[ "$choice" = "O" ]] || [[ "$choice" = "o" ]]; then
-    read -p $'\e[36mNouvelle Appli à personnaliser : \e[0m' NOUVELLE  </dev/tty
+  if [[ "$choice" = "Y" ]] || [[ "$choice" = "y" ]]; then
+    echo >&2 -n -e "\e[36m"$(gettext "Nouvelle Appli à personnaliser :")"\e[0m"
+    read NOUVELLE
     echo ""
-      echo -e "\e[32mApplication non référencée dans la base existante,\e[0m \e[36m${NOUVELLE}.yml\e[0m \e[32ma été créée ds le dossier ${SETTINGS_STORAGE}vars.\e[0m" 
-      echo -e "\e[32mUne fois personnalisée, elle s'installera à partir du menu Application perso\e[0m" 
+      echo -e "\e[32m"$(gettext "Application non référencée dans la base existante,")"\e[0m \e[36m${NOUVELLE}.yml\e[0m \e[32m"$(gettext "a été créée ds le dossier") "${SETTINGS_STORAGE}vars.\e[0m" 
+      echo -e "\e[32m"$(gettext "Une fois personnalisée, elle s'installera à partir du menu Application perso")"\e[0m" 
       create_file "${SETTINGS_STORAGE}/vars/${NOUVELLE}.yml"
       cp "${SETTINGS_SOURCE}/includes/dockerapps/vars/exemple.yml" "${SETTINGS_STORAGE}vars/${NOUVELLE}.yml"
     pause
@@ -1718,14 +1541,14 @@ function copie_applis() {
   rm -Rf "${SERVICESPERUSER}" >/dev/null 2>&1
   touch $SERVICESPERUSER
   jq -r '.selected_lines[] | split("-")[0] | gsub("\""; "")' output.json | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' > "$SERVICESPERUSER"
-  echo -e "\e[36m## Copie des fichiers dans le dossier vars ##\e[0m"  
+  echo -e "\e[36m##" $(gettext "Copie des fichiers dans le dossier vars") "##\e[0m"  
   while IFS= read -r line; do
     if [ -e "${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml" ]; then
       cp "${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml" "${SETTINGS_STORAGE}vars/${line}.yml"
-      echo -e "\e[32mCopie effectuée pour\e[0m \e[36m$line\e[0m" 
+      echo -e "\e[32m"$(gettext "Copie effectuée pour")"\e[0m \e[36m$line\e[0m" 
     else
       cp "${SETTINGS_SOURCE}/includes/dockerapps/${line}.yml" "${SETTINGS_STORAGE}vars/${line}.yml"
-      echo -e "\e[32mCopie effectuée pour\e[0m \e[36m$line\e[0m"
+      echo -e "\e[32m"$(gettext "Copie effectuée pour")"\e[0m \e[36m$line\e[0m"
     fi
   done < "$SERVICESPERUSER"
   rm output.json
@@ -1782,3 +1605,14 @@ function create_applis_perso() {
   python3 "${SETTINGS_SOURCE}/includes/config/scripts/generique_python.py" create_applis_perso
 }
 
+function translation() {
+  for f in ${SETTINGS_SOURCE}/i18n/*.po; do
+    [[ -e "$f" ]] || break # handle the case of no *.po files
+    temp=$(basename $f)
+    short="${temp:0:2}"
+    mkdir -p "i18n/${short}/LC_MESSAGES"
+    msgfmt -o "${SETTINGS_SOURCE}/i18n/${short}/LC_MESSAGES/ks.mo" "${SETTINGS_SOURCE}/i18n/${short}.po"
+    echo "$(gettext "Generation") ${short} $(gettext "terminée")"
+  done
+  echo " == $(gettext "Génération des traductions terminées") =="
+}

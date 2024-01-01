@@ -20,11 +20,11 @@ backupList() {
 
     if [[ ! -d /home/${SUDO_USER}/backup ]]; then
 	echo ""
-        echo -e "\n${CRED}/!\ ERREUR: Aucune sauvegarde locale existante.${CEND}\n" 1>&2
+        echo -e "\n${CRED}"$(gettext "ERREUR: Aucune sauvegarde locale existante.")"${CEND}\n" 1>&2
         exit 1
     fi
 
-    echo -e "\n Liste des archives disponibles :"
+    echo -e "\n $(gettext "Liste des archives disponibles :")
 
     for backup in ${backups[*]}; do
         let "i += 1"
@@ -33,10 +33,12 @@ backupList() {
     done
 
     echo ""
-    read -rp $'\e[32mSaisir le numéro de l’archive à restaurer\e[0m :' n
+    echo >&2 -n -e "\e[32m"$(gettext "Saisir le numéro de l’archive à restaurer")"\e[0m"
+    read n
+
 
     if [[ $n -lt 1 ]] || [[ $n -gt $i ]]; then
-        echo -e "\n${CRED}/!\ ERREUR: Numéro d'archive invalide !${CEND}"
+        echo -e "\n${CRED}"$(gettext "ERREUR: Numéro d'archive invalide !")"${CEND}"
         echo ""
         exit 1
     fi
@@ -57,7 +59,9 @@ rclone --config /home/${SUDO_USER}/.config/rclone/rclone.conf lsf {{rclone.remot
 
 echo ""
 
-read -rp $'\e[32mSaisir le numéro de l’archive à restaurer\e[0m :' ligne
+echo >&2 -n -e "\e[32m"$(gettext "Saisir le numéro de l’archive à restaurer")"\e[0m"
+read ligne
+
 
 BACKUPFOLDER=$(sed -n "$ligne"p $path)
 ARCHIVE="$BACKUPFOLDER.tar.gz"
@@ -69,13 +73,13 @@ localRestoration() {
 
     echo ""
     echo -e "${CRED}-------------------------------------------------------${CEND}"
-    echo -e "${CRED} /!\ ATTENTION : RESTAURATION DU SERVEUR IMMINENTE /!\ ${CEND}"
+    echo -e "${CRED}ATTENTION :" $(gettext "RESTAURATION DU SERVEUR IMMINENTE")"${CEND}"
     echo -e "${CRED}-------------------------------------------------------${CEND}"
 
-    echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour démarrer la restauration ou CTRL+C pour quitter..."
+    echo -e "\n"$(gettext "Appuyer sur") "${CCYAN}["$(gettext "ENTREE")"]${CEND}" $(gettext "pour démarrer la restauration ou CTRL+C pour quitter...")
     read -r
 
-    echo "> Récupération de l'archive locale"
+    echo $(gettext "> Récupération de l'archive locale")
     cp /home/${SUDO_USER}/backup/"$ARCHIVEPATH"/*.tar.gz* .
 
 }
@@ -84,13 +88,13 @@ GdriveRestoration() {
 
     echo ""
     echo -e "${CRED}-------------------------------------------------------${CEND}"
-    echo -e "${CRED} /!\ ATTENTION : RESTAURATION DU SERVEUR IMMINENTE /!\ ${CEND}"
+    echo -e "${CRED}ATTENTION :" $(gettext "RESTAURATION DU SERVEUR IMMINENTE")"${CEND}"
     echo -e "${CRED}-------------------------------------------------------${CEND}"
 
-    echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour démarrer la restauration ou CTRL+C pour quitter..."
+    echo -e "\n"$(gettext "Appuyer sur") "${CCYAN}["$(gettext "ENTREE")"]${CEND}" $(gettext "pour démarrer la restauration ou CTRL+C pour quitter...")
     read -r
 
-    echo "> Récupération de l'archive distante"
+    echo $(gettext "> Récupération de l'archive distante")
     rclone --config /home/${SUDO_USER}/.config/rclone/rclone.conf  copy {{rclone.remote}}:/{{user.name}}/BACKUPS/$BACKUPFOLDER/$ARCHIVE . --progress
 }
 
@@ -98,16 +102,16 @@ fin() {
 
     echo ""
     echo -e "${CRED}-------------------------------------------------------${CEND}"
-    echo -e "${CRED}        RESTAURATION DU SERVEUR TERMINEE               ${CEND}"
+    echo -e "${CRED}"$(gettext "RESTAURATION DU SERVEUR TERMINEE")"${CEND}"
     echo -e "${CRED}-------------------------------------------------------${CEND}"
 
-    echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+    echo -e "\n $(gettext "Appuyer sur") ${CCYAN}[$(gettext "ENTREE")]${CEND} $(gettext "pour continuer")"
     read -r
 }
 
 if [[ $EUID -ne 0 ]]; then
     echo ""
-    echo -e "${CRED}/!\ ERREUR: Vous devez être connecté en tant que root pour pouvoir exécuter ce script.${CEND}" 1>&2
+    echo -e "${CRED}"$(gettext "ERREUR: Vous devez être connecté en tant que root pour pouvoir exécuter ce script.")${CEND}" 1>&2
     echo ""
     exit 1
 fi
@@ -117,12 +121,12 @@ clear
 echo ""
 echo -e "${CCYAN}#########################################################${CEND}"
 echo ""
-echo -e "${CCYAN}          DEMARRAGE DU SCRIPT DE RESTAURATION            ${CEND}"
+echo -e "${CCYAN}"$(gettext "DEMARRAGE DU SCRIPT DE RESTAURATION")"${CEND}"
 echo ""
 echo -e "${CCYAN}#########################################################${CEND}"
 echo ""
 
-echo "Choisir le type de restauration :"
+echo $(gettext "Choisir le type de restauration :")
 echo "  1. Gdrive"
 echo "  2. Locale"
 echo ""
@@ -133,19 +137,19 @@ while [[ $EXIT -eq 0 ]]; do
 
     case "$RTYPE" in
     "1")
-        echo -e "Type de restauration sélectionnée : ${CGREEN}Gdrive${CEND}"
+        echo -e $(gettext "Type de restauration sélectionnée :") "${CGREEN}Gdrive${CEND}"
         remoteRestoration
 	GdriveRestoration
         EXIT=1
         ;;
     "2")
-        echo -e "Type de restauration sélectionnée : ${CGREEN}Locale${CEND}"
+        echo -e $(gettext "Type de restauration sélectionnée :") "${CGREEN}Locale${CEND}"
         backupList
         localRestoration
         EXIT=1
         ;;
     *)
-        echo -e "${CRED}Action inconnue${CEND}"
+        echo -e "${CRED}"$(gettext "Action inconnue")"${CEND}"
         ;;
     esac
 
@@ -156,7 +160,7 @@ sleep 3
 tar xvf "$ARCHIVE" --absolute-names -C / 2> $ERROR_FILE
 
 if [[ -s $ERROR_FILE ]]; then
-    echo -e "\n${CRED}/!\ ERREUR: Echec de la décompression de l'archive.${CEND}"
+    echo -e "\n${CRED}"$(gettext "ERREUR: Echec de la décompression de l'archive.")"${CEND}"
     echo -e ""
     exit 1
 fi

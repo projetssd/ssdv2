@@ -25,16 +25,16 @@ menu_secu_system_ajout_adresse_oauth2() {
   clear
   logo
   echo ""
-  echo >&2 -n -e "${BWHITE}Compte(s) Gmail utilisé(s), séparés d'une virgule si plusieurs: ${CEND}"
+  echo >&2 -n -e "${BWHITE}"$(gettext "Compte(s) Gmail utilisé(s), séparés d'une virgule si plusieurs :")"${CEND}"
   read email
   manage_account_yml oauth.email $email
   ansible-playbook ${SETTINGS_SOURCE}/includes/dockerapps/traefik.yml
 
   echo -e "${CRED}---------------------------------------------------------------${CEND}"
-  echo -e "${CRED}     /!\ MISE A JOUR EFFECTUEE AVEC SUCCES /!\      ${CEND}"
+  echo -e "${CRED}     /!\ "$(gettext "MISE A JOUR EFFECTUEE AVEC SUCCES")" /!\  ${CEND}"
   echo -e "${CRED}---------------------------------------------------------------${CEND}"
 
-  echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+  echo -e "\n"$(gettext "Appuyer sur")"${CCYAN} ["$(gettext "ENTREE")"]${CEND}" $(gettext "pour continuer")
   read -r
 
 }
@@ -70,14 +70,7 @@ menu_change_sous_domaine() {
   fi
 
   install_services
-  echo "Changement effectué"
-  pause
-}
-
-menu_gestion_motd() {
-  clear
-  echo ""
-  motd
+  echo $(gettext "Changement effectué")
   pause
 }
 
@@ -96,20 +89,10 @@ menu_gestion_ufw() {
 
 menu_gestion_backup() {
   clear
-  echo -e " ${BLUE}* Configuration du Backup${NC}"
+  echo -e " ${BLUE}*" $(gettext "Configuration du Backup")"${NC}"
   echo ""
   ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/backup/tasks/main.yml
-  echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
-  read -r
-
-}
-
-function menu_gestion_install_filebot() {
-  clear
-  echo -e " ${BLUE}* Installation de filebot${NC}"
-  echo ""
-  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/filebot/tasks/main.yml
-  echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
+  echo -e "\n"$(gettext "Appuyer sur")"${CCYAN} ["$(gettext "ENTREE")"]${CEND}" $(gettext "pour continuer")
   read -r
 
 }
@@ -141,6 +124,7 @@ function ajout_app_seedbox() {
   choose_services
   install_services
   echo "Installations terminées"
+  echo -e "\e[32m"$(gettext "Installations terminées")"\e[0m" 
   pause
 }
 
@@ -154,7 +138,7 @@ function menu_suppression_application() {
 function menu_reinit_container() {
   line=$1
   log_write "Reinit du container ${line}" >/dev/null 2>&1
-  echo -e "\e[32mLes volumes ne seront pas supprimés\e[0m" 
+  echo -e "\e[32m"$(gettext "Les volumes ne seront pas supprimés")"\e[0m" 
   subdomain=$(get_from_account_yml "sub.${line}.${line}")
 
   suppression_appli "${line}"
@@ -170,8 +154,8 @@ function menu_reinit_container() {
     launch_service ${line}
   fi
   checking_errors $?
-  echo""
-  echo -e "${BLUE}### Le Container ${line} a été Réinitialisé ###${NC}"
+  echo ""
+  echo -e "${BLUE}### ${line}" $(gettext "a été Réinitialisé") "###${NC}"
   echo ""
   pause
 }

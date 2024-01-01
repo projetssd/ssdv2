@@ -7,7 +7,7 @@
 ###############################################################
 
 if [ "$USER" != "root" ]; then
-  echo "Ce script doit être lancé par root ou en sudo"
+  echo $(gettext "Ce script doit être lancé par root ou en sudo")
   exit 1
 fi
 

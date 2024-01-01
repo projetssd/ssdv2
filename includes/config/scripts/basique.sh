@@ -11,9 +11,9 @@ DOMAIN=$(cat ${TMPDOMAIN})
 SEEDGROUP=$(cat ${TMPGROUP})
 rm ${TMPNAME} ${TMPDOMAIN} ${TMPGROUP}
 
-    	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
-    	echo -e "${CCYAN}    /!\ Auth Basique avec Traefik – Secure pour les services Docker /!\      ${CEND}"
-    	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
+    	echo -e "${CRED}---------------------------------------------------------------------------${CEND}"
+    	echo -e "${CCYAN}"$(gettext "Auth Basique avec Traefik – Secure pour les services Docker")"${CEND}"
+    	echo -e "${CRED}---------------------------------------------------------------------------${CEND}"
 	echo ""
 
 ## suppression des yml dans ${SETTINGS_STORAGE}/conf
@@ -35,17 +35,17 @@ install_watchtower
 echo ""
 
 ## reinstallation application
-echo -e "${BLUE}### REINITIALISATION DES APPLICATIONS ###${NC}"
-echo -e " ${BWHITE}* Les fichiers de configuration ne seront pas effacés${NC}"
+echo -e "${BLUE}###" $(gettext "REINITIALISATION DES APPLICATIONS")" ###${NC}"
+echo -e " ${BWHITE}*" $(gettext "Les volumes ne seront pas supprimés")"${NC}"
 
 relance_tous_services
 
 
 rm $SERVICESUSER${USER}
     	echo -e "${CRED}---------------------------------------------------------------${CEND}"
-    	echo -e "${CRED}     /!\ MISE A JOUR DU SERVEUR EFFECTUEE AVEC SUCCES /!\      ${CEND}"
+    	echo -e "${CRED}" $(gettext "MISE A JOUR DU SERVEUR EFFECTUEE AVEC SUCCES")    ${CEND}"
     	echo -e "${CRED}---------------------------------------------------------------${CEND}"
 
-echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
-read -r
+  echo -e "\n"$(gettext "Appuyer sur")"${CCYAN}["$(gettext "ENTREE")"]${CEND}" $(gettext "pour continuer")
+  read -r
 

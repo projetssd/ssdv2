@@ -67,6 +67,7 @@
           - "jq"
           - "moreutils"
           - "unrar"
+          - "gettext"
       ignore_errors: yes
 
     - name: Check to see if unrar installed

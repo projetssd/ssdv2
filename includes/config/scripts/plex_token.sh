@@ -14,13 +14,13 @@ source "${SETTINGS_SOURCE}/includes/variables.sh"
 #########################################################################
 
 
->&2 echo -n 'Votre login Plex (e-mail or username): '
+>&2 echo -n $(gettext "Votre login Plex (e-mail or username) : ")
 read PLEX_LOGIN
 manage_account_yml plex.ident $PLEX_LOGIN
 
 
 
->&2 echo -n 'Votre password Plex: '
+>&2 echo -n $(gettext "Votre password Plex : ")
 read PLEX_PASSWORD
 manage_account_yml plex.sesame $PLEX_PASSWORD
 

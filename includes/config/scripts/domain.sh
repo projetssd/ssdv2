@@ -1,7 +1,7 @@
 #!/bin/bash
 clear
 echo -e "${CRED}----------------------------------------------${CEND}"
-echo -e "${CRED}     /!\ Changement du nom de Domaine /!\     ${CEND}"
+echo -e "${CRED}"$(gettext "Changement du nom de Domaine")    "${CEND}"
 echo -e "${CRED}----------------------------------------------${CEND}"
 echo ""
 CONTACTEMAIL=$(whiptail --title "Adresse Email" --inputbox \
@@ -30,8 +30,8 @@ install_traefik
 install_watchtower
 
 ## reinstallation application
-echo -e "${BLUE}### REINITIALISATION DES APPLICATIONS ###${NC}"
-echo -e " ${BWHITE}* Les fichiers de configuration ne seront pas effacés${NC}"
+echo -e "${BLUE}###" $(gettext "REINITIALISATION DES APPLICATIONS") "###${NC}"
+echo -e " ${BWHITE}*" $(gettext "Les volumes ne seront pas supprimés")"${NC}"
 ansible-playbook ${SETTINGS_SOURCE}/includes/dockerapps/templates/ansible/ansible.yml
 
 relance_tous_services
@@ -63,8 +63,8 @@ if [[ -e "$PLEXSCANSERVICE" ]]; then
 fi
 
 echo -e "${CRED}---------------------------------------------------------------${CEND}"
-echo -e "${CRED}     /!\ MISE A JOUR DU SERVEUR EFFECTUEE AVEC SUCCES /!\     ${CEND}"
+echo -e "${CRED}"$(gettext "MISE A JOUR DU SERVEUR EFFECTUEE AVEC SUCCES")    "${CEND}"
 echo -e "${CRED}---------------------------------------------------------------${CEND}"
 echo ""
-echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour revenir au menu principal..."
+echo -e "\n"$(gettext "Appuyer sur")"${CCYAN} ["$(gettext "ENTREE")"]${CEND}" $(gettext "pour continuer")
 read -r

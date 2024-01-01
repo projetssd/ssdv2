@@ -12,15 +12,18 @@ oauth_client=$1
 oauth_secret=$2
 email=$3
 
-    	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
-    	echo -e "${CCYAN}   /!\ Google OAuth avec Traefik – Secure SSO pour les services Docker /!\   ${CEND}"
-    	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
-	echo ""
-    	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
-    	echo -e "${CRED}    IMPORTANT: Au préalable créer un projet et vos identifiants		      ${CEND}"
-    	echo -e "${CRED}    https://github.com/laster13/patxav/wiki				      ${CEND}"
-    	echo -e "${CRED}------------------------------------------------------------------------------${CEND}"
-	echo ""
+echo -e "${BLUE}###" $(gettext "Google OAuth2 avec Traefik – Secure SSO pour les services Docker") "###${NC}"
+echo ""
+echo -e "${CCYAN}------------------------------------------------------------------${CEND}"
+echo -e "${CCYAN}"$(gettext "Protocole d'identification via Google OAuth2")    "${CEND}"
+echo -e "${CCYAN}"$(gettext "Securisation SSO pour les services Docker")       "${CEND}"
+echo -e "${CCYAN}------------------------------------------------------------------${CEND}"
+echo ""
+echo -e "${CRED}------------------------------------------------------------------${CEND}"
+echo -e "${CRED}"IMPORTANT: $(gettext "Au préalable créer un projet et vos identifiants")"${CEND}"
+echo -e "${CRED}https://github.com/laster13/patxav/wiki 		             ${CEND}"
+echo -e "${CRED}------------------------------------------------------------------${CEND}"
+echo ""
 
 while [ -z "$oauth_client" ]; do
     >&2 echo -n -e "${BWHITE}Oauth_client: ${CEND}"
@@ -35,7 +38,7 @@ while [ -z "$oauth_secret" ]; do
 done
 
 while [ -z "$email" ]; do
-    >&2 echo -n -e "${BWHITE}Compte Gmail utilisé(s), séparés d'une virgule si plusieurs: ${CEND}"
+    echo >&2 -n -e "${BWHITE}"$(gettext "Compte Gmail utilisé(s), séparés d'une virgule si plusieurs:") "${CEND}"
     read email
     manage_account_yml oauth.account $email
 done
@@ -44,7 +47,7 @@ openssl=$(openssl rand -hex 16)
 manage_account_yml oauth.openssl $openssl
 
 ## suppression des yml dans ${SETTINGS_STORAGE}/conf
-rm ${SETTINGS_STORAGE}/conf/*
+rm ${SETTINGS_STORAGE}/conf/* > /dev/null 2>&1
 
 
 ## suppression container
@@ -64,23 +67,21 @@ install_watchtower
 echo ""
 
 ## reinstallation application
-echo -e "${BLUE}### REINITIALISATION DES APPLICATIONS ###${NC}"
-echo -e " ${BWHITE}* Les fichiers de configuration ne seront pas effacés${NC}"
+echo -e "${BLUE}###" $(gettext "REINITIALISATION DES APPLICATIONS") "###${NC}"
+echo -e " ${BWHITE}*" $(gettext "Les fichiers de configuration ne seront pas effacés")"${NC}"
 
 relance_tous_services
 
 rm $SERVICESUSER${USER}
-    	echo -e "${CRED}---------------------------------------------------------------${CEND}"
-    	echo -e "${CRED}     /!\ MISE A JOUR DU SERVEUR EFFECTUEE AVEC SUCCES /!\      ${CEND}"
-    	echo -e "${CRED}---------------------------------------------------------------${CEND}"
-	echo ""
-    	echo -e "${CRED}---------------------------------------------------------------${CEND}"
-    	echo -e "${CCYAN}    IMPORTANT:	Avant la 1ere connexion			       ${CEND}"
-    	echo -e "${CCYAN}    		- Nettoyer l'historique de votre navigateur    ${CEND}"
-    	echo -e "${CCYAN}    		- déconnection de tout compte google	       ${CEND}"
-    	echo -e "${CRED}---------------------------------------------------------------${CEND}"
-	echo ""
-
-echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour continuer..."
-read -r
-
+    echo -e "${CRED}---------------------------------------------------------------${CEND}"
+    echo -e "${CRED}"$(gettext "MISE A JOUR DU SERVEUR EFFECTUEE AVEC SUCCES")"${CEND}"
+    echo -e "${CRED}---------------------------------------------------------------${CEND}"
+    echo ""
+    echo -e "${CRED}---------------------------------------------------------------${CEND}"
+    echo -e "${CCYAN}"    IMPORTANT:	$(gettext "Avant la 1ere connexion")"${CEND}"
+    echo -e "${CCYAN}"    		- $(gettext "Nettoyer l'historique de votre navigateur")"${CEND}"
+    echo -e "${CCYAN}"   		- $(gettext "déconnection de tout compte google")"${CEND}"
+    echo -e "${CRED}---------------------------------------------------------------${CEND}"
+    echo ""
+    echo -e "\n $(gettext "Appuyer sur") ${CCYAN}[$(gettext "ENTREE")]${CEND} $(gettext "pour continuer")"
+    read -r
