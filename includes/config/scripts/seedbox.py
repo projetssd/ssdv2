@@ -113,7 +113,7 @@ def install_applis_perso():
     files = list_files_in_folder(folder_path)
     translation =_('Sélectionner l\'application perso à installer')
     quit = _('Quitter le script')
-    prompt_message = _('Voulez-vous revenir au menu principal ? (Oui/Non): ')
+    prompt_message = _('Voulez-vous revenir au menu principal ? (yes/no): ')
     print(f"{Fore.CYAN}{_('Sélectionner `Quitter le script` pour revenir au menu précédent')}{Style.RESET_ALL}")  
 
     # Ajouter 'Quitter' à la liste des fichiers

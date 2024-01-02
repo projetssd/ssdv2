@@ -10,12 +10,13 @@ CURRENT_SCRIPT=$(readlink -f "$0")
 SETTINGS_SOURCE=$(dirname "$CURRENT_SCRIPT")
 export SETTINGS_SOURCE
 cd ${SETTINGS_SOURCE}
+export TEXTDOMAINDIR="${SETTINGS_SOURCE}/i18n"
+export TEXTDOMAIN=ks
 
 source "${SETTINGS_SOURCE}/includes/variables.sh"
 source "${SETTINGS_SOURCE}/includes/functions.sh"
 source "${SETTINGS_SOURCE}/includes/menus.sh"
 
-################################################
 # récupération des parametres
 # valeurs par défaut
 FORCE_ROOT=0
@@ -140,7 +141,8 @@ if [ $mode_install = "manuel" ]; then
     echo -e "${CGREEN}"   $(gettext "2) Installation Minimale sans zurg")"${CEND}"
     echo -e "${CGREEN}"   $(gettext "3) Restauration Seedbox")"${CEND}"
     echo -e ""
-    read -p "Votre choix : " CHOICE
+    echo >&2 -n -e "${BWHITE}"$(gettext "Votre choix :") "${CEND}"
+    read CHOICE
     echo ""
     case $CHOICE in
     1) ## Installation de la seedbox Zurg et rclone
@@ -287,7 +289,7 @@ if [ $mode_install = "manuel" ]; then
 
   chmod 755 ${SETTINGS_SOURCE}/logs
   #update_logrotate
-  log_statusbar "Check de la dernière version sur git"
+  log_statusbar "$(echo $(gettext "Check de la dernière version sur git"))"
   git_branch=$(git rev-parse --abbrev-ref HEAD)
   if [ ${git_branch} == 'master' ]; then
     cd ${SETTINGS_SOURCE}
@@ -297,8 +299,8 @@ if [ $mode_install = "manuel" ]; then
     if [ ${current_hash} != ${distant_hash} ]; then
       clear
       echo "==============================================="
-      echo "= Il existe une mise à jour"
-      echo "= Pour le faire, sortez du script, puis tapez"
+      echo $(gettext "= Il existe une mise à jour")
+      echo $(gettext "= Pour le faire, sortez du script, puis tapez")
       echo "= git pull"
       echo "==============================================="
       pause
@@ -306,8 +308,8 @@ if [ $mode_install = "manuel" ]; then
   else
     clear
     echo "==============================================="
-    echo "= Attention, vous n'êtes pas sur la branche master !"
-    echo "= Pour repasser sur master, sortez du script, puis tapez "
+    echo $(gettext "= Attention, vous n'êtes pas sur la branche master !")
+    echo $(gettext "= Pour repasser sur master, sortez du script, puis tapez ")
     echo "= git checkout master"
     echo "==============================================="
     pause
@@ -327,7 +329,7 @@ if [ $mode_install = "manuel" ]; then
   update_status
   # Verif compatibilité v2/0 => V2.1
   # On regarde que settings.storage existe
-  log_statusbar "Verification de l'emplacement du stockage"
+  log_statusbar "$(echo $(gettext "Verification de l'emplacement du stockage"))"
   emplacement_stockage=$(get_from_account_yml settings.storage)
   if [ "${emplacement_stockage}" == notfound ]; then
     manage_account_yml settings.storage "/opt/seedbox"
