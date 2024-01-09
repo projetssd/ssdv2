@@ -860,33 +860,6 @@ function premier_lancement() {
 
   sudo chown -R ${USER}: ${SETTINGS_SOURCE}/
 
-  # Choix du language
-
-  # Demander à l'utilisateur de choisir la langue
-  clear
-  logo
-  echo -e "${CCYAN}"Veuillez choisir la langue/Please choose a language :"${CEND}"
-  echo -e "${CGREEN}"1. Anglais/English"${CEND}"
-  echo -e "${CGREEN}"2. Français/French"${CEND}"
-  echo ""
-  read -p "Choix/Choice : " choix_langue
-
-  # Changer les locales en fonction du choix de l'utilisateur
-  case $choix_langue in
-      1)
-          nouvelle_locale="en_US.UTF-8"
-          ;;
-      2)
-          nouvelle_locale="fr_FR.UTF-8"
-          ;;
-      *)
-          echo "Choix invalide. Utilisez 1 pour l'anglais ou 2 pour le français."
-          exit 1
-          ;;
-  esac
-  sudo localectl set-locale LANG=$nouvelle_locale
-  source /etc/default/locale
-
   echo $(gettext "Certains composants doivent encore être installés/réglés")
   echo $(gettext "Cette opération va prendre plusieurs minutes selon votre système")
   echo "=================================================================="
@@ -962,7 +935,7 @@ EOF
   log_path=${SETTINGS_SOURCE}/logs/ansible.log
 EOF
 
-  echo $(gettex "Création de la configuration en cours")
+  echo $(gettext "Création de la configuration en cours")
   # On créé la database
   sqlite3 "${SETTINGS_SOURCE}/ssddb" <<EOF
     create table seedbox_params(param varchar(50) PRIMARY KEY, value varchar(50));

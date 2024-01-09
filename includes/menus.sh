@@ -123,7 +123,6 @@ function ajout_app_seedbox() {
   echo ""
   choose_services
   install_services
-  echo "Installations terminées"
   echo -e "\e[32m"$(gettext "Installations terminées")"\e[0m" 
   pause
 }

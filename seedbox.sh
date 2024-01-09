@@ -12,9 +12,8 @@ export SETTINGS_SOURCE
 cd ${SETTINGS_SOURCE}
 export TEXTDOMAINDIR="${SETTINGS_SOURCE}/i18n"
 export TEXTDOMAIN=ks
-
-source "${SETTINGS_SOURCE}/includes/variables.sh"
 source "${SETTINGS_SOURCE}/includes/functions.sh"
+source "${SETTINGS_SOURCE}/includes/variables.sh"
 source "${SETTINGS_SOURCE}/includes/menus.sh"
 
 # récupération des parametres
