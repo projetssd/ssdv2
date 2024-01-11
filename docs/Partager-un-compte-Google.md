@@ -121,7 +121,7 @@ Puis une section syncer
 
 ATTENTION ! Cette opération ne prend pas à ce jour les SA, donc il y a risque de saturation des 750Go/jour, et il faudra compter plusieurs jours d'upload si il y a des grandes quantités à transférer.
 
-Voir la doc : https://github.com/projetssd/ssdv2/wiki/Cloudplow
+Voir la doc : Cloudplow
 
 # Migration des réglages
 

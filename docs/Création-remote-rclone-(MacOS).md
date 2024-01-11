@@ -4,12 +4,12 @@ title: ssdv2
 ---
 ## Création des remotes pour utiliser le stockage Google sur votre serveur.  
 
-> ce guide est uniquement pour MacOS (autres version : [Pour Windows](https://github.com/projetssd/ssdv2/wiki/Cr%C3%A9ation-remote-rclone-(Windows)) | [Pour Linux](https://github.com/projetssd/ssdv2/wiki/Cr%C3%A9ation-remote-rclone-(Linux)))  
+> ce guide est uniquement pour MacOS (autres version : [Pour Windows](Cr%C3%A9ation-remote-rclone-(Windows)) | [Pour Linux](Cr%C3%A9ation-remote-rclone-(Linux)))  
 
 #### pré-requis 👍🏻 
 1. Installation de Homebrew
 2. Installation de rclone
-3. Création d'un projet API Google drive (disponible [ici](https://github.com/projetssd/ssdv2/wiki/Cr%C3%A9ation-API-Google))
+3. Création d'un projet API Google drive (disponible [ici](Cr%C3%A9ation-API-Google))
 4. Un navigateur en session privée connecté sur votre compte Google (celui avec le projet API Google)
 
 

@@ -40,11 +40,11 @@
           <hr>
             <span class="credits left">
                  {% for lang in site.languageNames %}
-            {% if lang[0] != site.lang %}
-                <a href="{{ site.baseurl_root }}{% if lang[0] != site.defaultLang %}/{{ lang[0] }}{% endif %}/{{ page.url }}">{{ lang[1] }}</a>
-            {% endif %}
+                    {% if lang[0] != site.lang %}
+                        <a href="{{ site.baseurl_root }}{% if lang[0] != site.defaultLang %}/{{ lang[0] }}{% endif %}/{{ page.url }}">{{ lang[1] }}</a>
+                    {% endif %}
 
-        {% endfor %}
+                {% endfor %}
             </span>
 <!--          <span class="credits left">Project maintained by <a href="{{ site.github.owner_url }}">{{ site.github.owner_name }}</a></span>-->
           <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></span>

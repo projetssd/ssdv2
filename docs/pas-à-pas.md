@@ -107,7 +107,7 @@ Pour le moment, il faut choisir ``basique``plus tard vous pourrez installer Oaut
 
 ### CHOIX 1 -> Copier/coller un rclone.conf déjà existant  
 
-Vous devez suivre la procédure suivante selon votre système : [Pour MacOS](https://github.com/projetssd/ssdv2/wiki/Cr%C3%A9ation-remote-rclone-(MacOS)) | [Pour Windows](https://github.com/projetssd/ssdv2/wiki/Cr%C3%A9ation-remote-rclone-(Windows)) | [Pour Linux](https://github.com/projetssd/ssdv2/wiki/Cr%C3%A9ation-remote-rclone-(Linux))
+Vous devez suivre la procédure suivante selon votre système : [Pour MacOS](Cr%C3%A9ation-remote-rclone-(MacOS)) | [Pour Windows](Cr%C3%A9ation-remote-rclone-(Windows)) | [Pour Linux](Cr%C3%A9ation-remote-rclone-(Linux))
 
 Coller le rclone, puis retour à la ligne et taper STOP puis à nouveau ENTRER pour valider.  
 
