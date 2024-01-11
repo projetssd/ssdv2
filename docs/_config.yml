@@ -1,1 +1,15 @@
-remote_theme: pages-themes/midnight@v0.2.0
+remote_theme: pages-themes/minimal@v0.2.0
+plugins:
+- jekyll-remote-theme
+- jekyll-multiple-languages-plugin
+title: ssdv2
+description: Simple Seedbox Docker
+
+languages: ["fr", "en"]
+
+baseurl: /ssdv2
+
+defaultLang: fr
+languageNames:
+  fr: Français
+  en: English

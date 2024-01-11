@@ -1,0 +1,15 @@
+global:
+  french: French
+  english: English
+
+index:
+  kubeseed_desc: "Kubeseed is a seedbox (and other tools) project, running on a Kubernetes engine. To do so, we use "
+
+liens:
+  description: "Description - installation"
+  migration: "Migration from SSDv2"
+  kubernetes: "Kubernetes usage"
+  chemins: "Paths"
+  traductions: "Translations"
+  liste: "Functions"
+  applications: "Detail of apps"
