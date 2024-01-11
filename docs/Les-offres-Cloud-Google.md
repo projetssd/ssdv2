@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: ssdv2
 ---
 > > Google a dernièrement modifié son offre, l'ancienne offre Gsuite à 10,40€/mois n'existe malheureusement plus.  

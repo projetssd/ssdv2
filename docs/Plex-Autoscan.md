@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: ssdv2
 ---
 Plex Autoscan [(de l3uddz)](https://github.com/l3uddz/plex_autoscan) est un script qui assiste Plex dans l'ajout de fichiers multimédias importés par Sonarr / Radarr en analysant uniquement le dossier importé et non pas toute la bibliothèque, empêchant ainsi les interdictions de Google API.

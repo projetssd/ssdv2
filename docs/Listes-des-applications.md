@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: ssdv2
 ---
 ###  Vous retrouverez ci-dessous l'ensemble des applications présentes dans le script

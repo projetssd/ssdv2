@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: ssdv2
 ---
 ## Outrepasser la sécurité oAuth afin d'utiliser (NZB360, Transdroid ou autre)

@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: ssdv2
 ---
 Google OAuth2 vous permet d'utiliser votre compte Google pour vous connecter à vos services. 

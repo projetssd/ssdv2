@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: ssdv2
 ---
 Prérecquis, avoir intégré le 2e teamdrive dans rclone.conf (teamdrive_crypt et teamdrive_crypt2 par exemple)

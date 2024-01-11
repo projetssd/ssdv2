@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: ssdv2
 ---
 UFW, ou Uncomplicated Firewall, est une interface vers + iptables + qui est conçue pour simplifier le processus de configuration d’un pare-feu.

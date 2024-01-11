@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: ssdv2
 ---
 Pour toute opération, assurez vous de ne pas être root.

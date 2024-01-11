@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: ssdv2
 ---
 Parce que le port ssh est le plus exposé aux attaques, il est fortement conseillé à la fois d'atttribuer un autre port que le 22 par défault (ce que nous verrons plus bas) mais également de mettre en place une authentification par clés.  

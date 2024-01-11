@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: ssdv2
 ---
 ![](https://grafana.com/api/dashboards/9558/images/5968/image)

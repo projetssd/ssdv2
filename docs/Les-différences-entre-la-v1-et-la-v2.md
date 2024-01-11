@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: ssdv2
 ---
 Rappel, les sources de la v1 se trouvent ici : [https://github.com/laster13/patxav](V1 (par Laster13))

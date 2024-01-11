@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: ssdv2
 ---
 Vous aurez besoin d'un nom de domaine pour l'accès aux applications.  

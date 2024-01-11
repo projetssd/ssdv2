@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: ssdv2
 ---
 ## 1er Étape : la création d'un Groupe Google

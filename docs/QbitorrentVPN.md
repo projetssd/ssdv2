@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: ssdv2
 ---
 > > Dépôt : https://hub.docker.com/r/dyonr/qbittorrentvpn

@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: ssdv2
 ---
 Vidéo "rapide" de présentation du menu de gestion

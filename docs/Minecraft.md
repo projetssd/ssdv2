@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: ssdv2
 ---
 ![](https://nextcloud.teamsyno.com/s/2jzfHCLjTdB2WTF/preview)

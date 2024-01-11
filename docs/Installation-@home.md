@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: ssdv2
 ---
 ### Testé sur une vm (sous vmware  esxi 7) avec le choix 

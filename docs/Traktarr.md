@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: ssdv2
 ---
 Traktarr utilise Trakt.tv pour rechercher des émissions et des films à ajouter à Sonarr et Radarr, respectivement.  

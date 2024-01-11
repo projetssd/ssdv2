@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: ssdv2
 ---
 Tout d'abord, Authelia est un outil open-source qui agit comme un portail où l'utilisateur est invité à s'authentifier.

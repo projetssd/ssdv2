@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: ssdv2
 ---
 ## Création des remotes pour utiliser le stockage Google sur votre serveur.  

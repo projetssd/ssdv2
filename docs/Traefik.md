@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: ssdv2
 ---
 #### Ajouter un 2ème Domaine à traefik  

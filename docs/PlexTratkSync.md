@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: ssdv2
 ---
 Vous devez créer une API Trakt pour utiliser ce produit :

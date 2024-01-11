@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: ssdv2
 ---
 #### Synchroniser deux drives avec 2 remotes nommés respectivement google et tata

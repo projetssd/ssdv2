@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: ssdv2
 ---
 #### Faire pointer son nom de domaine vers Wordpress

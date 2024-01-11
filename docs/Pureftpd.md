@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: ssdv2
 ---
 L'image utilisée est https://hub.docker.com/r/stilliard/pure-ftpd/

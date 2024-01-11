@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: ssdv2
 ---
 Information Essentielles, nécessaires à la configuration du mailserver de @hardware

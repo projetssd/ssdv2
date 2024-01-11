@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: ssdv2
 ---
 ### Attendre la présence d'un membre du staff sur le discord !!!

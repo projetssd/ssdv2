@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: ssdv2
 ---
 Plex Dupefinder [(par l3uddz)](https://github.com/l3uddz/plex_dupefinder) est une application python qui recherche les versions dupliquées de médias (épisodes et films) dans votre bibliothèque Plex et demande à Plex de supprimer les versions de qualité la plus basse (basées sur un algorithme de scoring), de manière automatique ou interactive (c'est-à-dire une invite à chaque recherche), vous laissant avec un fichier multimédia de haute qualité.  

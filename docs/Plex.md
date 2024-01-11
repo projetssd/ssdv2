@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: ssdv2
 ---
 ## Dans le cas ou vous utilisez le stockage Gdrive ou Sharedrive. 

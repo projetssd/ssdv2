@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: ssdv2
 ---
 > > La première chose est d'enlever authentification sur Ombi pour que les autres utilisateurs puissent accéder au site.
