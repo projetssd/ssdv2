@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>ssdv2 | SSDv2</title>
+<meta name="generator" content="Jekyll v3.8.7" />
+<meta property="og:title" content="ssdv2" />
+<meta property="og:locale" content="fr" />
+<meta name="description" content="Simple Seedbox docker" />
+<meta property="og:description" content="Simple Seedbox docker" />
+<meta property="og:site_name" content="SSDv2" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="ssdv2" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Simple Seedbox docker","headline":"ssdv2","url":"/ssdv2/Partager-un-compte-Google.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/ssdv2/assets/css/style.css?v=">
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="/ssdv2/assets/js/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="/ssdv2/assets/css/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup theme-color -->
+<!-- start theme color meta headers -->
+<meta name="theme-color" content="#353535">
+<meta name="msapplication-navbutton-color" content="#353535">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- end theme color meta headers -->
+
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/ssdv2/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+<!--      <div id="header">-->
+<!--        <nav>-->
+<!--          <ul>-->
+<!--            <li class="fork"><a href="">View On GitHub</a></li>-->
+<!--            -->
+<!--          </ul>-->
+<!--        </nav>-->
+<!--      </div>&lt;!&ndash; end header &ndash;&gt;-->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>SSDv2</h1>
+          <p>Simple Seedbox docker</p>
+          <hr>
+            <span class="credits left">
+                 
+                    
+
+                
+                    
+                        <a href="/ssdv2/en//Partager-un-compte-Google.html">English</a>
+                    
+
+                
+            </span>
+<!--          <span class="credits left">Project maintained by <a href=""></a></span>-->
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></span>
+        </div>
+
+        <h1 id="partager-un-compte-google">Partager un compte google</h1>
+
+<p>Définition : il y a un “propriétaire” et un “locataire”
+Le propriétaire doit déjà avoir un rclone configuré</p>
+
+<p>Le propriétaire n’aura pas accès aux fichiers du locataire et vice-versa.</p>
+
+<p>Le propriétaire peut supprimer les fichiers du locataire ou fermer son compte</p>
+
+<h2 id="prérequis">Prérequis</h2>
+
+<p>Même si ce n’est pas obligatoire, il est FORTEMENT CONSEILLE d’utiliser les SA (service accounts) et cloudplow. En effet, propriétaire et locataire vont uploader des fichiers depuis le même compte, et on peut vite arriver à la limite des 750Go/jour</p>
+
+<p>Le propriétaire doit configurer les SA via l’application ssd, et transmettre la totalité de son répertoire /opt/sa au locataire. Celui ci doit l’intégrer à son serveur, dans le chemin de son choix (/opt/sa s’il n’utilise pas déjà les sa, ou /opt/sa_proprio pour garde ses sa existants temporairement)</p>
+
+<h1 id="méthode">Méthode</h1>
+
+<p>Le propriétaire et le locataire doivent se synchroniser !</p>
+
+<p>Le propriétaire doit envoyer une partie de son rclone.conf au locataire. Cette partie correspond à son drive non chiffré.</p>
+
+<p>Par exemple</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[seedbox_proprio]
+client_id = xxxxxxxxxxxx-xxxxxxxxxxxx.apps.googleusercontent.com
+client_secret = xxxxxxxxxxxxxxx
+type = drive
+scope = drive
+token = {"access_token":"xxxx.xxxxxxxxxxxxxxxx","token_type":"Bearer","refresh_token":"1//0en0jLSWNB-xxxxxxxxxxxxxxxxxxxx","expiry":"2022-01-03T12:46:49.895145905+01:00"}
+team_drive = xxxxxxxxx_AyyU0RUk9PVA
+</code></pre></div></div>
+
+<p>Le locataire rentre cette partie dans son propre rclone.conf, puis teste les accès, en faisant</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>rclone lsd seedbox_proprio
+</code></pre></div></div>
+
+<p>Normalement, l’accès doit être refusé.
+Il faut lancer la commande</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>rclone config reconnect seedbox_proprio:
+</code></pre></div></div>
+<p>Et se laisser guider. Au moment de la question “use autoconfig”, répondre “N”. Le locataire doit alors donner l’url au propriétaire, qui doit accepter l’autorisation. Le propriétaire doit alors donner le code retour au locataire, qui va le rentrer dans la console.</p>
+
+<p>Une fois fait, la commande</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>rclone lsd seedbox_proprio
+</code></pre></div></div>
+<p>doit marcher.</p>
+
+<h2 id="création-dun-répertoire">Création d’un répertoire</h2>
+
+<p>Le propriétaire doit créer un répertoire dans son google drive, via l’interface graphique. Supposons que ce répertoire soit appelé “locataire”</p>
+
+<h2 id="création-dun-remote-pour-le-locataire">Création d’un remote pour le locataire</h2>
+
+<p>Le locataire doit créer un nouveau remonte sur son rclone, de type “crypt”, et donc la source sera “seedbox_proprio:/locataire” (penser à adapter le nom !)
+Le locataire choisit ses clés de chiffrement et ne les communique pas au propriétaire !</p>
+
+<p>Dans notre exemple, le remote s’appelera seedbox_locataire_crypt</p>
+
+<h2 id="prise-en-compte-dans-ssd">Prise en compte dans ssd</h2>
+
+<p>Sourcer l’environnement</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cd /opt/seedbox-compose 
+source profile.sh
+</code></pre></div></div>
+<p>lancer la commande</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>manage_account_yml rclone.remote seedbox_crypt
+</code></pre></div></div>
+
+<h1 id="migration-des-données">Migration des données</h1>
+
+<p>Si le locataire a des données dans son drive actuel, il doit les uploader dans son drive loué. Il faut pour cela utiliser cloudplow</p>
+
+<p>Pour cela, il faut créer un nouveau remote dans le config.json de cloudplow : `</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>       "seedbox_locataire_crypt": {
+            "hidden_remote": "",
+            "rclone_excludes": [],
+            "rclone_extras": {},
+            "rclone_sleeps": {},
+            "remove_empty_dir_depth": 2,
+            "sync_remote": "seedbox_locataire_crypt:",
+            "upload_folder": "",
+            "upload_remote": ""
+        }
+</code></pre></div></div>
+<p>Puis une section syncer</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"syncer": {
+        "actuel2locataire": {
+            "rclone_extras": {
+                "--bwlimit": "70M",
+                "--checkers": 16,
+                "--drive-chunk-size": "64M",
+                "--stats": "60s",
+                "--transfers": 8,
+                "--verbose": 1
+            },
+            "service": "local",
+            "sync_from": "nom_du_remote_actuel",
+            "sync_interval": 26,
+            "sync_to": "seedbox_locataire_crypt",
+            "tool_path": "/usr/bin/rclone",
+            "use_copy": true,
+            "instance_destroy": false
+          }
+</code></pre></div></div>
+
+<p>ATTENTION ! Cette opération ne prend pas à ce jour les SA, donc il y a risque de saturation des 750Go/jour, et il faudra compter plusieurs jours d’upload si il y a des grandes quantités à transférer.</p>
+
+<p>Voir la doc : Cloudplow</p>
+
+<h1 id="migration-des-réglages">Migration des réglages</h1>
+
+<h2 id="rclone">rclone</h2>
+
+<p>Une fois les données transférées, il “suffit” de modifier le fichier /etc/systemd/system/rclone.conf pour mettre le bon nom du remote
+Une fois que c’est fait</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>systemctl daemon-reload
+systemctl restart rclone
+</code></pre></div></div>
+<p>puis</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ls /mnt/rclone
+</code></pre></div></div>
+<p>pour vérifier que tout est ok.</p>
+
+<p>Une fois que c’est fait :</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo systemctl restart mergerfs
+sudo docker restart plex radarr sonarr autoscan
+</code></pre></div></div>
+
+<h2 id="cloudplow">cloudplow</h2>
+
+<p>Supprimer si nécessaire la partie syncer, et le remote qu’on a ajouté pour la partie transfert des données. Dans le remote “de base”, changer le nom du remote rclone</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo systemctl restart cloudplow
+</code></pre></div></div>
+
+
+      </section>
+
+    </div>
+  </body>
+</html>

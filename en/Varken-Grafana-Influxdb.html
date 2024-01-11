@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>ssdv2 | SSDv2</title>
+<meta name="generator" content="Jekyll v3.8.7" />
+<meta property="og:title" content="ssdv2" />
+<meta property="og:locale" content="en" />
+<meta name="description" content="Simple Seedbox docker" />
+<meta property="og:description" content="Simple Seedbox docker" />
+<meta property="og:site_name" content="SSDv2" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="ssdv2" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Simple Seedbox docker","headline":"ssdv2","url":"/ssdv2/en/Varken-Grafana-Influxdb.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/ssdv2/en/assets/css/style.css?v=">
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="/ssdv2/en/assets/js/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="/ssdv2/en/assets/css/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup theme-color -->
+<!-- start theme color meta headers -->
+<meta name="theme-color" content="#353535">
+<meta name="msapplication-navbutton-color" content="#353535">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- end theme color meta headers -->
+
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/ssdv2/en/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+<!--      <div id="header">-->
+<!--        <nav>-->
+<!--          <ul>-->
+<!--            <li class="fork"><a href="">View On GitHub</a></li>-->
+<!--            -->
+<!--          </ul>-->
+<!--        </nav>-->
+<!--      </div>&lt;!&ndash; end header &ndash;&gt;-->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>SSDv2</h1>
+          <p>Simple Seedbox docker</p>
+          <hr>
+            <span class="credits left">
+                 
+                    
+                        <a href="/ssdv2//Varken-Grafana-Influxdb.html">Français</a>
+                    
+
+                
+                    
+
+                
+            </span>
+<!--          <span class="credits left">Project maintained by <a href=""></a></span>-->
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></span>
+        </div>
+
+        <p><img src="https://grafana.com/api/dashboards/9558/images/5968/image" alt="" />
+<br /></p>
+<h4 id="quelques-explications">Quelques explications</h4>
+
+<p>Lors de l’installation de Varken, seront également installés Grafana et Telegraf.</p>
+
+<ul>
+  <li><strong>Varken</strong>: utilitaire autonome pour agréger les données de l’écosystème Plex dans InfluxDB.</li>
+  <li><strong>Grafana</strong>: application web nous permettant d’afficher des graphiques selon des métriques enregistré dans une base de donnée sous le moteur Influxdb.</li>
+  <li><strong>Telegraf</strong>: agent qui s’installe sur les serveurs et qui récupèrent des métriques selon les « inputs » définis dans ses fichiers de configurations. Il renvoie les différentes métriques vers les « outputs », les sorties définies dans la configuration de même.</li>
+  <li><strong>Monitorr</strong>: application Web PHP auto-hébergée qui surveille l’état des services réseau, des sites Web, des applications locales et distantes.</li>
+</ul>
+
+<h4 id="1-maxmind">1. Maxmind</h4>
+<h4 id="comment-obtenir-une-clé-de-licence">Comment obtenir une clé de licence</h4>
+
+<p>1ère étape <a href="https://www.maxmind.com/en/geolite2/signup">créer un compte (gratuit) chez MaxMind</a></p>
+
+<p>Une fois le compte créé, il sera possible de générer une clé de licence.<br />
+<br />
+<img src="https://100son.net/wp-content/uploads/2020/01/maxmind-com-license-key-2020-01-02.jpg" alt="" /><br />
+<br />
+Répondez non à la question ci-dessous et n’oubliez pas de <strong>copier votre key</strong> l’étape après avoir confirmé:
+<img src="https://nextcloud.teamsyno.com/s/K3YLH99tAZqdSPL/preview" alt="" />
+<br /></p>
+
+<p>Maintenant on va lancer le script et coller la KEY:</p>
+
+<p><img src="https://nextcloud.teamsyno.com/s/Q8RgfkbACgSXDSm/preview" alt="" /></p>
+
+<p>Valider par <strong>Enter</strong>, le script poursuit son travail.</p>
+
+<h4 id="2-grafana">2. Grafana</h4>
+<p><img src="https://i.stack.imgur.com/F5YMp.png" alt="" /><br />
+user: admin<br />
+Pass: grafana</p>
+
+<h4 id="configuration-influxdb">Configuration influxdb</h4>
+<p>Aller sur data sources<br />
+<img src="https://wiki.cajun.pro/uploads/images/gallery/2019-05-May/tizFzcFxa5xbGpf9-firefox_mvqEuEQvW9.png" alt="" /><br />
+<br />
+Cliquer sur Add data source<br />
+<img src="https://wiki.cajun.pro/uploads/images/gallery/2019-05-May/wznBc1XcoHpadRYj-firefox_O7f9LaAwpO.png" alt="" /><br />
+<br />
+Choisir Influxdb<br />
+<img src="https://wiki.cajun.pro/uploads/images/gallery/2019-05-May/ZY6yozj0FSD13LWW-firefox_Nv62HqpleL.png" alt="" /><br />
+<br />
+Configurer comme ci dessous<br />
+<img src="https://wiki.cajun.pro/uploads/images/gallery/2019-05-May/scaled-840-0/dNUOg1UMRxG6hLwy-firefox_xuRCHdLEQB.png" alt="" /><br />
+<br /><br />
+Recréer une 2ème base de donnée sur le même shéma que précédemment en changeant varken par telegraf, ce qui fait qu’au final vous disposerez de 2 bases de données influxdb: varken et telegraf<br />
+<br />
+Pour terminer vous importez le <a href="https://grafana.com/grafana/dashboards/9558">dashboard unofficial de plex</a> avec le n° id ‘9558’
+<img src="https://grafana.com/static/img/docs/v50/import_step1.png" alt="" /><br />
+<br /><a href="https://wiki.cajun.pro/books/varken/page/breakdown">Complément d’information sur la configuration</a></p>
+<h4 id="3-monitorr">3. Monitorr</h4>
+<p>Une fois monitorr installé à partir du script, assurez vous vous qu’il est fonctionnel en tapant:</p>
+<pre><code class="language-https:/monitorr.domain.com/assets/php/phpinfo.php```">vous devriez tomber sur cette page  
+&lt;br&gt;
+![](https://camo.githubusercontent.com/f70a9b7570bffc43562dd8d6f9a5930a28272fe0/68747470733a2f2f692e696d6775722e636f6d2f347568767730572e706e67)  
+&lt;br&gt;
+Accédez à https://monitorr.domain.com Vous verrez un avertissement indiquant "Répertoire de données NON détecté. Cliquer sur Monitorr setting  
+&lt;br&gt;
+![](https://camo.githubusercontent.com/4c0efdb48e174b366d0ec03d43cd3a5dcfb125c0/68747470733a2f2f692e696d6775722e636f6d2f3237466c5633552e706e67)  
+&lt;br&gt;
+Cliquer sur Monitorr registration  
+&lt;br&gt;
+![](https://camo.githubusercontent.com/74ae70a67cba5edc55ba092960ae89ba9fc21f9a/68747470733a2f2f692e696d6775722e636f6d2f4b43504d7070552e706e67)  
+&lt;br&gt;
+Ensuite créer vos identifiants de connexion  
+&lt;br&gt;
+![](https://camo.githubusercontent.com/7e81a59a2190857157628348cbee57a0b8261309/68747470733a2f2f692e696d6775722e636f6d2f43764356354e6a2e706e67)  
+&lt;br&gt;
+Vous devriez obtenir ceci  
+&lt;br&gt;
+![](https://camo.githubusercontent.com/407c7a568e294728b88be617eda021bf74208263/68747470733a2f2f692e696d6775722e636f6d2f347549685364372e706e67)  
+&lt;br&gt;
+Et enfin  
+&lt;br&gt;
+![](https://camo.githubusercontent.com/9fe47abd0e3c527d398ed69a1ed20908b69ea847/68747470733a2f2f692e696d6775722e636f6d2f77704939756f4b2e706e67)  
+&lt;br&gt;
+Plus qu'à configurer, c’est très simple de rajouter des applis, suivez le modele de celles déjà présentes  
+Sources: https://github.com/Monitorr/Monitorr/wiki/01-Config:--Initial-configuration  
+&lt;br&gt;
+#### 4. Intégration Monitorr avec la Home page d'Organizr  
+A ajouter dans Éditeur/Éléments de la page d’accueil/CustomHTML-1  
+&lt;br&gt;
+</code></pre>
+<div style="overflow:hidden;  height:255px">    
+        <embed style="height:100%" width="100%" src="https://yourdomain.com/monitorr/index.min.php" />
+</div>
+<p><br /></p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;br&gt;  
+Vous pouvez régler (height:255px) pour ne pas avoir d’ascenseur dans la Home page, rafraichissez, vous obtenez  
+
+![Imgur Image](https://i.imgur.com/uQ7iZ7I.png)  
+&lt;br&gt;
+Copier le script HTML ci dessous dans Éditeur/Éléments de la page d’accueil/CustomHTML-1 dessous le code précédemment intégré de monitorr  
+&lt;br&gt;
+</code></pre></div></div>
+<style>
+.flex {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    align-items: center;
+    background: transparent;
+    box-shadow: none !important;
+    transition: all .4s ease-in-out;
+    cursor: pointer
+}
+
+/* -------------------Small widget------------------- */
+.flex-child { padding: 3px; flex-grow: 1; flex-basis: 0;}
+#grafanadwidget { position: relative; height: calc(80px); width: calc(100%);}
+/* -------------------Small widget------------------- */
+
+/* -------------------Big widget------------------- */
+.flex-child-big { padding: 3px; flex-grow: 1; flex-basis: 0;}
+#grafanadwidget-big { position: relative; height: calc(250px); width: calc(100%);}
+/* -------------------Big widget------------------- */
+
+/* -------------------iFrame Link------------------- */
+.iframe-link { z-index:1; position:absolute; height: calc(80px); width: calc(100%); background-color: transparent; cursor: pointer}
+/* -------------------iFrame Link------------------- */
+
+#announcementRow { background-color:transparent !important;}
+#announcementRow>h4 {
+    padding-left: 15px;
+    font-family: Rubik,sans-serif;
+    margin: 10px 0;
+    font-weight: 300 !important;
+    line-height: 22px;
+    font-size: 18px;
+    color: #dce2ec;
+}
+.overflowhider { height: 100%; overflow: hidden;}
+@media only screen and (max-width: 650px) {.flex-child-big {flex-basis: auto;min-width: auto !important;}}
+@media only screen and (max-width: 1125px) {.flex-child-big {flex-basis: auto;min-width: 600px;flex-basis: fit-content;}}
+@media only screen and (max-width: 1649px) {.flex-child {flex-basis: auto;}}
+</style>
+
+<!-- -------------------ADD TITLE HERE------------------- -->
+<div id="announcementRow" class="row"><h4 class="pull-left">
+    <span>Grafana</span></h4><hr class="hidden-xs" /></div>
+
+<!-- -------------------SMALL WIDGET START------------------- -->
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;div class="content-box flex"&gt;
+&lt;!-- -------------------WIDGET------------------- --&gt;
+&lt;div class="flex-child" id="flex-grafanadwidget"&gt;
+&lt;div class="overflowhider"&gt;
+&lt;iframe class="iframe" id="grafanadwidget" 
+frameborder="0" src="ADD-URL-TO-GRAFANA-PANEL-HERE"&gt;&lt;/iframe&gt;
+&lt;/div&gt;&lt;/div&gt;
+&lt;!-- -------------------WIDGET------------------- --&gt; 
+&lt;div class="flex-child" id="flex-grafanadwidget"&gt;
+&lt;div class="overflowhider"&gt;
+&lt;iframe class="iframe" id="grafanadwidget" 
+frameborder="0" src="ADD-URL-TO-GRAFANA-PANEL-HERE"&gt;&lt;/iframe&gt;
+&lt;/div&gt;&lt;/div&gt;
+&lt;!-- -------------------WIDGET------------------- --&gt;     
+&lt;div class="flex-child" id="flex-grafanadwidget"&gt;
+&lt;div class="overflowhider"&gt;
+&lt;iframe class="iframe" id="grafanadwidget" 
+frameborder="0" src="ADD-URL-TO-GRAFANA-PANEL-HERE"&gt;&lt;/iframe&gt;
+&lt;/div&gt;&lt;/div&gt;
+&lt;!-- -------------------WIDGET------------------- --&gt; 
+&lt;div class="flex-child" id="flex-grafanadwidget"&gt;
+&lt;div class="overflowhider"&gt;
+&lt;iframe class="iframe" id="grafanadwidget" 
+frameborder="0" src="ADD-URL-TO-GRAFANA-PANEL-HERE"&gt;&lt;/iframe&gt;
+&lt;/div&gt;&lt;/div&gt;
+&lt;!-- -------------------WIDGET------------------- --&gt;     
+&lt;div class="flex-child" id="flex-grafanadwidget"&gt;
+&lt;div class="overflowhider"&gt;
+&lt;iframe class="iframe" id="grafanadwidget" 
+frameborder="0" src="ADD-URL-TO-GRAFANA-PANEL-HERE"&gt;&lt;/iframe&gt;
+&lt;/div&gt;&lt;/div&gt;
+&lt;!-- -------------------WIDGET------------------- --&gt;     
+&lt;div class="flex-child" id="flex-grafanadwidget"&gt;
+&lt;div class="overflowhider"&gt;
+&lt;iframe class="flex" id="grafanadwidget" 
+frameborder="0" src="ADD-URL-TO-GRAFANA-PANEL-HERE"&gt;&lt;/iframe&gt;
+&lt;/div&gt;&lt;/div&gt;
+</code></pre></div></div>
+<p>&lt;/div&gt;
+<!-- -------------------SMALL WIDGET END------------------- --></p>
+
+<!-- -------------------BIG WIDGET START------------------- -->
+<div class="content-box flex">
+    <!-- -------------------BIG WIDGET------------------- -->        
+    <div class="flex-child-big" id="flex-grafanadwidget-big">
+    <div class="overflowhider">
+    <iframe class="flex" id="grafanadwidget-big" frameborder="0" src="ADD-URL-TO-GRAFANA-PANEL-HERE"></iframe>
+    </div></div>
+    <!-- -------------------BIG WIDGET------------------- -->     
+    <div class="flex-child-big" id="flex-grafanadwidget-big">
+    <div class="overflowhider">
+    <iframe class="iframe" id="grafanadwidget-big" frameborder="0" src="ADD-URL-TO-GRAFANA-PANEL-HERE"></iframe>
+    </div></div>
+    <!-- -------------------BIG WIDGET------------------- -->     
+    <div class="flex-child-big" id="flex-grafanadwidget-big">
+    <div class="overflowhider">
+    <iframe class="iframe" id="grafanadwidget-big" frameborder="0" src="ADD-URL-TO-GRAFANA-PANEL-HERE"></iframe>
+    </div></div>   
+</div>
+<!-- -------------------BIG WIDGET END------------------- -->
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;br&gt;
+Comme vous pouvez le constater, 6 blocs sont réserves pour des petits widgets et 3 pour des plus gros. L'idée est de modifier les emplacements  
+&lt;br&gt;  
+
+</code></pre></div></div>
+<p>ADD-URL-TO-GRAFANA-PANEL-HERE</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>En mettant l'adresse du panel récupéré dans Grafana ainsi que  
+</code></pre></div></div>
+<p>TAB-NAME-HERE</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Par le nom de la table créée dans Oganizr.  
+&lt;br&gt;
+Par défaut on utilise l'adresse suivante  
+</code></pre></div></div>
+<p>src=’https://grafana.domain.com/d-solo/bj0JnBMmz/org-dash?refresh=5s&amp;orgId=1&amp;panelId=22’/&gt;</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Pour 
+</code></pre></div></div>
+<p>ADD-URL-TO-GRAFANA-PANEL-HERE</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;br&gt;
+&lt;br&gt;
+On modifie simplement le numéro de panelId par celui correspondant au panel que nous souhaitons afficher. Pour récupérer le numéro du panel on clique sur la petite flèche du panel puis Share/Embed on obtient ça:  
+&lt;br&gt;  
+  
+![](https://technicalramblings.com/wp-content/uploads/2019/01/share.png)  
+&lt;br&gt;  
+
+Ce qui nous intéresse c est le numéro 38 que l'on remplace dans  
+</code></pre></div></div>
+<p>src=’https://grafana.domain.com/d-solo/bj0JnBMmz/org-dash?refresh=5s&amp;orgId=1&amp;panelId=38’/&gt;<br />
+``` 
+<br /><br />
+Voilà mon Dashboard mais vous pouvez construire ce que vous voulez intégrant des metrics avec telegraf ou bien des données de Netdata  <br />
+<br /></p>
+
+<p><img src="https://i.imgur.com/S8QsuWg.png" alt="Imgur Image" /><br />
+<br /></p>
+
+<h4 id="ajouter-des-onglets-à-monitorr">Ajouter des onglets à Monitorr</h4>
+
+<p>Rendez-vous sur Services configuration de Monitorr: https://monitorr.ndd.tld/settings.php#services-configuration</p>
+
+<p><img src="https://nextcloud.teamsyno.com/s/QEzQ7YJNSHw4QGJ/preview" alt="" /></p>
+
+<ul>
+  <li><strong>Add Service</strong>: ajouter un service</li>
+  <li><strong>Remove Service</strong>: supprimer le service</li>
+  <li><strong>Move Up</strong>: monter un service dans l’ordre d’apparence</li>
+  <li><strong>Move Down</strong>: descendre un service dans l’ordre d’apparence</li>
+  <li><strong>Clear</strong>: supprimer les données déjà entrées dans le service</li>
+  <li><strong>Images</strong>: sélectionner et/ou ajouter l’icône d’un service</li>
+</ul>
+
+<p><img src="https://nextcloud.teamsyno.com/s/qPr4ckPrWogz6fD/preview" alt="" /></p>
+
+<ul>
+  <li><strong>Service title</strong>: Rutorrent</li>
+  <li><strong>Enabled</strong>: oui, on l’active</li>
+  <li><strong>Service image</strong>: un grand choix d’icônes est présent, (il suffira de copier le code de l’image), mais vous pouvez aussi en ajouter.</li>
+  <li><strong>Check type</strong>: standard</li>
+  <li><strong>Ping RT</strong>:</li>
+  <li><strong>Link Enabled</strong>: si vous voulez que l’icône soit cliquable et mène à la page web correspondante</li>
+  <li><strong>Check URL</strong>: https://rutorrent.VOTRE_DOMAINE.tld:443</li>
+  <li><strong>Service URL</strong>: https://rutorrent.VOTRE_DOMAINE.tld:443</li>
+</ul>
+
+<h4 id="corriger-lerreur-grafana-worldmap-panel">Corriger l’erreur grafana-worldmap-panel</h4>
+
+<p><code class="highlighter-rouge">rm -rf /opt/seedbox/docker/tjmm/grafana/plugins/grafana-worldmap-panel</code></p>
+
+<p><code class="highlighter-rouge">wget https://github.com/grafana/worldmap-panel/releases/download/v0.3.0/grafana-worldmap-panel-0.3.0.zip</code></p>
+
+<p>Mais vérifier s’il n’y a pas une nouvelle version <a href="https://github.com/grafana/worldmap-panel/releases/">ici</a>.</p>
+
+<p><code class="highlighter-rouge">unzip grafana-worldmap-panel-0.3.0.zip</code></p>
+
+<p><code class="highlighter-rouge">rm -rf grafana-worldmap-panel-0.3.0.zip</code></p>
+
+<p><code class="highlighter-rouge">chown -R 472:472 grafana-worldmap-panel</code></p>
+
+<p><code class="highlighter-rouge">docker restart grafana</code></p>
+
+
+      </section>
+
+    </div>
+  </body>
+</html>

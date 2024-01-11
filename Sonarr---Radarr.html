@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>ssdv2 | SSDv2</title>
+<meta name="generator" content="Jekyll v3.8.7" />
+<meta property="og:title" content="ssdv2" />
+<meta property="og:locale" content="fr" />
+<meta name="description" content="Simple Seedbox docker" />
+<meta property="og:description" content="Simple Seedbox docker" />
+<meta property="og:site_name" content="SSDv2" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="ssdv2" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Simple Seedbox docker","headline":"ssdv2","url":"/ssdv2/Sonarr---Radarr.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/ssdv2/assets/css/style.css?v=">
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="/ssdv2/assets/js/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="/ssdv2/assets/css/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup theme-color -->
+<!-- start theme color meta headers -->
+<meta name="theme-color" content="#353535">
+<meta name="msapplication-navbutton-color" content="#353535">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- end theme color meta headers -->
+
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/ssdv2/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+<!--      <div id="header">-->
+<!--        <nav>-->
+<!--          <ul>-->
+<!--            <li class="fork"><a href="">View On GitHub</a></li>-->
+<!--            -->
+<!--          </ul>-->
+<!--        </nav>-->
+<!--      </div>&lt;!&ndash; end header &ndash;&gt;-->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>SSDv2</h1>
+          <p>Simple Seedbox docker</p>
+          <hr>
+            <span class="credits left">
+                 
+                    
+
+                
+                    
+                        <a href="/ssdv2/en//Sonarr---Radarr.html">English</a>
+                    
+
+                
+            </span>
+<!--          <span class="credits left">Project maintained by <a href=""></a></span>-->
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></span>
+        </div>
+
+        <hr />
+
+<blockquote>
+  <p>La documentation complète de Radarr est <a href="https://href.li/?https://wiki.servarr.com/Radarr">ICI</a>.<br />
+La documentation complète de Sonarr est <a href="https://href.li/?https://wiki.servarr.com/Sonarr">ICI</a>.<br />
+Je vous conseille de commencer par la rubrique Quick Start Guide <a href="https://href.li?https://wiki.servarr.com/Radarr_Quick_Start_Guide">Radarr</a>, <a href="https://href.li?https://wiki.servarr.com/sonarr_Quick_Start_Guide">Sonarr</a></p>
+</blockquote>
+
+<hr />
+
+<p>Ci dessous vous trouverez les réglage prope au script SSD</p>
+
+<h2 id="downloads-client-rutorrent">Downloads Client (Rutorrent)</h2>
+
+<p><img src="https://user-images.githubusercontent.com/64525827/105706539-f6862000-5f11-11eb-9dc8-2ec81241c9dd.png" alt="Radarr - Download client" /></p>
+
+<h2 id="indiquer-le-chemin-vers-les-fichiers-à-importer-remote-patch">Indiquer le chemin vers les fichiers à importer (Remote Patch)</h2>
+
+<p><img src="https://user-images.githubusercontent.com/64525827/105707017-99d73500-5f12-11eb-82b5-6baa35dc918c.png" alt="Radarr - Remote patch" /></p>
+
+<h2 id="ajouter-un-indexer">Ajouter un indexer</h2>
+
+<p><img src="https://user-images.githubusercontent.com/64525827/105706541-f71eb680-5f11-11eb-9f3b-10c05197b985.png" alt="Radarr - Indexer" /></p>
+
+<p>Il faut utiliser la ligne ci-dessous comme base de lien vers Jackett</p>
+<blockquote>
+  <p>http://jackett:9117/api/v2.0/indexers/nametracker/results/torznab/</p>
+</blockquote>
+
+<h2 id="ajouter-autoscan-pour-informer-plex-de-lajout-de-fichier">Ajouter autoscan pour informer Plex de l’ajout de fichier</h2>
+
+<blockquote>
+  <p>rendez vous dans le menu seedbox et faites le choix suivants : 2 - 4 - 2) Autoscan (Nouvelle version de Plex_autoscan)</p>
+</blockquote>
+
+<p>Il n’y a pas de réglage à effectuer, c’est une vérification temps réel des modifications de fichier.<br />
+Une fois le nouveau fichier détecté il est mis en attente pendant 5 min puis Plex est alerté.</p>
+
+<h2 id="import-manuel">Import manuel</h2>
+
+<p>Vous avez téléchargez du contenu avant de le mettre en surveillance dans *arr ou vous avez une erreur à l’importation.</p>
+
+<p>Alors vous devez utilisez la fonction “manual import” :</p>
+<ul>
+  <li>Il faut utiliser le chemin vers le dossier contenant vos données (attention vous devez utilisez le chemin “Medias”</li>
+  <li>Ensuite “interactive import” et enfin vous pouvez sélectionner les fichiers à importés en ayant pris soins de cocher selon vos besoins “hardlink ou “move”
+<img width="1057" alt="manual import" src="https://user-images.githubusercontent.com/64525827/105092410-7a1eb780-5aa1-11eb-94ba-77e194d359e0.png" /></li>
+</ul>
+
+
+      </section>
+
+    </div>
+  </body>
+</html>

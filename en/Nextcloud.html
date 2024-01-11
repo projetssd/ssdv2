@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>ssdv2 | SSDv2</title>
+<meta name="generator" content="Jekyll v3.8.7" />
+<meta property="og:title" content="ssdv2" />
+<meta property="og:locale" content="en" />
+<meta name="description" content="Simple Seedbox docker" />
+<meta property="og:description" content="Simple Seedbox docker" />
+<meta property="og:site_name" content="SSDv2" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="ssdv2" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Simple Seedbox docker","headline":"ssdv2","url":"/ssdv2/en/Nextcloud.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/ssdv2/en/assets/css/style.css?v=">
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="/ssdv2/en/assets/js/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="/ssdv2/en/assets/css/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup theme-color -->
+<!-- start theme color meta headers -->
+<meta name="theme-color" content="#353535">
+<meta name="msapplication-navbutton-color" content="#353535">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- end theme color meta headers -->
+
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/ssdv2/en/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+<!--      <div id="header">-->
+<!--        <nav>-->
+<!--          <ul>-->
+<!--            <li class="fork"><a href="">View On GitHub</a></li>-->
+<!--            -->
+<!--          </ul>-->
+<!--        </nav>-->
+<!--      </div>&lt;!&ndash; end header &ndash;&gt;-->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>SSDv2</h1>
+          <p>Simple Seedbox docker</p>
+          <hr>
+            <span class="credits left">
+                 
+                    
+                        <a href="/ssdv2//Nextcloud.html">Français</a>
+                    
+
+                
+                    
+
+                
+            </span>
+<!--          <span class="credits left">Project maintained by <a href=""></a></span>-->
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></span>
+        </div>
+
+        <h2 id="comment-installer--configurer-nextcloud">Comment installer &amp; configurer Nextcloud</h2>
+
+<h4 id="à-propos-de-mariadb-et-la-base-de-données">À propos de mariadb et la base de données</h4>
+
+<p>⚠️ TON_USER = VOTRE user, en minuscule ⚠️</p>
+
+<p>⚠️ ndd.tld = VOTRE domaine, en minuscule ⚠️</p>
+
+<p>⚠️ Commenter c’est ajouter un # en début de ligne afin que le fichier config n’en tienne pas compte ⚠️</p>
+
+<p>Afin d’éviter des erreurs ultérieures et d’optimiser votre installation, il vaut mieux opter pour une installation avec Mariadb et non SQLite !</p>
+
+<p>Voici les informations nécessaires pour une installation avec Mariadb :</p>
+
+<p><img src="https://user-images.githubusercontent.com/64525827/105355834-f2e15900-5bf2-11eb-9d55-19d4eb658830.jpg" alt="505-828-max" /></p>
+
+<ul>
+  <li>Login: choisissez le vôtre et laissez toto tranquille :0)</li>
+  <li>Password: choisissez un password <strong>fort</strong>!</li>
+  <li>Répertoires des données : <code class="highlighter-rouge">/data </code></li>
+  <li>Utilisateur de la base de données : <code class="highlighter-rouge">nextcloud</code></li>
+  <li>Mot de passe de la base de données : <code class="highlighter-rouge">nextcloud</code></li>
+  <li>Nom de la base de données : <code class="highlighter-rouge">nextcloud</code></li>
+  <li>Hôte de la base de données : <code class="highlighter-rouge">db-nextcloud</code></li>
+</ul>
+
+<p>Clquer sur <strong>Installer</strong>, libre à vous de laisser coché les applications conseillées. Il est toujours possible de les installer par après.</p>
+
+<h4 id="pensez-à-mettre-votre-nextcloud-à-jour-avant-toute-autre-opération">Pensez à mettre votre Nextcloud à jour avant toute autre opération!!</h4>
+<h4 id="ce-tuto-est-valable-pour-la-dernière-version-2004">Ce tuto est valable pour la dernière version: 20.0.4</h4>
+
+<h3 id="régler-les-alertes-de-sécurité">Régler les alertes de sécurité</h3>
+
+<p>Après l’installation de Nextcloud il est nécessaire de régler les alertes de sécurité présentes dans :</p>
+
+<p>Paramètres / Vue d’ensemble / Avertissements de sécurité &amp; configuration</p>
+
+<p>https://nextcloud.ndd.tld/settings/admin/overview</p>
+
+<p><img src="https://user-images.githubusercontent.com/64525827/105355836-f379ef80-5bf2-11eb-95a0-1a166d368729.jpg" alt="1582-500-max" /></p>
+
+<p>Pour l’alerte: 
+« L’en-tête HTTP “Strict-Transport-Security” n’est pas configurée à au moins “15552000” secondes. Pour renforcer la sécurité, nous recommandons d’activer HSTS comme décrit dans nos conseils de sécurisation ↗. »</p>
+
+<p><code class="highlighter-rouge">nano /opt/seedbox/docker/TON_USER/nextcloud/conf/nginx/site-confs/default</code></p>
+
+<p>Ajouter cette ligne : 
+<code class="highlighter-rouge">add_header Strict-Transport-Security "max-age=63072000; includeSubdomains; preload";</code></p>
+
+<p>Comme ceci (par exemple):</p>
+
+<p><img src="https://user-images.githubusercontent.com/64525827/105355840-f4128600-5bf2-11eb-8e64-a454f0ac9b9c.jpg" alt="769-132-max" /></p>
+
+<p>Sauver le fchier édité.</p>
+
+<p>On relance Nextcloud et sa base de données en faisant:</p>
+
+<p><code class="highlighter-rouge">docker restart nextcloud db-nextcloud</code></p>
+
+<p>Pour l’alerte: La base de données a quelques index manquants. L’ajout d’index dans de grandes tables peut prendre un certain temps. Elles ne sont donc pas ajoutées automatiquement.</p>
+
+<p><code class="highlighter-rouge">docker exec -ti nextcloud bash</code></p>
+
+<p><code class="highlighter-rouge">occ db:add-missing-indices</code></p>
+
+<p>Pour l’alerte: Certaines colonnes de la base de données n’ont pas été converties en big int. Changer le type de colonne dans de grandes tables peu prendre beaucoup de temps, elles n’ont donc pas été converties automatiquement.</p>
+
+<p><code class="highlighter-rouge">docker exec -ti nextcloud bash</code></p>
+
+<p><code class="highlighter-rouge">occ db:convert-filecache-bigint</code> Valider</p>
+
+<p>Following columns will be updated:</p>
+
+<ul>
+  <li>federated_reshares.share_id</li>
+  <li>share_external.id</li>
+  <li>share_external.parent</li>
+</ul>
+
+<p>This can take up to hours, depending on the number of files in your instance!
+Continue with the conversion (y/n)? Choisir y, bien entendu!</p>
+
+<p>Vous obtenez à nouveau votre <strong>V</strong> vert sacré ;)</p>
+
+<p><img src="https://user-images.githubusercontent.com/64525827/105355841-f4128600-5bf2-11eb-97c6-80a48fb09b02.jpg" alt="1575-187-max" /></p>
+
+<p>Pour l’alerte:</p>
+<blockquote>
+  <p>Votre installation n’a pas de préfixe de région par défaut. C’est nécessaire pour valider les numéros de téléphone dans les paramètres du profil sans code pays. Pour autoriser les numéros sans code pays, veuillez ajouter “default_phone_region” avec le code ISO 3166-1 respectif de la région dans votre fichier de configuration.</p>
+</blockquote>
+
+<p>Il faut modifier le fichier config.php :</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>nano /opt/seedbox/docker/TON_USER/nextcloud/conf/www/nextcloud/config/config.php
+</code></pre></div></div>
+<p>ajouter à la derniere ligne</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>'default_phoneregion' =&gt; 'FR',
+</code></pre></div></div>
+<p>exemple:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  'dbhost' =&gt; 'XXX',
+  'dbport' =&gt; '',
+  'dbtableprefix' =&gt; 'oc',
+  'mysql.utf8mb4' =&gt; true,
+  'dbuser' =&gt; 'XXX',
+  'dbpassword' =&gt; 'XXX',
+  'installed' =&gt; true,
+  'default_phone_region' =&gt; 'FR',
+</code></pre></div></div>
+<p>Sauver le fchier édité.</p>
+
+<p>On relance Nextcloud et sa base de données en faisant:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker restart nextcloud db-nextcloud
+</code></pre></div></div>
+
+<h3 id="ajouter-un-mode-sombre-à-nextcloud">Ajouter un mode sombre à Nextcloud</h3>
+
+<p>Probablement l’application la plus suivie et la plus sympa pour un thème sombre.</p>
+
+<p>https://apps.nextcloud.com/apps/breezedark</p>
+
+<p>Cela fonctionne comme n’importe quelle autre application du magasin Nextcloud.</p>
+
+<p>Voici un aperçu:</p>
+
+<p><img src="https://user-images.githubusercontent.com/64525827/105355843-f4ab1c80-5bf2-11eb-9c2c-f94ab3a3221c.png" alt="screenshot" /></p>
+
+<p>Dans la partie application de Nextcloud il vous suffira d’entrer <strong>dark</strong> comme mot-clé et l’installer.</p>
+
+<p>Videz bien le cache et reload la page pour constater les effets!</p>
+
+<h3 id="monter-le-home-dans-nextcloud">Monter le home dans Nextcloud</h3>
+
+<p>https://mondedie.fr/d/10779-docker-monter-le-home-dans-nextcloud</p>
+
+<h3 id="monter-le-home-dans-nextcloud-sans-modifier-de-fichiers">Monter le home dans Nextcloud sans modifier de fichiers</h3>
+
+<p>C’est très simple, il suffi de vous rendre dans la partie <strong>Applications</strong> de votre installation Nextcloud.
+De rechercher l’application <strong>External storage support</strong> et de l’installer.</p>
+
+<p>Une fois installée, rendez-vous dans <strong>Paramètres</strong> puis dans la colonne de gauche dans <strong>Stockages externes</strong>:</p>
+
+<p>Maintenant remplissez les paramètres demandés:</p>
+
+<ul>
+  <li>Un nom de dossier: à votre convenance</li>
+  <li>Dans stockage externe: choisir… local :)</li>
+  <li>Authentification: aucun</li>
+  <li>Configuration: il faudra ici renseigner le chemin qui mène à votre home.</li>
+</ul>
+
+<p><em>Pour ceux qui utilisent Gdrive: /home/<strong>TON_USER</strong>/Medias/</em></p>
+
+<p><em>Pour ceux qui n’utilisent <strong>PAS</strong> Gdrive: /home/<strong>TON_USER</strong>/local/</em></p>
+<ul>
+  <li>Disponible pour: à vous de voir, si non laisser par défaut s’il n’y a pas de restrictions</li>
+</ul>
+
+<p>Pour que vous puissiez partager vos fichiers et/ou dossiers, veilliez à cliquer sur les <strong>…</strong>	comme indiqué sur le screenshot et cliquer sur <strong>Permettre le partage</strong></p>
+
+<p>Vérifier qu’un <strong>V</strong> vert soit présent comme sur le screenshot, vous avez fini!</p>
+
+<h3 id="la-double-authentification--2fa">La double authentification | 2fa</h3>
+
+<p>Augmenter la sécurité de votre compte avec la double authentification (two-factor authentication ou encore 2fa)!</p>
+
+<p><img src="https://raw.githubusercontent.com/nextcloud/twofactor_totp/dd1e48deec73a250886f35f3924186f5357f4c5f/screenshots/enter_challenge.png" alt="" /></p>
+
+<p>Rendez-vous dans la partie Applications de votre Nextcloud.</p>
+
+<p>Rechercher et installer: <strong>Two-Factor TOTP Provider</strong>
+Se rendre dans <strong>Paramètres</strong>
+Choisir <strong>Sécurité</strong> en haut à gauche ( https://ndd.tld/settings/user/security)</p>
+
+<p>Il suffira à cette étape de lancer votre application préférée pour la double authentification et de scanner le QR Code.
+Dans ce cas nous allons utiliser Google Authenticator, disponible ici: https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2&amp;hl=fr</p>
+
+<p>Maintenant que l’application est lancée, vous devriez voir ça:</p>
+
+<p>Cliquer sur <strong>Commencer</strong>
+Sélectionner <strong>Scanner un code-barres</strong></p>
+
+<p>Votre compte est ajouté!</p>
+
+<p>N’oubliez pas de rentrer le code renvoyé par Google Authenticator dans Nextcloud pour <strong>vérifier</strong> le tout:</p>
+
+<hr />
+<h1 id="nextcloud-avec-talk">Nextcloud avec Talk</h1>
+<hr />
+
+<p>On commence par mettre à jour le script:</p>
+
+<p><code class="highlighter-rouge">cd /opt/seedbox-compose/</code></p>
+
+<p><code class="highlighter-rouge">git pull</code></p>
+
+<p>On installe Nextcloud:</p>
+
+<p><code class="highlighter-rouge">cd /opt/seedbox-compose/</code></p>
+
+<p><code class="highlighter-rouge">./seedbox.sh</code></p>
+
+<p>Choisir l’option 2, ensuite l’option 1. Sélectionner Nextcloud dans la liste des applications avec la barre <strong>Espace</strong>, grâce à la touche TAB(ulation) de votre clavier, sélectionner <strong>OK</strong> et valider.</p>
+
+<p>Rendez-vous dans Nextcloud et télécharger <strong>Talk</strong> dans la partie applications:</p>
+
+<p>https://nextcloud.ndd.tld/settings/apps et taper dans recherche “<strong>Talk</strong>”.</p>
+
+<p>Une fois installé il faut se rendre à cette adresse, qui correspond à <strong>Paramètres</strong> / <strong>Discussion</strong> (en bas à gauche):</p>
+
+<p>https://nextcloud.ndd.tld/settings/admin/talk</p>
+
+<p>Remplissez les informations comme indiqué sur le screenshot:</p>
+
+<ul>
+  <li><strong>Serveurs STUN</strong>: l’IP de votre serveur suivi du port :3478</li>
+  <li><strong>Serveurs TURN</strong>: l’IP de votre serveur suivi du port :3478</li>
+  <li><strong>Secret</strong>: indiquer le code qui se trouve après <strong>static-auth-secret</strong> dans votre fichier turnserver.conf:</li>
+</ul>
+
+<p><code class="highlighter-rouge">nano /opt/seedbox/docker/VOTRE_USER/coturn/turnserver.conf</code></p>
+
+<p><strong>Important</strong><br />
+Penser à ouvrir le port 3478 dans iptables</p>
+
+<p>C’est fini, Talk est maintenant fonctionnel.</p>
+
+<hr />
+<h1 id="nextcloud-avec-collabora">Nextcloud avec Collabora</h1>
+<hr />
+
+<p><img src="https://nextcloud.teamsyno.com/s/xmkMexGHMoxJkop/preview" alt="" /></p>
+
+<h2 id="vous-avez-déjà-nextcloud-dinstallé-avec-le-script-sans-pertes-de-données">Vous avez déjà Nextcloud d’installé avec le script (sans pertes de données)</h2>
+
+<p>On commence par mettre à jour le script:</p>
+
+<p><code class="highlighter-rouge">cd /opt/seedbox-compose/</code></p>
+
+<p><code class="highlighter-rouge">git pull</code></p>
+
+<p> </p>
+
+<p>Maintenant on va copier le fichier nextcloud.yml:</p>
+
+<p><code class="highlighter-rouge">cp /opt/seedbox-compose/includes/dockerapps/nextcloud.yml /opt/seedbox/conf</code></p>
+
+<p> </p>
+
+<p>On réinitialise Nextcloud:</p>
+
+<p><code class="highlighter-rouge">cd /opt/seedbox-compose/</code></p>
+
+<p><code class="highlighter-rouge">./seedbox.sh</code></p>
+
+<p>Choisir l’option 2, ensuite l’option 3. Sélectionner Nextcloud dans la liste des applications avec la barre <strong>Espace</strong>, grâce à la touche TAB(ulation) de votre clavier, sélectionner <strong>OK</strong> et valider.</p>
+
+<p> </p>
+
+<p>Rendez-vous dans Nextcloud et télécharger <strong>Collabora</strong> dans la partie applications:</p>
+
+<p>https://nextcloud.ndd.tld/settings/apps</p>
+
+<p>Une fois installée, rendez-vous dans la partie configuration de <strong>Collabora</strong>:</p>
+
+<p>https://nextcloud.ndd.tld/settings/admin/richdocuments</p>
+
+<p><img src="https://nextcloud.teamsyno.com/s/QeD2qzCBm5xXrM4/preview" alt="" /></p>
+
+<p>Indiquez comme indiqué sur le screenshot votre sous domaine: https://collabora.ndd.tld et valider par <strong>Apply</strong>.</p>
+
+<h2 id="vous-navez-pas-encore-nextcloud-dinstallé">Vous n’avez pas encore Nextcloud d’installé</h2>
+
+<p>On commence par mettre à jour le script:</p>
+
+<p><code class="highlighter-rouge">cd /opt/seedbox-compose/ &amp;&amp; git pull</code></p>
+
+<p>On installe Nextcloud:</p>
+
+<p><code class="highlighter-rouge">cd /opt/seedbox-compose/ &amp;&amp; ./seedbox.sh</code></p>
+
+<p>Choisir l’option 2, ensuite l’option 1. Sélectionner Nextcloud dans la liste des applications avec la barre <strong>Espace</strong>, grâce à la touche TAB(tabulation) de votre clavier, sélectionner <strong>OK</strong> et valider.</p>
+
+<p>Rendez-vous dans Nextcloud et télécharger <strong>Collabora</strong> dans la partie applications:</p>
+
+<p>https://nextcloud.ndd.tld/settings/apps</p>
+
+<p>Une fois installée, rendez-vous dans la partie configuration de <strong>Collabora</strong>:</p>
+
+<p>https://nextcloud.ndd.tld/settings/admin/richdocuments</p>
+
+<p>Indiquez comme indiqué sur le screenshot votre sous domaine: https://collabora.ndd.tld et valider par <strong>Apply</strong>.</p>
+
+<h3 id="unauthorized-wopi-host">Unauthorized WOPI host</h3>
+
+<p>Il se peut que vous ayez un jour une erreur de ce type: “Unauthorized WOPI host”.</p>
+
+<p>Afin de régler cela, suivez cette procédure:</p>
+
+<ul>
+  <li>Sortir le fichier: <code class="highlighter-rouge">docker cp collabora:/etc/loolwsd/loolwsd.xml /opt/loolwsd.xml</code></li>
+  <li>Ensuite éditez le fichier loolwsd.xml: <code class="highlighter-rouge">nano /opt/loolwsd.xml</code></li>
+</ul>
+
+<p>Mettez à jour la balise <strong>storage</strong> en ajoutant deux lignes, l’une pour l’IP de votre serveur, l’autre pour le domaine de votre instance Nextcloud :</p>
+
+<p><code class="highlighter-rouge">&lt;host desc="Regex pattern of hostname to allow or deny." allow="true"&gt;1\.2\.3\.4&lt;/host&gt;</code></p>
+
+<p><code class="highlighter-rouge">&lt;host desc="Regex pattern of hostname to allow or deny." allow="true"&gt;nextcloud.votredomaine.tld&lt;/host&gt;</code></p>
+
+<ul>
+  <li>Réinjecter le fichier loolwsd.xl: <code class="highlighter-rouge">docker cp /opt/loolwsd.xml collabora:/etc/loolwsd/loolwsd.xml</code></li>
+</ul>
+
+<p>C’est fini et fonctionnel :)</p>
+
+
+      </section>
+
+    </div>
+  </body>
+</html>

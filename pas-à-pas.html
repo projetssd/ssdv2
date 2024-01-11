@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>ssdv2 | SSDv2</title>
+<meta name="generator" content="Jekyll v3.8.7" />
+<meta property="og:title" content="ssdv2" />
+<meta property="og:locale" content="fr" />
+<meta name="description" content="Simple Seedbox docker" />
+<meta property="og:description" content="Simple Seedbox docker" />
+<meta property="og:site_name" content="SSDv2" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="ssdv2" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Simple Seedbox docker","headline":"ssdv2","url":"/ssdv2/pas-%C3%A0-pas.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/ssdv2/assets/css/style.css?v=">
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="/ssdv2/assets/js/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="/ssdv2/assets/css/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup theme-color -->
+<!-- start theme color meta headers -->
+<meta name="theme-color" content="#353535">
+<meta name="msapplication-navbutton-color" content="#353535">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- end theme color meta headers -->
+
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/ssdv2/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+<!--      <div id="header">-->
+<!--        <nav>-->
+<!--          <ul>-->
+<!--            <li class="fork"><a href="">View On GitHub</a></li>-->
+<!--            -->
+<!--          </ul>-->
+<!--        </nav>-->
+<!--      </div>&lt;!&ndash; end header &ndash;&gt;-->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>SSDv2</h1>
+          <p>Simple Seedbox docker</p>
+          <hr>
+            <span class="credits left">
+                 
+                    
+
+                
+                    
+                        <a href="/ssdv2/en//pas-%C3%A0-pas.html">English</a>
+                    
+
+                
+            </span>
+<!--          <span class="credits left">Project maintained by <a href=""></a></span>-->
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></span>
+        </div>
+
+        <h2 id="on-commence-">on commence !!!</h2>
+<blockquote>
+  <p>Vous avez suivi les Prérequis alors on passe à l’installation du script qui installera toutes les dépendances (y compris docker).</p>
+</blockquote>
+
+<h3 id="il-faut-un-user-non-root-qui-ait-les-droits-de-faire-du-sudo">il faut un user NON root, qui ait les droits de faire du sudo</h3>
+
+<p>Sur debian, il faut commencer par installer sudo</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>apt-get update
+apt install -y sudo
+</code></pre></div></div>
+
+<p>Si vous n’avez que root :</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>adduser seed # changez "seed" par le user que vous voulez, et répondez aux questions
+usermod -aG sudo seed # changez "seed" par le user que vous voulez
+</code></pre></div></div>
+<p>Une fois que tout ça est fait, déconnectez vous de votre session root, et reconnectez vous avec le user qui vient d’être créé</p>
+
+<p>Ensuite</p>
+
+<h2 id="installation-du-script">Installation du script</h2>
+<h3 id="mise-à-jour-des-paquets-">Mise à jour des paquets :</h3>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo apt-get update &amp;&amp; sudo apt upgrade -y
+</code></pre></div></div>
+<h3 id="installation-de-git-">Installation de Git :</h3>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo apt install -y git
+</code></pre></div></div>
+<h3 id="clonage-du-script-">Clonage du script :</h3>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo git clone https://github.com/projetssd/ssdv2.git /home/${USER}/seedbox-compose
+</code></pre></div></div>
+<h3 id="changement-des-droits">Changement des droits</h3>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo chown -R ${USER}: /home/${USER}/seedbox-compose
+</code></pre></div></div>
+<p>Pour lancer le script :</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cd /home/${USER}/seedbox-compose &amp;&amp; ./seedbox.sh
+</code></pre></div></div>
+
+<h3 id="vous-aurez-ce-message-">Vous aurez ce message :</h3>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>IMPORTANT !
+===================================================
+Votre utilisateur n'était pas dans le groupe docker
+Il a été ajouté, mais vous devez vous déconnecter/reconnecter pour que la suite du process puisse fonctionner
+</code></pre></div></div>
+<p>Alors déconnexion puis Reconnexion et on continue avec la même commande</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cd /home/${USER}/seedbox-compose &amp;&amp; ./seedbox.sh
+</code></pre></div></div>
+
+<h3 id="informations-utilisateurs">INFORMATIONS UTILISATEURS</h3>
+<p>il suffit de répondre aux questions</p>
+
+<h3 id="installation-de-cloudflare">Installation de cloudflare</h3>
+<ul>
+  <li>
+    <p>Souhaitez vous utiliser les DNS Cloudflare ? (o/n - default n) : o
+recommandation <code class="highlighter-rouge">oui</code> afin de mettre à jour les sous-domaines automatiquement</p>
+  </li>
+  <li>Votre Email Cloudflare: <code class="highlighter-rouge">mail du compte cloudflare</code></li>
+  <li>Votre API Cloudflare: <code class="highlighter-rouge">API globale</code></li>
+</ul>
+
+<h3 id="google-oauth2-avec-traefik--secure-sso-pour-les-services-docker">Google OAuth2 avec Traefik – Secure SSO pour les services Docker</h3>
+<ul>
+  <li>Souhaitez vous sécuriser vos Applis avec Google OAuth2 ? (o/n - default n) : n</li>
+  <li>Dans un premier temps répondez <code class="highlighter-rouge">n</code> nous reviendrons dessus plus tard</li>
+</ul>
+
+<h2 id="fin-de-la-création-du-fichier-accountyml">Fin de la création du fichier account.yml</h2>
+
+<p>Lors de l’installation du script celui-ci prendra du temps et restera un moment sur</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>TASK [Add Debian repositories] ***************************************************************
+TASK [Install common packages] ***************************************************************
+</code></pre></div></div>
+<blockquote>
+  <p>Ne vous inquiétez pas, laissez faire car cela prendra plus ou moins du temps en fonction de la puissance de votre serveur et vous verrez le script redémarrer au bout d’un moment.</p>
+</blockquote>
+
+<h3 id="installation-de-traefik">Installation de Traefik</h3>
+<ul>
+  <li>Souhaitez vous personnaliser le sous domaine? (o/n): <code class="highlighter-rouge">n</code></li>
+  <li>Choix de Authentification pour traefik [ Enter ] 1 =&gt; basique | 2 =&gt; oauth | 3 =&gt; authelia: <code class="highlighter-rouge">1</code>
+Pour le moment, il faut choisir <code class="highlighter-rouge">basique</code>plus tard vous pourrez installer Oauth Google ou Authlia</li>
+</ul>
+
+<h3 id="les-composants-sont-maintenants-tous-installésréglés-poursuite-de-linstallation">Les composants sont maintenants tous installés/réglés, poursuite de l’installation</h3>
+<ul>
+  <li>Appuyez sur entrée pour continuer, ou ctrl+c pour sortir</li>
+</ul>
+
+<h1 id="vous-avez-réussi-à-atteindre-laccueil-du-script-bravo">Vous avez réussi à atteindre l’accueil du script <code class="highlighter-rouge">BRAVO</code></h1>
+
+<h3 id="le-premier-choix-à-faire--installation-local-ou-gdrive">Le premier choix à faire : installation local ou Gdrive</h3>
+<ul>
+  <li>Installation Seedbox Classique = Stockage uniquement sur la capacité de votre disque dur</li>
+  <li>Installation Seedbox Rclone = Stockage sur le cloud</li>
+  <li>Restauration Seedbox = Restauration à partir du BACKUP</li>
+</ul>
+
+<h3 id="gestion-du-rcloneconf">Gestion du rclone.conf</h3>
+<blockquote>
+  <p>vous avez 3 possibilités :</p>
+</blockquote>
+
+<ul>
+  <li>Copier/coller un rclone.conf déjà existant <strong>(fortement recommandé)</strong></li>
+  <li><del>Création rclone.conf</del></li>
+  <li><del>rclone.conf déjà existant sur le serveur</del></li>
+</ul>
+
+<h3 id="choix-1---copiercoller-un-rcloneconf-déjà-existant">CHOIX 1 -&gt; Copier/coller un rclone.conf déjà existant</h3>
+
+<table>
+  <tbody>
+    <tr>
+      <td>Vous devez suivre la procédure suivante selon votre système : <a href="Cr%C3%A9ation-remote-rclone-(MacOS)">Pour MacOS</a></td>
+      <td><a href="Cr%C3%A9ation-remote-rclone-(Windows)">Pour Windows</a></td>
+      <td><a href="Cr%C3%A9ation-remote-rclone-(Linux)">Pour Linux</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Coller le rclone, puis retour à la ligne et taper STOP puis à nouveau ENTRER pour valider.</p>
+
+<h3 id="choisir-le-remote-principal-">Choisir le remote principal :</h3>
+
+<p>1) Share Drive 
+   2) Gdrive</p>
+
+<ul>
+  <li>Votre choix: 1
+Nous vous conseillons l’utilisation de Sharedrive</li>
+</ul>
+
+<h3 id="médias-à-ajouter-">Médias à ajouter :</h3>
+<ul>
+  <li>Avec la barre d’espace sélectionner les dossiers à créer</li>
+  <li>Tabulation, puis taper entrer sur le bouton OK</li>
+</ul>
+
+<h1 id="vous-avez-réussi-linstallation-du-script-bravo">Vous avez réussi l’installation du script <code class="highlighter-rouge">BRAVO</code></h1>
+
+<h3 id="commençon-par-installer-une-application-ou-deux">Commençon par installer une application (ou deux)</h3>
+<ul>
+  <li>Entrez le chiffre 1) Ajout/ Suppression d’Applis</li>
+  <li>Ajout d’applications (naviguer avec les flêches et tabulation)</li>
+  <li>Vous pouvez selectionner plusieurs applications
+    <blockquote>
+      <p>Sélection des applications à installer:<br />
+Appuyer sur le barre espace pour sélectionner les applications, puis tabulation et taper ENTRER sur <code class="highlighter-rouge">OK</code></p>
+    </blockquote>
+  </li>
+  <li>une fois toutes les apps sélectionner, aller sur OK</li>
+</ul>
+
+<h3 id="personnaliser-les-sous-domaines-on--n">Personnaliser les sous domaines: (o/N) ? N</h3>
+<p>Dans un premier temps je vous conseille de conserver les sous-domaines par défaut</p>
+
+<h3 id="retour-à-laccueil">Retour à l’accueil</h3>
+<ul>
+  <li>pour sortir d’ici, il faut faire CTRL c</li>
+</ul>
+
+<h3 id="désormais-vous-pouvez-lancer-le-menu-en-faisant">Désormais vous pouvez lancer le menu en faisant</h3>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cd /home/${USER}/seedbox-compose &amp;&amp; ./seedbox.sh
+</code></pre></div></div>
+
+<h3 id="première-chose-à-faire-linstallation-de-cloudplow-et-plex_autoscan">Première chose à faire l’installation de cloudplow et Plex_Autoscan</h3>
+<ul>
+  <li>choix 2 puis choix 4</li>
+  <li>Ensuite lancer l’installation de Plex_Autoscan</li>
+  <li>et ensuite celle de cloudplow</li>
+</ul>
+
+<h1 id="fin-">FIN 👍</h1>
+
+
+      </section>
+
+    </div>
+  </body>
+</html>

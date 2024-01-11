@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>ssdv2 | SSDv2</title>
+<meta name="generator" content="Jekyll v3.8.7" />
+<meta property="og:title" content="ssdv2" />
+<meta property="og:locale" content="en" />
+<meta name="description" content="Simple Seedbox docker" />
+<meta property="og:description" content="Simple Seedbox docker" />
+<meta property="og:site_name" content="SSDv2" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="ssdv2" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Simple Seedbox docker","headline":"ssdv2","url":"/ssdv2/en/UFW-Installation-et-configuration.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/ssdv2/en/assets/css/style.css?v=">
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="/ssdv2/en/assets/js/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="/ssdv2/en/assets/css/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup theme-color -->
+<!-- start theme color meta headers -->
+<meta name="theme-color" content="#353535">
+<meta name="msapplication-navbutton-color" content="#353535">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- end theme color meta headers -->
+
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/ssdv2/en/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+<!--      <div id="header">-->
+<!--        <nav>-->
+<!--          <ul>-->
+<!--            <li class="fork"><a href="">View On GitHub</a></li>-->
+<!--            -->
+<!--          </ul>-->
+<!--        </nav>-->
+<!--      </div>&lt;!&ndash; end header &ndash;&gt;-->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>SSDv2</h1>
+          <p>Simple Seedbox docker</p>
+          <hr>
+            <span class="credits left">
+                 
+                    
+                        <a href="/ssdv2//UFW-Installation-et-configuration.html">Français</a>
+                    
+
+                
+                    
+
+                
+            </span>
+<!--          <span class="credits left">Project maintained by <a href=""></a></span>-->
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></span>
+        </div>
+
+        <p>UFW, ou Uncomplicated Firewall, est une interface vers + iptables + qui est conçue pour simplifier le processus de configuration d’un pare-feu.</p>
+
+<h4 id="1---installation-">1 - Installation :</h4>
+
+<p>Pour l’activer il faut se rendre dans le menu 3)Gestion, 2)Utilitaires, 8) Bloquer les ports non vitaux avec UFW.</p>
+
+<p>Par defaut, il sera installé avec les ports ouverts suivant :</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- http (80)
+- https (443)
+- plex  (32400)
+- ssh (22 si vous avez laissé la valeur par défaut)
+</code></pre></div></div>
+
+<p><img src="https://user-images.githubusercontent.com/64525827/105354525-f70c7700-5bf0-11eb-83ae-27aec32d5a72.png" alt="mobaxterm-kfkusnrm4l" /></p>
+
+<h4 id="2---conseil-important-">2 - Conseil important :</h4>
+
+<p>Une fois l’installation terminée, ne surtout pas fermer votre terminal. En ouvrir un second et essayer de vous connecter en SSH.</p>
+
+<h4 id="3---commandes-ufw-utiles-">3 - Commandes UFW utiles :</h4>
+
+<p>ci joint une liste non exhaustive des commandes pour UFW</p>
+
+<p>Pour connaitre la liste des ports et le status sur votre serveur</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ufw status verbose
+
+
+
+Status: active 
+To                         Action      From
+--                         ------      ----
+8398                       ALLOW       Anywhere
+Anywhere                   ALLOW       176.189.55.227
+Anywhere                   ALLOW       172.16.0.0/12
+Anywhere                   ALLOW       127.0.0.1
+80                         ALLOW       Anywhere
+443                        ALLOW       Anywhere
+8080                       ALLOW       Anywhere
+45000                      ALLOW       Anywhere
+plexmediaserver-all        ALLOW       Anywhere
+Anywhere                   ALLOW       182.122.87.111
+8398 (v6)                  ALLOW       Anywhere (v6)
+80 (v6)                    ALLOW       Anywhere (v6)
+443 (v6)                   ALLOW       Anywhere (v6)
+8080 (v6)                  ALLOW       Anywhere (v6)
+45000 (v6)                 ALLOW       Anywhere (v6)
+plexmediaserver-all (v6)   ALLOW       Anywhere (v6)
+</code></pre></div></div>
+
+<h4 id="4---ajout-de-ports-etou-dip">4 - Ajout de ports et/ou d’IP</h4>
+
+<p>Si vous avez besoin d’ajouter un port particulier et/ou une adresse Ip qui ne sera pas affecté par le filtrage d’UFW, il faut éditer le fichier suivant :  /opt/seedbox/conf/ufw.yml
+et ajouter des lignes supplémentaires. Il ne faut pas modifier les lignes existantes.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>hosts: localhost
+ 	gather_facts: true
+  	vars:
+ opened_ports:
+  - 80
+  - 443
+  - 8080
+  - 45000
+  # Ajoutez les ports nécessaires ici :
+  # - 25 # smtp
+ allow_ips:
+  - 172.17.0.1/12 # réseau docker, ne pas supprimer !
+  - 127.0.0.1
+  - 188.13.87.111
+  # ajoutez des ip ou des plages supplémentaires ici
+  # - 123.456.789.123
+  # - fe20:abcd::
+</code></pre></div></div>
+
+
+      </section>
+
+    </div>
+  </body>
+</html>

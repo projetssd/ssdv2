@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>ssdv2 | SSDv2</title>
+<meta name="generator" content="Jekyll v3.8.7" />
+<meta property="og:title" content="ssdv2" />
+<meta property="og:locale" content="en" />
+<meta name="description" content="Simple Seedbox docker" />
+<meta property="og:description" content="Simple Seedbox docker" />
+<meta property="og:site_name" content="SSDv2" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="ssdv2" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Simple Seedbox docker","headline":"ssdv2","url":"/ssdv2/en/Plex-Autoscan.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/ssdv2/en/assets/css/style.css?v=">
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="/ssdv2/en/assets/js/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="/ssdv2/en/assets/css/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup theme-color -->
+<!-- start theme color meta headers -->
+<meta name="theme-color" content="#353535">
+<meta name="msapplication-navbutton-color" content="#353535">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- end theme color meta headers -->
+
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/ssdv2/en/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+<!--      <div id="header">-->
+<!--        <nav>-->
+<!--          <ul>-->
+<!--            <li class="fork"><a href="">View On GitHub</a></li>-->
+<!--            -->
+<!--          </ul>-->
+<!--        </nav>-->
+<!--      </div>&lt;!&ndash; end header &ndash;&gt;-->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>SSDv2</h1>
+          <p>Simple Seedbox docker</p>
+          <hr>
+            <span class="credits left">
+                 
+                    
+                        <a href="/ssdv2//Plex-Autoscan.html">Français</a>
+                    
+
+                
+                    
+
+                
+            </span>
+<!--          <span class="credits left">Project maintained by <a href=""></a></span>-->
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></span>
+        </div>
+
+        <p>Plex Autoscan <a href="https://github.com/l3uddz/plex_autoscan">(de l3uddz)</a> est un script qui assiste Plex dans l’ajout de fichiers multimédias importés par Sonarr / Radarr en analysant uniquement le dossier importé et non pas toute la bibliothèque, empêchant ainsi les interdictions de Google API.</p>
+
+<p>Plex Autoscan est automatiquement configuré par le script. Toutefois vous avez la possibilité de le modifier à votre convenance</p>
+
+<p>Ce qu’il est important de savoir est qu’avant la première utilisation de plex_autoscan il vous faudra faire un scan manuel de chaque librairie avec au moins un media dans chacune d’entre elles.</p>
+
+<h4 id="exemple">Exemple</h4>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "DOCKER_NAME": "plex",
+  "GDRIVE": {
+    "CLIENT_ID": "",
+    "CLIENT_SECRET": "",
+    "ENABLED": false,
+    "TEAMDRIVE": false,
+    "POLL_INTERVAL": 60,
+    "IGNORE_PATHS": [],
+    "SCAN_EXTENSIONS":[
+      "webm","mkv","flv","vob","ogv","ogg","drc","gif",
+      "gifv","mng","avi","mov","qt","wmv","yuv","rm",
+      "rmvb","asf","amv","mp4","m4p","m4v","mpg","mp2",
+      "mpeg","mpe","mpv","m2v","m4v","svi","3gp","3g2",
+      "mxf","roq","nsv","f4v","f4p","f4a","f4b","mp3",
+      "flac","ts"
+    ]
+  },
+  "PLEX_ANALYZE_DIRECTORY": true,
+  "PLEX_ANALYZE_TYPE": "basic",
+  "PLEX_DATABASE_PATH": "/var/lib/plexmediaserver/Library/Application Support/Plex Media Server/Plug-in Support/Databases/com.plexapp.plugins.library.db",
+  "PLEX_EMPTY_TRASH": false,
+  "PLEX_EMPTY_TRASH_CONTROL_FILES": [
+    "/mnt/unionfs/mounted.bin"
+  ],
+  "PLEX_EMPTY_TRASH_MAX_FILES": 100,
+  "PLEX_EMPTY_TRASH_ZERO_DELETED": false,
+  "PLEX_LD_LIBRARY_PATH": "/usr/lib/plexmediaserver",
+  "PLEX_LOCAL_URL": "http://localhost:32400",
+  "PLEX_SCANNER": "/usr/lib/plexmediaserver/Plex\\ Media\\ Scanner",
+  "PLEX_SECTION_PATH_MAPPINGS": {
+    "1": [
+      "/Movies/"
+    ],
+    "2": [
+      "/TV/"
+    ]
+  },
+  "PLEX_SUPPORT_DIR": "/var/lib/plexmediaserver/Library/Application\\ Support",
+  "PLEX_TOKEN": "",
+  "PLEX_USER": "plex",
+  "PLEX_WAIT_FOR_EXTERNAL_SCANNERS": true,
+  "RCLONE_RC_CACHE_EXPIRE": {
+    "ENABLED": false,
+    "MOUNT_FOLDER": "/mnt/rclone",
+    "RC_URL": "http://localhost:5572"
+  },
+  "RUN_COMMAND_BEFORE_SCAN": "",
+  "RUN_COMMAND_AFTER_SCAN": "",
+  "SERVER_ALLOW_MANUAL_SCAN": false,
+  "SERVER_FILE_EXIST_PATH_MAPPINGS": {
+      "/mnt/unionfs/media/": [
+          "/data/"
+      ]
+  },
+  "SERVER_IGNORE_LIST": [
+    "/.grab/",
+    ".DS_Store",
+    "Thumbs.db"
+  ],
+  "SERVER_IP": "0.0.0.0",
+  "SERVER_MAX_FILE_CHECKS": 10,
+  "SERVER_FILE_CHECK_DELAY": 60,
+  "SERVER_PASS": "9c4b81fe234e4d6eb9011cefe514d915",
+  "SERVER_PATH_MAPPINGS": {
+      "/mnt/unionfs/": [
+          "/home/seed/media/fused/"
+      ]
+  },
+  "SERVER_PORT": 3468,
+  "SERVER_SCAN_DELAY": 180,
+  "SERVER_SCAN_FOLDER_ON_FILE_EXISTS_EXHAUSTION": false,
+  "SERVER_SCAN_PRIORITIES": {
+    "1": [
+      "/Movies/"
+    ],
+    "2": [
+      "/TV/"
+    ]
+  },
+  "SERVER_USE_SQLITE": true,
+  "USE_DOCKER": false,
+  "USE_SUDO": false
+}
+</code></pre></div></div>
+
+<h4 id="pour-modifier-ou-rajouter-des-sections">Pour modifier ou rajouter des sections</h4>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cd /home/user/scripts/plex_autoscan
+python scan.py sections
+
+</code></pre></div></div>
+
+<p>Un exemple de sortie</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code> 2018-06-23 08:28:26,910 -     INFO -    CONFIG [140425529542400]: Using default setting --loglevel=INFO
+ 2018-06-23 08:28:26,910 -     INFO -    CONFIG [140425529542400]: Using default setting --cachefile=cache.db
+ 2018-06-23 08:28:26,910 -     INFO -    CONFIG [140425529542400]: Using default setting --tokenfile=token.json
+ 2018-06-23 08:28:26,910 -     INFO -    CONFIG [140425529542400]: Using default setting --queuefile=queue.db
+ 2018-06-23 08:28:26,910 -     INFO -    CONFIG [140425529542400]: Using default setting --logfile=plex_autoscan.log
+ 2018-06-23 08:28:26,910 -     INFO -    CONFIG [140425529542400]: Using default setting --config=config/config.json
+ 2018-06-23 08:28:27,069 -     INFO -  AUTOSCAN [140425529542400]:
+        _                         _
+  _ __ | | _____  __   __ _ _   _| |_ ___  ___  ___ __ _ _ __
+ | '_ \| |/ _ \ \/ /  / _` | | | | __/ _ \/ __|/ __/ _` | '_ \
+ | |_) | |  __/&gt;  &lt;  | (_| | |_| | || (_) \__ \ (_| (_| | | | |
+ | .__/|_|\___/_/\_\  \__,_|\__,_|\__\___/|___/\___\__,_|_| |_|
+ |_|
+
+#########################################################################
+# Author:   l3uddz                                                      #
+# URL:      https://github.com/l3uddz/plex_autoscan                     #
+# --                                                                    #
+# Part of the Cloudbox project: https://cloudbox.works                  #
+#########################################################################
+# GNU General Public License v3.0                                       #
+#########################################################################
+
+ 2018-06-23 08:28:27,070 -     INFO -      PLEX [140425529542400]: Using Plex Scanner
+  1: Movies
+  2: TV
+</code></pre></div></div>
+
+<h4 id="modifications-à-effectuer">Modifications à effectuer</h4>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"PLEX_SECTION_PATH_MAPPINGS": {
+  "1": [
+    "/Movies/"
+  ],
+  "2": [
+    "/TV/"
+  ]
+},
+</code></pre></div></div>
+<p>ainsi que</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"SERVER_PATH_MAPPINGS": {
+    "/path/in/plex/container/": [
+        "/path/from/sonarr/container/"
+    ]
+},
+</code></pre></div></div>
+<h4 id="modification-de-la-fréquence-de-déclenchement-de-plex_autoscan">Modification de la fréquence de déclenchement de plex_autoscan</h4>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"SERVER_SCAN_DELAY": 180,
+</code></pre></div></div>
+
+<p>Les options de configurations sont nombreuses et détaillées sur le git de l3uddz
+https://github.com/l3uddz/plex_autoscan</p>
+
+
+      </section>
+
+    </div>
+  </body>
+</html>

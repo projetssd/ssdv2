@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>ssdv2 | SSDv2</title>
+<meta name="generator" content="Jekyll v3.8.7" />
+<meta property="og:title" content="ssdv2" />
+<meta property="og:locale" content="fr" />
+<meta name="description" content="Simple Seedbox docker" />
+<meta property="og:description" content="Simple Seedbox docker" />
+<meta property="og:site_name" content="SSDv2" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="ssdv2" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Simple Seedbox docker","headline":"ssdv2","url":"/ssdv2/Principes-de-base-de-gestion-des-fichiers.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/ssdv2/assets/css/style.css?v=">
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="/ssdv2/assets/js/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="/ssdv2/assets/css/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup theme-color -->
+<!-- start theme color meta headers -->
+<meta name="theme-color" content="#353535">
+<meta name="msapplication-navbutton-color" content="#353535">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- end theme color meta headers -->
+
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/ssdv2/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+<!--      <div id="header">-->
+<!--        <nav>-->
+<!--          <ul>-->
+<!--            <li class="fork"><a href="">View On GitHub</a></li>-->
+<!--            -->
+<!--          </ul>-->
+<!--        </nav>-->
+<!--      </div>&lt;!&ndash; end header &ndash;&gt;-->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>SSDv2</h1>
+          <p>Simple Seedbox docker</p>
+          <hr>
+            <span class="credits left">
+                 
+                    
+
+                
+                    
+                        <a href="/ssdv2/en//Principes-de-base-de-gestion-des-fichiers.html">English</a>
+                    
+
+                
+            </span>
+<!--          <span class="credits left">Project maintained by <a href=""></a></span>-->
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></span>
+        </div>
+
+        <h2 id="principe-de-gestion-des-fichiers">Principe de gestion des fichiers</h2>
+
+<h3 id="généralités">Généralités</h3>
+
+<p>Dans les exemples ci-dessous, nous allons imaginer que le [user] télécharge
+un film de vacances qui fait 100 Mo, via Rutorrent. Son répertoire sera nommé /home/[user] 
+L’architecture de fichier est la suivante :</p>
+<ul>
+  <li>**/mnt/rclone/<user>** : le montage de rclone (chiffré sur cloud)</user></li>
+  <li><strong>/home/[user]/local</strong> : fichier local (disque dur local)</li>
+  <li><strong>/home/[user]/Medias</strong> : systeme de fichier mergerfs, fusion de /mnt/rclone/[user] et /home/[user]/local</li>
+  <li><strong>/data/Films</strong> : montage correspondant à <strong>/home/[user]/Medias</strong> (petite explication : Plex tourne en container, et le répertoire /data est mappé sur /home/[user]/Medias. Cela veut dire que le contenu du répertoire /data du container Plex est égal au contenu /home/[user]/Medias de son hôte. Chaque modification sur /data de plex impacte /home/[user]/Medias et inversement)</li>
+</ul>
+
+<h3 id="téléchargement-du-fichier">Téléchargement du fichier</h3>
+
+<p>Rutorrent télécharge le fichier dans <strong>/home/[user]/local/Rutorrent</strong>. 100 Mo sont occupé sur le disque</p>
+
+<p>Grace à mergerfs, le fichier est visible dans <strong>/home/[user]/local/Rutorrent</strong> et aussi dans <strong>/home/[user]/Medias/Rutorrent</strong></p>
+
+<h3 id="traitement-par-radarr-ou-équivalent">Traitement par Radarr (ou équivalent)</h3>
+
+<p>Radarr voit le fichier dans <strong>/home/[user]/Medias/Rutorrent</strong>. Il peut donc faire un “hard link” de <strong>/home/[user]/Medias/Rutorrent/monfilm.mkv</strong> vers <strong>/home/[user]/Medias/Films/MonFilm/monfilm.mkv</strong></p>
+
+<p>Il va ensuite “prévenir” autoscan (ou plex_autoscan) qu’il a traité un fichier à cet emplacement</p>
+
+<h4 id="quel-est-lintérêt-de-cette-pratique-">Quel est l’intérêt de cette pratique ?</h4>
+<ul>
+  <li>cela ne prend qu’une fraction de seconde de faire un hard link, contrairement à une copie</li>
+  <li>Plex est prévenu qu’il y a un “nouveau fichier” dans <strong>/data/Films/MonFilm</strong>, et peut analyser uniquement ce répertoire (et non pas toute la bibliothèque, et heureusement, car une grande partie de cette bibliothèque est distante, et provoquerait un grand nombre d’appel api)</li>
+  <li>Même si le fichier est visible par le système à deux endroits différents, il ne prend qu’une fois l’espace disque. Seuls 100 Mo sont consommés</li>
+</ul>
+
+<h3 id="petite-explication-technique--cest-quoi-un-hard-link-">Petite explication technique : c’est quoi un hard link ?</h3>
+
+<p>C’est quand le système attribue plusieurs entrées à sa table d’allocation pour un seul fichier.</p>
+
+<p>Sous linux, le stockage d’un fichier est un représenté par un inode. Chaque fichier, chaque dossier a son propre inode. Dans le cas d’un hard link, plusieurs
+entrée de la table d’allocation ont le même inode. Le système voit donc plusieurs fois le même fichier, mais en réalité, il n’est stocké qu’une seule fois.</p>
+
+<p>Tant qu’on n’a pas effacé tous les fichiers pointant vers cet inode, les autres continuent d’exister et ne sont pas impactés. On peut en renommer un sans toucher aux autres (il parait que la formule <a href="https://fr.wiktionary.org/wiki/cela_m%E2%80%99en_touche_une_sans_faire_bouger_l%E2%80%99autre">“ça m’en touche une sans faire bouger l’autre”</a> vient de là, comme quoi Chirac était un linuxien accompli).</p>
+
+<p>Les principales limitations du hardlink sont :</p>
+<ul>
+  <li>on ne peut pas en faire sur un dossier ou sur un fichier spécial</li>
+  <li>On ne peut pas faire de hardlink d’un fichier vers un autre filesystem (ou point de montage) que le fichier d’origine.</li>
+</ul>
+
+<p>Du coup, on ne peut pas faire de hardlink de <strong>/home/[user]/local/Rutorrent</strong> vers <strong>**/home/[user]/Medias/Films (puisque /home/[user]/Medias est un point de montage), mais on peut faire un hardlink de **/home/[user]/Medias/Rutorrent</strong> vers <strong>/home/[user]/Medias/Films</strong></p>
+
+<h3 id="et-après-">Et après ?</h3>
+
+<p>Le système voit deux fichiers distincts, même si en réalité c’est le même fichier (un seul stockage).</p>
+<ul>
+  <li>un des deux fichiers (celui dans <strong>/home/[user]/Medias/Rutorrent</strong>)reste en seed aussi longtemps que l’on veut</li>
+  <li>l’autre fichier est lisible par plex.</li>
+</ul>
+
+<p>Ce dernier “fichier logique” va un jour être traité par cloudplow (ou crop) pour être envoyé sur le drive.
+Concrètement, il va passer de <strong>/home/[user]/local/Films (branche “locale” de Medias) à /mnt/rclone/[user]/Films</strong> (branche “distante” de Medias).
+En réalité, même s’il est physiquement déplacé, il reste visible par le système (et donc plex) dans <strong>/data/Films</strong> (car comme on l’a dit, le répertoire /data du container Plex est égal au /home/[user]/Medias)</p>
+
+<p>Comme il n’a pas changé de place, Plex peut le lire sans avoir à l’analyser de nouveau</p>
+
+<h3 id="conclusion">Conclusion</h3>
+
+<p>Grace à ce système, le fichier ne prend jamais plus de place que son stockage réél. Il n’est jamais réellement copié.</p>
+
+<p>On peut envoyer le fichier sur le drive tout en restant en seed sur Rutorrent, et on peut supprimer de Rutorrent sans toucher au fichier lisible par plex (qu’il soit local ou distant)</p>
+
+
+      </section>
+
+    </div>
+  </body>
+</html>

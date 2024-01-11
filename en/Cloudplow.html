@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>ssdv2 | SSDv2</title>
+<meta name="generator" content="Jekyll v3.8.7" />
+<meta property="og:title" content="ssdv2" />
+<meta property="og:locale" content="en" />
+<meta name="description" content="Simple Seedbox docker" />
+<meta property="og:description" content="Simple Seedbox docker" />
+<meta property="og:site_name" content="SSDv2" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="ssdv2" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Simple Seedbox docker","headline":"ssdv2","url":"/ssdv2/en/Cloudplow.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/ssdv2/en/assets/css/style.css?v=">
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="/ssdv2/en/assets/js/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="/ssdv2/en/assets/css/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup theme-color -->
+<!-- start theme color meta headers -->
+<meta name="theme-color" content="#353535">
+<meta name="msapplication-navbutton-color" content="#353535">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- end theme color meta headers -->
+
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/ssdv2/en/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+<!--      <div id="header">-->
+<!--        <nav>-->
+<!--          <ul>-->
+<!--            <li class="fork"><a href="">View On GitHub</a></li>-->
+<!--            -->
+<!--          </ul>-->
+<!--        </nav>-->
+<!--      </div>&lt;!&ndash; end header &ndash;&gt;-->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>SSDv2</h1>
+          <p>Simple Seedbox docker</p>
+          <hr>
+            <span class="credits left">
+                 
+                    
+                        <a href="/ssdv2//Cloudplow.html">Français</a>
+                    
+
+                
+                    
+
+                
+            </span>
+<!--          <span class="credits left">Project maintained by <a href=""></a></span>-->
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></span>
+        </div>
+
+        <h4 id="synchroniser-deux-drives-avec-2-remotes-nommés-respectivement-google-et-tata">Synchroniser deux drives avec 2 remotes nommés respectivement google et tata</h4>
+
+<p>Cloudplow upload vers le 1er drive et ensuite, dans un delais préalablement defini, synchonise le 1er drive avec le 2ème drive</p>
+
+<p>le rclone.conf intègre donc 5 remotes</p>
+
+<p>avec les mêmes mots de passe</p>
+
+<p>Le remote plexdrive concernant le 2ème remote à synchroniser n’est pas nécessaire</p>
+<h4 id="exemple-de-configjson-pour-la-synchro-sur-un-2eme-drive">Exemple de config.json pour la synchro sur un 2eme drive:</h4>
+
+<pre><code class="language-{">    "core": {
+        "dry_run": false,
+        "rclone_binary_path": "/usr/bin/rclone",
+        "rclone_config_path": "/root/.config/rclone/rclone.conf"
+    },
+    "hidden": {
+        "/home/yohann/local/.unionfs-fuse": {
+            "hidden_remotes": [
+                "google"
+            ]
+        }
+    },
+    "notifications": {},
+    "nzbget": {
+        "enabled": false,
+        "url": "https://user:password@nzbget.domain.com"
+    },
+    "plex": {
+        "enabled": false,
+        "max_streams_before_throttle": 1,
+        "notifications": false,
+        "poll_interval": 60,
+        "rclone": {
+            "throttle_speeds": {
+                "0": "1000M",
+                "1": "50M",
+                "2": "40M",
+                "3": "30M",
+                "4": "20M",
+                "5": "10M"
+            },
+            "url": "http://localhost:7949"
+        },
+        "token": "FXrhQE28zND-YDc",
+        "url": "https://plex.domaine.com",
+        "verbose_notifications": false
+    },
+    "remotes": {
+        "google": {
+            "hidden_remote": "google:/yohann",
+            "rclone_command": "move",
+            "rclone_excludes": [
+                "**partial~",
+                "**_HIDDEN~",
+                ".unionfs/**",
+                ".unionfs-fuse/**",
+                ".fuse_hidden**",
+                "rutorrent/**",
+                "sabnzbd/**",
+                "Unsorted/**"
+            ],
+            "rclone_extras": {
+                "--checkers": 16,
+                "--drive-chunk-size": "128M",
+                "--low-level-retries": 2,
+                "--retries": 1,
+                "--skip-links": null,
+                "--stats": "60s",
+                "--transfers": 8,
+                "--verbose": 1
+            },
+            "rclone_sleeps": {
+                " 0/s,": {
+                    "count": 16,
+                    "sleep": 25,
+                    "timeout": 62
+                },
+                "Failed to copy: googleapi: Error 403: User rate limit exceeded": {
+                    "count": 10,
+                    "sleep": 25,
+                    "timeout": 7200
+                }
+            },
+            "remove_empty_dir_depth": 2,
+            "sync_remote": "google:/yohann",
+            "upload_folder": "/home/yohann/local",
+            "upload_remote": "google:/yohann"
+        },
+
+        "yohann": {
+            "hidden_remote": "",
+            "rclone_excludes": [],
+            "rclone_extras": {},
+            "rclone_sleeps": {},
+            "remove_empty_dir_depth": 2,
+            "sync_remote": "yohann:/yohann",
+            "upload_folder": "",
+            "upload_remote": ""
+        }
+    },
+    "syncer": {
+        "google2yohann": {
+            "rclone_extras": {
+                "--bwlimit": "70M",
+                "--checkers": 16,
+                "--drive-chunk-size": "64M",
+                "--stats": "60s",
+                "--transfers": 8,
+                "--verbose": 1
+            },
+            "service": "local",
+            "sync_from": "google",
+            "sync_interval": 26,
+            "sync_to": "yohann",
+            "tool_path": "/usr/bin/rclone",
+            "use_copy": true,
+            "instance_destroy": false
+          }
+},
+    "uploader": {
+        "google": {
+            "check_interval": 30,
+            "exclude_open_files": false,
+            "max_size_gb": 20,
+            "opened_excludes": [
+                "/rutorrent/"
+            ],
+            "service_account_path": "",
+            "size_excludes": [
+                "rutorrent/*"
+            ]
+        }
+    }
+}
+</code></pre>
+
+
+      </section>
+
+    </div>
+  </body>
+</html>

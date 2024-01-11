@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>ssdv2 | SSDv2</title>
+<meta name="generator" content="Jekyll v3.8.7" />
+<meta property="og:title" content="ssdv2" />
+<meta property="og:locale" content="en" />
+<meta name="description" content="Simple Seedbox docker" />
+<meta property="og:description" content="Simple Seedbox docker" />
+<meta property="og:site_name" content="SSDv2" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="ssdv2" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Simple Seedbox docker","headline":"ssdv2","url":"/ssdv2/en/Les-diff%C3%A9rences-entre-la-v1-et-la-v2.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/ssdv2/en/assets/css/style.css?v=">
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="/ssdv2/en/assets/js/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="/ssdv2/en/assets/css/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup theme-color -->
+<!-- start theme color meta headers -->
+<meta name="theme-color" content="#353535">
+<meta name="msapplication-navbutton-color" content="#353535">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- end theme color meta headers -->
+
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/ssdv2/en/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+<!--      <div id="header">-->
+<!--        <nav>-->
+<!--          <ul>-->
+<!--            <li class="fork"><a href="">View On GitHub</a></li>-->
+<!--            -->
+<!--          </ul>-->
+<!--        </nav>-->
+<!--      </div>&lt;!&ndash; end header &ndash;&gt;-->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>SSDv2</h1>
+          <p>Simple Seedbox docker</p>
+          <hr>
+            <span class="credits left">
+                 
+                    
+                        <a href="/ssdv2//Les-diff%C3%A9rences-entre-la-v1-et-la-v2.html">Français</a>
+                    
+
+                
+                    
+
+                
+            </span>
+<!--          <span class="credits left">Project maintained by <a href=""></a></span>-->
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></span>
+        </div>
+
+        <p>Rappel, les sources de la v1 se trouvent ici : <a href="V1 (par Laster13)">https://github.com/laster13/patxav</a></p>
+
+<h2 id="principales-différences">Principales différences</h2>
+
+<ul>
+  <li><strong>la v1 n’est plus maintenue</strong>, plus de nouvelles applications, plus de correctifs</li>
+  <li>la v2 se lance avec un user non root, la v1 doit être lancée en root</li>
+  <li>la v2 utilise un <a href="environnement virtuel">https://docs.python.org/fr/3/library/venv.html</a> pour installer tout ce qui est lié à python, et donc :
+    <ul>
+      <li>pip</li>
+      <li>ansible</li>
+      <li>les dépendances d’outils tiers (cloudplow, plex_autoscan, …)</li>
+    </ul>
+  </li>
+</ul>
+
+<p>Cela est fait pour toucher le moins possible au système. Vous pouvez avoir un ansible 2.8 sur le système et un ansible 2.10 pour ssd. En cas de désinstallation de ssd, le système reste fonctionnel</p>
+<ul>
+  <li>refonte du code pour factoriser au maximum et éviter les doublons (toujours en cours), notamment sur les playbooks de lancement des applis containerisées</li>
+  <li>utilisation de fonctions, qui peuvent être appelées autrement que par le script (soit en ligne de commande, soit par des outils à venir)</li>
+</ul>
+
+<h2 id="evolutions">Evolutions</h2>
+
+<p>Le développement de la v2 a été lancée en octobre 2020. En plus des modifications de base exposées ci dessus, il y a eu des évolutions fonctionnelles :</p>
+<ul>
+  <li>nouvelles applications (gotify, …)</li>
+  <li>refonte de l’affichage et de la gestion des menus</li>
+  <li>stockage des informations dans une base sqlite qui pourra être exploitée par d’autres outils à terme</li>
+</ul>
+
+<h2 id="des-chiffres">Des chiffres</h2>
+
+<p>En septembre 2021, la v2 correspond à près de 600 commits et près de 18 000 lignes de code modifiées depuis la v1.</p>
+
+
+
+      </section>
+
+    </div>
+  </body>
+</html>

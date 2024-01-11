@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>ssdv2 | SSDv2</title>
+<meta name="generator" content="Jekyll v3.8.7" />
+<meta property="og:title" content="ssdv2" />
+<meta property="og:locale" content="fr" />
+<meta name="description" content="Simple Seedbox docker" />
+<meta property="og:description" content="Simple Seedbox docker" />
+<meta property="og:site_name" content="SSDv2" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="ssdv2" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Simple Seedbox docker","headline":"ssdv2","url":"/ssdv2/Contourner-authentification-Oauth-(NZB360).html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/ssdv2/assets/css/style.css?v=">
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="/ssdv2/assets/js/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="/ssdv2/assets/css/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup theme-color -->
+<!-- start theme color meta headers -->
+<meta name="theme-color" content="#353535">
+<meta name="msapplication-navbutton-color" content="#353535">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- end theme color meta headers -->
+
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/ssdv2/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+<!--      <div id="header">-->
+<!--        <nav>-->
+<!--          <ul>-->
+<!--            <li class="fork"><a href="">View On GitHub</a></li>-->
+<!--            -->
+<!--          </ul>-->
+<!--        </nav>-->
+<!--      </div>&lt;!&ndash; end header &ndash;&gt;-->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>SSDv2</h1>
+          <p>Simple Seedbox docker</p>
+          <hr>
+            <span class="credits left">
+                 
+                    
+
+                
+                    
+                        <a href="/ssdv2/en//Contourner-authentification-Oauth-(NZB360).html">English</a>
+                    
+
+                
+            </span>
+<!--          <span class="credits left">Project maintained by <a href=""></a></span>-->
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></span>
+        </div>
+
+        <h2 id="outrepasser-la-sécurité-oauth-afin-dutiliser-nzb360-transdroid-ou-autre">Outrepasser la sécurité oAuth afin d’utiliser (NZB360, Transdroid ou autre)</h2>
+
+<blockquote>
+  <p>Remplacer les middlewares existantes par celle ci-dessous :</p>
+</blockquote>
+
+<p class="callout info">Après avoir modifier le fichier de config.yml il faut depuis le menu réinitiliaser l'application.</p>
+
+<h4 id="sonnar-">Sonnar :</h4>
+<p>N’oubliez pas d’ajouter votre API sur la ligne suivante :</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>traefik.http.routers.radarr-rtr-bypass.rule: 'Headers(`X-Api-Key`, `API_Radarr`)'
+</code></pre></div></div>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    # LABELS ######################################################################
+    - name: 'Ajout label traefik'
+      set_fact:
+        pg_labels:
+          traefik.enable: 'true'
+          traefik.http.routers.sonarr-rtr-bypass.entrypoints: 'https'
+          traefik.http.routers.sonarr-rtr-bypass.rule: 'Headers(`X-Api-Key`, `API_Sonarr`)'
+          traefik.http.routers.sonarr-rtr-bypass.priority: '100'
+          traefik.http.routers.sonarr-rtr-bypass.tls: 'true'
+          ## HTTP Routers Auth
+          traefik.http.routers.sonarr-rtr.entrypoints: 'https'
+          traefik.http.routers.sonarr-rtr.rule: 'Host(`sonarr.`)'
+          traefik.http.routers.sonarr-rtr.priority: '99'
+          traefik.http.routers.sonarr-rtr.tls: 'true'
+          ## Middlewares
+          traefik.http.routers.sonarr-rtr-bypass.middlewares: 'chain-no-auth@file'
+          traefik.http.routers.sonarr-rtr.middlewares: 'chain-oauth@file'
+          ## HTTP Services
+          traefik.http.routers.sonarr-rtr.service: 'sonarr-svc'
+          traefik.http.routers.sonarr-rtr-bypass.service: 'sonarr-svc'
+          traefik.http.services.sonarr-svc.loadbalancer.server.port: '8989'
+</code></pre></div></div>
+
+<p>#### Radarr :
+   N’oubliez pas d’ajouter votre API sur la ligne suivante :</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>traefik.http.routers.radarr-rtr-bypass.rule: 'Headers(`X-Api-Key`, `API_Radarr`)'
+</code></pre></div></div>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    # LABELS ######################################################################
+    - name: 'Ajout label traefik'
+      set_fact:
+        pg_labels:
+          traefik.enable: 'true'
+          traefik.http.routers.radarr-rtr-bypass.entrypoints: 'https'
+          traefik.http.routers.radarr-rtr-bypass.rule: 'Headers(`X-Api-Key`, `API_Radarr`)'
+          traefik.http.routers.radarr-rtr-bypass.priority: '100'
+          traefik.http.routers.radarr-rtr-bypass.tls: 'true'
+          ## HTTP Routers Auth
+          traefik.http.routers.radarr-rtr.entrypoints: 'https'
+          traefik.http.routers.radarr-rtr.rule: 'Host(`radarr.`)'
+          traefik.http.routers.radarr-rtr.priority: '99'
+          traefik.http.routers.radarr-rtr.tls: 'true'
+          ## Middlewares
+          traefik.http.routers.radarr-rtr-bypass.middlewares: 'chain-no-auth@file'
+          traefik.http.routers.radarr-rtr.middlewares: 'chain-oauth@file'
+          ## HTTP Services
+          traefik.http.routers.radarr-rtr.service: 'radarr-svc'
+          traefik.http.routers.radarr-rtr-bypass.service: 'radarr-svc'
+          traefik.http.services.radarr-svc.loadbalancer.server.port: '7878'
+</code></pre></div></div>
+
+<p>#### Rutorrent :</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    # LABELS ######################################################################
+    - name: 'Ajout label traefik'
+      set_fact:
+        pg_labels:
+          traefik.enable: 'true'
+          traefik.http.routers.rutorrent-rtr-bypass.entrypoints: 'https'
+          traefik.http.routers.rutorrent-rtr-bypass.rule: 'Path(`/RPC2`)'
+          traefik.http.routers.rutorrent-rtr-bypass.priority: '100'
+          traefik.http.routers.rutorrent-rtr-bypass.tls: 'true'
+          ## HTTP Routers Auth
+          traefik.http.routers.rutorrent-rtr.entrypoints: 'https'
+          traefik.http.routers.rutorrent-rtr.rule: 'Host(`rutorrent.`)'
+          traefik.http.routers.rutorrent-rtr.priority: '99'
+          traefik.http.routers.rutorrent-rtr.tls: 'true'
+          ## Middlewares
+          traefik.http.routers.rutorrent-rtr-bypass.middlewares: 'chain-basic-auth@file'
+          traefik.http.routers.rutorrent-rtr.middlewares: 'chain-oauth@file'
+          ## HTTP Services
+          traefik.http.routers.rutorrent-rtr.service: 'rutorrent-svc'
+          traefik.http.routers.rutorrent-rtr-bypass.service: 'rutorrent-svc'
+          traefik.http.services.rutorrent-svc.loadbalancer.server.port: '8080'
+</code></pre></div></div>
+
+<p>-
+Par mesure de sécurité on rajoute une couche d’authentification basique pour l’acces à nzb360
+Du coup pour faire fonctionner sonarr, radarr, lidarr à la fois sur NZb360 et LunaSea tu modifies le label de cette façon</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>traefik.http.routers.sonarr-rtr-bypass.rule: 'Headers(`X-Api-Key`, `b12d1732186a4376b80bdb3875a0f39d`) || Query(`apikey`, `b12d1732186a4376b80bdb3875a0f39d`)'
+</code></pre></div></div>
+
+
+      </section>
+
+    </div>
+  </body>
+</html>

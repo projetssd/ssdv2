@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>ssdv2 | SSDv2</title>
+<meta name="generator" content="Jekyll v3.8.7" />
+<meta property="og:title" content="ssdv2" />
+<meta property="og:locale" content="fr" />
+<meta name="description" content="Simple Seedbox docker" />
+<meta property="og:description" content="Simple Seedbox docker" />
+<meta property="og:site_name" content="SSDv2" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="ssdv2" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Simple Seedbox docker","headline":"ssdv2","url":"/ssdv2/Comment-migrer-de-la-v1-vers-la-v2.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/ssdv2/assets/css/style.css?v=">
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="/ssdv2/assets/js/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="/ssdv2/assets/css/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup theme-color -->
+<!-- start theme color meta headers -->
+<meta name="theme-color" content="#353535">
+<meta name="msapplication-navbutton-color" content="#353535">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- end theme color meta headers -->
+
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/ssdv2/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+<!--      <div id="header">-->
+<!--        <nav>-->
+<!--          <ul>-->
+<!--            <li class="fork"><a href="">View On GitHub</a></li>-->
+<!--            -->
+<!--          </ul>-->
+<!--        </nav>-->
+<!--      </div>&lt;!&ndash; end header &ndash;&gt;-->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>SSDv2</h1>
+          <p>Simple Seedbox docker</p>
+          <hr>
+            <span class="credits left">
+                 
+                    
+
+                
+                    
+                        <a href="/ssdv2/en//Comment-migrer-de-la-v1-vers-la-v2.html">English</a>
+                    
+
+                
+            </span>
+<!--          <span class="credits left">Project maintained by <a href=""></a></span>-->
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></span>
+        </div>
+
+        <h3 id="attendre-la-présence-dun-membre-du-staff-sur-le-discord-">Attendre la présence d’un membre du staff sur le discord !!!</h3>
+
+<p>==========================================================</p>
+
+<p>ATTENTION POUR CEUX QUI SONT EN DEBIAN 10</p>
+
+<p>Avant toute chose, passez root puis tapez “apt update” et acceptez les changements proposés.</p>
+
+<p>Verifiez ensuite avec</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>apt-get update
+apt-get upgrade
+</code></pre></div></div>
+<p>que les commandes passent sans erreur.</p>
+
+<p>============================================================</p>
+
+<p>Il faut un user qui porte le même nom que le user d’admin de la v1. Il faut que cette user soit dans le groupe sudo. 
+En root :</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>usermod -aG sudo &lt;user&gt;
+</code></pre></div></div>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!! TOUTES LES ACTIONS SUIVANTES SONT A FAIRE EN USER "NORMAL", pas en root           !!!
+!!! Déconnectez vous de root, et reconnectez vous avec le bon user avant de continuer !!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+</code></pre></div></div>
+
+<p>Il est fortement conseillé de faire un backup de la seedbox avant de commencer !</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo backup
+</code></pre></div></div>
+
+<p>Renommer le répertoire existant</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo mv /opt/seedbox-compose /opt/seedbox-compose.old
+</code></pre></div></div>
+<p>Cloner le nouveau répertoire</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo git clone https://github.com/projetssd/ssdv2.git /opt/seedbox-compose
+sudo chown -R ${USER}: /opt/seedbox-compose
+</code></pre></div></div>
+<p>Lancer la migration</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cd /opt/seedbox-compose &amp;&amp; bash -x ./seedbox.sh --migrate
+</code></pre></div></div>
+<p>Rebooter la machine une fois terminé !</p>
+
+
+      </section>
+
+    </div>
+  </body>
+</html>

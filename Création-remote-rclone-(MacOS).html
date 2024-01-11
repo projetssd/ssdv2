@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>ssdv2 | SSDv2</title>
+<meta name="generator" content="Jekyll v3.8.7" />
+<meta property="og:title" content="ssdv2" />
+<meta property="og:locale" content="fr" />
+<meta name="description" content="Simple Seedbox docker" />
+<meta property="og:description" content="Simple Seedbox docker" />
+<meta property="og:site_name" content="SSDv2" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="ssdv2" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Simple Seedbox docker","headline":"ssdv2","url":"/ssdv2/Cr%C3%A9ation-remote-rclone-(MacOS).html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/ssdv2/assets/css/style.css?v=">
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="/ssdv2/assets/js/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="/ssdv2/assets/css/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup theme-color -->
+<!-- start theme color meta headers -->
+<meta name="theme-color" content="#353535">
+<meta name="msapplication-navbutton-color" content="#353535">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- end theme color meta headers -->
+
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/ssdv2/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+<!--      <div id="header">-->
+<!--        <nav>-->
+<!--          <ul>-->
+<!--            <li class="fork"><a href="">View On GitHub</a></li>-->
+<!--            -->
+<!--          </ul>-->
+<!--        </nav>-->
+<!--      </div>&lt;!&ndash; end header &ndash;&gt;-->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>SSDv2</h1>
+          <p>Simple Seedbox docker</p>
+          <hr>
+            <span class="credits left">
+                 
+                    
+
+                
+                    
+                        <a href="/ssdv2/en//Cr%C3%A9ation-remote-rclone-(MacOS).html">English</a>
+                    
+
+                
+            </span>
+<!--          <span class="credits left">Project maintained by <a href=""></a></span>-->
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></span>
+        </div>
+
+        <h2 id="création-des-remotes-pour-utiliser-le-stockage-google-sur-votre-serveur">Création des remotes pour utiliser le stockage Google sur votre serveur.</h2>
+
+<blockquote>
+  <table>
+    <tbody>
+      <tr>
+        <td>ce guide est uniquement pour MacOS (autres version : <a href="Cr%C3%A9ation-remote-rclone-(Windows)">Pour Windows</a></td>
+        <td><a href="Cr%C3%A9ation-remote-rclone-(Linux)">Pour Linux</a>)</td>
+      </tr>
+    </tbody>
+  </table>
+</blockquote>
+
+<h4 id="pré-requis-">pré-requis 👍🏻</h4>
+<ol>
+  <li>Installation de Homebrew</li>
+  <li>Installation de rclone</li>
+  <li>Création d’un projet API Google drive (disponible <a href="Cr%C3%A9ation-API-Google">ici</a>)</li>
+  <li>Un navigateur en session privée connecté sur votre compte Google (celui avec le projet API Google)</li>
+</ol>
+
+<h3 id="installation-de-homebrew">Installation de Homebrew</h3>
+
+<p>Rendez vous sur la page de <a href="https://brew.sh/index_fr">Homebrew</a> pour copier/coller la commande d’installation</p>
+
+<p><img width="821" alt="brew" src="https://user-images.githubusercontent.com/64525827/165914239-8aa4b0c1-2f84-4c41-b741-f8cfc55206e3.png" /></p>
+
+<h3 id="installation-de-rclone">Installation de rclone</h3>
+
+<p><code class="highlighter-rouge">brew install rclone</code></p>
+
+<h2 id="pour-la-suite-vous-devez-avoir-réalisé-les-étapes-3-et-4">Pour la suite, vous devez avoir réalisé les étapes 3 et 4</h2>
+
+<h3 id="création-du-premier-remote-gdrive">création du premier remote Gdrive</h3>
+
+<h5 id="connectez-vous-à-votre-serveur-en-ssh">Connectez vous à votre serveur en ssh</h5>
+
+<ul>
+  <li>depuis votre shell, taper <code class="highlighter-rouge">rclone config</code> puis Enter</li>
+  <li>Taper <strong>n</strong> for <strong>New remote</strong> puis Enter</li>
+  <li>Puis pour <strong>name</strong>, taper <strong>teamdrive</strong> par exemple</li>
+</ul>
+
+<p><img width="245" alt="remote" src="https://user-images.githubusercontent.com/64525827/165921230-78874568-a36a-4747-b6d8-cc3b2e2ec650.png" /></p>
+
+<ul>
+  <li>
+    <p>Pour <strong>Type of storage</strong>, taper le <strong>chiffre</strong> correspondant à <strong>Google Drive \ (drive)</strong></p>
+  </li>
+  <li>
+    <p>Pour <strong>Google Application Client ID</strong>, <strong>coller le Client ID</strong> correspondant à votre projet <strong>drive</strong> et appuyer sur Enter.</p>
+  </li>
+  <li>
+    <p>Pour <strong>Google Application Client Secret</strong>, <strong>coller le Client Secret</strong> et appuyer sur Enter.</p>
+  </li>
+  <li>
+    <p>Appuyer sur Enter</p>
+  </li>
+  <li>
+    <p>Pour <strong>ID du dossier racine</strong>, laissez <strong>vide</strong> et appuyez sur Enter</p>
+  </li>
+  <li>
+    <p>Pour <strong>Chemin du fichier JSON</strong>, laissez <strong>vide</strong> et appuyez sur Enter</p>
+  </li>
+  <li>
+    <p>Pour <strong>Edit advanced config</strong>, taper n appuyer sur Enter</p>
+  </li>
+  <li>
+    <p>Pour <strong>Utiliser la configuration automatique?</strong>, Tapez <strong>y</strong> puis appuyer sur Enter</p>
+  </li>
+</ul>
+
+<p><img width="1081" alt="autoconfig" src="https://user-images.githubusercontent.com/64525827/165916281-69016e9d-835f-4032-8323-4fe2817ed34f.png" /></p>
+
+<ul>
+  <li>Copier la ligne <strong>http://127.0.0.1:53682/auth?state=0vK_dA1aQDIOIryBIIGYaw</strong> et coller dans votre <strong>session privée</strong>.</li>
+</ul>
+
+<p><img src="https://user-images.githubusercontent.com/64525827/165916532-55dbf3f8-b23b-442c-a440-32fab590bf8f.png" alt="Quickstart" /></p>
+
+<ul>
+  <li>
+    <p>cliquer sur <strong>autoriser</strong> puis retourner sur votre shell</p>
+  </li>
+  <li>
+    <p>Pour “Configure this as a Shared Drive (Team Drive)?”, taper <strong>y</strong> appuyer sur Enter</p>
+  </li>
+</ul>
+
+<p><img width="463" alt="teamdrive" src="https://user-images.githubusercontent.com/64525827/165917258-092af5a8-bd1e-4e0e-8706-e109bee3603f.png" /></p>
+
+<ul>
+  <li>Pour <strong>Choose a number from below</strong>, taper le <strong>numéro</strong> correspondant à votre stockage puis Enter</li>
+</ul>
+
+<h3 id="taper-y-puis-entrer-pour-valider-la-création-du-remote">taper <strong>y</strong> puis entrer pour valider la création du remote</h3>
+
+<hr />
+
+<h2 id="création-du-remote-crypt">Création du remote crypt</h2>
+
+<ul>
+  <li>
+    <p>Taper <strong>n</strong> for <strong>New remote</strong> puis Enter</p>
+  </li>
+  <li>
+    <p>Écrire le <strong>même nom</strong> que le remote précédent puis _crypt (exemple : teamdrive_crypt)</p>
+  </li>
+  <li>
+    <p>Taper le <strong>numéro</strong> correspondant à <strong>Encrypt/Decrypt a remote \ (crypt)</strong> puis enter</p>
+  </li>
+</ul>
+
+<p><img width="510" alt="remote" src="https://user-images.githubusercontent.com/64525827/165918249-9dac9604-ec2b-4f74-981c-cfd8323f2cf7.png" /></p>
+
+<ul>
+  <li>
+    <p>vous devez taper le <strong>nom du remote</strong> puis :Medias (exemple : teamdrive:Medias)</p>
+  </li>
+  <li>
+    <p>Taper <strong>1</strong> puis continuer comme ci-dessous</p>
+  </li>
+</ul>
+
+<p><img width="452" alt="encrypt" src="https://user-images.githubusercontent.com/64525827/165918546-ca1aa9c4-1056-4149-982e-62ece7ee58c1.png" /></p>
+
+<ul>
+  <li>Taper <strong>1</strong> puis continuer comme ci-dessous</li>
+</ul>
+
+<p><img width="557" alt="option_directory" src="https://user-images.githubusercontent.com/64525827/165918699-a875a00a-2127-4218-ab61-a9746c4068bd.png" /></p>
+
+<ul>
+  <li>Pour “Option password.” choisir <strong>g</strong></li>
+  <li>Pour “Password strength in bits.” choisir <strong>128</strong></li>
+</ul>
+
+<p><img width="525" alt="passowrd1" src="https://user-images.githubusercontent.com/64525827/165918864-e916b56d-c3a8-48b9-84ec-22c065b513c7.png" /></p>
+
+<ul>
+  <li>
+    <p>Puis taper <strong>Enter</strong></p>
+  </li>
+  <li>Pour “Option password2” choisir <strong>g</strong></li>
+  <li>Pour “Password strength in bits” choisir <strong>128</strong></li>
+</ul>
+
+<p><img width="490" alt="password2" src="https://user-images.githubusercontent.com/64525827/165919231-721017ba-1a2d-440f-8d2f-aaa8fe7b2612.png" /></p>
+
+<ul>
+  <li>
+    <p>Puis taper <strong>Enter</strong></p>
+  </li>
+  <li>
+    <p>Pour <strong>Edit advanced config?</strong> choisir <strong>n</strong> puis enter</p>
+  </li>
+</ul>
+
+<h4 id="taper-y-puis-enter-pour-valider-la-création-du-remote-puis-q-pour-quitter">taper <strong>y</strong> puis enter pour valider la création du remote puis <strong>q</strong> pour quitter</h4>
+
+<ul>
+  <li>
+    <p>Taper <strong>rclone config file</strong> puis copier le chemin (exemple : /Users/kesurof/.config/rclone/rclone.conf)</p>
+  </li>
+  <li>
+    <p>Taper la commande suivante <code class="highlighter-rouge">cat /Users/kesurof/.config/rclone/rclone.conf</code></p>
+  </li>
+</ul>
+
+<h2 id="copier-le-contenu-et-surtout-conserver-le-précieusement-à-vie-">Copier le contenu et surtout conserver le précieusement à VIE !!!</h2>
+
+
+
+      </section>
+
+    </div>
+  </body>
+</html>

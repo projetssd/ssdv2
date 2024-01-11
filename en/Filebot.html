@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>ssdv2 | SSDv2</title>
+<meta name="generator" content="Jekyll v3.8.7" />
+<meta property="og:title" content="ssdv2" />
+<meta property="og:locale" content="en" />
+<meta name="description" content="Simple Seedbox docker" />
+<meta property="og:description" content="Simple Seedbox docker" />
+<meta property="og:site_name" content="SSDv2" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="ssdv2" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Simple Seedbox docker","headline":"ssdv2","url":"/ssdv2/en/Filebot.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/ssdv2/en/assets/css/style.css?v=">
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="/ssdv2/en/assets/js/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="/ssdv2/en/assets/css/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup theme-color -->
+<!-- start theme color meta headers -->
+<meta name="theme-color" content="#353535">
+<meta name="msapplication-navbutton-color" content="#353535">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- end theme color meta headers -->
+
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/ssdv2/en/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+<!--      <div id="header">-->
+<!--        <nav>-->
+<!--          <ul>-->
+<!--            <li class="fork"><a href="">View On GitHub</a></li>-->
+<!--            -->
+<!--          </ul>-->
+<!--        </nav>-->
+<!--      </div>&lt;!&ndash; end header &ndash;&gt;-->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>SSDv2</h1>
+          <p>Simple Seedbox docker</p>
+          <hr>
+            <span class="credits left">
+                 
+                    
+                        <a href="/ssdv2//Filebot.html">Français</a>
+                    
+
+                
+                    
+
+                
+            </span>
+<!--          <span class="credits left">Project maintained by <a href=""></a></span>-->
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></span>
+        </div>
+
+        <h4 id="enregistrer-une-licence">Enregistrer une licence</h4>
+
+<p>Mettre le fichier de licence dans /opt/seedbox/docker/${USER}/.filebot/FileBot_License.psm</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/opt/seedbox/docker/${USER}/.filebot/filebot.sh --license /opt/seedbox/docker/${USER}/.filebot/FileBot_License.psm
+</code></pre></div></div>
+
+<h4 id="astuce-filebot-proposée-par-tealc">Astuce filebot proposée par @TEALC</h4>
+
+<p>Comment séparer les Films 4k des autres (n’oublier pas de remplacer USER par votre pseudo)</p>
+
+<ol>
+  <li>
+    <p>Créer le dossier Films4k dans /home/USER/local/.</p>
+  </li>
+  <li>
+    <p>Dans les paramètres de Plex, ajouter une Bibliothèques de type Films (donner lui un nom ex: Films 4K, langue: Fr), avec comme dossier dans Plex –&gt; /data/Films4k.</p>
+  </li>
+  <li>
+    <p>En SSH</p>
+  </li>
+</ol>
+
+<p><code class="highlighter-rouge">cd /home/USER/scripts/plex_autoscan</code></p>
+
+<p>puis</p>
+
+<p><code class="highlighter-rouge">python scan.py update_sections</code></p>
+
+<ol>
+  <li><code class="highlighter-rouge">nano /home/USER/scripts/plex_autoscan/config/config.json</code></li>
+</ol>
+
+<p>Au alentour de la ligne 84 il doit y avoir “/data/Films4k/” (NE SURTOUT PAS TOUCHER A LA NUMEROTATION) :</p>
+
+<p>```“PLEX_SECTION_PATH_MAPPINGS”: {
+    “1”: [
+      “/data/Animes/”
+    ], 
+    “2”: [
+      “/data/Films/”
+    ], 
+    “3”: [
+      “/data/Musiques/”
+    ], 
+    “4”: [
+      “/data/Series/”
+    ], 
+    “5”: [
+      “/data/Films4k/”
+    ]
+  },</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>5. Rechercher la ligne "SERVER_FILE_EXIST_PATH_MAPPINGS": { et après le dernier ] (juste avant le }, ajouter:
+
+</code></pre></div></div>
+<p>, 
+    “/home/USER/local/Films4k/”: [
+      “/data/Films4k/”
+    ]</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+6. Rechercher la ligne "SERVER_PATH_MAPPINGS": { et après le dernier ] (juste avant le }, ajouter:
+
+</code></pre></div></div>
+<p>,
+    “/data/Films4k/”: [
+      “/movies4k/”, 
+      “/home/USER/Medias/Films4k/”, 
+      “/home/USER/local/Films4k/”
+    ]</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+7. Rechercher la ligne "SERVER_SCAN_PRIORITIES": { et après le dernier ] (juste avant le }, ajouter (AAA = le nombre suivant):
+
+```,
+    "AAA": [
+      "/Films4k/"
+    ]
+</code></pre></div></div>
+
+<ol>
+  <li>Enregistrer puis fermer.</li>
+</ol>
+
+<p>En SSH</p>
+
+<p><code class="highlighter-rouge">systemctl restart plex_autoscan.service</code></p>
+
+<p><code class="highlighter-rouge">nano  /opt/seedbox/docker/USER/.filebot/filebot-process.sh</code></p>
+
+<p>Remplacer par:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">#!/bin/bash</span>
+
+sh /opt/seedbox/docker/USER/.filebot/filebot.sh <span class="nt">-script</span> fn:amc <span class="nt">--output</span> <span class="s2">"/home/USER/local"</span> <span class="nt">--action</span> move <span class="nt">--conflict</span> skip <span class="nt">-non-strict</span> <span class="nt">--lang</span> fr <span class="nt">--log-file</span> amc.log <span class="nt">--def</span> <span class="nv">unsorted</span><span class="o">=</span>y <span class="nv">music</span><span class="o">=</span>y <span class="nt">--def</span> <span class="nv">excludeList</span><span class="o">=</span>/home/USER/exclude.txt <span class="s2">"exec=/home/USER/scripts/plex_autoscan/plex_autoscan_rutorrent.sh"</span> <span class="s2">"ut_dir=/home/USER/filebot"</span> <span class="nt">--def</span> <span class="nv">movieFormat</span><span class="o">=</span><span class="s2">"/home/USER/local/{fn =~ /2160p|4K|4k|UHD/ ? 'Films4k' : 'Films'}/{n} ({y})/{n} ({y}) _ {source}.{vf} - {audioLanguages} - {textLanguages} - {vc}.{ac}-{channels}"</span> <span class="nv">seriesFormat</span><span class="o">=</span><span class="s2">"/home/USER/local/Series/{n}/Saison {s}/{n} - {s00e00} - {t} _ {source}.{vf} - {audioLanguages} - {textLanguages} - {vc}.{ac}-{channels}"</span> <span class="nv">animeFormat</span><span class="o">=</span><span class="s2">"/home/USER/local/Animes/{n}/{episode.special ? 'Special' : 'Saison '+s}/{n} - {episode.special ? 'S00E'+special.pad(2) : s00e00} - {t} _ {source}.{vf} - {audioLanguages} - {textLanguages} - {vc}.{ac}-{channels}"</span> <span class="nv">musicFormat</span><span class="o">=</span><span class="s2">"/home/USER/local/Musiques/{n}/{album+'/'}{pi.pad(2)+'. '}{artist} - {t}"</span>
+</code></pre></div></div>
+
+<p><strong>ATTENTION</strong> ce script déplace les fichiers, pour pouvoir rester en SEED remplacer : –action move par –action copy.</p>
+
+<p>Enregistrer et fermer.</p>
+
+<p>J’ai modifié le système de renommage, les fichiers auront le format {titre} (année) _ {qualitée}.{format} - [les langues] - [langues sous titres] - {codec vidéo}.{codec audio}-{nombre de channels}.mkv</p>
+
+<p>Pour que filebot trie aussi avant 2005
+Créer le dossier FilmsOdl (comme film4k)
+Remplacer dans filebot le movieformat par</p>
+
+<p><code class="highlighter-rouge">movieFormat="/home/USER/local/{y &lt; 2006 ? 'FilmsOld' : fn =~ /2160p|4K|4k|UHD/ ? 'Films4k' : 'Films'}/{n} ({y})/{n} ({y}) _ {source}.{vf} - {audioLanguages} - {textLanguages} - {vc}.{ac}-{channels}"</code></p>
+
+
+      </section>
+
+    </div>
+  </body>
+</html>

@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>ssdv2 | SSDv2</title>
+<meta name="generator" content="Jekyll v3.8.7" />
+<meta property="og:title" content="ssdv2" />
+<meta property="og:locale" content="fr" />
+<meta name="description" content="Simple Seedbox docker" />
+<meta property="og:description" content="Simple Seedbox docker" />
+<meta property="og:site_name" content="SSDv2" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="ssdv2" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Simple Seedbox docker","headline":"ssdv2","url":"/ssdv2/Cloudflare.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/ssdv2/assets/css/style.css?v=">
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="/ssdv2/assets/js/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="/ssdv2/assets/css/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup theme-color -->
+<!-- start theme color meta headers -->
+<meta name="theme-color" content="#353535">
+<meta name="msapplication-navbutton-color" content="#353535">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- end theme color meta headers -->
+
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/ssdv2/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+<!--      <div id="header">-->
+<!--        <nav>-->
+<!--          <ul>-->
+<!--            <li class="fork"><a href="">View On GitHub</a></li>-->
+<!--            -->
+<!--          </ul>-->
+<!--        </nav>-->
+<!--      </div>&lt;!&ndash; end header &ndash;&gt;-->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>SSDv2</h1>
+          <p>Simple Seedbox docker</p>
+          <hr>
+            <span class="credits left">
+                 
+                    
+
+                
+                    
+                        <a href="/ssdv2/en//Cloudflare.html">English</a>
+                    
+
+                
+            </span>
+<!--          <span class="credits left">Project maintained by <a href=""></a></span>-->
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></span>
+        </div>
+
+        <h3 id="présentation">Présentation</h3>
+<p>Plus que des services de CDN, les clients font confiance au réseau mondial de Cloudflare pour améliorer la sécurité, la performance et la fiabilité de tout ce qui est connecté à Internet.</p>
+
+<p>Cloudflare est conçu pour être configuré facilement. Toute personne possédant un site web et un domaine personnel peut utiliser Cloudflare, indépendamment de son choix de plate-forme. Cloudflare ne requiert aucun critère matériel, logiciel ni changement de code particuliers.</p>
+
+<blockquote>
+  <p>Voilà pour la présentation officiel</p>
+</blockquote>
+
+<h3 id="les-étapes-sont-à-réaliser-dans-lordre-suivant-">Les étapes sont à réaliser dans l’ordre suivant :</h3>
+<ul>
+  <li>Créez un compte Cloudflare et ajoutez un site web</li>
+  <li>Transférez la gestion des DNS à cloudflare</li>
+  <li>Récupérer l’API global de cloudflare</li>
+  <li>Passer le mode SSL/TLS sur type complet</li>
+</ul>
+
+<h3 id="étape-1-créez-un-compte-cloudflare-ou-connectez-vous">Étape 1. Créez un compte Cloudflare ou connectez vous.</h3>
+
+<p>Rendez-vous ici: <a href="https://dash.cloudflare.com/sign-up">https://href.li/?https://dash.cloudflare.com/sign-up</a>:</p>
+
+<ul>
+  <li>
+    <p>Entrez votre adresse email et votre mot de passe</p>
+  </li>
+  <li>
+    <p>Cliquez sur <strong>Create Account</strong> (Créer un compte)</p>
+  </li>
+  <li>
+    <p>cliquer ensuite sur le bouton bleu <code class="highlighter-rouge">ajouter un site</code></p>
+  </li>
+</ul>
+
+<p>Entrez le domaine racine pour votre site web puis cliquez sur <strong>Add Site</strong>. Par exemple, si votre site est www.exemple.com, entrez exemple.com.</p>
+
+<p>Cloudflare tente d’identifier automatiquement vos enregistrements DNS. Cela prendra environ 60 secondes.</p>
+
+<ul>
+  <li>
+    <p>Cliquez sur <strong>Next</strong> (Suivant).</p>
+  </li>
+  <li>
+    <p>Choisissez un niveau d’offre, la gratuite, et cliquez sur <strong>Confirmer l’offre</strong>:</p>
+  </li>
+  <li>
+    <p>Cliquez sur Continuer</p>
+  </li>
+  <li>
+    <p>Copiez les 2 serveurs de noms Cloudflare affichés puis cliquez sur: <strong>Terminé, vérifier les serveurs de noms</strong>.</p>
+  </li>
+</ul>
+
+<hr />
+
+<h3 id="étape-2-changer-les-serveurs-de-noms-de-votre-domaine-pour-cloudflare">Étape 2. Changer les serveurs de noms de votre domaine pour Cloudflare</h3>
+
+<p>Dans cet exemple je vais utiliser OVH qui est relativement fréquent.</p>
+
+<p>Si vous avez un provider différent, nous vous invitons sur Discord afin de vous aiguiller.</p>
+
+<p>On va se rendre sur la console d’administration d’OVH:</p>
+
+<p><a href="https://www.ovh.com/manager/web/#/configuration/domains">https://href.li/?https://www.ovh.com/manager/web/#/configuration/domains</a></p>
+
+<p>Cliquez sur votre domaine et rendez-vous dans la partie: <strong>Serveurs DNS</strong>.</p>
+
+<ul>
+  <li>Cliquez sur Modifier les serveurs DNS</li>
+  <li>
+    <p>Indiquez les DNS copiés précédemment dans Cloudflare</p>
+  </li>
+  <li>Cliquez sur <strong>Appliquer la configuration</strong></li>
+</ul>
+
+<p>Maintenant il va falloir patienter un peu que la propagation des DNS se fassent (jusqu’à 24H).</p>
+
+<h5 id="vous-recevrez-un-email-de-confirmation">Vous recevrez un email de confirmation.</h5>
+
+<hr />
+
+<h3 id="étape-3-récupérer-lapi-global-cloudflare">Étape 3. Récupérer L’API global Cloudflare</h3>
+
+<ul>
+  <li>
+    <p>Rendez-vous sur votre compte Clouflare et cliquez sur <code class="highlighter-rouge">Aperçu</code> sur le côté gauche de l’écran.</p>
+  </li>
+  <li>
+    <p>En bas sur la droite <code class="highlighter-rouge">Obtenir votre jeton d’API</code></p>
+  </li>
+  <li>
+    <p>Puis l’onglet <code class="highlighter-rouge">jeton API</code></p>
+  </li>
+  <li>
+    <p>Cliquer sur <code class="highlighter-rouge">affichage</code>en face de la ligne <code class="highlighter-rouge">Global API Key</code></p>
+  </li>
+  <li>
+    <p>Récupérez votre jeton et <strong>gardez le pour l’installation du script</strong></p>
+  </li>
+</ul>
+
+<hr />
+
+<h3 id="étape-4-modification-du-mode-de-chiffrement-ssltls">Étape 4. Modification du mode de chiffrement SSL/TLS</h3>
+
+<p><img src="https://user-images.githubusercontent.com/64525827/105042745-e5966400-5a64-11eb-9dd9-aa4bed5bd8b7.png" alt="Cloudflare - SSL:TLS" /></p>
+
+
+
+      </section>
+
+    </div>
+  </body>
+</html>

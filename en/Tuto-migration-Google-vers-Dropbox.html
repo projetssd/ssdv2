@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>ssdv2 | SSDv2</title>
+<meta name="generator" content="Jekyll v3.8.7" />
+<meta property="og:title" content="ssdv2" />
+<meta property="og:locale" content="en" />
+<meta name="description" content="Simple Seedbox docker" />
+<meta property="og:description" content="Simple Seedbox docker" />
+<meta property="og:site_name" content="SSDv2" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="ssdv2" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Simple Seedbox docker","headline":"ssdv2","url":"/ssdv2/en/Tuto-migration-Google-vers-Dropbox.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/ssdv2/en/assets/css/style.css?v=">
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="/ssdv2/en/assets/js/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="/ssdv2/en/assets/css/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup theme-color -->
+<!-- start theme color meta headers -->
+<meta name="theme-color" content="#353535">
+<meta name="msapplication-navbutton-color" content="#353535">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- end theme color meta headers -->
+
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/ssdv2/en/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+<!--      <div id="header">-->
+<!--        <nav>-->
+<!--          <ul>-->
+<!--            <li class="fork"><a href="">View On GitHub</a></li>-->
+<!--            -->
+<!--          </ul>-->
+<!--        </nav>-->
+<!--      </div>&lt;!&ndash; end header &ndash;&gt;-->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>SSDv2</h1>
+          <p>Simple Seedbox docker</p>
+          <hr>
+            <span class="credits left">
+                 
+                    
+                        <a href="/ssdv2//Tuto-migration-Google-vers-Dropbox.html">Français</a>
+                    
+
+                
+                    
+
+                
+            </span>
+<!--          <span class="credits left">Project maintained by <a href=""></a></span>-->
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></span>
+        </div>
+
+        <h1 id="tuto-migration-google-vers-dropbox">Tuto migration Google vers Dropbox</h1>
+
+<hr />
+
+<blockquote>
+  <p>Attention cela concerne ma propre migration, il peut y avoir des divergences pour vous. N’hésitez pas à demander de l’aide sur le discord</p>
+</blockquote>
+
+<hr />
+
+<h2 id="mise-à-jour-de-rclone-il-faut-au-minimum-la-version-158">Mise à jour de Rclone, il faut au minimum la version 1.58</h2>
+
+<ul>
+  <li><code class="highlighter-rouge">rclone version</code> pour connaitre votre version actuelle</li>
+  <li><code class="highlighter-rouge">rclone selfupdate</code> pour mettre à jour vers la dernière version dispo</li>
+</ul>
+
+<blockquote>
+  <p>à partir de 1.62.2, il faut installer fuse3 <code class="highlighter-rouge">sudo apt install fuse3</code> et par conséquent être en Ubuntu 20.04</p>
+</blockquote>
+
+<h2 id="dropbox-">Dropbox :</h2>
+
+<p>Vous devez ajouter un dossier nommé “Medias” à la racine de Dropbox</p>
+
+<h3 id="création-du-remote-dropbox-">Création du remote Dropbox :</h3>
+
+<ul>
+  <li>création de dropbox non crypté : ne pas rentrer d’id ni de password pour générer le token</li>
+  <li>création de dropbox crypté : penser à voir dans les options pour 3 (Encode using base32768) voir l’exemple plus bas</li>
+</ul>
+
+<h3 id="ajout-du-remote-dropbox-dans-le-rcloneconfig-du-serveur--ça-doit-ressembler-à-ce-qui-est-ci-dessous">Ajout du remote dropbox dans le rclone.config du serveur : (ça doit ressembler à ce qui est ci-dessous)</h3>
+
+<div class="language-jsx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">[</span><span class="nx">dropbox</span><span class="p">]</span>
+<span class="nx">type</span> <span class="o">=</span> <span class="nx">dropbox</span>
+<span class="nx">token</span> <span class="o">=</span> <span class="p">{</span><span class="dl">"</span><span class="s2">access_token</span><span class="dl">"</span><span class="p">:</span><span class="dl">"</span><span class="s2">sl.BgNdT0uK1-fq</span><span class="dl">"</span><span class="p">,</span><span class="dl">"</span><span class="s2">token_type</span><span class="dl">"</span><span class="p">:</span><span class="dl">"</span><span class="s2">bearer</span><span class="dl">"</span><span class="p">,</span><span class="dl">"</span><span class="s2">refresh_token</span><span class="dl">"</span><span class="p">:</span><span class="dl">"</span><span class="s2">sN4vbcqQXsclGm6</span><span class="dl">"</span><span class="p">,</span><span class="dl">"</span><span class="s2">expiry</span><span class="dl">"</span><span class="p">:</span><span class="dl">"</span><span class="s2">2023-06-1302:00</span><span class="dl">"</span><span class="p">}</span>
+
+<span class="p">[</span><span class="nx">dropbox_crypt</span><span class="p">]</span>
+<span class="nx">type</span> <span class="o">=</span> <span class="nx">crypt</span>
+<span class="nx">filename_encoding</span> <span class="o">=</span> <span class="nx">base32768</span>
+<span class="nx">suffix</span> <span class="o">=</span> <span class="nx">none</span>
+<span class="nx">remote</span> <span class="o">=</span> <span class="nx">dropbox</span><span class="p">:</span><span class="nx">Medias</span>
+<span class="nx">password</span> <span class="o">=</span> <span class="o">******************</span>
+<span class="nx">password2</span> <span class="o">=</span> <span class="o">******************</span>
+
+<span class="p">[</span><span class="nx">teamdrive</span><span class="p">]</span>
+<span class="nx">type</span> <span class="o">=</span> <span class="nx">drive</span>
+<span class="nx">client_id</span> <span class="o">=</span> <span class="o">******************-</span><span class="mi">8</span><span class="nx">h5ontent</span><span class="p">.</span><span class="nx">com</span>
+<span class="nx">client_secret</span> <span class="o">=</span> <span class="o">******************</span>
+<span class="nx">scope</span> <span class="o">=</span> <span class="nx">drive</span>
+<span class="nx">token</span> <span class="o">=</span> <span class="p">{</span><span class="dl">"</span><span class="s2">access_token</span><span class="dl">"</span><span class="p">:</span><span class="dl">"</span><span class="s2">ya29.a0AW0169</span><span class="dl">"</span><span class="p">,</span><span class="dl">"</span><span class="s2">token_type</span><span class="dl">"</span><span class="p">:</span><span class="dl">"</span><span class="s2">Bearer</span><span class="dl">"</span><span class="p">,</span><span class="dl">"</span><span class="s2">refresh_token</span><span class="dl">"</span><span class="p">:</span><span class="dl">"</span><span class="s2">1//03ECegslU4M</span><span class="dl">"</span><span class="p">,</span><span class="dl">"</span><span class="s2">expiry</span><span class="dl">"</span><span class="p">:</span><span class="dl">"</span><span class="s2">202302:00</span><span class="dl">"</span><span class="p">}</span>
+<span class="nx">team_drive</span> <span class="o">=</span> <span class="o">******************</span>
+<span class="nx">root_folder_id</span> <span class="o">=</span> 
+
+<span class="p">[</span><span class="nx">teamdrive_crypt</span><span class="p">]</span>
+<span class="nx">type</span> <span class="o">=</span> <span class="nx">crypt</span>
+<span class="nx">remote</span> <span class="o">=</span> <span class="nx">teamdrive</span><span class="p">:</span><span class="nx">Medias</span>
+<span class="nx">filename_encryption</span> <span class="o">=</span> <span class="nx">standard</span>
+<span class="nx">password</span> <span class="o">=</span> <span class="o">******************</span>
+<span class="nx">password2</span> <span class="o">=</span> <span class="o">******************</span>
+</code></pre></div></div>
+
+<h3 id="ajout-du-service-rclone-dropbox-et-ajout-du-point-de-montage-dans-mergerfs-">Ajout du service rclone-dropbox et ajout du point de montage dans Mergerfs :</h3>
+
+<ul>
+  <li>Création du point de montage pour dropbox :
+    <div class="language-zsh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">mkdir</span> /mnt/dropbox
+</code></pre></div>    </div>
+  </li>
+  <li>Création du service : <code class="highlighter-rouge">rclone-dropbox.service</code>
+    <div class="language-zsh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>nano /etc/systemd/system/rclone-dropbox.service
+</code></pre></div>    </div>
+  </li>
+</ul>
+
+<blockquote>
+  <p><strong>Warning</strong>
+Remplacer <code class="highlighter-rouge">$USER</code>, <code class="highlighter-rouge">$GROUP</code>, <code class="highlighter-rouge">$UID</code> et <code class="highlighter-rouge">$GID</code> par vos paramètres.</p>
+</blockquote>
+
+<div class="language-jsx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">[</span><span class="nx">Unit</span><span class="p">]</span>
+<span class="nx">Description</span><span class="o">=</span><span class="nx">Dropbox</span> <span class="nx">Rclone</span> <span class="nx">VFS</span> <span class="nx">Mount</span>
+<span class="nx">AssertPathIsDirectory</span><span class="o">=</span><span class="sr">/mnt/</span><span class="nx">rclone</span>
+<span class="nx">After</span><span class="o">=</span><span class="nx">network</span><span class="o">-</span><span class="nx">online</span><span class="p">.</span><span class="nx">target</span>
+
+<span class="p">[</span><span class="nx">Service</span><span class="p">]</span>
+<span class="nx">User</span><span class="o">=</span><span class="nx">$USER</span>
+<span class="nx">Group</span><span class="o">=</span><span class="nx">$GROUP</span>
+<span class="nx">Type</span><span class="o">=</span><span class="nx">notify</span>
+<span class="nx">ExecStart</span><span class="o">=</span><span class="sr">/usr/</span><span class="nx">bin</span><span class="o">/</span><span class="nx">rclone</span> <span class="nx">mount</span> <span class="o">\</span>
+  <span class="o">--</span><span class="nx">config</span><span class="o">=</span><span class="sr">/home/</span><span class="nx">$USER</span><span class="o">/</span><span class="p">.</span><span class="nx">config</span><span class="o">/</span><span class="nx">rclone</span><span class="o">/</span><span class="nx">rclone</span><span class="p">.</span><span class="nx">conf</span> <span class="o">\</span>
+  <span class="o">--</span><span class="nx">uid</span><span class="o">=</span><span class="nx">$uid</span> <span class="o">--</span><span class="nx">gid</span><span class="o">=</span><span class="nx">$gid</span> <span class="o">\</span>
+  <span class="o">--</span><span class="nx">umask</span><span class="o">=</span><span class="mi">002</span> <span class="o">\</span>
+  <span class="o">--</span><span class="nx">allow</span><span class="o">-</span><span class="nx">other</span> <span class="o">-</span><span class="nx">v</span> <span class="o">\</span>
+  <span class="o">--</span><span class="k">async</span><span class="o">-</span><span class="nx">read</span><span class="o">=</span><span class="kc">true</span> <span class="o">\</span>
+  <span class="o">--</span><span class="nx">allow</span><span class="o">-</span><span class="nx">non</span><span class="o">-</span><span class="nx">empty</span> <span class="o">\</span>
+  <span class="o">--</span><span class="nx">buffer</span><span class="o">-</span><span class="nx">size</span><span class="o">=</span><span class="mi">256</span><span class="nx">M</span> <span class="o">\</span>
+  <span class="o">--</span><span class="nx">size</span><span class="o">-</span><span class="nx">only</span> <span class="o">\</span>
+  <span class="o">--</span><span class="nx">dir</span><span class="o">-</span><span class="nx">cache</span><span class="o">-</span><span class="nx">time</span><span class="o">=</span><span class="mi">5000</span><span class="nx">h</span> <span class="o">\</span>
+  <span class="o">--</span><span class="nx">log</span><span class="o">-</span><span class="nx">systemd</span> <span class="o">\</span>
+  <span class="o">--</span><span class="nx">user</span><span class="o">-</span><span class="nx">agent</span><span class="o">=</span><span class="dl">'</span><span class="s1">Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.131 Safari/537.36</span><span class="dl">'</span> <span class="o">\</span>
+  <span class="o">--</span><span class="nx">cache</span><span class="o">-</span><span class="nx">dir</span><span class="o">=</span><span class="sr">/home/</span><span class="nx">$USER</span><span class="o">/</span><span class="p">.</span><span class="nx">config</span><span class="o">/</span><span class="nx">rclone</span><span class="o">/</span><span class="nx">cache</span> <span class="o">\</span>
+  <span class="o">--</span><span class="nx">use</span><span class="o">-</span><span class="nx">mmap</span> <span class="o">\</span>
+  <span class="o">--</span><span class="nx">vfs</span><span class="o">-</span><span class="nx">read</span><span class="o">-</span><span class="nx">ahead</span><span class="o">=</span><span class="mi">128</span><span class="nx">M</span> <span class="o">\</span>
+  <span class="o">--</span><span class="nx">vfs</span><span class="o">-</span><span class="nx">read</span><span class="o">-</span><span class="nx">chunk</span><span class="o">-</span><span class="nx">size</span><span class="o">=</span><span class="mi">256</span><span class="nx">M</span> <span class="o">\</span>
+  <span class="o">--</span><span class="nx">vfs</span><span class="o">-</span><span class="nx">read</span><span class="o">-</span><span class="nx">chunk</span><span class="o">-</span><span class="nx">size</span><span class="o">-</span><span class="nx">limit</span><span class="o">=</span><span class="mi">2</span><span class="nx">G</span> <span class="o">\</span>
+  <span class="o">--</span><span class="nx">vfs</span><span class="o">-</span><span class="nx">fast</span><span class="o">-</span><span class="nx">fingerprint</span> <span class="o">\</span>
+  <span class="o">--</span><span class="nx">vfs</span><span class="o">-</span><span class="nx">cache</span><span class="o">-</span><span class="nx">max</span><span class="o">-</span><span class="nx">age</span><span class="o">=</span><span class="mi">504</span><span class="nx">h</span> <span class="o">\</span>
+  <span class="o">--</span><span class="nx">vfs</span><span class="o">-</span><span class="nx">cache</span><span class="o">-</span><span class="nx">mode</span><span class="o">=</span><span class="nx">full</span> <span class="o">\</span>
+  <span class="o">--</span><span class="nx">vfs</span><span class="o">-</span><span class="nx">cache</span><span class="o">-</span><span class="nx">poll</span><span class="o">-</span><span class="nx">interval</span><span class="o">=</span><span class="mi">30</span><span class="nx">s</span> <span class="o">\</span>
+  <span class="o">--</span><span class="nx">vfs</span><span class="o">-</span><span class="nx">cache</span><span class="o">-</span><span class="nx">max</span><span class="o">-</span><span class="nx">size</span><span class="o">=</span><span class="mi">250</span><span class="nx">G</span> <span class="o">\</span>
+  <span class="nx">dropbox_crypt</span><span class="p">:</span> <span class="o">/</span><span class="nx">mnt</span><span class="o">/</span><span class="nx">rclone</span><span class="o">/</span>
+<span class="nx">ExecStop</span><span class="o">=</span><span class="sr">/bin/</span><span class="nx">fusermount</span> <span class="o">-</span><span class="nx">uz</span> <span class="o">/</span><span class="nx">mnt</span><span class="o">/</span><span class="nx">rclone</span>
+<span class="nx">Restart</span><span class="o">=</span><span class="nx">on</span><span class="o">-</span><span class="nx">abort</span>
+<span class="nx">RestartSec</span><span class="o">=</span><span class="mi">5</span>
+
+<span class="p">[</span><span class="nx">Install</span><span class="p">]</span>
+<span class="nx">WantedBy</span><span class="o">=</span><span class="k">default</span><span class="p">.</span><span class="nx">target</span>
+</code></pre></div></div>
+
+<ul>
+  <li>enregistrer le fichier. <code class="highlighter-rouge">ctrl+X</code></li>
+</ul>
+
+<h2 id="on-modifie-maintenant-mergerfs">On modifie maintenant mergerfs</h2>
+
+<div class="language-jsx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">systemctl</span> <span class="o">--</span><span class="nx">system</span> <span class="nx">stop</span> <span class="nx">mergerfs</span><span class="p">.</span><span class="nx">service</span>
+</code></pre></div></div>
+<ul>
+  <li>On édite <code class="highlighter-rouge">mergerfs.service</code>
+    <div class="language-jsx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">nano</span> <span class="o">/</span><span class="nx">etc</span><span class="o">/</span><span class="nx">systemd</span><span class="o">/</span><span class="nx">system</span><span class="o">/</span><span class="nx">mergerfs</span><span class="p">.</span><span class="nx">service</span>
+</code></pre></div>    </div>
+  </li>
+</ul>
+
+<blockquote>
+  <p><strong>Warning</strong>
+Remplacer $USER par le votre</p>
+</blockquote>
+
+<div class="language-jsx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">[</span><span class="nx">Unit</span><span class="p">]</span>
+<span class="nx">Description</span><span class="o">=</span><span class="nx">gmedia</span> <span class="nx">mergerfs</span> <span class="nx">mount</span>
+<span class="nx">Requires</span><span class="o">=</span><span class="nx">rclone</span><span class="p">.</span><span class="nx">service</span> <span class="nx">rclone</span><span class="o">-</span><span class="nx">dropbox</span><span class="p">.</span><span class="nx">service</span>
+<span class="nx">After</span><span class="o">=</span><span class="nx">rclone</span><span class="p">.</span><span class="nx">service</span> <span class="nx">rclone</span><span class="o">-</span><span class="nx">dropbox</span><span class="p">.</span><span class="nx">service</span>
+
+<span class="p">[</span><span class="nx">Service</span><span class="p">]</span>
+<span class="nx">Type</span><span class="o">=</span><span class="nx">forking</span>
+<span class="nx">ExecStart</span><span class="o">=</span><span class="sr">/usr/</span><span class="nx">bin</span><span class="o">/</span><span class="nx">mergerfs</span> <span class="o">/</span><span class="nx">home</span><span class="o">/</span><span class="nx">$USER</span><span class="o">/</span><span class="nx">local</span><span class="o">=</span><span class="nx">RW</span><span class="p">:</span><span class="o">/</span><span class="nx">mnt</span><span class="o">/</span><span class="nx">rclone</span><span class="o">/</span><span class="nx">$USER</span><span class="o">=</span><span class="nx">NC</span><span class="p">:</span><span class="o">/</span><span class="nx">mnt</span><span class="o">/</span><span class="nx">dropbox</span><span class="o">=</span><span class="nx">NC</span> <span class="o">/</span><span class="nx">home</span><span class="o">/</span><span class="nx">$USER</span><span class="o">/</span><span class="nx">Medias</span> <span class="o">-</span><span class="nx">o</span> <span class="nx">rw</span><span class="p">,</span><span class="nx">use_ino</span><span class="p">,</span><span class="nx">allow_other</span><span class="p">,</span><span class="nx">func</span><span class="p">.</span><span class="nx">getattr</span><span class="o">=</span><span class="nx">newest</span><span class="p">,</span><span class="nx">category</span><span class="p">.</span><span class="nx">action</span><span class="o">=</span><span class="nx">all</span><span class="p">,</span><span class="nx">category</span><span class="p">.</span><span class="nx">create</span><span class="o">=</span><span class="nx">ff</span><span class="p">,</span><span class="nx">cache</span><span class="p">.</span><span class="nx">files</span><span class="o">=</span><span class="nx">auto</span><span class="o">-</span><span class="nx">full</span>
+<span class="nx">ExecStop</span><span class="o">=</span><span class="sr">/bin/</span><span class="nx">fusermount</span> <span class="o">-</span><span class="nx">u</span> <span class="o">/</span><span class="nx">home</span><span class="o">/</span><span class="nx">$USER</span><span class="o">/</span><span class="nx">Medias</span>
+<span class="nx">KillMode</span><span class="o">=</span><span class="nx">process</span>
+<span class="nx">Restart</span><span class="o">=</span><span class="nx">on</span><span class="o">-</span><span class="nx">failure</span>
+
+<span class="p">[</span><span class="nx">Install</span><span class="p">]</span>
+<span class="nx">WantedBy</span><span class="o">=</span><span class="nx">multi</span><span class="o">-</span><span class="nx">user</span><span class="p">.</span><span class="nx">target</span>
+</code></pre></div></div>
+<ul>
+  <li>Rechargement des service :
+    <div class="language-jsx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">sudo</span> <span class="nx">systemctl</span> <span class="nx">daemon</span><span class="o">-</span><span class="nx">reload</span>
+</code></pre></div>    </div>
+  </li>
+  <li>Démarage du montage dropbox :
+    <div class="language-jsx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">service</span> <span class="nx">rclone</span><span class="o">-</span><span class="nx">dropbox</span> <span class="nx">start</span>
+</code></pre></div>    </div>
+  </li>
+  <li>A ce stade on vérifie que le service et fonctionel :
+    <div class="language-zsh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">ls</span> <span class="nt">-lsha</span> /mnt/dropbox
+</code></pre></div>    </div>
+  </li>
+</ul>
+
+<blockquote>
+  <p><strong>Note</strong>
+Vérifiez que tout vos fichiers de dropbox sont bien visible</p>
+</blockquote>
+
+<blockquote>
+  <p><strong>Warning</strong></p>
+
+  <p>Si ce n’est pas le cas, on s’arette la et on debug :</p>
+
+  <ul>
+    <li>On regarde déja se qu’il se passe dans le log systemd :</li>
+  </ul>
+
+  <p>Sa peut étre une simple faute de frappe ou de cc : 
+<code class="highlighter-rouge">sudo systemctl --system status rclone-dropbox.service</code></p>
+
+  <ul>
+    <li>Si il n’y a pas assez de détail vous pouvez nous demander de l’aide sur le discord:</li>
+  </ul>
+
+  <p><code class="highlighter-rouge">journalctl -u rclone-dropbox.service</code></p>
+
+  <ul>
+    <li>Fournir le log complet</li>
+  </ul>
+</blockquote>
+
+<ul>
+  <li>Activation du service au boot
+    <div class="language-zsh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">sudo </span>systemctl <span class="nt">--system</span> <span class="nb">enable </span>rclone-dropbox.service
+</code></pre></div>    </div>
+  </li>
+  <li>Démarage de mergerfs
+    <div class="language-jsx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">service</span> <span class="nx">mergerfs</span> <span class="nx">start</span>
+</code></pre></div>    </div>
+  </li>
+</ul>
+
+<blockquote>
+  <p><strong>Note</strong>
+remplacer start par status pour confirmer que tout fonctionne correctement, vous pouvez également vérifier dans le /mnt/rclone et /mnt/dropbox que vous avez vos fichiers</p>
+</blockquote>
+
+<h3 id="il-faut-ensuite-relancer-certain-container">il faut ensuite relancer certain container</h3>
+
+<div class="language-jsx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">docker</span> <span class="nx">restart</span> <span class="nx">sonarr</span> <span class="nx">radarr</span> <span class="nx">plex</span> <span class="dl">""</span><span class="nx">et</span> <span class="nx">tout</span> <span class="nx">ceux</span> <span class="nx">qui</span> <span class="nx">utilises</span> <span class="nx">les</span> <span class="nx">données</span> <span class="nx">Medias</span><span class="dl">""</span>
+</code></pre></div></div>
+
+<h3 id="commande-de-migration-des-données-à-faire-depuis-un-vps">Commande de migration des données (à faire depuis un VPS):</h3>
+
+<p>attention à vérifier si à la racine de google vous avez oui ou non un dossier correspondant à votre pseudo — <code class="highlighter-rouge">rclone lsd teamdrive_crypt:</code></p>
+
+<p>je vous conseil de faire dossier par dossier</p>
+
+<div class="language-jsx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">rclone</span> <span class="nx">move</span> <span class="o">-</span><span class="nx">Pv</span> <span class="nx">teamdrive_crypt</span><span class="p">:</span><span class="nx">kesurof</span><span class="o">/</span><span class="nx">Films4K</span> <span class="nx">dropbox_crypt</span><span class="p">:</span><span class="nx">Films4K</span> <span class="o">--</span><span class="nx">fast</span><span class="o">-</span><span class="nx">list</span> <span class="o">--</span><span class="nx">max</span><span class="o">-</span><span class="nx">backlog</span><span class="o">=</span><span class="mi">2000000</span> <span class="o">--</span><span class="nx">dropbox</span><span class="o">-</span><span class="nx">batch</span><span class="o">-</span><span class="nx">size</span> <span class="mi">70</span> <span class="o">--</span><span class="nx">dropbox</span><span class="o">-</span><span class="nx">batch</span><span class="o">-</span><span class="nx">mode</span> <span class="k">async</span> <span class="o">--</span><span class="nx">dropbox</span><span class="o">-</span><span class="nx">batch</span><span class="o">-</span><span class="nx">timeout</span> <span class="mi">20</span><span class="nx">s</span> <span class="o">--</span><span class="nx">tpslimit</span><span class="o">-</span><span class="nx">burst</span><span class="o">=</span><span class="mi">1</span> <span class="o">--</span><span class="nx">tpslimit</span><span class="o">=</span><span class="mi">10</span> <span class="o">--</span><span class="nx">transfers</span><span class="o">=</span><span class="mi">8</span> <span class="o">--</span><span class="nx">use</span><span class="o">-</span><span class="nx">mmap</span> <span class="o">--</span><span class="nx">no</span><span class="o">-</span><span class="nx">update</span><span class="o">-</span><span class="nx">modtime</span> <span class="o">--</span><span class="nx">dropbox</span><span class="o">-</span><span class="nx">chunk</span><span class="o">-</span><span class="nx">size</span><span class="o">=</span><span class="mi">64</span><span class="nx">M</span> <span class="o">--</span><span class="nx">progress</span> <span class="o">-</span><span class="nx">v</span> <span class="o">--</span><span class="nx">max</span><span class="o">-</span><span class="nx">transfer</span> <span class="mi">9</span><span class="nx">T</span> <span class="o">--</span><span class="nx">cutoff</span><span class="o">-</span><span class="nx">mode</span><span class="o">=</span><span class="nx">soft</span> <span class="o">--</span><span class="nx">drive</span><span class="o">-</span><span class="nx">stop</span><span class="o">-</span><span class="nx">on</span><span class="o">-</span><span class="nx">download</span><span class="o">-</span><span class="nx">limit</span>
+</code></pre></div></div>
+
+<h3 id="il-faut-également-modifier-cloudplow-ou-crop-pour-indiquer-le-nom-du-remote-correspondant-à-dropbox-ainsi-que-le-script-de-backup">Il faut également modifier cloudplow ou crop pour indiquer le nom du remote correspondant à Dropbox ainsi que le script de backup</h3>
+
+<ul>
+  <li><code class="highlighter-rouge">/usr/local/bin/backup</code> il faut remplacer teamdrive_crypt par dropbox_crypt</li>
+  <li><code class="highlighter-rouge">/usr/local/bin/restore</code> il faut remplacer teamdrive_crypt par dropbox_crypt</li>
+</ul>
+
+
+      </section>
+
+    </div>
+  </body>
+</html>

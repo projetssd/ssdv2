@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>ssdv2 | SSDv2</title>
+<meta name="generator" content="Jekyll v3.8.7" />
+<meta property="og:title" content="ssdv2" />
+<meta property="og:locale" content="en" />
+<meta name="description" content="Simple Seedbox docker" />
+<meta property="og:description" content="Simple Seedbox docker" />
+<meta property="og:site_name" content="SSDv2" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="ssdv2" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Simple Seedbox docker","headline":"ssdv2","url":"/ssdv2/en/Ajouter,-Supprimer,-R%C3%A9initialiser.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/ssdv2/en/assets/css/style.css?v=">
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="/ssdv2/en/assets/js/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="/ssdv2/en/assets/css/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup theme-color -->
+<!-- start theme color meta headers -->
+<meta name="theme-color" content="#353535">
+<meta name="msapplication-navbutton-color" content="#353535">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- end theme color meta headers -->
+
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/ssdv2/en/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+<!--      <div id="header">-->
+<!--        <nav>-->
+<!--          <ul>-->
+<!--            <li class="fork"><a href="">View On GitHub</a></li>-->
+<!--            -->
+<!--          </ul>-->
+<!--        </nav>-->
+<!--      </div>&lt;!&ndash; end header &ndash;&gt;-->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>SSDv2</h1>
+          <p>Simple Seedbox docker</p>
+          <hr>
+            <span class="credits left">
+                 
+                    
+                        <a href="/ssdv2//Ajouter,-Supprimer,-R%C3%A9initialiser.html">Français</a>
+                    
+
+                
+                    
+
+                
+            </span>
+<!--          <span class="credits left">Project maintained by <a href=""></a></span>-->
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></span>
+        </div>
+
+        <h1 id="différences-entre-ajout-suppression-et-réinitialiser">Différences entre ajout, suppression et réinitialiser</h1>
+
+<h2 id="1-ajout-application">1) Ajout application</h2>
+
+<ul>
+  <li>Permet de faire une installation complète d’application</li>
+  <li>Permet d’appliquer les modifications faites sur le fichier .yml local (commencer par supprimer le container <code class="highlighter-rouge">docker rm -f appli</code>)</li>
+</ul>
+
+<h2 id="2-suppression-dapplication">2) Suppression d’application</h2>
+
+<ul>
+  <li>Permet de supprimer le .yml local ainsi que les données sous <code class="highlighter-rouge">opt/seedbox/docker/${USER}</code> et les informations
+d’authentification et de sous domaines dans le fichier account</li>
+</ul>
+
+<h2 id="3-réinitialisation-container">3) Réinitialisation container</h2>
+
+<ul>
+  <li>Permet de restaurer le fichier .yml d’origine et d’appliquer les changements
+pas de suppression des données utilisateurs ni des données contenu dans le fichier account</li>
+</ul>
+
+<h2 id="4-relance-container">4) Relance container</h2>
+
+<ul>
+  <li>Permet d’arrêter/relancer un container sans suppression des parametres personnalisés. A utiliser si vous avez modifié le .yml d’origine de l’application.
+pas de suppression des données utilisateurs ni des données contenu dans le fichier account</li>
+</ul>
+
+<h2 id="astuces">Astuces</h2>
+
+<p>Il est possible d’utiliser des commandes rapide à la condition d’être dans le venv</p>
+
+<p><code class="highlighter-rouge">suppression_appli app</code> : supprimes le container, les infos dans account et le yml local<br />
+<code class="highlighter-rouge">suppression_appli app 1</code> : supprimes le container, les infos dans account, le yml local ainsi que les données sous opt<br />
+<code class="highlighter-rouge">launch_service app</code> : installation de l’application demandé</p>
+
+
+      </section>
+
+    </div>
+  </body>
+</html>

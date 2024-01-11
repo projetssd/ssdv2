@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>ssdv2 | SSDv2</title>
+<meta name="generator" content="Jekyll v3.8.7" />
+<meta property="og:title" content="ssdv2" />
+<meta property="og:locale" content="en" />
+<meta name="description" content="Simple Seedbox docker" />
+<meta property="og:description" content="Simple Seedbox docker" />
+<meta property="og:site_name" content="SSDv2" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="ssdv2" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Simple Seedbox docker","headline":"ssdv2","url":"/ssdv2/en/Trakt.tv-et-Kitana.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/ssdv2/en/assets/css/style.css?v=">
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="/ssdv2/en/assets/js/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="/ssdv2/en/assets/css/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup theme-color -->
+<!-- start theme color meta headers -->
+<meta name="theme-color" content="#353535">
+<meta name="msapplication-navbutton-color" content="#353535">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- end theme color meta headers -->
+
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/ssdv2/en/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+<!--      <div id="header">-->
+<!--        <nav>-->
+<!--          <ul>-->
+<!--            <li class="fork"><a href="">View On GitHub</a></li>-->
+<!--            -->
+<!--          </ul>-->
+<!--        </nav>-->
+<!--      </div>&lt;!&ndash; end header &ndash;&gt;-->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>SSDv2</h1>
+          <p>Simple Seedbox docker</p>
+          <hr>
+            <span class="credits left">
+                 
+                    
+                        <a href="/ssdv2//Trakt.tv-et-Kitana.html">Français</a>
+                    
+
+                
+                    
+
+                
+            </span>
+<!--          <span class="credits left">Project maintained by <a href=""></a></span>-->
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></span>
+        </div>
+
+        <p>Attention : première écriture.</p>
+
+<h2 id="vous-avez-envie-de-synchroniser-vos-lectures-avec-votre-compte-trakttv-vous-êtes-à-la-bonne-adresse">Vous avez envie de synchroniser vos lectures avec votre compte Trakt.tv, vous êtes à la bonne adresse.</h2>
+
+<h3 id="prérequis-">prérequis :</h3>
+<ul>
+  <li>un compte trakt.tv “gratuit”</li>
+  <li>un compte plex “gratuit”</li>
+</ul>
+
+<p>comme vous l’avez compris, il n’y as pas besoin d’être VIP, nous n’utiliserons pas les webhooks</p>
+
+<blockquote>
+  <p>Avantage de cette solution (il en existe une autre mais je n’en parlerai pas) vous allez pouvoir synchroniser chaque utilisateurs de votre server plex avec sont propre compte Trakt.tv</p>
+</blockquote>
+
+<h2 id="on-commence-">on commence :</h2>
+
+<h3 id="installation-du-plugin-trakt-plex-trakt-scrobbler">Installation du plugin trakt (Plex-Trakt-Scrobbler)</h3>
+
+<p>Download the latest release of the Trakt.tv plugin :</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>wget https://github.com/trakt/Plex-Trakt-Scrobbler/archive/master.zip -O Plex-Trakt-Scrobbler.zip
+</code></pre></div></div>
+<p>Extract the downloaded ZIP archive :</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>unzip Plex-Trakt-Scrobbler.zip
+</code></pre></div></div>
+
+<p>Déplacement : (remplacer USER votre votre user)</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cp -r Plex-Trakt-Scrobbler-*/Trakttv.bundle "/opt/seedbox/docker/USER/plex/config/Library/Application Support/Plex Media Server/Plug-ins"
+</code></pre></div></div>
+
+<p>Changement des droits :</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cd "/opt/seedbox/docker/USER/plex/config/Library/Application Support/Plex Media Server/Plug-ins/"
+</code></pre></div></div>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>chown -R 1000:1000 Trakttv.bundle &amp;&amp; chmod -R 775 Trakttv.bundle
+</code></pre></div></div>
+
+<p>Restart Plex Media Server :</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker restart plex
+</code></pre></div></div>
+
+<h3 id="installation-de-kitana-">Installation de Kitana :</h3>
+
+<p>Direction le menu du script pour y ajouter l’application “kitana”</p>
+
+<h3 id="parametrage-de-la-solution-">Parametrage de la solution :</h3>
+
+<p>Rendez-vous à l’adresse suivante <a href="http://trakt-for-plex.github.io/configuration/#/login">trakt-scrobbler</a></p>
+
+<p>Connexion à votre compte plex :</p>
+
+<p><img src="https://user-images.githubusercontent.com/64525827/119456089-94f88580-bd3a-11eb-946a-e2f2eb956c94.png" alt="login" /></p>
+
+<p>puis sélectionner votre serveur dans la fenêtre “connect”</p>
+
+<p><img src="https://user-images.githubusercontent.com/64525827/119456303-d7ba5d80-bd3a-11eb-90a2-0eb725f0cf9f.png" alt="configuration" /><br />
+cliquer sur Rules et reproduisez ceci<br />
+<img src="https://user-images.githubusercontent.com/64525827/119456424-f28cd200-bd3a-11eb-8d3a-ffcb8caafc57.png" alt="rules" /></p>
+
+<p>Dans “Accounts” il faut ajouter les différents compte que vous souhaitez synchroniser avec Trakt.tv</p>
+
+<blockquote>
+  <p>IMPORTANT : il faut suivre dans le sens exact les consignes suivantes</p>
+</blockquote>
+
+<p>Pour Plex : 
+Cliquer sur le lien https://plex.tv/pin pour entrer le code présent à l’écran, attendez que ça soit bien pris en compte puis ENREGISTRER avec le bouton bleu en haut à droite.</p>
+
+<p>Pour Trakt : 
+Cliquer sur “Get PIN” connectez vous à votre compte Trakt afin de voir le code généré, ensuite coller le dans la config et cliquer sur “Sign in” puis ENREGISTRER avec le bouton bleu</p>
+
+<p>Résultat attendu :</p>
+
+<p><img src="https://user-images.githubusercontent.com/64525827/119457702-43e99100-bd3c-11eb-9b8b-5c64ecafe6b9.png" alt="authentification" /></p>
+
+<h2 id="suite-de-linstallation-avec-kitana">Suite de l’installation avec Kitana</h2>
+
+<p>Rendez vous à l’adresse de votre kitana (exemple : https://kitana.votrendd.fr)</p>
+
+<p>connectez vous avec votre compte PLEX<br />
+<img src="https://user-images.githubusercontent.com/64525827/119457858-6c718b00-bd3c-11eb-86d7-a7e0982448bc.png" alt="kitana connect" /></p>
+
+<p>Cliquer sur l’adresse IP local “172.18.0.xx” puis sur le plugin trakt</p>
+
+<p>Dans l’onglet “sync” vous avez plusieurs possibilités j’en présente deux :</p>
+
+<p>Ce choix, permet de récupérer l’htistorique de vue depuis Trakt afin de marquer comme vu dans Plex tout ce qui est marqué comme vu dans Trakt<br />
+<img src="https://user-images.githubusercontent.com/64525827/119458238-d12ce580-bd3c-11eb-9196-237f146ed463.png" alt="Pull" /></p>
+
+<p>Ce choix, permet d’envoyer à Trakt tout les contenus marqué comme vu dans votre Plex<br />
+<img src="https://user-images.githubusercontent.com/64525827/119458428-089b9200-bd3d-11eb-8543-2d9b1dd0cfea.png" alt="Push" /></p>
+
+<blockquote>
+  <p>Pour vérifier le bon fonctionnement, il vous suffit de lancer une lecture et d’aller sur trakt.tv, vous devriez voir ceci<br />
+<img src="https://user-images.githubusercontent.com/64525827/119458868-79db4500-bd3d-11eb-8450-9df1430724e6.png" alt="Capture d’écran 2021-05-25 à 09 41 58" /></p>
+</blockquote>
+
+<p>Fin 👍🏻</p>
+
+
+      </section>
+
+    </div>
+  </body>
+</html>

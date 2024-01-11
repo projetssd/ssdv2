@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>ssdv2 | SSDv2</title>
+<meta name="generator" content="Jekyll v3.8.7" />
+<meta property="og:title" content="ssdv2" />
+<meta property="og:locale" content="fr" />
+<meta name="description" content="Simple Seedbox docker" />
+<meta property="og:description" content="Simple Seedbox docker" />
+<meta property="og:site_name" content="SSDv2" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="ssdv2" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Simple Seedbox docker","headline":"ssdv2","url":"/ssdv2/Traktarr.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/ssdv2/assets/css/style.css?v=">
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="/ssdv2/assets/js/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="/ssdv2/assets/css/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup theme-color -->
+<!-- start theme color meta headers -->
+<meta name="theme-color" content="#353535">
+<meta name="msapplication-navbutton-color" content="#353535">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- end theme color meta headers -->
+
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/ssdv2/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+<!--      <div id="header">-->
+<!--        <nav>-->
+<!--          <ul>-->
+<!--            <li class="fork"><a href="">View On GitHub</a></li>-->
+<!--            -->
+<!--          </ul>-->
+<!--        </nav>-->
+<!--      </div>&lt;!&ndash; end header &ndash;&gt;-->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>SSDv2</h1>
+          <p>Simple Seedbox docker</p>
+          <hr>
+            <span class="credits left">
+                 
+                    
+
+                
+                    
+                        <a href="/ssdv2/en//Traktarr.html">English</a>
+                    
+
+                
+            </span>
+<!--          <span class="credits left">Project maintained by <a href=""></a></span>-->
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></span>
+        </div>
+
+        <p>Traktarr utilise Trakt.tv pour rechercher des émissions et des films à ajouter à Sonarr et Radarr, respectivement.</p>
+
+<p>https://github.com/Cloudbox/Community/wiki/Traktarr-Tips</p>
+
+<p>Exemple:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>traktarr movies -t person -f /home/yohann/Medias/Classiques -a 'fernandel' -l 10
+</code></pre></div></div>
+
+<h4 id="1-types-de-listes-de-tâches-supportées">1. Types de listes de tâches supportées:</h4>
+
+<ul>
+  <li>
+    <p>Listes officielles de trakt
+      Tendances
+      Populaire
+      Anticipé
+      Box-office
+      Le plus regardé
+      Le plus joué</p>
+  </li>
+  <li>
+    <p>Listes publiques</p>
+  </li>
+  <li>
+    <p>Listes privées</p>
+  </li>
+  <li>
+    <p>Liste de surveillance</p>
+  </li>
+  <li>
+    <p>Liste personnalisée (s)</p>
+  </li>
+  <li>
+    <p>Prise en charge de plusieurs utilisateurs (authentifiés).</p>
+  </li>
+</ul>
+
+<p><a href="https://asciinema.org/a/180044" target="_blank"><img src="https://asciinema.org/a/180044.svg" /></a></p>
+
+<h4 id="2-créer-une-application-trakt">2. Créer une application Trakt</h4>
+<ol>
+  <li>
+    <p>Créez une application Trakt en allant https://trakt.tv/oauth/applications/new</p>
+  </li>
+  <li>
+    <p>Entrez un nom pour votre application. par exemple traktarr</p>
+  </li>
+  <li>
+    <p>Entrez <code class="highlighter-rouge">urn:ietf:wg:oauth:2.0:oob</code> dans le champ Redirect uri</p>
+  </li>
+  <li>
+    <p>Cliquez sur “ENREGISTRER APP”</p>
+  </li>
+</ol>
+
+<p>Ouvrez ensuite  le fichier de configuration config.json et 
+insérez votre ID client et votre secret client dans le config.json, comme ceci:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      " trakt " : {
+         " client_id " : " your_trakt_client_id " ,
+         " client_secret " : " your_trakt_client_secret "
+     } 
+</code></pre></div></div>
+
+<h4 id="3-authentifier-utilisateur-s-facultatif">3. Authentifier utilisateur (s) (facultatif)</h4>
+
+<p>Pour chaque utilisateur auquel vous souhaitez accéder aux listes privées (liste de contrôle et / ou listes personnalisées, par exemple), vous devez vous authentifier.</p>
+
+<p>Répétez les étapes suivantes pour chaque utilisateur à authentifier:</p>
+
+<ol>
+  <li>
+    <p>Exécuter traktarr trakt_authentication</p>
+  </li>
+  <li>Vous obtiendrez l’invite suivante:
+```
+    <ul>
+      <li>We’re talking to Trakt to get your verification code. Please wait a moment… - Go to: https://trakt.tv/activate on any device and enter A0XXXXXX. We’ll be polling Trakt every 5 seconds for a reply
+```</li>
+    </ul>
+  </li>
+  <li>
+    <p>Allez à https://trakt.tv/activate</p>
+  </li>
+  <li>
+    <p>Entrez le code que vous voyez dans votre terminal.</p>
+  </li>
+  <li>
+    <p>Cliquez sur Continuer.</p>
+  </li>
+  <li>
+    <p>Si vous n’êtes pas connecté à Trakt, connectez-vous maintenant.</p>
+  </li>
+  <li>Cliquez sur “Accepter”.</li>
+</ol>
+
+<p>Vous recevrez le message: “Woohoo! Votre appareil est maintenant connecté et s’actualisera automatiquement dans quelques secondes.”</p>
+
+<p>Vous avez maintenant authentifié l’utilisateur.</p>
+
+<p>Vous pouvez répéter cette procédure pour autant d’utilisateurs que vous le souhaitez.</p>
+
+<h4 id="configuration">Configuration</h4>
+
+<ol>
+  <li>Automatique</li>
+</ol>
+
+<p>Utilisé pour les tâches Traktarr automatiques / planifiées.</p>
+
+<p>Les films peuvent être diffusés séparément, puis à partir de séries.</p>
+
+<p>Remarque: ces paramètres ne sont nécessaires que si vous prévoyez d’utiliser Traktarr sur une planification (par rapport à son utilisation uniquement en tant que commande CLI; voir Utilisation ).</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"automatic": {
+  "movies": {
+    "anticipated": 3,
+    "boxoffice": 10,
+    "interval": 24,
+    "popular": 3,
+    "trending": 2,
+    "watched": 2,
+    "played_all": 2,
+    "watchlist": {},
+    "lists": {},
+  },
+  "shows": {
+    "anticipated": 10,
+    "interval": 48,
+    "popular": 1,
+    "trending": 2,
+    "watched_monthly": 2,
+    "played": 2,
+    "watchlist": {},
+    "lists": {}
+  }
+},
+</code></pre></div></div>
+
+<p>interval - Spécifiez la fréquence (en heures) d’exécution de la tâche Traktarr.</p>
+
+<p>anticipated , popular , trending , boxoffice (films uniquement) - Spécifiez le nombre d’éléments à rechercher dans chaque liste Trakt.</p>
+
+<p>watched - Ajoute les éléments les plus regardés par les utilisateurs uniques de Trakt (visionnements multiples exclus).</p>
+
+<ul>
+  <li>
+    <p>watched_weekly / watched_weekly - Les plus regardées de la semaine.</p>
+  </li>
+  <li>
+    <p>watched_monthly - Les plus regardées au cours du mois.</p>
+  </li>
+  <li>
+    <p>watched_yearly - Le plus regardé de l’année.</p>
+  </li>
+  <li>
+    <p>watched_all - Le plus regardé de tous les temps.</p>
+  </li>
+</ul>
+
+<p>played - Ajoute les éléments les plus souvent lus par les utilisateurs de Trakt (visualisations multiples incluses).</p>
+
+<ul>
+  <li>
+    <p>played / played_weekly - La plupart des played_weekly de la semaine.</p>
+  </li>
+  <li>
+    <p>played_monthly - Le plus joué dans le mois.</p>
+  </li>
+  <li>
+    <p>played_yearly - La plupart des played_yearly de l’année.</p>
+  </li>
+  <li>
+    <p>played_all plus joué de tous les temps.</p>
+  </li>
+</ul>
+
+<p>watchlist - Spécifiez les listes de surveillance à récupérer (voir les explications ci-dessous).</p>
+
+<p>lists - Spécifiez les listes personnalisées à récupérer (voir les explications ci-dessous).</p>
+
+<p>Les options sont nombreuses, je vous invite à consulter le wiki de https://github.com/l3uddz pour avoir plus d’infos.</p>
+
+<h4 id="exemple-avec-des-listes-et-radarr">exemple avec des listes et radarr</h4>
+
+<p>Pour les listes publiques et privées, vous aurez besoin de l’URL de cette liste. Lorsque vous consultez la liste sur Trakt, copiez simplement l’URL à partir de la barre d’adresse de votre navigateur.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "automatic": {
+    "movies": {
+      "anticipated": 3,
+      "boxoffice": 10,
+      "interval": 24,
+      "popular": 3,
+      "trending": 2,
+      "lists": {
+      "https://trakt.tv/users/toto/lists":10
+      }
+    },
+    "shows": {
+      "anticipated": 10,
+      "interval": 48,
+      "popular": 1,
+      "trending": 2
+    }
+</code></pre></div></div>
+
+<p><strong>traktarr movies –list-type watchlist</strong>
+<img src="https://i.imgur.com/3qawDFd.png" alt="Imgur" /></p>
+
+<p>plugin chrome pour trak.tv francais</p>
+
+<p>https://github.com/nliautaud/trakttvstats</p>
+
+
+      </section>
+
+    </div>
+  </body>
+</html>

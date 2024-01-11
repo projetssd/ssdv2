@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>ssdv2 | SSDv2</title>
+<meta name="generator" content="Jekyll v3.8.7" />
+<meta property="og:title" content="ssdv2" />
+<meta property="og:locale" content="fr" />
+<meta name="description" content="Simple Seedbox docker" />
+<meta property="og:description" content="Simple Seedbox docker" />
+<meta property="og:site_name" content="SSDv2" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="ssdv2" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Simple Seedbox docker","headline":"ssdv2","url":"/ssdv2/Organizr.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/ssdv2/assets/css/style.css?v=">
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="/ssdv2/assets/js/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="/ssdv2/assets/css/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup theme-color -->
+<!-- start theme color meta headers -->
+<meta name="theme-color" content="#353535">
+<meta name="msapplication-navbutton-color" content="#353535">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- end theme color meta headers -->
+
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/ssdv2/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+<!--      <div id="header">-->
+<!--        <nav>-->
+<!--          <ul>-->
+<!--            <li class="fork"><a href="">View On GitHub</a></li>-->
+<!--            -->
+<!--          </ul>-->
+<!--        </nav>-->
+<!--      </div>&lt;!&ndash; end header &ndash;&gt;-->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>SSDv2</h1>
+          <p>Simple Seedbox docker</p>
+          <hr>
+            <span class="credits left">
+                 
+                    
+
+                
+                    
+                        <a href="/ssdv2/en//Organizr.html">English</a>
+                    
+
+                
+            </span>
+<!--          <span class="credits left">Project maintained by <a href=""></a></span>-->
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></span>
+        </div>
+
+        <h4 id="quest-ce-quorganizr">Qu’est-ce qu’Organizr?</h4>
+
+<p>Organizr vous permet de configurer des «onglets» qui seront tous chargés dans une seule page Web. 
+Vous pouvez ensuite travailler sur votre serveur en toute simplicité et passer d’un service à l’autre très facilement!
+C’est aussi ce que l’on nomme, un dashboard.</p>
+
+<h4 id="petite-parenthèse-sur-lauthentification">Petite parenthèse sur l’authentification</h4>
+
+<p>Organizr possède sa propre page d’authentification, vous pouvez très bien désactiver l’Auth (la fenêtre ou vous devez entrer votre user et mdp créé pendant le script) si vous avez des comptes utilisateurs afin de ne pas divulguer votre compte administrateur. Voici la marche à suivre:</p>
+
+<p><code class="highlighter-rouge">nano /opt/seedbox/conf/organizr.yml</code></p>
+
+<p>On commente ces 4 lignes en ajoutant un # devant les lignes en question:</p>
+
+<p><code class="highlighter-rouge">#traefik.frontend.auth.basic: ''</code></p>
+
+<p><code class="highlighter-rouge">#traefik.frontend.auth.forward.address: 'http://oauth:4181'</code></p>
+
+<p><code class="highlighter-rouge">#traefik.frontend.auth.forward.authResponseHeaders: 'X-Forwarded-User'</code></p>
+
+<p><code class="highlighter-rouge">#traefik.frontend.auth.forward.trustForwardHeader: 'true'</code></p>
+
+<p>Une fois que c’est fait il faut réinitialiser le conteneur de la manière suivante pour valider tous les changements effectués :</p>
+
+<p><code class="highlighter-rouge">cd /opt/seedbox-compose/</code></p>
+
+<p><code class="highlighter-rouge">./seedbox.sh</code></p>
+
+<p>Choisir l’option 2 ( Ajout/Suppression d’Applis )</p>
+
+<p>Choisir l’option 3 ( Réinitialisation Container )</p>
+
+<p>Choisir Organizr et valider par OK</p>
+
+<h4 id="à-quoi-peut-ressembler-organizr-une-fois-configuré-et-installé">À quoi peut ressembler Organizr une fois configuré et installé?</h4>
+
+<p>Tout dépend évidemment de la façon dont vous allez configurer votre dashboard, voici un exemple:</p>
+
+<p><img src="https://user-images.githubusercontent.com/16184466/53615856-35cc5a80-3b9d-11e9-8428-1f2ae05da2c9.png" alt="" /></p>
+
+<p>C’est une présentation classique d’Organizr. Il est possible d’inclure Grafana à la homepage. C’est <a href="Varken-Grafana-Influxdb">le sujet de ce tutoriel</a>.</p>
+
+<p>Vous obtiendrez alors un mélange d’Organizr &amp; Grafana:</p>
+
+<p><img src="https://nextcloud.teamsyno.com/s/HrTfHFBnpJWQnZk/preview" alt="" /></p>
+
+<h4 id="configurer-organizr-partie-1">Configurer Organizr: Partie 1</h4>
+
+<p>Vous arrivez sur cette page (https://organizr.ndd.tld), et vous devez choisir votre type d’installation.</p>
+
+<p>Il y a deux types d’installations:</p>
+
+<p><img src="https://nextcloud.teamsyno.com/s/yDJqT7QNJsznRzP/preview" alt="" /></p>
+
+<p><strong>Personnel</strong> ou <strong>Professionnel</strong></p>
+
+<p><strong>Personnel</strong> ne cache rien — sans restrictions</p>
+
+<p><strong>Professionnel</strong> cache des éléments média [Plex, Emby, etc.]</p>
+
+<p>Choisir ce qui vous correspond et suivant vos besoins.</p>
+
+<p>Cliquer sur <strong>next</strong>.</p>
+
+<p><strong>Infos de l’administrateur.</strong></p>
+
+<p><img src="https://nextcloud.teamsyno.com/s/KRFBgmDxw8YJFJ7/preview" alt="" /></p>
+
+<p>Indiquer votre <strong>nom d’utilisateur</strong>: ici: <strong>Marcel</strong></p>
+
+<p>Indiquer votre <strong>email</strong>: D’ailleurs à ce propos, il est conseillé d’utiliser celui lié à votre compte Emby ou Plex.</p>
+
+<p>Indiquer <strong>votre mot de passe</strong>: De préférence un mot de passe fort. <a href="https://www.motdepasse.xyz/">Vous pouvez en créer un ici!</a></p>
+
+<p>Cliquer sur <strong>Next</strong>.</p>
+
+<p><strong>Création de l’administrateur</strong></p>
+
+<p><img src="https://nextcloud.teamsyno.com/s/nCzafGiRXweDWQn/preview" alt="" /></p>
+
+<p><strong>Clé de hachage</strong>: entre 2 et 30 caractères. Mettons 30 caractères, précisément. Le cadre doit-être vert, si vous dépassez les 30 caractères, il sera rouge, il faudra effacer les caractères en trop.</p>
+
+<p><strong>Mot de passe de l’inscription</strong>: remettre le même mot de passe créé à l’étape précédente.</p>
+
+<p><strong>Clé API</strong>: c’est déjà rempli, vous pouvez passer à l’étape suivante.</p>
+
+<p>Cliquer sur <strong>Next</strong></p>
+
+<p><strong>Création de l’administrateur, seconde partie</strong></p>
+
+<p><img src="https://nextcloud.teamsyno.com/s/RX6GdQ4Bsr2wwyF/preview" alt="" /></p>
+
+<p><strong>Nom de la base de données</strong>: choisisir un nom de base de données.</p>
+
+<p><strong>Emplacement de la base de données</strong>: comme indiqué sur le screenshot, il faut placer la base de données hors de la racine du dossier web. Vous pouvez copier/coller le premier exemple <code class="highlighter-rouge">/config/www/db</code>.</p>
+
+<p>Cliquer sur <strong>Test/Create Path</strong>, vous devez avoir le message annonçant <strong>Path is good to go</strong>.</p>
+
+<p>On va à la page suivante en cliquant sur <strong>Next</strong>.</p>
+
+<p><strong>Création de l’administrateur, troisième partie</strong></p>
+
+<p><img src="https://nextcloud.teamsyno.com/s/XSEKKtxqPpBnStx/preview" alt="" /></p>
+
+<p>Maintenant vous pouvez cliquer sur <strong>Finish</strong>!</p>
+
+<p>Vous voilà sur la page d’authentification d’Organizr, suivant que vous ayez désactivé l’Auth ou pas, il faudra au préalable entrer vos identifiants créé lors du script si elle n’est pas désactivée.</p>
+
+<p><img src="https://nextcloud.teamsyno.com/s/9nwXYdtyyzzGJCn/preview" alt="" /></p>
+
+<p>Une fois que vous avez entré votre login et password, on clic sur <strong>Connexion</strong>.</p>
+
+<p>Vous arrivez sur la page générale des <strong>Paramètres d’Organizr</strong>. C’est ici que tout commence réellement.</p>
+
+<p><img src="https://nextcloud.teamsyno.com/s/8GdZereG9m8RnzT/preview" alt="" /></p>
+
+<h4 id="configurer-organizr-partie-2">Configurer Organizr: Partie 2</h4>
+
+<p>Vu les nombreuses possibilités qu’offrent Organizr, nous allons parcourir les bases pour que vous ayez un bon dashboard fonctionnel et nous vous invitons à nous rejoindre sur <a href="https://discord.gg/v5dZHB5">Discord</a> si vous avez d’autres questions qui ne seront pas forcément abordées ici.</p>
+
+<p>Par contre, le fait de suivre ces étapes vont vous familiariser avec l’interface qui n’est pas très compliquée et vous prendrez très vite la main :)</p>
+
+<h4 id="créer-des-onglets">Créer des onglets</h4>
+
+<p>Certainement l’un des paramètres les plus importants d’Organizr!</p>
+
+<p>C’est grâce aux onglets que vous pourrez afficher les icônes des services correspondants.</p>
+
+<p><strong>Je vous invite à activer Homepage avant toute chose</strong> :)</p>
+
+<p><img src="https://nextcloud.teamsyno.com/s/ojcDJYa8JaPjpym/preview" alt="" /></p>
+
+<p>Dans la partie <strong>Éditeurs d’onglets</strong>, cliquer sur <img src="https://nextcloud.teamsyno.com/s/jztJFy2dmXrzKwt/preview" alt="" /></p>
+
+<p><img src="https://nextcloud.teamsyno.com/s/CJjtSsz8qa7MYHY/preview" alt="" /></p>
+
+<p>On va ajouter l’onglet ruTorrent par exemple.</p>
+
+<p><img src="https://nextcloud.teamsyno.com/s/rxA3SmmEc9p65yN/preview" alt="" /></p>
+
+<p><strong>Nom de l’onglet</strong>: <strong>ruTorrent</strong> ou comme bon vous semble</p>
+
+<p><strong>URL de l’onglet</strong>: indiquer l’url de votre ruTorrent sous la forme https://rutorrent.ndd.tld</p>
+
+<p><strong>Choisir l’image</strong>: soit vous tapez dans la recherche rutorrent ou vous collez ceci directement dans <strong>Image de l’onglet</strong>:</p>
+
+<p><code class="highlighter-rouge">plugins/images/tabs/rutorrent.png</code></p>
+
+<p>Valider par <strong>Ajouter un onglet</strong>.</p>
+
+<p>Recharger votre page en faisant <strong>F5</strong>, vous pouvez constater l’apparition de votre premier onglet ruTorrent sur le côté gauche de votre Organizr. Bien joué!</p>
+
+<p><img src="https://nextcloud.teamsyno.com/s/icPzxfcMX9YMkTm/preview" alt="" /></p>
+
+<p>Ajoutons maintenant Plex!</p>
+
+<p>On va ajouter l’onglet Plex de la même manière que ruTorrent.</p>
+
+<p>Dans la partie <strong>Éditeurs d’onglets</strong>, cliquer sur <img src="https://nextcloud.teamsyno.com/s/jztJFy2dmXrzKwt/preview" alt="" /></p>
+
+<p><img src="https://nextcloud.teamsyno.com/s/xep3rL4pNCpzTbp/preview" alt="" /></p>
+
+<p><strong>Nom de l’onglet</strong>: <strong>Plex</strong> ou comme bon vous semble</p>
+
+<p><strong>URL de l’onglet</strong>: indiquer l’url de Plex sous la forme https://plex.ndd.tld</p>
+
+<p><strong>Choisir l’image</strong>: soit vous tapez dans la recherche <strong>Plex</strong> ou vous collez ceci directement dans <strong>Image de l’onglet</strong>:</p>
+
+<p><code class="highlighter-rouge">plugins/images/tabs/plex.png</code></p>
+
+<p>Valider par <strong>Ajouter un onglet</strong>.</p>
+
+<p>Recharger votre page en faisant F5, vous pouvez constater l’apparition de votre second onglet <strong>Plex</strong> sur le côté gauche de votre Organizr. Yeah!</p>
+
+<p>Vous pouvez maintenant ajouter des onglets à votre guise, le principe étant toujours le même.</p>
+
+<h4 id="organiser-les-onglets">Organiser les onglets</h4>
+
+<p>Il est possible d’organiser l’ordre de vos onglets.</p>
+
+<p><img src="https://nextcloud.teamsyno.com/s/dP2Rg4TbptMkKoi/preview" alt="" /></p>
+
+<p>En passant votre souris sur l’icône, vous allez voir trois petites lignes <img src="https://nextcloud.teamsyno.com/s/mcATj2MCsM8yrsY/preview" alt="" />, saisissez l’onglet en maintenant appuyé le clic gauche de votre souris, montez ou descendez votre onglet.</p>
+
+<h4 id="personnalisation">Personnalisation</h4>
+
+<p>Comme tout bon dashboard qui se respecte, il y a moyen de personnaliser l’interface.</p>
+
+<p>Voici la partie personnalisation:</p>
+
+<p><img src="https://nextcloud.teamsyno.com/s/E8ey8x3J3xsJaPE/preview" alt="" /></p>
+
+<p><strong>Top Bar</strong></p>
+
+<p>Cette catégorie permet de modifier 3 éléments.</p>
+
+<ul>
+  <li><strong>Logo</strong>: permet de changer le logo Organizr OU laisser le titre ORGANIZR V2 (que vous pouvez modifier bien entendu, c’est l’étape d’après).</li>
+</ul>
+
+<p>Pour utiliser un logo à la place du titre il suffi de cocher <strong>Utiliser le logo à la place du titre</strong>.</p>
+
+<ul>
+  <li><strong>Titre</strong>: par défaut ORGANIZR V2, adaptez suivant vos besoins.</li>
+  <li><strong>Meta Description</strong>: le descriptif de cette partie informe que: Used to set the description for SEO meta tags.</li>
+</ul>
+
+<p>Pour faire plus simple:</p>
+
+<blockquote>
+  <p>L’optimisation pour les moteurs de recherche, appelé aussi SEO (de l’anglais Search Engine Optimization) est un ensemble de techniques visant à favoriser la compréhension de la thématique et du contenu d’une ou de l’ensemble des pages d’un site web par les moteurs de recherche».</p>
+</blockquote>
+
+<p>Dans cet exemple, nous allons personnaliser le dashboard avec un petit logo de <strong>Script Seedbox Docker</strong>.</p>
+
+<p>Dans la partie <strong>Logo</strong> vous coller l’url de l’image souhaitée, cochez <strong>Utiliser le logo à la place du titre</strong> et on valide par <strong>Enregistrer</strong>:</p>
+
+<p><img src="https://nextcloud.teamsyno.com/s/2NGJ9RBB4MWem6r/preview" alt="" /></p>
+
+<p>Prenez soin de rafraîchir la page pour voir le logo apparaître dans le coin supérieur gauche.</p>
+
+<p>Si vous voulez changer l’arrière plan de la page de connexion, toujours dans <strong>Personnaliser</strong>, partie <strong>LoginPage</strong>:</p>
+
+<p><img src="https://nextcloud.teamsyno.com/s/qzby3ePFnwBPwDD/preview" alt="" /></p>
+
+<p>Vous collez l’URL de votre image dans la partie <strong>Arrière-plan de connexion</strong>. Quand c’est fait, on se déconnecte de sa session Organizr et on admire le résultat.</p>
+
+<p><img src="https://nextcloud.teamsyno.com/s/Q2bJBWYHnWJtgND/preview" alt="" /></p>
+
+<p>Afficher les requêtes Ombi sur la Homepage d’Organizr:</p>
+
+<p><img src="https://nextcloud.teamsyno.com/s/aBEfJkPCP8kFDzA/preview" alt="" /></p>
+
+<p>Se rendre sur Ombi: https://ombi.ndd.tld/Settings/Ombi</p>
+
+<p>On récupère l’<strong>Api Key</strong>:</p>
+
+<p><img src="https://nextcloud.teamsyno.com/s/Q7CR72Qny32jpam/preview" alt="" /></p>
+
+<p>On retourne sur Organizr: <strong>Settings</strong>, <strong>Éditeurs d’onglets</strong>, <strong>Éléments de la page d’accueil</strong>, on clic sur Ombi.</p>
+
+<p><img src="https://nextcloud.teamsyno.com/s/fiJ5FYYBbi2ie2D/preview" alt="" /></p>
+
+<p>On commence par cocher <strong>Activer</strong> dans le premier onglet.</p>
+
+<p>Dans <strong>Connexion</strong> vous mettez l’URL de votre Ombi et coller l’API KEY précédemment copiée.</p>
+
+<p><img src="https://nextcloud.teamsyno.com/s/rsgscHqgjkXR4s2/preview" alt="" /></p>
+
+<p>Rendez-vous maintenant dans la partie Default Filter et vous cochez suivant vos besoins:</p>
+
+<p><img src="https://nextcloud.teamsyno.com/s/gJW72o7AaJz8dHd/preview" alt="" /></p>
+
+<p>Il ne reste plus qu’à enregistrer le tout et d’aller dans le dernier onglet, <strong>Test Connection</strong>, vérifier que tout fonctionne bien.</p>
+
+<p>Votre Homepage affiche maintenant les requêtes Ombi:</p>
+
+<p><img src="https://nextcloud.teamsyno.com/s/NBAwHcQjaGGWPKm/preview" alt="" /></p>
+
+<hr />
+<blockquote>
+  <h3 id="pour-aller-encore-plus-loin-avec-oganizr-suivez-ce-tuto-varken-grafana-influxdb">Pour aller encore plus loin avec Oganizr, suivez ce tuto <a href="Varken-Grafana-Influxdb">Varken-Grafana-Influxdb</a></h3>
+</blockquote>
+
+<hr />
+
+
+      </section>
+
+    </div>
+  </body>
+</html>

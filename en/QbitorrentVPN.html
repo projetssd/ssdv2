@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>ssdv2 | SSDv2</title>
+<meta name="generator" content="Jekyll v3.8.7" />
+<meta property="og:title" content="ssdv2" />
+<meta property="og:locale" content="en" />
+<meta name="description" content="Simple Seedbox docker" />
+<meta property="og:description" content="Simple Seedbox docker" />
+<meta property="og:site_name" content="SSDv2" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="ssdv2" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Simple Seedbox docker","headline":"ssdv2","url":"/ssdv2/en/QbitorrentVPN.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/ssdv2/en/assets/css/style.css?v=">
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="/ssdv2/en/assets/js/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="/ssdv2/en/assets/css/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup theme-color -->
+<!-- start theme color meta headers -->
+<meta name="theme-color" content="#353535">
+<meta name="msapplication-navbutton-color" content="#353535">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- end theme color meta headers -->
+
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/ssdv2/en/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+<!--      <div id="header">-->
+<!--        <nav>-->
+<!--          <ul>-->
+<!--            <li class="fork"><a href="">View On GitHub</a></li>-->
+<!--            -->
+<!--          </ul>-->
+<!--        </nav>-->
+<!--      </div>&lt;!&ndash; end header &ndash;&gt;-->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>SSDv2</h1>
+          <p>Simple Seedbox docker</p>
+          <hr>
+            <span class="credits left">
+                 
+                    
+                        <a href="/ssdv2//QbitorrentVPN.html">Français</a>
+                    
+
+                
+                    
+
+                
+            </span>
+<!--          <span class="credits left">Project maintained by <a href=""></a></span>-->
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></span>
+        </div>
+
+        <blockquote>
+  <blockquote>
+    <p>Dépôt : https://hub.docker.com/r/dyonr/qbittorrentvpn</p>
+  </blockquote>
+</blockquote>
+
+<h2 id="installation-de-qbitorrent-vpn">Installation de Qbitorrent VPN</h2>
+
+<p>Variables d’environnement à remplir au moment de l’installation :</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Variable</th>
+      <th>Required</th>
+      <th>Function</th>
+      <th>Example</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>VPN_ENABLED</td>
+      <td>Yes</td>
+      <td>Enable VPN (yes/no)?</td>
+      <td>yes</td>
+      <td>yes</td>
+    </tr>
+    <tr>
+      <td>VPN_TYPE</td>
+      <td>Yes</td>
+      <td>WireGuard or OpenVPN (wireguard/openvpn)?</td>
+      <td>wireguard</td>
+      <td>openvpn</td>
+    </tr>
+    <tr>
+      <td>VPN_USERNAME</td>
+      <td>No</td>
+      <td> </td>
+      <td>username</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>VPN_PASSWORD</td>
+      <td>No</td>
+      <td> </td>
+      <td>password</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>LAN_NETWORK</td>
+      <td>Yes</td>
+      <td>Réseaux locaux délimités par des virgules avec notation CIDR</td>
+      <td>172.18.0.0/24</td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Attention -&gt; pour le moment non fonctionnel avec wireguard.</p>
+
+<h2 id="réglages-qbitorrent">Réglages Qbitorrent</h2>
+
+<p>Par défaut il faut utiliser comme identifant (admin/adminadmin)</p>
+
+<h3 id="chemin-denregistrement-des-fichiers">Chemin d’enregistrement des fichiers</h3>
+
+<p>source des données : /home/user/local/qbitorrent/downloads/…</p>
+
+<blockquote>
+  <p>Depuis l’interface, il faut commencer par downloads/…</p>
+</blockquote>
+
+<p>On va commencer par sécuriser et mettre en Français l’interface</p>
+
+<h4 id="language---outilsoptioninterface-web">Language   (Outils/Option/interface web)</h4>
+<p><img src="https://user-images.githubusercontent.com/64525827/107520001-33f4d980-6bb1-11eb-8690-249c3723710c.png" alt="francais" /></p>
+
+<h4 id="authentification---outilsoptioninterface-web">Authentification   (Outils/Option/interface web)</h4>
+<p><img src="https://user-images.githubusercontent.com/64525827/107520003-348d7000-6bb1-11eb-9693-c6499659648d.png" alt="auth" /></p>
+
+<h4 id="téléchargement---outilsoptiontéléchargements">Téléchargement   (Outils/Option/Téléchargements)</h4>
+<p><img src="https://user-images.githubusercontent.com/64525827/107518518-63a2e200-6baf-11eb-828b-2891a6c16588.png" alt="enregistrement" /></p>
+
+<h2 id="optimisations">Optimisations</h2>
+
+<h4 id="gestion-du-cache---outilsoptionavancésection-libtorrent">Gestion du cache   (Outils/Option/Avancé/Section libtorrent)</h4>
+<p>il faut désactiver l’utilisation du cache</p>
+
+<p><img src="https://user-images.githubusercontent.com/64525827/107519416-8aade380-6bb0-11eb-82bb-15065cacc821.png" alt="cache" /></p>
+
+<h4 id="connexions--outilsoptionconnexion">Connexions  (Outils/Option/Connexion)</h4>
+<p><img src="https://user-images.githubusercontent.com/64525827/107518883-d2803b00-6baf-11eb-97da-bc94d2bc2baf.png" alt="connexions" /></p>
+
+<h4 id="priorisation---outilsoptionbittorrent">Priorisation   (Outils/Option/BitTorrent)</h4>
+
+<p><img src="https://user-images.githubusercontent.com/64525827/107518996-f774ae00-6baf-11eb-9a90-31e456974b22.png" alt="priorisation" /></p>
+
+
+
+      </section>
+
+    </div>
+  </body>
+</html>

@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>ssdv2 | SSDv2</title>
+<meta name="generator" content="Jekyll v3.8.7" />
+<meta property="og:title" content="ssdv2" />
+<meta property="og:locale" content="fr" />
+<meta name="description" content="Simple Seedbox docker" />
+<meta property="og:description" content="Simple Seedbox docker" />
+<meta property="og:site_name" content="SSDv2" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="ssdv2" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Simple Seedbox docker","headline":"ssdv2","url":"/ssdv2/Configuration-Mailserver-@Hardware.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/ssdv2/assets/css/style.css?v=">
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="/ssdv2/assets/js/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="/ssdv2/assets/css/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup theme-color -->
+<!-- start theme color meta headers -->
+<meta name="theme-color" content="#353535">
+<meta name="msapplication-navbutton-color" content="#353535">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- end theme color meta headers -->
+
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/ssdv2/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+<!--      <div id="header">-->
+<!--        <nav>-->
+<!--          <ul>-->
+<!--            <li class="fork"><a href="">View On GitHub</a></li>-->
+<!--            -->
+<!--          </ul>-->
+<!--        </nav>-->
+<!--      </div>&lt;!&ndash; end header &ndash;&gt;-->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>SSDv2</h1>
+          <p>Simple Seedbox docker</p>
+          <hr>
+            <span class="credits left">
+                 
+                    
+
+                
+                    
+                        <a href="/ssdv2/en//Configuration-Mailserver-@Hardware.html">English</a>
+                    
+
+                
+            </span>
+<!--          <span class="credits left">Project maintained by <a href=""></a></span>-->
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></span>
+        </div>
+
+        <p>Information Essentielles, nécessaires à la configuration du mailserver de @hardware
+https://github.com/hardware/mailserver</p>
+
+<h4 id="configuration-des-dns">Configuration des DNS</h4>
+
+<p>Par défaut, si vous avez confié la gestion de vos DNS à Cloudflare, <strong>Le script va automatiquement créer les enregistrements décrits ci dessous dans la partie DNS de votre Domaine</strong>. Dans le cas contraire vous devez rentrer manuellement ces enregistrements auprès de votre Registrar (Gandi, Ovh , etc ..)</p>
+
+<p>Très important, et çà le script ne le fait pas, penser à configurer le PTR au niveau de votre serveur Hetzner –&gt; <strong>Reverse DNS entry</strong> –&gt; mail.domain.tld</p>
+
+<p><br /></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>HOSTNAME</th>
+      <th style="text-align: center">CLASS</th>
+      <th style="text-align: center">TYPE</th>
+      <th style="text-align: center">PRIORITY</th>
+      <th style="text-align: right">VALUE</th>
+      <th> </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td> </td>
+      <td style="text-align: center">mail</td>
+      <td style="text-align: center">IN</td>
+      <td style="text-align: center">A/AAAA</td>
+      <td style="text-align: right">any</td>
+      <td>1.2.3.4</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td style="text-align: center">spam</td>
+      <td style="text-align: center">IN</td>
+      <td style="text-align: center">CNAME</td>
+      <td style="text-align: right">any</td>
+      <td>mail.domain.tld.</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td style="text-align: center">webmail</td>
+      <td style="text-align: center">IN</td>
+      <td style="text-align: center">CNAME</td>
+      <td style="text-align: right">any</td>
+      <td>mail.domain.tld.</td>
+    </tr>
+    <tr>
+      <td>postfixadmin</td>
+      <td style="text-align: center">IN</td>
+      <td style="text-align: center">CNAME</td>
+      <td style="text-align: center">any</td>
+      <td style="text-align: right">mail.domain.tld.</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>@</td>
+      <td style="text-align: center">IN</td>
+      <td style="text-align: center">MX</td>
+      <td style="text-align: center">10</td>
+      <td style="text-align: right">mail.domain.tld.</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>@</td>
+      <td style="text-align: center">IN</td>
+      <td style="text-align: center">TXT</td>
+      <td style="text-align: center">any</td>
+      <td style="text-align: right">“v=spf1 a mx ip4:SERVER_IPV4 ~all”</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>mail._domainkey</td>
+      <td style="text-align: center">IN</td>
+      <td style="text-align: center">TXT</td>
+      <td style="text-align: center">any</td>
+      <td style="text-align: right">“v=DKIM1; k=rsa; p=YOUR DKIM Public Key”</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>_dmarc</td>
+      <td style="text-align: center">IN</td>
+      <td style="text-align: center">TXT</td>
+      <td style="text-align: center">any</td>
+      <td style="text-align: right">“v=DMARC1; p=reject; rua=mailto:postmaster@domain.tld; ruf=mailto:admin@domain.tld; fo=0; adkim=s; aspf=s; pct=100; rf=afrf; sp=reject”</td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<p>La clé public key DKIM est disponible après lancement:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/mnt/docker/mail/dkim/domain.tld/public.key
+</code></pre></div></div>
+
+<h4 id="configuration-postfixadmin">Configuration Postfixadmin</h4>
+
+<ol>
+  <li>Allez sur la page de configuration https://postfixadmin.domain.tld/setup.php</li>
+  <li>Definir le setup password</li>
+  <li>Recuperer le hash<br />
+```
+docker exec -ti postfixadmin setup</li>
+</ol>
+
+<blockquote>
+  <p>Postfixadmin setup hash : ffdeb741c58db70d060ddb170af4623a:54e0ac9a55d69c5e53d214c7ad7f1e3df40a3caa
+Setup done.
+```</p>
+  <ol>
+    <li>Créer le compte Admin</li>
+    <li>Aller sur la page https://postfixadmin.your-domain.tld/</li>
+    <li>Vous pouvez maintenant creer vos mailboxes, Alias, etc ..<br />
+<br /></li>
+  </ol>
+</blockquote>
+
+<p><img src="https://camo.githubusercontent.com/b16f7a3ca44d1a89791014d35522d718098e9006/687474703a2f2f692e696d6775722e636f6d2f344237554d4b692e706e67" alt="" /></p>
+
+<p><img src="https://camo.githubusercontent.com/03c6094f15bf963a6669a1b5c2d3e81e4278284b/687474703a2f2f692e696d6775722e636f6d2f4a686f79354f6e2e706e67" alt="" /></p>
+
+<h4 id="configuration-rainloop">Configuration Rainloop</h4>
+<p>Pour configurer Rainloop il faut se rendre sur la panneau d’administration, https://webmail.domain.tld/?admin<br />
+Login par défaut: <strong>admin</strong> password <strong>12345</strong>
+Vous d’abord configurer votre domaine
+<img src="https://camo.githubusercontent.com/a6f4ad35c115c988e4258dc857f22705b9edf0db/687474703a2f2f692e696d6775722e636f6d2f52624d56686b7a2e706e67" alt="" /></p>
+
+<p><img src="https://camo.githubusercontent.com/fa9bf6188e34b4170cc9a8d8cfeba718f930dfb2/687474703a2f2f692e696d6775722e636f6d2f474662624a7a732e706e67" alt="" /></p>
+
+<p><img src="https://camo.githubusercontent.com/013beb92422e527c513d0daa12fb1ecc3f352904/687474703a2f2f692e696d6775722e636f6d2f6572764b7472472e706e67" alt="" /></p>
+
+<p><img src="https://camo.githubusercontent.com/0ecf409c5e5585e9c58de4a0533d5bdce6055ab9/687474703a2f2f692e696d6775722e636f6d2f38593070704c622e706e67" alt="" /></p>
+
+<h4 id="liste-des-web-services">Liste des web services:</h4>
+
+<table>
+  <thead>
+    <tr>
+      <th>Service</th>
+      <th style="text-align: right">URI</th>
+      <th> </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td> </td>
+      <td style="text-align: right">Rspamd  dashboard</td>
+      <td>https://spam.domain.tld/</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td style="text-align: right">Administration</td>
+      <td>https://postfixadmin.domain.tld/</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td style="text-align: right">Webmail</td>
+      <td>https://webmail.domain.tld/</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Vous pouvez enfin tester l’authenticité de vos mail</p>
+
+<ul>
+  <li>https://www.mail-tester.com/</li>
+  <li>https://www.hardenize.com/</li>
+  <li>https://observatory.mozilla.org/</li>
+  <li>https://www.emailprivacytester.com/<br />
+<br /></li>
+</ul>
+
+<p><img src="https://i.imgur.com/xbufE6H.png" alt="" /></p>
+
+
+      </section>
+
+    </div>
+  </body>
+</html>

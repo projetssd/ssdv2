@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>ssdv2 | SSDv2</title>
+<meta name="generator" content="Jekyll v3.8.7" />
+<meta property="og:title" content="ssdv2" />
+<meta property="og:locale" content="fr" />
+<meta name="description" content="Simple Seedbox docker" />
+<meta property="og:description" content="Simple Seedbox docker" />
+<meta property="og:site_name" content="SSDv2" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="ssdv2" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"Simple Seedbox docker","headline":"ssdv2","url":"/ssdv2/Cr%C3%A9ation-API-Google.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="stylesheet" href="/ssdv2/assets/css/style.css?v=">
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="/ssdv2/assets/js/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="/ssdv2/assets/css/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup theme-color -->
+<!-- start theme color meta headers -->
+<meta name="theme-color" content="#353535">
+<meta name="msapplication-navbutton-color" content="#353535">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- end theme color meta headers -->
+
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/ssdv2/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+<!--      <div id="header">-->
+<!--        <nav>-->
+<!--          <ul>-->
+<!--            <li class="fork"><a href="">View On GitHub</a></li>-->
+<!--            -->
+<!--          </ul>-->
+<!--        </nav>-->
+<!--      </div>&lt;!&ndash; end header &ndash;&gt;-->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>SSDv2</h1>
+          <p>Simple Seedbox docker</p>
+          <hr>
+            <span class="credits left">
+                 
+                    
+
+                
+                    
+                        <a href="/ssdv2/en//Cr%C3%A9ation-API-Google.html">English</a>
+                    
+
+                
+            </span>
+<!--          <span class="credits left">Project maintained by <a href=""></a></span>-->
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/mattgraham">mattgraham</a></span>
+        </div>
+
+        <h2 id="la-création-du-projet-google">la création du projet Google</h2>
+<p>Vous aurez besoin de ces éléments pour créer un Sharedrive</p>
+
+<blockquote>
+  <p>ATTENTION : Vous devez être sur et certains de vous connecter au bon compte Google.
+Si vous en avez plusieurs, connectez-vous alors en fenêtre de navigation privée !</p>
+</blockquote>
+
+<ul>
+  <li>
+    <p>Rendez vous à l’adresse suivante et connectez vous avec votre compte Gsuite :<br />
+<a href="https://href.li/?https://console.cloud.google.com/cloud-resource-manager">Google Apps Script API</a></p>
+  </li>
+  <li>
+    <h3 id="cliquez-sur-créer-un-projet">Cliquez sur Créer un projet</h3>
+    <p><img src="https://user-images.githubusercontent.com/64525827/119948392-14839000-bf99-11eb-96a0-c7509bde74e9.png" alt="creer_un_projet" /><br />
+<br /><br /></p>
+  </li>
+  <li>
+    <h3 id="entrer-le-nom-du-projet-teamdrive-puis-cliquer-sur-créer">Entrer le nom du projet <code class="highlighter-rouge">teamdrive</code> puis cliquer sur Créer</h3>
+    <p><img src="https://user-images.githubusercontent.com/64525827/119948566-3f6de400-bf99-11eb-8ddf-ce61d54a76b4.png" alt="creation_projet" /><br />
+<br /><br /></p>
+  </li>
+  <li>
+    <h3 id="dans-la-notification-en-haut-à-droite-cliquer-sur-sélectionner-un-projet">Dans la notification en haut à droite, cliquer sur “sélectionner un projet”</h3>
+    <p><img src="https://user-images.githubusercontent.com/64525827/119949044-c28f3a00-bf99-11eb-8c9f-3342f6c0649e.png" alt="notification" /></p>
+  </li>
+</ul>
+
+<h2 id="activer-une-api-google-workspace">Activer une API Google Workspace</h2>
+<ul>
+  <li>sur la gauche Cliquez sur “API et Services” puis sur “Bibliothèque”</li>
+  <li>Dans le champ de recherche, saisissez le nom de l’API “drive”</li>
+  <li>cliquer sur le résultat =&gt; Google Drive API<br />
+<br /><br />
+    <h3 id="cliquez-sur-activer">Cliquez sur Activer</h3>
+    <p><img src="https://user-images.githubusercontent.com/64525827/119950056-c66f8c00-bf9a-11eb-8ea7-ba4670048a77.png" alt="google drive api" /></p>
+  </li>
+</ul>
+
+<h3 id="après-linstallation-cliquer-sur-identifiants">Après l’installation cliquer sur “identifiants”</h3>
+<p><img src="https://user-images.githubusercontent.com/64525827/119950352-0a629100-bf9b-11eb-923c-fd49240cc6e0.png" alt="identifiant" />
+<br /><br />
+Dans la nouvelel fenetre, cliquer sur “Créer des identifiants” puis sur “ID client OAuth”
+<img src="https://user-images.githubusercontent.com/64525827/119950515-33832180-bf9b-11eb-9e12-14995ab54f3c.png" alt="creation_identifiant" /><br />
+<br /><br />
+Il y a une étape intermédiaire, cliquer sur “Configurer l’écran d’autorisation”<br />
+<img src="https://user-images.githubusercontent.com/64525827/119950915-af7d6980-bf9b-11eb-9d4a-f51a90294427.png" alt="configurer oauth" /><br />
+<br /><br />
+puis sélectionner “externe” et Créer<br />
+<img src="https://user-images.githubusercontent.com/64525827/119951092-dc318100-bf9b-11eb-8fb2-79b59052fecf.png" alt="externe" />
+<br /><br />
+Dans la nouvelle fenêtre, remplissez les champs :</p>
+<ul>
+  <li>Nom de l’application =&gt; <code class="highlighter-rouge">identique au nom du projet</code></li>
+  <li>Adresse e-mail d’assistance utilisateur =&gt; <code class="highlighter-rouge">sélectionner celle du compte google</code></li>
+  <li>Coordonnées du développeur (Adresse email) =&gt; <code class="highlighter-rouge">Entrer votre email</code></li>
+</ul>
+
+<h3 id="sur-chaque-étapes-cliqurer-en-bas-sur-enregistrer">Sur chaque étapes, cliqurer en bas sur enregistrer</h3>
+<p><img src="https://user-images.githubusercontent.com/64525827/119951704-8a3d2b00-bf9c-11eb-9632-8c3698a45e5d.png" alt="etapes" />
+<br /><br />
+Une fois terminé, cliquer à nouveau sur “Identifiants” sur la gauche de l’écran<br />
+Puis :</p>
+<ul>
+  <li>Créer des identifiants</li>
+  <li>ID client OAuth</li>
+  <li>Type d’application  =&gt; <code class="highlighter-rouge">Application de bureau</code></li>
+  <li>
+    <p>Nom =&gt; <code class="highlighter-rouge">identique au nom du projet</code><br />
+<img src="https://user-images.githubusercontent.com/64525827/119952103-ef911c00-bf9c-11eb-8303-9b3a6c7f95cf.png" alt="noms" /><br />
+<br /><br /></p>
+  </li>
+  <li>
+    <h3 id="copier-sur-un-bloc-note-le-client-id-et-le-client-secret">Copier sur un bloc note le CLIENT ID et le CLIENT SECRET</h3>
+    <p><img src="https://user-images.githubusercontent.com/64525827/105181463-1ee5d700-5b2c-11eb-85b1-55a14668ea34.jpeg" alt="google-apps-script-api-client-id-et-secret" /></p>
+  </li>
+</ul>
+
+<h3 id="vous-aurez-besoin-par-la-suite-de-ces-identifiants">Vous aurez besoin par la suite de ces identifiants.</h3>
+
+<p>Si vous avez fermer la fenêtre avec vos identifiants, vous pouvez les retrouver dans la rubrique identifiant de projet drive. <a href="https://href.li/?https://console.developers.google.com">Dashboard API</a>.</p>
+
+<p><img src="https://user-images.githubusercontent.com/64525827/105181488-2907d580-5b2c-11eb-9b8b-cc39e3e2ed04.jpg" alt="projets-google-api-identifiants" /></p>
+
+
+      </section>
+
+    </div>
+  </body>
+</html>
