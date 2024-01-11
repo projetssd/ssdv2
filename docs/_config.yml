@@ -1,21 +1,17 @@
-# Import the theme
-theme: jekyll-theme-chirpy
+remote_theme: pages-themes/midnight@v0.2.0
 
-# boolean type, the global switch for TOC in posts.
-toc: true
-
-# remote_theme: pages-themes/minimal@v0.2.0
 plugins:
 - jekyll-remote-theme
 - jekyll-multiple-languages-plugin
-title: ssdv2
-description: Simple Seedbox Docker
+title: Kubeseed
+description: Une seedbox sous Kubernetes
 
 languages: ["fr", "en"]
 
-baseurl: /ssdv2
+baseurl: /kubeseed
 
 defaultLang: fr
 languageNames:
   fr: Français
   en: English
+
