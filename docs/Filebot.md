@@ -2,7 +2,6 @@
 layout: post
 title: ssdv2
 ---
-
 #### Enregistrer une licence
 
 Mettre le fichier de licence dans /opt/seedbox/docker/${USER}/.filebot/FileBot_License.psm
