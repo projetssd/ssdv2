@@ -1,4 +1,10 @@
-remote_theme: pages-themes/minimal@v0.2.0
+# Import the theme
+theme: jekyll-theme-chirpy
+
+# boolean type, the global switch for TOC in posts.
+toc: true
+
+# remote_theme: pages-themes/minimal@v0.2.0
 plugins:
 - jekyll-remote-theme
 - jekyll-multiple-languages-plugin
