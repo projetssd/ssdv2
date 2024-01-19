@@ -19,7 +19,7 @@ pg_env:
   N8N_BASIC_AUTH_PASSWORD: "{{ user.pass }}"
 
 posttasks:
-  - "postgresqldb"
+  - "postgresql"
 
 description: "AutomationTool"
 
