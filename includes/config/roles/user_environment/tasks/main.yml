@@ -17,8 +17,14 @@
         path: "/home/{{ lookup('env','USER') }}/.profile"
         line: "cd {{ settings.source }} && source profile.sh && cd /home/{{ lookup('env','USER') }}"
 
+    - name: Ajout clear
+      lineinfile:
+        path: "/home/{{ lookup('env','USER') }}/.profile"
+        line: "clear"
+
     - name: Ajout logo
       lineinfile:
         path: "/home/{{ lookup('env','USER') }}/.profile"
         line: "logo"
+
 
