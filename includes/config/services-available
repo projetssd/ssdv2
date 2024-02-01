@@ -39,7 +39,8 @@ guacamole - Accès à distance via portail Web
 handbrake - Transcoder une source vidéo
 heimdall - Organiser vos applications Web
 jackett - Indexeur de scraping
-jackettVPN - Indexeur de scraping
+jackettstremio - Indexeur de scraping
+jackettvpn - Indexeur de scraping
 jdownloader - Gestionnaire de téléchargements
 jellyfin - Serveur multimédia
 jfago - Gestion des utilisateurs Jellyfin
