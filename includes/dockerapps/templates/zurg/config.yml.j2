@@ -3,45 +3,29 @@ zurg: v1
 
 token: {{zurg.token}}
 
-# when somebody asks for your zurg config, you copy from this point
-
-# basic functionality
-host: "[::]" # do not change this if you are running it inside a docker container
-port: 9999 # do not change this if you are running it inside a docker container
-concurrent_workers: 200
-check_for_changes_every_secs: 15
-
-# misc configs
-retain_folder_name_extension: false # if true, zurg won't modify the filenames from real-debrid
-retain_rd_torrent_name: false # if true, it will strictly follow RD API torrent name property w/c should make this more compatible with rdt-client
-auto_delete_rar_torrents: false # if true, zurg will delete unstreamable rar files (these torrents will always be compressed in a rar archive no matter what files you select)
-use_download_cache: true # if true, during zurg initialization, it will fetch all downloads to unrestrict links faster
-enable_repair: true # BEWARE! THERE CAN ONLY BE 1 INSTANCE OF ZURG THAT SHOULD REPAIR YOUR TORRENTS
+# host: "[::]"
+# port: 9999
+# username:
+# password:
+# proxy:
+# concurrent_workers: 20
+check_for_changes_every_secs: 10
+# repair_every_mins: 60
+# ignore_renames: false
+# retain_rd_torrent_name: false
+# retain_folder_name_extension: false
+enable_repair: true
+auto_delete_rar_torrents: true
+# api_timeout_secs: 15
+# download_timeout_secs: 10
+# enable_download_mount: false
+# rate_limit_sleep_secs: 6
+# retries_until_failed: 2
+# network_buffer_size: 4194304 # 4MB
+# serve_from_rclone: false
+# verify_download_link: false
+# force_ipv6: false
 # on_library_update: sh plex_update.sh "$@"
-on_library_update: |
-  for arg in "$@"
-  do
-      echo "detected update on: $arg"
-  done
-
-# network configs
-network_buffer_size: 1048576 # 1 MiB
-serve_from_rclone: false # serve file data from rclone, not from zurg (zurg will only provide rclone the link to download)
-verify_download_link: true # if true, zurg will check if the link is truly streamable; only relevant if serve_from_rclone is set to true (as it already does this all the time if serve_from_rclone is false)
-force_ipv6: false # force connect to real-debrid ipv6 addresses
-rate_limit_sleep_secs: 6 # wait time after getting a 429 from Real-Debrid API
-realdebrid_timeout_secs: 60 # api timeout
-retries_until_failed: 5 # api failures until considered failed
-# preferred_hosts: # Run ./zurg network-test
-#   - 20.download.real-debrid.com
-#   - 21.download.real-debrid.com
-#   - 22.download.real-debrid.com
-#   - 23.download.real-debrid.com
-#   - 30.download.real-debrid.com
-#   - 31.download.real-debrid.com
-#   - 32.download.real-debrid.com
-#   - 34.download.real-debrid.com
-#   - 40.download.real-debrid.com
 
 # List of directory definitions and their filtering rules
 directories:

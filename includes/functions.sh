@@ -1356,7 +1356,7 @@ function install_zurg() {
   docker rm -f zurg > /dev/null 2>&1
   docker system prune -af > /dev/null 2>&1
   mkdir -p "${HOME}/scripts/zurg" && cd ${HOME}/scripts/zurg
-  wget https://github.com/debridmediamanager/zurg-testing/raw/main/releases/${ZURG_VERSION}/zurg-${ZURG_VERSION}-linux-${ARCHITECTURE}.zip > /dev/null 2>&1
+  wget https://github.com/debridmediamanager/zurg-testing/releases/download/${ZURG_VERSION}/zurg-${ZURG_VERSION}-linux-${ARCHITECTURE}.zip > /dev/null 2>&1
   unzip zurg-${ZURG_VERSION}-linux-${ARCHITECTURE}.zip > /dev/null 2>&1
   rm zurg-${ZURG_VERSION}-linux-${ARCHITECTURE}.zip > /dev/null 2>&1
   ZURG_TOKEN=$(get_from_account_yml zurg.token)
@@ -1428,33 +1428,30 @@ function install_dmm() {
 }
 
 function update_release_zurg() {
-  wget https://api.github.com/repos/debridmediamanager/zurg-testing/commits > /dev/null 2>&1
+  wget https://api.github.com/repos/debridmediamanager/zurg-testing/releases > /dev/null 2>&1
   CURRENT_VERSION=$(get_from_account_yml zurg.version)
-  LATEST_VERSION=$(jq '.[] | .commit.message' commits | tr -d '"' | grep -m 1 "Release")
-  if [[ ${CURRENT_VERSION} == notfound ]] || [[ ${LATEST_VERSION} == *"Release"* ]]; then
-      LATEST_VERSION=$(jq '.[] | .commit.message' commits | grep -m 1 "Release" | cut -d ' ' -f 2 | tr -d '"' )
-      if [[ ${LATEST_VERSION} != ${CURRENT_VERSION} ]]; then
-        manage_account_yml zurg.version "${LATEST_VERSION}"
-        echo -e  "${BLUE}"$(gettext "Version Zurg :") "$LATEST_VERSION${CEND}"
-      else 
-        echo -e  "${BLUE}"$(gettext "Version Zurg :") "$LATEST_VERSION${CEND}"
-      fi
+  LATEST_VERSION=$(jq '.[] | .tag_name' releases | tr -d '"' | sed -n "1p")
+  if [[ ${CURRENT_VERSION} == notfound ]] || [[ ${CURRENT_VERSION} != ${LATEST_VERSION} ]]; then
+    manage_account_yml zurg.version "${LATEST_VERSION}"
+    echo -e  "${BLUE}"$(gettext "Version Zurg :") "$LATEST_VERSION${CEND}"
+  else 
+    echo -e  "${BLUE}"$(gettext "Version Zurg :") "$LATEST_VERSION${CEND}"
   fi
-  rm commits
+  # rm releases
 }
 
 function choose_version_zurg() {
   echo ""
-  wget https://api.github.com/repos/debridmediamanager/zurg-testing/commits > /dev/null 2>&1
-  jq '.[] | .commit.message' commits | tr -d '"' | grep -m 20 "Release" | uniq | cat -n | sed 's/[ ]\+/ /g' | tr " " " " | tr "\t" " " > temp
+  wget https://api.github.com/repos/debridmediamanager/zurg-testing/releases > /dev/null 2>&1
+  jq '.[] | .tag_name' releases | tr -d '"' | cat -n | sed 's/[ ]\+/ /g' | tr " " " " | tr "\t" " " > temp
 
   while read LIGNE
-  do echo -e "\e[32m$LIGNE\e[0m"
+  do echo -e "${CCYAN}"$LIGNE"${CEND}"
   done < temp
   echo ""
   echo >&2 -n -e "${CCYAN}"$(gettext "Choisir le numéro de la Version :") "${CEND}"
   read NUMERO_LIGNE
-  VERSION=$(sed -n "${NUMERO_LIGNE}p" temp | cut -d ' ' -f 4) 
+  VERSION=$(sed -n "${NUMERO_LIGNE}p" temp | cut -d ' ' -f 3) 
   manage_account_yml zurg.version "${VERSION}"
   echo -e  "${BLUE}"$(gettext "Version Zurg :") "$VERSION${CEND}"
   ARCHITECTURE=$(dpkg --print-architecture)
@@ -1468,7 +1465,7 @@ function choose_version_zurg() {
   docker rm -f zurg > /dev/null 2>&1
   docker system prune -af > /dev/null 2>&1
   mkdir -p "${HOME}/scripts/zurg" && cd ${HOME}/scripts/zurg
-  wget https://github.com/debridmediamanager/zurg-testing/raw/main/releases/${ZURG_VERSION}/zurg-${ZURG_VERSION}-linux-${ARCHITECTURE}.zip > /dev/null 2>&1
+  wget https://github.com/debridmediamanager/zurg-testing/releases/download/${ZURG_VERSION}/zurg-${ZURG_VERSION}-linux-${ARCHITECTURE}.zip > /dev/null 2>&1
   unzip zurg-${ZURG_VERSION}-linux-${ARCHITECTURE}.zip > /dev/null 2>&1
   rm zurg-${ZURG_VERSION}-linux-${ARCHITECTURE}.zip > /dev/null 2>&1
   ZURG_TOKEN=$(get_from_account_yml zurg.token)
