@@ -91,6 +91,7 @@ prowlarr - Indexeur de scraping
 pureftpd - Serveur FTP
 pyload - Gestionnaire de téléchargement
 qbittorrent - Gestionnaire de torrent
+qbitorrentvpn - Gestionnaire de torrent
 qflood - Gestionnaire de torrent
 radarr4k - Gestion Films-4K Usenet-BitTorrent
 radarr - Gestion Films Usenet-BitTorrent

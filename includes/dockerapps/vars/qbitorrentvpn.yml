@@ -1,0 +1,24 @@
+---
+pgrole: 'qbitorrentvpn'
+intport: '8080'
+image: 'binhex/arch-qbittorrentvpn'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
+  - "{{ lookup('env','HOME') }}/qbitorrent:/config/qBittorrent/downloads"
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  VPN_ENABLED: 'yes'
+  VPN_PROV: 'wireguard'
+  VPN_CLIENT: 'wireguard'
+  VPN_INPUT_PORTS: '45000'
+  LAN_NETWORK: '192.168.1.0/24'
+  dns_servers: '84.200.69.80,37.235.1.174,1.1.1.1,37.235.1.177,84.200.70.40,1.0.0.1'
+  DEBUG: 'true'
+
+# tags spécifiques à ajouter à la construction du docker
+specific_docker_info:
+  "{{ vpn_specific[vpn] }}"
+
