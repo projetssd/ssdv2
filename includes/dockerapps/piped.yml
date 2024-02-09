@@ -1,0 +1,68 @@
+---
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+    - "{{ settings.source }}/includes/dockerapps/templates/generique/generique.yml"
+
+  tasks:
+
+    # FACTS #######################################################################
+
+    - name: Checking for existing app data
+      stat:
+        path: '{{ settings.storage }}/docker/{{user.name}}/authelia/configuration.yml'
+      register: check
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
+      vars:
+        subdomain: "piped"
+      when: cloudflare_enabled
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
+      vars:
+        subdomain: "pipedapi"
+      when: cloudflare_enabled
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
+      vars:
+        subdomain: "pipedproxy"
+      when: cloudflare_enabled
+
+    - name: Clone piped
+      git:
+        repo: https://github.com/TeamPiped/Piped-Docker.git
+        dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/piped"
+        clone: yes
+        update: yes
+      become: yes
+      become_user: "{{ lookup('env','USER') }}"
+
+    - name: docker compose file
+      template:
+        dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/piped/piped.yml"
+        src: "{{ settings.source }}/includes/dockerapps/templates/piped/piped.yml.j2"
+      become: yes
+      become_user: "{{ lookup('env','USER') }}"
+
+    - name: configure file
+      template:
+        dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/piped/configure-instance.sh"
+        src: "{{ settings.source }}/includes/dockerapps/templates/piped/configure-instance.yml.j2"
+      become: yes
+      become_user: "{{ lookup('env','USER') }}"
+
+    - name: Run Shell Script.
+      shell: sh "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/piped/configure-instance.sh"
+
+    - name: deploy Docker Compose stack
+      command: docker compose -f "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/piped/piped.yml" up -d
+
+    - name: Add traefik_proxy to nginx
+      docker_network:
+        name: traefik_proxy
+        connected:
+          - nginx
+        appends: yes

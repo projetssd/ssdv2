@@ -729,6 +729,14 @@ function suppression_appli() {
   zurg)
     sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/zurg
     ;;
+  piped*)
+    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/piped
+    docker rm -f nginx piped-frontend piped-backend postgres piped-proxy >/dev/null 2>&1
+    ;;
+  nginx)
+    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/piped
+    docker rm -f nginx piped-frontend piped-backend postgres piped-proxy >/dev/null 2>&1
+    ;;
   esac
 
   if docker ps | grep -q db-$APPSELECTED; then

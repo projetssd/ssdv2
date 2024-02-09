@@ -1,0 +1,15 @@
+#!/bin/sh
+
+frontend=piped.{{user.domain}}
+backend=pipedapi.{{user.domain}}
+proxy=pipedproxy.{{user.domain}}
+reverseproxy=nginx
+
+rm -rf config/
+rm -f docker-compose.yml
+
+cp -r {{ settings.storage }}/docker/{{ lookup('env','USER') }}/piped/template/ {{ settings.storage }}/docker/{{ lookup('env','USER') }}/piped/config/
+
+sed -i "s/FRONTEND_HOSTNAME/$frontend/g" {{ settings.storage }}/docker/{{ lookup('env','USER') }}/piped/config/*
+sed -i "s/BACKEND_HOSTNAME/$backend/g" {{ settings.storage }}/docker/{{ lookup('env','USER') }}/piped/config/*
+sed -i "s/PROXY_HOSTNAME/$proxy/g" {{ settings.storage }}/docker/{{ lookup('env','USER') }}/piped/config/*
