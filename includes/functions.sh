@@ -1392,7 +1392,6 @@ function install_zurg() {
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/zurg.yml"
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml"
   launch_service rdtclient
-  install_qdebrid
 }
 
 function install_zurg_docker() {
