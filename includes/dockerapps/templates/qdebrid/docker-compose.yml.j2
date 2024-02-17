@@ -1,0 +1,17 @@
+version: '3'
+
+services:
+
+  qdebrid:
+    container_name: qdebrid
+    image: ghcr.io/sushydev/qdebrid:main
+    restart: unless-stopped
+    volumes:
+      - ./qdebrid.yml:/app/config.yml
+      - /home/{{user.name}}/scripts/qdebrid:/mnt/scripts
+    networks:
+      traefik_proxy:
+
+networks:
+  traefik_proxy:
+    external: true

@@ -737,6 +737,9 @@ function suppression_appli() {
     sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/piped
     docker rm -f nginx piped-frontend piped-backend postgres piped-proxy >/dev/null 2>&1
     ;;
+  qdebrid)
+   sudo rm -rf /home/$USER/scripts/qdebrid
+    ;;
   esac
 
   if docker ps | grep -q db-$APPSELECTED; then
@@ -1310,20 +1313,6 @@ EOF
   launch_service traefik
 }
 
-function relance_zurg() {
-clear
-logo
-echo -e "\e[36m##" $(gettext "Relance de Zurg") "##\e[0m"  
-sudo systemctl stop zurg
-sudo systemctl stop rclone
-rm -rf "${SETTINGS_STORAGE}/scripts/zurg"
-sudo systemctl start zurg
-sudo systemctl start rclone
-docker restart rdtclient radarr sonarr plex
-echo -e "\e[36m##" $(gettext "Relance de Zurg terminée") "##\e[0m"
-pause
-}
-
 function apply_patches() {
   touch "${HOME}/.config/ssd/patches"
   for patch in $(ls ${SETTINGS_SOURCE}/patches); do
@@ -1349,6 +1338,30 @@ function sortie_cloud() {
   sudo systemctl stop rclone
   sudo systemctl restart mergerfs
   relance_tous_services
+}
+
+function install_qdebrid() {
+  echo "####################################################"
+  echo $(gettext "Les Applications radarr et sonarr")                     
+  echo $(gettext "Sont indispensables au fonctionnement de Qdebrid")
+  echo $(gettext "Si elles ne sont pas installées, elles vont l'être")                             
+  echo "####################################################"
+  echo ""
+  sleep 2s
+  suppression_appli qdebrid 1
+  for service in sonarr radarr; do
+    if docker ps | grep -q "$service"; then
+      api=$(head -n 7 "${SETTINGS_STORAGE}/docker/$USER/$service/config/config.xml" | tail -n 1 | cut -c11-42)
+    else
+      echo -e "\e[36mInstallation de ${service} \e[0m"
+      launch_service "$service"
+      sleep 5s
+      api=$(head -n 7 "${SETTINGS_STORAGE}/docker/$USER/$service/config/config.xml" | tail -n 1 | cut -c11-42)
+    fi
+    manage_account_yml "sub.$service.api" "$api"
+  done
+  echo -e "\e[36mInstallation de Qdebrid \e[0m"
+  ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/qdebrid.yml"
 }
 
 function install_zurg() {
@@ -1379,6 +1392,7 @@ function install_zurg() {
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/zurg.yml"
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml"
   launch_service rdtclient
+  install_qdebrid
 }
 
 function install_zurg_docker() {
@@ -1395,6 +1409,7 @@ function install_zurg_docker() {
   ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/generique.yml" --extra-vars "@${SETTINGS_SOURCE}/includes/dockerapps/vars/zurg.yml"
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml"
   launch_service rdtclient
+  install_qdebrid
 }
 
 
@@ -1445,7 +1460,7 @@ function update_release_zurg() {
   else 
     echo -e  "${BLUE}"$(gettext "Version Zurg :") "$LATEST_VERSION${CEND}"
   fi
-  # rm releases
+  rm releases
 }
 
 function choose_version_zurg() {
@@ -1488,6 +1503,7 @@ function choose_version_zurg() {
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/zurg.yml"
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml"
   launch_service rdtclient
+  install_qdebrid
 }
 
 function get_architecture() {

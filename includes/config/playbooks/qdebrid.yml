@@ -1,0 +1,38 @@
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+
+    - name: Checking for existing zurg
+      stat:
+        path: '{{ settings.storage }}/docker/{{user.name}}/zurg/config.yml'
+      register: check
+
+    - name: Create a directory
+      file:
+        path: "{{ lookup('env','SETTINGS_STORAGE') }}/docker/{{ lookup('env','USER') }}/qdebrid"
+        state: directory
+
+    - name: Create docker-compose file
+      become: yes
+      template:
+        dest: "{{ lookup('env','SETTINGS_STORAGE') }}/docker/{{ lookup('env','USER') }}/qdebrid/docker-compose.yml"
+        src: "{{ settings.source }}/includes/dockerapps/templates/qdebrid/docker-compose.yml.j2"
+
+    - name: Create qdebrid.yml binarie file
+      become: yes
+      template:
+        dest: "{{ lookup('env','SETTINGS_STORAGE') }}/docker/{{ lookup('env','USER') }}/qdebrid/qdebrid.yml"
+        src: "{{ settings.source }}/includes/dockerapps/templates/qdebrid/qdebrid_zurg_binarie.yml.j2"
+      when: not check.stat.exists
+
+    - name: Create qdebrid.yml docker file
+      become: yes
+      template:
+        dest: "{{ lookup('env','SETTINGS_STORAGE') }}/docker/{{ lookup('env','USER') }}/qdebrid/qdebrid.yml"
+        src: "{{ settings.source }}/includes/dockerapps/templates/qdebrid/qdebrid_zurg_docker.yml.j2"
+      when: check.stat.exists
+
+    - name: deploy Docker Compose stack
+      command: docker compose -f "{{ lookup('env','SETTINGS_STORAGE') }}/docker/{{ lookup('env','USER') }}/qdebrid/docker-compose.yml" up -d
+

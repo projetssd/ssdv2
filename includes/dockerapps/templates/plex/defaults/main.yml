@@ -62,7 +62,8 @@ plex_docker_ports: "{{ (web_tools_ports + plex_main_ports) if (plex.open_main_po
 plex_docker_volumes:
   - "/etc/localtime:/etc/localtime:ro"
   - "/home/{{ lookup('env','USER') }}:/home/{{ lookup('env','USER') }}"
-  - "/home/{{ lookup('env','USER') }}/Medias:/data"
+  - "/home/{{ lookup('env','USER') }}/Medias:/mnt"
+  - "{{ settings.storage }}/zurg:/mnt/zurg"
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/plex/config:/config"
   - "/tmp:/tmp"
   - "/dev/shm:/dev/shm"

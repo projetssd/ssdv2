@@ -12,8 +12,8 @@ token: {{zurg.token}}
 check_for_changes_every_secs: 10
 # repair_every_mins: 60
 # ignore_renames: false
-# retain_rd_torrent_name: false
-# retain_folder_name_extension: false
+retain_rd_torrent_name: true
+retain_folder_name_extension: true
 enable_repair: true
 auto_delete_rar_torrents: true
 # api_timeout_secs: 15
@@ -21,11 +21,10 @@ auto_delete_rar_torrents: true
 # enable_download_mount: false
 # rate_limit_sleep_secs: 6
 # retries_until_failed: 2
-# network_buffer_size: 4194304 # 4MB
+network_buffer_size: 4194304 # 4MB
 # serve_from_rclone: false
 # verify_download_link: false
-# force_ipv6: false
-# on_library_update: sh plex_update.sh "$@"
+# force_ipv6: false# on_library_update: sh plex_update.sh "$@"
 
 # List of directory definitions and their filtering rules
 directories:
