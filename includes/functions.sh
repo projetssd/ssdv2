@@ -1391,7 +1391,6 @@ function install_zurg() {
   # launch zurg
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/zurg.yml"
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml"
-  launch_service rdtclient
 }
 
 function install_zurg_docker() {
@@ -1407,8 +1406,6 @@ function install_zurg_docker() {
   # launch zurg
   ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/generique.yml" --extra-vars "@${SETTINGS_SOURCE}/includes/dockerapps/vars/zurg.yml"
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml"
-  launch_service rdtclient
-  install_qdebrid
 }
 
 
@@ -1501,8 +1498,6 @@ function choose_version_zurg() {
   # launch zurg
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/zurg.yml"
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml"
-  launch_service rdtclient
-  install_qdebrid
 }
 
 function get_architecture() {
