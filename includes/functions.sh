@@ -1341,11 +1341,11 @@ function sortie_cloud() {
 }
 
 function install_qdebrid() {
-  echo "####################################################"
-  echo $(gettext "Les Applications radarr et sonarr")                     
-  echo $(gettext "Sont indispensables au fonctionnement de Qdebrid")
-  echo $(gettext "Si elles ne sont pas installées, elles vont l'être")                             
-  echo "####################################################"
+  clear
+  logo 
+  echo -e "${BLUE}"$(gettext "Pour assurer le bon fonctionnement de Qdebrid")"${CEND}"                     
+  echo -e "${BLUE}"$(gettext "l'installation des applications Radarr et Sonarr est indispensable")"${CEND}"
+  echo -e "${BLUE}"$(gettext "Si elles ne sont pas déjà installées, elles le seront.")"${CEND}"                             
   echo ""
   sleep 2s
   suppression_appli qdebrid 1
@@ -1360,7 +1360,7 @@ function install_qdebrid() {
     fi
     manage_account_yml "sub.$service.api" "$api"
   done
-  echo -e "\e[36mInstallation de Qdebrid \e[0m"
+  echo -e "\e[36m"$(gettext "Installation Qdebrid")"\e[0m"
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/qdebrid.yml"
 }
 

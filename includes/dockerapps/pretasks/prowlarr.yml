@@ -1,0 +1,11 @@
+---
+- name: Creating scripts and plugins paths
+  become: yes
+  file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
+  with_items:
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/Custom"
+
+- name: Copy content of Custom 'files'
+  copy:
+    src: "{{ settings.source }}//includes/dockerapps/templates/Torrentio/Custom/"
+    dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/Custom/"
