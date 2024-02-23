@@ -731,11 +731,15 @@ function suppression_appli() {
     ;;
   piped*)
     sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/piped
-    docker rm -f nginx piped-frontend piped-backend postgres piped-proxy >/dev/null 2>&1
+    docker rm -f nginx piped-frontend piped-backend postgres piped-proxy hyperpipe-backend hyperpipe-frontend >/dev/null 2>&1
     ;;
   nginx)
     sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/piped
-    docker rm -f nginx piped-frontend piped-backend postgres piped-proxy >/dev/null 2>&1
+    docker rm -f nginx piped-frontend piped-backend postgres piped-proxy hyperpipe-backend hyperpipe-frontend >/dev/null 2>&1
+    ;;
+  hyperpipe*)
+    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/piped
+    docker rm -f nginx piped-frontend piped-backend postgres piped-proxy hyperpipe-backend hyperpipe-frontend >/dev/null 2>&1
     ;;
   qdebrid)
    sudo rm -rf /home/$USER/scripts/qdebrid

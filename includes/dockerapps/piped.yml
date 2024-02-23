@@ -22,6 +22,12 @@
     - name: "Set DNS Record on CloudFlare"
       include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
       vars:
+        subdomain: "youtube"
+      when: cloudflare_enabled
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
+      vars:
         subdomain: "pipedapi"
       when: cloudflare_enabled
 
@@ -54,7 +60,14 @@
       become: yes
       become_user: "{{ lookup('env','USER') }}"
 
-    - name: Run Shell Script.
+    - name: configure file
+      template:
+        dest: "{{ settings.storage }}/docker/traefik/rules/hyperpipe.toml"
+        src: "{{ settings.source }}/includes/dockerapps/templates/piped/hyperpipe.toml.j2"
+      become: yes
+      become_user: "{{ lookup('env','USER') }}"
+
+    - name: Run Shell Script
       shell: sh "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/piped/configure-instance.sh"
 
     - name: deploy Docker Compose stack
@@ -66,3 +79,13 @@
         connected:
           - nginx
         appends: yes
+
+    - name: stop traefik
+      community.docker.docker_container:
+        name: traefik
+        state: stopped
+
+    - name: start traefik
+      community.docker.docker_container:
+        name: traefik
+        state: started

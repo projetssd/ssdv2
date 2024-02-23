@@ -1,0 +1,15 @@
+[http.routers]
+  [http.routers.hyperpipe-rtr]
+      entryPoints = ["https"]
+      rule = "Host(`youtube.{{user.domain}}`)"
+      service = "hyperpipe-svc"
+      middlewares = ["chain-no-auth"]
+      [http.routers.hyperpipe-rtr.tls]
+        certresolver = "letsencrypt"
+
+[http.services]
+  [http.services.hyperpipe-svc]
+    [http.services.hyperpipe-svc.loadBalancer]
+      passHostHeader = true
+      [[http.services.hyperpipe-svc.loadBalancer.servers]]
+        url = "http://195.20.227.72:8081"

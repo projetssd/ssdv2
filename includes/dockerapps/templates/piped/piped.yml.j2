@@ -8,6 +8,7 @@ services:
             - piped
         container_name: piped-frontend
         entrypoint: ash -c 'sed -i s/pipedapi.kavin.rocks/pipedapi.{{user.domain}}/g /usr/share/nginx/html/assets/* && /docker-entrypoint.sh && nginx -g "daemon off;"'
+
     piped-proxy:
         image: 1337kavin/piped-proxy:latest
         restart: unless-stopped
@@ -49,6 +50,23 @@ services:
             - "traefik.http.routers.piped-rtr.entrypoints=http,https"
             - "traefik.http.routers.piped-rtr.service=piped-svc"
             - "traefik.http.services.piped-svc.loadbalancer.server.port=80"
+
+    hyperpipe-frontend:
+        image: codeberg.org/hyperpipe/hyperpipe:latest
+        container_name: hyperpipe-frontend
+        restart: unless-stopped
+        entrypoint: sh -c 'find /usr/share/nginx/html -type f -exec sed -i s/pipedapi.kavin.rocks/pipedapi.{{user.domain}}/g {} \; -exec sed -i s/hyperpipeapi.onrender.com/hyperpipeapi.onrender.com/g {} \; && /docker-entrypoint.sh && nginx -g "daemon off;"'
+        ports:
+            - '8081:80'
+
+    hyperpipe-backend:
+        image: codeberg.org/hyperpipe/hyperpipe-backend:latest
+        container_name: hyperpipe-backend
+        environment:
+          - HYP_PROXY=pipedapi.{{user.domain}}
+        restart: unless-stopped
+        ports:
+            - '3000:3000'
 
     postgres:
         image: postgres:15
