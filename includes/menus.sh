@@ -27,7 +27,7 @@ menu_secu_system_ajout_adresse_oauth2() {
   echo ""
   echo >&2 -n -e "${BWHITE}"$(gettext "Compte(s) Gmail utilisé(s), séparés d'une virgule si plusieurs :")"${CEND}"
   read email
-  manage_account_yml oauth.email $email
+  manage_account_yml oauth.account $email
   ansible-playbook ${SETTINGS_SOURCE}/includes/dockerapps/traefik.yml
 
   echo -e "${CRED}---------------------------------------------------------------${CEND}"
