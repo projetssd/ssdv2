@@ -1,0 +1,14 @@
+###############################################################
+#                         Users Database                      #
+###############################################################
+
+# List of users
+users:
+  "{{ lookup('env','USER') }}":
+    disabled: false
+    displayname: "{{ lookup('env','USER') }}"
+    password: "{{password.stdout}}"
+    email: {{user.mail}}
+    groups:
+      - admins
+

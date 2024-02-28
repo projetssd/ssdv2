@@ -1,0 +1,46 @@
+---
+- hosts: all
+  vars_prompt:
+
+    - name: username
+      prompt: Nom
+      private: false
+
+    - name: password
+      prompt: Password
+      private: false
+
+    - name: mail
+      prompt: Mail
+      private: false
+
+  tasks:
+
+    - name: Create new hashed
+      shell: |
+        docker run --rm authelia/authelia:latest authelia hash-password {{ password }} | cut -d: -f2 | sed 's/ //g'
+      register: password
+
+    - name: Modify rclone.conf
+      blockinfile:
+        marker: "##{{ username }}##"
+        path: "{{ settings.storage }}/docker/{{user.name}}/authelia/users.yml"
+        block: |2 
+            "{{ username }}":
+              disabled: false
+              displayname: "{{ username }}"
+              password: "{{ password.stdout }}"
+              email: {{ mail }}
+              groups:
+               - admins
+
+    - name: Print a message
+      ansible.builtin.debug:
+        msg: 'Logging authelia in as {{ username }}'
+
+    - name: Print a message
+      ansible.builtin.debug:
+        msg: 'Logging authelia in as {{ password }}'
+
+
+

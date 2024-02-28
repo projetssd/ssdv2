@@ -10,15 +10,68 @@ menu_secu_system_oauth2() {
   "${SETTINGS_SOURCE}/includes/config/scripts/oauth.sh"
 }
 
-menu_secu_system_auth_classique() {
+menu_install_authelia() {
   clear
-  echo ""
-  manage_account_yml oauth.client " "
-  manage_account_yml oauth.secret " "
-  manage_account_yml oauth.openssl " "
-  manage_account_yml oauth.account " "
+  logo
+  echo -e "${CRED}-------------------------------------${CEND}"
+  echo -e "${CCYAN}"$(gettext "INSTALLATION AUTHELIA")"${CEND}"
+  echo -e "${CRED}-------------------------------------${CEND}"
 
-  ${SETTINGS_SOURCE}/includes/config/scripts/basique.sh
+  # Installation Authelia
+  launch_service authelia
+
+  echo -e "${CRED}---------------------------------------------------------------${CEND}"
+  echo -e "${CRED}"$(gettext "Réinitialiser manuellement les applis qui seront")"${CEND}"
+  echo -e "${CRED}"$(gettext "Concernées par l'authentification Authelia") "${CEND}"
+  echo -e "${CRED}"$(gettext "Choix 1 puis 3 dans le menu")                     "${CEND}"
+
+  echo -e "${CRED}---------------------------------------------------------------${CEND}"
+  echo ""
+  echo -e "${CRED}---------------------------------------------------------------${CEND}"
+  echo -e "${CCYAN}"    IMPORTANT:	$(gettext "Avant la 1ere connexion")"${CEND}"
+  echo -e "${CCYAN}"    		- $(gettext "Nettoyer l'historique de votre navigateur")"${CEND}"
+  echo -e "${CRED}---------------------------------------------------------------${CEND}"
+  echo ""
+  echo -e "\n $(gettext "Appuyer sur") ${CCYAN}[$(gettext "ENTREE")]${CEND} $(gettext "pour continuer")"
+  read -r
+}
+
+menu_ajout_users_authelia() {
+  clear
+  logo
+  echo -e "${CRED}---------------------------------------------------------------${CEND}"
+  echo -e "${CRED}"$(gettext "Ajout Utilisateurs Authelia")                     "${CEND}"
+  echo -e "${CRED}---------------------------------------------------------------${CEND}"
+  echo ""
+  ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/add_users_authelia.yml"
+  docker restart authelia >/dev/null 2>&1
+  echo ""
+  echo -e "\n"$(gettext "Appuyer sur")"${CCYAN} ["$(gettext "ENTREE")"]${CEND}" $(gettext "pour continuer")
+  read -r
+}
+
+menu_suppression_utilisateur_authelia() {
+  clear
+  logo
+  echo -e "${CRED}---------------------------------------------------------------${CEND}"
+  echo -e "${CRED}"$(gettext "Suppression Utilisateurs Authelia")               "${CEND}"
+  echo -e "${CRED}---------------------------------------------------------------${CEND}"
+  echo ""
+  grep displayname "${SETTINGS_STORAGE}/docker/${USER}/authelia/users.yml" | cut -d: -f2 | tr -d '"' | cat -n | sed 's/[ ]\+/ /g' | tr " " " " | tr "\t" " " > temp
+  while read LIGNE
+  do echo -e "${CCYAN}"$LIGNE"${CEND}"
+  done < temp
+  echo ""
+  echo >&2 -n -e "${CCYAN}"$(gettext "Choisir le numéro de l'utilisateur :") "${CEND}"
+  read NUMERO_LIGNE
+  UTILISATEUR=$(sed -n "${NUMERO_LIGNE}p" temp | cut -d ' ' -f 4)
+  sed -i "/##${UTILISATEUR}##/,/##${UTILISATEUR}##/d" "${SETTINGS_STORAGE}/docker/${USER}/authelia/users.yml"
+  rm temp
+  echo ""
+  echo -e "\e[32m"$(gettext "L'utilisateur ${UTILISATEUR} a été supprimé")"\e[0m"
+  docker restart authelia >/dev/null 2>&1
+  echo -e "\n"$(gettext "Appuyer sur")"${CCYAN} ["$(gettext "ENTREE")"]${CEND}" $(gettext "pour continuer")
+  read -r
 }
 
 menu_secu_system_ajout_adresse_oauth2() {
@@ -36,7 +89,6 @@ menu_secu_system_ajout_adresse_oauth2() {
 
   echo -e "\n"$(gettext "Appuyer sur")"${CCYAN} ["$(gettext "ENTREE")"]${CEND}" $(gettext "pour continuer")
   read -r
-
 }
 
 menu_secu_systeme_iptables() {

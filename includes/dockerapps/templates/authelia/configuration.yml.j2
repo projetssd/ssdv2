@@ -1,104 +1,64 @@
 ###############################################################
 #                   Authelia configuration                    #
 ###############################################################
+jwt_secret: "{{jwt_secret.stdout}}"
+default_redirection_url: https://authelia.{{user.domain}}
+theme: dark
 
 server:
   host: 0.0.0.0
   port: 9091
+
 log:
-  level: warn
-
-# This secret can also be set using the env variables AUTHELIA_JWT_SECRET_FILE
-# I used this site to generate the secret: https://www.grc.com/passwords.htm
-jwt_secret: {{user.pass}}
-
-
-# https://docs.authelia.com/configuration/miscellaneous.html#default-redirection-url
-default_redirection_url: https://authelia.{{user.domain}}
+  level: info
+  format: text
+  file_path: /config/authelia.log
+  keep_stdout: true
 
 totp:
   issuer: authelia.com
   period: 30
   skew: 1
 
-# Enable the following for Duo Push Notification support
-#duo_api:
-#  hostname: api-123456789.example.com
-#  integration_key: ABCDEF
-#  # This secret can also be set using the env variables AUTHELIA_DUO_API_SECRET_KEY_FILE
-#  secret_key: 1234567890abcdefghifjkl
-
 authentication_backend:
   file:
-    path: /etc/authelia/users_database.yml
-    # customize passwords based on https://docs.authelia.com/configuration/authentication/file.html
+    path: /config/users.yml
     password:
       algorithm: argon2id
       iterations: 1
       salt_length: 16
       parallelism: 8
-      memory: 1024
+      memory: 128 # blocks this much of the RAM
 
-# https://docs.authelia.com/configuration/access-control.html
 access_control:
   default_policy: deny
   rules:
-    # Rules applied to everyone
     - domain: authelia.{{user.domain}}
       policy: bypass
-#    - domain: radarr.example.com
-#      policy: bypass
-#      subject: "group:admins"
-#      resources:
-#      - "^/api/.*$"      
-#    - domain: "*.example.com"
-#      policy: one_factor
-    - domain: "*.{{user.domain}}"
+    - domain:
+        - "*.{{user.domain}}"
+        - "{{user.domain}}"
       policy: two_factor
-    - domain: "{{user.domain}}"
-      policy: two_factor
-
 
 session:
+  secret: "{{secret.stdout}}"
   name: authelia_session
-  # This secret can also be set using the env variables AUTHELIA_SESSION_SECRET_FILE
-  # Used a different secret, but the same site as jwt_secret above.
-  secret: {{user.pass}}
-  expiration: 3600 # 1 hour
-  inactivity: 300 # 5 minutes
+  expiration: 1h
+  inactivity: 5m
+  remember_me_duration: 1M
   domain: {{user.domain}} # Should match whatever your root protected domain is
-
-# Optional. Can improve performance on a busy system. If not enabled, session info is stored in memory.
-#  redis:
-#    host: redis
-#    port: 6379
-    # This secret can also be set using the env variables AUTHELIA_SESSION_REDIS_PASSWORD_FILE
-    # password: authelia
-
+ 
 regulation:
   max_retries: 3
-  find_time: 120
-  ban_time: 300
+  find_time: 300
+  ban_time: 600
 
 storage:
-# For local storage, uncomment lines below and comment out mysql. https://docs.authelia.com/configuration/storage/sqlite.html
-#  local:
-#    path: /var/lib/authelia/db.sqlite3
-  encryption_key: "{{ my_random_key }}"
-  mysql:
-  # MySQL allows running multiple authelia instances. Create database and enter details below.
-    host: db-authelia
-    port: 3306
-    database: authelia
-    username: authelia
-    # Password can also be set using a secret: https://docs.authelia.com/configuration/secrets.html
-    password: authelia
+  encryption_key: "{{encryption_key.stdout}}"
+  local:
+    path: /config/db.sqlite3
 
 notifier:
-  smtp:
-    username: {{mail}}
-    # Password can also be set using a secret: https://docs.authelia.com/configuration/secrets.html
-    password: {{secret}}
-    sender: admin@{{user.domain}}
-    host: {{smtp}}
-    port: {{port_smtp}}
+  disable_startup_check: false
+  filesystem:
+    filename: /config/notifications.txt

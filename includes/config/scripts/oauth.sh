@@ -1,13 +1,9 @@
 #!/bin/bash
-
-source ${SETTINGS_SOURCE}/includes/functions.sh
-source ${SETTINGS_SOURCE}/includes/variables.sh
+source ${SETTINGS_SOURCE}/profile.sh
+clear
+logo
 
 ## Variable
-ansible-playbook ${SETTINGS_SOURCE}/includes/dockerapps/templates/ansible/ansible.yml
-DOMAIN=$(cat ${TMPDOMAIN})
-SEEDGROUP=$(cat ${TMPGROUP})
-rm ${TMPNAME} ${TMPDOMAIN} ${TMPGROUP}
 oauth_client=$1
 oauth_secret=$2
 email=$3
@@ -46,35 +42,16 @@ done
 openssl=$(openssl rand -hex 16)
 manage_account_yml oauth.openssl $openssl
 
-## suppression des yml dans ${SETTINGS_STORAGE}/conf
-rm ${SETTINGS_STORAGE}/conf/* > /dev/null 2>&1
-
-
-## suppression container
-docker rm -f $(docker ps -aq) > /dev/null 2>&1
-
-## supression Authelia si installé
-rm -rf ${SETTINGS_STORAGE}/docker/${USER}/authelia > /dev/null 2>&1
-rm ${SETTINGS_STORAGE}/conf/authelia.yml > /dev/null 2>&1
-
 ## reinstallation traefik
 echo ""
+suppression_appli traefik
 install_traefik
 
-echo ""
-## reinstallation watchtower
-install_watchtower
-echo ""
-
-## reinstallation application
-echo -e "${BLUE}###" $(gettext "REINITIALISATION DES APPLICATIONS") "###${NC}"
-echo -e " ${BWHITE}*" $(gettext "Les fichiers de configuration ne seront pas effacés")"${NC}"
-
-relance_tous_services
-
-rm $SERVICESUSER${USER}
     echo -e "${CRED}---------------------------------------------------------------${CEND}"
-    echo -e "${CRED}"$(gettext "MISE A JOUR DU SERVEUR EFFECTUEE AVEC SUCCES")"${CEND}"
+    echo -e "${CRED}"$(gettext "Réinitialiser manuellement les applis qui seront")"${CEND}"
+    echo -e "${CRED}"$(gettext "Concernées par l'authentification Google OAuth2") "${CEND}"
+    echo -e "${CRED}"$(gettext "Choix 1 puis 3 dans le menu")                     "${CEND}"
+
     echo -e "${CRED}---------------------------------------------------------------${CEND}"
     echo ""
     echo -e "${CRED}---------------------------------------------------------------${CEND}"

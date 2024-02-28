@@ -1,43 +1,23 @@
 ---
-- name: mail
-  pause:
-    prompt: "Entrer votre mail "
-    echo: yes
-  register: mail
+- name: Creating paths
+  file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
+  with_items:
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}"
 
-- name: Set fact mail
-  set_fact:
-    mail: "{{ mail.user_input }}"
+- name: Create new hashed jwt_secret
+  shell: |
+    docker run --rm authelia/authelia:latest authelia crypto rand --length 64 --charset alphanumeric | cut -d: -f2 | sed 's/ //g'
+  register: jwt_secret
 
-- name: smtp.gmail.com
-  pause:
-    prompt: "Smtp de votre mail ex: smtp.gmail.com"
-    echo: yes
-  register: smtp
-
-- name: Set fact smtp
-  set_fact:
-    smtp: "{{ smtp.user_input }}"
-
-- name: port_smtp
-  pause:
-    prompt: "Entre le port smtp ex: 587 pour gmail"
-    echo: yes
-  register: port_smtp
-
-- name: verif
-  set_fact:
-    port_smtp: "{{ port_smtp.user_input }}"
-
-- name: mot de passe de l'application Google
-  pause:
-    prompt: "Mot de passe de l'application Google"
-    echo: yes
+- name: Create new hashed secret
+  shell: |
+    docker run --rm authelia/authelia:latest authelia crypto rand --length 64 --charset alphanumeric | cut -d: -f2 | sed 's/ //g'
   register: secret
 
-- name: verif
-  set_fact:
-    secret: "{{ secret.user_input }}"
+- name: Create new hashed encryption_key
+  shell: |
+    docker run --rm authelia/authelia:latest authelia crypto rand --length 64 --charset alphanumeric | cut -d: -f2 | sed 's/ //g'
+  register: encryption_key
 
 - name: Create new hashed
   shell: |
@@ -48,13 +28,12 @@
   set_fact:
     my_random_key: lookup('community.general.random_string', length=20)
 
-
 - name: Import configuration.yml
   template:
-    src: "{{ settings.source }}/includes/dockerapps/templates/authelia/configuration.yml.j2"
+    src: "{{ settings.source }}/includes/dockerapps/templates/{{pgrole}}/configuration.yml.j2"
     dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/configuration.yml"
 
 - name: Import users_database.yml
   template:
-    src: "{{ settings.source }}/includes/dockerapps/templates/authelia/users_database.yml.j2"
-    dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/users_database.yml"
+    src: "{{ settings.source }}/includes/dockerapps/templates/{{pgrole}}/users.yml.j2"
+    dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/users.yml"

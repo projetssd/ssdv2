@@ -692,6 +692,12 @@ function suppression_appli() {
   echo "0" >${SETTINGS_STORAGE}/status/$APPSELECTED
 
   case $APPSELECTED in
+  oauth)
+    manage_account_yml oauth.client " "
+    manage_account_yml oauth.secret " "
+    manage_account_yml oauth.openssl " "
+    manage_account_yml oauth.account " "
+    ;;
   seafile)
     docker rm -f memcached >/dev/null 2>&1
     ;;
@@ -732,14 +738,17 @@ function suppression_appli() {
   piped*)
     sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/piped
     docker rm -f nginx piped-frontend piped-backend postgres piped-proxy hyperpipe-backend hyperpipe-frontend >/dev/null 2>&1
+    manage_account_yml sub.piped " "
     ;;
   nginx)
     sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/piped
     docker rm -f nginx piped-frontend piped-backend postgres piped-proxy hyperpipe-backend hyperpipe-frontend >/dev/null 2>&1
+    manage_account_yml sub.piped " "
     ;;
   hyperpipe*)
     sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/piped
     docker rm -f nginx piped-frontend piped-backend postgres piped-proxy hyperpipe-backend hyperpipe-frontend >/dev/null 2>&1
+    manage_account_yml sub.piped " "
     ;;
   qdebrid)
    sudo rm -rf /home/$USER/scripts/qdebrid
