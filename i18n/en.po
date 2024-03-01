@@ -415,6 +415,16 @@ msgid "Choix 1 puis 3 dans le menu"
 msgstr "Choice 1 then 3 in the menu"
 msgid "Choisir le numéro de l'utilisateur :"
 msgstr "Choose the user number:"
+msgid "Mise en place Cloudflare"
+msgstr "Cloudflare implementation"
+msgid "Mise à jour Cloudflare effectuée"
+msgstr "Cloudflare update completed"
+msgid "Mise à jour du domaine effectuée"
+msgstr "Domain update completed"
+msgid "Nouveau Domaine"
+msgstr "New Domain"
+
+
 
 #
 # seedbox.py

@@ -3,6 +3,10 @@ menu_ajout_supp_applis() {
   manage_apps
 }
 
+menu_change_domaine () {
+  "${SETTINGS_SOURCE}/includes/config/scripts/domain.sh"
+}
+
 menu_secu_system_oauth2() {
   clear
   echo ""
@@ -45,7 +49,6 @@ menu_ajout_users_authelia() {
   echo ""
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/add_users_authelia.yml"
   docker restart authelia >/dev/null 2>&1
-  echo ""
   echo -e "\n"$(gettext "Appuyer sur")"${CCYAN} ["$(gettext "ENTREE")"]${CEND}" $(gettext "pour continuer")
   read -r
 }

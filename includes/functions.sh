@@ -1321,9 +1321,8 @@ function relance_tous_services() {
   sqlite3 ${SETTINGS_SOURCE}/ssddb <<EOF >$SERVICESPERUSER
 select name from applications;
 EOF
-
+  sed -i '/traefik/d' $SERVICESPERUSER
   install_services
-  launch_service traefik
 }
 
 function apply_patches() {
