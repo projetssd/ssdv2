@@ -1,7 +1,7 @@
 ---
 pgrole: 'rdtclient'
 intport: '6500'
-image: "systr0/rdt-client-2.0.39:latest"
+image: "systr0/rdtclient:latest"
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/data/db:rw"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
