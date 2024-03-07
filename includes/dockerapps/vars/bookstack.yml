@@ -8,8 +8,9 @@ pg_volumes:
 pg_env:
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
+  TZ: "Europe/Paris"
   DB_HOST: "db-{{ pgrole }}"
   DB_USER: "{{ pgrole }}"
   DB_PASS: "{{ pgrole }}"
   DB_DATABASE: "{{ pgrole }}"
-  APP_URL: "http://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{user.domain}}"
+  APP_URL: "https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{user.domain}}"
