@@ -10,18 +10,18 @@ if [ "$myid" -eq 0 ]; then
   CCYAN="${CSI}0;36m"
 
   # Variables
-  remote={{rclone.remote}}
+  REMOTE=$(grep -B 1 "type = crypt" "/home/{{user.name}}/.config/rclone/rclone.conf" | grep -oP '^\[\K[^]]+')
   remote_backups=BACKUPS
   NB_MAX_BACKUP=3
   CDAY=$(date +%Y%m%d-%H%M)
-  BACKUP_PARTITION=/home/{{ user.name }}/backup
-  BACKUP_FOLDER=$BACKUP_PARTITION/backup-$CDAY
-  ARCHIVE=$BACKUP_FOLDER/backup-$CDAY.tar.gz
+  BACKUP_PARTITION=/home/{{ user.name }}/backup/seedbox
+  #BACKUP_FOLDER=$BACKUP_PARTITION/backup-$CDAY
+  ARCHIVE=$BACKUP_PARTITION/backup-$CDAY.tar.gz
 
   echo ""
-  echo -e "${CRED}---------------------------------------------${CEND}"
-  echo -e "${CRED}"$(gettext "ATTENTION : SAUVEGARDE DU SERVEUR IMMINENTE")"${CEND}"
-  echo -e "${CRED}---------------------------------------------${CEND}"
+  echo -e "${CRED}-----------------------------------------------${CEND}"
+  echo -e "${CCYAN}"$(gettext "ATTENTION : Sauvegarde du serveur imminente")"${CEND}"
+  echo -e "${CRED}-----------------------------------------------${CEND}"
 
   # Stop Plex
   plex=$(docker ps -aq --format={{ '{{' }}.Names{{ '}}' }} | grep -x 'plex' 1> /dev/null 2>&1 && echo true || echo false)
@@ -34,55 +34,57 @@ if [ "$myid" -eq 0 ]; then
   fi
 
   echo ""
-  echo -e "${CCYAN}#########################################################${CEND}"
-  echo ""
-  echo -e "${CCYAN}"$(gettext "DEMARRAGE DU SCRIPT DE SAUVEGARDE")"${CEND}"
-  echo ""
-  echo -e "${CCYAN}#########################################################${CEND}"
+  echo -e "${CRED}---------------------------------------------------------${CEND}"
+  echo -e "${CCYAN}"$(gettext "Lancement de la sauvegarde")"${CEND}"
+  echo -e "${CRED}---------------------------------------------------------${CEND}"
   echo ""
 
   # Backup Plex database
-  mkdir -p $BACKUP_FOLDER
+  mkdir -p $BACKUP_PARTITION
 
   echo -e "${CCYAN}> Création de l'archive${CEND}"
-  tar cvzf $ARCHIVE -P --exclude={{ settings.storage }}zurg {{ settings.storage }} /home/{{ lookup('env','USER') }}/.config/ssd /home/{{ lookup('env','USER') }}/.ansible /home/{{ lookup('env','USER') }}/.vault_pass /home/{{ lookup('env','USER') }}/scripts /home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf /etc/systemd {{ settings.source }}/ssddb --ignore-failed-read --exclude={{ settings.storage }}/zurg
+  tar cvzf $ARCHIVE -P --exclude={{ settings.storage }}zurg {{ settings.storage }} /home/{{user.name}}/.config/ssd /home/{{user.name}}/.ansible /home/{{user.name}}/.vault_pass /home/{{user.name}}/scripts /home/{{user.name}}/.config/rclone/rclone.conf /etc/systemd {{ settings.source }}/ssddb --ignore-failed-read
   sleep 2s
 
   # Restart Plex
-   if [[ ${plex} == "true" ]]; then
+  if [[ ${plex} == "true" ]]; then
     echo -e "${CCYAN}>" $(gettext "Lancement de plex")"${CEND}"
     docker start plex
     sleep 5
   fi
 
-
-  # echo -e "${CCYAN}> Envoie Archive vers Google Drive${CEND}"
-  # Envoie Archive vers Google Drive
-  # rclone --config "/home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf" copy "$BACKUP_FOLDER" "{{rclone.remote}}:/{{user.name}}/$remote_backups/backup-$CDAY" --progress
+  #REMOTE=$(grep -B 1 "type = crypt" "/home/{{user.name}}/.config/rclone/rclone.conf" | grep -oP '^\[\K[^]]+')
+  #if [ $? -eq 0 ]; then
+  #  echo -e "${CCYAN}> Envoie Archive vers Google Drive${CEND}"
+    # Envoie Archive vers Google Drive
+  #  rclone --config "/home/{{user.name}}/.config/rclone/rclone.conf" copy "$ARCHIVE" "${REMOTE}:/$remote_backups/seedbox/" --progress
+  #fi
 
   # Nombre de sauvegardes effectuées
-  nbBackup=$(find $BACKUP_PARTITION -type d -name 'backup-*' | wc -l)
+  nbBackup=$(find $BACKUP_PARTITION -type f -name 'backup-*' | wc -l)
 
   if [[ "$nbBackup" -gt "$NB_MAX_BACKUP" ]]; then
+    # Archive la plus ancienne
+    oldestBackupPath=$(find $BACKUP_PARTITION -type f -name 'backup-*' -printf '%T+ %p\n' | sort | head -n 1 | awk '{print $2}')
+    oldestBackupFile=$(find $BACKUP_PARTITION -type f -name 'backup-*' -printf '%T+ %p\n' | sort | head -n 1 | awk '{split($0,a,/\//); print a[6]}')
 
-      # Archive la plus ancienne
-      oldestBackupPath=$(find $BACKUP_PARTITION -type d -name 'backup-*' -printf '%T+ %p\n' | sort | head -n 1 | awk '{print $2}')
-      oldestBackupFile=$(find $BACKUP_PARTITION -type d -name 'backup-*' -printf '%T+ %p\n' | sort | head -n 1 | awk '{split($0,a,/\//); print a[5]}')
+    # Suppression du répertoire du backup
+    sudo rm "$oldestBackupPath"
 
-      # Suppression du répertoire du backup
-      rm -rf "$oldestBackupPath"
-
-    # Suppression Archive Google Drive
-    # echo -e "${CCYAN}> Suppression de l'archive la plus ancienne${CEND}"
-    # rclone --config "/home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf" purge "{{rclone.remote}}:/{{user.name}}/$remote_backups/$oldestBackupFile" --progress
+    REMOTE=$(grep -B 1 "type = crypt" "/home/{{user.name}}/.config/rclone/rclone.conf" | grep -oP '^\[\K[^]]+')
+    #if [ $? -eq 0 ]; then
+      # Suppression Archive Google Drive
+    #  echo -e "${CCYAN}> Suppression de l'archive la plus ancienne${CEND}"
+    #  rclone --config "/home/{{user.name}}/.config/rclone/rclone.conf" purge "${REMOTE}:/$remote_backups/seedbox/$oldestBackupFile" --progress
+    #fi
   fi
-  chown {{ lookup('env','USER') }}:{{ lookup('env','MYGIDNAME') }} "/home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf"
+  chown {{user.name}}:{{user.name}} "/home/{{user.name}}/.config/rclone/rclone.conf"
   echo ""
   echo -e "${CRED}-------------------------------------------------------${CEND}"
-  echo -e "${CRED}"$(gettext "SAUVEGARDE DU SERVEUR TERMINEE")"${CEND}"
+  echo -e "${CCYAN}"$(gettext "SAUVEGARDE DU SERVEUR TERMINEE")"${CEND}"
   echo -e "${CRED}-------------------------------------------------------${CEND}"
 else
   echo -e "${CRED}-------------------------------------------------------${CEND}"
-  echo -e "${CRED}"$(gettext "LA SAUVEGARDE DOIT ETRE LANCEE EN ROOT - ABANDON")"${CEND}"
+  echo -e "${CCYAN}"$(gettext "LA SAUVEGARDE DOIT ETRE LANCEE EN ROOT - ABANDON")"${CEND}"
   echo -e "${CRED}-------------------------------------------------------${CEND}"
 fi

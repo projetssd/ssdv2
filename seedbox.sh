@@ -195,13 +195,13 @@ if [ $mode_install = "manuel" ]; then
         install_watchtower
         # Install fail2ban
         install_fail2ban
-        # Install rclone si dropbox
-        install_rclone
         # Choix des dossiers et création de l'arborescence
         create_folders
         sauve
         # on marque la seedbox comme installée
         update_seedbox_param "installed" 1
+        # installation environnement
+        install_environnement
         echo $(gettext "L'installation est maintenant terminée.")
         echo $(gettext "Pour le configurer ou modifier les applis, vous pouvez le relancer")
         echo "cd ${SETTINGS_SOURCE}"

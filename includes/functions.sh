@@ -1174,6 +1174,46 @@ function choix_appli_sauvegarde() {
   sauve_one_appli ${line}
 }
 
+function sauve_symlinks() {
+  clear
+  logo
+  echo -e "${CRED}----------------------------------------${CEND}"
+  echo -e "${CCYAN}"$(gettext "Sauvegarde des Symlinks")"${CEND}"
+  echo -e "${CRED}----------------------------------------${CEND}"
+  ls -1 /home/${USER}/Medias| cat -n | sed 's/[ ]\+/ /g' | tr "\t" " " > temp
+
+  # nombre total de lignes dans le fichier temp
+  total_lines=$(wc -l < temp)
+
+  # Ajoutez 1 au nombre total de lignes pour obtenir le numéro suivant
+  next_line_number=$((total_lines + 1))
+
+  # Incrémentez le numéro de ligne avant d'ajouter "Medias" au fichier temporaire
+  echo " $next_line_number Medias" >> temp
+
+  while read LIGNE
+  do 
+    echo -e "${BLUE}  "$LIGNE"${CEND}"
+  done < temp
+
+  echo -e "${CGREEN}---------------------------------------${CEND}"
+  echo -e "${CGREEN}  "$(gettext "H) Retour au menu principal")"${CEND}"
+  echo -e "${CGREEN}  "$(gettext "Q) Quitter")"${CEND}"
+  echo -e "${CGREEN}---------------------------------------${CEND}"
+  echo ""
+  echo >&2 -n -e "${CGREEN}"$(gettext "Votre choix :") "${CEND}"
+  read DOSSIER
+  if [ $DOSSIER == h ] || [ $DOSSIER == H ]; then
+    affiche_menu_db
+  elif [ $DOSSIER == q ] || [ $DOSSIER == Q ]; then
+    exit 1
+  fi
+  APPLI=$(grep $DOSSIER temp | cut -d ' ' -f3)
+  
+  rm temp
+  sauve_one_appli $APPLI
+}
+
 function sauve_one_appli() {
   #############################
   # Parametres :
@@ -1183,6 +1223,14 @@ function sauve_one_appli() {
   # si $2 non renseigné, on reste à 3 backups à garder
   ##############################
 
+  # Variables
+  APPLI=$1
+  CDAY=$(date +%Y%m%d-%H%M)
+  BACKUP_PARTITION=/home/${USER}/backup
+  ARCHIVE=$APPLI-$CDAY.tar.gz
+  BACKUP_FOLDER=$BACKUP_PARTITION/$APPLI/$ARCHIVE
+  remote_backups=BACKUPS
+
   # Définition des variables de couleurs
   CSI="\033["
   CEND="${CSI}0m"
@@ -1191,9 +1239,26 @@ function sauve_one_appli() {
   CYELLOW="${CSI}1;33m"
   CCYAN="${CSI}0;36m"
 
-  # Variables
-  remote=$(get_from_account_yml rclone.remote)
-  APPLI=$1
+  sudo mkdir -p "${BACKUP_PARTITION}/${APPLI}"
+
+  if [[ "$(basename "${APPLI}")" == "Medias" ]]; then
+    SOURCE_DIR="/home/${USER}"
+    FOLDER="du Dossier"
+  elif [[ -d "/home/${USER}/Medias/${APPLI}" ]]; then
+    SOURCE_DIR="/home/${USER}/Medias"
+    FOLDER="du Dossier"
+  else
+    SOURCE_DIR="${SETTINGS_STORAGE}/docker/${USER}"
+    FOLDER="de l'Application"
+  fi
+
+  echo -e "${CCYAN}>" $(gettext "Sauvegarde $FOLDER") "$1${CEND}"
+  REMOTE=$(grep -B 1 "type = crypt" "/home/${USER}/.config/rclone/rclone.conf" | grep -oP '^\[\K[^]]+')
+  if [ $? -eq 0 ]; then
+    echo -e "${BLUE}>" $(gettext "Remote Drive :")"${CEND}" "${CGREEN} $REMOTE ${CEND}"
+  else
+    echo -e "${BLUE}>" $(gettext "Remote Drive :")"${CEND}" "${CGREEN} Non Actif ${CEND}"
+  fi
 
   NB_MAX_BACKUP=3
   ALL_RETENTION=0
@@ -1204,55 +1269,39 @@ function sauve_one_appli() {
       NB_MAX_BACKUP=$2
     fi
   fi
-  SOURCE_DIR="${SETTINGS_STORAGE}/docker/${USER}"
-  remote_backups=BACKUPS
 
-  echo $(gettext "Sauvegarde de l'application") "$1"
   if [ $ALL_RETENTION -eq 0 ]; then
-    echo $(gettext "Nombre de backups à garder") : "$NB_MAX_BACKUP"
+    echo -e "${CCYAN}>" $(gettext "Nombre de backups à garder") : "$NB_MAX_BACKUP" "${CEND}"
   else
     echo $(gettext "Pas de suppression des vieux backups")
   fi
 
-  CDAY=$(date +%Y%m%d-%H%M)
-  BACKUP_PARTITION=/var/backup/local
-  #BACKUP_FOLDER=$BACKUP_PARTITION/$APPLI-$CDAY
-  ARCHIVE=$APPLI-$CDAY.tar.gz
-
-  echo ""
-  echo -e "${CRED}-------------------------------------------------------${CEND}"
-  echo -e "${CRED} /!\ ATTENTION :" $(gettext "SAUVEGARDE IMMINENTE DE") "${APPLI} /!\ ${CEND}"
-  echo -e "${CRED}-------------------------------------------------------${CEND}"
-
-  # Stop Plex
-  echo -e "${CCYAN}>" $(gettext "Arrêt de") "${APPLI}${CEND}"
-  #docker stop `docker ps -q`
-  docker stop ${APPLI}
+  if [ "${SOURCE_DIR}" == "${SETTINGS_STORAGE}/docker/${USER}" ]; then
+    # Stop APPLI
+    echo -e "${CCYAN}>" $(gettext "Arrêt de") "${APPLI}${CEND}"
+    docker stop ${APPLI} > /dev/null 2>&1
+  fi
   sleep 5
-
-  echo ""
-  echo -e "${CCYAN}#########################################################${CEND}"
-  echo ""
-  echo -e "${CCYAN}"         $(gettext "DEMARRAGE DU SCRIPT DE SAUVEGARDE")"${CEND}"
-  echo ""
-  echo -e "${CCYAN}#########################################################${CEND}"
-  echo ""
 
   echo -e "${CCYAN}>" $(gettext "Création de l'archive")"${CEND}"
-  sudo tar -I pigz -cf $BACKUP_PARTITION/$ARCHIVE -P $SOURCE_DIR/$APPLI
+  mkdir -p $BACKUP_PARTITION/$APPLI
+  sudo tar -I pigz -cf $BACKUP_PARTITION/$APPLI/$ARCHIVE -P $SOURCE_DIR/$APPLI
   sleep 2s
+  echo -e "${CCYAN}>" $(gettext "Archive conservée dans le dossier /home/${USER}/backup")"${CEND}"
 
-  # Si une erreur survient lors de la compression
-  if [[ -s "$ERROR_FILE" ]]; then
-    echo -e "\n${CRED}/!\ ERREUR:" $(gettext "Echec de la compression des fichiers système.")"${CEND}" | tee -a $LOG_FILE
-    echo -e "" | tee -a $LOG_FILE
-    exit 1
+  if [ "${SOURCE_DIR}" == "${SETTINGS_STORAGE}/docker/${USER}" ]; then
+  # Restart APPLI
+  echo -e "${CCYAN}>" $(gettext "Lancement de") "${APPLI}${CEND}"
+  docker start $APPLI > /dev/null 2>&1
+  sleep 5
   fi
 
-  # Restart Plex
-  echo -e "${CCYAN}>" $(gettext "Lancement de") "${APPLI}${CEND}"
-  docker start $APPLI
-  sleep 5
+  REMOTE=$(grep -B 1 "type = crypt" "/home/${USER}/.config/rclone/rclone.conf" | grep -oP '^\[\K[^]]+')
+  if [ $? -eq 0 ]; then
+    echo -e "${CCYAN}> Envoie Archive vers Google Drive${CEND}"
+    # Envoie Archive vers Google Drive
+    rclone copy "$BACKUP_FOLDER" "$REMOTE:/$remote_backups/$APPLI" --progress
+  fi
 
   # Nombre de sauvegardes effectuées
   nbBackup=$(find $BACKUP_PARTITION -type f -name $APPLI-* | wc -l)
@@ -1260,23 +1309,31 @@ function sauve_one_appli() {
     if [[ "$nbBackup" -gt "$NB_MAX_BACKUP" ]]; then
 
       # Archive la plus ancienne
-      oldestBackupPath=$(find $BACKUP_PARTITION -type f -name $APPLI-* -printf '%T+ %p\n' | sort | head -n 1 | awk '{print $2}')
-      oldestBackupFile=$(find $BACKUP_PARTITION -type f -name $APPLI-* -printf '%T+ %p\n' | sort | head -n 1 | awk '{split($0,a,/\//); print a[5]}')
+      oldestBackupPath=$(find $BACKUP_PARTITION/$APPLI -type f -name $APPLI-* -printf '%T+ %p\n' | sort | head -n 1 | awk '{print $2}')
+      oldestBackupFile=$(find $BACKUP_PARTITION/$APPLI -type f -name $APPLI-* -printf '%T+ %p\n' | sort | head -n 1 | awk '{split($0,a,/\//); print a[6]}')
 
-      # Suppression du répertoire du backup
-      rm -rf "$oldestBackupPath"
+      # Suppression du backup local
+      sudo rm "$oldestBackupPath"
+
+      REMOTE=$(grep -B 1 "type = crypt" "/home/${USER}/.config/rclone/rclone.conf" | grep -oP '^\[\K[^]]+')
+      if [ $? -eq 0 ]; then
+        # Suppression Archive Google Drive
+        echo -e "${CCYAN}> Suppression de l'archive la plus ancienne${CEND}"
+        rclone delete "$REMOTE:/$remote_backups/$APPLI/$oldestBackupFile" --progress
+      fi
     fi
   fi
   echo ""
-  echo -e "${CRED}-------------------------------------------------------${CEND}"
-  echo -e "${CRED}"        $(gettext "SAUVEGARDE TERMINEE POUR")        "${APPLI}${CEND}"
-  echo -e "${CRED}-------------------------------------------------------${CEND}"
-  pause
+  echo -e "${CRED}------------------------------------------${CEND}"
+  echo -e "${CCYAN}"$(gettext "Sauvegarde $FOLDER $APPLI terminée")"${CEND}"
+  echo -e "${CRED}------------------------------------------${CEND}"
+  echo -e "\n"$(gettext "Appuyer sur")"${CCYAN} ["$(gettext "ENTREE")"]${CEND}" $(gettext "pour continuer")
+  read -r
 }
 
 function change_password() {
   echo "#############################################"
-  echo $(gettext "Cette procédure va redéarrer traefik")
+  echo $(gettext "Cette procédure va redémarrer traefik")
   echo $(gettext "Pendant cette opération, les interfaces web seront inaccessibles")
   echo >&2 -n -e "${BWHITE}"$(gettext "Saisissez le nouveau password :") "${CEND}"
   read NEWPASS
@@ -1420,7 +1477,6 @@ function install_zurg_docker() {
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml"
 }
 
-
 function create_folders() {
   echo ""
   create_dir "${HOME}/local"
@@ -1518,11 +1574,11 @@ function get_architecture() {
 }
 
 function liste_perso() {
-  echo "####################################################"
-  echo $(gettext "Liste des applis déjà personnalisées")                     
-  echo $(gettext "Vous pouvez à tout moment décider de modifier les fichiers")
-  echo $(gettext "Relancer ensuite le container")                             
-  echo "####################################################"
+  echo -e "${CRED}-----------------------------------------------------------${CEND}"
+  echo -e "${CCYAN}"$(gettext "Liste des applis déjà personnalisées")"${CEND}"                     
+  echo -e "${CCYAN}"$(gettext "Vous pouvez à tout moment décider de modifier les fichiers")"${CEND}"
+  echo -e "${CCYAN}"$(gettext "Relancer ensuite le container")"${CEND}"                             
+  echo -e "${CRED}-----------------------------------------------------------${CEND}"
   echo ""
 
   folder_path="${SETTINGS_STORAGE}/vars"
