@@ -10,7 +10,7 @@ if [ "$myid" -eq 0 ]; then
   CCYAN="${CSI}0;36m"
 
   # Variables
-  REMOTE=$(grep -B 1 "type = crypt" "/home/{{user.name}}/.config/rclone/rclone.conf" | grep -oP '^\[\K[^]]+')
+  REMOTE=$(get_from_account_yml rclone.remote)
   remote_backups=BACKUPS
   NB_MAX_BACKUP=3
   CDAY=$(date +%Y%m%d-%H%M)
@@ -53,8 +53,7 @@ if [ "$myid" -eq 0 ]; then
     sleep 5
   fi
 
-  #REMOTE=$(grep -B 1 "type = crypt" "/home/{{user.name}}/.config/rclone/rclone.conf" | grep -oP '^\[\K[^]]+')
-  #if [ $? -eq 0 ]; then
+  # if [ ${REMOTE} != notfound ]; then
   #  echo -e "${CCYAN}> Envoie Archive vers Google Drive${CEND}"
     # Envoie Archive vers Google Drive
   #  rclone --config "/home/{{user.name}}/.config/rclone/rclone.conf" copy "$ARCHIVE" "${REMOTE}:/$remote_backups/seedbox/" --progress
@@ -71,8 +70,7 @@ if [ "$myid" -eq 0 ]; then
     # Suppression du répertoire du backup
     sudo rm "$oldestBackupPath"
 
-    REMOTE=$(grep -B 1 "type = crypt" "/home/{{user.name}}/.config/rclone/rclone.conf" | grep -oP '^\[\K[^]]+')
-    #if [ $? -eq 0 ]; then
+    # if [ ${REMOTE} != notfound ]; then
       # Suppression Archive Google Drive
     #  echo -e "${CCYAN}> Suppression de l'archive la plus ancienne${CEND}"
     #  rclone --config "/home/{{user.name}}/.config/rclone/rclone.conf" purge "${REMOTE}:/$remote_backups/seedbox/$oldestBackupFile" --progress

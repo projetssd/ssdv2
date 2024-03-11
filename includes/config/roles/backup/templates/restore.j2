@@ -7,6 +7,7 @@
   ERROR_FILE=/home/${USER}/errors.log
   EXIT=0
   ARCHIVE=""
+  REMOTE=$(get_from_account_yml rclone.remote)
 
   # Définition des variables de couleurs
   CSI="\033["
@@ -78,7 +79,7 @@ backupList() {
 remoteRestoration() {
   echo ""
   echo -e "${CGREEN}"$(gettext "Sauvegardes disponibles")"${CEND}"    
-  rclone lsf crypt:/BACKUPS/ | sed 's:/.*::' | cat -n | sed 's/\([1-9].*\)/\1/' | awk '{print "\033[0;36m" $0 "\033[0m"}'
+  rclone lsf $REMOTE:/BACKUPS/ | sed 's:/.*::' | cat -n | sed 's/\([1-9].*\)/\1/' | awk '{print "\033[0;36m" $0 "\033[0m"}'
 
   # Demander à l'utilisateur de choisir un dossier
   echo >&2 -n -e "${CGREEN}"$(gettext "Numéro du dossier à ouvrir : ")"${CEND}"
@@ -92,11 +93,11 @@ remoteRestoration() {
   fi
 
   # Récupérer le nom du dossier sélectionné
-  selected_folder=$(rclone lsf crypt:/BACKUPS/ | sed 's:/.*::' | sed "${folder_number}q;d")
+  selected_folder=$(rclone lsf $REMOTE:/BACKUPS/ | sed 's:/.*::' | sed "${folder_number}q;d")
 
   # Afficher le contenu du dossier sélectionné
   echo -e "${CGREEN}"$(gettext "Liste des archives disponibles")"${CEND}"
-  rclone lsf crypt:/BACKUPS/"$selected_folder" | cat -n | awk '{print "\033[0;36m" $0 "\033[0m"}'
+  rclone lsf $REMOTE:/BACKUPS/"$selected_folder" | cat -n | awk '{print "\033[0;36m" $0 "\033[0m"}'
   # Demander à l'utilisateur de choisir une archive
   echo >&2 -n -e "${CGREEN}"$(gettext "Numéro de l'archive à restaurer : ")"${CEND}"
   read -r archive_number
@@ -109,8 +110,8 @@ remoteRestoration() {
   fi
 
   # Récupérer le nom de l'archive sélectionnée
-  ARCHIVE=$(rclone lsf crypt:/BACKUPS/"$selected_folder" | sed "${archive_number}q;d")
-  APPLI=$(rclone lsf crypt:/BACKUPS/"$selected_folder" | sed "${archive_number}q;d" | cut -d '-' -f1)
+  ARCHIVE=$(rclone lsf $REMOTE:/BACKUPS/"$selected_folder" | sed "${archive_number}q;d")
+  APPLI=$(rclone lsf $REMOTE:/BACKUPS/"$selected_folder" | sed "${archive_number}q;d" | cut -d '-' -f1)
 }
 
 localRestoration() {
@@ -135,7 +136,7 @@ GdriveRestoration() {
   echo -e "\n"$(gettext "Appuyer sur") "${CCYAN}["$(gettext "ENTREE")"]${CEND}" $(gettext "pour démarrer la restauration ou CTRL+C pour quitter...")
   read -r
   echo -e "${BLUE}"$(gettext "> Récupération de l'archive distante")"${CEND}"
-  sudo rclone --config "/home/{{user.name}}/.config/rclone/rclone.conf" copy crypt:BACKUPS/$APPLI/$ARCHIVE / --progress
+  sudo rclone --config "/home/{{user.name}}/.config/rclone/rclone.conf" copy $REMOTE:BACKUPS/$APPLI/$ARCHIVE / --progress
 }
 
 fin() {

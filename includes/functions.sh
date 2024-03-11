@@ -1252,12 +1252,31 @@ function sauve_one_appli() {
     FOLDER="de l'Application"
   fi
 
-  echo -e "${CCYAN}>" $(gettext "Sauvegarde $FOLDER") "$1${CEND}"
-  REMOTE=$(grep -B 1 "type = crypt" "/home/${USER}/.config/rclone/rclone.conf" | grep -oP '^\[\K[^]]+')
-  if [ $? -eq 0 ]; then
-    echo -e "${BLUE}>" $(gettext "Remote Drive :")"${CEND}" "${CGREEN} $REMOTE ${CEND}"
+  REMOTE=$(get_from_account_yml rclone.remote)
+  if [ ${REMOTE} == notfound ]; then
+    RCLONE=$(grep -B 1 "type" "/home/${USER}/.config/rclone/rclone.conf" | grep -oP '^\[\K[^]]+' | grep -v "zurg" | cat -n | tr "\t" " ")
+    if [ -n "$RCLONE" ]; then
+      echo ""
+      echo -e "${CGREEN}Remote Rclone disponible${CEND}"
+      echo "$RCLONE" | while read -r line
+      do
+        echo -e "${BLUE}  $line ${CEND}"
+      done
+      echo >&2 -n -e "${CGREEN}"$(gettext "Votre choix : ")"${CEND}"
+      read -r REPONSE
+
+      # extraire la ligne correspondant à la réponse choisie
+      REMOTE=$(grep -B 1 "type" "/home/${USER}/.config/rclone/rclone.conf" | grep -oP '^\[\K[^]]+' | grep -v "zurg" | sed -n "${REPONSE}p")
+      manage_account_yml rclone.remote $REMOTE
+      # Affichez la ligne choisie
+      echo ""
+      echo -e "${BLUE}>" $(gettext "Remote Drive :")"${CEND}" "${CGREEN} $REMOTE${CEND}"
+    else
+      echo ""
+      echo -e "${BLUE}>" $(gettext "Remote Drive :")"${CEND}" "${CGREEN} Non Actif ${CEND}"
+    fi
   else
-    echo -e "${BLUE}>" $(gettext "Remote Drive :")"${CEND}" "${CGREEN} Non Actif ${CEND}"
+    echo -e "${BLUE}>" $(gettext "Remote Drive :")"${CEND}" "${CGREEN} $REMOTE${CEND}"
   fi
 
   NB_MAX_BACKUP=3
@@ -1296,8 +1315,7 @@ function sauve_one_appli() {
   sleep 5
   fi
 
-  REMOTE=$(grep -B 1 "type = crypt" "/home/${USER}/.config/rclone/rclone.conf" | grep -oP '^\[\K[^]]+')
-  if [ $? -eq 0 ]; then
+  if [ ${REMOTE} != notfound ]; then
     echo -e "${CCYAN}> Envoie Archive vers Google Drive${CEND}"
     # Envoie Archive vers Google Drive
     rclone copy "$BACKUP_FOLDER" "$REMOTE:/$remote_backups/$APPLI" --progress
@@ -1315,8 +1333,7 @@ function sauve_one_appli() {
       # Suppression du backup local
       sudo rm "$oldestBackupPath"
 
-      REMOTE=$(grep -B 1 "type = crypt" "/home/${USER}/.config/rclone/rclone.conf" | grep -oP '^\[\K[^]]+')
-      if [ $? -eq 0 ]; then
+      if [ ${REMOTE} != notfound ]; then
         # Suppression Archive Google Drive
         echo -e "${CCYAN}> Suppression de l'archive la plus ancienne${CEND}"
         rclone delete "$REMOTE:/$remote_backups/$APPLI/$oldestBackupFile" --progress
