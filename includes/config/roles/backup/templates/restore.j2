@@ -86,7 +86,7 @@ remoteRestoration() {
   read -r folder_number
   echo
   # Vérifier si le numéro du dossier est valide
-  if [[ $folder_number -lt 1 ]] || [[ $folder_number -gt $(rclone lsf crypt:/BACKUPS/ | wc -l) ]]; then
+  if [[ $folder_number -lt 1 ]] || [[ $folder_number -gt $(rclone lsf $REMOTE:/BACKUPS/ | wc -l) ]]; then
     echo -e "\n${CRED}$(gettext "ERREUR: Numéro de dossier invalide !")${CEND}"
     echo ""
     exit 1
@@ -103,7 +103,7 @@ remoteRestoration() {
   read -r archive_number
 
   # Vérifier si le numéro de l'archive est valide
-  if [[ $archive_number -lt 1 ]] || [[ $archive_number -gt $(rclone lsf crypt:/BACKUPS/"$selected_folder" | wc -l) ]]; then
+  if [[ $archive_number -lt 1 ]] || [[ $archive_number -gt $(rclone lsf $REMOTE:/BACKUPS/"$selected_folder" | wc -l) ]]; then
     echo -e "\n${CRED}$(gettext "ERREUR: Numéro d'archive invalide !")${CEND}"
     echo ""
     exit 1

@@ -126,7 +126,9 @@ menu_change_sous_domaine() {
 
   install_services
   echo $(gettext "Changement effectué")
-  pause
+  echo ""
+  echo -e "\n $(gettext "Appuyer sur") ${CCYAN}[$(gettext "ENTREE")]${CEND} $(gettext "pour continuer")"
+  read -r
 }
 
 menu_gestion_rtorrent_cleaner() {
@@ -211,5 +213,7 @@ function menu_reinit_container() {
   echo ""
   echo -e "${BLUE}### ${line}" $(gettext "a été Réinitialisé") "###${NC}"
   echo ""
-  pause
+  echo ""
+  echo -e "\n $(gettext "Appuyer sur") ${CCYAN}[$(gettext "ENTREE")]${CEND} $(gettext "pour continuer")"
+  read -r
 }

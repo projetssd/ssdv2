@@ -1257,7 +1257,7 @@ function sauve_one_appli() {
     RCLONE=$(grep -B 1 "type" "/home/${USER}/.config/rclone/rclone.conf" | grep -oP '^\[\K[^]]+' | grep -v "zurg" | cat -n | tr "\t" " ")
     if [ -n "$RCLONE" ]; then
       echo ""
-      echo -e "${CGREEN}Remote Rclone disponible${CEND}"
+      echo -e "${CGREEN}"$(gettext "Remote Rclone disponible")"${CEND}"
       echo "$RCLONE" | while read -r line
       do
         echo -e "${BLUE}  $line ${CEND}"
@@ -1316,7 +1316,7 @@ function sauve_one_appli() {
   fi
 
   if [ ${REMOTE} != notfound ]; then
-    echo -e "${CCYAN}> Envoie Archive vers Google Drive${CEND}"
+    echo -e "${CCYAN}>" $(gettext "Envoie Archive vers Google Drive")"${CEND}"
     # Envoie Archive vers Google Drive
     rclone copy "$BACKUP_FOLDER" "$REMOTE:/$remote_backups/$APPLI" --progress
   fi
@@ -1335,7 +1335,7 @@ function sauve_one_appli() {
 
       if [ ${REMOTE} != notfound ]; then
         # Suppression Archive Google Drive
-        echo -e "${CCYAN}> Suppression de l'archive la plus ancienne${CEND}"
+        echo -e "${CCYAN}>" $(gettext "Suppression de l'archive la plus ancienne")"${CEND}"
         rclone delete "$REMOTE:/$remote_backups/$APPLI/$oldestBackupFile" --progress
       fi
     fi
@@ -1448,6 +1448,8 @@ function install_qdebrid() {
   done
   echo -e "\e[36m"$(gettext "Installation Qdebrid")"\e[0m"
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/qdebrid.yml"
+  echo -e "\n"$(gettext "Appuyer sur")"${CCYAN} ["$(gettext "ENTREE")"]${CEND}" $(gettext "pour continuer")
+  read -r
 }
 
 function install_zurg() {
@@ -1477,6 +1479,8 @@ function install_zurg() {
   # launch zurg
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/zurg.yml"
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml"
+  echo -e "\n"$(gettext "Appuyer sur")"${CCYAN} ["$(gettext "ENTREE")"]${CEND}" $(gettext "pour continuer")
+  read -r
 }
 
 function install_zurg_docker() {
@@ -1492,6 +1496,8 @@ function install_zurg_docker() {
   # launch zurg
   ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/generique.yml" --extra-vars "@${SETTINGS_SOURCE}/includes/dockerapps/vars/zurg.yml"
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml"
+  echo -e "\n"$(gettext "Appuyer sur")"${CCYAN} ["$(gettext "ENTREE")"]${CEND}" $(gettext "pour continuer")
+  read -r
 }
 
 function create_folders() {
@@ -1529,6 +1535,8 @@ function install_dmm() {
 
 # installation debridmediamanager
   ansible-playbook ${SETTINGS_SOURCE}/includes/dockerapps/dmm.yml
+  echo -e "\n"$(gettext "Appuyer sur")"${CCYAN} ["$(gettext "ENTREE")"]${CEND}" $(gettext "pour continuer")
+  read -r
 }
 
 function update_release_zurg() {
@@ -1583,6 +1591,8 @@ function choose_version_zurg() {
   # launch zurg
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/zurg.yml"
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml"
+  echo -e "\n"$(gettext "Appuyer sur")"${CCYAN} ["$(gettext "ENTREE")"]${CEND}" $(gettext "pour continuer")
+  read -r
 }
 
 function get_architecture() {
@@ -1634,7 +1644,8 @@ function applis_perso_create() {
       echo -e "\e[32m"$(gettext "Une fois personnalisée, elle s'installera à partir du menu Application perso")"\e[0m" 
       create_file "${SETTINGS_STORAGE}/vars/${NOUVELLE}.yml"
       cp "${SETTINGS_SOURCE}/includes/dockerapps/vars/exemple.yml" "${SETTINGS_STORAGE}vars/${NOUVELLE}.yml"
-    pause
+  echo -e "\n"$(gettext "Appuyer sur")"${CCYAN} ["$(gettext "ENTREE")"]${CEND}" $(gettext "pour continuer")
+  read -r
   fi  
 }
 
@@ -1654,7 +1665,8 @@ function copie_applis() {
   done < "$SERVICESPERUSER"
   rm output.json
   rm $SERVICESPERUSER
-  pause
+  echo -e "\n"$(gettext "Appuyer sur")"${CCYAN} ["$(gettext "ENTREE")"]${CEND}" $(gettext "pour continuer")
+  read -r
 }
 
 function reinit_container() {
