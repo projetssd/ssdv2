@@ -18,6 +18,35 @@
   CCYAN="${CSI}0;36m"
   BLUE='\e[0;36m'
 
+remote() {
+  REMOTE=$(get_from_account_yml rclone.remote)
+  if [ ${REMOTE} == notfound ]; then
+    RCLONE=$(grep -B 1 "type" "/home/${USER}/.config/rclone/rclone.conf" | grep -oP '^\[\K[^]]+' | grep -v "zurg" | cat -n | tr "\t" " ")
+    if [ -n "$RCLONE" ]; then
+      echo ""
+      echo -e "${CGREEN}"$(gettext "Remote Rclone disponible")"${CEND}"
+      echo "$RCLONE" | while read -r line
+      do
+        echo -e "${BLUE}  $line ${CEND}"
+      done
+      echo >&2 -n -e "${CGREEN}"$(gettext "Votre choix : ")"${CEND}"
+      read -r REPONSE
+
+      # extraire la ligne correspondant à la réponse choisie
+      REMOTE=$(grep -B 1 "type" "/home/${USER}/.config/rclone/rclone.conf" | grep -oP '^\[\K[^]]+' | grep -v "zurg" | sed -n "${REPONSE}p")
+      manage_account_yml rclone.remote $REMOTE
+      # Affichez la ligne choisie
+      echo ""
+      echo -e "${BLUE}>" $(gettext "Remote Drive :")"${CEND}" "${CGREEN} $REMOTE${CEND}"
+    else
+      echo ""
+      echo -e "${BLUE}>" $(gettext "Remote Drive :")"${CEND}" "${CGREEN} Non Actif ${CEND}"
+    fi
+  else
+    echo -e "${BLUE}>" $(gettext "Remote Drive :")"${CEND}" "${CGREEN} $REMOTE${CEND}"
+  fi
+}
+
 backupList() {
   backups="/home/{{user.name}}/backup"
   i=0
@@ -169,6 +198,7 @@ fin() {
         clear
         logo
         echo -e "${CGREEN}"$(gettext "Type de restauration sélectionnée :")"${CEND}" "${BLUE}Gdrive/Dropbox${CEND}"
+        remote
         remoteRestoration
 	GdriveRestoration
         EXIT=1

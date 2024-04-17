@@ -18,7 +18,7 @@
 
 - name: "MergerFS | Set 'mergerfs_download_url_backup' variable"
   set_fact:
-    mergerfs_download_url_backup: https://github.com/trapexit/mergerfs/releases/download/2.27.1/mergerfs_2.27.1.{{ ansible_distribution|lower
+    mergerfs_download_url_backup: https://github.com/trapexit/mergerfs/releases/download/2.40.2/mergerfs_2.40.2.{{ ansible_distribution|lower
      }}-{{ ansible_distribution_release|lower }}_amd64.deb
 
 - name: "Create local directory"
