@@ -1,12 +1,10 @@
 ---
 pgrole: 'speedtest-tracker'
 intport: '80'
-image: 'ghcr.io/alexjustesen/speedtest-tracker:latest'
+image: 'lscr.io/linuxserver/speedtest-tracker:latest'
 
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config"
-  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/web:/etc/ssl/web"
-
 pg_env:
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
@@ -16,6 +14,7 @@ pg_env:
   DB_DATABASE: '{{ pgrole }}'
   DB_USERNAME: '{{ pgrole }}'
   DB_PASSWORD: '{{ pgrole }}'
+  TZ: 'Europe/Paris'
 
 posttasks:
   - mariadb_officiel

@@ -128,7 +128,8 @@ ttrss - Agrégateur de flux d'actualités
 ubooquity - Gestion ebooks
 varken - Ecosystème Plex dans InfluxDB/Grafana
 vaultwarden - Serveur compatible Bitwarden
-vikunja - Application de liste de tâches 
+vikunja - Application de liste de tâches
+wallos - Gestion des abonnements
 webdav - Service d'hébergement de fichiers
 webtop - Gestion d'environnements
 wetty - Terminal sur HTTP et https
