@@ -29,7 +29,7 @@ firefox - Un navigateur dans votre navigateur
 firefoxsyncserver - Navigateur Firefox
 foptimum - Performances serveur
 freshrss - Agrégateur de flux open source
-getHomePage - Gestion d'application
+gethomePage - Gestion d'application
 gitea - Hébergement de développement logiciel
 gitlab - Hébergement de développement logiciel
 glftpd - Serveur FTP
@@ -98,6 +98,7 @@ radarr4k - Gestion Films-4K Usenet-BitTorrent
 radarr - Gestion Films Usenet-BitTorrent
 rdtclient - Clients Real debrid
 readarr - Gestion ebook Usenet-BitTorrent
+recyclarr - Trash Guide Customs Formats
 rflood - Un gestionnaire de torrent
 rtorrentvpn - Gestionnaire de torrent VPN
 rutorrent_2 - Un gestionnaire de torrent

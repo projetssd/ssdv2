@@ -1,0 +1,31 @@
+---
+# https://recyclarr.dev/wiki/getting-started/
+
+- hosts: localhost
+  gather_facts: false
+  tasks:
+
+    - name: Creating paths
+      become: yes
+      file: "path={{item}} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID') }}"
+      with_items:
+        - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/recyclarr"
+        - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/recyclarr/config"      
+
+    - name: Create a data container
+      community.docker.docker_container:
+        name: recyclarr
+        image: ghcr.io/recyclarr/recyclarr
+        user: "{{ lookup('env','MYUID') }}:{{ lookup('env','MYGID') }}"
+        volumes:
+          - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/recyclarr/config:/config"
+        env:
+          TZ: "Europe/Paris"
+        networks:
+          - name: traefik_proxy
+
+    - name: Run a simple command (argv)
+      community.docker.docker_container_exec:
+        container: recyclarr
+        command: /bin/bash -c "recyclarr config create"
+        chdir: /root
