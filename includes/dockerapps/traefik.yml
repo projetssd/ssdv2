@@ -155,7 +155,7 @@
           - --providers.docker.swarmMode=false
           - --providers.file.directory=/rules
           - --providers.file.watch=true
-          - --certificatesResolvers.letsencrypt.acme.email='{{cloudflare.login}}'
+          - --certificatesResolvers.letsencrypt.acme.email={{cloudflare.login}}
           - --certificatesResolvers.letsencrypt.acme.storage=/acme.json
           - --certificatesResolvers.letsencrypt.acme.dnsChallenge.provider=cloudflare
           - --certificatesResolvers.letsencrypt.acme.dnsChallenge.resolvers=1.1.1.1:53,1.0.0.1:53
@@ -184,7 +184,7 @@
           - --providers.docker.swarmMode=false
           - --providers.file.directory=/rules
           - --providers.file.watch=true
-          - --certificatesResolvers.letsencrypt.acme.email='{{user.mail}}'
+          - --certificatesResolvers.letsencrypt.acme.email={{user.mail}}
           - --certificatesResolvers.letsencrypt.acme.storage=/acme.json
           - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
       when: not cloudflare_enabled
