@@ -1,0 +1,12 @@
+---
+pgrole: 'goaccess'
+intport: '7880'
+image: 'xavierh/goaccess-for-nginxproxymanager:latest'
+pg_volumes:
+  - "{{ settings.storage }}/docker/traefik/:/opt/log/"
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  TZ: "Europe/Paris"
+  LOG_TYPE: "TRAEFIK"
+  LOG_TYPE_FILE_PATTERN: "traefik.log"
