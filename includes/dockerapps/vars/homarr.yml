@@ -1,0 +1,10 @@
+---
+pgrole: 'homarr'
+intport: '7575'
+image: 'ghcr.io/ajnart/homarr:latest'
+pg_volumes:
+  - '/var/run/docker.sock:/var/run/docker.sock'
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/configs:/app/data/configs"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/icons:/app/public/icons"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/data"
+pg_env:
