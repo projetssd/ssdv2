@@ -1523,22 +1523,6 @@ function install_gluetun {
   launch_service gluetun
 }
 
-function install_dmm() {
-  DMM_TOKEN=$(get_from_account_yml dmm.token)
-  if [ ${DMM_TOKEN} == notfound ]; then
-    echo >&2 -n -e "${BLUE}"$(gettext "Token MYSQL pour Debridmediamanager | Appuyer sur [Enter] :") "${CEND}"
-    read DMM_TOKEN
-    manage_account_yml dmm.token "${DMM_TOKEN}"
-  else
-    echo -e "${BLUE}"$(gettext "Mysql debridmediamanager déjà renseigné")"${CEND}"
-  fi
-
-# installation debridmediamanager
-  ansible-playbook ${SETTINGS_SOURCE}/includes/dockerapps/dmm.yml
-  echo -e "\n"$(gettext "Appuyer sur")"${CCYAN} ["$(gettext "ENTREE")"]${CEND}" $(gettext "pour continuer")
-  read -r
-}
-
 function update_release_zurg() {
   wget https://api.github.com/repos/debridmediamanager/zurg-testing/releases > /dev/null 2>&1
   CURRENT_VERSION=$(get_from_account_yml zurg.version)

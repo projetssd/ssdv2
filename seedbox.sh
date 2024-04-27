@@ -136,7 +136,7 @@ if [ $mode_install = "manuel" ]; then
   if [[ ${IS_INSTALLED} -eq 0 ]]; then
     # Si on est là, c'est que le prérequis sont installés, mais c'est tout
     # On propose donc l'install de la seedbox
-    echo -e "${CGREEN}"   $(gettext "1) Installation zurg - rclone - RDTclient")"${CEND}"
+    echo -e "${CGREEN}"   $(gettext "1) Installation zurg - rclone")"${CEND}"
     echo -e "${CGREEN}"   $(gettext "2) Installation Minimale sans zurg")"${CEND}"
     echo -e "${CGREEN}"   $(gettext "3) Restauration Seedbox")"${CEND}"
     echo -e ""

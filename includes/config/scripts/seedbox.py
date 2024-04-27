@@ -6,28 +6,59 @@ gettext.bindtextdomain('ks', settings_source + '/i18n')
 gettext.textdomain('ks')
 _ = gettext.gettext
 
-
 def install_applis():
     file_path = 'includes/config/services-available'
-    translation =_('Sélection des Applications à installer')
+    translation = _('Sélection des Applications à installer')
     output_path = 'output.json'
-    print(f"{Fore.CYAN}{_('Entrée ->')} {Style.RESET_ALL}{Fore.YELLOW}{_('Menu précédent')} && {Style.RESET_ALL}{Fore.CYAN}{_('Barre espace')} -> {Style.RESET_ALL}{Fore.YELLOW}{_('Sélection')}{Style.RESET_ALL}") 
 
-    try:
-        selected_lines = inquirer.prompt([
-            inquirer.Checkbox('selected_lines', message=f'{Fore.GREEN}{translation}{Style.RESET_ALL}',
-                              choices=[line.strip() for line in open(file_path, 'r') if os.path.exists(file_path)])
-        ])['selected_lines']
+    # Choix entre liste et recherche
+    choice_prompt = inquirer.prompt([
+        inquirer.List('choice',
+                      message=f'{Fore.GREEN}Choisissez une option{Style.RESET_ALL}',
+                      choices=['Afficher la liste des applications', 'Rechercher une application', 'Quitter']
+                      )
+    ])['choice']
 
-        if selected_lines:
-            with open(output_path, 'w') as output_file:
-                json.dump({'selected_lines': selected_lines}, output_file, indent=2)
+    selected_lines = []
 
-            subprocess.run(['includes/config/scripts/generique.sh', 'ajout_app_seedbox', *selected_lines])
+    if choice_prompt == 'Afficher la liste des applications':
+
+        try:
+            print(f"{Fore.CYAN}{_('Entrée ->')} {Style.RESET_ALL}{Fore.YELLOW}{_('Quitter')} && {Style.RESET_ALL}{Fore.CYAN}{_('Barre espace')} -> {Style.RESET_ALL}{Fore.YELLOW}{_('Sélection')}{Style.RESET_ALL}")
+            choices = [line.strip() for line in open(file_path, 'r') if os.path.exists(file_path)]
+            selected_lines = inquirer.prompt([
+                inquirer.Checkbox('selected_lines', message=f'{Fore.GREEN}{translation}{Style.RESET_ALL}',
+                                  choices=choices)
+            ])['selected_lines']
+        except Exception as e:
+            print(f'Une erreur s\'est produite : {e}')
+    elif choice_prompt == 'Rechercher une application':
+
+        search_field = inquirer.Text('search', message=f'{Fore.GREEN}Nom Application{Style.RESET_ALL}')
+        search_term = inquirer.prompt([search_field])['search']
+
+        if search_term.strip():  # Vérifier si un terme de recherche a été saisi
+            # Filter choices based on search term
+            choices = [line.strip() for line in open(file_path, 'r') if os.path.exists(file_path)]
+            filtered_choices = [choice for choice in choices if choice.lower().startswith(search_term.lower())]
+
+            print(f"{Fore.CYAN}{_('Entrée ->')} {Style.RESET_ALL}{Fore.YELLOW}{_('Quitter')} && {Style.RESET_ALL}{Fore.CYAN}{_('Barre espace')} -> {Style.RESET_ALL}{Fore.YELLOW}{_('Sélection')}{Style.RESET_ALL}")
+            selected_lines = inquirer.prompt([
+                inquirer.Checkbox('selected_lines', message=f'{Fore.GREEN}{translation}{Style.RESET_ALL}',
+                                  choices=filtered_choices)
+            ])['selected_lines']
         else:
-            print(_('Aucune application sélectionnée'))
-    except Exception as e:
-        print(f'Une erreur s\'est produite : {e}')
+            print('Aucun terme de recherche saisi.')
+    elif choice_prompt == 'Quitter':
+        return
+
+    if selected_lines:
+        with open(output_path, 'w') as output_file:
+            json.dump({'selected_lines': selected_lines}, output_file, indent=2)
+
+        subprocess.run(['includes/config/scripts/generique.sh', 'ajout_app_seedbox', *selected_lines])
+    else:
+        print(_('Aucune application sélectionnée'))
 
 def reinit_container():
     init(autoreset=True)
