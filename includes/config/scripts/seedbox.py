@@ -176,17 +176,48 @@ def install_applis_perso():
             return
         else:
             print(_("Continuer le script..."))
- 
+
+def copie_applis():
+    try:
+        file_path = 'includes/config/services-available'
+        output_path = 'output.json'
+        translation = _('Application à copier dans le dossier vars')
+
+        question = inquirer.Text('search', message=f'{Fore.GREEN}Nom Application{Style.RESET_ALL}')
+        search_term = inquirer.prompt([question])['search']
+
+        if search_term.strip():
+            choices = [line.strip() for line in open(file_path, 'r') if os.path.exists(file_path)]
+            filtered_choices = [choice for choice in choices if choice.lower().startswith(search_term.lower())]
+
+            print(f"{Fore.CYAN}{_('Entrée ->')} {Style.RESET_ALL}{Fore.YELLOW}{_('Quitter')} && {Style.RESET_ALL}{Fore.CYAN}{_('Barre espace')} -> {Style.RESET_ALL}{Fore.YELLOW}{_('Sélection')}{Style.RESET_ALL}")
+            selected_lines = inquirer.prompt([
+                inquirer.Checkbox('selected_lines', message=f'{Fore.GREEN}{translation}{Style.RESET_ALL}',
+                                  choices=filtered_choices)
+            ])['selected_lines']
+        else:
+            print('Aucun terme de recherche saisi.')
+
+        if selected_lines:
+            with open(output_path, 'w') as output_file:
+                json.dump({'selected_lines': selected_lines}, output_file, indent=2)
+            subprocess.run(['includes/config/scripts/generique.sh', 'copie_applis', *selected_lines])
+        else:
+            print('Aucune application sélectionnée')
+    except Exception as e:
+        print(f'Une erreur s\'est produite : {e}')
+
 def create_applis_perso():
-    translation =_('Type d\'applis à créer/copier')
-    quit = _('Quitter le script')
-    base = _('Applis déjà dans la base')
-    nouvelle = _('Nouvelle Appli')
+    translation = _('Type d\'applis à créer/copier')
+    quit_option = _('Quitter le script')
+    base_option = _('Applis déjà dans la base')
+    new_option = _('Nouvelle Appli')
+
     print(f"{Fore.CYAN}{_('Sélectionner `Quitter le script` pour revenir au menu précédent')}{Style.RESET_ALL}")  
-    choices = [(_('Applis déjà dans la base'))] + [(_('Nouvelle Appli'))] + [(_('Quitter le script'))]
+    choices = [base_option, new_option, quit_option]
 
     questions = [
-        inquirer.List('selected_option',  # Ajout du nom de la question ('selected_option')
+        inquirer.List('selected_option',
                       message=f"{Fore.GREEN}{translation}{Style.RESET_ALL}",
                       choices=choices)
     ]
@@ -194,36 +225,12 @@ def create_applis_perso():
     answers = inquirer.prompt(questions)
 
     selected_option = answers['selected_option']
-    if selected_option == quit:
+    if selected_option == quit_option:
         return
 
-    elif selected_option == base:
-        os.system('clear')
-        subprocess.run(['includes/config/scripts/generique.sh', 'logo'])
+    elif selected_option == base_option:
+        # os.system('clear')
+        subprocess.run(['includes/config/scripts/generique.sh'])
         copie_applis()
     else:
         subprocess.run(['includes/config/scripts/generique.sh', 'applis_perso_create', selected_option])
-
-def copie_applis():
-    file_path = 'includes/config/services-available'
-    output_path = 'output.json'
-    translation =_('Sélection des Applications à copier dans le dossier vars')
-
-    print(f"{Fore.CYAN}{_('Entrée ->')} {Style.RESET_ALL}{Fore.YELLOW}{_('Menu précédent')} && {Style.RESET_ALL}{Fore.CYAN}{_('Barre espace')} -> {Style.RESET_ALL}{Fore.YELLOW}{_('Sélection')}{Style.RESET_ALL}")
-
-    try:
-        selected_lines = inquirer.prompt([
-            inquirer.Checkbox('selected_lines', message=f'{Fore.GREEN}{translation}{Style.RESET_ALL}',
-                              choices=[line.strip() for line in open(file_path, 'r') if os.path.exists(file_path)])
-        ])['selected_lines']
-
-        if selected_lines:
-            with open(output_path, 'w') as output_file:
-                json.dump({'selected_lines': selected_lines}, output_file, indent=2)
-            subprocess.run(['includes/config/scripts/generique.sh', 'copie_applis', *selected_lines])
-
-        else:
-            print('Aucune application sélectionnée')
-    except Exception as e:
-        print(f'Une erreur s\'est produite : {e}')
-

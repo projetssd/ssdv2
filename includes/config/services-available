@@ -29,7 +29,7 @@ firefox - Un navigateur dans votre navigateur
 firefoxsyncserver - Navigateur Firefox
 foptimum - Performances serveur
 freshrss - Agrégateur de flux open source
-gethomePage - Gestion d'application
+gethomepage - Gestion d'application
 gitea - Hébergement de développement logiciel
 gitlab - Hébergement de développement logiciel
 glftpd - Serveur FTP
@@ -129,6 +129,7 @@ transmission - Gestionnaire de torrent
 transmissionvpn - Gestionnaire de torrent VPN
 ttrss - Agrégateur de flux d'actualités
 ubooquity - Gestion ebooks
+usenet - Un gestionnaire de nzb
 varken - Ecosystème Plex dans InfluxDB/Grafana
 vaultwarden - Serveur compatible Bitwarden
 vikunja - Application de liste de tâches

@@ -1,22 +1,29 @@
 ---
-pgrole: 'rclone'
-image: 'rclone/rclone:latest'
-pg_volumes:
-  - /mnt/zurg:/data:rshared
-  - "{{ lookup('env','HOME') }}/.config/rclone/rclone.conf:/config/rclone/rclone.conf"
-pg_env:
-  PUID: "{{ lookup('env','MYUID') }}"
-  PGID: "{{ lookup('env','MYGID') }}"
-devices: '
-  - /dev/fuse:/dev/fuse:rwm'
-security_opts:
-  - apparmor:unconfined
-command: "mount {{rclone.remote}}: /data --allow-non-empty --allow-other --uid={{PUID}} --gid={{PGID}} --dir-cache-time 10s --read-only"
+- name: 'Deploying rclone'
+  docker_container:
+    name: 'rclone'
+    image: 'rclone/rclone:latest'
+    volumes:
+      - /home/{{ lookup('env','USER') }}/usenet:/home/{{ lookup('env','USER') }}/usenet:shared
+      - /home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf:/home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf
+      - /home/{{ lookup('env','USER') }}/.cache/rclone:/home/{{ lookup('env','USER') }}/.cache/rclone:shared
+      - /etc/group:/etc/group:ro
+      - /etc/passwd:/etc/passwd:ro
+    env:
+      PUID: "{{ lookup('env','MYUID') }}"
+      PGID: "{{ lookup('env','MYGID') }}"
+    user: "{{ lookup('env','MYUID') }}:{{ lookup('env','MYGID') }}"
+    capabilities:
+      - SYS_ADMIN
+    devices:
+      - '/dev/fuse:/dev/fuse:rwm'
+    security_opts:
+      - apparmor:unconfined
+    command: "mount usenet-crypt: /home/{{ lookup('env','USER') }}/usenet --config /home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf --cache-dir /home/{{ lookup('env','USER') }}/.cache/rclone --allow-non-empty --allow-other --async-read=true --dir-cache-time=1000h --buffer-size=32M --poll-interval=15s --rc --rc-no-auth --rc-addr={{ new_ip_address }}:5573 --use-mmap --vfs-read-ahead=128M --vfs-read-chunk-size=32M --vfs-read-chunk-size-limit=2G --vfs-cache-max-age=504h --vfs-cache-mode=full --vfs-cache-poll-interval=30s --vfs-cache-max-size=25G --timeout=10m --umask=002"
+    networks:
+      - name: traefik_proxy
+        ipv4_address: "{{ new_ip_address}}"
 
-# tags spécifiques à ajouter à la construction du docker
-specific_docker_info:
-  capabilities:
-  - SYS_ADMIN
 
 
 

@@ -729,9 +729,6 @@ function suppression_appli() {
   vinkunja)
     docker rm -f vikunja-api >/dev/null 2>&1
     ;;
-  dmm)
-    docker rm -f tor >/dev/null 2>&1
-    ;;
   zurg)
     sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/zurg
     ;;
@@ -750,8 +747,16 @@ function suppression_appli() {
     docker rm -f nginx piped-frontend piped-backend postgres piped-proxy hyperpipe-backend hyperpipe-frontend >/dev/null 2>&1
     manage_account_yml sub.piped " "
     ;;
-  qdebrid)
-   sudo rm -rf /home/$USER/scripts/qdebrid
+  rclone)
+   docker rm -f usenet
+   sudo fusermount -uz  /home/${USER}/usenet 
+   sudo rm -rf /home/$USER/usenet
+   sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/usenet
+    ;;
+  usenet)
+   docker rm -f rclone >/dev/null 2>&1
+   sudo fusermount -uz  /home/${USER}/usenet >/dev/null 2>&1
+   sudo rm -rf /home/$USER/usenet >/dev/null 2>&1
     ;;
   esac
 
@@ -1588,13 +1593,13 @@ function liste_perso() {
   echo -e "${CRED}-----------------------------------------------------------${CEND}"
   echo -e "${CCYAN}"$(gettext "Liste des applis déjà personnalisées")"${CEND}"                     
   echo -e "${CCYAN}"$(gettext "Vous pouvez à tout moment décider de modifier les fichiers")"${CEND}"
-  echo -e "${CCYAN}"$(gettext "Relancer ensuite le container")"${CEND}"                             
+  echo -e "${CCYAN}"$(gettext "Réinitialiser ensuite le container")"${CEND}"                             
   echo -e "${CRED}-----------------------------------------------------------${CEND}"
   echo ""
 
   folder_path="${SETTINGS_STORAGE}/vars"
   files=$(ls -p "$folder_path" | grep -v /)
-  echo -e "\e[32m"$(gettext "Applications Personnalisées")"\e[0m"
+  echo -e "\e[32m"$(gettext "Applications Personnalisées : ")"\e[0m"
   if [ -n "$files" ]; then
     echo -e "\e[36m$files\e[0m"
     echo
@@ -1609,19 +1614,20 @@ function applis_perso_create() {
   logo
   liste_perso
   # Liste des fichiers déjà personnalisés
-  echo "####################################################"
-  echo "ATTENTION"
-  echo $(gettext "Cette fonction va copier/créer les fichiers yml choisis")
-  echo $(gettext "Afin de pouvoir les personnaliser")
-  echo $(gettext "Mais ne lancera pas les services associés")
-  echo "####################################################"
+
+  echo -e "${CRED}-----------------------------------------------------------${CEND}"
+  echo -e "${CCYAN}"ATTENTION !!"${CEND}"                     
+  echo -e "${CCYAN}"$(gettext "Cette fonction va copier/créer les fichiers yml choisis")"${CEND}"                     
+  echo -e "${CCYAN}"$(gettext "Afin de pouvoir les personnaliser")"${CEND}"
+  echo -e "${CCYAN}"$(gettext "Mais ne lancera pas les services associés")"${CEND}"                             
+  echo -e "${CRED}-----------------------------------------------------------${CEND}"
   echo ""
-  
+
   # Nouvelle appli
-  echo -e "\e[32m"$(gettext "Configurer une nouvelle application ? (y/n)") "\e[0m"
+  echo >&2 -n -e "\e[36m"$(gettext "Configurer une nouvelle application ? (y/n) : ")"\e[0m"
   read choice
   if [[ "$choice" = "Y" ]] || [[ "$choice" = "y" ]]; then
-    echo >&2 -n -e "\e[36m"$(gettext "Nouvelle Appli à personnaliser :")"\e[0m"
+    echo >&2 -n -e "\e[36m"$(gettext "Nouvelle Appli à personnaliser : ")"\e[0m"
     read NOUVELLE
     echo ""
       echo -e "\e[32m"$(gettext "Application non référencée dans la base existante,")"\e[0m \e[36m${NOUVELLE}.yml\e[0m \e[32m"$(gettext "a été créée ds le dossier") "${SETTINGS_STORAGE}vars.\e[0m" 
