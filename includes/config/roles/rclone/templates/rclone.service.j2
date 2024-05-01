@@ -7,15 +7,20 @@ After=network-online.target
 User={{ lookup('env','USER') }}
 Group={{ lookup('env','MYGIDNAME') }}
 Type=simple
-ExecStart=/usr/bin/rclone mount \
+ExecStart=/usr/bin/rclone mount zurg: {{ lookup('env','HOME') }}/seedbox/zurg \
   --config={{ lookup('env','HOME') }}/.config/rclone/rclone.conf \
-  --allow-other --gid {{user.groupid}} --uid {{user.userid}} \
+  --allow-other \
+  --gid {{ user.groupid }} \
+  --uid {{ user.userid }} \
   --allow-non-empty \
   --dir-cache-time=20s \
   --cache-dir={{ lookup('env','HOME') }}/.cache/rclone \
-  --vfs-cache-mode full \
-  zurg: \
-  {{ lookup('env','HOME') }}/seedbox/zurg
+  --vfs-cache-mode=full \
+  --vfs-cache-max-size=25G \
+  --rc \
+  --rc-addr=172.17.0.1:5572 \
+  --rc-web-gui-no-open-browser \
+  --rc-no-auth
 ExecStop=/bin/fusermount -uz {{ lookup('env','HOME') }}/seedbox/zurg
 Restart=always
 RestartSec=5
