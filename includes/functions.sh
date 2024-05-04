@@ -1509,7 +1509,9 @@ function create_folders() {
   echo ""
   create_dir "${HOME}/local"
   create_dir "${HOME}/local/radarr"
+  create_dir "${HOME}/local/radarr4k"
   create_dir "${HOME}/local/sonarr"
+  create_dir "${HOME}/local/sonarr4k"
   create_dir "${HOME}/Medias"
   echo -e "\e[36m"$(gettext "Noms de dossiers à créer dans Medias ex: Films, Series, Films d'animation etc .. [Enter] | Taper stop une fois terminé")"\e[0m"		
   while :

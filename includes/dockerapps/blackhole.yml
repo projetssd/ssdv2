@@ -1,0 +1,120 @@
+---
+- hosts: localhost
+  gather_facts: false
+
+  tasks:
+    # Vérifier la présence des fichiers de configuration de Radarr et Sonarr
+    - name: Vérifier si Radarr est lancé
+      stat:
+        path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/radarr/config/config.xml"
+      register: radarr_config_exists
+
+    - name: Vérifier si Sonarr est lancé
+      stat:
+        path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/sonarr/config/config.xml"
+      register: sonarr_config_exists
+
+    # Vérifier si Radarr ou Sonarr est installé
+    - name: Vérifier si Radarr ou Sonarr est installé
+      fail:
+        msg: "Aucune instance de Radarr ou Sonarr n'est installée. Veuillez installer Radarr ou Sonarr avant d'exécuter ce script."
+      when: radarr_config_exists.stat.exists | bool == false and sonarr_config_exists.stat.exists | bool == false
+
+    # Vérifier si Radarr4k ou Sonarr4k est lancé
+    - name: Vérifier si Radarr4k est lancé
+      stat:
+        path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/radarr4k/config/config.xml"
+      register: radarr4k_config_exists
+
+    - name: Vérifier si Sonarr4k est lancé
+      stat:
+        path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/sonarr4k/config/config.xml"
+      register: sonarr4k_config_exists
+
+    # Récupération de la clé API de Radarr
+    - name: API de Radarr
+      shell: "grep -oP '(?<=<ApiKey>).*?(?=</ApiKey>)' {{ settings.storage }}/docker/{{ lookup('env','USER') }}/radarr/config/config.xml"
+      register: api_key_radarr
+      when: radarr_config_exists.stat.exists | bool
+
+    - name: Clé API Radarr
+      debug:
+        var: api_key_radarr.stdout
+      when: radarr_config_exists.stat.exists | bool
+
+    # Récupération de la clé API de Radarr4k
+    - name: API de Radarr4k
+      shell: "grep -oP '(?<=<ApiKey>).*?(?=</ApiKey>)' {{ settings.storage }}/docker/{{ lookup('env','USER') }}/radarr4k/config/config.xml"
+      register: api_key_radarr_4k
+      when: radarr4k_config_exists.stat.exists | bool
+
+    - name: Clé API Radarr4k
+      debug:
+        var: api_key_radarr_4k.stdout
+      when: radarr4k_config_exists.stat.exists | bool
+
+    # Récupération de la clé API de Sonarr
+    - name: API de Sonarr
+      shell: "grep -oP '(?<=<ApiKey>).*?(?=</ApiKey>)' {{ settings.storage }}/docker/{{ lookup('env','USER') }}/sonarr/config/config.xml"
+      register: api_key_sonarr
+      when: sonarr_config_exists.stat.exists | bool
+
+    - name: Clé API Sonarr
+      debug:
+        var: api_key_sonarr.stdout
+      when: sonarr_config_exists.stat.exists | bool
+
+    # Récupération de la clé API de Sonarr4k
+    - name: API de Sonarr4k
+      shell: "grep -oP '(?<=<ApiKey>).*?(?=</ApiKey>)' {{ settings.storage }}/docker/{{ lookup('env','USER') }}/sonarr4k/config/config.xml"
+      register: api_key_sonarr_4k
+      when: sonarr4k_config_exists.stat.exists | bool
+
+    - name: Clé API Sonarr4k
+      debug:
+        var: api_key_sonarr_4k.stdout
+      when: sonarr4k_config_exists.stat.exists | bool
+
+    # Création de répertoires et déploiement de fichiers de configuration
+    - name: Creating paths
+      become: yes
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0775'
+        owner: "{{ lookup('env', 'MYUID') }}"
+        group: "{{ lookup('env', 'MYGID') }}"
+      with_items:
+        - "{{ settings.storage }}/docker/{{ lookup('env', 'USER') }}/blackhole"
+
+    - name: docker compose file
+      template:
+        dest: "{{ settings.storage }}/docker/{{ lookup('env', 'USER') }}/blackhole/docker-compose.yml"
+        src: "{{ settings.source }}/includes/dockerapps/templates/blackhole/docker-compose.yml.j2"
+      become: yes
+      become_user: "{{ lookup('env', 'USER') }}"
+
+    - name: docker compose file
+      template:
+        dest: "{{ settings.storage }}/docker/{{ lookup('env', 'USER') }}/blackhole/.env"
+        src: "{{ settings.source }}/includes/dockerapps/templates/blackhole/.env.j2"
+      become: yes
+      become_user: "{{ lookup('env', 'USER') }}"
+
+    - name: Exécuter le fichier blackhole
+      command: "blackhole"
+      become: yes
+      become_user: "{{ lookup('env', 'USER') }}"
+
+    - name: Afficher un message
+      debug:
+        msg: >
+          blackhole pour radarr & sonarr est actuellement lancé.
+          Si vous souhaitez lancer blackhole pour sonarr4k et radarr4k
+          il vous suffit de taper dans le shell blackhole_4k
+
+    - name: Installation terminée
+      pause:
+        prompt: "Appuyez sur Entrée pour revenir au menu principal"
+
+
