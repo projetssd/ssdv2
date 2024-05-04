@@ -1,3 +1,4 @@
 #!/bin/bash
 cd "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/blackhole"
 docker compose up blackhole_mux -d
+docker network connect traefik_proxy blackhole_mux_service

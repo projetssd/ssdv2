@@ -1,3 +1,4 @@
 #!/bin/bash
 cd "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/blackhole"
 docker compose up blackhole_4k -d
+docker network connect traefik_proxy blackhole_4k_service

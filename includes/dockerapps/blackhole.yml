@@ -101,10 +101,47 @@
       become: yes
       become_user: "{{ lookup('env', 'USER') }}"
 
+    - name: 'Import backup config'
+      become: yes
+      template:
+        src: "{{ settings.source }}/includes/dockerapps/templates/blackhole/blackhole.j2"
+        dest: /usr/local/bin/blackhole
+        owner: "root"
+        group: "root"
+        mode: 0755
+        force: yes
+
+    - name: 'Import backup config'
+      become: yes
+      template:
+        src: "{{ settings.source }}/includes/dockerapps/templates/blackhole/blackhole_4k.j2"
+        dest: /usr/local/bin/blackhole_4k
+        owner: "root"
+        group: "root"
+        mode: 0755
+        force: yes
+
+    - name: 'Import backup config'
+      become: yes
+      template:
+        src: "{{ settings.source }}/includes/dockerapps/templates/blackhole/blackhole_mux.j2"
+        dest: /usr/local/bin/blackhole_mux
+        owner: "root"
+        group: "root"
+        mode: 0755
+        force: yes
+
     - name: Exécuter le fichier blackhole
       command: "blackhole"
       become: yes
       become_user: "{{ lookup('env', 'USER') }}"
+
+    - name: Add traefik_proxy to blackhole_service
+      docker_network:
+        name: traefik_proxy
+        connected:
+          - blackhole_service
+        appends: yes
 
     - name: Afficher un message
       debug:
