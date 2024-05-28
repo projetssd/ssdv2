@@ -1,0 +1,115 @@
+libraries:
+  {{ librarymovie }}:
+    remove_overlays: false
+    collection_files:
+      - default: basic               # This is a file within Kometa's defaults folder
+      - default: imdb                # This is a file within Kometa's defaults folder
+    overlay_files:
+      - default: resolution
+      - default: streaming
+      # see the wiki for how to use local files, folders, URLs, or files from git
+  {{ librarytv }}:
+    remove_overlays: false           # Set this to true to remove all overlays
+    collection_files:
+      - default: basic               # This is a file within Kometa's defaults folder
+      - default: imdb                # This is a file within Kometa's defaults folder
+    overlay_files:
+      - default: resolution              # This is a file within Kometa's defaults folder
+      - default: streaming
+
+playlist_files:
+  - default: playlist                # This is a file within Kometa's defaults folder
+    template_variables:
+      libraries: {{ librarymovie }}, {{ librarytv }}
+settings:
+  run_order:
+  - operations
+  - metadata
+  - collections
+  - overlays
+  cache: true
+  cache_expiration: 60
+  asset_directory: config/assets
+  asset_folders: true
+  asset_depth: 0
+  create_asset_folders: false
+  prioritize_assets: false
+  dimensional_asset_rename: false
+  download_url_assets: false
+  show_missing_season_assets: false
+  show_missing_episode_assets: false
+  show_asset_not_needed: true
+  sync_mode: append
+  minimum_items: 1
+  default_collection_order:
+  delete_below_minimum: true
+  delete_not_scheduled: false
+  run_again_delay: 2
+  missing_only_released: false
+  only_filter_missing: false
+  show_unmanaged: true
+  show_unconfigured: true
+  show_filtered: false
+  show_options: true
+  show_missing: true
+  show_missing_assets: true
+  save_report: false
+  tvdb_language: fre
+  ignore_ids:
+  ignore_imdb_ids:
+  item_refresh_delay: 0
+  playlist_sync_to_users: all
+  playlist_exclude_users:
+  playlist_report: false
+  verify_ssl: true
+  custom_repo:
+  overlay_artwork_filetype: jpg
+  overlay_artwork_quality: 75
+plex:                                # Can be individually specified per library as well; REQUIRED for the script to run
+  url: http://plex:32400
+  token: {{ plex.token }}
+  timeout: 60
+  db_cache:
+  clean_bundles: false
+  empty_trash: false
+  optimize: false
+  verify_ssl:
+tmdb:                                # REQUIRED for the script to run
+  apikey: {{ apitmdb }}
+  language: fr
+#tautulli:
+#  url: http://tautulli:8181
+#  apikey: ################################
+#radarr:
+#  url: http://radarr:7878
+#  token: ################################
+#  add_missing: false
+#  add_existing: false
+#  upgrade_existing: false
+#  monitor_existing: false
+#  root_folder_path: "S:/Movies"
+#  monitor: true
+#  availability: announced
+#  quality_profile: HD-1080p
+#  tag:
+#  search: false
+#  radarr_path:
+#  plex_path:
+#sonarr:                              # Can be individually specified per library as well
+#  url: http://sonarr:8989
+#  token: ################################
+#  add_missing: false
+#  add_existing: false
+#  upgrade_existing: false
+#  monitor_existing: false
+#  root_folder_path: "S:/TV Shows"
+#  monitor: all
+#  quality_profile: HD-1080p
+#  language_profile: English
+#  series_type: standard
+#  season_folder: true
+#  tag:
+#  search: false
+#  cutoff_search: false
+#  sonarr_path:
+#  plex_path:

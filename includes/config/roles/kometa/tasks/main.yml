@@ -1,0 +1,72 @@
+---
+- hosts: localhost
+  gather_facts: false
+  become: yes
+
+  tasks:
+    - name: Set known facts
+      set_fact:
+        pgrole: 'kometa'
+        image: 'lscr.io/linuxserver/kometa:latest'
+
+    - name: Creating paths
+      file: "path={{item}} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID') }}"
+      with_items:
+        - "/home/{{ lookup('env','USER') }}/scripts/{{ pgrole }}"
+        - "/home/{{ lookup('env','USER') }}/scripts/{{ pgrole }}/config"
+        - "/home/{{ lookup('env','USER') }}/scripts/{{ pgrole }}/config/assets"
+
+    - pause:
+        prompt: "Nom de la librairie Films sur Plex"
+        echo: yes
+      register: librarymovie
+    - set_fact:
+        librarymovie: "{{ librarymovie.user_input }}"
+
+    - pause:
+        prompt: "Nom de la librairie Séries sur Plex"
+        echo: yes
+      register: librarytv
+    - set_fact:
+        librarytv: "{{ librarytv.user_input }}"
+
+    - pause:
+        prompt: "API key TMDB obligatoire"
+        echo: yes
+      register: apitmdb
+    - set_fact:
+        apitmdb: "{{ apitmdb.user_input }}"
+
+    - name: Import config.yml kometa
+      template:
+        src: "{{ settings.source }}/includes/config/roles/{{ pgrole }}/templates/config.yml.j2"
+        dest: "/home/{{ lookup('env','USER') }}/scripts/{{ pgrole }}/config/config.yml"
+        owner: "{{lookup('env','MYUID')}}"
+        group: "{{lookup('env','MYGID')}}"
+        mode: 0644
+        force: yes
+
+    - name: 'Setting Kometa Volumes'
+      set_fact:
+        pg_volumes:
+          - "/home/{{ lookup('env','USER') }}/scripts/{{ pgrole }}/config:/config:rw"
+
+    - name: 'Setting Kometa ENV'
+      set_fact:
+        pg_env:
+          PUID: "{{ lookup('env','MYUID') }}"
+          PGID: "{{ lookup('env','MYGID') }}"
+          TZ: "Europe/Paris"
+          KOMETA_RUN: "true"
+
+    - name: 'Deploying {{ pgrole }}'
+      docker_container:
+        name: '{{ pgrole }}'
+        image: '{{ image }}'
+        pull: yes
+        volumes: '{{ pg_volumes }}'
+        env: '{{ pg_env }}'
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+        state: started
