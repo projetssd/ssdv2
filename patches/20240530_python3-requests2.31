@@ -1,0 +1,6 @@
+#!/bin/bash
+source "${HOME}/.config/ssd/env"
+source "${SETTINGS_SOURCE}/profile.sh"
+
+pip uninstall -y requests
+pip install requests==2.31
