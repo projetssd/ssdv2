@@ -933,8 +933,8 @@ function premier_lancement() {
     inquirer \
     jsons \
     colorama \
-    request==2.31
-  # request bloqué sur version 2.31 au 28/05/2024, jusqu'à résolution
+    requests==2.31
+  # requests bloqué sur version 2.31 au 28/05/2024, jusqu'à résolution
 
   ##########################################
   # Pas de configuration existante
