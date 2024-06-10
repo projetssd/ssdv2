@@ -3,7 +3,21 @@
   gather_facts: false
 
   tasks:
-    # Vérifier la présence des fichiers de configuration de Radarr et Sonarr
+
+    - name: Supprimer le conteneur blackhole si present
+      docker_container:
+        name: blackhole
+        state: absent
+
+    - name: Exécuter docker system prune
+      command: docker system prune -af
+
+    - name: Supprimer le dossier blackhole s'il existe
+      ansible.builtin.file:
+        path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/blackhole"
+        state: absent
+        force: yes
+
     - name: Vérifier si Radarr est lancé
       stat:
         path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/radarr/config/config.xml"
@@ -14,13 +28,20 @@
         path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/sonarr/config/config.xml"
       register: sonarr_config_exists
 
-    # Vérifier si Radarr ou Sonarr est installé
-    - name: Vérifier si Radarr ou Sonarr est installé
-      fail:
-        msg: "Aucune instance de Radarr ou Sonarr n'est installée. Veuillez installer Radarr ou Sonarr avant d'exécuter ce script."
-      when: radarr_config_exists.stat.exists | bool == false and sonarr_config_exists.stat.exists | bool == false
+    - name: Afficher un message si aucune instance de Radarr ou Sonarr n'est installée
+      ansible.builtin.debug:
+        msg: "Veuillez installer Radarr et Sonarr avant d'exécuter ce script."
+      when: not (radarr_config_exists.stat.exists | bool) or not (sonarr_config_exists.stat.exists | bool)
 
-    # Vérifier si Radarr4k ou Sonarr4k est lancé
+    - name: Pause pour permettre à l'utilisateur de sortir avec Ctrl+C
+      ansible.builtin.pause:
+        prompt: "Appuyez sur Ctrl+C pour quitter..."
+      when: not (radarr_config_exists.stat.exists | bool) or not (sonarr_config_exists.stat.exists | bool)
+
+    - name: Fin du playbook si aucune instance de Radarr ou Sonarr n'est installée
+      meta: end_play
+      when: not (radarr_config_exists.stat.exists | bool) or not (sonarr_config_exists.stat.exists | bool)
+
     - name: Vérifier si Radarr4k est lancé
       stat:
         path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/radarr4k/config/config.xml"
@@ -31,51 +52,46 @@
         path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/sonarr4k/config/config.xml"
       register: sonarr4k_config_exists
 
-    # Récupération de la clé API de Radarr
     - name: API de Radarr
       shell: "grep -oP '(?<=<ApiKey>).*?(?=</ApiKey>)' {{ settings.storage }}/docker/{{ lookup('env','USER') }}/radarr/config/config.xml"
       register: api_key_radarr
       when: radarr_config_exists.stat.exists | bool
 
-    - name: Clé API Radarr
-      debug:
-        var: api_key_radarr.stdout
+    - name: Récupération root folder de Radarr
+      shell: "curl -s -H 'X-Api-Key: {{ api_key_radarr.stdout }}' 'http://localhost:7878/api/v3/rootFolder' | jq -r '.[].path'"
+      register: root_folder_radarr
       when: radarr_config_exists.stat.exists | bool
 
-    # Récupération de la clé API de Radarr4k
     - name: API de Radarr4k
       shell: "grep -oP '(?<=<ApiKey>).*?(?=</ApiKey>)' {{ settings.storage }}/docker/{{ lookup('env','USER') }}/radarr4k/config/config.xml"
       register: api_key_radarr_4k
       when: radarr4k_config_exists.stat.exists | bool
 
-    - name: Clé API Radarr4k
-      debug:
-        var: api_key_radarr_4k.stdout
+    - name: Récupération root folder de Radarr4k
+      shell: "curl -s -H 'X-Api-Key: {{ api_key_radarr_4k.stdout }}' 'http://localhost:7878/api/v3/rootFolder' | jq -r '.[].path'"
+      register: root_folder_radarr4k
       when: radarr4k_config_exists.stat.exists | bool
 
-    # Récupération de la clé API de Sonarr
     - name: API de Sonarr
       shell: "grep -oP '(?<=<ApiKey>).*?(?=</ApiKey>)' {{ settings.storage }}/docker/{{ lookup('env','USER') }}/sonarr/config/config.xml"
       register: api_key_sonarr
       when: sonarr_config_exists.stat.exists | bool
 
-    - name: Clé API Sonarr
-      debug:
-        var: api_key_sonarr.stdout
+    - name: Récupération root folder de Sonarr
+      shell: "curl -s -H 'X-Api-Key: {{ api_key_sonarr.stdout }}' 'http://localhost:8989/api/v3/rootFolder' | jq -r '.[].path'"
+      register: root_folder_sonarr
       when: sonarr_config_exists.stat.exists | bool
 
-    # Récupération de la clé API de Sonarr4k
     - name: API de Sonarr4k
       shell: "grep -oP '(?<=<ApiKey>).*?(?=</ApiKey>)' {{ settings.storage }}/docker/{{ lookup('env','USER') }}/sonarr4k/config/config.xml"
       register: api_key_sonarr_4k
       when: sonarr4k_config_exists.stat.exists | bool
 
-    - name: Clé API Sonarr4k
-      debug:
-        var: api_key_sonarr_4k.stdout
+    - name: Récupération root folder de Sonarr4k
+      shell: "curl -s -H 'X-Api-Key: {{ api_key_sonarr_4k.stdout }}' 'http://localhost:8989/api/v3/rootFolder' | jq -r '.[].path'"
+      register: root_folder_sonarr4k
       when: sonarr4k_config_exists.stat.exists | bool
 
-    # Création de répertoires et déploiement de fichiers de configuration
     - name: Creating paths
       become: yes
       file:
@@ -87,61 +103,44 @@
       with_items:
         - "{{ settings.storage }}/docker/{{ lookup('env', 'USER') }}/blackhole"
 
-    - name: docker compose file
+    - name: Clone west scripts
+      git:
+        repo: https://github.com/westsurname/scripts.git
+        dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/blackhole"
+        clone: yes
+        update: yes
+      become: yes
+      become_user: "{{ lookup('env','USER') }}"
+
+    - name: Créer les fichiers docker-compose et .env
       template:
-        dest: "{{ settings.storage }}/docker/{{ lookup('env', 'USER') }}/blackhole/docker-compose.yml"
-        src: "{{ settings.source }}/includes/dockerapps/templates/blackhole/docker-compose.yml.j2"
+        dest: "{{ settings.storage }}/docker/{{ lookup('env', 'USER') }}/blackhole/{{ item.dest }}"
+        src: "{{ settings.source }}/includes/dockerapps/templates/blackhole/{{ item.src }}"
+      with_items:
+        - { dest: "docker-compose.yml", src: "docker-compose.yml.j2" }
+        - { dest: ".env", src: ".env.j2" }
       become: yes
       become_user: "{{ lookup('env', 'USER') }}"
 
-    - name: docker compose file
-      template:
-        dest: "{{ settings.storage }}/docker/{{ lookup('env', 'USER') }}/blackhole/.env"
-        src: "{{ settings.source }}/includes/dockerapps/templates/blackhole/.env.j2"
-      become: yes
-      become_user: "{{ lookup('env', 'USER') }}"
-
-    - name: 'Import backup config'
+    - name: Importer les configurations de blackhole
       become: yes
       template:
-        src: "{{ settings.source }}/includes/dockerapps/templates/blackhole/blackhole.j2"
-        dest: /usr/local/bin/blackhole
-        owner: "root"
-        group: "root"
+        src: "{{ settings.source }}/includes/dockerapps/templates/blackhole/{{ item.src }}"
+        dest: "{{ item.dest }}"
+        owner: "{{ lookup('env', 'MYUID') }}"
+        group: "{{ lookup('env', 'MYGID') }}"
         mode: 0755
         force: yes
-
-    - name: 'Import backup config'
-      become: yes
-      template:
-        src: "{{ settings.source }}/includes/dockerapps/templates/blackhole/blackhole_4k.j2"
-        dest: /usr/local/bin/blackhole_4k
-        owner: "root"
-        group: "root"
-        mode: 0755
-        force: yes
-
-    - name: 'Import backup config'
-      become: yes
-      template:
-        src: "{{ settings.source }}/includes/dockerapps/templates/blackhole/blackhole_mux.j2"
-        dest: /usr/local/bin/blackhole_mux
-        owner: "root"
-        group: "root"
-        mode: 0755
-        force: yes
+      with_items:
+        - { src: "blackhole.j2", dest: "/usr/local/bin/blackhole" }
+        - { src: "repair.j2", dest: "/usr/local/bin/repair" }
+        - { src: "repair_4k.j2", dest: "/usr/local/bin/repair_4k" }
+        - { src: "blackhole_4k.j2", dest: "/usr/local/bin/blackhole_4k" }
 
     - name: Exécuter le fichier blackhole
       command: "blackhole"
       become: yes
       become_user: "{{ lookup('env', 'USER') }}"
-
-    - name: Add traefik_proxy to blackhole_service
-      docker_network:
-        name: traefik_proxy
-        connected:
-          - blackhole_service
-        appends: yes
 
     - name: Afficher un message
       debug:

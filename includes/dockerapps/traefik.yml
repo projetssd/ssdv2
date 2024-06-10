@@ -19,11 +19,11 @@
         path: "{{ settings.storage }}/docker/{{user.name}}/authelia/configuration.yml"
       register: check
 
-    - name: "Set DNS Record on CloudFlare"
-      include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
-      vars:
-        subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
-      when: cloudflare_enabled
+#    - name: "Set DNS Record on CloudFlare"
+#      include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
+#      vars:
+#        subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
+#      when: cloudflare_enabled
 
     - name: Remove {{pgrole}}
       docker_container:
@@ -133,32 +133,39 @@
 
     - name: command traefik with cloudflare
       set_fact:
-        command:
+        command: # CLI arguments
           - --global.checkNewVersion=true
           - --global.sendAnonymousUsage=true
-          - --entryPoints.http.address=:80
-          - --entryPoints.https.address=:443
-          #- --entryPoints.traefik.address=:8080
-          - --entrypoints.https.forwardedHeaders.trustedIPs=173.245.48.0/20,103.21.244.0/22,103.22.200.0/22,103.31.4.0/22,141.101.64.0/18,108.162.192.0/18,190.93.240.0/20,188.114.96.0/20,197.234.240.0/22,198.41.128.0/17,162.158.0.0/15,104.16.0.0/12,172.64.0.0/13,131.0.72.0/22
+          - --entrypoints.http.address=:80
+          - --entrypoints.https.address=:443
+         # - --entrypoints.traefik.address=:8080
+          - --entrypoints.web.http.redirections.entrypoint.to=https
+          - --entrypoints.web.http.redirections.entrypoint.scheme=https
+          - --entrypoints.web.http.redirections.entrypoint.permanent=true
           - --api=true
+          - --api.dashboard=true
+          - --entrypoints.https.forwardedHeaders.trustedIPs=173.245.48.0/20,103.21.244.0/22,103.22.200.0/22,103.31.4.0/22,141.101.64.0/18,108.162.192.0/18,190.93.240.0/20,188.114.96.0/20,197.234.240.0/22,198.41.128.0/17,162.158.0.0/15,104.16.0.0/12,172.64.0.0/13,131.0.72.0/22
           - --log=true
-          - --log.level=DEBUG
-          - --accessLog=true
-          - --accessLog.filePath=/traefik.log
-          - --accessLog.bufferingSize=100
-          #- --accessLog.filters.statusCodes=400-499
-          - --providers.docker=true
           - --providers.docker.endpoint=unix:///var/run/docker.sock
+          - --log.filePath=/logs
+          - --log.level=DEBUG # (Default: error) DEBUG, INFO, WARN, ERROR, FATAL, PANIC
+          - --accessLog=true
+          - --accessLog.filePath=/logs/access.log
+          - --accessLog.bufferingSize=100 # Configuring a buffer of 100 lines
+          - --accessLog.filters.statusCodes=204-299,400-499,500-599
+          - --providers.docker=true
           - --providers.docker.exposedByDefault=false
-          - --entrypoints.https.http.tls.certresolver=letsencrypt
           - --providers.docker.network=traefik_proxy
-          - --providers.docker.swarmMode=false
-          - --providers.file.directory=/rules
-          - --providers.file.watch=true
+          - --entrypoints.https.http.tls.certresolver=letsencrypt 
+          - --entrypoints.https.http.tls=true
+          - --providers.file.directory=/rules # Load dynamic configuration from one or more .toml or .yml files in a directory
+          - --providers.file.watch=true # Only works on top level files in the rules folder
           - --certificatesResolvers.letsencrypt.acme.email={{cloudflare.login}}
           - --certificatesResolvers.letsencrypt.acme.storage=/acme.json
           - --certificatesResolvers.letsencrypt.acme.dnsChallenge.provider=cloudflare
           - --certificatesResolvers.letsencrypt.acme.dnsChallenge.resolvers=1.1.1.1:53,1.0.0.1:53
+          - --certificatesResolvers.letsencrypt.acme.dnsChallenge.delayBeforeCheck=90 # To delay DNS check and reduce LE hitrate
+          # - --certificatesResolvers.letsencrypt.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory # LetsEncrypt Staging Server - uncomment when testing
       when: cloudflare_enabled
 
     - name: command traefik without cloudflare
@@ -196,7 +203,7 @@
     - name: Deploy Traefik
       docker_container:
         name: '{{pgrole}}'
-        image: traefik:v2.10.1
+        image: traefik:3.0
         pull: yes
         published_ports:
           - "80:80"
@@ -213,7 +220,7 @@
           - "/etc/localtime:/etc/localtime:ro"
           - "{{ settings.storage }}/docker/{{pgrole}}/acme/acme.json:/acme.json"
           - "{{ settings.storage }}/docker/{{pgrole}}/rules:/rules"
-          - "{{ settings.storage }}/docker/{{pgrole}}/traefik.log:/traefik.log"
+          - "{{ settings.storage }}/docker/{{pgrole}}/traefik.log:/logs"
         labels: '{{labels}}'
         restart_policy: unless-stopped
         state: started

@@ -1420,45 +1420,6 @@ function apply_patches() {
   done
 }
 
-function sortie_cloud() {
-  echo $(gettext "Attention, cette fonction n'est à utiliser que si vous n'utilisez plus de stockage cloud")
-  echo $(gettext "Appuyez sur CTRL^C si vous souhaitez annuler")
-  pause
-  ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/backup/tasks/remove.yml"
-  sudo systemctl disable cloudplow
-  sudo systemctl stop cloudplow
-  sudo systemctl disable rclone
-  sudo systemctl stop rclone
-  sudo systemctl restart mergerfs
-  relance_tous_services
-}
-
-function install_qdebrid() {
-  clear
-  logo 
-  echo -e "${BLUE}"$(gettext "Pour assurer le bon fonctionnement de Qdebrid")"${CEND}"                     
-  echo -e "${BLUE}"$(gettext "l'installation des applications Radarr et Sonarr est indispensable")"${CEND}"
-  echo -e "${BLUE}"$(gettext "Si elles ne sont pas déjà installées, elles le seront.")"${CEND}"                             
-  echo ""
-  sleep 2s
-  suppression_appli qdebrid 1
-  for service in sonarr radarr; do
-    if docker ps | grep -q "$service"; then
-      api=$(head -n 7 "${SETTINGS_STORAGE}/docker/$USER/$service/config/config.xml" | tail -n 1 | cut -c11-42)
-    else
-      echo -e "\e[36mInstallation de ${service} \e[0m"
-      launch_service "$service"
-      sleep 5s
-      api=$(head -n 7 "${SETTINGS_STORAGE}/docker/$USER/$service/config/config.xml" | tail -n 1 | cut -c11-42)
-    fi
-    manage_account_yml "sub.$service.api" "$api"
-  done
-  echo -e "\e[36m"$(gettext "Installation Qdebrid")"\e[0m"
-  ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/qdebrid.yml"
-  echo -e "\n"$(gettext "Appuyer sur")"${CCYAN} ["$(gettext "ENTREE")"]${CEND}" $(gettext "pour continuer")
-  read -r
-}
-
 function install_zurg() {
   update_release_zurg
   ARCHITECTURE=$(dpkg --print-architecture)
