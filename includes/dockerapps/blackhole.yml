@@ -9,6 +9,11 @@
         name: blackhole
         state: absent
 
+    - name: Supprimer le conteneur repair si present
+      docker_container:
+        name: repair
+        state: absent
+
     - name: Exécuter docker system prune
       command: docker system prune -af
 
@@ -109,6 +114,7 @@
         dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/blackhole"
         clone: yes
         update: yes
+        version: "v1.2.2"
       become: yes
       become_user: "{{ lookup('env','USER') }}"
 
@@ -134,8 +140,8 @@
       with_items:
         - { src: "blackhole.j2", dest: "/usr/local/bin/blackhole" }
         - { src: "repair.j2", dest: "/usr/local/bin/repair" }
-        - { src: "repair_4k.j2", dest: "/usr/local/bin/repair_4k" }
-        - { src: "blackhole_4k.j2", dest: "/usr/local/bin/blackhole_4k" }
+        - { src: "repair4k.j2", dest: "/usr/local/bin/repair4k" }
+        - { src: "blackhole4k.j2", dest: "/usr/local/bin/blackhole4k" }
 
     - name: Exécuter le fichier blackhole
       command: "blackhole"
@@ -144,10 +150,12 @@
 
     - name: Afficher un message
       debug:
-        msg: >
-          blackhole pour radarr & sonarr est actuellement lancé.
+        msg: |
+          Blackhole pour radarr & sonarr est actuellement lancé.
           Si vous souhaitez lancer blackhole pour sonarr4k et radarr4k
-          il vous suffit de taper dans le shell blackhole_4k
+          Il vous suffit de taper dans le shell blackhole4k
+          Une fonction repair pour réparer les symlinks brisés
+          Taper "repair" ou "repair4k"
 
     - name: Installation terminée
       pause:
