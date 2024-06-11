@@ -15,9 +15,6 @@ pg_env:
   #TP_ADDON: 'sonarr-4k-logo'
   #TP_THEME: 'plex'
   #Remplacer 'plex' par le theme que vous souhaitez avoir (https://docs.theme-park.dev/theme-options/) 
-specific_docker_info:
-  ports:
-    - '7878:7878'
   
 # Pour contourner l'authentification pour des outils de style nzb360, décommentez le pavé ci dessous
 # et remplacer API par votre API sonarr
