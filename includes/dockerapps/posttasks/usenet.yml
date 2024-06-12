@@ -1,3 +1,0 @@
----
-- name: Launch rclone
-  include_tasks: "{{ settings.source }}/includes/dockerapps/vars/rclone.yml"
