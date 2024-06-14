@@ -599,13 +599,16 @@ function launch_service() {
   line=$1
   log_write "Installation de ${line}" >/dev/null 2>&1
   error=0
-  tempsubdomain=$(get_from_account_yml sub.${line}.${line})
-  if [ "${tempsubdomain}" = notfound ]; then
-    subdomain_unitaire ${line}
-  fi
-  tempauth=$(get_from_account_yml sub.${line}.auth)
-  if [ "${tempauth}" = notfound ]; then
-    auth_unitaire ${line}
+  grep "traefik_labels_enabled: false" "${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml"
+  if [ $? -eq 1 ]; then
+    tempsubdomain=$(get_from_account_yml sub.${line}.${line})
+    if [ "${tempsubdomain}" = notfound ]; then
+      subdomain_unitaire ${line}
+    fi
+    tempauth=$(get_from_account_yml sub.${line}.auth)
+    if [ "${tempauth}" = notfound ]; then
+      auth_unitaire ${line}
+    fi
   fi
 
   if [[ "${line}" == "plex" ]]; then
@@ -682,7 +685,7 @@ function suppression_appli() {
   docker rm -f "$APPSELECTED" >/dev/null 2>&1
   if [ $DELETE -eq 1 ]; then
     log_write "Suppresion de ${APPSELECTED}, données supprimées" >/dev/null 2>&1
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/$APPSELECTED
+    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/$APPSELECTED >/dev/null 2>&1
   else
     log_write "Suppresion de ${APPSELECTED}, données conservées" >/dev/null 2>&1
   fi
@@ -747,16 +750,10 @@ function suppression_appli() {
     docker rm -f nginx piped-frontend piped-backend postgres piped-proxy hyperpipe-backend hyperpipe-frontend >/dev/null 2>&1
     manage_account_yml sub.piped " "
     ;;
-  rclone)
-   docker rm -f usenet
-   sudo fusermount -uz  /home/${USER}/usenet 
-   sudo rm -rf /home/$USER/usenet
-   sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/usenet
-    ;;
-  usenet)
-   docker rm -f rclone >/dev/null 2>&1
-   sudo fusermount -uz  /home/${USER}/usenet >/dev/null 2>&1
-   sudo rm -rf /home/$USER/usenet >/dev/null 2>&1
+  jellygrail)
+   sudo fusermount -uz ${SETTINGS_STORAGE}/docker/${USER}/jellygrail/Video_Library
+   sudo fusermount -uz ${SETTINGS_STORAGE}/docker/${USER}/jellygrail/Video_Library
+   sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/jellygrail
     ;;
   esac
 

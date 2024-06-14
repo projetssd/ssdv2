@@ -1,0 +1,14 @@
+---
+- name: Cloner le dépôt Jellygrail
+  git:
+    repo: https://github.com/philamp/jellygrail.git
+    dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}"
+    clone: yes
+
+- name: Creating paths
+  become: yes
+  file: "path={{item}} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID') }}"
+  with_items:
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/Video_Library"
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/fallbackdata"
+

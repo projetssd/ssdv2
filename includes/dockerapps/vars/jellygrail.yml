@@ -1,0 +1,23 @@
+---
+pgrole: 'jellygrail'
+image: 'ghcr.io/laster13/jellygrail:latest'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/jellygrail:/jellygrail"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/Video_Library:/Video_Library:rshared"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/fallbackdata:/mounts/fallback"
+  - "{{ settings.storage }}/zurg:/mounts/remote_realdebrid"
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+traefik_labels_enabled: false
+specific_docker_info:
+  privileged: yes
+  capabilities:
+  - MKNOD
+  - SYS_ADMIN
+  devices:
+    - /dev/fuse
+    - /dev/dri/renderD128
+    - /dev/dri/card0
+  security_opts:
+    - apparmor:unconfined
+
+

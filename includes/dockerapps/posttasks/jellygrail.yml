@@ -1,0 +1,21 @@
+---
+- name: Importer les configurations de jellygrail
+  become: yes
+  template:
+    src: "{{ settings.source }}/includes/dockerapps/templates/jellygrail/{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ lookup('env', 'MYUID') }}"
+    group: "{{ lookup('env', 'MYGID') }}"
+    mode: 0755
+    force: yes
+  with_items:
+    - { src: "jellygrail.sh.j2", dest: "/usr/local/bin/jellygrail" }
+
+- name: Afficher un message
+  debug:
+    msg: |
+      Pour finaliser l'installation, taper 'jellygrail' ds la console ssh
+
+- name: Installation terminée
+  pause:
+    prompt: "Appuyez sur Entrée pour revenir au menu principal"
