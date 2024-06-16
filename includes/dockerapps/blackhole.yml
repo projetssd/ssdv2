@@ -150,11 +150,6 @@
         - { src: "repair4k.j2", dest: "/usr/local/bin/repair4k" }
         - { src: "blackhole4k.j2", dest: "/usr/local/bin/blackhole4k" }
 
-    - name: Exécuter le fichier blackhole
-      command: "blackhole"
-      become: yes
-      become_user: "{{ lookup('env', 'USER') }}"
-
     - name: Afficher un message
       debug:
         msg: |
