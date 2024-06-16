@@ -599,7 +599,7 @@ function launch_service() {
   line=$1
   log_write "Installation de ${line}" >/dev/null 2>&1
   error=0
-  grep "traefik_labels_enabled: false" "${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml"
+  grep "traefik_labels_enabled: false" "${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml" >/dev/null 2>&1
   if [ $? -eq 1 ]; then
     tempsubdomain=$(get_from_account_yml sub.${line}.${line})
     if [ "${tempsubdomain}" = notfound ]; then

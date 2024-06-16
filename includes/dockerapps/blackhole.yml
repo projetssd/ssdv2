@@ -114,9 +114,16 @@
         dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/blackhole"
         clone: yes
         update: yes
-        version: "v1.2.2"
+      #  version: "v1.2.2"
       become: yes
       become_user: "{{ lookup('env','USER') }}"
+
+    - name: Replace #blackhole with #all for bencode3==0.1.0
+      lineinfile:
+        path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/blackhole/requirements.txt"
+        regexp: '^bencode3==0\.1\.0 #blackhole$'
+        line: 'bencode3==0.1.0 #all'
+        backrefs: yes
 
     - name: Créer les fichiers docker-compose et .env
       template:

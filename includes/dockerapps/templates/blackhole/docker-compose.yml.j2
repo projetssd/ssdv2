@@ -3,6 +3,7 @@ x-blackhole: &blackhole
     context: .
     dockerfile: Dockerfile.blackhole
   #image: ghcr.io/westsurname/scripts/blackhole:latest
+  pull_policy: always
   user: "${PUID:-}${PGID:+:${PGID}}"
   env_file:
     - .env
@@ -13,6 +14,7 @@ x-repair: &repair
     context: .
     dockerfile: Dockerfile.scripts
   #image: ghcr.io/westsurname/scripts/scripts:latest
+  pull_policy: always
   command: python repair.py --no-confirm
   env_file:
     - .env
@@ -25,12 +27,13 @@ services:
     environment:
       - BLACKHOLE_BASE_WATCH_PATH=/${BLACKHOLE_BASE_WATCH_PATH}
     volumes:
-      - ${BLACKHOLE_RD_MOUNT_TORRENTS_PATH}:${BLACKHOLE_RD_MOUNT_TORRENTS_PATH}
+      - ${REALDEBRID_MOUNT_TORRENTS_PATH:-/dev/null}:${REALDEBRID_MOUNT_TORRENTS_PATH:-/dev/null}
+      - ${TORBOX_MOUNT_TORRENTS_PATH:-/dev/null}:${TORBOX_MOUNT_TORRENTS_PATH:-/dev/null}
       - ${BLACKHOLE_BASE_WATCH_PATH}/${BLACKHOLE_SONARR_PATH}:/${BLACKHOLE_BASE_WATCH_PATH}/${BLACKHOLE_SONARR_PATH}
       - ${BLACKHOLE_BASE_WATCH_PATH}/${BLACKHOLE_RADARR_PATH}:/${BLACKHOLE_BASE_WATCH_PATH}/${BLACKHOLE_RADARR_PATH}
     profiles: [blackhole, blackhole_all, all]
 
-  blackhole4k:
+  blackhole_4k:
     <<: *blackhole
     container_name: blackhole4k
     environment:
@@ -40,7 +43,8 @@ services:
       - RADARR_API_KEY=${RADARR_API_KEY_4K}
       - BLACKHOLE_BASE_WATCH_PATH=/${BLACKHOLE_BASE_WATCH_PATH}
     volumes:
-      - ${BLACKHOLE_RD_MOUNT_TORRENTS_PATH}:${BLACKHOLE_RD_MOUNT_TORRENTS_PATH}
+      - ${REALDEBRID_MOUNT_TORRENTS_PATH}:${REALDEBRID_MOUNT_TORRENTS_PATH}
+      - ${TORBOX_MOUNT_TORRENTS_PATH:-/dev/null}:${TORBOX_MOUNT_TORRENTS_PATH:-/dev/null}
       - ${BLACKHOLE_BASE_WATCH_PATH}/${BLACKHOLE_SONARR_PATH}4k:/${BLACKHOLE_BASE_WATCH_PATH}/${BLACKHOLE_SONARR_PATH}
       - ${BLACKHOLE_BASE_WATCH_PATH}/${BLACKHOLE_RADARR_PATH}4k:/${BLACKHOLE_BASE_WATCH_PATH}/${BLACKHOLE_RADARR_PATH}
     profiles: [blackhole_4k, blackhole_all, all]
@@ -49,7 +53,8 @@ services:
     <<: *repair
     container_name: repair
     volumes:
-      - ${BLACKHOLE_RD_MOUNT_TORRENTS_PATH}:${BLACKHOLE_RD_MOUNT_TORRENTS_PATH}
+      - ${REALDEBRID_MOUNT_TORRENTS_PATH}:${REALDEBRID_MOUNT_TORRENTS_PATH}
+      - ${TORBOX_MOUNT_TORRENTS_PATH:-/dev/null}:${TORBOX_MOUNT_TORRENTS_PATH:-/dev/null}
       - ${SONARR_ROOT_FOLDER}:${SONARR_ROOT_FOLDER}
       - ${RADARR_ROOT_FOLDER}:${RADARR_ROOT_FOLDER}
     profiles: [repair, repair_all, all]
@@ -63,9 +68,9 @@ services:
       - RADARR_HOST=${RADARR_HOST_4K}
       - RADARR_API_KEY=${RADARR_API_KEY_4K}
     volumes:
-      - ${BLACKHOLE_RD_MOUNT_TORRENTS_PATH}:${BLACKHOLE_RD_MOUNT_TORRENTS_PATH}
+      - ${REALDEBRID_MOUNT_TORRENTS_PATH}:${REALDEBRID_MOUNT_TORRENTS_PATH}
+      - ${TORBOX_MOUNT_TORRENTS_PATH:-/dev/null}:${TORBOX_MOUNT_TORRENTS_PATH:-/dev/null}
       - ${SONARR_ROOT_FOLDER_4K}:${SONARR_ROOT_FOLDER_4K}
       - ${RADARR_ROOT_FOLDER_4K}:${RADARR_ROOT_FOLDER_4K}
     profiles: [repair_4k, repair_all, all]
-
 
