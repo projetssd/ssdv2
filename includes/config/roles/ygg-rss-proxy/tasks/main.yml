@@ -1,0 +1,55 @@
+---
+- name: Déploiement de ygg-rss-proxy
+  hosts: localhost
+  become: yes
+  vars:
+    env_file_path: "/home/{{ lookup('env','USER') }}/scripts/ygg-rss-proxy/config/.env"
+    template_dir: "../templates"
+  tasks:
+
+    - name: Creating paths
+      file: "path={{item}} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID') }}"
+      with_items:
+        - "/home/{{ lookup('env','USER') }}/scripts/ygg-rss-proxy"
+        - "/home/{{ lookup('env','USER') }}/scripts/ygg-rss-proxy/config"
+
+    - name: Pause pour saisir le nom d'utilisateur YGG
+      pause:
+        prompt: "Nom d'utilisateur YGG "
+        echo: true
+      register: ygg_user_input
+
+    - name: Pause pour saisir le mot de passe YGG
+      pause:
+        prompt: "Mot de passe YGG "
+        echo: false
+      register: ygg_pass_input
+
+    - name: Pause pour saisir l'URL de YGG
+      pause:
+        prompt: "URL de YGG "
+        echo: true
+      register: ygg_url_input
+
+    - name: Générer le fichier .env à partir des réponses saisies
+      template:
+        src: "{{ template_dir }}/.env.j2"
+        dest: "{{ env_file_path }}"
+      vars:
+        ygg_user: "{{ ygg_user_input.user_input }}"
+        ygg_pass: "{{ ygg_pass_input.user_input }}"
+        ygg_url: "{{ ygg_url_input.user_input }}"
+
+    - name: Démarrer le conteneur ygg-rss-proxy
+      docker_container:
+        name: ygg-rss-proxy
+        image: ghcr.io/limedrive/ygg-rss-proxy:latest
+        expose:
+          - 8080
+        env_file: "{{ env_file_path }}"
+        volumes:
+          - "/home/{{ lookup('env','USER') }}/scripts/ygg-rss-proxy/config:/app/config"
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+        state: started

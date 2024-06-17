@@ -183,6 +183,14 @@ menu_gestoutils_kometa() {
   pause
 }
 
+menu_gestoutils_ygg-rss-proxy() {
+  clear
+  echo""
+  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/ygg-rss-proxy/tasks/main.yml
+  pause
+}
+
+
 function ajout_app_seedbox() {
   echo ""
   choose_services
