@@ -21,7 +21,7 @@
 
 - name: Create new hashed
   shell: |
-    docker run --rm authelia/authelia:latest authelia hash-password {{user.pass}} | cut -d: -f2 | sed 's/ //g'
+    docker run authelia/authelia:4.37.5 authelia hash-password {{user.pass}} | cut -d: -f2 | sed 's/ //g'
   register: password
 
 - name: Generate random key
@@ -37,3 +37,7 @@
   template:
     src: "{{ settings.source }}/includes/dockerapps/templates/{{pgrole}}/users.yml.j2"
     dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/users.yml"
+
+- name: Prune Docker system
+  command: docker system prune -af
+  register: prune_result

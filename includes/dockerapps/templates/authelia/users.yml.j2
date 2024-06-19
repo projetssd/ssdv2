@@ -7,8 +7,8 @@ users:
   "{{ lookup('env','USER') }}":
     disabled: false
     displayname: "{{ lookup('env','USER') }}"
-    password: "{{password.stdout}}"
-    email: {{user.mail}}
+    password: "{{ password.stdout }}"
+    email: "{{ user.mail }}"
     groups:
       - admins
 
