@@ -15,7 +15,7 @@ pg_env:
   DB_USERNAME: '{{ pgrole }}'
   DB_PASSWORD: '{{ pgrole }}'
   TZ: 'Europe/Paris'
-  APP_KEY: '{{ appkeyspt }}'
+  APP_KEY: "{{ appkeyspt }}"
 
 pretasks:
   - appkey_spt
