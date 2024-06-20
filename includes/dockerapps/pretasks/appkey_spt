@@ -1,0 +1,7 @@
+---
+- pause:
+    prompt: "rendez vous à https://speedtest-tracker.dev/ et copier coller l'APP_KEY affichée base64:blabla"
+    echo: yes
+  register: appkeyspt
+- set_fact:
+    vpn: "{{ appkeyspt.user_input }}"
