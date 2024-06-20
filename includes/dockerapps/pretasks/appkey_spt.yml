@@ -4,4 +4,4 @@
     echo: yes
   register: appkeyspt
 - set_fact:
-    vpn: "{{ appkeyspt.user_input }}"
+    appkeyspt: "{{ appkeyspt.user_input }}"
