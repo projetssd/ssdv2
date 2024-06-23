@@ -1,7 +1,7 @@
 ---
 pgrole: 'wgeasy'
 intport: '51821'
-image: 'weejewel/wg-easy'
+image: 'ghcr.io/wg-easy/wg-easy'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/etc/wireguard"
 pg_env:
