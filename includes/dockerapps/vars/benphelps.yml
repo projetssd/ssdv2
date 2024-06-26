@@ -1,7 +1,0 @@
----
-pgrole: 'homepage'
-intport: '3000'
-image: 'ghcr.io/gethomepage/homepage:latest'
-pg_volumes:
-  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/app/config"
-  - '/var/run/docker.sock:/var/run/docker.sock:ro'

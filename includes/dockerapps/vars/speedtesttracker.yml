@@ -1,23 +1,18 @@
 ---
 pgrole: 'speedtest-tracker'
 intport: '80'
-image: 'lscr.io/linuxserver/speedtest-tracker:latest'
+image: 'lscr.io/linuxserver/speedtest-tracker:0.20.6'
 
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config"
 pg_env:
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
-  DB_CONNECTION: 'mysql'
-  DB_HOST: 'db-{{ pgrole }}'
-  DB_PORT: '3306'
-  DB_DATABASE: '{{ pgrole }}'
-  DB_USERNAME: '{{ pgrole }}'
-  DB_PASSWORD: '{{ pgrole }}'
+  DB_CONNECTION: 'sqlite'
   TZ: 'Europe/Paris'
   APP_KEY: "{{ appkeyspt }}"
-
+  SPEEDTEST_SCHEDULE: "36 * * * *"
+  APP_TIMEZONE: 'Europe/Paris'
+  PUBLIC_DASHBOARD: 'true'
 pretasks:
   - appkey_spt
-posttasks:
-  - mariadb_officiel
