@@ -1,0 +1,47 @@
+---
+- name: "Set DNS Record on CloudFlare"
+  include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
+  vars:
+    subdomain: "{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}"
+  when: cloudflare_enabled
+
+- name: Create espocrm-daemon
+  docker_container:
+    name: espocrm-daemon
+    image: espocrm/espocrm
+    volumes:
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/espocrm:/var/www/html"
+    entrypoint: docker-daemon.sh
+    restart_policy: always
+    networks:
+      - name: traefik_proxy
+
+- name: Create espocrm-websocket
+  docker_container:
+    name: espocrm-websocket
+    image: espocrm/espocrm
+    env:
+      ESPOCRM_CONFIG_USE_WEB_SOCKET: "true"
+      ESPOCRM_CONFIG_WEB_SOCKET_URL: "wss://{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}/ws"
+      ESPOCRM_CONFIG_WEB_SOCKET_ZERO_M_Q_SUBSCRIBER_DSN: "tcp://*:7777"
+      ESPOCRM_CONFIG_WEB_SOCKET_ZERO_M_Q_SUBMISSION_DSN: "tcp://espocrm-websocket:7777"
+    volumes:
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/espocrm:/var/www/html"
+    entrypoint: docker-websocket.sh
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.espocrm-ws.rule: "Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`) && PathPrefix(`/ws`)"
+      traefik.http.routers.espocrm-ws.entrypoints: "https"
+      traefik.http.routers.espocrm-ws.tls: "true"
+      traefik.http.routers.espocrm-ws.tls.certresolver: "letsencrypt"
+      ## Middlewares
+      traefik.http.routers.espocrm-ws.middlewares: "{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
+      else 'chain-basic-auth@file' if auth_enabled and sub[pgrole].auth == 'basique' | default(false)
+      else 'chain-oauth@file' if auth_enabled and sub[pgrole].auth == 'oauth' | default(false) 
+      else 'chain-no-auth@file' if auth_enabled and sub[pgrole].auth == 'aucune'}}"
+
+    restart_policy: always
+    networks:
+      - name: traefik_proxy
+
+

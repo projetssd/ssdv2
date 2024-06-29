@@ -1,0 +1,14 @@
+---
+- name: Create espocrm-daemon
+  docker_container:
+    name: mysql
+    image: mysql:8
+    env:
+      MYSQL_ROOT_PASSWORD: espocrm
+      MYSQL_DATABASE: espocrm
+      MYSQL_USER: espocrm
+      MYSQL_PASSWORD: espocrm
+    volumes:
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/mysql:/var/lib/mysql"
+    networks:
+      - name: traefik_proxy

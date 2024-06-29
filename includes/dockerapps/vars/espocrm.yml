@@ -1,0 +1,32 @@
+---
+pgrole: 'espocrm'
+intport: '8080'
+image: 'espocrm/espocrm'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/var/www/html"
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  TZ: "Europe/Paris"
+  ESPOCRM_DATABASE_PLATFORM: Mysql
+  ESPOCRM_DATABASE_HOST: mysql
+  ESPOCRM_DATABASE_USER: root
+  ESPOCRM_DATABASE_PASSWORD: espocrm
+  ESPOCRM_ADMIN_USERNAME: admin
+  ESPOCRM_ADMIN_PASSWORD: password
+  ESPOCRM_SITE_URL: "https://{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}"
+traefik_labels_enabled: false
+specific_docker_info:
+  labels:
+    traefik.enable: "true" 
+    traefik.http.routers.espocrm-app.entrypoints: "https"
+    traefik.http.routers.espocrm-app.rule: "Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)"
+    traefik.http.routers.espocrm-app.tls: "true"
+    traefik.http.routers.espocrm-app.tls.certresolver: "letsencrypt"
+    ## Middlewares
+    traefik.http.routers.espocrm-app.middlewares: "{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
+    else 'chain-basic-auth@file' if auth_enabled and sub[pgrole].auth == 'basique' | default(false)
+    else 'chain-oauth@file' if auth_enabled and sub[pgrole].auth == 'oauth' | default(false) 
+    else 'chain-no-auth@file' if auth_enabled and sub[pgrole].auth == 'aucune'}}"
+

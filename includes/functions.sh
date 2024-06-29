@@ -599,6 +599,8 @@ function launch_service() {
   line=$1
   log_write "Installation de ${line}" >/dev/null 2>&1
   error=0
+
+  # Vérifie la présence de "traefik_labels_enabled: false" dans le fichier
   grep "traefik_labels_enabled: false" "${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml" >/dev/null 2>&1
   if [ $? -eq 1 ]; then
     tempsubdomain=$(get_from_account_yml sub.${line}.${line})
@@ -608,6 +610,19 @@ function launch_service() {
     tempauth=$(get_from_account_yml sub.${line}.auth)
     if [ "${tempauth}" = notfound ]; then
       auth_unitaire ${line}
+    fi
+  else
+    # Vérifie également la présence de "labels" dans le fichier si "traefik_labels_enabled: false" est trouvé
+    grep "labels:" "${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml" >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+      tempsubdomain=$(get_from_account_yml sub.${line}.${line})
+      if [ "${tempsubdomain}" = notfound ]; then
+        subdomain_unitaire ${line}
+      fi
+      tempauth=$(get_from_account_yml sub.${line}.auth)
+      if [ "${tempauth}" = notfound ]; then
+        auth_unitaire ${line}
+      fi
     fi
   fi
 
@@ -755,6 +770,10 @@ function suppression_appli() {
    sudo fusermount -uz ${SETTINGS_STORAGE}/docker/${USER}/jellygrail/Video_Library
    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/jellygrail
     ;;
+  espocrm*)
+   sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/mysql
+   sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/espocrm >/dev/null 2>&1
+   docker rm -f espocrm espocrm-websocket espocrm-daemon mysql >/dev/null 2>&1
   esac
 
   if docker ps | grep -q db-$APPSELECTED; then
