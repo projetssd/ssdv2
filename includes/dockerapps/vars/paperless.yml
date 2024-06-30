@@ -1,0 +1,25 @@
+---
+# creation de l'utilisateur
+# docker exec -ti paperless bash -c 'python /usr/src/paperless/src/manage.py createsuperuser'
+
+pgrole: 'paperless'
+intport: '8000'
+image: 'ghcr.io/paperless-ngx/paperless-ngx:latest'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/data:/usr/src/paperless/data"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/data:/usr/src/paperless/media"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/data:/usr/src/paperless/export"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/data:/usr/src/paperless/consume"
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  PAPERLESS_REDIS: "redis://broker:6379"
+  PAPERLESS_DBENGINE: "mariadb"
+  PAPERLESS_DBHOST: "mariadb"
+  PAPERLESS_DBUSER: "paperless"
+  PAPERLESS_DBPASS: "paperless"
+  PAPERLESS_DBPORT: "3306"
+  PAPERLESS_URL: "https://{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}"
+  PAPERLESS_SECRET_KEY: "{{user.pass}}"
+  PAPERLESS_TIME_ZONE: "Europe/Paris"
+  PAPERLESS_OCR_LANGUAGE: "fra"

@@ -774,6 +774,13 @@ function suppression_appli() {
    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/mysql
    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/espocrm >/dev/null 2>&1
    docker rm -f espocrm espocrm-websocket espocrm-daemon mysql >/dev/null 2>&1
+    ;;
+  paperless)
+   sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/mariadb
+   sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/paperless >/dev/null 2>&1
+   sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/redis >/dev/null 2>&1
+   docker rm -f mariadb paperless broker >/dev/null 2>&1
+  ;;
   esac
 
   if docker ps | grep -q db-$APPSELECTED; then

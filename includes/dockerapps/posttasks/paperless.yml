@@ -1,0 +1,4 @@
+---
+- name: Commande à saisir pour créer l'utilisateur
+  debug:
+    msg: "docker exec -ti paperless bash -c 'python /usr/src/paperless/src/manage.py createsuperuser'"
