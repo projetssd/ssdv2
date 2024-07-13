@@ -44,34 +44,34 @@
         owner: "{{ lookup('env','USER') }}"
         group: "{{ lookup('env','MYGIDNAME') }}"
       with_items:
-        - "{{ settings.storage }}/docker/{{pgrole}}"
-        - "{{ settings.storage }}/docker/{{pgrole}}/acme"
-        - "{{ settings.storage }}/docker/{{pgrole}}/rules"
+        - "{{ settings.storage }}/docker/{{ pgrole }}"
+        - "{{ settings.storage }}/docker/{{ pgrole }}/acme"
+        - "{{ settings.storage }}/docker/{{ pgrole }}/rules"
+        - "{{ settings.storage }}/docker/{{ pgrole }}/logs"
 
     - name: Check acme.json exists
       stat:
         path: " {{ settings.storage }}/docker/{{pgrole}}/acme/acme.json"
       register: acme_json
 
-    - name: Installing ACME (touch)
+    - name: Create ACME empty file (touch)
       file:
         path: "{{ settings.storage }}/docker/{{pgrole}}/acme/acme.json"
         state: touch
         mode: 0600
       when: acme_json.stat.exists == False
 
-    - name: Create directory
-      file:
-        path: "{{ item }}"
-        state: directory
-      with_items:
-        - "{{ settings.storage }}/docker/{{pgrole}}/"
-        - "{{ settings.storage }}/docker/{{pgrole}}/rules"
+    #- name: Create traefik.log empty file (touch)
+    #  file:
+    #    path: "{{ settings.storage }}/docker/{{pgrole}}/logs/traefik.log"
+    #    state: touch
+    #    mode: 0600
 
-    - name: create an empty file traefik.log
+    - name: Create access.log empty file (touch)
       file:
-        path: "{{ settings.storage }}/docker/{{pgrole}}/traefik.log"
+        path: "{{ settings.storage }}/docker/{{pgrole}}/logs/access.log"
         state: touch
+        mode: 0600
 
     - name: Import middlewares-chains.toml
       template:
@@ -138,25 +138,24 @@
           - --global.sendAnonymousUsage=true
           - --entrypoints.http.address=:80
           - --entrypoints.https.address=:443
-         # - --entrypoints.traefik.address=:8080
           - --entrypoints.web.http.redirections.entrypoint.to=https
           - --entrypoints.web.http.redirections.entrypoint.scheme=https
           - --entrypoints.web.http.redirections.entrypoint.permanent=true
+          - --entrypoints.https.forwardedHeaders.trustedIPs=173.245.48.0/20,103.21.244.0/22,103.22.200.0/22,103.31.4.0/22,141.101.64.0/18,108.162.192.0/18,190.93.240.0/20,188.114.96.0/20,197.234.240.0/22,198.41.128.0/17,162.158.0.0/15,104.16.0.0/12,172.64.0.0/13,131.0.72.0/22
           - --api=true
           - --api.dashboard=true
-          - --entrypoints.https.forwardedHeaders.trustedIPs=173.245.48.0/20,103.21.244.0/22,103.22.200.0/22,103.31.4.0/22,141.101.64.0/18,108.162.192.0/18,190.93.240.0/20,188.114.96.0/20,197.234.240.0/22,198.41.128.0/17,162.158.0.0/15,104.16.0.0/12,172.64.0.0/13,131.0.72.0/22
-          - --log=true
           - --providers.docker.endpoint=unix:///var/run/docker.sock
-          - --log.filePath=/logs
+          - --log=true
+          #- --log.filePath=/logs/traefik.log
           - --log.level=DEBUG # (Default: error) DEBUG, INFO, WARN, ERROR, FATAL, PANIC
-          - --accessLog=true
-          - --accessLog.filePath=/logs/access.log
-          - --accessLog.bufferingSize=100 # Configuring a buffer of 100 lines
-          - --accessLog.filters.statusCodes=204-299,400-499,500-599
+          - --accesslog=true
+          - --accesslog.filePath=/logs/access.log
+          - --accesslog.bufferingSize=100 # Configuring a buffer of 100 lines
+          - --accesslog.addinternals
           - --providers.docker=true
           - --providers.docker.exposedByDefault=false
           - --providers.docker.network=traefik_proxy
-          - --entrypoints.https.http.tls.certresolver=letsencrypt 
+          - --entrypoints.https.http.tls.certresolver=letsencrypt
           - --entrypoints.https.http.tls=true
           - --providers.file.directory=/rules # Load dynamic configuration from one or more .toml or .yml files in a directory
           - --providers.file.watch=true # Only works on top level files in the rules folder
@@ -180,7 +179,7 @@
           - --log=true
           - --log.level=DEBUG
           - --accessLog=true
-          - --accessLog.filePath=/traefik.log
+          - --accessLog.filePath=/logs/traefik.log
           - --accessLog.bufferingSize=100
           #- --accessLog.filters.statusCodes=400-499
           - --providers.docker=true
@@ -220,7 +219,7 @@
           - "/etc/localtime:/etc/localtime:ro"
           - "{{ settings.storage }}/docker/{{pgrole}}/acme/acme.json:/acme.json"
           - "{{ settings.storage }}/docker/{{pgrole}}/rules:/rules"
-          - "{{ settings.storage }}/docker/{{pgrole}}/traefik.log:/logs"
+          - "{{ settings.storage }}/docker/{{pgrole}}/logs/:/logs"
         labels: '{{labels}}'
         restart_policy: unless-stopped
         state: started
