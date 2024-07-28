@@ -600,21 +600,17 @@ function launch_service() {
   log_write "Installation de ${line}" >/dev/null 2>&1
   error=0
 
-  # Vérifie la présence de "traefik_labels_enabled: false" dans le fichier
-  grep "traefik_labels_enabled: false" "${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml" >/dev/null 2>&1
-  if [ $? -eq 1 ]; then
-    tempsubdomain=$(get_from_account_yml sub.${line}.${line})
-    if [ "${tempsubdomain}" = notfound ]; then
-      subdomain_unitaire ${line}
-    fi
-    tempauth=$(get_from_account_yml sub.${line}.auth)
-    if [ "${tempauth}" = notfound ]; then
-      auth_unitaire ${line}
-    fi
-  else
-    # Vérifie également la présence de "labels" dans le fichier si "traefik_labels_enabled: false" est trouvé
-    grep "labels:" "${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml" >/dev/null 2>&1
-    if [ $? -eq 0 ]; then
+# Définir les chemins à vérifier
+  paths=(
+    "${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml"
+    "${SETTINGS_SOURCE}/includes/dockerapps/${line}.yml"
+    "/home/${USER}/seedbox/vars/${line}.yml"
+  )
+
+  for path in "${paths[@]}"; do
+    # Vérifie la présence de "traefik_labels_enabled: false" dans le fichier
+    grep "traefik_labels_enabled: false" "$path" >/dev/null 2>&1
+    if [ $? -eq 1 ]; then
       tempsubdomain=$(get_from_account_yml sub.${line}.${line})
       if [ "${tempsubdomain}" = notfound ]; then
         subdomain_unitaire ${line}
@@ -623,8 +619,21 @@ function launch_service() {
       if [ "${tempauth}" = notfound ]; then
         auth_unitaire ${line}
       fi
+    else
+      # Vérifie également la présence de "labels" dans le fichier si "traefik_labels_enabled: false" est trouvé
+      grep "labels:" "$path" >/dev/null 2>&1
+      if [ $? -eq 0 ]; then
+        tempsubdomain=$(get_from_account_yml sub.${line}.${line})
+        if [ "${tempsubdomain}" = notfound ]; then
+          subdomain_unitaire ${line}
+        fi
+        tempauth=$(get_from_account_yml sub.${line}.auth)
+        if [ "${tempauth}" = notfound ]; then
+          auth_unitaire ${line}
+        fi
+      fi
     fi
-  fi
+  done
 
   if [[ "${line}" == "plex" ]]; then
     echo ""
@@ -633,21 +642,12 @@ function launch_service() {
     echo ""
     echo -e " ${GREEN}"$(gettext "ATTENTION IMPORTANT - NE PAS FAIRE D'ERREUR - SINON DESINSTALLER ET REINSTALLER")"${NC}"
     "${SETTINGS_SOURCE}/includes/config/scripts/plex_token.sh"
-
-    if [[ -f "${SETTINGS_STORAGE}/conf/plex.yml" ]]; then
-      :
-    else
-      cp "${SETTINGS_SOURCE}/includes/dockerapps/plex.yml" "${SETTINGS_STORAGE}/conf/plex.yml" >/dev/null 2>&1
-    fi
     ansible-playbook "${SETTINGS_STORAGE}/conf/plex.yml"
     echo "2" >"${SETTINGS_STORAGE}/status/plex"
   else
     # On est dans le cas générique
     # on regarde s'i y a un playbook existant
-    if [[ -f "${SETTINGS_STORAGE}/conf/${line}.yml" ]]; then
-      # il y a déjà un playbook "perso", on le lance
-      ansible-playbook "${SETTINGS_STORAGE}/conf/${line}.yml"
-    elif [[ -f "${SETTINGS_STORAGE}/vars/${line}.yml" ]]; then
+    if [[ -f "${SETTINGS_STORAGE}/vars/${line}.yml" ]]; then
       # il y a des variables persos, on les lance
       ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/generique.yml" --extra-vars "@${SETTINGS_STORAGE}/vars/${line}.yml"
     elif [[ -f "${SETTINGS_SOURCE}/includes/dockerapps/${line}.yml" ]]; then
@@ -766,21 +766,30 @@ function suppression_appli() {
     manage_account_yml sub.piped " "
     ;;
   jellygrail)
-   sudo fusermount -uz ${SETTINGS_STORAGE}/docker/${USER}/jellygrail/Video_Library
-   sudo fusermount -uz ${SETTINGS_STORAGE}/docker/${USER}/jellygrail/Video_Library
-   sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/jellygrail
+    sudo fusermount -uz ${SETTINGS_STORAGE}/docker/${USER}/jellygrail/Video_Library
+    sudo fusermount -uz ${SETTINGS_STORAGE}/docker/${USER}/jellygrail/Video_Library
+    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/jellygrail
     ;;
   espocrm*)
-   sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/mysql
-   sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/espocrm >/dev/null 2>&1
-   docker rm -f espocrm espocrm-websocket espocrm-daemon mysql >/dev/null 2>&1
+    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/mysql
+    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/espocrm >/dev/null 2>&1
+    docker rm -f espocrm espocrm-websocket espocrm-daemon mysql >/dev/null 2>&1
+    manage_account_yml sub.piped " "
     ;;
   paperless)
-   sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/mariadb
-   sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/paperless >/dev/null 2>&1
-   sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/redis >/dev/null 2>&1
-   docker rm -f mariadb paperless broker >/dev/null 2>&1
-  ;;
+    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/mariadb
+    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/paperless >/dev/null 2>&1
+    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/redis >/dev/null 2>&1
+    docker rm -f mariadb paperless broker >/dev/null 2>&1
+    manage_account_yml sub.paperless " "
+    ;;
+  immich_server)
+    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/immich-app >/dev/null 2>&1
+    docker rm -f immich_server database redis immich-machine-learning >/dev/null 2>&1
+    docker volume prune -f >/dev/null 2>&1
+    docker volume rm model-cache >/dev/null 2>&1
+    manage_account_yml sub.immich " "
+    ;;
   esac
 
   if docker ps | grep -q db-$APPSELECTED; then

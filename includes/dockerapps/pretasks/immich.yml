@@ -1,0 +1,101 @@
+---
+
+- name: Create a volume
+  docker_volume:
+    name: model-cache
+
+- name: Generate random string
+  shell: echo "$RANDOM$(date)$RANDOM" | sha256sum | base64 | head -c10
+  register: random_string_output
+
+- name: Show the generated random string
+  debug:
+    msg: "Generated random string: {{ random_string_output.stdout }}"
+
+- name: Create immich-machine-learning
+  community.docker.docker_container:
+    name: immich-machine-learning
+    image: ghcr.io/immich-app/immich-machine-learning:release
+    env:
+      DB_PASSWORD: '{{ random_string_output.stdout }}'
+      DB_USERNAME: postgres
+      DB_DATABASE_NAME: immich
+      DB_DATA_LOCATION: '/home/ubuntu/seedbox/docker/ubuntu/immich-app/postgres'
+      UPLOAD_LOCATION: '/home/ubuntu/seedbox/docker/ubuntu/immich-app/library'
+    volumes:
+      - model-cache:/cache
+    restart_policy: always
+    networks:
+      - name: traefik_proxy
+
+- name: Create redis
+  community.docker.docker_container:
+    name: redis
+    image: docker.io/redis:6.2-alpine@sha256:328fe6a5822256d065debb36617a8169dbfbd77b797c525288e465f56c1d392b
+    healthcheck:
+      test: redis-cli ping || exit 1
+    restart_policy: always
+    networks:
+      - name: traefik_proxy
+
+- name: Create database
+  community.docker.docker_container:
+    name: database
+    image: docker.io/tensorchord/pgvecto-rs:pg14-v0.2.0@sha256:90724186f0a3517cf6914295b5ab410db9ce23190a2d9d0b9dd6463e3fa298f0
+    env:
+      POSTGRES_PASSWORD: '{{ random_string_output.stdout }}'
+      POSTGRES_USER: postgres
+      POSTGRES_DB: immich
+      POSTGRES_INITDB_ARGS: '--data-checksums'
+    volumes:
+      - '/home/ubuntu/seedbox/docker/ubuntu/immich-app/postgres:/var/lib/postgresql/data'
+    healthcheck:
+      test: pg_isready --dbname='immich' --username='postgres' || exit 1; Chksum="$$(psql --dbname='immich' --username='postgres' --tuples-only --no-align --command='SELECT COALESCE(SUM(checksum_failures), 0) FROM pg_stat_database')"; echo "checksum failure count is $$Chksum"; [ "$$Chksum" = '0' ] || exit 1
+      interval: 5m
+      start_interval: 30s
+      start_period: 5m
+    command: ["postgres", "-c" ,"shared_preload_libraries=vectors.so", "-c", 'search_path="$$user", public, vectors', "-c", "logging_collector=on", "-c", "max_wal_size=2GB", "-c", "shared_buffers=512MB", "-c", "wal_compression=on"]
+    restart_policy: always
+    networks:
+      - name: traefik_proxy
+
+- name: Define middleware chain
+  set_fact:
+    middleware_chain: >
+      {% if sub[pgrole].auth == 'authelia' %}
+      chain-authelia@file
+      {% elif auth_enabled and sub[pgrole].auth == 'basique' %}
+      chain-basic-auth@file
+      {% elif auth_enabled and sub[pgrole].auth == 'oauth' %}
+      chain-oauth@file
+      {% elif auth_enabled and sub[pgrole].auth == 'aucune' %}
+      chain-no-auth@file
+      {% else %}
+      ''
+      {% endif %}
+
+- name: Create immich_server
+  community.docker.docker_container:
+    name: immich_server
+    image: ghcr.io/immich-app/immich-server:release
+    env:
+      DB_PASSWORD: '{{ random_string_output.stdout }}'
+      DB_USERNAME: postgres
+      DB_DATABASE_NAME: immich
+      DB_DATA_LOCATION: '/home/ubuntu/seedbox/docker/ubuntu/immich-app/postgres'
+      UPLOAD_LOCATION: '/home/ubuntu/seedbox/docker/ubuntu/immich-app/library'
+    labels:
+      traefik.enable: "true" 
+      traefik.http.routers.immich.entrypoints: "https"
+      traefik.http.routers.immich.rule: "Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)"
+      traefik.http.routers.immich.tls: "true"
+      traefik.http.routers.immich.tls.certresolver: "letsencrypt"
+      traefik.http.routers.immich.middlewares: "{{ middleware_chain }}"
+    volumes:
+      - '/home/ubuntu/seedbox/docker/ubuntu/immich-app/library:/usr/src/app/upload'
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - 2283:3001
+    restart_policy: always
+    networks:
+      - name: traefik_proxy

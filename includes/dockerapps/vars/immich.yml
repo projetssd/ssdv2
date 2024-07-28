@@ -1,0 +1,6 @@
+---
+pgrole: 'immich'
+intport: '2283'
+docker_deploy_enabled: false
+
+
