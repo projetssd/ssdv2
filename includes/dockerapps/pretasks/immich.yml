@@ -20,8 +20,8 @@
       DB_PASSWORD: '{{ random_string_output.stdout }}'
       DB_USERNAME: postgres
       DB_DATABASE_NAME: immich
-      DB_DATA_LOCATION: '/home/ubuntu/seedbox/docker/ubuntu/immich-app/postgres'
-      UPLOAD_LOCATION: '/home/ubuntu/seedbox/docker/ubuntu/immich-app/library'
+      DB_DATA_LOCATION: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/immich-app/postgres"
+      UPLOAD_LOCATION: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/immich-app/library"
     volumes:
       - model-cache:/cache
     restart_policy: always
@@ -48,7 +48,7 @@
       POSTGRES_DB: immich
       POSTGRES_INITDB_ARGS: '--data-checksums'
     volumes:
-      - '/home/ubuntu/seedbox/docker/ubuntu/immich-app/postgres:/var/lib/postgresql/data'
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/immich-app/postgres:/var/lib/postgresql/data"
     healthcheck:
       test: pg_isready --dbname='immich' --username='postgres' || exit 1; Chksum="$$(psql --dbname='immich' --username='postgres' --tuples-only --no-align --command='SELECT COALESCE(SUM(checksum_failures), 0) FROM pg_stat_database')"; echo "checksum failure count is $$Chksum"; [ "$$Chksum" = '0' ] || exit 1
       interval: 5m
@@ -82,8 +82,8 @@
       DB_PASSWORD: '{{ random_string_output.stdout }}'
       DB_USERNAME: postgres
       DB_DATABASE_NAME: immich
-      DB_DATA_LOCATION: '/home/ubuntu/seedbox/docker/ubuntu/immich-app/postgres'
-      UPLOAD_LOCATION: '/home/ubuntu/seedbox/docker/ubuntu/immich-app/library'
+      DB_DATA_LOCATION: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/immich-app/postgres"
+      UPLOAD_LOCATION: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/immich-app/library"
     labels:
       traefik.enable: "true" 
       traefik.http.routers.immich.entrypoints: "https"
@@ -92,7 +92,7 @@
       traefik.http.routers.immich.tls.certresolver: "letsencrypt"
       traefik.http.routers.immich.middlewares: "{{ middleware_chain }}"
     volumes:
-      - '/home/ubuntu/seedbox/docker/ubuntu/immich-app/library:/usr/src/app/upload'
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/immich-app/library:/usr/src/app/upload"
       - /etc/localtime:/etc/localtime:ro
     ports:
       - 2283:3001
