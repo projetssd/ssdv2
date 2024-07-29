@@ -1,0 +1,4 @@
+---
+- name: Commande à saisir pour créer l'utilisateur
+  debug:
+    msg: "docker exec --user node -it thelounge thelounge add <nick>"
