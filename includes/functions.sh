@@ -790,6 +790,13 @@ function suppression_appli() {
     docker volume rm model-cache >/dev/null 2>&1
     manage_account_yml sub.immich " "
     ;;
+  streamfusion)
+    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/streamfusion
+    docker rm -f streamfusion elasticsearch zilean >/dev/null 2>&1
+    docker volume prune -f >/dev/null 2>&1
+    docker volume rm data-zilean data-elasticsearch >/dev/null 2>&1
+    manage_account_yml sub.streamfusion " "
+    ;;
   esac
 
   if docker ps | grep -q db-$APPSELECTED; then
@@ -1219,7 +1226,7 @@ function sauve_symlinks() {
   echo -e "${CRED}----------------------------------------${CEND}"
   echo -e "${CCYAN}"$(gettext "Sauvegarde des Symlinks")"${CEND}"
   echo -e "${CRED}----------------------------------------${CEND}"
-  ls -1 /home/${USER}/Medias| cat -n | sed 's/[ ]\+/ /g' | tr "\t" " " > temp
+  ls -1 /home/${USER}/Medias | xargs -I {} sh -c 'if [ -d "/home/${USER}/Medias/{}" ]; then echo {}; fi' | cat -n | sed 's/[ ]\+/ /g' | tr "\t" " " > temp
 
   # nombre total de lignes dans le fichier temp
   total_lines=$(wc -l < temp)

@@ -1,0 +1,67 @@
+---
+
+- pause:
+    prompt: "SECRET_API_KEY"
+    echo: yes
+  register: secret_api_key
+
+- pause:
+    prompt: "TMDB_API_KEY"
+    echo: yes
+  register: tmdb_api_key
+
+- pause:
+    prompt: "YGG_PROXY_APIKEY"
+    echo: yes
+  register: ygg_proxy_apikey
+
+- name: Create a volume
+  docker_volume:
+    name: data-elasticsearch
+
+- name: Create a volume
+  docker_volume:
+    name: data-zilean
+
+- name: Elasticsearch
+  community.docker.docker_container:
+    name: elasticsearch
+    image: "elasticsearch:8.14.3@sha256:1ddbb1ae0754278f3ab53edc24fcc5c790ebc2422cc47abea760b24abee2d88a"
+    env:
+      ES_SETTING_DISCOVERY_TYPE: "single-node"
+      ES_SETTING_XPACK_SECURITY_ENABLED: "false"
+      ES_SETTING_BOOTSTRAP_MEMORY__LOCK: "true"
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+    volumes:
+      - data-elasticsearch:/usr/share/elasticsearch/data:rw
+    restart_policy: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200 | grep -q 'You Know, for Search'"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    networks:
+      - name: traefik_proxy
+
+- name: Wait for elasticsearch to be healthy
+  command: >
+    docker inspect --format="{{ '{{' }}.State.Health.Status{{ '}}' }}" elasticsearch
+  register: elasticsearch_health
+  until: elasticsearch_health.stdout == 'healthy'
+  retries: 10
+  delay: 10
+
+- name: zilean
+  community.docker.docker_container:
+    name: zilean
+    image: ipromknight/zilean:latest
+    env:
+      Zilean__ElasticSearch__Url: 'http://elasticsearch:9200'
+    volumes:
+      - data-zilean:/app/data
+    restart_policy: always
+    networks:
+      - name: traefik_proxy
+
+
+

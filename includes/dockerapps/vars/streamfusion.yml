@@ -1,0 +1,20 @@
+---
+pgrole: 'streamfusion'
+intport: '8080'
+image: 'ghcr.io/limedrive/stream-fusion:develop'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/app/config"
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  RELOAD: "False"
+  SECRET_API_KEY: "{{ secret_api_key.user_input }}"
+  TMDB_API_KEY: "{{ tmdb_api_key.user_input }}"
+  ZILEAN_URL: "http://zilean:8181"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  LOG_LEVEL: "DEBUG"
+  LOG_REDACTED: "False"
+  YGG_LIME_FIX: "True"
+  YGG_PROXY_URL: "https://proxy.limehub.eu"
+  YGG_PROXY_APIKEY: "{{ ygg_proxy_apikey.user_input }}"
