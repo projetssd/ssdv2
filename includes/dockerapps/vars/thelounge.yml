@@ -1,0 +1,12 @@
+---
+# Création de l'utilisateur
+# docker exec --user node -it thelounge thelounge add <nick>
+pgrole: 'thelounge'
+intport: '9000'
+image: 'ghcr.io/thelounge/thelounge:latest'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/thelounge://var/opt/thelounge:rw"
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
