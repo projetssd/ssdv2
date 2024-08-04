@@ -642,7 +642,7 @@ function launch_service() {
     echo ""
     echo -e " ${GREEN}"$(gettext "ATTENTION IMPORTANT - NE PAS FAIRE D'ERREUR - SINON DESINSTALLER ET REINSTALLER")"${NC}"
     "${SETTINGS_SOURCE}/includes/config/scripts/plex_token.sh"
-    ansible-playbook "${SETTINGS_STORAGE}/dockerapps/plex.yml"
+    ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/plex.yml"
     echo "2" >"${SETTINGS_STORAGE}/status/plex"
   else
     # On est dans le cas générique
