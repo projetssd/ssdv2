@@ -2,7 +2,7 @@
 - name: 'Deploying flaresolverr'
   docker_container:
     name: 'flaresolverr'
-    image: 'flaresolverr/flaresolverr:latest'
+    image: 'ghcr.io/flaresolverr/flaresolverr:pr-1282'
     env:
       CAPTCHA_SOLVER: 'harvester'
       HARVESTER_ENDPOINT: 'https://127.0.0.1:5000/token'
