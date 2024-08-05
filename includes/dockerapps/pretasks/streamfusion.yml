@@ -63,5 +63,12 @@
     networks:
       - name: traefik_proxy
 
-
-
+- name: redis
+  community.docker.docker_container:
+    name: redis
+    image: redis:latest
+    volumes:
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/redis:/app/data"
+    restart_policy: always
+    networks:
+      - name: traefik_proxy
