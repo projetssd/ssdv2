@@ -3,7 +3,7 @@
 
 [Documentation](https://projetssd.github.io/ssdv2_docs/)
 
-[![Discord: https://discord.gg/EyV5f5ZyYF](https://img.shields.io/badge/Discord-gray.svg?style=for-the-badge)](https://discordapp.com/invite/kkwEvV6dfj)
+[![Discord: https://discord.gg/ZhWvKVmTuh](https://img.shields.io/badge/Discord-gray.svg?style=for-the-badge)](https://discordapp.com/invite/ZhWvKVmTuh)
 
 ## JetBrains
 merci à  [<img src="/images/jetbrains-training-partner.svg" alt="JetBrains" width="32"> JetBrains](http://www.jetbrains.com/) pour les licences open source qui nous permettent de travailler sur ce projet.
