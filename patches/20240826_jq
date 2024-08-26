@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# Vérifie si jq est installé
+if ! dpkg -l | grep -q "^ii  jq"; then
+    # Si jq n'est pas installé, on l'installe
+    sudo apt update
+    sudo apt install jq -y
+fi

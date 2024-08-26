@@ -72,8 +72,8 @@ apt-get install -y --reinstall \
   gnupg \
   lsb-release \
   fuse3 \
-  apparmor
-
+  apparmor \
+  jq
 
 rm -f /usr/bin/python
 
