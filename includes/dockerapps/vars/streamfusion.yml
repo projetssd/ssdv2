@@ -15,6 +15,5 @@ pg_env:
   REDIS_PORT: "6379"
   LOG_LEVEL: "DEBUG"
   LOG_REDACTED: "False"
-  YGG_LIME_FIX: "True"
-  YGG_PROXY_URL: "https://proxy.limehub.eu"
-  YGG_PROXY_APIKEY: "{{ ygg_proxy_apikey.user_input }}"
+  USE_HTTPS: True
+  TZ: Europe/London
