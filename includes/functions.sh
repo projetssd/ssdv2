@@ -792,9 +792,9 @@ function suppression_appli() {
     ;;
   streamfusion)
     sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/streamfusion
-    docker rm -f streamfusion elasticsearch zilean >/dev/null 2>&1
+    docker rm -f streamfusion postgres zilean >/dev/null 2>&1
     docker volume prune -f >/dev/null 2>&1
-    docker volume rm data-zilean data-elasticsearch >/dev/null 2>&1
+    docker volume rm data-zilean data-pg >/dev/null 2>&1
     manage_account_yml sub.streamfusion " "
     ;;
   esac
