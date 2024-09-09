@@ -10,44 +10,39 @@
     echo: yes
   register: tmdb_api_key
 
-- pause:
-    prompt: "YGG_PROXY_APIKEY"
-    echo: yes
-  register: ygg_proxy_apikey
-
 - name: Create a volume
   docker_volume:
-    name: data-elasticsearch
+    name: data-pg
 
 - name: Create a volume
   docker_volume:
     name: data-zilean
 
-- name: Elasticsearch
+- name: postgres
   community.docker.docker_container:
-    name: elasticsearch
-    image: "elasticsearch:8.14.3@sha256:1ddbb1ae0754278f3ab53edc24fcc5c790ebc2422cc47abea760b24abee2d88a"
+    name: postgres
+    image: "postgres:16.3-alpine3.20"
     env:
-      ES_SETTING_DISCOVERY_TYPE: "single-node"
-      ES_SETTING_XPACK_SECURITY_ENABLED: "false"
-      ES_SETTING_BOOTSTRAP_MEMORY__LOCK: "true"
-      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: zilean
+      POSTGRES_PASSWORD: zilean
+      POSTGRES_DB: zilean
     volumes:
-      - data-elasticsearch:/usr/share/elasticsearch/data:rw
+      - data-pg:/var/lib/postgresql/data/pgdata
     restart_policy: always
     healthcheck:
-      test: ["CMD-SHELL", "curl -s http://localhost:9200 | grep -q 'You Know, for Search'"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 10s
-      timeout: 10s
+      timeout: 5s
       retries: 5
     networks:
       - name: traefik_proxy
 
-- name: Wait for elasticsearch to be healthy
+- name: Wait for postgres to be healthy
   command: >
-    docker inspect --format="{{ '{{' }}.State.Health.Status{{ '}}' }}" elasticsearch
-  register: elasticsearch_health
-  until: elasticsearch_health.stdout == 'healthy'
+    docker inspect --format="{{ '{{' }}.State.Health.Status{{ '}}' }}" postgres
+  register: postgres_health
+  until: postgres_health.stdout == 'healthy'
   retries: 10
   delay: 10
 
@@ -56,7 +51,10 @@
     name: zilean
     image: ipromknight/zilean:latest
     env:
-      Zilean__ElasticSearch__Url: 'http://elasticsearch:9200'
+      Zilean__Database__ConnectionString: "Host=postgres;Port=5432;Database=zilean;Username=zilean;Password=zilean"
+      Zilean__Dmm__ImportBatched: "true"
+      Zilean__Dmm__MaxFilteredResults: 200
+      Zilean__Dmm__MinimumScoreMatch: 0.85
     volumes:
       - data-zilean:/app/data
     restart_policy: always
