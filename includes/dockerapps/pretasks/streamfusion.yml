@@ -40,7 +40,7 @@
 
 - name: Wait for postgres to be healthy
   command: >
-    docker inspect --format="{{ '{{' }}.State.Health.Status{{ '}}' }}" postgres
+    docker inspect --format="{{ '{{' }}.State.Health.Status{{ '}}' }}" postgres-zilean
   register: postgres_health
   until: postgres_health.stdout == 'healthy'
   retries: 10
