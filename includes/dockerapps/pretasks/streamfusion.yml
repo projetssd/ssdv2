@@ -12,15 +12,15 @@
 
 - name: Create a volume
   docker_volume:
-    name: data-pg
+    name: data-pg-zilean
 
 - name: Create a volume
   docker_volume:
     name: data-zilean
 
-- name: postgres
+- name: postgres-zilean
   community.docker.docker_container:
-    name: postgres
+    name: postgres-zilean
     image: "postgres:16.3-alpine3.20"
     env:
       PGDATA: /var/lib/postgresql/data/pgdata
@@ -28,10 +28,10 @@
       POSTGRES_PASSWORD: zilean
       POSTGRES_DB: zilean
     volumes:
-      - data-pg:/var/lib/postgresql/data/pgdata
+      - data-pg-zilean:/var/lib/postgresql/data/pgdata
     restart_policy: always
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      test: [ "CMD-SHELL", "pg_isready -U zilean" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -51,7 +51,7 @@
     name: zilean
     image: ipromknight/zilean:latest
     env:
-      Zilean__Database__ConnectionString: "Host=postgres;Port=5432;Database=zilean;Username=zilean;Password=zilean"
+      Zilean__Database__ConnectionString: "Host=postgres-zilean;Port=5432;Database=zilean;Username=zilean;Password=zilean"
       Zilean__Dmm__ImportBatched: "true"
       Zilean__Dmm__MaxFilteredResults: 200
       Zilean__Dmm__MinimumScoreMatch: 0.85
