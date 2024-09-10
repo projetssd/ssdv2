@@ -1,0 +1,25 @@
+---
+- name: 'Deploying db-{{pgrole}}'
+  docker_container:
+    name: 'db-{{pgrole}}'
+    recreate: true
+    image: 'postgres:15'
+    pull: yes
+    volumes:
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}:/var/lib/postgresql/data"
+    env:
+      POSTGRES_USER: "{{pgrole}}"
+      POSTGRES_PASSWORD: "{{pgrole}}"
+    restart_policy: always
+    networks:
+      - name: 'traefik_proxy'
+    state: started
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+- name: Wait for 10 seconds before continuing
+  wait_for:
+    timeout: 10
