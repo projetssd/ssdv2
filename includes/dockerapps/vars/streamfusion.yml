@@ -13,7 +13,7 @@ pg_env:
   ZILEAN_URL: "http://zilean:8181"
   REDIS_HOST: "redis"
   REDIS_PORT: "6379"
-  LOG_LEVEL: "DEBUG"
+  LOG_LEVEL: "INFO"
   LOG_REDACTED: "False"
-  USE_HTTPS: True
-  TZ: Europe/London
+  USE_HTTPS: "True"
+  TZ: "Europe/Paris"
