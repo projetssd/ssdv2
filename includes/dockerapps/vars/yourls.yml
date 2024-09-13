@@ -12,4 +12,4 @@ pg_env:
   YOURLS_DB_PASS: "{{ pgrole }}"
   YOURLS_USER: "{{ user.name }}"
   YOURLS_PASS: "{{ user.pass }}"
-  YOURLS_SITE: "https://{{ fqdn }}"
+  YOURLS_SITE: "https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{user.domain}}"

@@ -9,7 +9,7 @@ pg_volumes:
 pg_env:
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
-  BASE_URL: "https://{{ fqdn }}"
+  BASE_URL: "https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{user.domain}}"
   PORT: "7000"
   CACHE_CATALOG_CONTENT_DURATION_DAYS: '3'
   CACHE_POSTER_CONTENT_DURATION_DAYS: '7'
