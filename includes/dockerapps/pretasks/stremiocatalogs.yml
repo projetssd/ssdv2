@@ -1,0 +1,6 @@
+---
+
+- pause:
+    prompt: "TMDB_API_TOKEN"
+    echo: yes
+  register: tmdb_api_token
