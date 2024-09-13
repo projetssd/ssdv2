@@ -797,6 +797,11 @@ function suppression_appli() {
     docker volume rm data-zilean data-pg-zilean >/dev/null 2>&1
     manage_account_yml sub.streamfusion " "
     ;;
+  stremiocatalogs)
+    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/stremiocatalogs
+    docker rm -f stremiocatalogs >/dev/null 2>&1
+    manage_account_yml sub.stremiocatalogs " "
+    ;;
   esac
 
   if docker ps | grep -q db-$APPSELECTED; then

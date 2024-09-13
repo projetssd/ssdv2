@@ -1,0 +1,21 @@
+# https://github.com/redd-ravenn/stremio-catalog-providers
+---
+pgrole: 'stremiocatalogs'
+intport: '7000'
+image: 'ghcr.io/limedrive/stremio-catalog-providers:latest'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db:/usr/src/app/db"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/log:/usr/src/app/log"
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  BASE_URL: "https://{{ fqdn }}"
+  PORT: "7000"
+  CACHE_CATALOG_CONTENT_DURATION_DAYS: '3'
+  CACHE_POSTER_CONTENT_DURATION_DAYS: '7'
+  TMDB_BEARER_TOKEN: "{{ tmdb_api_token.user_input }}"
+  TMDB_LANGUAGE: 'fr'
+  TMDB_WATCH_REGION: 'FR'
+  LOG_LEVEL: 'info'
+  LOG_INTERVAL_DELETION: '3d'
+  TZ: 'Europe/Paris'
