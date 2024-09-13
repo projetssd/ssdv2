@@ -2,7 +2,7 @@
 ---
 pgrole: 'stremiocatalogs'
 intport: '7000'
-image: 'ghcr.io/limedrive/stremio-catalog-providers:latest'
+image: 'reddravenn/stremio-catalog-providers:latest'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db:/usr/src/app/db"
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/log:/usr/src/app/log"
