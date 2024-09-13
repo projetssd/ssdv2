@@ -131,6 +131,8 @@ speedtesttracker - Teste vitesse Internet
 statping - Surveillance de vos sites Web
 streamfusion - plugin for Stremio streaming
 stremiocatalogs - plugin for Stremio that provides catalogs
+stremiosaga - plugin for Stremio that provides saga infos
+stremiomanager - plugin for Stremio for re-organizing your plugins
 subsonic - Serveur multimédia
 synclounge - Adon Plex
 syncthing - Synchronisation de fichiers

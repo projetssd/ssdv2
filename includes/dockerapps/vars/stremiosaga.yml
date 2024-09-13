@@ -1,0 +1,16 @@
+# https://github.com/redd-ravenn/stremio-saga-addon
+---
+pgrole: 'stremiosaga'
+intport: '7000'
+image: 'reddravenn/stremio-catalog-providers:latest'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/log:/usr/src/app/log"
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  PORT: "7000"
+  RATE_LIMIT_ENABLED: "true" 
+  TMDB_API_KEY: "{{ tmdb_api_key.user_input }}"
+  NODE_ENV: "production"
+  LOG_ENABLED: "true"
+  TZ: 'Europe/Paris'
