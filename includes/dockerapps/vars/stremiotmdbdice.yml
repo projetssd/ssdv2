@@ -1,17 +1,18 @@
-# https://github.com/redd-ravenn/stremio-saga-addon
+# https://github.com/redd-ravenn/stremio-tmdb-dice
 ---
-pgrole: 'stremiosaga'
+pgrole: 'stremiotmdbdice'
 intport: '7000'
-image: 'reddravenn/stremio-catalog-providers:latest'
+image: 'reddravenn/stremio-tmdb-dice:latest'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db:/usr/src/app/db"
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/log:/usr/src/app/log"
 pg_env:
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
+  BASE_URL: "https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{user.domain}}"
   PORT: "7000"
-  RATE_LIMIT_ENABLED: "true"
-  TMDB_API_KEY: "{{ tmdb_api_key.user_input }}"
+  CATALOG_CONTENT_CACHE_DURATION: "3d"
+  RPDB_POSTER_CACHE_DURATION: "3d"
   NODE_ENV: "production"
-  LOG_ENABLED: "true"
+  LOG_INTERVAL_DELETION: "3d"
   TZ: 'Europe/Paris'
