@@ -7,3 +7,6 @@ pg_env:
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
   TZ: 'Europe/Paris'
+pg_volumes:
+  - '/etc/localtime:/etc/localtime:ro'
+
