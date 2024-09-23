@@ -28,7 +28,7 @@
     - streamfusion
 
 - name: Create missing databases
-  command: docker exec -e PGPASSWORD=stremio stremio-postgres psql -U stremio -c "CREATE DATABASE {{ item }};"
+  command: docker exec -e PGPASSWORD=stremio stremio-postgres psql -U stremio -d postgres -c "CREATE DATABASE {{ item }};"
   when: db_check.results | selectattr('item', 'equalto', item) | map(attribute='rc') | first != 0
   loop:
     - zilean
