@@ -844,18 +844,18 @@ function check_and_remove_shared_containers() {
   done
 
   if docker ps -a --filter "name=stremio-postgres" --format "{{.Names}}" | grep -q "stremio-postgres"; then
-    case "$app" in
-      streamfusion)
-        docker exec -e PGPASSWORD=stremio stremio-postgres psql -U stremio -c "DROP DATABASE IF EXISTS zilean;" || echo "Failed to drop zilean database."
-        docker exec -e PGPASSWORD=stremio stremio-postgres psql -U stremio -c "DROP DATABASE IF EXISTS streamfusion;" || echo "Failed to drop streamfusion database."
-        ;;
-      stremiocatalogs)
-        docker exec -e PGPASSWORD=stremio stremio-postgres psql -U stremio -c "DROP DATABASE IF EXISTS \"stremio-catalogs-db\";" || echo "Failed to drop stremio-catalogs-db database."
-        ;;
-      *)
-        docker exec -e PGPASSWORD=stremio stremio-postgres psql -U stremio -c "DROP DATABASE IF EXISTS \"$app-db\";" || echo "Failed to drop $app-db database."
-        ;;
-    esac
+      case "$app" in
+        streamfusion)
+          docker exec -e PGPASSWORD=stremio stremio-postgres psql -U stremio -d postgres -c "DROP DATABASE IF EXISTS \"zilean\";" || echo "Failed to drop zilean database."
+          docker exec -e PGPASSWORD=stremio stremio-postgres psql -U stremio -d postgres -c "DROP DATABASE IF EXISTS \"streamfusion\";" || echo "Failed to drop streamfusion database."
+          ;;
+        stremiocatalogs)
+          docker exec -e PGPASSWORD=stremio stremio-postgres psql -U stremio -d postgres -c "DROP DATABASE IF EXISTS \"stremio-catalog-db\";" || echo "Failed to drop stremio-catalog-db database."
+          ;;
+        *)
+          docker exec -e PGPASSWORD=stremio stremio-postgres psql -U stremio -d postgres -c "DROP DATABASE IF EXISTS \"$app-db\";" || echo "Failed to drop $app-db database."
+          ;;
+      esac
   fi
 
   if ! $other_apps_running; then
