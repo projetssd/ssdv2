@@ -6,6 +6,10 @@ bantime = 600
 [sshd]
 enabled = true
 port = {{ ssh_port }}
+{% if ansible_distribution_major_version == "12" %}
+backend = systemd
+{% else %}
 logpath = /var/log/auth.log
+{% endif %}
 banaction = iptables-multiport
 maxretry = 5
