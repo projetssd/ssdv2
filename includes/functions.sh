@@ -790,13 +790,18 @@ function suppression_appli() {
     docker volume rm model-cache >/dev/null 2>&1
     manage_account_yml sub.immich " "
     ;;
-  zilean|streamfusion|stremiocatalogs)
+  streamfusion)
+    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/${APPSELECTED}
+    docker rm -f zilean streamfusion >/dev/null 2>&1
+    # Il faut gérer les DB postgres dans la fonction 'check_and_remove_shared_containers'
+    check_and_remove_shared_containers ${APPSELECTED}
+    docker volume prune -f >/dev/null 2>&1
+    ;;
+  stremiocatalogs)
     sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/${APPSELECTED}
     docker rm -f ${APPSELECTED} >/dev/null 2>&1
     # Il faut gérer les DB postgres dans la fonction 'check_and_remove_shared_containers'
     check_and_remove_shared_containers ${APPSELECTED}
-    docker volume prune -f >/dev/null 2>&1
-    manage_account_yml sub.${APPSELECTED} " "
     ;;
   esac
 
