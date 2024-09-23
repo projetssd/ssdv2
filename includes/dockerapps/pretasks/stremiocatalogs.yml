@@ -1,102 +1,32 @@
 ---
-- name: Check if TRAKT_CLIENT_ID and TRAKT_CLIENT_SECRET are present
-  set_fact:
-    trakt_client_id_exists: "{{ not (trakt.id is undefined or trakt.id is none or (trakt.id | trim | length == 0)) }}"
-    trakt_client_secret_exists: "{{ not (trakt.secret is undefined or trakt.secret is none or (trakt.secret | trim | length == 0)) }}"
+- name: Launch Pretask
+  include_tasks: "{{ settings.source }}/includes/dockerapps/pretasks/stremiobase.yml"
 
-- name: Ask TRAKT_CLIENT_ID if missing
-  pause:
-    prompt: "Please enter your TRAKT_CLIENT_ID"
-    echo: yes
-  register: trakt_client_id_input
-  when: not trakt_client_id_exists
-
-- name: Ask TRAKT_CLIENT_SECRET if missing
-  pause:
-    prompt: "Please enter your TRAKT_CLIENT_SECRET"
-    echo: yes
-  register: trakt_client_secret_input
-  when: not trakt_client_secret_exists
-
-- name: Update TRAKT_CLIENT_ID and TRAKT_CLIENT_SECRET
-  set_fact:
-    trakt:
-      id: "{{ trakt_client_id_input.user_input if not trakt_client_id_exists else trakt.id }}"
-      secret: "{{ trakt_client_secret_input.user_input if not trakt_client_secret_exists else trakt.secret }}"
-
-- name: Add TRAKT_CLIENT_ID and TRAKT_CLIENT_SECRET in the vault
-  shell: |
-    source ${SETTINGS_SOURCE}/profile.sh
-    manage_account_yml trakt.id "{{ trakt.id }}"
-    manage_account_yml trakt.secret "{{ trakt.secret }}"
-  args:
-    executable: /bin/bash
-  when: trakt_client_id_input is defined or trakt_client_secret_input is defined
-
-- name: Check if postgres-zilean container exists
-  command: docker ps -a --filter "name=postgres-zilean" --format "{{ '{{' }}.Names{{ '}}' }}"
-  register: zilean_container
+- name: Check if stremio-postgres container exists
+  command: docker ps -a --filter "name=stremio-postgres" --format "{% raw %}{{.Names}}{% endraw %}"
+  register: stremio_postgres_container
   changed_when: false
 
-- name: Create a volume
-  docker_volume:
-    name: data-pg-stremio-catalogs
-  when: zilean_container.stdout == ""
+- name: Check if stremio-redis container exists
+  command: docker ps -a --filter "name=stremio-redis" --format "{% raw %}{{.Names}}{% endraw %}"
+  register: stremio_redis_container
+  changed_when: false
 
-- name: Ensure postgres-stremio-catalogs container is created if postgres-zilean does not exist
-  community.docker.docker_container:
-    name: postgres-stremio-catalogs
-    image: "postgres:16.3-alpine3.20"
-    env:
-      PGDATA: "/var/lib/postgresql/data/pgdata"
-      POSTGRES_USER: "stremio"
-      POSTGRES_PASSWORD: "stremio"
-      POSTGRES_DB: "stremio-catalog-db"
-    volumes:
-      - data-pg-stremio-catalogs:/var/lib/postgresql/data/pgdata
-    restart_policy: always
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres-stremio-catalogs" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - name: traefik_proxy
-  when: zilean_container.stdout == ""
+- name: Fail if stremio-redis container does not exist
+  fail:
+    msg: "The stremio-redis container does not exist. Please ensure it is running before proceeding."
+  when: stremio_redis_container.stdout == ""
 
-- name: Add stremio_catalogs database to postgres-zilean if it exists
-  command: docker exec -e PGPASSWORD=zilean postgres-zilean psql -U zilean -c "CREATE DATABASE \"stremio-catalog-db\";"
-  when: zilean_container.stdout != ""
+- name: Check if databases exist
+  command: docker exec stremio-postgres psql -U stremio -lqt | cut -d \| -f 1 | grep -qw {{ item }}
+  register: db_check
+  changed_when: false
+  failed_when: false
+  loop:
+    - stremio-catalog-db
 
-- name: Set DB environment variables for postgres-zilean
-  set_fact:
-    db_user: "zilean"
-    db_host: "postgres-zilean"
-    db_password: "zilean"
-  when: zilean_container.stdout != ""
-
-- name: Set DB environment variables for postgres-stremio-catalogs
-  set_fact:
-    db_user: "stremio"
-    db_host: "postgres-stremio-catalogs"
-    db_password: "stremio"
-  when: zilean_container.stdout == ""
-
-- name: Wait for postgres-stremio-catalogs to be healthy
-  command: >
-    docker inspect --format="{{ '{{' }}.State.Health.Status{{ '}}' }}" postgres-stremio-catalogs
-  register: postgres_health
-  until: postgres_health.stdout == 'healthy'
-  retries: 10
-  delay: 10
-  when: zilean_container.stdout == ""
-
-- name: redis
-  community.docker.docker_container:
-    name: redis
-    image: redis:latest
-    volumes:
-      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/redis:/app/data"
-    restart_policy: always
-    networks:
-      - name: traefik_proxy
+- name: Create missing databases
+  command: docker exec -e PGPASSWORD=stremio stremio-postgres psql -U stremio -c "CREATE DATABASE {{ item }};"
+  when: db_check.results | selectattr('item', 'equalto', item) | map(attribute='rc') | first != 0
+  loop:
+    - stremio-catalog-db
