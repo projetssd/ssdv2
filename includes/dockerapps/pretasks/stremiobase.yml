@@ -1,0 +1,55 @@
+---
+- name: Check if containers exist
+  command: docker ps -a --filter "name={{ item }}" --format "{% raw %}{{.Names}}{% endraw %}"
+  register: container_check
+  changed_when: false
+  loop:
+    - stremio-postgres
+    - stremio-redis
+
+- name: Create Docker volumes
+  docker_volume:
+    name: "data-{{ item }}"
+  loop:
+    - stremio-postgres
+    - stremio-redis
+  when: item not in container_check.results | map(attribute='stdout') | list
+
+- name: Deploy stremio-postgres
+  community.docker.docker_container:
+    name: stremio-postgres
+    image: "postgres:16.3-alpine3.20"
+    env:
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+      POSTGRES_USER: "stremio"
+      POSTGRES_PASSWORD: "stremio"
+      POSTGRES_DB: "shared"
+    volumes:
+      - data-stremio-postgres:/var/lib/postgresql/data/pgdata
+    restart_policy: always
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U stremio" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - name: traefik_proxy
+  when: "'stremio-postgres' not in container_check.results | map(attribute='stdout') | list"
+
+- name: Wait for PostgreSQL to be healthy
+  command: docker inspect --format="{% raw %}{{.State.Health.Status}}{% endraw %}" stremio-postgres
+  register: postgres_health
+  until: postgres_health.stdout == 'healthy'
+  retries: 12
+  delay: 10
+
+- name: Deploy stremio-redis
+  community.docker.docker_container:
+    name: stremio-redis
+    image: redis:latest
+    volumes:
+      - "data-stremio-redis:/app/data"
+    restart_policy: always
+    networks:
+      - name: traefik_proxy
+  when: "'stremio-redis' not in container_check.results | map(attribute='stdout') | list"

@@ -1,72 +1,48 @@
 ---
-
-- pause:
-    prompt: "SECRET_API_KEY"
-    echo: yes
+- name: Prompt for SECRET_API_KEY
+  pause:
+    prompt: "Enter SECRET_API_KEY"
+    echo: no
   register: secret_api_key
 
-- pause:
-    prompt: "TMDB_API_KEY"
-    echo: yes
-  register: tmdb_api_key
+- name: Check if stremio-postgres container exists
+  command: docker ps -a --filter "name=stremio-postgres" --format "{% raw %}{{.Names}}{% endraw %}"
+  register: stremio_postgres_container
+  changed_when: false
 
-- name: Create a volume
-  docker_volume:
-    name: data-pg-zilean
+- name: Check if databases exist
+  command: docker exec stremio-postgres psql -U stremio -lqt | cut -d \| -f 1 | grep -qw {{ item }}
+  register: db_check
+  changed_when: false
+  failed_when: false
+  loop:
+    - zilean
+    - streamfusion
 
-- name: Create a volume
+- name: Create missing databases
+  command: docker exec -e PGPASSWORD=stremio stremio-postgres psql -U stremio -c "CREATE DATABASE {{ item }};"
+  when: db_check.results | selectattr('item', 'equalto', item) | map(attribute='rc') | first != 0
+  loop:
+    - zilean
+    - streamfusion
+
+- name: Create a volume for zilean
   docker_volume:
     name: data-zilean
 
-- name: postgres-zilean
-  community.docker.docker_container:
-    name: postgres-zilean
-    image: "postgres:16.3-alpine3.20"
-    env:
-      PGDATA: "/var/lib/postgresql/data/pgdata"
-      POSTGRES_USER: "zilean"
-      POSTGRES_PASSWORD: "zilean"
-      POSTGRES_DB: "zilean"
-    volumes:
-      - data-pg-zilean:/var/lib/postgresql/data/pgdata
-    restart_policy: always
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U zilean" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - name: traefik_proxy
-
-- name: Wait for postgres to be healthy
-  command: >
-    docker inspect --format="{{ '{{' }}.State.Health.Status{{ '}}' }}" postgres-zilean
-  register: postgres_health
-  until: postgres_health.stdout == 'healthy'
-  retries: 10
-  delay: 10
-
-- name: zilean
+- name: Deploy zilean container
   community.docker.docker_container:
     name: zilean
     image: ipromknight/zilean:latest
     env:
-      Zilean__Database__ConnectionString: "Host=postgres-zilean;Port=5432;Database=zilean;Username=zilean;Password=zilean"
+      Zilean__Database__ConnectionString: "Host=stremio-postgres;Port=5432;Database=zilean;Username=stremio;Password=stremio"
       Zilean__Dmm__ImportBatched: "true"
+      Zilean__Imdb__EnableImportMatching: "false"
+      Zilean__Imdb__EnableEndpoint: "false"
       Zilean__Dmm__MaxFilteredResults: "200"
       Zilean__Dmm__MinimumScoreMatch: "0.85"
     volumes:
       - data-zilean:/app/data
-    restart_policy: always
-    networks:
-      - name: traefik_proxy
-
-- name: redis
-  community.docker.docker_container:
-    name: redis
-    image: redis:latest
-    volumes:
-      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/redis:/app/data"
     restart_policy: always
     networks:
       - name: traefik_proxy

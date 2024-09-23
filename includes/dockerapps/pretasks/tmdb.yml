@@ -1,0 +1,24 @@
+---
+- name: Check if TMDB_API_KEY are present
+  set_fact:
+    tmdb_api_key_exists: "{{ not (tmdb.apikey is undefined or tmdb.apikey is none or (tmdb.apikey | trim | length == 0)) }}"
+
+- name: Ask TMDB_API_KEY if missing
+  pause:
+    prompt: "Please enter your TMDB_API_KEY"
+    echo: yes
+  register: tmdb_api_key_input
+  when: not tmdb_api_key_exists
+
+- name: Update TMDB_API_KEY
+  set_fact:
+    tmdb:
+      apikey: "{{ tmdb_api_key_input.user_input if not tmdb_api_key_exists else tmdb.apikey }}"
+
+- name: Add TMDB_API_KEY in the vault
+  shell: |
+    source ${SETTINGS_SOURCE}/profile.sh
+    manage_account_yml tmdb.apikey "{{ tmdb.apikey }}"
+  args:
+    executable: /bin/bash
+  when: tmdb_api_key_input is defined
