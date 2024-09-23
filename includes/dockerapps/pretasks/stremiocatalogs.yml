@@ -18,7 +18,7 @@
   when: stremio_redis_container.stdout == ""
 
 - name: Check if databases exist
-  command: docker exec stremio-postgres psql -U stremio -lqt | cut -d \| -f 1 | grep -qw {{ item }}
+  command: docker exec stremio-postgres psql -U stremio -d postgres -lqt | cut -d \| -f 1 | grep -qw {{ item }}
   register: db_check
   changed_when: false
   failed_when: false
@@ -26,7 +26,7 @@
     - stremio-catalog-db
 
 - name: Create missing databases
-  command: docker exec -e PGPASSWORD=stremio stremio-postgres psql -U stremio -c "CREATE DATABASE {{ item }};"
+  command: docker exec -e PGPASSWORD=stremio stremio-postgres psql -U stremio -d postgres -c "CREATE DATABASE {{ item }};"
   when: db_check.results | selectattr('item', 'equalto', item) | map(attribute='rc') | first != 0
   loop:
     - stremio-catalog-db
