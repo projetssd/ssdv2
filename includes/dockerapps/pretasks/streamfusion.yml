@@ -1,14 +1,22 @@
 ---
-- name: Prompt for SECRET_API_KEY
-  pause:
-    prompt: "Enter SECRET_API_KEY"
-    echo: no
-  register: secret_api_key
+
+- name: Launch Pretask
+  include_tasks: "{{ settings.source }}/includes/dockerapps/pretasks/stremiobase.yml"
 
 - name: Check if stremio-postgres container exists
   command: docker ps -a --filter "name=stremio-postgres" --format "{% raw %}{{.Names}}{% endraw %}"
   register: stremio_postgres_container
   changed_when: false
+
+- name: Check if stremio-redis container exists
+  command: docker ps -a --filter "name=stremio-redis" --format "{% raw %}{{.Names}}{% endraw %}"
+  register: stremio_redis_container
+  changed_when: false
+
+- name: Fail if stremio-redis container does not exist
+  fail:
+    msg: "The stremio-redis container does not exist. Please ensure it is running before proceeding."
+  when: stremio_redis_container.stdout == ""
 
 - name: Check if databases exist
   command: docker exec stremio-postgres psql -U stremio -lqt | cut -d \| -f 1 | grep -qw {{ item }}
@@ -46,3 +54,9 @@
     restart_policy: always
     networks:
       - name: traefik_proxy
+
+- name: Prompt for SECRET_API_KEY
+  pause:
+    prompt: "Enter SECRET_API_KEY"
+    echo: no
+  register: secret_api_key

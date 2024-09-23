@@ -1,55 +1,32 @@
 ---
+- name: Launch Pretask
+  include_tasks: "{{ settings.source }}/includes/dockerapps/pretasks/stremiobase.yml"
+
 - name: Check if stremio-postgres container exists
-  command: docker ps -a --filter "name=stremio-postgres" --format "{{ '{{' }}.Names{{ '}}' }}"
-  register: stremio-postgres_container
+  command: docker ps -a --filter "name=stremio-postgres" --format "{% raw %}{{.Names}}{% endraw %}"
+  register: stremio_postgres_container
   changed_when: false
 
-- name: Add stremio_catalogs database to stremio-postgres if it exists
-  command: docker exec -e PGPASSWORD=stremio stremio-postgres psql -U stremio -c "CREATE DATABASE \"stremio-catalog-db\";"
-  when: stremio-postgres_container.stdout == ""
+- name: Check if stremio-redis container exists
+  command: docker ps -a --filter "name=stremio-redis" --format "{% raw %}{{.Names}}{% endraw %}"
+  register: stremio_redis_container
+  changed_when: false
 
-# - name: Create a volume
-#   docker_volume:
-#     name: data-pg-stremio-catalogs
-#   when: zilean_container.stdout == ""
+- name: Fail if stremio-redis container does not exist
+  fail:
+    msg: "The stremio-redis container does not exist. Please ensure it is running before proceeding."
+  when: stremio_redis_container.stdout == ""
 
-# - name: Ensure postgres-stremio-catalogs container is created if stremio-postgres does not exist
-#   community.docker.docker_container:
-#     name: postgres-stremio-catalogs
-#     image: "postgres:16.3-alpine3.20"
-#     env:
-#       PGDATA: "/var/lib/postgresql/data/pgdata"
-#       POSTGRES_USER: "stremio"
-#       POSTGRES_PASSWORD: "stremio"
-#       POSTGRES_DB: "stremio-catalog-db"
-#     volumes:
-#       - data-pg-stremio-catalogs:/var/lib/postgresql/data/pgdata
-#     restart_policy: always
-#     healthcheck:
-#       test: [ "CMD-SHELL", "pg_isready -U postgres-stremio-catalogs" ]
-#       interval: 10s
-#       timeout: 5s
-#       retries: 5
-#     networks:
-#       - name: traefik_proxy
-#   when: stremio-postgres_container.stdout == ""
+- name: Check if databases exist
+  command: docker exec stremio-postgres psql -U stremio -lqt | cut -d \| -f 1 | grep -qw {{ item }}
+  register: db_check
+  changed_when: false
+  failed_when: false
+  loop:
+    - stremio-catalog-db
 
-
-# - name: Wait for postgres-stremio-catalogs to be healthy
-#   command: >
-#     docker inspect --format="{{ '{{' }}.State.Health.Status{{ '}}' }}" postgres-stremio-catalogs
-#   register: postgres_health
-#   until: postgres_health.stdout == 'healthy'
-#   retries: 10
-#   delay: 10
-#   when: stremio-postgres_container.stdout == ""
-
-# - name: redis
-#   community.docker.docker_container:
-#     name: redis
-#     image: redis:latest
-#     volumes:
-#       - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/redis:/app/data"
-#     restart_policy: always
-#     networks:
-#       - name: traefik_proxy
+- name: Create missing databases
+  command: docker exec -e PGPASSWORD=stremio stremio-postgres psql -U stremio -c "CREATE DATABASE {{ item }};"
+  when: db_check.results | selectattr('item', 'equalto', item) | map(attribute='rc') | first != 0
+  loop:
+    - stremio-catalog-db

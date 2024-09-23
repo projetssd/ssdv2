@@ -8,15 +8,9 @@ pg_env:
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
   SECRET_API_KEY: "{{ secret_api_key.user_input }}"
-  TMDB_API_KEY: "{{ tmdb.apikey }}" # TODO: Add TMDB API key from global vars and made pre-tasks
-  ZILEAN_URL: "http://zilean:8181"
-  REDIS_HOST: "redis"
-  REDIS_PORT: "6379"
-  LOG_LEVEL: "INFO"
-  LOG_REDACTED: "False"
-  USE_HTTPS: "True"
+  TMDB_API_KEY: "{{ tmdb.apikey }}"
+  REDIS_HOST: "stremio-redis"
+  PG_HOST: "stremio-postgres"
   TZ: "Europe/Paris"
 pretasks:
   - tmdb
-  - stremiobase
-  - streamfusion
