@@ -58,10 +58,10 @@
     db_password: "stremio"
   when: zilean_container.stdout == ""
 
-- name: Update DB credentials in the template
-  template:
-    src: stremio_catalog_providers_template.j2
-    dest: /home/{{ lookup('env', 'USER') }}/seedbox-compose/includes/dockerapps/vars/stremiocatalogs.yml
+# - name: Update DB credentials in the template
+#   template:
+#     src: stremio_catalog_providers_template.j2
+#     dest: /home/{{ lookup('env', 'USER') }}/seedbox-compose/includes/dockerapps/vars/stremiocatalogs.yml
 
 - name: Wait for postgres-stremio-catalogs to be healthy
   command: >
