@@ -3,11 +3,17 @@
   gather_facts: true
 
   vars:
-    - local_ip: "{{ ansible_env['SSH_CLIENT'].split() | first }}"
-    - ssh_port: "{{ ansible_env['SSH_CLIENT'].split() | last }}"
+    local_ip: "{{ ansible_env['SSH_CLIENT'].split()[0] if ansible_env['SSH_CLIENT'] is defined else '127.0.0.1' }}"
+    ssh_port: "{{ ansible_env['SSH_CLIENT'].split()[-1] if ansible_env['SSH_CLIENT'] is defined else '22' }}"
+
   tasks:
-        
+
     # FACTS #######################################################################
+    - name: Afficher les variables
+      debug:
+        msg:
+          - "IP du client: {{ local_ip }}"
+          - "Port SSH: {{ ssh_port }}"
 
     - name: "Variables | Set 'cloudflare_enabled' variable"
       set_fact:
