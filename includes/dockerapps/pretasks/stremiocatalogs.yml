@@ -1,13 +1,37 @@
 ---
-- pause:
-    prompt: "TRAKT_CLIENT_ID"
-    echo: yes
-  register: trakt_client_id
+- name: Check if TRAKT_CLIENT_ID and TRAKT_CLIENT_SECRET are present
+  set_fact:
+    trakt_client_id_exists: "{{ not (trakt.id is undefined or trakt.id is none or (trakt.id | trim | length == 0)) }}"
+    trakt_client_secret_exists: "{{ not (trakt.secret is undefined or trakt.secret is none or (trakt.secret | trim | length == 0)) }}"
 
-- pause:
-    prompt: "TRAKT_CLIENT_SECRET"
+- name: Ask TRAKT_CLIENT_ID if missing
+  pause:
+    prompt: "Please enter your TRAKT_CLIENT_ID"
     echo: yes
-  register: trakt_client_secret
+  register: trakt_client_id_input
+  when: not trakt_client_id_exists
+
+- name: Ask TRAKT_CLIENT_SECRET if missing
+  pause:
+    prompt: "Please enter your TRAKT_CLIENT_SECRET"
+    echo: yes
+  register: trakt_client_secret_input
+  when: not trakt_client_secret_exists
+
+- name: Update TRAKT_CLIENT_ID and TRAKT_CLIENT_SECRET
+  set_fact:
+    trakt:
+      id: "{{ trakt_client_id_input.user_input if not trakt_client_id_exists else trakt.id }}"
+      secret: "{{ trakt_client_secret_input.user_input if not trakt_client_secret_exists else trakt.secret }}"
+
+- name: Add TRAKT_CLIENT_ID and TRAKT_CLIENT_SECRET in the vault
+  shell: |
+    source ${SETTINGS_SOURCE}/profile.sh
+    manage_account_yml trakt.id "{{ trakt.id }}"
+    manage_account_yml trakt.secret "{{ trakt.secret }}"
+  args:
+    executable: /bin/bash
+  when: trakt_client_id_input is defined or trakt_client_secret_input is defined
 
 - name: Check if postgres-zilean container exists
   command: docker ps -a --filter "name=postgres-zilean" --format "{{ '{{' }}.Names{{ '}}' }}"
@@ -57,11 +81,6 @@
     db_host: "postgres-stremio-catalogs"
     db_password: "stremio"
   when: zilean_container.stdout == ""
-
-# - name: Update DB credentials in the template
-#   template:
-#     src: stremio_catalog_providers_template.j2
-#     dest: /home/{{ lookup('env', 'USER') }}/seedbox-compose/includes/dockerapps/vars/stremiocatalogs.yml
 
 - name: Wait for postgres-stremio-catalogs to be healthy
   command: >

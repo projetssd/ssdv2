@@ -22,8 +22,8 @@ pg_env:
   REDIS_HOST: 'redis'
   REDIS_PORT: '6379'
   REDIS_PASSWORD: ''
-  TRAKT_CLIENT_ID: "{{ trakt_client_id.user_input }}"
-  TRAKT_CLIENT_SECRET: "{{ trakt_client_secret.user_input }}"
+  TRAKT_CLIENT_ID: "{{ trakt.id }}"
+  TRAKT_CLIENT_SECRET: "{{ trakt.secret }}"
   TRAKT_HISTORY_FETCH_INTERVAL: '1d'
   CACHE_CATALOG_CONTENT_DURATION_DAYS: '3'
   CACHE_POSTER_CONTENT_DURATION_DAYS: '7'
@@ -33,3 +33,5 @@ pg_env:
   TZ: 'Europe/Paris'
 specific_docker_info:
   recreate: "true"
+pretasks:
+  - trakt
