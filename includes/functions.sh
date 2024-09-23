@@ -790,25 +790,14 @@ function suppression_appli() {
     docker volume rm model-cache >/dev/null 2>&1
     manage_account_yml sub.immich " "
     ;;
-  streamfusion)
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/streamfusion
-    docker rm -f streamfusion postgres-zilean zilean >/dev/null 2>&1
+  zilean|streamfusion|stremiocatalogs)
+    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/${APPSELECTED}
+    docker rm -f ${APPSELECTED} >/dev/null 2>&1
+    # Il faut gérer les DB postgres dans la fonction 'check_and_remove_shared_containers'
+    check_and_remove_shared_containers ${APPSELECTED}
     docker volume prune -f >/dev/null 2>&1
-    docker volume rm data-zilean data-pg-zilean >/dev/null 2>&1
-    manage_account_yml sub.streamfusion " "
+    manage_account_yml sub.${APPSELECTED} " "
     ;;
-  stremiocatalogs)
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/stremiocatalogs
-    if docker ps -a --filter "name=postgres-zilean" --format "{{.Names}}" | grep -q "postgres-zilean"; then
-        docker exec -e PGPASSWORD=zilean postgres-zilean psql -U zilean -c "DROP DATABASE IF EXISTS \"stremio-catalog-db\";"
-    fi
-    if docker ps -a --filter "name=postgres-stremio-catalogs" --format "{{.Names}}" | grep -q "postgres-stremio-catalogs"; then
-        docker rm -f postgres-stremio-catalogs >/dev/null 2>&1
-    fi
-    docker volume prune -f >/dev/null 2>&1
-    docker volume rm data-pg-stremio-catalogs >/dev/null 2>&1
-    manage_account_yml sub.stremiocatalogs " "
-    ;;    
   esac
 
   if docker ps | grep -q db-$APPSELECTED; then
@@ -840,6 +829,39 @@ $req
 
 EOF
 
+}
+
+function check_and_remove_shared_containers() {
+  local app="$1"
+  local other_apps=("zilean" "streamfusion" "stremiocatalogs")
+  local other_apps_running=false
+
+  for other_app in "${other_apps[@]}"; do
+    if [ "$other_app" != "$app" ] && docker ps -q --filter name="$other_app" | grep -q .; then
+      other_apps_running=true
+      break
+    fi
+  done
+
+  if docker ps -a --filter "name=stremio-postgres" --format "{{.Names}}" | grep -q "stremio-postgres"; then
+    case "$app" in
+      streamfusion)
+        docker exec -e PGPASSWORD=stremio stremio-postgres psql -U stremio -c "DROP DATABASE IF EXISTS zilean;" || echo "Failed to drop zilean database."
+        docker exec -e PGPASSWORD=stremio stremio-postgres psql -U stremio -c "DROP DATABASE IF EXISTS streamfusion;" || echo "Failed to drop streamfusion database."
+        ;;
+      stremiocatalogs)
+        docker exec -e PGPASSWORD=stremio stremio-postgres psql -U stremio -c "DROP DATABASE IF EXISTS \"stremio-catalogs-db\";" || echo "Failed to drop stremio-catalogs-db database."
+        ;;
+      *)
+        docker exec -e PGPASSWORD=stremio stremio-postgres psql -U stremio -c "DROP DATABASE IF EXISTS \"$app-db\";" || echo "Failed to drop $app-db database."
+        ;;
+    esac
+  fi
+
+  if ! $other_apps_running; then
+    docker rm -f stremio-postgres stremio-redis >/dev/null 2>&1 || echo "Failed to remove containers."
+    docker volume rm data-stremio-postgres data-stremio-redis >/dev/null 2>&1 || echo "Failed to remove volumes."
+  fi
 }
 
 function pause() {
