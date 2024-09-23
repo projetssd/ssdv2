@@ -797,6 +797,18 @@ function suppression_appli() {
     docker volume rm data-zilean data-pg-zilean >/dev/null 2>&1
     manage_account_yml sub.streamfusion " "
     ;;
+  stremiocatalogs)
+    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/stremiocatalogs
+    if docker ps -a --filter "name=postgres-zilean" --format "{{.Names}}" | grep -q "postgres-zilean"; then
+        docker exec -e PGPASSWORD=zilean postgres-zilean psql -U zilean -c "DROP DATABASE IF EXISTS \"stremio-catalog-db\";"
+    fi
+    if docker ps -a --filter "name=postgres-stremio-catalogs" --format "{{.Names}}" | grep -q "postgres-stremio-catalogs"; then
+        docker rm -f postgres-stremio-catalogs >/dev/null 2>&1
+    fi
+    docker volume prune -f >/dev/null 2>&1
+    docker volume rm data-pg-stremio-catalogs >/dev/null 2>&1
+    manage_account_yml sub.stremiocatalogs " "
+    ;;    
   esac
 
   if docker ps | grep -q db-$APPSELECTED; then

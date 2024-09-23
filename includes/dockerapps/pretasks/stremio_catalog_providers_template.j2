@@ -1,4 +1,4 @@
-# https://github.com/redd-ravenn/stremio-catalog-providers
+# stremio_catalog_providers_template.j2
 ---
 pgrole: 'stremiocatalogs'
 intport: '7000'
@@ -11,10 +11,10 @@ pg_env:
   PGID: "{{ lookup('env','MYGID') }}"
   BASE_URL: "https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{user.domain}}"
   PORT: "7000"
-  DB_USER: 'stremio'
-  DB_HOST: 'postgres-stremio-catalogs'
+  DB_USER: "{{ db_user }}"
+  DB_HOST: "{{ db_host }}"
   DB_NAME: 'stremio-catalog-db'
-  DB_PASSWORD: 'stremio'
+  DB_PASSWORD: "{{ db_password }}"
   DB_PORT: '5432'
   DB_MAX_CONNECTIONS: '20'
   DB_IDLE_TIMEOUT: '30000'

@@ -1,6 +1,83 @@
 ---
+- pause:
+    prompt: "TRAKT_CLIENT_ID"
+    echo: yes
+  register: trakt_client_id
 
 - pause:
-    prompt: "TMDB_API_TOKEN"
+    prompt: "TRAKT_CLIENT_SECRET"
     echo: yes
-  register: tmdb_api_token
+  register: trakt_client_secret
+
+- name: Check if postgres-zilean container exists
+  command: docker ps -a --filter "name=postgres-zilean" --format "{{ '{{' }}.Names{{ '}}' }}"
+  register: zilean_container
+  changed_when: false
+
+- name: Create a volume
+  docker_volume:
+    name: data-pg-stremio-catalogs
+  when: zilean_container.stdout == ""
+
+- name: Ensure postgres-stremio-catalogs container is created if postgres-zilean does not exist
+  community.docker.docker_container:
+    name: postgres-stremio-catalogs
+    image: "postgres:16.3-alpine3.20"
+    env:
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+      POSTGRES_USER: "stremio"
+      POSTGRES_PASSWORD: "stremio"
+      POSTGRES_DB: "stremio-catalog-db"
+    volumes:
+      - data-pg-stremio-catalogs:/var/lib/postgresql/data/pgdata
+    restart_policy: always
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres-stremio-catalogs" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - name: traefik_proxy
+  when: zilean_container.stdout == ""
+
+- name: Add stremio_catalogs database to postgres-zilean if it exists
+  command: docker exec -e PGPASSWORD=zilean postgres-zilean psql -U zilean -c "CREATE DATABASE \"stremio-catalog-db\";"
+  when: zilean_container.stdout != ""
+
+- name: Set DB environment variables for postgres-zilean
+  set_fact:
+    db_user: "zilean"
+    db_host: "postgres-zilean"
+    db_password: "zilean"
+  when: zilean_container.stdout != ""
+
+- name: Set DB environment variables for postgres-stremio-catalogs
+  set_fact:
+    db_user: "stremio"
+    db_host: "postgres-stremio-catalogs"
+    db_password: "stremio"
+  when: zilean_container.stdout == ""
+
+- name: Update DB credentials in the template
+  template:
+    src: stremio_catalog_providers_template.j2
+    dest: /home/{{ lookup('env', 'USER') }}/seedbox-compose/includes/dockerapps/vars/stremiocatalogs.yml
+
+- name: Wait for postgres-stremio-catalogs to be healthy
+  command: >
+    docker inspect --format="{{ '{{' }}.State.Health.Status{{ '}}' }}" postgres-stremio-catalogs
+  register: postgres_health
+  until: postgres_health.stdout == 'healthy'
+  retries: 10
+  delay: 10
+  when: zilean_container.stdout == ""
+
+- name: redis
+  community.docker.docker_container:
+    name: redis
+    image: redis:latest
+    volumes:
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/redis:/app/data"
+    restart_policy: always
+    networks:
+      - name: traefik_proxy
