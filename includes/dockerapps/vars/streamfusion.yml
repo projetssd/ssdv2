@@ -1,7 +1,7 @@
 ---
 pgrole: 'streamfusion'
 intport: '8080'
-image: 'ghcr.io/limedrive/stream-fusion:develop'
+image: 'ghcr.io/limedrive/stream-fusion:v2-beta'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/app/config"
 pg_env:
