@@ -7,10 +7,18 @@ pg_volumes:
 pg_env:
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
-  SECRET_API_KEY: "{{ secret_api_key.user_input }}"
+  SECRET_API_KEY: "{{ SECRET_API_KEY }}"
   TMDB_API_KEY: "{{ tmdb.apikey }}"
   REDIS_HOST: "stremio-redis"
   PG_HOST: "stremio-postgres"
+  PG_BASE: "streamfusion"
+  PG_USER: "stremio"
+  PG_PASS: "stremio"
+  USE_HTTPS: "true"
+  RD_TOKEN: "{{ RD_TOKEN }}"
+  AD_TOKEN: "{{ AD_TOKEN }}"
+  YGG_PASSKEY: "{{ YGG_PASSKEY }}"
+  SHAREWOOD_PASSKEY: "{{ SHAREWOOD_PASSKEY }}"
   TZ: "Europe/Paris"
 pretasks:
   - tmdb
