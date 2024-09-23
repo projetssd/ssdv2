@@ -35,3 +35,4 @@ specific_docker_info:
   recreate: "true"
 pretasks:
   - trakt
+  - stremiocatalogs
