@@ -1,0 +1,14 @@
+#!/bin/bash
+source "${HOME}/.config/ssd/env"
+source "${SETTINGS_SOURCE}/profile.sh"
+
+# Vérification du statut du service fail2ban
+SERVICE_STATUS=$(sudo systemctl is-active fail2ban)
+
+# Si le service est inactif ou échoué, on exécute la fonction install_fail2ban
+if [[ "$SERVICE_STATUS" != "active" ]]; then
+    echo "Le service fail2ban n'est pas en cours d'exécution. Exécution de la fonction install_fail2ban."
+    install_fail2ban
+else
+    echo "Le service fail2ban est en cours d'exécution."
+fi
