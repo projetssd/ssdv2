@@ -1,5 +1,5 @@
 [DEFAULT]
-ignoreip = 127.0.0.1 {{ ansible_env['SSH_CLIENT'].split() | first }}
+ignoreip = 127.0.0.1 {{ local_ip }}
 findtime = 3600
 bantime = 600
 
