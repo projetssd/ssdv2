@@ -1,6 +1,32 @@
 ---
+- name: Launch Pretask
+  include_tasks: "{{ settings.source }}/includes/dockerapps/pretasks/stremiobase.yml"
 
-- pause:
-    prompt: "TMDB_API_TOKEN"
-    echo: yes
-  register: tmdb_api_token
+- name: Check if stremio-postgres container exists
+  command: docker ps -a --filter "name=stremio-postgres" --format "{% raw %}{{.Names}}{% endraw %}"
+  register: stremio_postgres_container
+  changed_when: false
+
+- name: Check if stremio-redis container exists
+  command: docker ps -a --filter "name=stremio-redis" --format "{% raw %}{{.Names}}{% endraw %}"
+  register: stremio_redis_container
+  changed_when: false
+
+- name: Fail if stremio-redis container does not exist
+  fail:
+    msg: "The stremio-redis container does not exist. Please ensure it is running before proceeding."
+  when: stremio_redis_container.stdout == ""
+
+- name: Check if databases exist
+  command: docker exec stremio-postgres psql -U stremio -d postgres -lqt | cut -d \| -f 1 | grep -qw {{ item }}
+  register: db_check
+  changed_when: false
+  failed_when: false
+  loop:
+    - stremio-catalog-db
+
+- name: Create missing databases
+  command: docker exec -e PGPASSWORD=stremio stremio-postgres psql -U stremio -d postgres -c "CREATE DATABASE \"{{ item }}\";"
+  when: db_check.results | selectattr('item', 'equalto', item) | map(attribute='rc') | first != 0
+  loop:
+    - stremio-catalog-db

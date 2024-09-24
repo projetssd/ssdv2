@@ -791,11 +791,17 @@ function suppression_appli() {
     manage_account_yml sub.immich " "
     ;;
   streamfusion)
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/streamfusion
-    docker rm -f streamfusion postgres-zilean zilean >/dev/null 2>&1
+    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/${APPSELECTED}
+    docker rm -f zilean streamfusion >/dev/null 2>&1
+    # Il faut gérer les DB postgres dans la fonction 'check_and_remove_shared_containers'
+    check_and_remove_shared_containers ${APPSELECTED}
     docker volume prune -f >/dev/null 2>&1
-    docker volume rm data-zilean data-pg-zilean >/dev/null 2>&1
-    manage_account_yml sub.streamfusion " "
+    ;;
+  stremiocatalogs)
+    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/${APPSELECTED}
+    docker rm -f ${APPSELECTED} >/dev/null 2>&1
+    # Il faut gérer les DB postgres dans la fonction 'check_and_remove_shared_containers'
+    check_and_remove_shared_containers ${APPSELECTED}
     ;;
   esac
 
@@ -828,6 +834,39 @@ $req
 
 EOF
 
+}
+
+function check_and_remove_shared_containers() {
+  local app="$1"
+  local other_apps=("zilean" "streamfusion" "stremiocatalogs")
+  local other_apps_running=false
+
+  for other_app in "${other_apps[@]}"; do
+    if [ "$other_app" != "$app" ] && docker ps -q --filter name="$other_app" | grep -q .; then
+      other_apps_running=true
+      break
+    fi
+  done
+
+  if docker ps -a --filter "name=stremio-postgres" --format "{{.Names}}" | grep -q "stremio-postgres"; then
+      case "$app" in
+        streamfusion)
+          docker exec -e PGPASSWORD=stremio stremio-postgres psql -U stremio -d postgres -c "DROP DATABASE IF EXISTS \"zilean\";" || echo "Failed to drop zilean database."
+          docker exec -e PGPASSWORD=stremio stremio-postgres psql -U stremio -d postgres -c "DROP DATABASE IF EXISTS \"streamfusion\";" || echo "Failed to drop streamfusion database."
+          ;;
+        stremiocatalogs)
+          docker exec -e PGPASSWORD=stremio stremio-postgres psql -U stremio -d postgres -c "DROP DATABASE IF EXISTS \"stremio-catalog-db\";" || echo "Failed to drop stremio-catalog-db database."
+          ;;
+        *)
+          docker exec -e PGPASSWORD=stremio stremio-postgres psql -U stremio -d postgres -c "DROP DATABASE IF EXISTS \"$app-db\";" || echo "Failed to drop $app-db database."
+          ;;
+      esac
+  fi
+
+  if ! $other_apps_running; then
+    docker rm -f stremio-postgres stremio-redis >/dev/null 2>&1 || echo "Failed to remove containers."
+    docker volume rm data-stremio-postgres data-stremio-redis >/dev/null 2>&1 || echo "Failed to remove volumes."
+  fi
 }
 
 function pause() {
