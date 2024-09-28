@@ -1762,3 +1762,28 @@ function translation() {
   done
   echo " == $(gettext "Génération des traductions terminées") =="
 }
+
+# Fonction pour mettre à jour un ou plusieurs containers Docker avec Watchtower
+update_containers() {
+  if [ $# -eq 0 ]; then
+    echo "Veuillez fournir au moins un nom de container."
+    return 1
+  fi
+
+  for container_name in "$@"; do
+    echo "Mise à jour du container '$container_name' avec Watchtower..."
+
+    # Exécution de Watchtower pour chaque container
+    docker run --rm -d --name watchtower_"$container_name" \
+      -e WATCHTOWER_CLEANUP=true \
+      -v /var/run/docker.sock:/var/run/docker.sock \
+      containrrr/watchtower \
+      --run-once "$container_name"
+    
+    if [ $? -eq 0 ]; then
+      echo "Mise à jour du container '$container_name' lancée avec succès."
+    else
+      echo "Échec de la mise à jour du container '$container_name'."
+    fi
+  done
+}
