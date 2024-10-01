@@ -22,7 +22,7 @@
       loop:
         - stremio-postgres
         - stremio-redis
-      when: "not {{ item.split('-')[1] }}_exists"
+      when: "not vars[item.split('-')[1] + '_exists']"
 
     - name: Deploy stremio-postgres
       community.docker.docker_container:
