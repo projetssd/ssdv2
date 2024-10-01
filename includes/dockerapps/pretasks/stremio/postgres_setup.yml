@@ -37,7 +37,7 @@
           changed_when: false
 
         - name: Create missing databases
-          command: docker exec -e PGPASSWORD={{ postgres_password }} {{ postgres_container }} psql -U {{ postgres_user }} -d postgres -c "CREATE DATABASE {{ item }};"
+          command: docker exec -e PGPASSWORD={{ postgres_password }} {{ postgres_container }} psql -U {{ postgres_user }} -d postgres -c "CREATE DATABASE \"{{ item }}\";"
           loop: "{{ required_databases }}"
           when: item not in existing_databases.stdout_lines
           register: db_create
