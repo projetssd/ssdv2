@@ -791,31 +791,39 @@ function suppression_appli() {
     manage_account_yml sub.immich " "
     ;;
   streamfusion)
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/${APPSELECTED}
     docker rm -f warp streamfusion >/dev/null 2>&1
-    docker volume rm warp-data >/dev/null 2>&1
-    # Il faut gérer les DB postgres dans la fonction 'check_and_remove_shared_containers'
-    check_and_remove_shared_containers ${APPSELECTED}
-    docker volume prune -f >/dev/null 2>&1
+    if [ $DELETE -eq 1 ]; then
+        sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/${APPSELECTED}
+        docker volume rm warp-data >/dev/null 2>&1
+        # Il faut gérer les DB postgres dans la fonction 'check_and_remove_shared_containers'
+        check_and_remove_shared_containers ${APPSELECTED}
+        docker volume prune -f >/dev/null 2>&1
+    fi
     ;;
   stremiocatalogs)
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/${APPSELECTED}
     docker rm -f ${APPSELECTED} >/dev/null 2>&1
-    # Il faut gérer les DB postgres dans la fonction 'check_and_remove_shared_containers'
-    check_and_remove_shared_containers ${APPSELECTED}
+    if [ $DELETE -eq 1 ]; then
+        sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/${APPSELECTED}
+        # Il faut gérer les DB postgres dans la fonction 'check_and_remove_shared_containers'
+        check_and_remove_shared_containers ${APPSELECTED}
+    fi
     ;;
   stremiotrakt)
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/${APPSELECTED}
     docker rm -f ${APPSELECTED} >/dev/null 2>&1
-    # Il faut gérer les DB postgres dans la fonction 'check_and_remove_shared_containers'
-    check_and_remove_shared_containers ${APPSELECTED}
+    if [ $DELETE -eq 1 ]; then
+        sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/${APPSELECTED}
+        # Il faut gérer les DB postgres dans la fonction 'check_and_remove_shared_containers'
+        check_and_remove_shared_containers ${APPSELECTED}
+    fi
     ;;
   zilean)
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/${APPSELECTED}
     docker rm -f zilean >/dev/null 2>&1
-    # Il faut gérer les DB postgres dans la fonction 'check_and_remove_shared_containers'
-    check_and_remove_shared_containers ${APPSELECTED}
-    docker volume prune -f >/dev/null 2>&1
+    if [ $DELETE -eq 1 ]; then
+        sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/${APPSELECTED}
+        # Il faut gérer les DB postgres dans la fonction 'check_and_remove_shared_containers'
+        check_and_remove_shared_containers ${APPSELECTED}
+        docker volume prune -f >/dev/null 2>&1
+    fi
     ;;
   esac
 
