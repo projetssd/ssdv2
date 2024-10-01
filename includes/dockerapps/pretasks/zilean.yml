@@ -1,6 +1,6 @@
 ---
 - name: Launch Pretask
-  include_tasks: "{{ settings.source }}/includes/dockerapps/pretasks/stremio_base.yml"
+  include_tasks: "{{ settings.source }}/includes/dockerapps/pretasks/stremio/stremio_base.yml"
 
 - name: Set PostgreSQL variables for Zilean
   set_fact:
