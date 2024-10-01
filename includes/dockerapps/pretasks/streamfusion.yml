@@ -1,124 +1,109 @@
 ---
-
 - name: Launch Pretask
-  include_tasks: "{{ settings.source }}/includes/dockerapps/pretasks/stremiobase.yml"
+  include_tasks: "{{ settings.source }}/includes/dockerapps/pretasks/stremio/stremio_base.yml"
 
-- name: Check if stremio-postgres container exists
-  command: docker ps -a --filter "name=stremio-postgres" --format "{% raw %}{{.Names}}{% endraw %}"
-  register: stremio_postgres_container
-  changed_when: false
+- name: Check for Redis containers
+  block:
+    - name: Check if stremio-redis container exists
+      command: docker ps -a --filter "name=stremio-redis" --format "{% raw %}{{.Names}}{% endraw %}"
+      register: stremio_redis_container
+      changed_when: false
 
-- name: Check if stremio-redis container exists
-  command: docker ps -a --filter "name=stremio-redis" --format "{% raw %}{{.Names}}{% endraw %}"
-  register: stremio_redis_container
-  changed_when: false
+    - name: Fail if required containers do not exist
+      fail:
+        msg: "The {{ item.name }} container does not exist. Please ensure it is running before proceeding."
+      when: item.result.stdout == ""
+      loop:
+        - { name: "stremio-redis", result: "{{ stremio_redis_container }}" }
 
-- name: Fail if stremio-redis container does not exist
-  fail:
-    msg: "The stremio-redis container does not exist. Please ensure it is running before proceeding."
-  when: stremio_redis_container.stdout == ""
-
-- name: Check if databases exist
-  command: docker exec stremio-postgres psql -U stremio -lqt | cut -d \| -f 1 | grep -qw {{ item }}
-  register: db_check
-  changed_when: false
-  failed_when: false
-  loop:
-    - zilean
-    - streamfusion
-
-- name: Create missing databases
-  command: docker exec -e PGPASSWORD=stremio stremio-postgres psql -U stremio -d postgres -c "CREATE DATABASE {{ item }};"
-  when: db_check.results | selectattr('item', 'equalto', item) | map(attribute='rc') | first != 0
-  loop:
-    - zilean
-    - streamfusion
-
-- name: Create a volume for zilean
-  docker_volume:
-    name: data-zilean
-
-- name: Deploy zilean container
-  community.docker.docker_container:
-    name: zilean
-    image: ipromknight/zilean:latest
-    env:
-      Zilean__Database__ConnectionString: "Host=stremio-postgres;Port=5432;Database=zilean;Username=stremio;Password=stremio"
-      Zilean__Dmm__ImportBatched: "true"
-      Zilean__Imdb__EnableImportMatching: "false"
-      Zilean__Imdb__EnableEndpoint: "false"
-      Zilean__Dmm__MaxFilteredResults: "200"
-      Zilean__Dmm__MinimumScoreMatch: "0.85"
-    volumes:
-      - data-zilean:/app/data
-    restart_policy: always
-    networks:
-      - name: traefik_proxy
-
-- name: Prompt for SECRET_API_KEY
-  pause:
-    prompt: "Enter SECRET_API_KEY (required)"
-    echo: no
-  register: secret_api_key_input
-  until: secret_api_key_input.user_input != ''
-  retries: 3
-  delay: 1
-
-- name: Set SECRET_API_KEY
+- name: Set PostgreSQL variables for StreamFusion
   set_fact:
-    SECRET_API_KEY: "{{ secret_api_key_input.user_input }}"
+    app_name: "StreamFusion"
+    postgres_container: "stremio-postgres"
+    postgres_user: "stremio"
+    postgres_password: "stremio"
+    required_databases:
+      - streamfusion
 
-- name: Fail if SECRET_API_KEY is not provided
-  fail:
-    msg: "SECRET_API_KEY is required. Please provide a valid value."
-  when: SECRET_API_KEY | length == 0
+- name: Setup PostgreSQL for Streamfusion
+  include_tasks: "{{ settings.source }}/includes/dockerapps/pretasks/stremio/postgres_setup.yml"
 
-- name: Prompt for RD_TOKEN
-  pause:
-    prompt: "Enter Real-Debrid token (RD_TOKEN) (leave empty for null)"
-    echo: no
-  register: rd_token_input
+- name: Deploy Warp Proxy container
+  block:
+    - name: Create a volume for warp
+      docker_volume:
+        name: warp-data
 
-- name: Set RD_TOKEN
-  set_fact:
-    RD_TOKEN: "{{ rd_token_input.user_input | default('', true) }}"
+    - name: Deploy warp container
+      community.docker.docker_container:
+        name: warp
+        image: caomingjun/warp:latest
+        expose:
+          - 1080
+        env:
+          WARP_SLEEP: "2"
+        cap_add:
+          - NET_ADMIN
+        sysctls:
+          net.ipv6.conf.all.disable_ipv6: "0"
+          net.ipv4.conf.all.src_valid_mark: "1"
+        volumes:
+          - warp-data:/var/lib/cloudflare-warp
+        restart_policy: always
+        networks:
+          - name: traefik_proxy
 
-- name: Prompt for AD_TOKEN
-  pause:
-    prompt: "Enter AllDebrid token (AD_TOKEN) (leave empty for null)"
-    echo: no
-  register: ad_token_input
+- name: Collect and validate user inputs
+  block:
+    - name: Prompt for SECRET_API_KEY
+      pause:
+        prompt: "Enter SECRET_API_KEY (required)"
+        echo: no
+      register: secret_api_key_input
+      until: secret_api_key_input.user_input != ''
+      retries: 3
+      delay: 1
 
-- name: Set AD_TOKEN
-  set_fact:
-    AD_TOKEN: "{{ ad_token_input.user_input | default('', true) }}"
+    - name: Set SECRET_API_KEY
+      set_fact:
+        SECRET_API_KEY: "{{ secret_api_key_input.user_input }}"
 
-- name: Prompt for YGG_PASSKEY
-  pause:
-    prompt: "Enter your YggTorrent passkey (YGG_PASSKEY) (must be 32 characters, leave empty for null)"
-    echo: no
-  register: ygg_passkey_input
+    - name: Fail if SECRET_API_KEY is not provided
+      fail:
+        msg: "SECRET_API_KEY is required. Please provide a valid value."
+      when: SECRET_API_KEY | length == 0
 
-- name: Validate and set YGG_PASSKEY
-  set_fact:
-    YGG_PASSKEY: "{{ ygg_passkey_input.user_input if ygg_passkey_input.user_input | length == 32 else '' }}"
+    - name: Prompt for optional tokens
+      loop:
+        - { name: "RD_TOKEN", prompt: "Enter Real-Debrid token (RD_TOKEN) (leave empty for null)" }
+        - { name: "AD_TOKEN", prompt: "Enter AllDebrid token (AD_TOKEN) (leave empty for null)" }
+      block:
+        - name: Prompt for {{ item.name }}
+          pause:
+            prompt: "{{ item.prompt }}"
+            echo: no
+          register: token_input
 
-- name: Warn if YGG_PASSKEY is invalid
-  debug:
-    msg: "Warning: YGG_PASSKEY must be 32 characters long. It has been set to null."
-  when: ygg_passkey_input.user_input != '' and ygg_passkey_input.user_input | length != 32
+        - name: Set {{ item.name }}
+          set_fact:
+            "{{ item.name }}": "{{ token_input.user_input | default('', true) }}"
 
-- name: Prompt for SHAREWOOD_PASSKEY
-  pause:
-    prompt: "Enter your Sharewood passkey (SHAREWOOD_PASSKEY) (must be 32 characters, leave empty for null)"
-    echo: no
-  register: sharewood_passkey_input
+    - name: Prompt for passkeys
+      loop:
+        - { name: "YGG_PASSKEY", prompt: "Enter your YggTorrent passkey (YGG_PASSKEY) (must be 32 characters, leave empty for null)" }
+        - { name: "SHAREWOOD_PASSKEY", prompt: "Enter your Sharewood passkey (SHAREWOOD_PASSKEY) (must be 32 characters, leave empty for null)" }
+      block:
+        - name: Prompt for {{ item.name }}
+          pause:
+            prompt: "{{ item.prompt }}"
+            echo: no
+          register: passkey_input
 
-- name: Validate and set SHAREWOOD_PASSKEY
-  set_fact:
-    SHAREWOOD_PASSKEY: "{{ sharewood_passkey_input.user_input if sharewood_passkey_input.user_input | length == 32 else '' }}"
+        - name: Validate and set {{ item.name }}
+          set_fact:
+            "{{ item.name }}": "{{ passkey_input.user_input if passkey_input.user_input | length == 32 else '' }}"
 
-- name: Warn if SHAREWOOD_PASSKEY is invalid
-  debug:
-    msg: "Warning: SHAREWOOD_PASSKEY must be 32 characters long. It has been set to null."
-  when: sharewood_passkey_input.user_input != '' and sharewood_passkey_input.user_input | length != 32
+        - name: Warn if {{ item.name }} is invalid
+          debug:
+            msg: "Warning: {{ item.name }} must be 32 characters long. It has been set to null."
+          when: passkey_input.user_input != '' and passkey_input.user_input | length != 32

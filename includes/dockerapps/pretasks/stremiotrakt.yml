@@ -16,15 +16,15 @@
       loop:
         - { name: "stremio-redis", result: "{{ stremio_redis_container }}" }
 
-- name: Set PostgreSQL variables for Stremio-Catalog-Addon
+- name: Set PostgreSQL variables for Stremio-Trakt-Addon
   set_fact:
-    app_name: "Stremio-Catalog-Addon"
+    app_name: "Stremio-Trakt-Addon"
     postgres_container: "stremio-postgres"
     postgres_user: "stremio"
     postgres_password: "stremio"
     required_databases:
-      - stremio-catalog-db
+      - stremio-trakt-db
 
-- name: Setup PostgreSQL for Stremio-Catalog-Addon
+- name: Setup PostgreSQL for Stremio-Trakt-Addon
   include_tasks: "{{ settings.source }}/includes/dockerapps/pretasks/stremio/postgres_setup.yml"
 

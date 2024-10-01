@@ -1,0 +1,36 @@
+---
+pgrole: 'stremiotrakt'
+intport: '7000'
+image: 'reddravenn/stremio-trakt-addon:latest'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/cache:/usr/src/app/cache"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/log:/usr/src/app/log"
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  BASE_URL: "https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{user.domain}}"
+  PORT: "7000"
+  DB_USER: "stremio"
+  DB_PASSWORD: "stremio"
+  DB_HOST: "stremio-postgres"
+  DB_NAME: 'stremio-trakt-db'
+  DB_PORT: '5432'
+  DB_MAX_CONNECTIONS: '20'
+  DB_IDLE_TIMEOUT: '30000'
+  DB_CONNECTION_TIMEOUT: '2000'
+  REDIS_HOST: 'stremio-redis'
+  REDIS_PORT: '6379'
+  REDIS_PASSWORD: ''
+  TRAKT_CLIENT_ID: "{{ trakt.id }}"
+  TRAKT_CLIENT_SECRET: "{{ trakt.secret }}"
+  TRAKT_HISTORY_FETCH_INTERVAL: '1d'
+  TMDB_CACHE_DURATION: '1d'
+  TRAKT_CACHE_DURATION: '1d'
+  LOG_LEVEL: 'info'
+  LOG_INTERVAL_DELETION: '3d'
+  NODE_ENV: 'production'
+  TZ: 'Europe/Paris'
+specific_docker_info:
+  recreate: "true"
+pretasks:
+  - trakt

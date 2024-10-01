@@ -1,0 +1,70 @@
+---
+- name: Stremio Base Pre-task Setup
+  block:
+    - name: Check if containers exist
+      command: docker ps -a --filter "name={{ item }}" --format "{% raw %}{{.Names}}{% endraw %}"
+      register: container_check
+      changed_when: false
+      loop:
+        - stremio-postgres
+        - stremio-redis
+
+    - name: Set facts for container existence
+      set_fact:
+        postgres_exists: "'stremio-postgres' in container_check.results | map(attribute='stdout') | list"
+        redis_exists: "'stremio-redis' in container_check.results | map(attribute='stdout') | list"
+
+    - name: Ensure data directories exist
+      file:
+        path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - stremio-postgres
+        - stremio-redis
+      when: "not {{ item.split('-')[1] }}_exists"
+
+    - name: Deploy stremio-postgres
+      community.docker.docker_container:
+        name: stremio-postgres
+        image: "postgres:16.3-alpine3.20"
+        env:
+          PGDATA: "/var/lib/postgresql/data/pgdata"
+          POSTGRES_USER: "stremio"
+          POSTGRES_PASSWORD: "stremio"
+          POSTGRES_DB: "shared"
+        volumes:
+          - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/stremio-postgres:/var/lib/postgresql/data/pgdata"
+        restart_policy: always
+        healthcheck:
+          test: ["CMD-SHELL", "pg_isready"]
+          interval: 10s
+          timeout: 5s
+          retries: 5
+        networks:
+          - name: traefik_proxy
+      when: not postgres_exists
+
+    - name: Wait for PostgreSQL to be healthy
+      command: docker inspect --format="{% raw %}{{.State.Health.Status}}{% endraw %}" stremio-postgres
+      register: postgres_health
+      until: postgres_health.stdout == 'healthy'
+      retries: 12
+      delay: 10
+      when: not postgres_exists
+
+    - name: Deploy stremio-redis
+      community.docker.docker_container:
+        name: stremio-redis
+        image: redis:latest
+        volumes:
+          - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/stremio-redis:/data"
+        restart_policy: always
+        networks:
+          - name: traefik_proxy
+      when: not redis_exists
+
+  rescue:
+    - name: Display error message
+      fail:
+        msg: "An error occurred during the Stremio pre-task setup. Please check the logs for more details."

@@ -1,0 +1,61 @@
+---
+## This task file is used to setup PostgreSQL databases for all applications that require to share the same PostgreSQL instance.
+# Example usage:
+# ---
+# # - name: Launch Pretask
+# #   include_tasks: "{{ settings.source }}/includes/dockerapps/pretasks/stremio/stremio_base.yml"
+
+# # - name: Set PostgreSQL variables for MyApp
+# #   set_fact:
+# #     app_name: "MyApp"
+# #     postgres_container: "stremio-postgres"
+# #     postgres_user: "stremio"
+# #     postgres_password: "stremio"
+# #     required_databases:
+# #       - myapp-db
+
+# # - name: Setup PostgreSQL for Streamfusion
+# #   include_tasks: {{ settings.source }}/includes/dockerapps/pretasks/stremio/postgres_setup.yml
+
+- name: PostgreSQL Setup for {{ app_name }}
+  block:
+    - name: Check if {{ postgres_container }} container exists
+      command: docker ps -a --filter "name={{ postgres_container }}" --format "{% raw %}{{.Names}}{% endraw %}"
+      register: postgres_container_check
+      changed_when: false
+
+    - name: Fail if {{ postgres_container }} container does not exist
+      fail:
+        msg: "The {{ postgres_container }} container does not exist. Please ensure it is running before proceeding."
+      when: postgres_container_check.stdout == ""
+
+    - name: Check and create databases
+      block:
+        - name: Get list of existing databases
+          command: docker exec {{ postgres_container }} psql -U {{ postgres_user }} -d postgres -tAc "SELECT datname FROM pg_database WHERE datistemplate = false;"
+          register: existing_databases
+          changed_when: false
+
+        - name: Create missing databases
+          command: >
+            docker exec -e PGPASSWORD={{ postgres_password }} {{ postgres_container }}
+            psql -U {{ postgres_user }} -d postgres -c "CREATE DATABASE {{ item }};"
+          loop: "{{ required_databases }}"
+          when: item not in existing_databases.stdout_lines
+          register: db_create
+          changed_when: db_create.rc == 0
+          failed_when:
+            - db_create.rc != 0
+            - '"already exists" not in db_create.stderr'
+
+        - name: Summarize database creation
+          debug:
+            msg: "Database '{{ item.item }}' {{ 'already existed' if item.skipped is defined else 'was created successfully' }}"
+          loop: "{{ db_create.results }}"
+          loop_control:
+            label: "{{ item.item }}"
+
+  rescue:
+    - name: Display global error message
+      fail:
+        msg: "An error occurred while setting up PostgreSQL databases for {{ app_name }}. Please check the logs for more details."

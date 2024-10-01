@@ -1,0 +1,15 @@
+---
+- name: Launch Pretask
+  include_tasks: "{{ settings.source }}/includes/dockerapps/pretasks/stremio_base.yml"
+
+- name: Set PostgreSQL variables for Zilean
+  set_fact:
+    app_name: "Zilean"
+    postgres_container: "stremio-postgres"
+    postgres_user: "stremio"
+    postgres_password: "stremio"
+    required_databases:
+      - zilean
+
+- name: Setup PostgreSQL for Zilean
+  include_tasks: "{{ settings.source }}/includes/dockerapps/pretasks/stremio/postgres_setup.yml"
