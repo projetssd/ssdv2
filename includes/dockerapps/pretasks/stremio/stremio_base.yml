@@ -9,10 +9,20 @@
         - stremio-postgres
         - stremio-redis
 
+    - name: Debug container check results
+      debug:
+        var: container_check
+
     - name: Set facts for container existence
       set_fact:
-        postgres_exists: "'stremio-postgres' in container_check.results | map(attribute='stdout') | list"
-        redis_exists: "'stremio-redis' in container_check.results | map(attribute='stdout') | list"
+        postgres_exists: "{{ 'stremio-postgres' in container_check.results | map(attribute='stdout') | join(',') }}"
+        redis_exists: "{{ 'stremio-redis' in container_check.results | map(attribute='stdout') | join(',') }}"
+
+    - name: Debug container existence
+      debug:
+        msg: 
+          - "Postgres exists: {{ postgres_exists }}"
+          - "Redis exists: {{ redis_exists }}"
 
     - name: Deploy stremio-postgres
       community.docker.docker_container:
