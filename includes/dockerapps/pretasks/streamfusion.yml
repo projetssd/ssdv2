@@ -73,37 +73,52 @@
         msg: "SECRET_API_KEY is required. Please provide a valid value."
       when: SECRET_API_KEY | length == 0
 
-    - name: Prompt for optional tokens
-      loop:
-        - { name: "RD_TOKEN", prompt: "Enter Real-Debrid token (RD_TOKEN) (leave empty for null)" }
-        - { name: "AD_TOKEN", prompt: "Enter AllDebrid token (AD_TOKEN) (leave empty for null)" }
-      block:
-        - name: Prompt for {{ item.name }}
-          pause:
-            prompt: "{{ item.prompt }}"
-            echo: no
-          register: token_input
+    - name: Prompt for RD_TOKEN
+      pause:
+        prompt: "Enter Real-Debrid token (RD_TOKEN) (leave empty for null)"
+        echo: no
+      register: rd_token_input
 
-        - name: Set {{ item.name }}
-          set_fact:
-            "{{ item.name }}": "{{ token_input.user_input | default('', true) }}"
+    - name: Set RD_TOKEN
+      set_fact:
+        RD_TOKEN: "{{ rd_token_input.user_input | default('', true) }}"
 
-    - name: Prompt for passkeys
-      loop:
-        - { name: "YGG_PASSKEY", prompt: "Enter your YggTorrent passkey (YGG_PASSKEY) (must be 32 characters, leave empty for null)" }
-        - { name: "SHAREWOOD_PASSKEY", prompt: "Enter your Sharewood passkey (SHAREWOOD_PASSKEY) (must be 32 characters, leave empty for null)" }
-      block:
-        - name: Prompt for {{ item.name }}
-          pause:
-            prompt: "{{ item.prompt }}"
-            echo: no
-          register: passkey_input
+    - name: Prompt for AD_TOKEN
+      pause:
+        prompt: "Enter AllDebrid token (AD_TOKEN) (leave empty for null)"
+        echo: no
+      register: ad_token_input
 
-        - name: Validate and set {{ item.name }}
-          set_fact:
-            "{{ item.name }}": "{{ passkey_input.user_input if passkey_input.user_input | length == 32 else '' }}"
+    - name: Set AD_TOKEN
+      set_fact:
+        AD_TOKEN: "{{ ad_token_input.user_input | default('', true) }}"
 
-        - name: Warn if {{ item.name }} is invalid
-          debug:
-            msg: "Warning: {{ item.name }} must be 32 characters long. It has been set to null."
-          when: passkey_input.user_input != '' and passkey_input.user_input | length != 32
+    - name: Prompt for YGG_PASSKEY
+      pause:
+        prompt: "Enter your YggTorrent passkey (YGG_PASSKEY) (must be 32 characters, leave empty for null)"
+        echo: no
+      register: ygg_passkey_input
+
+    - name: Validate and set YGG_PASSKEY
+      set_fact:
+        YGG_PASSKEY: "{{ ygg_passkey_input.user_input if ygg_passkey_input.user_input | length == 32 else '' }}"
+
+    - name: Warn if YGG_PASSKEY is invalid
+      debug:
+        msg: "Warning: YGG_PASSKEY must be 32 characters long. It has been set to null."
+      when: ygg_passkey_input.user_input != '' and ygg_passkey_input.user_input | length != 32
+
+    - name: Prompt for SHAREWOOD_PASSKEY
+      pause:
+        prompt: "Enter your Sharewood passkey (SHAREWOOD_PASSKEY) (must be 32 characters, leave empty for null)"
+        echo: no
+      register: sharewood_passkey_input
+
+    - name: Validate and set SHAREWOOD_PASSKEY
+      set_fact:
+        SHAREWOOD_PASSKEY: "{{ sharewood_passkey_input.user_input if sharewood_passkey_input.user_input | length == 32 else '' }}"
+
+    - name: Warn if SHAREWOOD_PASSKEY is invalid
+      debug:
+        msg: "Warning: SHAREWOOD_PASSKEY must be 32 characters long. It has been set to null."
+      when: sharewood_passkey_input.user_input != '' and sharewood_passkey_input.user_input | length != 32
