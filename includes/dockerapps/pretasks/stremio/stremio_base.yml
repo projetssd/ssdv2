@@ -14,16 +14,6 @@
         postgres_exists: "'stremio-postgres' in container_check.results | map(attribute='stdout') | list"
         redis_exists: "'stremio-redis' in container_check.results | map(attribute='stdout') | list"
 
-    - name: Ensure data directories exist
-      file:
-        path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ item }}"
-        state: directory
-        mode: '0755'
-      loop:
-        - stremio-postgres
-        - stremio-redis
-      when: "not vars[item.split('-')[1] + '_exists']"
-
     - name: Deploy stremio-postgres
       community.docker.docker_container:
         name: stremio-postgres
