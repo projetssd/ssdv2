@@ -1,6 +1,6 @@
 ---
 - name: Setup or Check the Stremio Base Install
-  include_tasks: "{{ settings.source }}/includes/dockerapps/pretasks/stremio_base.yml"
+  include_tasks: "{{ settings.source }}/includes/dockerapps/pretasks/stremio/stremio_base.yml"
 
 - name: Check for Redis containers
   block:
