@@ -6,7 +6,7 @@
 - name: Ask TMDB_API_KEY if missing
   pause:
     prompt: "Please enter your TMDB_API_KEY"
-    echo: yes
+    echo: no
   register: tmdb_api_key_input
   when: not tmdb_api_key_exists
 
