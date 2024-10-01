@@ -38,11 +38,11 @@
       community.docker.docker_container:
         name: warp
         image: caomingjun/warp:latest
-        expose:
+        exposed_ports:
           - 1080
         env:
           WARP_SLEEP: "2"
-        cap_add:
+        capabilities:
           - NET_ADMIN
         sysctls:
           net.ipv6.conf.all.disable_ipv6: "0"
