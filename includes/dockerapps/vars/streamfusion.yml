@@ -1,7 +1,7 @@
 ---
 pgrole: 'streamfusion'
 intport: '8080'
-image: 'ghcr.io/limedrive/stream-fusion:v2-beta'
+image: 'ghcr.io/limedrive/stream-fusion:latest'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/app/config"
 pg_env:
@@ -19,6 +19,7 @@ pg_env:
   AD_TOKEN: "{{ AD_TOKEN }}"
   YGG_PASSKEY: "{{ YGG_PASSKEY }}"
   SHAREWOOD_PASSKEY: "{{ SHAREWOOD_PASSKEY }}"
+  PROXY_URL: "http://warp:1080"
   TZ: "Europe/Paris"
 pretasks:
   - tmdb

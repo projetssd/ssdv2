@@ -2,7 +2,7 @@
 ---
 pgrole: 'stremiomanager'
 intport: '80'
-image: 'reddravenn/stremio-addon-manager:latest'
+image: 'ghcr.io/limedrive/stremio-addon-manager:latest'
 pg_env:
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"

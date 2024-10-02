@@ -129,11 +129,12 @@ sonarr - Gestion Séries Usenet et BitTorren
 speedtest - Teste vitesse Internet
 speedtesttracker - Teste vitesse Internet
 statping - Surveillance de vos sites Web
-streamfusion - plugin for Stremio streaming
-stremiocatalogs - plugin for Stremio that provides catalogs
-stremiosaga - plugin for Stremio that provides saga infos
-stremiotmdbdice - plugin for Stremio that provides shuffle movies suggestions
-stremiomanager - App for re-organizing your Stremio plugins
+streamfusion - addon for Stremio streaming
+stremiocatalogs - addon for Stremio that provides catalogs
+stremiotrakt - addon for Stremio that provides trakt lists
+stremiosaga - addon for Stremio that provides saga infos
+stremiotmdbdice - addon for Stremio that provides shuffle movies suggestions
+stremiomanager - App for re-organizing your Stremio addons
 subsonic - Serveur multimédia
 synclounge - Adon Plex
 syncthing - Synchronisation de fichiers
@@ -161,3 +162,4 @@ wordpress - Gestion de contenu (CMS)
 xteve - Proxy M3U pour Plex DVR et Emby Live TV
 yacht - Gestion des conteneurs Docker
 yourls - Gestion de liens
+zilean - DMM hashlist scrapper

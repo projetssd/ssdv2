@@ -1,0 +1,14 @@
+---
+pgrole: 'zilean'
+intport: '8181'
+image: 'ipromknight/zilean:latest'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/app/data"
+pg_env:
+  Zilean__Database__ConnectionString: "Host=stremio-postgres;Port=5432;Database=zilean;Username=stremio;Password=stremio"
+  Zilean__Dmm__ImportBatched: "true"
+  Zilean__Imdb__EnableImportMatching: "false"
+  Zilean__Imdb__EnableEndpoint: "false"
+  Zilean__Dmm__MaxFilteredResults: "200"
+  Zilean__Dmm__MinimumScoreMatch: "0.85"
+  TZ: "Europe/Paris"
