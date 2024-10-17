@@ -1,12 +1,35 @@
 ---
-- name: 'Stop {{ pgrole }}'
+- name: Create {{pgrole}}-net network
+  docker_network:
+    name: '{{pgrole}}-net'
+    state: present
+
+- name: 'Deploying db-{{pgrole}}'
   docker_container:
-    name: '{{ pgrole }}'
-    state: stopped
+    name: 'db-{{pgrole}}'
+    recreate: true
+    image: 'postgres'
+    pull: yes
+    volumes:
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}:/var/lib/postgresql/data"
+      - '/etc/localtime:/etc/localtime:ro'
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/init:/docker-entrypoint-initdb.d"
+    env:
+      POSTGRES_USER: "{{pgrole}}"
+      POSTGRES_PASSWORD: "{{pgrole}}"
+      POSTGRES_DB: "{{pgrole}}"
+    restart_policy: unless-stopped
+    networks:
+      - name: '{{pgrole}}-net'
+    state: started
 
-- name: Launch postgresql
-  include_tasks: "{{ settings.source }}/includes/dockerapps/templates/generique/postgresql.yml"
+- name: Wait for 10 seconds before continuing
+  wait_for:
+    timeout: 10
 
-- name: 'Deploying {{pgrole}}'
-  docker_container: "{{ docker_info }}"
-
+- name: Add '{{pgrole}}-net' to network
+  docker_network:
+    name: '{{pgrole}}-net'
+    connected:
+      - '{{ pgrole }}'
+    appends: yes

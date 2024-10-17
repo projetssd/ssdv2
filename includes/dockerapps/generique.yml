@@ -10,6 +10,8 @@
     - kwoodson.yedit
   vars_files:
     - "{{ settings.source }}/includes/dockerapps/templates/generique/generique.yml"
+  vars:
+    subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
 
   tasks:
     # PRE TASKS ###################################################################
@@ -56,7 +58,24 @@
       vars:
         subdomain: "{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}"
       when: cloudflare_enabled and traefik_labels_enabled == true
-    
+
+    - name: "Prompt user to create A record for {{ subdomain }} with IP {{ network.ipv4 }}"
+      pause:
+        prompt: |
+          Please create an A record for the subdomain "{{ subdomain }}.{{ user.domain }}"
+          with the IP address "{{ network.ipv4 }}" in your DNS provider.
+          Press Enter to continue once the record has been created.
+      when: not cloudflare_enabled
+
+    - name: "Wait for subdomain to resolve to correct IP"
+      command: dig +short {{ subdomain }}.{{ user.domain }} @1.1.1.1
+      register: dig_output
+      until: dig_output.stdout == network.ipv4
+      retries: 300  # Nombre de tentatives
+      delay: 10  # Temps (en secondes) entre chaque tentative
+      changed_when: false
+      when: not cloudflare_enabled
+
     - name: Initialize labels
       set_fact:
         pg_labels: {}

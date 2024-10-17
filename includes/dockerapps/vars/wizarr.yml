@@ -2,11 +2,11 @@
 pgrole: 'wizarr'
 intport: '5690'
 image: 'ghcr.io/wizarrrr/wizarr'
+
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/data/database"
   - '/etc/localtime:/etc/localtime:ro'
+
 pg_env:
-  APP_URL: "{{ fqdn }}"
+  APP_URL: "https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{user.domain}}"
   DISABLE_BUILTIN_AUTH: "true"
-pretasks:
-  - "yourls"

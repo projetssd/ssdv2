@@ -3,12 +3,12 @@
   gather_facts: True
   vars_files:
     - "{{ settings.source }}/includes/dockerapps/templates/generique/generique.yml"
-  tasks:
+  vars:
+    pgrole: 'traefik'
+    pgerro: 'error-pages'
+    subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
 
-    - name: 'Set Known Facts'
-      set_fact:
-        pgrole: 'traefik'
-        pgerro: 'error-pages'
+  tasks:
 
     - name: create traefik state
       shell: |
@@ -21,9 +21,24 @@
 
     - name: "Set DNS Record on CloudFlare"
       include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
-      vars:
-        subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
       when: cloudflare_enabled
+
+    - name: "Prompt user to create A record for {{ subdomain }} with IP {{ network.ipv4 }}"
+      pause:
+        prompt: |
+          Please create an A record for the subdomain "{{ subdomain }}.{{ user.domain }}"
+          with the IP address "{{ network.ipv4 }}" in your DNS provider.
+          Press Enter to continue once the record has been created.
+      when: not cloudflare_enabled
+
+    - name: "Wait for subdomain to resolve to correct IP"
+      command: dig +short {{ subdomain }}.{{ user.domain }} @1.1.1.1
+      register: dig_output
+      until: dig_output.stdout == network.ipv4
+      retries: 300  # Nombre de tentatives
+      delay: 10  # Temps (en secondes) entre chaque tentative
+      changed_when: false
+      when: not cloudflare_enabled
 
     - name: Remove {{pgrole}}
       docker_container:
@@ -60,12 +75,6 @@
         state: touch
         mode: 0600
       when: acme_json.stat.exists == False
-
-    #- name: Create traefik.log empty file (touch)
-    #  file:
-    #    path: "{{ settings.storage }}/docker/{{pgrole}}/logs/traefik.log"
-    #    state: touch
-    #    mode: 0600
 
     - name: Create access.log empty file (touch)
       file:
@@ -138,15 +147,14 @@
           - --global.sendAnonymousUsage=true
           - --entrypoints.http.address=:80
           - --entrypoints.https.address=:443
-          - --entrypoints.web.http.redirections.entrypoint.to=https
-          - --entrypoints.web.http.redirections.entrypoint.scheme=https
-          - --entrypoints.web.http.redirections.entrypoint.permanent=true
+          - --entrypoints.http.http.redirections.entrypoint.to=https
+          - --entrypoints.http.http.redirections.entrypoint.scheme=https
+          - --entrypoints.http.http.redirections.entrypoint.permanent=true
           - --entrypoints.https.forwardedHeaders.trustedIPs=173.245.48.0/20,103.21.244.0/22,103.22.200.0/22,103.31.4.0/22,141.101.64.0/18,108.162.192.0/18,190.93.240.0/20,188.114.96.0/20,197.234.240.0/22,198.41.128.0/17,162.158.0.0/15,104.16.0.0/12,172.64.0.0/13,131.0.72.0/22
           - --api=true
           - --api.dashboard=true
           - --providers.docker.endpoint=unix:///var/run/docker.sock
           - --log=true
-          #- --log.filePath=/logs/traefik.log
           - --log.level=DEBUG # (Default: error) DEBUG, INFO, WARN, ERROR, FATAL, PANIC
           - --accesslog=true
           - --accesslog.filePath=/logs/access.log
@@ -159,61 +167,67 @@
           - --entrypoints.https.http.tls=true
           - --providers.file.directory=/rules # Load dynamic configuration from one or more .toml or .yml files in a directory
           - --providers.file.watch=true # Only works on top level files in the rules folder
-          - --certificatesResolvers.letsencrypt.acme.email={{cloudflare.login}}
-          - --certificatesResolvers.letsencrypt.acme.storage=/acme.json
-          - --certificatesResolvers.letsencrypt.acme.dnsChallenge.provider=cloudflare
-          - --certificatesResolvers.letsencrypt.acme.dnsChallenge.resolvers=1.1.1.1:53,1.0.0.1:53
-          - --certificatesResolvers.letsencrypt.acme.dnsChallenge.delayBeforeCheck=90 # To delay DNS check and reduce LE hitrate
-          # - --certificatesResolvers.letsencrypt.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory # LetsEncrypt Staging Server - uncomment when testing
+          - --certificatesresolvers.letsencrypt.acme.email={{cloudflare.login}}
+          - --certificatesresolvers.letsencrypt.acme.storage=/acme.json
+          - --certificatesresolvers.letsencrypt.acme.dnsChallenge.provider=cloudflare
+          - --certificatesresolvers.letsencrypt.acme.dnsChallenge.resolvers=1.1.1.1:53,1.0.0.1:53
+          - --certificatesresolvers.letsencrypt.acme.dnsChallenge.delayBeforeCheck=90 # To delay DNS check and reduce LE hitrate
+          # - --certificatesresolvers.letsencrypt.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory # LetsEncrypt Staging Server - uncomment when testing
       when: cloudflare_enabled
 
     - name: command traefik without cloudflare
       set_fact:
         command:
-          - --global.checkNewVersion=true
-          - --global.sendAnonymousUsage=true
-          - --entryPoints.http.address=:80
-          - --entryPoints.https.address=:443
-          #- --entryPoints.traefik.address=:8080
           - --api=true
           - --log=true
           - --log.level=DEBUG
-          - --accessLog=true
-          - --accessLog.filePath=/logs/traefik.log
-          - --accessLog.bufferingSize=100
-          #- --accessLog.filters.statusCodes=400-499
+          - --accesslog=true
+          - --accesslog.filePath=/logs/access.log
+          - --accesslog.bufferingSize=100 # Configuring a buffer of 100 lines
+          - --accesslog.addinternals
+          - --global.checkNewVersion=false
+          - --global.sendAnonymousUsage=false
+          - --entryPoints.http.address=:80
+          - --entryPoints.https.address=:443
+          - --entrypoints.https.http.tls.certresolver=letsencrypt
+          - --entrypoints.http.http.redirections.entrypoint.to=https
+          - --entrypoints.http.http.redirections.entrypoint.scheme=https
+          - --entrypoints.http.http.redirections.entrypoint.permanent=true
           - --providers.docker=true
           - --providers.docker.endpoint=unix:///var/run/docker.sock
           - --providers.docker.exposedByDefault=false
-          - --entrypoints.https.http.tls.certresolver=letsencrypt
           - --providers.docker.network=traefik_proxy
-          - --providers.docker.swarmMode=false
           - --providers.file.directory=/rules
           - --providers.file.watch=true
-          - --certificatesResolvers.letsencrypt.acme.email={{user.mail}}
-          - --certificatesResolvers.letsencrypt.acme.storage=/acme.json
+          - --certificatesresolvers.letsencrypt.acme.email={{user.mail}}
+          - --certificatesresolvers.letsencrypt.acme.storage=/acme.json
           - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
+          #- --certificatesresolvers.letsencrypt.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory # LetsEncrypt Staging Server - uncomment when testing
       when: not cloudflare_enabled
 
     - name: Create a network
       community.docker.docker_network:
         name: traefik_proxy
 
+    - name: Set Cloudflare environment variables (if enabled)
+      set_fact:
+        traefik_env:
+          CF_API_EMAIL: '{{cloudflare.login}}'
+          CF_API_KEY: '{{cloudflare.api}}'
+      when: cloudflare_enabled
+
     - name: Deploy Traefik
       docker_container:
         name: '{{pgrole}}'
-        image: traefik:3.0
+        image: traefik:v3.1.6
         pull: yes
         published_ports:
           - "80:80"
           - "443:443"
-          #- "8080:8080"
         command: '{{command}}'
         security_opts:
           - no-new-privileges:true
-        env:
-          CF_API_EMAIL: '{{cloudflare.login}}'
-          CF_API_KEY: '{{cloudflare.api}}'
+        env: '{{ traefik_env | default({}) }}'
         volumes:
           - "/var/run/docker.sock:/var/run/docker.sock:ro"
           - "/etc/localtime:/etc/localtime:ro"
@@ -258,11 +272,11 @@
       include_tasks: "{{ settings.source }}/includes/dockerapps/templates/{{pgrole}}/oauth.yml"
       when: oauth_enabled
 
-    - name: create {{pgrole}}state
+    - name: create {{pgrole}} state
       shell: |
         echo "2" >  {{ settings.storage }}/status/{{pgrole}}
 
-    - name: create {{pgrole}}state
+    - name: create {{pgrole}} state
       shell: |
         echo "2" >  {{ settings.storage }}/status/oauth
       when: oauth_enabled
