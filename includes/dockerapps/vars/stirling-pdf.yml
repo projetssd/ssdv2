@@ -1,0 +1,12 @@
+---
+pgrole: 'stirling-pdf'
+intport: '8080'
+image: '  stirlingtools/stirling-pdf:latest'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/configs:/configs"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/trainingdata:/usr/share/tessdata"
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  DOCKER_ENABLE_SECURITY: "false"
+  INSTALL_BOOK_AND_ADVANCED_HTML_OPS: "false"
+  LANGS: "fr_FR"
