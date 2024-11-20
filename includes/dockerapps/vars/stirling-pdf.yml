@@ -1,5 +1,5 @@
 ---
-pgrole: 'stirling-pdf'
+pgrole: 'stirlingpdf'
 intport: '8080'
 image: '  stirlingtools/stirling-pdf:latest'
 pg_volumes:
