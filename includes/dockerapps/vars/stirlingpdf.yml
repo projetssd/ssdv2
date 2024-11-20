@@ -1,7 +1,7 @@
 ---
 pgrole: 'stirlingpdf'
 intport: '8080'
-image: '  stirlingtools/stirling-pdf:latest'
+image: 'stirlingtools/stirling-pdf:latest'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/configs:/configs"
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/trainingdata:/usr/share/tessdata"
