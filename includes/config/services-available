@@ -129,6 +129,7 @@ sonarr - Gestion Séries Usenet et BitTorren
 speedtest - Teste vitesse Internet
 speedtesttracker - Teste vitesse Internet
 statping - Surveillance de vos sites Web
+stirling-pdf - Boite à outils PDF
 streamfusion - addon for Stremio streaming
 stremiocatalogs - addon for Stremio that provides catalogs
 stremiotrakt - addon for Stremio that provides trakt lists
@@ -155,8 +156,8 @@ wetty - Terminal sur HTTP et https
 wgeasy - Gestion WireGuard
 whisparr - Gestionnaire de films pour adultes
 wikijs - Une application wiki moderne
-wireGuardUI - Interface Web gestion/WireGuard
-wireGuard - Protocole de communication (VPN).
+wireguardui - Interface Web gestion/WireGuard
+wireguard - Protocole de communication (VPN).
 wizarr - Invitation utilisateurs Plex et Jellyfin
 wordpress - Gestion de contenu (CMS)
 xteve - Proxy M3U pour Plex DVR et Emby Live TV
