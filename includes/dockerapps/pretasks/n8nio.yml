@@ -1,0 +1,9 @@
+---
+- name: Check if paths is existing and creating if necessary
+  become: yes
+  file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config"
+    state: directory
+    mode: '0775'
+    owner: "{{ lookup('env','MYUID') }}"
+    group: "{{ lookup('env','MYGID') }}"
