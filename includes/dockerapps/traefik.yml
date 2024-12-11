@@ -264,7 +264,6 @@
         labels: '{{labelserror}}'
         restart_policy: unless-stopped
         state: started
-        purge_networks: yes
         networks:
           - name: traefik_proxy
 
