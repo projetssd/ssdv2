@@ -1,7 +1,0 @@
----
-- pause:
-    prompt: "rendez vous à https://speedtest-tracker.dev/ et copier coller l'APP_KEY affichée base64:blabla"
-    echo: yes
-  register: appkeyspt
-- set_fact:
-    appkeyspt: "{{ appkeyspt.user_input }}"

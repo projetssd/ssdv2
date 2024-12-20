@@ -2,15 +2,29 @@
 pgrole: 'bookstack'
 intport: '80'
 image: 'lscr.io/linuxserver/bookstack'
+
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
   - '/etc/localtime:/etc/localtime:ro'
+
 pg_env:
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
   TZ: "Europe/Paris"
   DB_HOST: "db-{{ pgrole }}"
-  DB_USER: "{{ pgrole }}"
-  DB_PASS: "{{ pgrole }}"
+  DB_PORT: "3306"
+  DB_USERNAME: "{{ pgrole }}"
+  DB_PASSWORD: "{{ pgrole }}"
   DB_DATABASE: "{{ pgrole }}"
   APP_URL: "https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{user.domain}}"
+  APP_KEY: "{{ appkey.bookstack }}"
+
+pretasks:
+  - appkey
+  - mariadb_officiel
+
+posttasks:
+  - default_login_and_password
+
+dlogin: "admin@admin.com"
+dpasswd: "password"

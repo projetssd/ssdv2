@@ -1,18 +1,20 @@
 ---
-pgrole: 'speedtest-tracker'
+pgrole: 'speedtesttracker'
 intport: '80'
 image: 'lscr.io/linuxserver/speedtest-tracker:0.20.6'
 
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config"
+
 pg_env:
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
   DB_CONNECTION: 'sqlite'
   TZ: 'Europe/Paris'
-  APP_KEY: "{{ appkeyspt }}"
+  APP_KEY: "{{ appkey.speedtesttracker }}"
   SPEEDTEST_SCHEDULE: "36 * * * *"
   APP_TIMEZONE: 'Europe/Paris'
   PUBLIC_DASHBOARD: 'true'
+
 pretasks:
-  - appkey_spt
+  - appkey

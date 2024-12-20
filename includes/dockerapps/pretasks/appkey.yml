@@ -1,0 +1,97 @@
+---
+# Bloc pour Vikunja
+- block:
+    - name: Vérifier si le JWT secret est défini
+      set_fact:
+        jwt_secret_exists: "{{ not (vikunja.jwtsecret is undefined or vikunja.jwtsecret is none or (vikunja.jwtsecret | trim | length == 0)) }}"
+
+    - name: Générer un JWT secret si non défini pour Vikunja
+      set_fact:
+        vikunja_jwtsecret: "{{ lookup('password', '/dev/null length=64 chars=ascii_letters,digits') }}"
+      when: not jwt_secret_exists
+
+    - name: Mettre à jour vikunja.jwtsecret si généré
+      set_fact:
+        vikunja:
+          jwtsecret: "{{ vikunja_jwtsecret if not jwt_secret_exists else vikunja.jwtsecret }}"
+
+    - name: Ajouter le JWT secret dans le vault si généré
+      shell: |
+        source ${SETTINGS_SOURCE}/profile.sh
+        manage_account_yml vikunja.jwtsecret "{{ vikunja.jwtsecret }}"
+      args:
+        executable: /bin/bash
+      when: vikunja_jwtsecret is defined
+
+    - name: Afficher le JWT secret final pour Vikunja
+      debug:
+        msg: "JWT Secret pour Vikunja : {{ vikunja.jwtsecret }}"
+  when: pgrole == "vikunja"
+
+# Bloc pour SpeedTestTracker
+- block:
+    - name: Vérifier si APPKEY est définie
+      set_fact:
+        appkey_speedtesttracker_exists: "{{ not (appkey.speedtesttracker is undefined or appkey.speedtesttracker is none or (appkey.speedtesttracker | trim | length == 0)) }}"
+
+    - name: Générer 32 octets bruts encodés en Base64 pour SpeedTestTracker
+      command: openssl rand -base64 32
+      register: raw_key
+      when: not appkey_speedtesttracker_exists
+
+    - name: Ajouter le préfixe `base64:` à la clé pour SpeedTestTracker
+      set_fact:
+        app_key: "base64:{{ raw_key.stdout }}"
+      when: not appkey_speedtesttracker_exists
+
+    - name: Mettre à jour appkey.speedtesttracker si généré
+      set_fact:
+        appkey:
+          speedtesttracker: "{{ app_key if not appkey_speedtesttracker_exists else appkey.speedtesttracker }}"
+
+    - name: Ajouter appkey.speedtesttracker dans le vault si généré
+      shell: |
+        source ${SETTINGS_SOURCE}/profile.sh
+        manage_account_yml appkey.speedtesttracker "{{ appkey.speedtesttracker }}"
+      args:
+        executable: /bin/bash
+      when: appkey.speedtesttracker is defined
+
+    - name: Afficher la clé finale pour SpeedTestTracker
+      debug:
+        msg: "Clé générée pour SpeedTestTracker : {{ appkey.speedtesttracker }}"
+  when: pgrole == "speedtesttracker"
+
+# Bloc pour Bookstack
+- block:
+    - name: Vérifier si APPKEY est définie
+      set_fact:
+        appkey_bookstack_exists: "{{ not (appkey.bookstack is undefined or appkey.bookstack is none or (appkey.bookstack | trim | length == 0)) }}"
+
+    - name: Générer 32 octets bruts encodés en Base64 pour bookstack
+      command: openssl rand -base64 32
+      register: raw_key
+      when: not appkey_bookstack_exists
+
+    - name: Ajouter le préfixe `base64:` à la clé pour bookstack
+      set_fact:
+        app_key: "base64:{{ raw_key.stdout }}"
+      when: not appkey_bookstack_exists
+
+    - name: Mettre à jour appkey.bookstack si généré
+      set_fact:
+        appkey:
+          bookstack: "{{ app_key if not appkey_bookstack_exists else appkey.bookstack }}"
+
+    - name: Ajouter appkey.bookstack dans le vault si généré
+      shell: |
+        source ${SETTINGS_SOURCE}/profile.sh
+        manage_account_yml appkey.bookstack "{{ appkey.bookstack }}"
+      args:
+        executable: /bin/bash
+      when: appkey.bookstack is defined
+
+    - name: Afficher la clé finale pour bookstack
+      debug:
+        msg: "Clé générée pour bookstack : {{ appkey.bookstack }}"
+  when: pgrole == "bookstack"
