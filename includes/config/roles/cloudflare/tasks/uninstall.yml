@@ -1,31 +1,29 @@
-#########################################################################
-# Title:         Cloudbox: Cloudflare Role                              #
-# Author(s):     l3uddz, desimaniac                                     #
-# URL:           https://github.com/cloudbox/cloudbox                   #
-# --                                                                    #
-#         Part of the Cloudbox project: https://cloudbox.works          #
-#########################################################################
-#                   GNU General Public License v3.0                     #
-#########################################################################
 ---
+
+- set_fact:
+    zone_id: "{{ lookup('pipe', 'curl -s -X GET \"https://api.cloudflare.com/client/v4/zones?name=' + user.domain + '\" -H \"X-Auth-Email: ' + cloudflare.login + '\" -H \"X-Auth-Key: ' + cloudflare.api + '\" -H \"Content-Type: application/json\" | jq -r \".result[0].id\"') }}"
+
+- set_fact:
+    record_id: "{{ lookup('pipe', 'curl -s -X GET \"https://api.cloudflare.com/client/v4/zones/' + zone_id + '/dns_records?name=' + subdomain + '.' + user.domain + '\" -H \"X-Auth-Email: ' + cloudflare.login + '\" -H \"X-Auth-Key: ' + cloudflare.api + '\" -H \"Content-Type: application/json\" | jq -r \".result[0].id\"') }}"
+
+- command: >
+    curl -s -X DELETE "https://api.cloudflare.com/client/v4/zones/{{ zone_id }}/dns_records/{{ record_id }}"
+    -H "X-Auth-Email: {{ cloudflare.login }}"
+    -H "X-Auth-Key: {{ cloudflare.api }}"
+    -H "Content-Type: application/json"
+  register: delete_result
+  
 - name: Remove DNS Record
-  cloudflare_dns:
-    account_api_token: "{{ cloudflare.api }}"
-    account_email: "{{ cloudflare.login }}"
-    zone: "{{ user.domain }}"
-    state: absent
-    proxied: yes
-    type: A
-    record: "{{ subdomain }}"
+  debug:
+    msg: "DNS Record for '{{ subdomain }}' remove from '{{ network.ipv4 }}'."
 
 
-- name: Remove record for ipv6
-  cloudflare_dns:
-    account_api_token: "{{ cloudflare.api }}"
-    account_email: "{{ cloudflare.login }}"
-    zone: "{{ user.domain }}"
-    state: absent
-    proxied: yes
-    type: AAAA
-    record: "{{ subdomain }}"
-  when: (network.ipv6 is defined) and (network.ipv6|length > 0)
+
+
+
+
+
+
+
+
+

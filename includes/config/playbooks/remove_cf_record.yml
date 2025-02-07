@@ -5,7 +5,7 @@
     - "{{ settings.source }}/includes/dockerapps/templates/generique/generique.yml"
 
   tasks:
-  - name: "Set DNS Record on CloudFlare"
+  - name: "Remove DNS Record on CloudFlare"
     include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/uninstall.yml"
     vars:
       subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
