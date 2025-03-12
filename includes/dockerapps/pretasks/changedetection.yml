@@ -1,0 +1,42 @@
+- name: 'Information durée'
+  debug:
+    msg: "Je ne peux rien lui apprendre, cet enfant n’a aucune patience. Trop de colère en lui, comme son père. il n’est pas prêt"
+
+- name: 'Deploying sockpuppetbrowser'
+  docker_container:
+    name: 'sockpuppetbrowser'
+    recreate: true
+    image: 'dgtlmoon/sockpuppetbrowser:latest'
+    pull: yes
+    capabilities:
+      - sys_admin
+    env:
+      SCREEN_WIDTH: "1920"
+      SCREEN_HEIGHT: "1024"
+      SCREEN_DEPTH: "16"
+      MAX_CONCURRENT_CHROME_PROCESSES: "10"
+    restart_policy: unless-stopped
+    networks:
+      - name: 'traefik_proxy'
+    state: started
+
+
+- name: 'Deploying browser-chrome'
+  docker_container:
+    name: 'browser-chrome'
+    recreate: true
+    image: 'selenium/standalone-chrome:4'
+    pull: yes
+    capabilities:
+      - sys_admin
+    volumes:
+      - /dev/shm:/dev/shm
+    env:
+      VNC_NO_PASSWORD: "1"
+      SCREEN_WIDTH: "1920"
+      SCREEN_HEIGHT: "1024"
+      SCREEN_DEPTH: "24"
+    restart_policy: unless-stopped
+    networks:
+      - name: 'traefik_proxy'
+    state: started
