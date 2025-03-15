@@ -6,5 +6,6 @@ pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/app/config:rw"
   - "/var/run/docker/sock:/var/run/docker/sock:ro"
 pg_env:
+  HOMEPAGE_ALLOWED_HOSTS: "{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{user.domain}}"
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
