@@ -1,7 +1,7 @@
 ---
 pgrole: 'mealie'
 intport: '9000'
-image: 'ghcr.io/mealie-recipes/mealie:v1.12.0'
+image: 'ghcr.io/mealie-recipes/mealie:latest'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/app/data:rw"
 pg_env:
