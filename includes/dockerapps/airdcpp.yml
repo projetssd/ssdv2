@@ -1,0 +1,17 @@
+---
+pgrole: 'airdcpp'
+intport: '5600'
+image: 'gangefors/airdcpp-webclient'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/.airdcpp:/.airdcpp:rw"
+  - "{{ lookup('env','HOME') }}/Medias/Downloads:/Downloads:rw"
+  - "{{ lookup('env','HOME') }}/Medias:/Share:rw"
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+pg_ports:
+  - "80:5600"
+  - "443:5601"
+  - "21248:21248"
+  - "21248:21248/udp"
+  - "21249:21249"
