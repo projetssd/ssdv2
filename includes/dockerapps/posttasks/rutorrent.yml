@@ -9,30 +9,26 @@
     path: "/home/{{ lookup('env','USER') }}/local/{{pgrole}}"
     state: directory
 
-- name: Set download location
-  lineinfile:
-    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config/rtorrent/.rtorrent.rc"
-    regexp: '#*directory.default.set\s*=.*'
-    line: "directory.default.set = /home/{{ lookup('env','USER') }}/local/{{pgrole}}"
-    state: present
+#- name: Set download location
+#  lineinfile:
+#    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config/rtorrent/.rtorrent.rc"
+#    regexp: '#*directory.default.set\s*=.*'
+#    line: "directory.default.set = /home/{{ lookup('env','USER') }}/local/{{pgrole}}"
+#    state: present
 
-- name: Change port
-  lineinfile:
-    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config/rtorrent/.rtorrent.rc"
-    regexp: '#*network.port_range.set\s*=.*'
-    line: "network.port_range.set = {{ specific_docker_info.ports[0] | replace(':', '-') }}"
-    state: present
+#- name: Change port
+#  lineinfile:
+#    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config/rtorrent/.rtorrent.rc"
+#    regexp: '#*network.port_range.set\s*=.*'
+#    line: "network.port_range.set = {{ specific_docker_info.ports[0] | replace(':', '-') }}"
+#    state: present
 
-- name: Set download location
-  lineinfile:
-    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config/rutorrent/conf/config.php"
-    regexp: '\$topDirectory\s*=.*'
-    line: "$topDirectory = '/home/{{ lookup('env','USER') }}';"
-    state: present
-
-- name: set fact
-  set_fact:
-    myusername: "{{ lookup('env','USER') }}"
+#- name: Set download location
+#  lineinfile:
+#    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config/rutorrent/conf/config.php"
+#    regexp: '\$topDirectory\s*=.*'
+#    line: "$topDirectory = '/home/{{ lookup('env','USER') }}';"
+#    state: present
 
 - name: Clone Ratio Color plugin
   git:

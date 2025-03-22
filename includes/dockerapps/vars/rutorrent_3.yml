@@ -1,5 +1,5 @@
 ---
-pgrole: 'rutorrent_3'
+pgrole: 'rutorrent'
 intport: '8080'
 image: 'mondedie/rutorrent:latest'
 pg_volumes:
@@ -13,14 +13,20 @@ pg_env:
   UID: '{{user.userid}}'
   GID: '{{user.groupid}}'
   TZ: 'Europe/Paris'
-  DOWNLOAD_DIRECTORY: "{{ lookup('env','HOME') }}/local/rutorrent_3"
+  DOWNLOAD_DIRECTORY: "{{ lookup('env','HOME') }}"
+  PORT_RTORRENT: '45003'
 # tags spécifiques à ajouter à la construction du docker
 specific_docker_info:
   ports:
     - '45003:45003'
+
+posttasks:
+  - rutorrent
+
+#  Pour contourner l'authentification pour des outils de style nzb360, décommentez le pavé ci dessous
 #extra_labels:
-#  traefik.http.routers.rutorrent-rtr-bypass.rule: 'Path(`/RPC2`)'
-#  traefik.http.routers.rutorrent-rtr-bypass.priority: '100'
-#  traefik.http.routers.rutorrent-rtr-bypass.tls: 'true'
-#  traefik.http.routers.rutorrent-rtr-bypass.middlewares: 'chain-basic-auth@file'
-#  traefik.http.routers.rutorrent-rtr-bypass.service: 'rutorrent-svc'
+#  traefik.http.routers.rutorrent_3-rtr-bypass.rule: 'Path(`/RPC2`)'
+#  traefik.http.routers.rutorrent_3-rtr-bypass.priority: '100'
+#  traefik.http.routers.rutorrent_3-rtr-bypass.tls: 'true'
+#  traefik.http.routers.rutorrent_3-rtr-bypass.middlewares: 'chain-basic-auth@file'
+#  traefik.http.routers.rutorrent_3-rtr-bypass.service: 'rutorrent_3-svc'

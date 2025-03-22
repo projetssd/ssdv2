@@ -13,11 +13,16 @@ pg_env:
   UID: '{{user.userid}}'
   GID: '{{user.groupid}}'
   TZ: 'Europe/Paris'
-  DOWNLOAD_DIRECTORY: "{{ lookup('env','HOME') }}/local/rutorrent"
+  DOWNLOAD_DIRECTORY: "{{ lookup('env','HOME') }}"
+  PORT_RTORRENT: '45000'
 # tags spécifiques à ajouter à la construction du docker
 specific_docker_info:
   ports:
     - '45000:45000'
+
+posttasks:
+  - rutorrent
+
 #  Pour contourner l'authentification pour des outils de style nzb360, décommentez le pavé ci dessous
 #extra_labels:
 #  traefik.http.routers.rutorrent-rtr-bypass.rule: 'Path(`/RPC2`)'
