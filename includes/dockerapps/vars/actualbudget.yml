@@ -1,0 +1,12 @@
+---
+pgrole: 'actualbudget'
+intport: '5006'
+image: 'docker.io/actualbudget/actual-server:latest'
+
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/data"
+
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  TZ: "Europe/Paris"
