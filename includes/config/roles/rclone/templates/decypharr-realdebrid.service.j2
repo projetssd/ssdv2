@@ -1,0 +1,41 @@
+[Unit]
+Description=Rclone mount for Decypharr-realdebrid Webdav
+After=network-online.target
+
+[Service]
+Type=simple
+User={{ lookup('env','USER') }}
+Group={{ lookup('env','MYGIDNAME') }}
+ExecStart=/usr/bin/rclone mount decypharr-realdebrid: {{ lookup('env','HOME') }}/realdebrid \
+    --allow-non-empty \
+    --allow-other \
+    --copy-links \
+    --dir-cache-time=5s \
+    --max-read-ahead=196M \
+    --umask=002 \
+    --vfs-cache-min-free-space=off \
+    --vfs-cache-max-age=504h \
+    --vfs-cache-max-size=100G \
+    --vfs-cache-mode=full \
+    --vfs-cache-poll-interval=30s \
+    --vfs-read-chunk-size=32M \
+    --vfs-read-chunk-size-limit=128M \
+    --vfs-fast-fingerprint \
+    --cache-dir={{ lookup('env','HOME') }}/.config/rclone/cache/realdebrid \
+    --gid {{ user.groupid }} \
+    --uid {{ user.userid }} \
+    --log-level=INFO \
+    --rc \
+    --rc-addr=localhost:5572 \
+    --rc-no-auth \
+    --rc-web-gui \
+    --rc-web-gui-no-open-browser
+
+ExecStop=/bin/bash -c '/bin/fusermount -uz {{ lookup('env','HOME') }}/realdebrid || umount {{ lookup('env','HOME') }}/realdebrid '
+Restart=always
+RestartSec=5
+StartLimitInterval=60s
+
+[Install]
+WantedBy=multi-user.target
+

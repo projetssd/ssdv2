@@ -1816,3 +1816,33 @@ update_containers() {
     fi
   done
 }
+
+function decypharr() {
+  clear
+  echo -e "\033[1;34m+------------------------------------------------\033[0m"
+  echo -e "\033[1;34m|\033[0m      \033[1mChoisissez votre service Debrid\033[0m"
+  echo -e "\033[1;34m+------------------------------------------------\033[0m"
+  echo -e "\033[1;34m|\033[0m  1) Alldebrid"
+  echo -e "\033[1;34m|\033[0m  2) Real-Debrid"
+  echo -e "\033[1;34m|\033[0m  3) Les deux"
+  echo -e "\033[1;34m+------------------------------------------------\033[0m"
+  echo
+
+  read -p $'\033[1;36m>>> Choix (1/2/3): \033[0m' choice
+  case $choice in
+    1) debrid_choice="alldebrid" ;;
+    2) debrid_choice="realdebrid" ;;
+    3) debrid_choice="both" ;;
+    *) echo -e "\033[1;31mChoix invalide. Veuillez entrer 1, 2 ou 3.\033[0m"; exit 1 ;;
+  esac
+
+  echo
+  echo -e "\033[1;32mLancement du playbook avec : $debrid_choice\033[0m"
+  sleep 1
+
+  ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/generique.yml" \
+    --extra-vars "@${SETTINGS_SOURCE}/includes/dockerapps/vars/decypharr.yml" \
+    --extra-vars "debrid_choice=$debrid_choice"
+}
+
+

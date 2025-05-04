@@ -4,8 +4,6 @@ intport: '8989'
 image: 'lscr.io/linuxserver/sonarr:develop'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
-  - "{{ settings.storage }}/zurg:/mnt/zurg"
-  - "{{ lookup('env','HOME') }}/scripts/qdebrid:/mnt/scripts"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
 pg_env:
   PUID: "{{ lookup('env','MYUID') }}"
