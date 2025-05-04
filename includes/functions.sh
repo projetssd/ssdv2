@@ -1843,6 +1843,11 @@ function decypharr() {
   ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/generique.yml" \
     --extra-vars "@${SETTINGS_SOURCE}/includes/dockerapps/vars/decypharr.yml" \
     --extra-vars "debrid_choice=$debrid_choice"
+
+  echo ""
+  echo -e "\n $(gettext "Appuyer sur") ${CCYAN}[$(gettext "ENTREE")]${CEND} $(gettext "pour continuer")"
+  read -r
+
 }
 
 
