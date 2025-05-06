@@ -8,30 +8,3 @@
     prompt: "Entrez le chemin pour TORRENTS_DIR (ex: /home/ubuntu/seedbox/zurg)"
     echo: yes
   register: torrents_input
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
