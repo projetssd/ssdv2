@@ -1,10 +1,4 @@
 ---
-- name: Supprimer le conteneur Docker decypharr s'il existe
-  community.docker.docker_container:
-    name: decypharr
-    state: absent
-    force_kill: true
-
 - name: Supression du dossier decypharr par precaution s'il existe
   become: yes
   file:

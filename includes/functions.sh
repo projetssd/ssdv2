@@ -1818,7 +1818,28 @@ update_containers() {
 }
 
 function decypharr() {
+
+  # Vérifie si rclone est déjà installé
+  if command -v rclone >/dev/null 2>&1; then
+      echo "rclone est déjà installé."
+  else
+      echo "rclone n'est pas installé. Installation en cours..."
+      curl -fsSL https://rclone.org/install.sh | sudo bash
+
+      # Vérifie si l'installation a réussi
+      if command -v rclone >/dev/null 2>&1; then
+          echo "rclone a été installé avec succès."
+      else
+          echo "Échec de l'installation de rclone." >&2
+          exit 1
+      fi
+  fi
+
+  echo ""
+  echo -e "\n $(gettext "Appuyer sur") ${CCYAN}[$(gettext "ENTREE")]${CEND} $(gettext "pour continuer")"
+  read -r
   clear
+
   echo -e "\033[1;34m+------------------------------------------------\033[0m"
   echo -e "\033[1;34m|\033[0m      \033[1mChoisissez votre service Debrid\033[0m"
   echo -e "\033[1;34m+------------------------------------------------\033[0m"
