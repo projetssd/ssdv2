@@ -1,0 +1,27 @@
+---
+pgrole: 'baserow'
+intport: '80'
+image: 'baserow/baserow:1.33.3'
+
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/baserow/data"
+
+pg_env:
+  BASEROW_PUBLIC_URL: "https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{user.domain}}"
+  DATABASE_HOST: "db-{{ pgrole }}"
+  DATABASE_PORT: "5432"
+  DATABASE_NAME: "{{ pgrole }}"
+  DATABASE_USER: "{{ pgrole }}"
+  DATABASE_PASSWORD: "{{ pgrole }}"
+### EMAIL SETTINGS ###
+### a verifier pas de docs complete ###
+# EMAIL_SMTP: "True"
+# EMAIL_SMTP_HOST: "servername.ndd.tld"
+# EMAIL_SMTP_PORT: "587/465/25"
+# EMAIL_SMTP_USER: "user"
+# EMAIL_SMTP_PASSWORD: "password"
+# EMAIL_SMTP_USE_TLS: "yes/no"
+###########
+
+pretasks:
+  - postgresql15
