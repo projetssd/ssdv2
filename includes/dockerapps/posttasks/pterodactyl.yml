@@ -19,7 +19,7 @@
     labels:
       traefik.enable: "true"
       traefik.http.routers.wings-rtr.entrypoints: 'http,https'
-      traefik.http.routers.wings-rtr.rule: "Host(`wings.lastharo.fr`)"
+      traefik.http.routers.wings-rtr.rule: "Host(`wings.{{ user.domain }}`)"
       traefik.http.routers.wings-rtr.tls: 'true'
       traefik.http.routers.wings-rtr.tls.certresolver: "letsencrypt"
       traefik.http.routers.{{pgrole}}-rtr.service: 'wings-svc'
