@@ -1,0 +1,19 @@
+---
+pgrole: 'pterodactyl'
+intport: '80'
+image: 'ghcr.io/pterodactyl/panel:latest'
+pg_volumes:
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+  - "/srv/pterodactyl/logs/:/app/storage/logs"
+  - "/srv/pterodactyl/var/:/app/var/"
+pg_env:
+  DB_PASSWORD: "pterodactyl"
+  APP_URL: "https://pterodactyl.{{ user.domain }}/"
+  APP_ENV: "production"
+  APP_ENVIRONMENT_ONLY: "false"
+  CACHE_DRIVER: "redis"
+  SESSION_DRIVER: "redis"
+  QUEUE_DRIVER: "redis"
+  REDIS_HOST: "redis-pterodactyl"
+  DB_HOST: "db-pterodactyl"
+  DB_PORT: "3306"

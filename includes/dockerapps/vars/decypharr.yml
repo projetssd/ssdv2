@@ -1,7 +1,7 @@
 ---
 pgrole: 'decypharr'
 intport: '8282'
-image: 'cy01/blackhole:beta'
+image: 'ghcr.io/sirrobot01/decypharr:beta'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}:/app"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"

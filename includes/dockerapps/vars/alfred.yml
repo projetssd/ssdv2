@@ -7,12 +7,13 @@ pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}:/app/data"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
 pg_env:
-  PUID: "{{ lookup('env','MYUID') }}"
-  PGID: "{{ lookup('env','MYGID') }}"
   TZ: "Europe/Paris"
   SYMLINK_DIR: "{{ symlink_input.user_input }}"
   TORRENTS_DIR: "{{ torrents_input.user_input }}"
   DELETE_BEHAVIOR: "files"
   SCAN_INTERVAL: "720"
+  PENDING_DELETION_GRACE_SECONDS: "60"
+  DRY_RUN: "true"
+  RUN_ON_STARTUP: "true"
 specific_docker_info:
-  user: "{{ lookup('env','MYUID') }}:{{ lookup('env','MYGID') }}"
+  user: "1000:1000"

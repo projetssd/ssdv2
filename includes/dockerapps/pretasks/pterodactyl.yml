@@ -1,0 +1,39 @@
+---
+- name: 'Deploying db-{{pgrole}}'
+  docker_container:
+    name: 'db-{{pgrole}}'
+    recreate: true
+    image: 'mariadb:10.6.4'
+    pull: yes
+    volumes:
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}/data:/var/lib/mysql"
+      - '/etc/localtime:/etc/localtime:ro'
+    env:
+      TZ: "Europe/Paris"
+      MYSQL_ROOT_PASSWORD: "{{user.pass}}"
+      MYSQL_USER: "{{pgrole}}"
+      MYSQL_PASSWORD: "{{pgrole}}"
+      MYSQL_DATABASE: "panel"
+    restart_policy: unless-stopped
+    networks:
+      - name: 'traefik_proxy'
+    state: started
+
+- name: 'Deploying redis-{{pgrole}}'
+  docker_container:
+    name: 'redis-{{pgrole}}'
+    recreate: true
+    image: 'redis:7.2-alpine'
+    pull: yes
+    volumes:
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/redis-{{pgrole}}/data:/data"
+      - '/etc/localtime:/etc/localtime:ro'
+    env:
+      TZ: "Europe/Paris"
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+    restart_policy: unless-stopped
+    networks:
+      - name: 'traefik_proxy'
+    state: started
+
+
