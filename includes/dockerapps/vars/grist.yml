@@ -1,0 +1,39 @@
+---
+pgrole: 'grist'
+intport: '8080'
+image: 'gristlabs/grist:latest'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/persist"
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+pg_env:
+  PORT: "8080"
+  APP_HOME_URL: "https://grist.{{ user.domain }}"
+  GRIST_ALLOWED_HOSTS: "grist.{{ user.domain }}"
+  GRIST_DOMAIN: "grist.{{ user.domain }}"
+  GRIST_SINGLE_ORG: "myorg"
+  GRIST_HIDE_UI_ELEMENTS: "billing"
+  GRIST_LIST_PUBLIC_SITES: "false"
+  GRIST_MAX_UPLOAD_ATTACHMENT_MB: "10"
+  GRIST_MAX_UPLOAD_IMPORT_MB: "300"
+  GRIST_ORG_IN_PATH: "false"
+  GRIST_PAGE_TITLE_SUFFIX: "_blank"
+  GRIST_FORCE_LOGIN: "true"
+  GRIST_SUPPORT_ANON: "false"
+  GRIST_THROTTLE_CPU: "true"
+
+  GRIST_SANDBOX_FLAVOR: "gvisor"
+  PYTHON_VERSION: "3"
+  PYTHON_VERSION_ON_CREATION: "3"
+  user: "{{ lookup('env','MYUID') }}:{{ lookup('env','MYGID') }}"
+
+  # Database
+  TYPEORM_DATABASE: "grist"
+  TYPEORM_USERNAME: "grist"
+  TYPEORM_HOST: "db-grist"
+  TYPEORM_LOGGING: "false"
+  TYPEORM_PASSWORD: "grist"
+  TYPEORM_PORT: "5432"
+  TYPEORM_TYPE: "postgres"
+specific_docker_info:
+  ports:
+    - '127.0.0.1:3000:8080'

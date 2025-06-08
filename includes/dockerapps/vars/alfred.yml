@@ -16,4 +16,5 @@ pg_env:
   DRY_RUN: "true"
   RUN_ON_STARTUP: "true"
 specific_docker_info:
-  user: "1000:1000"
+  user: "{{ lookup('env','MYUID') }}:{{ lookup('env','MYGID') }}"
+

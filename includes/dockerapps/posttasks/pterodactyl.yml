@@ -1,4 +1,9 @@
 ---
+- name: "Set DNS Record on CloudFlare"
+  include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
+  vars:
+    subdomain: "wings"
+
 - name: 'Deploying wings'
   docker_container:
     name: 'wings'
@@ -35,6 +40,6 @@
     msg: "🚀🚀🚀 IMPORTANT 🚀🚀🚀 | 📚 DOCUMENTATION → https://belginux.com/pterodactyl/"
 
 - debug:
-    msg: "🚀🚀🚀 IMPORTANT 🚀🚀🚀 | 📚 PORT CREATION NODE WINGS → 443"
+    msg: "🚀🚀🚀 IMPORTANT 🚀🚀🚀 | 📚 PORT CREATION NODE WINGS → 443 | 📚 Utiliser wings.domain.eu pour la configuration du node"
 
 

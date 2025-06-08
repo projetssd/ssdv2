@@ -1,0 +1,30 @@
+---
+- name: 'Deploying db-{{pgrole}}'
+  docker_container:
+    name: 'db-{{pgrole}}'
+    image: 'postgres:17.2-alpine'
+    pull: yes
+    volumes:
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}/data:/var/lib/postgresql/data"
+    env:
+      POSTGRES_DB: grist
+      POSTGRES_USER: grist
+      POSTGRES_PASSWORD: grist
+    restart_policy: unless-stopped
+    networks:
+      - name: 'traefik_proxy'
+    state: started
+    user: "{{ lookup('env','MYUID') }}:{{ lookup('env','MYGID') }}"
+
+- name: Ensure data directory exists and has correct permissions
+  become: true
+  file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}"
+    state: directory
+    recurse: yes
+    owner: "{{ lookup('env','MYUID') }}"
+    group: "{{ lookup('env','MYGID') }}"
+    mode: '0755'
+
+
+
