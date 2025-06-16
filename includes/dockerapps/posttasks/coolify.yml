@@ -6,14 +6,44 @@
     subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
   when: cloudflare_enabled
 
-- name: Créer le dossier source de coolify
-  file:
-    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/source"
+- name: Dossiers necessaires pour l'application {{ pgrole }}
+  ansible.builtin.file:
+    path: "{{ item }}"
     state: directory
     mode: '0755'
-    recurse: yes
+    owner: "{{ lookup('env', 'USER') }}"
+    group: "{{ lookup('env', 'USER') }}"
+  loop:
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/source"
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/ssh"
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/ssh/keys"
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/ssh/mux"
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/applications"
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/databases"
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/backups"
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/services"
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/proxy"
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/proxy/dynamic"
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/webhooks-during-maintenance"
 
-- name: Generer un fichier .env complet avec pg_env + labels
+- name: Generer la cle SSH ed25519 pour root@coolify si absente
+  ansible.builtin.command:
+    cmd: ssh-keygen -f {{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/ssh/keys/id.root@host.docker.internal -t ed25519 -N '' -C root@coolify
+    creates: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/ssh/keys/id.root@host.docker.internal"
+
+- name: Ajouter la cle publique a authorized_keys
+  ansible.builtin.shell: >
+    cat {{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/ssh/keys/id.root@host.docker.internal.pub
+    >> ~/.ssh/authorized_keys
+  args:
+    executable: /bin/bash
+
+- name: Appliquer les bonnes permissions sur ~/.ssh/authorized_keys
+  ansible.builtin.file:
+    path: ~/.ssh/authorized_keys
+    mode: '0600'
+
+- name: Fichier .env complet avec pg_env + labels
   copy:
     dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/source/.env"
     mode: '0600'
@@ -62,7 +92,7 @@
     regexp: '(\s+networks:\s*\n)(\s*)- coolify'
     replace: '\1\2- traefik_proxy'
 
-- name: injecter les labels Traefik dans docker-compose.prod.yml
+- name: Injecter les labels Traefik dans docker-compose.prod.yml
   block:
     - name: template Jinja2 traefik_labels.j2
       copy:
