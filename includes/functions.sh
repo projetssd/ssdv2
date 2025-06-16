@@ -825,6 +825,20 @@ function suppression_appli() {
         docker volume prune -f >/dev/null 2>&1
     fi
     ;;
+
+  coolify)
+    # Supprimer tous les conteneurs dont le nom contient 'coolify'
+    docker ps -a --filter "name=coolify" --format "{{.ID}}" | xargs -r docker rm -f
+
+    if [ "$DELETE" -eq 1 ]; then
+      # Supprimer le dossier d'installation
+      sudo rm -rf "${SETTINGS_STORAGE}/docker/${USER}/${APPSELECTED}"
+
+      # Supprimer tous les volumes Docker liés à 'coolify'
+      docker volume ls --format "{{.Name}}" | grep -i 'coolify' | xargs -r docker volume rm -f
+    fi
+    ;;
+
   esac
 
   if docker ps | grep -q db-$APPSELECTED; then

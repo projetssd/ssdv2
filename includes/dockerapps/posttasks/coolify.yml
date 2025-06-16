@@ -1,0 +1,108 @@
+# coolify_postask.yml
+
+- name: "Set DNS Record on CloudFlare"
+  include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
+  vars:
+    subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
+  when: cloudflare_enabled
+
+- name: Créer le dossier source de coolify
+  file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/source"
+    state: directory
+    mode: '0755'
+    recurse: yes
+
+- name: Generer un fichier .env complet avec pg_env + labels
+  copy:
+    dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/source/.env"
+    mode: '0600'
+    content: |
+      {% for key, value in pg_env.items() %}
+      {{ key }}={{ value }}
+      {% endfor %}
+
+- name: Télécharger docker-compose.yml
+  get_url:
+    url: https://cdn.coollabs.io/coolify/docker-compose.yml
+    dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/source/docker-compose.yml"
+
+- name: Télécharger docker-compose.prod.yml
+  get_url:
+    url: https://cdn.coollabs.io/coolify/docker-compose.prod.yml
+    dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/source/docker-compose.prod.yml"
+
+- name: Remplacer tous les chemins /data/coolify/... par /home/${USER}/coolify/...
+  replace:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/source/docker-compose.prod.yml"
+    regexp: '/data/coolify(/[^"\s]*)?'
+    replace: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}\\1"
+
+- name: Remplacer le nom du reseau Docker "coolify" par "traefik_proxy"
+  replace:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/source/docker-compose.prod.yml"
+    regexp: '\bnetwork[s]?:\s*\n\s*coolify:'
+    replace: 'networks:\n  traefik_proxy:'
+
+- name: Remplacer le network "coolify" dans les services
+  replace:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/source/docker-compose.prod.yml"
+    regexp: '\bnetworks:\s*\n\s*- coolify'
+    replace: 'networks:\n      - traefik_proxy'
+
+- name: Remplacer le network "coolify" par "traefik_proxy"
+  replace:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/source/docker-compose.yml"
+    regexp: '^\s*coolify:\s*\n(\s*)name:.*\n(\s*)driver:.*\n(\s*)external:.*'
+    replace: '\1traefik_proxy:\n\1  name: traefik_proxy\n\1  driver: bridge\n\1  external: false'
+
+- name: Remplacer le network "coolify" dans les services
+  replace:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/source/docker-compose.yml"
+    regexp: '(\s+networks:\s*\n)(\s*)- coolify'
+    replace: '\1\2- traefik_proxy'
+
+- name: injecter les labels Traefik dans docker-compose.prod.yml
+  block:
+    - name: template Jinja2 traefik_labels.j2
+      copy:
+        dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/source/traefik_labels.j2"
+        mode: '0644'
+        content: |
+          labels:
+          {% for key, val in labels.items() %}
+            {{ key }}: "{{ val }}"
+          {% endfor %}
+
+    - name: Rendre le bloc labels depuis le template avec indentation correcte
+      set_fact:
+        rendered_labels_block: >-
+          {{
+            lookup(
+              'template',
+              settings.storage ~ '/docker/' ~ lookup('env','USER') ~ '/' ~ pgrole ~ '/source/traefik_labels.j2'
+            )
+            | regex_replace('^', '    ', multiline=True)
+          }}
+
+    - name: Injecter le bloc labels dans le service coolify
+      blockinfile:
+        path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/source/docker-compose.prod.yml"
+        insertafter: '^  coolify:'
+        block: "{{ rendered_labels_block }}"
+        marker: "# {mark} ANSIBLE MANAGED BLOCK - Traefik Labels"
+
+- name: Lancer {{ pgrole }} via Docker Compose (v2)
+  community.docker.docker_compose_v2:
+    project_src: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/source"
+    files:
+      - docker-compose.yml
+      - docker-compose.prod.yml
+    env_files:
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/source/.env"
+    state: present
+    recreate: never
+
+
+
+

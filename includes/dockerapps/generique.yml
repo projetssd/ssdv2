@@ -119,7 +119,7 @@
         docker_info:
           name: '{{ pgrole }}'
           image: '{{ image }}'
-          volumes: "{{ pg_volumes }}"
+          volumes: "{{ pg_volumes | default([]) }}"
           env: "{{ pg_env }}"
           restart_policy: unless-stopped
           networks:

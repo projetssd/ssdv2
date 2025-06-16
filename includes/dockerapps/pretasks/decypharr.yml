@@ -12,14 +12,14 @@
     path: "{{ lookup('env','HOME') }}/alldebrid"
     state: directory
     mode: '0755'
-  when: debrid_choice in ['alldebrid', 'both']
+  when: debrid_choice is defined and debrid_choice in ['alldebrid', 'both']
 
 - name: Créer le dossier ~/realdebrid si nécessaire
   file:
     path: "{{ lookup('env','HOME') }}/realdebrid"
     state: directory
     mode: '0755'
-  when: debrid_choice in ['realdebrid', 'both']
+  when: debrid_choice is defined and debrid_choice in ['realdebrid', 'both']
 
 - name: Vérifier s'il existe un ou plusieurs services decypharr*.service
   become: yes
@@ -58,15 +58,7 @@
       url = http://localhost:8282/webdav/alldebrid
       vendor = other
       pacer_min_sleep = 0
-  when: debrid_choice in ['alldebrid', 'both']
-
-- name: Ajouter une ligne vide entre les deux blocs (si both)
-  lineinfile:
-    path: "{{ lookup('env', 'HOME') }}/.config/rclone/rclone.conf"
-    insertafter: "# END ANSIBLE BLOCK Alldebrid"
-    line: ""
-    state: present
-  when: debrid_choice == 'both'
+  when: debrid_choice is defined and debrid_choice in ['alldebrid', 'both']
 
 - name: Ajouter la remote Real-Debrid à rclone.conf
   blockinfile:
@@ -78,21 +70,20 @@
       url = http://localhost:8282/webdav/realdebrid
       vendor = other
       pacer_min_sleep = 0
-  when: debrid_choice in ['realdebrid', 'both']
+  when: debrid_choice is defined and debrid_choice in ['realdebrid', 'both']
 
 - name: Créer le fichier systemd pour Alldebrid
   become: yes
   template:
     dest: "/etc/systemd/system/decypharr-alldebrid.service"
     src: "{{ lookup('env', 'SETTINGS_SOURCE') }}/includes/config/roles/rclone/templates/decypharr-alldebrid.service.j2"
-  when: debrid_choice in ['alldebrid', 'both']
 
 - name: Créer le fichier systemd pour Real-Debrid
   become: yes
   template:
     dest: "/etc/systemd/system/decypharr-realdebrid.service"
     src: "{{ lookup('env', 'SETTINGS_SOURCE') }}/includes/config/roles/rclone/templates/decypharr-realdebrid.service.j2"
-  when: debrid_choice in ['realdebrid', 'both']
+  when: debrid_choice is defined and debrid_choice in ['realdebrid', 'both']
 
 - name: Lancer le service decypharr-alldebrid
   become: yes
@@ -101,7 +92,6 @@
     state: started
     enabled: yes
     daemon_reload: yes
-  when: debrid_choice in ['alldebrid', 'both']
 
 - name: Lancer le service decypharr-realdebrid
   become: yes
@@ -110,4 +100,5 @@
     state: started
     enabled: yes
     daemon_reload: yes
-  when: debrid_choice in ['realdebrid', 'both']
+  when: debrid_choice is defined and debrid_choice in ['realdebrid', 'both']
+

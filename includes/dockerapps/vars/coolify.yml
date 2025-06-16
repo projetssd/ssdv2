@@ -1,0 +1,37 @@
+# coolify.yml
+---
+pgrole: 'coolify'
+intport: '8000'
+image: 'ghcr.io/coollabsio/coolify:latest'
+pg_env:
+  APP_ID: "{{ lookup('pipe', 'openssl rand -hex 16') }}"
+  APP_KEY: "base64:{{ lookup('pipe', 'openssl rand -base64 32') | trim }}"
+  DB_USERNAME: "coolify"
+  DB_PASSWORD: "{{ lookup('pipe', 'openssl rand -base64 32') | trim }}"
+  DB_DATABASE: "coolify"
+  REDIS_PASSWORD: "{{ lookup('pipe', 'openssl rand -base64 32') | trim }}"
+  PUSHER_APP_ID: "{{ lookup('pipe', 'openssl rand -hex 32') }}"
+  PUSHER_APP_KEY: "{{ lookup('pipe', 'openssl rand -hex 32') }}"
+  PUSHER_APP_SECRET: "{{ lookup('pipe', 'openssl rand -hex 32') }}"
+  LETSENCRYPT_EMAIL: "{{ user.mail }}"
+
+labels:
+  traefik.enable: "true" 
+  traefik.http.routers.coolify-app.entrypoints: "https"
+  traefik.http.routers.coolify-app.rule: "Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)"
+  traefik.http.routers.coolify-app.tls: "true"
+  traefik.http.routers.coolify-app.tls.certresolver: "letsencrypt"
+  ## Middlewares
+  traefik.http.routers.coolify-app.middlewares: "{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
+  else 'chain-basic-auth@file' if auth_enabled and sub[pgrole].auth == 'basique' | default(false)
+  else 'chain-oauth@file' if auth_enabled and sub[pgrole].auth == 'oauth' | default(false) 
+  else 'chain-no-auth@file' if auth_enabled and sub[pgrole].auth == 'aucune'}}"
+
+  traefik.http.routers.coolify-app.service: "coolify-svc"
+  traefik.http.services.coolify-svc.loadbalancer.server.port: "8080"
+
+
+docker_deploy_enabled: false
+traefik_labels_enabled: false
+
+
