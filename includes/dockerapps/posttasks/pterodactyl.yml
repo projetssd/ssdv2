@@ -34,12 +34,12 @@
     state: started
 
 - debug:
-    msg: "?????? IMPORTANT ?????? | ?? CREATION UTILISATEUR ? docker exec -ti pterodactyl sh -c 'php artisan p:user:mak'"
+    msg: "🚀🚀🚀 IMPORTANT 🚀🚀🚀 | 📚 CREATION UTILISATEUR → docker exec -ti pterodactyl sh -c 'php artisan p:user:mak'"
 
 - debug:
-    msg: "?????? IMPORTANT ?????? | ?? DOCUMENTATION ? https://belginux.com/pterodactyl/"
+    msg: "🚀🚀🚀 IMPORTANT 🚀🚀🚀 | 📚 DOCUMENTATION → https://belginux.com/pterodactyl/"
 
 - debug:
-    msg: "?????? IMPORTANT ?????? | ?? PORT CREATION NODE WINGS ? 443 | ?? Utiliser wings.domain.eu pour la configuration du node"
+    msg: "🚀🚀🚀 IMPORTANT 🚀🚀🚀 | 📚 PORT CREATION NODE WINGS → 443 | 📚 Utiliser wings.domain.eu pour la configuration du node"
 
 
