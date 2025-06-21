@@ -29,8 +29,6 @@
       traefik.http.routers.wings-rtr.tls.certresolver: "letsencrypt"
       traefik.http.routers.{{pgrole}}-rtr.service: 'wings-svc'
       traefik.http.services.wings-svc.loadbalancer.server.port: "443"
-    ports:
-      - 2022:2022
     networks:
       - name: 'traefik_proxy'
     state: started
