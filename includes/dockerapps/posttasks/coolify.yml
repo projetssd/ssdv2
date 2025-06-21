@@ -7,13 +7,15 @@
   when: cloudflare_enabled
 
 - name: Dossiers necessaires pour l'application {{ pgrole }}
+  become: true
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
-    mode: '0755'
-    owner: "{{ lookup('env', 'USER') }}"
-    group: "{{ lookup('env', 'USER') }}"
+    mode: '0750'
+    owner: "9999"
+    group: "root"
   loop:
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}"
     - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/source"
     - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/ssh"
     - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/ssh/keys"
@@ -27,11 +29,13 @@
     - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/webhooks-during-maintenance"
 
 - name: Generer la cle SSH ed25519 pour root@coolify si absente
+  become: true
   ansible.builtin.command:
     cmd: ssh-keygen -f {{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/ssh/keys/id.root@host.docker.internal -t ed25519 -N '' -C root@coolify
     creates: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/ssh/keys/id.root@host.docker.internal"
 
 - name: Ajouter la cle publique a authorized_keys
+  become: true
   ansible.builtin.shell: >
     cat {{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/ssh/keys/id.root@host.docker.internal.pub
     >> ~/.ssh/authorized_keys
@@ -44,6 +48,7 @@
     mode: '0600'
 
 - name: Fichier .env complet avec pg_env + labels
+  become: true
   copy:
     dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/source/.env"
     mode: '0600'
@@ -53,50 +58,58 @@
       {% endfor %}
 
 - name: Télécharger docker-compose.yml
+  become: true
   get_url:
     url: https://cdn.coollabs.io/coolify/docker-compose.yml
     dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/source/docker-compose.yml"
 
 - name: Télécharger docker-compose.prod.yml
+  become: true
   get_url:
     url: https://cdn.coollabs.io/coolify/docker-compose.prod.yml
     dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/source/docker-compose.prod.yml"
 
 - name: Remplacer tous les chemins /data/coolify/... par /home/${USER}/coolify/...
+  become: true
   replace:
     path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/source/docker-compose.prod.yml"
     regexp: '/data/coolify(/[^"\s]*)?'
     replace: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}\\1"
 
 - name: Remplacer le nom du reseau Docker "coolify" par "traefik_proxy"
+  become: true
   replace:
     path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/source/docker-compose.prod.yml"
     regexp: '\bnetwork[s]?:\s*\n\s*coolify:'
     replace: 'networks:\n  traefik_proxy:'
 
 - name: Remplacer le network "coolify" dans les services
+  become: true
   replace:
     path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/source/docker-compose.prod.yml"
     regexp: '\bnetworks:\s*\n\s*- coolify'
     replace: 'networks:\n      - traefik_proxy'
 
 - name: Remplacer le network "coolify" par "traefik_proxy"
+  become: true
   replace:
     path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/source/docker-compose.yml"
     regexp: '^\s*coolify:\s*\n(\s*)name:.*\n(\s*)driver:.*\n(\s*)external:.*'
     replace: '\1traefik_proxy:\n\1  name: traefik_proxy\n\1  driver: bridge\n\1  external: false'
 
 - name: Remplacer le network "coolify" dans les services
+  become: true
   replace:
     path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/source/docker-compose.yml"
     regexp: '(\s+networks:\s*\n)(\s*)- coolify'
     replace: '\1\2- traefik_proxy'
 
 - name: Injecter les labels Traefik dans docker-compose.prod.yml
+  become: true
   block:
-    - name: template Jinja2 traefik_labels.j2
+    - name: Fichier temporaire de labels Traefik
       copy:
-        dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/source/traefik_labels.j2"
+        dest: "/tmp/traefik_labels.j2"
         mode: '0644'
         content: |
           labels:
@@ -108,11 +121,7 @@
       set_fact:
         rendered_labels_block: >-
           {{
-            lookup(
-              'template',
-              settings.storage ~ '/docker/' ~ lookup('env','USER') ~ '/' ~ pgrole ~ '/source/traefik_labels.j2'
-            )
-            | regex_replace('^', '    ', multiline=True)
+            lookup('template', '/tmp/traefik_labels.j2') | regex_replace('^', '    ', multiline=True)
           }}
 
     - name: Injecter le bloc labels dans le service coolify
@@ -122,7 +131,8 @@
         block: "{{ rendered_labels_block }}"
         marker: "# {mark} ANSIBLE MANAGED BLOCK - Traefik Labels"
 
-- name: Lancer {{ pgrole }} via Docker Compose (v2)
+- name: Lancer "{{ pgrole }}" via Docker Compose (v2)
+  become: true
   community.docker.docker_compose_v2:
     project_src: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/source"
     files:
@@ -133,6 +143,9 @@
     state: present
     recreate: never
 
+- name: Changer le proprietaire du dossier coolify
+  become: true
+  command: chown -R 9999:root /home/maman/seedbox/docker/maman/coolify
 
 
 

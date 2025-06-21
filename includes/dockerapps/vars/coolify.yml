@@ -14,6 +14,11 @@ pg_env:
   PUSHER_APP_KEY: "{{ lookup('pipe', 'openssl rand -hex 32') }}"
   PUSHER_APP_SECRET: "{{ lookup('pipe', 'openssl rand -hex 32') }}"
   LETSENCRYPT_EMAIL: "{{ user.mail }}"
+  APP_ENV: "local"
+  APP_NAME: "Coolify"
+  APP_PORT: "8000"
+  APP_DEBUG: "true"
+  SSH_MUX_ENABLED: "true"
 
 labels:
   traefik.enable: "true" 
