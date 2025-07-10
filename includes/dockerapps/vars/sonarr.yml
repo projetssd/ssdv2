@@ -22,3 +22,7 @@ pg_env:
 #  traefik.http.routers.sonarr-rtr-bypass.tls: 'true'
 #  traefik.http.routers.sonarr-rtr-bypass.middlewares: 'chain-no-auth@file'
 #  traefik.http.routers.sonarr-rtr-bypass.service: 'sonarr-svc'
+specific_docker_info:
+  ports:
+    - '8989:8989'
+

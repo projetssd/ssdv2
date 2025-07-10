@@ -22,3 +22,8 @@ pg_env:
 #  traefik.http.routers.radarr-rtr-bypass.tls: 'true'
 #  traefik.http.routers.radarr-rtr-bypass.middlewares: 'chain-no-auth@file'
 #  traefik.http.routers.radarr-rtr-bypass.service: 'radarr-svc'
+
+specific_docker_info:
+  ports:
+    - '7878:7878'
+
