@@ -825,7 +825,6 @@ function suppression_appli() {
         docker volume prune -f >/dev/null 2>&1
     fi
     ;;
-
   coolify)
     # Supprimer tous les conteneurs dont le nom contient 'coolify'
     docker ps -a --filter "name=coolify" --format "{{.ID}}" | xargs -r docker rm -f
@@ -834,11 +833,10 @@ function suppression_appli() {
       # Supprimer le dossier d'installation
       sudo rm -rf "${SETTINGS_STORAGE}/docker/${USER}/${APPSELECTED}"
 
-      # Supprimer tous les volumes Docker li�s � 'coolify'
+      # Supprimer tous les volumes Docker liés à 'coolify'
       docker volume ls --format "{{.Name}}" | grep -i 'coolify' | xargs -r docker volume rm -f
     fi
     ;;
-
   esac
 
   if docker ps | grep -q db-$APPSELECTED; then
@@ -1234,6 +1232,23 @@ function affiche_menu_db() {
   clear
   logo
   ## chargement des menus
+  domain=$(get_from_account_yml user.domain)
+  sp="/-\|"
+  i=0
+  build_dir="${SETTINGS_STORAGE}/docker/${USER}/projet-ssd/saison-frontend/build"
+
+  while [ ! -d "$build_dir" ]; do
+      i=$(( (i+1) %4 ))
+      printf "\r  \033[1;32m${sp:$i:1} Installation en cours de la webui...\033[0m"
+      sleep 0.2
+  done
+
+  # Efface uniquement la ligne du spinner
+  printf "\r\033[K"
+
+  # Affiche le message final
+  log_statusbar "\033[1;32mInterface webui disponible : https://ssdv2.${domain}\033[0m"
+
   request="select * from menu where parent_id ${start_menu}"
   sqlite3 "${SETTINGS_SOURCE}/menu" "${request}" | while read -a db_select; do
     IFS='|'
@@ -1293,7 +1308,7 @@ function log_statusbar() {
   tput cup $(($(tput lines) - 2)) 3 # go to last line
   tput ed
   tput cup $(($(tput lines) - 1)) 3 # go to last line
-  echo $1
+  echo -e $1
   tput rc # bring the cursor back to the last saved position
 }
 
@@ -1832,57 +1847,7 @@ update_containers() {
 }
 
 function decypharr() {
-
-  # Vérifie si rclone est déjà installé
-  if command -v rclone >/dev/null 2>&1; then
-      echo "rclone est déjà installé."
-  else
-      echo "rclone n'est pas installé. Installation en cours..."
-      curl -fsSL https://rclone.org/install.sh | sudo bash
-
-      # Vérifie si l'installation a réussi
-      if command -v rclone >/dev/null 2>&1; then
-          echo "rclone a été installé avec succès."
-      else
-          echo "Échec de l'installation de rclone." >&2
-          exit 1
-      fi
-  fi
-
-  echo ""
-  echo -e "\n $(gettext "Appuyer sur") ${CCYAN}[$(gettext "ENTREE")]${CEND} $(gettext "pour continuer")"
-  read -r
-  clear
-
-  echo -e "\033[1;34m+------------------------------------------------\033[0m"
-  echo -e "\033[1;34m|\033[0m      \033[1mChoisissez votre service Debrid\033[0m"
-  echo -e "\033[1;34m+------------------------------------------------\033[0m"
-  echo -e "\033[1;34m|\033[0m  1) Alldebrid"
-  echo -e "\033[1;34m|\033[0m  2) Real-Debrid"
-  echo -e "\033[1;34m|\033[0m  3) Les deux"
-  echo -e "\033[1;34m+------------------------------------------------\033[0m"
-  echo
-
-  read -p $'\033[1;36m>>> Choix (1/2/3): \033[0m' choice
-  case $choice in
-    1) debrid_choice="alldebrid" ;;
-    2) debrid_choice="realdebrid" ;;
-    3) debrid_choice="both" ;;
-    *) echo -e "\033[1;31mChoix invalide. Veuillez entrer 1, 2 ou 3.\033[0m"; exit 1 ;;
-  esac
-
-  echo
-  echo -e "\033[1;32mLancement du playbook avec : $debrid_choice\033[0m"
-  sleep 1
-
-  ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/generique.yml" \
-    --extra-vars "@${SETTINGS_SOURCE}/includes/dockerapps/vars/decypharr.yml" \
-    --extra-vars "debrid_choice=$debrid_choice"
-
-  echo ""
-  echo -e "\n $(gettext "Appuyer sur") ${CCYAN}[$(gettext "ENTREE")]${CEND} $(gettext "pour continuer")"
-  read -r
-
+launch_service decypharr
 }
 
 
