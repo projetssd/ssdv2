@@ -965,11 +965,15 @@ function manage_account_yml() {
 }
 
 function get_from_account_yml() {
-  tempresult=$(ansible-playbook ${SETTINGS_SOURCE}/includes/config/playbooks/get_var.yml -e myvar=$1 -e tempfile=${tempfile} | grep "##RESULT##" | awk -F'##RESULT##' '{print $2}'|xargs)
+  tmpfile=$(mktemp)
+  tempresult=$(ansible-playbook ${SETTINGS_SOURCE}/includes/config/playbooks/get_var.yml \
+    -e myvar=$1 -e tempfile=${tmpfile} | grep "##RESULT##" | awk -F'##RESULT##' '{print $2}' | xargs)
+  rm -f "$tmpfile"
+
   if [ -z "$tempresult" ]; then
     tempresult=notfound
   fi
-  echo $tempresult
+  echo "$tempresult"
 }
 
 function install_gui() {
