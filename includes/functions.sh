@@ -1239,7 +1239,7 @@ function affiche_menu_db() {
   ## chargement des menus
   domain=$(get_from_account_yml user.domain)
 
-  PATCH_FILE="/home/maman/.config/ssd/patches"
+  PATCH_FILE="/home/$USER/.config/ssd/patches"
   NEEDED_LINE="20250630_webui"
 
   sp='|/-\'   # spinner
