@@ -1235,19 +1235,23 @@ function affiche_menu_db() {
   fi
   clear
   logo
+
   ## chargement des menus
   domain=$(get_from_account_yml user.domain)
-  sp="/-\|"
-  i=0
-  build_dir="${SETTINGS_STORAGE}/docker/${USER}/projet-ssd/saison-frontend/build"
 
-  while [ ! -d "$build_dir" ]; do
+  PATCH_FILE="/home/maman/.config/ssd/patches"
+  NEEDED_LINE="20250630_webui"
+
+  sp='|/-\'   # spinner
+  i=0
+
+  while ! grep -q "^${NEEDED_LINE}$" "$PATCH_FILE"; do
       i=$(( (i+1) %4 ))
       printf "\r  \033[1;32m${sp:$i:1} Installation en cours de la webui...\033[0m"
       sleep 0.2
   done
 
-  # Efface uniquement la ligne du spinner
+  # Efface uniquement la ligne du spinner avant d’afficher le succès
   printf "\r\033[K"
 
   # Affiche le message final
