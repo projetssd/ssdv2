@@ -72,7 +72,7 @@ sed -i '/NVM_DIR/d' ~/.bashrc
 sed -i '/nvm.sh/d' ~/.bashrc
 
 # ─────── SUPPRESSION DOSSIER ──────────────────────
-TARGET_DIR="/home/maman/seedbox/docker/maman/projet-ssd"
+TARGET_DIR="$HOME/seedbox/docker/maman/projet-ssd"
 if [[ -d "$TARGET_DIR" ]]; then
   echo "➖ Suppression du dossier $TARGET_DIR..."
   rm -rf "$TARGET_DIR"
