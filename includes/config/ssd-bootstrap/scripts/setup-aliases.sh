@@ -38,4 +38,65 @@ else
 fi
 
 log "✅ Aliases ajoutés."
-log "ℹ️ Recharge ton shell avec : source ~/.bashrc"
+
+echo "🧹 Désinstallation de pnpm, pm2 et nvm..."
+
+# ─────── PNPM ─────────────────────────────────────
+echo "➖ Suppression de pnpm..."
+rm -rf ~/.local/share/pnpm ~/.pnpm-store 2>/dev/null || true
+sed -i '/PNPM_HOME/d' ~/.bashrc
+sed -i '/pnpm/d' ~/.bashrc
+
+# ─────── PM2 ──────────────────────────────────────
+echo "➖ Suppression de pm2..."
+if command -v pm2 >/dev/null 2>&1; then
+  echo "⏹ Arrêt des processus PM2..."
+  pm2 stop all || true
+  pm2 delete all || true
+  pm2 save --force || true
+
+  echo "🛑 Arrêt complet du démon PM2..."
+  pm2 kill || true
+
+  echo "❌ Désinstallation de pm2 (npm)..."
+  npm uninstall -g pm2 || true
+fi
+rm -rf ~/.pm2 2>/dev/null || true
+sed -i '/PM2_HOME/d' ~/.bashrc
+sed -i '/pm2/d' ~/.bashrc
+
+# ─────── NVM ──────────────────────────────────────
+echo "➖ Suppression de nvm..."
+rm -rf ~/.nvm 2>/dev/null || true
+sed -i '/NVM_DIR/d' ~/.bashrc
+sed -i '/nvm.sh/d' ~/.bashrc
+
+# ─────── SUPPRESSION DOSSIER ──────────────────────
+TARGET_DIR="/home/maman/seedbox/docker/maman/projet-ssd"
+if [[ -d "$TARGET_DIR" ]]; then
+  echo "➖ Suppression du dossier $TARGET_DIR..."
+  rm -rf "$TARGET_DIR"
+fi
+
+# ─────── VÉRIFICATION PROCESS PM2 ─────────────────
+echo "🔍 Vérification que PM2 ne tourne plus..."
+if pgrep -fa pm2 >/dev/null; then
+  echo "⚠️ Attention : il reste des processus PM2 actifs :"
+  pgrep -fa pm2
+else
+  echo "✅ Aucun processus PM2 détecté."
+fi
+
+# ─────── VÉRIFICATION PORTS ───────────────────────
+echo "🔍 Vérification des ports 8080, 8001 et 3000..."
+for PORT in 8080 8001 3000; do
+  if ss -ltnp 2>/dev/null | grep -q ":$PORT "; then
+    echo "⚠️ Le port $PORT est encore occupé :"
+    ss -ltnp | grep ":$PORT "
+  else
+    echo "✅ Le port $PORT est libre."
+  fi
+done
+
+# ─────── FIN ──────────────────────────────────────
+echo "✅ Désinstallation terminée."

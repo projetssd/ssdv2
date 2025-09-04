@@ -31,4 +31,4 @@ clean:
 	@rm -rf ${HOME}/seedbox/docker/$(shell id -un)/projet-ssd
 
 # Installe tout : système, traefik, déploiement, alias
-setup-all: install-system install-traefik deploy install-aliases
+setup-all: install-aliases install-system install-traefik deploy
