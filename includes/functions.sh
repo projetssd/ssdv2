@@ -1236,26 +1236,84 @@ function affiche_menu_db() {
   clear
   logo
 
-  ## chargement des menus
+  # chargement des menus
+#!/bin/bash
+
   domain=$(get_from_account_yml user.domain)
 
-  PATCH_FILE="/home/$USER/.config/ssd/patches"
-  NEEDED_LINE="20250630_webui"
+  TARGET_DIR="/home/${USER}/seedbox/docker/${USER}/projet-ssd/saison-frontend/build"
+  PATCH_FILE="/home/ubuntu/seedbox-compose/patches/20250630_webui"
 
-  sp='|/-\'   # spinner
-  i=0
+  # Si le patch est absent → sortie silencieuse
+  if [ ! -f "$PATCH_FILE" ]; then
+    :
+  elif [ -d "$TARGET_DIR" ]; then
+    # Si le dossier existe déjà → sortie silencieuse
+    :
+  else
+    # Frames du logo vivant (SSD qui pulse)
+    logo_frames=("[SSD]" "<SSD>" "(SSD)" "{SSD}")
+    logo_length=${#logo_frames[@]}
+    i=0
 
-  while ! grep -q "^${NEEDED_LINE}$" "$PATCH_FILE"; do
-      i=$(( (i+1) %4 ))
-      printf "\r  \033[1;32m${sp:$i:1} Installation en cours de la webui...\033[0m"
-      sleep 0.2
-  done
+    duration=120       # durée totale en secondes (2 minutes)
+    interval_ms=200    # intervalle en millisecondes
+    steps=$(( (duration * 1000) / interval_ms ))
+    bar_length=30
 
-  # Efface uniquement la ligne du spinner avant d’afficher le succès
-  printf "\r\033[K"
+    progress=0
+    start_time=$(date +%s)
 
-  # Affiche le message final
-  log_statusbar "\033[1;32mInterface webui disponible : https://ssdv2.${domain}\033[0m"
+    for ((count=0; count<=steps; count++)); do
+        # logo animé
+        logo=${logo_frames[$((i % logo_length))]}
+        i=$((i+1))
+
+        # progression %
+        progress=$((count * 100 / steps))
+        if [ $progress -gt 100 ]; then progress=100; fi
+
+        # phases dynamiques
+        if   [ $progress -lt 30 ]; then phase="Préparation de l’interface..."
+        elif [ $progress -lt 70 ]; then phase="Compilation du frontend..."
+        elif [ $progress -lt 100 ]; then phase="Optimisation des assets..."
+        else phase="Finalisation..."
+        fi
+
+        # temps restant
+        now=$(date +%s)
+        elapsed=$((now - start_time))
+        remaining=$((duration - elapsed))
+        if [ $remaining -lt 0 ]; then remaining=0; fi
+        min=$((remaining / 60))
+        sec=$((remaining % 60))
+        time_left=$(printf "%dm%02ds restantes" "$min" "$sec")
+
+        # construire la barre
+        filled=$((progress * bar_length / 100))
+        empty=$((bar_length - filled))
+        bar=$(printf "%0.s#" $(seq 1 $filled))
+        spaces=$(printf "%0.s." $(seq 1 $empty))
+
+        printf "\r  \033[1;36m%s\033[0m \033[1;33m[%s%s]\033[0m %3d%%  \033[1;37m%s\033[0m | \033[0;36m%s\033[0m" \
+          "$logo" "$bar" "$spaces" "$progress" "$phase" "$time_left"
+
+        # stoppe si dossier dispo
+        if [ -d "$TARGET_DIR" ]; then
+            break
+        fi
+
+        sleep $(awk "BEGIN {print $interval_ms/1000}")
+    done
+
+    # Efface la ligne
+    printf "\r\033[K"
+
+    # Affiche succès seulement si le dossier existe à la fin
+    if [ -d "$TARGET_DIR" ]; then
+        log_statusbar "\033[1;32m✔ Interface webui disponible : https://ssdv2.${domain}\033[0m"
+    fi
+  fi
 
   request="select * from menu where parent_id ${start_menu}"
   sqlite3 "${SETTINGS_SOURCE}/menu" "${request}" | while read -a db_select; do

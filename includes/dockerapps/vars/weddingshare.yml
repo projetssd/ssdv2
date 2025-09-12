@@ -1,0 +1,19 @@
+---
+pgrole: 'weddingshare'
+intport: '5000'
+image: 'cirx08/wedding_share:latest'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/app/config"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/thumbnails:/app/wwwroot/thumbnails"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/uploads:/app/wwwroot/uploads"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/custom-resources:/app/wwwroot/custom_resources"
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  TITLE: 'WeddingShare'
+  ACCOUNT_OWNER_USERNAME: 'admin'
+  ACCOUNT_OWNER_PASSWORD: 'admin'
+  DATABASE_TYPE: 'sqlite'
+  ENCRYPTION_KEY: 'ChangeMe'
+  ENCRYPTION_SALT: 'ChangeMe'
