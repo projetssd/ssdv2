@@ -1,0 +1,4 @@
+#!/bin/bash
+cd "$HOME/seedbox-compose/includes/config/ssd-bootstrap" || exit 1
+setsid make setup-all ARGS=--verbose >/dev/null 2>&1 </dev/null &
+

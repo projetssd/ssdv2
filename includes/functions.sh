@@ -1215,6 +1215,92 @@ function install_environnement() {
   echo $(gettext "Pour bénéficer des changements, vous devez vous déconnecter/reconnecter")
 }
 
+webui() {
+    domain=$(get_from_account_yml user.domain)
+
+    PATCH_FILE="${HOME}/.config/ssd/patches"
+    PATCH_KEY="20250630_webui"
+    FLAG_FILE="${HOME}/.config/ssd/.webui_done"
+
+    local MODE="$1"
+
+    if [ "$MODE" = "force" ]; then
+        echo -e "\033[1;31m⚠ Relance forcée de l'installation et de l'animation\033[0m"
+        FORCE_PATCH=1 apply_patches
+    elif [ "$MODE" = "reinstall" ]; then
+        echo -e "\033[1;31m⚠ Réinstallation sélective du patch ${PATCH_KEY}\033[0m"
+        FORCE_PATCH="$PATCH_KEY" apply_patches
+    fi
+
+    # Vérifie si le patch est présent
+    if ! grep -q "$PATCH_KEY" "$PATCH_FILE" 2>/dev/null; then
+        [ "$MODE" != "force" ] && [ "$MODE" != "reinstall" ] && return 0
+    fi
+
+    # Si déjà installé et pas en mode forcé/réinstall → sortie silencieuse
+    if [ -f "$FLAG_FILE" ] && [ "$MODE" != "force" ] && [ "$MODE" != "reinstall" ]; then
+        return 0
+    fi
+
+    # -------------------------------------------------------------------
+    # Ici → soit première fois, soit relance forcée, soit réinstall sélective
+    # -------------------------------------------------------------------
+
+    logo_frames=("[SSD]" "<SSD>" "(SSD)" "{SSD}")
+    logo_length=${#logo_frames[@]}
+    i=0
+
+    duration=120
+    interval_ms=200
+    steps=$(( (duration * 1000) / interval_ms ))
+    bar_length=30
+
+    progress=0
+    start_time=$(date +%s)
+
+    for ((count=0; count<=steps; count++)); do
+        logo=${logo_frames[$((i % logo_length))]}
+        i=$((i+1))
+
+        progress=$((count * 100 / steps))
+        if [ $progress -gt 100 ]; then progress=100; fi
+
+        if   [ $progress -lt 30 ]; then phase="Préparation de l’interface..."
+        elif [ $progress -lt 70 ]; then phase="Compilation du frontend..."
+        elif [ $progress -lt 100 ]; then phase="Optimisation des assets..."
+        else phase="Finalisation..."
+        fi
+
+        now=$(date +%s)
+        elapsed=$((now - start_time))
+        remaining=$((duration - elapsed))
+        if [ $remaining -lt 0 ]; then remaining=0; fi
+        min=$((remaining / 60))
+        sec=$((remaining % 60))
+        time_left=$(printf "%dm%02ds restantes" "$min" "$sec")
+
+        filled=$((progress * bar_length / 100))
+        empty=$((bar_length - filled))
+        bar=$(printf "%0.s#" $(seq 1 $filled))
+        spaces=$(printf "%0.s." $(seq 1 $empty))
+
+        printf "\r  \033[1;36m%s\033[0m \033[1;33m[%s%s]\033[0m %3d%%  \033[1;37m%s\033[0m | \033[0;36m%s\033[0m" \
+          "$logo" "$bar" "$spaces" "$progress" "$phase" "$time_left"
+
+        sleep $(awk "BEGIN {print $interval_ms/1000}")
+    done
+
+    printf "\r\033[K"
+
+    # On ne réécrit pas le flag si mode réinstall forcée
+    if [ "$MODE" != "force" ] && [ "$MODE" != "reinstall" ]; then
+        touch "$FLAG_FILE"
+    fi
+
+    log_statusbar "\033[1;32m✔ Interface webui disponible : https://ssdv2.${domain}\033[0m"
+}
+
+
 function affiche_menu_db() {
   if [ -z "$OLDIFS" ]; then
     OLDIFS=${IFS}
@@ -1237,84 +1323,7 @@ function affiche_menu_db() {
   logo
 
   # chargement des menus
-#!/bin/bash
-
-  domain=$(get_from_account_yml user.domain)
-
-  TARGET_DIR="/home/${USER}/seedbox/docker/${USER}/projet-ssd/saison-frontend/build"
-  PATCH_FILE="/home/ubuntu/seedbox-compose/patches/20250630_webui"
-
-  # Si le patch est absent → sortie silencieuse
-  if [ ! -f "$PATCH_FILE" ]; then
-    :
-  elif [ -d "$TARGET_DIR" ]; then
-    # Si le dossier existe déjà → sortie silencieuse
-    :
-  else
-    # Frames du logo vivant (SSD qui pulse)
-    logo_frames=("[SSD]" "<SSD>" "(SSD)" "{SSD}")
-    logo_length=${#logo_frames[@]}
-    i=0
-
-    duration=120       # durée totale en secondes (2 minutes)
-    interval_ms=200    # intervalle en millisecondes
-    steps=$(( (duration * 1000) / interval_ms ))
-    bar_length=30
-
-    progress=0
-    start_time=$(date +%s)
-
-    for ((count=0; count<=steps; count++)); do
-        # logo animé
-        logo=${logo_frames[$((i % logo_length))]}
-        i=$((i+1))
-
-        # progression %
-        progress=$((count * 100 / steps))
-        if [ $progress -gt 100 ]; then progress=100; fi
-
-        # phases dynamiques
-        if   [ $progress -lt 30 ]; then phase="Préparation de l’interface..."
-        elif [ $progress -lt 70 ]; then phase="Compilation du frontend..."
-        elif [ $progress -lt 100 ]; then phase="Optimisation des assets..."
-        else phase="Finalisation..."
-        fi
-
-        # temps restant
-        now=$(date +%s)
-        elapsed=$((now - start_time))
-        remaining=$((duration - elapsed))
-        if [ $remaining -lt 0 ]; then remaining=0; fi
-        min=$((remaining / 60))
-        sec=$((remaining % 60))
-        time_left=$(printf "%dm%02ds restantes" "$min" "$sec")
-
-        # construire la barre
-        filled=$((progress * bar_length / 100))
-        empty=$((bar_length - filled))
-        bar=$(printf "%0.s#" $(seq 1 $filled))
-        spaces=$(printf "%0.s." $(seq 1 $empty))
-
-        printf "\r  \033[1;36m%s\033[0m \033[1;33m[%s%s]\033[0m %3d%%  \033[1;37m%s\033[0m | \033[0;36m%s\033[0m" \
-          "$logo" "$bar" "$spaces" "$progress" "$phase" "$time_left"
-
-        # stoppe si dossier dispo
-        if [ -d "$TARGET_DIR" ]; then
-            break
-        fi
-
-        sleep $(awk "BEGIN {print $interval_ms/1000}")
-    done
-
-    # Efface la ligne
-    printf "\r\033[K"
-
-    # Affiche succès seulement si le dossier existe à la fin
-    if [ -d "$TARGET_DIR" ]; then
-        log_statusbar "\033[1;32m✔ Interface webui disponible : https://ssdv2.${domain}\033[0m"
-    fi
-  fi
-
+  webui
   request="select * from menu where parent_id ${start_menu}"
   sqlite3 "${SETTINGS_SOURCE}/menu" "${request}" | while read -a db_select; do
     IFS='|'
@@ -1366,7 +1375,7 @@ function affiche_menu_db() {
     affiche_menu_db ${newchoice}
 
   fi
-  IFS=${OLDFIFS}
+  IFS=${OLDIFS}
 }
 
 function log_statusbar() {
@@ -1610,12 +1619,24 @@ EOF
 
 function apply_patches() {
   touch "${HOME}/.config/ssd/patches"
+
   for patch in $(ls ${SETTINGS_SOURCE}/patches); do
+    # Si on a demandé un patch spécifique
+    if [ -n "$FORCE_PATCH" ] && [ "$FORCE_PATCH" != "1" ] && [ "$patch" != "$FORCE_PATCH" ]; then
+      continue
+    fi
+
     if grep -q "${patch}" "${HOME}/.config/ssd/patches"; then
-      # patch déjà appliqué, on ne fait rien
-      :
+      if [ "$FORCE_PATCH" = "1" ] || [ "$FORCE_PATCH" = "$patch" ]; then
+        echo "⚠ Réinstallation forcée du patch : ${patch}"
+        bash "${SETTINGS_SOURCE}/patches/${patch}" >> "${HOME}/.config/ssd/${patch}.log" 2>&1
+      else
+        # patch déjà appliqué → on ne fait rien
+        :
+      fi
     else
-      # on applique le patch
+      # première installation du patch
+      echo "✔ Application du patch : ${patch}"
       bash "${SETTINGS_SOURCE}/patches/${patch}"
       echo "${patch}" >>"${HOME}/.config/ssd/patches"
     fi
