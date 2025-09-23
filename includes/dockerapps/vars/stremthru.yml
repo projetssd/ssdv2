@@ -1,0 +1,18 @@
+---
+pgrole: 'stremthru'
+intport: '8080'
+image: 'muniftanjim/stremthru'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/app/data"
+pg_env:
+  STREMTHRU_HTTP_PROXY: "socks5://warp:1080"
+  STREMTHRU_HTTPS_PROXY: "socks5://warp:1080"
+  STREMTHRU_PROXY_AUTH: "{{ AD_PSEUDO }}:{{ AD_PASSWORD }}"
+  STREMTHRU_STORE_AUTH: "{{ AD_PSEUDO }}:alldebrid:{{ AD_TOKEN }}"
+  STREMTHRU_REDIS_URI: "redis://stremthru-redis:6379/0"
+  STREMTHRU_DATABASE_URI: "postgresql://stremthru:stremthru@stremthru-postgres:5432/stremthru"
+  STREMTHRU_STORE_TUNNEL: "true"
+specific_docker_info:
+  sysctls:
+    net.ipv6.conf.all.disable_ipv6: "1"
+
