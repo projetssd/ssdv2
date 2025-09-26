@@ -1,0 +1,10 @@
+---
+pgrole: 'aiostreams'
+intport: '3000'
+image: 'ghcr.io/viren070/aiostreams:latest'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/app/data"
+specific_docker_info:
+  env_file:
+    "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/aiostreams/.env"
+

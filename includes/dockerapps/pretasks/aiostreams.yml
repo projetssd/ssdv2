@@ -1,0 +1,27 @@
+---
+- name: Générer une clé aléatoire hexadécimale de 32 octets
+  ansible.builtin.command: "openssl rand -hex 32"
+  register: random_key
+  changed_when: false
+
+- name: Sauvegarder la clé dans une variable de fait
+  ansible.builtin.set_fact:
+    my_secret_key: "{{ random_key.stdout }}"
+
+- name: Créer le dossier aiostreams
+  file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env', 'USER') }}/aiostreams"
+    state: directory
+    owner: "{{ lookup('env','USER') }}"
+    mode: '0755'
+
+- name: Créer le fichier .env
+  template:
+    dest: "{{ settings.storage }}/docker/{{ lookup('env', 'USER') }}/aiostreams/{{ item.dest }}"
+    src: "{{ settings.source }}/includes/dockerapps/templates/aiostreams/{{ item.src }}"
+  with_items:
+    - { dest: ".env", src: ".env.j2" }
+  become: yes
+  become_user: "{{ lookup('env', 'USER') }}"
+
+
