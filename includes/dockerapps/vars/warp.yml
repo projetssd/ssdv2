@@ -1,0 +1,19 @@
+---
+pgrole: 'warp'
+intport: '1080'
+image: 'caomingjun/warp:latest'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}:/var/lib/cloudflare-warp"
+traefik_labels_enabled: false
+specific_docker_info:
+  capabilities:
+    - NET_ADMIN
+  security_opts:
+    - apparmor:unconfined
+  exposed_ports:
+    - 1080
+  sysctls:
+    net.ipv6.conf.all.disable_ipv6: "1"
+    net.ipv4.conf.all.src_valid_mark: "1"
+  env:
+    WARP_SLEEP: "2"
