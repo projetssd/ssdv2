@@ -54,6 +54,9 @@ export PATH="$PNPM_HOME:$PATH"
 
 export PM2_HOME="$BASE_DIR/.pm2"
 
+# ─────── SUPPRESSION PYPOETRY ───────────────────
+sudo rm -rf $HOME/.cache/pypoetry
+
 # ─────── PAQUETS SYSTÈME ─────────────────────────
 log "🔧 Mise à jour des paquets..."
 $SUDO DEBIAN_FRONTEND=noninteractive apt-get update -qq || true
@@ -61,22 +64,6 @@ $SUDO DEBIAN_FRONTEND=noninteractive apt-get update -qq || true
 log "📦 Installation des paquets système..."
 $SUDO DEBIAN_FRONTEND=noninteractive apt-get install -y \
   software-properties-common curl git jq apache2-utils inotify-tools || true
-
-# ─────── PYTHON ──────────────────────────────────
-if ! command -v python3.11 >/dev/null; then
-  log "🐍 Installation de Python 3.11..."
-  if command -v add-apt-repository >/dev/null; then
-    $SUDO add-apt-repository -y ppa:deadsnakes/ppa
-    $SUDO apt-get update -qq
-    $SUDO apt-get install -y python3.11 python3.11-venv python3.11-dev lm-sensors
-  else
-    log "⚠️ Pas de add-apt-repository, utilisation du python3 par défaut."
-  fi
-fi
-
-if command -v python3.11 >/dev/null; then
-  curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11
-fi
 
 # ─────── NODE + PNPM ─────────────────────────────
 log "🟢 Installation de Node.js via NVM..."
