@@ -1,0 +1,12 @@
+---
+- name: Create Backend directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ lookup('env','MYUID') }}"
+    group: "{{ lookup('env','MYGID') }}"
+    mode: '0755'
+  loop:
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}"
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config"
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data"

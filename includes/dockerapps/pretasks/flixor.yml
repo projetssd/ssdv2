@@ -1,0 +1,10 @@
+---
+- name: Copy custom Nginx config to flixor container
+  ansible.builtin.shell: |
+    docker cp {{ settings.storage }}/docker/{{ lookup('env','USER') }}/seedbox-compose/includes/dockerapps/templates/flixor/default.conf flixor:/etc/nginx/conf.d/default.conf
+    docker exec flixor nginx -s reload
+  ignore_errors: yes
+  register: nginx_config
+  retries: 3
+  delay: 2
+  until: nginx_config.rc == 0
