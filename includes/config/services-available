@@ -4,6 +4,7 @@ airdcpp - Client AirDC++
 alfred - Symlink Manager
 authelia - Authentification applications Web
 autoindex - Générateur de liste de répertoires
+backend - backend de flixor
 baserow - Outil no-code pour BDD modulable
 baikal - logiciel de calendrier simple
 bazarr - Gestion de sous-titres Sonarr/Radarr
@@ -36,6 +37,7 @@ filebrowser - Gestion fichiers via une interface
 filerun - Gestion documents bureautiques, photos
 firefox - Un navigateur dans votre navigateur
 firefoxsyncserver - Navigateur Firefox
+flixor - interface modern plex
 foptimum - Performances serveur
 freshrss - Agrégateur de flux open source
 gethomepage - Gestion d'application
