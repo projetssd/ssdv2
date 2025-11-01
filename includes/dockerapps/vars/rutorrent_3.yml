@@ -1,5 +1,5 @@
 ---
-pgrole: 'rutorrent'
+pgrole: 'rutorrent_3'
 intport: '8080'
 image: 'mondedie/rutorrent:latest'
 pg_volumes:
