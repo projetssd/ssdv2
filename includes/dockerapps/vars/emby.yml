@@ -7,9 +7,9 @@ pg_volumes:
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:
-  PUID: "{{ lookup('env','MYUID') }}"
-  PGID: "{{ lookup('env','MYGID') }}"
-
+  UID: "{{ lookup('env','MYUID') }}"
+  GID: "{{ lookup('env','MYGID') }}"
+  GIDLIST: "{{ lookup('env','MYGID') }}"
 specific_docker_info:
   ports:
     - '8096:8096'

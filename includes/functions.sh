@@ -825,7 +825,6 @@ function suppression_appli() {
         docker volume prune -f >/dev/null 2>&1
     fi
     ;;
-
   coolify)
     # Supprimer tous les conteneurs dont le nom contient 'coolify'
     docker ps -a --filter "name=coolify" --format "{{.ID}}" | xargs -r docker rm -f
@@ -834,11 +833,10 @@ function suppression_appli() {
       # Supprimer le dossier d'installation
       sudo rm -rf "${SETTINGS_STORAGE}/docker/${USER}/${APPSELECTED}"
 
-      # Supprimer tous les volumes Docker li�s � 'coolify'
+      # Supprimer tous les volumes Docker liés à 'coolify'
       docker volume ls --format "{{.Name}}" | grep -i 'coolify' | xargs -r docker volume rm -f
     fi
     ;;
-
   esac
 
   if docker ps | grep -q db-$APPSELECTED; then
@@ -967,11 +965,15 @@ function manage_account_yml() {
 }
 
 function get_from_account_yml() {
-  tempresult=$(ansible-playbook ${SETTINGS_SOURCE}/includes/config/playbooks/get_var.yml -e myvar=$1 -e tempfile=${tempfile} | grep "##RESULT##" | awk -F'##RESULT##' '{print $2}'|xargs)
+  tmpfile=$(mktemp)
+  tempresult=$(ansible-playbook ${SETTINGS_SOURCE}/includes/config/playbooks/get_var.yml \
+    -e myvar=$1 -e tempfile=${tmpfile} | grep "##RESULT##" | awk -F'##RESULT##' '{print $2}' | xargs)
+  rm -f "$tmpfile"
+
   if [ -z "$tempresult" ]; then
     tempresult=notfound
   fi
-  echo $tempresult
+  echo "$tempresult"
 }
 
 function install_gui() {
@@ -1213,6 +1215,92 @@ function install_environnement() {
   echo $(gettext "Pour bénéficer des changements, vous devez vous déconnecter/reconnecter")
 }
 
+webui() {
+    domain=$(get_from_account_yml user.domain)
+
+    PATCH_FILE="${HOME}/.config/ssd/patches"
+    PATCH_KEY="20250630_webui"
+    FLAG_FILE="${HOME}/.config/ssd/.webui_done"
+
+    local MODE="$1"
+
+    if [ "$MODE" = "force" ]; then
+        echo -e "\033[1;31m⚠ Relance forcée de l'installation et de l'animation\033[0m"
+        FORCE_PATCH=1 apply_patches
+    elif [ "$MODE" = "reinstall" ]; then
+        echo -e "\033[1;31m⚠ Réinstallation sélective du patch ${PATCH_KEY}\033[0m"
+        FORCE_PATCH="$PATCH_KEY" apply_patches
+    fi
+
+    # Vérifie si le patch est présent
+    if ! grep -q "$PATCH_KEY" "$PATCH_FILE" 2>/dev/null; then
+        [ "$MODE" != "force" ] && [ "$MODE" != "reinstall" ] && return 0
+    fi
+
+    # Si déjà installé et pas en mode forcé/réinstall → sortie silencieuse
+    if [ -f "$FLAG_FILE" ] && [ "$MODE" != "force" ] && [ "$MODE" != "reinstall" ]; then
+        return 0
+    fi
+
+    # -------------------------------------------------------------------
+    # Ici → soit première fois, soit relance forcée, soit réinstall sélective
+    # -------------------------------------------------------------------
+
+    logo_frames=("[SSD]" "<SSD>" "(SSD)" "{SSD}")
+    logo_length=${#logo_frames[@]}
+    i=0
+
+    duration=120
+    interval_ms=200
+    steps=$(( (duration * 1000) / interval_ms ))
+    bar_length=30
+
+    progress=0
+    start_time=$(date +%s)
+
+    for ((count=0; count<=steps; count++)); do
+        logo=${logo_frames[$((i % logo_length))]}
+        i=$((i+1))
+
+        progress=$((count * 100 / steps))
+        if [ $progress -gt 100 ]; then progress=100; fi
+
+        if   [ $progress -lt 30 ]; then phase="Préparation de l’interface..."
+        elif [ $progress -lt 70 ]; then phase="Compilation du frontend..."
+        elif [ $progress -lt 100 ]; then phase="Optimisation des assets..."
+        else phase="Finalisation..."
+        fi
+
+        now=$(date +%s)
+        elapsed=$((now - start_time))
+        remaining=$((duration - elapsed))
+        if [ $remaining -lt 0 ]; then remaining=0; fi
+        min=$((remaining / 60))
+        sec=$((remaining % 60))
+        time_left=$(printf "%dm%02ds restantes" "$min" "$sec")
+
+        filled=$((progress * bar_length / 100))
+        empty=$((bar_length - filled))
+        bar=$(printf "%0.s#" $(seq 1 $filled))
+        spaces=$(printf "%0.s." $(seq 1 $empty))
+
+        printf "\r  \033[1;36m%s\033[0m \033[1;33m[%s%s]\033[0m %3d%%  \033[1;37m%s\033[0m | \033[0;36m%s\033[0m" \
+          "$logo" "$bar" "$spaces" "$progress" "$phase" "$time_left"
+
+        sleep $(awk "BEGIN {print $interval_ms/1000}")
+    done
+
+    printf "\r\033[K"
+
+    # On ne réécrit pas le flag si mode réinstall forcée
+    if [ "$MODE" != "force" ] && [ "$MODE" != "reinstall" ]; then
+        touch "$FLAG_FILE"
+    fi
+
+    log_statusbar "\033[1;32m✔ Interface webui disponible : https://ssdv2.${domain}\033[0m"
+}
+
+
 function affiche_menu_db() {
   if [ -z "$OLDIFS" ]; then
     OLDIFS=${IFS}
@@ -1233,7 +1321,9 @@ function affiche_menu_db() {
   fi
   clear
   logo
-  ## chargement des menus
+
+  # chargement des menus
+  webui
   request="select * from menu where parent_id ${start_menu}"
   sqlite3 "${SETTINGS_SOURCE}/menu" "${request}" | while read -a db_select; do
     IFS='|'
@@ -1285,7 +1375,7 @@ function affiche_menu_db() {
     affiche_menu_db ${newchoice}
 
   fi
-  IFS=${OLDFIFS}
+  IFS=${OLDIFS}
 }
 
 function log_statusbar() {
@@ -1293,7 +1383,7 @@ function log_statusbar() {
   tput cup $(($(tput lines) - 2)) 3 # go to last line
   tput ed
   tput cup $(($(tput lines) - 1)) 3 # go to last line
-  echo $1
+  echo -e $1
   tput rc # bring the cursor back to the last saved position
 }
 
@@ -1529,12 +1619,24 @@ EOF
 
 function apply_patches() {
   touch "${HOME}/.config/ssd/patches"
+
   for patch in $(ls ${SETTINGS_SOURCE}/patches); do
+    # Si on a demandé un patch spécifique
+    if [ -n "$FORCE_PATCH" ] && [ "$FORCE_PATCH" != "1" ] && [ "$patch" != "$FORCE_PATCH" ]; then
+      continue
+    fi
+
     if grep -q "${patch}" "${HOME}/.config/ssd/patches"; then
-      # patch déjà appliqué, on ne fait rien
-      :
+      if [ "$FORCE_PATCH" = "1" ] || [ "$FORCE_PATCH" = "$patch" ]; then
+        echo "⚠ Réinstallation forcée du patch : ${patch}"
+        bash "${SETTINGS_SOURCE}/patches/${patch}" >> "${HOME}/.config/ssd/${patch}.log" 2>&1
+      else
+        # patch déjà appliqué → on ne fait rien
+        :
+      fi
     else
-      # on applique le patch
+      # première installation du patch
+      echo "✔ Application du patch : ${patch}"
       bash "${SETTINGS_SOURCE}/patches/${patch}"
       echo "${patch}" >>"${HOME}/.config/ssd/patches"
     fi
@@ -1832,57 +1934,7 @@ update_containers() {
 }
 
 function decypharr() {
-
-  # Vérifie si rclone est déjà installé
-  if command -v rclone >/dev/null 2>&1; then
-      echo "rclone est déjà installé."
-  else
-      echo "rclone n'est pas installé. Installation en cours..."
-      curl -fsSL https://rclone.org/install.sh | sudo bash
-
-      # Vérifie si l'installation a réussi
-      if command -v rclone >/dev/null 2>&1; then
-          echo "rclone a été installé avec succès."
-      else
-          echo "Échec de l'installation de rclone." >&2
-          exit 1
-      fi
-  fi
-
-  echo ""
-  echo -e "\n $(gettext "Appuyer sur") ${CCYAN}[$(gettext "ENTREE")]${CEND} $(gettext "pour continuer")"
-  read -r
-  clear
-
-  echo -e "\033[1;34m+------------------------------------------------\033[0m"
-  echo -e "\033[1;34m|\033[0m      \033[1mChoisissez votre service Debrid\033[0m"
-  echo -e "\033[1;34m+------------------------------------------------\033[0m"
-  echo -e "\033[1;34m|\033[0m  1) Alldebrid"
-  echo -e "\033[1;34m|\033[0m  2) Real-Debrid"
-  echo -e "\033[1;34m|\033[0m  3) Les deux"
-  echo -e "\033[1;34m+------------------------------------------------\033[0m"
-  echo
-
-  read -p $'\033[1;36m>>> Choix (1/2/3): \033[0m' choice
-  case $choice in
-    1) debrid_choice="alldebrid" ;;
-    2) debrid_choice="realdebrid" ;;
-    3) debrid_choice="both" ;;
-    *) echo -e "\033[1;31mChoix invalide. Veuillez entrer 1, 2 ou 3.\033[0m"; exit 1 ;;
-  esac
-
-  echo
-  echo -e "\033[1;32mLancement du playbook avec : $debrid_choice\033[0m"
-  sleep 1
-
-  ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/generique.yml" \
-    --extra-vars "@${SETTINGS_SOURCE}/includes/dockerapps/vars/decypharr.yml" \
-    --extra-vars "debrid_choice=$debrid_choice"
-
-  echo ""
-  echo -e "\n $(gettext "Appuyer sur") ${CCYAN}[$(gettext "ENTREE")]${CEND} $(gettext "pour continuer")"
-  read -r
-
+launch_service decypharr
 }
 
 

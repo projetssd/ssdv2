@@ -1,0 +1,70 @@
+---
+- name: Stremthru Base Pre-task Setup
+  block:
+    - name: Check if containers exist
+      command: docker ps -a --filter "name={{ item }}" --format "{% raw %}{{.Names}}{% endraw %}"
+      register: container_check
+      changed_when: false
+      loop:
+        - stremthru-postgres
+        - stremthru-redis
+
+    - name: Debug container check results
+      debug:
+        var: container_check
+
+    - name: Set facts for container existence
+      set_fact:
+        postgres_exists: "{{ 'stremthru-postgres' in container_check.results | map(attribute='stdout') | join(',') }}"
+        redis_exists: "{{ 'stremthru-redis' in container_check.results | map(attribute='stdout') | join(',') }}"
+
+    - name: Debug container existence
+      debug:
+        msg:
+          - "Postgres exists: {{ postgres_exists }}"
+          - "Redis exists: {{ redis_exists }}"
+
+    - name: Deploy stremthru-postgres
+      community.docker.docker_container:
+        name: stremthru-postgres
+        image: "postgres:16.6-alpine"
+        env:
+          PGDATA: "/var/lib/postgresql/data/pgdata"
+          POSTGRES_USER: "stremthru"
+          POSTGRES_PASSWORD: "stremthru"
+          POSTGRES_DB: "stremthru"
+        volumes:
+          - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/stremthru-postgres:/var/lib/postgresql/data/pgdata"
+        restart_policy: always
+        healthcheck:
+          test: ["CMD-SHELL", "pg_isready -U stremthru"]
+          interval: 10s
+          timeout: 5s
+          retries: 5
+        networks:
+          - name: traefik_proxy
+      when: not postgres_exists
+
+    - name: Wait for PostgreSQL to be healthy
+      command: docker inspect --format="{% raw %}{{.State.Health.Status}}{% endraw %}" stremthru-postgres
+      register: postgres_health
+      until: postgres_health.stdout == 'healthy'
+      retries: 12
+      delay: 10
+      when: not postgres_exists
+
+    - name: Deploy stremthru-redis
+      community.docker.docker_container:
+        name: stremthru-redis
+        image: redis:latest
+        volumes:
+          - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/stremthru-redis:/data"
+        restart_policy: always
+        networks:
+          - name: traefik_proxy
+      when: not redis_exists
+
+  rescue:
+    - name: Display error message
+      fail:
+        msg: "An error occurred during the Stremthru pre-task setup. Please check the logs for more details."

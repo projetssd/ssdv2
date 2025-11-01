@@ -1,0 +1,29 @@
+---
+pgrole: 'warp'
+intport: '1080'
+image: 'caomingjun/warp:latest'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}:/var/lib/cloudflare-warp"
+traefik_labels_enabled: false
+specific_docker_info:
+  capabilities:
+    - NET_ADMIN
+    - MKNOD
+    - AUDIT_WRITE
+  security_opts:
+    - apparmor:unconfined
+  device_cgroup_rules:
+    - 'c 10:200 rwm'
+  exposed_ports:
+    - 1080
+  sysctls:
+    "net.ipv6.conf.all.disable_ipv6": "0"
+    "net.ipv4.conf.all.src_valid_mark": "1"
+    "net.ipv4.ip_forward": "1"
+    "net.ipv6.conf.all.forwarding": "1"
+  env:
+    WARP_SLEEP: "2"
+    WARP_ENABLE_NAT: "1"
+  networks:
+    - name: traefik_proxy
+      ipv4_address: "172.18.0.250"

@@ -1,74 +1,100 @@
 #!/bin/bash
+set -euo pipefail
+trap 'echo "❌ Erreur à la ligne $LINENO"; exit 1' ERR
 
-# ─────── MODE VERBEUX / SILENCIEUX ─────────────────────────────
+# ─────── MODE VERBEUX / SILENCIEUX ────────────────
 QUIET=0
-
 for arg in "$@"; do
   case $arg in
     --silent) QUIET=1 ;;
     --verbose) QUIET=0 ;;
   esac
 done
+log() { [ "$QUIET" -eq 0 ] && echo "$@"; }
 
-# Si en mode silencieux, on coupe toutes les sorties
-if [ "$QUIET" -eq 1 ]; then
-  exec > /dev/null 2>&1
+# ─────── SUDO OU ROOT ────────────────────────────
+if command -v sudo >/dev/null 2>&1; then
+  SUDO="sudo"
+else
+  if [ "$(id -u)" -ne 0 ]; then
+    echo "❌ Ce script doit être exécuté en root ou avec sudo"
+    exit 1
+  fi
+  SUDO=""
 fi
 
-log() {
-  [ "$QUIET" -eq 0 ] && echo "$@"
-}
+USERNAME=$(id -un)
+BASE_DIR="$HOME/seedbox/docker/$USERNAME/projet-ssd"
+mkdir -p "$BASE_DIR"
 
-# ─────── MISE À JOUR SYSTÈME ───────────────────────────────────
-log "🔧 Mise à jour des paquets..."
-sudo DEBIAN_FRONTEND=noninteractive apt-get update -qq > /dev/null 2>&1
+PROFILE="$HOME/.bashrc"
 
-log "📦 Installation des paquets système..."
-sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
-  software-properties-common curl git jq apache2-utils \
-  > /dev/null 2>&1
-
-# ─────── PYTHON 3.11 + pip ─────────────────────────────────────
-log "🐍 Installation de Python 3.11..."
-sudo add-apt-repository -y ppa:deadsnakes/ppa > /dev/null 2>&1
-sudo apt-get update -qq > /dev/null 2>&1
-sudo apt-get install -y python3.11 python3.11-venv python3.11-dev > /dev/null 2>&1
-
-log "📥 Installation de pip..."
-curl -sS https://bootstrap.pypa.io/get-pip.py | python3.11 > /dev/null 2>&1
-
-# ─────── NODE + PNPM ───────────────────────────────────────────
-log "🟢 Installation de Node.js via NVM..."
-if [ ! -d "$HOME/.nvm" ]; then
-  curl -s -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash > /dev/null 2>&1
+# ─────── CONFIG .BASHRC ──────────────────────────
+if ! grep -q "Config Node/npm/pm2 personnalisée" "$PROFILE"; then
+  {
+    echo ""
+    echo "# >>> Config Node/npm/pm2 personnalisée >>>"
+    echo "export NVM_DIR=\"\$HOME/.nvm\""
+    echo "[ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\""
+    echo ""
+    echo "export PNPM_HOME=\"\$HOME/.local/share/pnpm\""
+    echo "export PATH=\"\$PNPM_HOME:\$PATH\""
+    echo ""
+    echo "export PM2_HOME=\"$BASE_DIR/.pm2\""
+    echo "# <<< Fin config >>>"
+  } >> "$PROFILE"
 fi
 
+# ─────── ENV DIRECTEMENT ACTIF ───────────────────
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-
-nvm install --lts > /dev/null 2>&1
-nvm use --lts > /dev/null 2>&1
-
-log "📦 Installation de PNPM..."
-curl -fsSL https://get.pnpm.io/install.sh | sh -s -- > /dev/null
 
 export PNPM_HOME="$HOME/.local/share/pnpm"
 export PATH="$PNPM_HOME:$PATH"
 
-# ─────── DOCKER ────────────────────────────────────────────────
-log "🐳 Installation de Docker si nécessaire..."
-if ! command -v docker &>/dev/null; then
-  curl -fsSL https://get.docker.com -o get-docker.sh
-  sudo sh get-docker.sh > /dev/null 2>&1
-  rm get-docker.sh
-  sudo usermod -aG docker "$USER"
+export PM2_HOME="$BASE_DIR/.pm2"
+
+# ─────── SUPPRESSION PYPOETRY ───────────────────
+sudo rm -rf $HOME/.cache/pypoetry
+
+# ─────── PAQUETS SYSTÈME ─────────────────────────
+log "🔧 Mise à jour des paquets..."
+$SUDO DEBIAN_FRONTEND=noninteractive apt-get update -qq || true
+
+log "📦 Installation des paquets système..."
+$SUDO DEBIAN_FRONTEND=noninteractive apt-get install -y \
+  software-properties-common curl git jq apache2-utils inotify-tools || true
+
+# ─────── NODE + PNPM ─────────────────────────────
+log "🟢 Installation de Node.js via NVM..."
+if [ ! -s "$NVM_DIR/nvm.sh" ]; then
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
+  . "$NVM_DIR/nvm.sh"
 fi
 
-# ─────── SUDOERS ───────────────────────────────────────────────
-log "🔐 Ajout de $USER dans les sudoers si nécessaire..."
-if ! sudo grep -q "^$USER ALL=(ALL) NOPASSWD:ALL" /etc/sudoers; then
-  echo "$USER ALL=(ALL) NOPASSWD:ALL" | sudo tee -a /etc/sudoers > /dev/null
+nvm install --lts
+nvm alias default 'lts/*'
+nvm use default
+
+log "📦 Installation de PNPM..."
+curl -fsSL https://get.pnpm.io/install.sh | sh -s -- > /dev/null
+
+# ─────── INSTALLATION PM2 ─────────────────────────
+log "📦 Installation de pm2..."
+npm install -g pm2 >/dev/null
+
+if ! command -v pm2 >/dev/null; then
+  log "❌ pm2 non détecté après installation."
+  exit 1
+fi
+log "✅ pm2 installé : $(pm2 -v)"
+
+# ─────── SUDOERS ─────────────────────────────────
+log "🔐 Ajout de $USERNAME dans les sudoers si nécessaire..."
+if command -v sudo >/dev/null 2>&1; then
+  if ! sudo grep -q "^$USERNAME ALL=(ALL) NOPASSWD:ALL" /etc/sudoers; then
+    echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" | sudo tee -a /etc/sudoers > /dev/null
+  fi
 fi
 
 log "✅ Setup système terminé."
-exit 0

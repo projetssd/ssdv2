@@ -1,0 +1,29 @@
+---
+pgrole: 'mediaflowproxy'
+intport: '8888'
+image: 'mhdzumair/mediaflow-proxy:latest'
+pg_env:
+  API_PASSWORD: mediaflowproxy
+  FORWARDED_ALLOW_IPS: "*"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

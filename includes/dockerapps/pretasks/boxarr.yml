@@ -1,0 +1,8 @@
+---
+- name: Creating paths
+  file: 
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}"
+    state: directory
+    mode: 0775
+    owner: "{{ lookup('env','MYUID') }}"
+    group: "{{ lookup('env','MYGID') }}"

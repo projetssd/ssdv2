@@ -1,0 +1,76 @@
+---
+- name: Launch Pretask
+  include_tasks: "{{ settings.source }}/includes/dockerapps/pretasks/stremio/stremthru_base.yml"
+
+- name: Check for Redis containers
+  block:
+    - name: Check if stremthru-redis container exists
+      command: docker ps -a --filter "name=stremthru-redis" --format "{% raw %}{{.Names}}{% endraw %}"
+      register: stremthru_redis_container
+      changed_when: false
+
+    - name: Fail if required containers do not exist
+      fail:
+        msg: "The {{ item.name }} container does not exist. Please ensure it is running before proceeding."
+      when: item.result.stdout == ""
+      loop:
+        - { name: "stremthru-redis", result: "{{ stremthru_redis_container }}" }
+
+- name: Deploy Warp Proxy container
+  block:
+    - name: Create a volume for warp
+      docker_volume:
+        name: warp-data
+
+    - name: Deploy warp container
+      community.docker.docker_container:
+        name: warp
+        image: caomingjun/warp:latest
+        exposed_ports:
+          - 1080
+        env:
+          WARP_SLEEP: "2"
+        capabilities:
+          - NET_ADMIN
+        sysctls:
+          net.ipv6.conf.all.disable_ipv6: "1"
+          net.ipv4.conf.all.src_valid_mark: "1"
+        volumes:
+          - warp-data:/var/lib/cloudflare-warp
+        restart_policy: always
+        networks:
+          - name: traefik_proxy
+
+- name: Collect and validate user inputs
+  block:
+
+    - name: Prompt for AD_PSEUDO
+      pause:
+        prompt: "Entrer le pseudo Alldebrid"
+        echo: no
+      register: ad_pseudo_input
+
+    - name: Set AD_PSEUDO
+      set_fact:
+        AD_PSEUDO: "{{ ad_pseudo_input.user_input | default('', true) }}"
+
+    - name: Prompt for AD_PASSWORD
+      pause:
+        prompt: "Entrer le password Alldebrid"
+        echo: no
+      register: ad_password_input
+
+    - name: Set AD_PASSWORD
+      set_fact:
+        AD_PASSWORD: "{{ ad_password_input.user_input | default('', true) }}"
+
+    - name: Prompt for AD_TOKEN
+      pause:
+        prompt: "Entrer le token Alldebrid"
+        echo: no
+      register: ad_token_input
+
+    - name: Set AD_TOKEN
+      set_fact:
+        AD_TOKEN: "{{ ad_token_input.user_input | default('', true) }}"
+

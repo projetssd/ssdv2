@@ -1,14 +1,17 @@
 actualbudget - App for managing your finances
+aiostreams - Adonn Stremio
 airdcpp - Client AirDC++
 alfred - Symlink Manager
 authelia - Authentification applications Web
 autoindex - Générateur de liste de répertoires
+backend - backend de flixor
 baserow - Outil no-code pour BDD modulable
 baikal - logiciel de calendrier simple
 bazarr - Gestion de sous-titres Sonarr/Radarr
 benphelps - Intégrations Docker et API de service
 bitwarden - Gestionnaire de mots de passeL
 bookstack - Wiki gratuit et open source
+boxarr - Box Office dans Radarr
 cadvisor - Gestion des ressources docker
 calibre - Gestionnaire de livres électroniques
 calibreweb - Gestionnaire de livres électroniques
@@ -35,6 +38,7 @@ filebrowser - Gestion fichiers via une interface
 filerun - Gestion documents bureautiques, photos
 firefox - Un navigateur dans votre navigateur
 firefoxsyncserver - Navigateur Firefox
+flixor - interface modern plex
 foptimum - Performances serveur
 freshrss - Agrégateur de flux open source
 gethomepage - Gestion d'application
@@ -49,6 +53,7 @@ guacamole - Accès à distance via portail Web
 handbrake - Transcoder une source vidéo
 heimdall - Organiser vos applications Web
 homarr - A simple powerful dashboard
+huntarr - Chasseur médias automatisé
 imagmaid - Plex Image Cleanup
 immich - self-hosted photo video management
 jackett - Indexeur de scraping
@@ -74,6 +79,7 @@ mango - Serveur de mangas auto-hébergé
 Mattermost - Plateforme de collaboration
 mealie - Gestion de vos recettes
 mediawiki - plateforme pour Wikipédia
+mediaflowproxy - Proxy pour Stremio
 medusa - Gestionnaire de séries, animes
 mellow - client proxy
 metube - Téléchargement YouTube auto-hébergé
@@ -84,6 +90,7 @@ monicaHQ - CRM pour votre vie personnelle
 monitorr - Gérer votre système et réseau
 n8nio - Outil de Workflow open-source
 navidrome - Serveur de streaming musical
+neko - navigateur virtuel auto-hébergé
 netdata - Serveur de surveillance systeme
 nextcloud - Stockage et partage de fichiers
 nocodb - Plateforme NoCode open source
@@ -144,6 +151,7 @@ stremiotrakt - addon for Stremio that provides trakt lists
 stremiosaga - addon for Stremio that provides saga infos
 stremiotmdbdice - addon for Stremio that provides shuffle movies suggestions
 stremiomanager - App for re-organizing your Stremio addons
+stremthru - Proxy pour Stremio
 subsonic - Serveur multimédia
 synclounge - Adon Plex
 syncthing - Synchronisation de fichiers
@@ -158,8 +166,10 @@ varken - Ecosystème Plex dans InfluxDB/Grafana
 vaultwarden - Serveur compatible Bitwarden
 vikunja - Application de liste de tâches
 wallos - Gestion des abonnements
+warp - VPN/proxy développé par Cloudflare
 webdav - Service d'hébergement de fichiers
 webtop - Gestion d'environnements
+weddingshare - Partage Moments Ensembles
 wetty - Terminal sur HTTP et https
 wgeasy - Gestion WireGuard
 whisparr - Gestionnaire de films pour adultes

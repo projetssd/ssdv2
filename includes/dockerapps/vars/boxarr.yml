@@ -1,0 +1,12 @@
+---
+pgrole: 'boxarr'
+intport: '8888'
+image: 'ghcr.io/iongpt/boxarr:latest'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  TZ: "{{ lookup('env','TZ') | default('Europe/Paris') }}"
+  BOXARR_URL_BASE: "{{ pgrole }}"
+  BOXARR_LOG_LEVEL: "INFO"

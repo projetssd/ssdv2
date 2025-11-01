@@ -1,0 +1,21 @@
+---
+pgrole: 'neko'
+intport: '8080'
+image: "ghcr.io/m1k1o/neko/firefox:latest"
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}:/home/neko/.mozilla/firefox"
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  TZ: "Europe/Paris"
+  NEKO_DESKTOP_SCREEN: "1920x1080@30"
+  NEKO_MEMBER_MULTIUSER_USER_PASSWORD: "neko"
+  NEKO_MEMBER_MULTIUSER_ADMIN_PASSWORD: "admin"
+  NEKO_WEBRTC_EPR: "52000-52100"
+  NEKO_WEBRTC_ICELITE: "1"
+  NEKO_WEBRTC_NAT1TO1: "82.66.255.97"
+shm_size: "2gb"
+specific_docker_info:
+  ports:
+    - "52000-52100:52000-52100/udp"
