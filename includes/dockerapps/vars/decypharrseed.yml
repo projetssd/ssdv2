@@ -1,0 +1,15 @@
+---
+pgrole: 'decypharrseed'
+intport: '8069'
+image: 'ghcr.io/aerya/decypharrseed:latest'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/decypharr/config/cache/alldebrid:/data/alldebrid:ro"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}:/data"
+pg_env:
+  MCC_HOST: "0.0.0.0"
+  MCC_PORT: "8069"
+  MCC_JSON_DIRS: "/data/alldebrid"
+  MCC_USER: "{{ login.user_input }}"
+  MCC_PASS: "{{ password.user_input }}"
+  user: "{{ lookup('env','MYUID') }}:{{ lookup('env','MYGID') }}"
+

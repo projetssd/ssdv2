@@ -99,6 +99,7 @@ git clone https://github.com/laster13/saison-frontend.git "$SAISON_FRONTEND_DIR"
 cat <<EOT > "$SSD_FRONTEND_DIR/.env"
 VITE_BACKEND_URL_HTTPS=https://ssdv2.$domain
 VITE_API_BASE_URL=https://ssdv2.$domain/api/v1
+VITE_YOUTUBE_API_KEY="AIzaSyD7anrVAEfpWPGviZPbnazwP0JB4ZV6ukU"
 EOT
 
 cat <<EOT > "$SSD_DIR/.env"

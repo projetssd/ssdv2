@@ -1,0 +1,10 @@
+---
+- pause:
+    prompt: "Choisir votre login"
+    echo: yes
+  register: login
+
+- pause:
+    prompt: "Choisir votre password"
+    echo: yes
+  register: password

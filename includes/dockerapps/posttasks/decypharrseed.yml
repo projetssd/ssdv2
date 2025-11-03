@@ -1,0 +1,21 @@
+# --- Créer le dossier principal
+- name: Créer le dossier principal DecypharrSeed s'il n'existe pas
+  file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/decypharrseed"
+    state: directory
+    mode: '0777'
+
+# --- Appliquer les permissions sauf sur le volume read-only alldebrid
+- name: Donner les droits 777 à tous les sous-dossiers sauf alldebrid
+  ansible.builtin.shell: |
+    find "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/decypharrseed" \
+      -type d ! -path "*/alldebrid/*" ! -path "*/alldebrid" -exec chmod 777 {} +
+  args:
+    executable: /bin/bash
+  ignore_errors: yes
+
+- name: Redémarrer le conteneur decypharrseed
+  community.docker.docker_container:
+    name: "decypharrseed"
+    state: started
+    restart: yes
