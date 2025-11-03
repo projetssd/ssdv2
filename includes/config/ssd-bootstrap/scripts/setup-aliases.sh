@@ -41,9 +41,21 @@ log "✅ Aliases ajoutés."
 
 # ─────── fd ──────────────────────────────────
 
-sudo apt update
-sudo apt install fd-find
-sudo ln -s $(which fdfind) /usr/local/bin/fd
+# Mise à jour et installation de fd-find
+echo "🔄 Mise à jour des paquets..."
+sudo apt update -y
+sudo apt install -y fd-find
+
+# Vérification du lien symbolique
+if [ -L /usr/local/bin/fd ]; then
+    echo "✅ Le lien symbolique /usr/local/bin/fd existe déjà."
+elif [ -f /usr/local/bin/fd ]; then
+    echo "⚠️ Un fichier normal existe déjà à /usr/local/bin/fd — pas de lien créé."
+else
+    echo "🔗 Création du lien symbolique /usr/local/bin/fd → $(which fdfind)"
+    sudo ln -s "$(which fdfind)" /usr/local/bin/fd
+    echo "✅ Lien créé avec succès."
+fi
 
 # ─────────────────────────────────────────────
 
