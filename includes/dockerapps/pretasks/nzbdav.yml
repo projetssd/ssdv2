@@ -1,0 +1,103 @@
+---
+- pause:
+    prompt: "Choisir votre login"
+    echo: yes
+  register: login
+
+- pause:
+    prompt: "Choisir votre password"
+    echo: yes
+  register: password
+
+# ---- OBLIGATOIRE : Obscurcir le mot de passe ----
+- name: Obscure password with rclone
+  command: "rclone obscure {{ password.user_input }}"
+  register: obscure_pw
+  changed_when: false
+
+- name: Create /mnt/usenet with user permissions
+  become: yes
+  file:
+    path: "/mnt/usenet"
+    state: directory
+    owner: "{{ lookup('env','USER') }}"
+    group: "{{ lookup('env','USER') }}"
+    mode: '0755'
+
+# -------------------------------------------------
+# Vérification si la section [nzbdav] existe déjà
+# -------------------------------------------------
+- name: Check if nzbdav remote already exists
+  command: "grep -q '^[[]nzbdav[]]' /home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf"
+  register: nzbdav_present
+  failed_when: false
+  changed_when: false
+
+# -------------------------------------------------
+# Création du dossier si absent
+# -------------------------------------------------
+- name: Ensure rclone config directory exists
+  file:
+    path: "/home/{{ lookup('env','USER') }}/.config/rclone"
+    state: directory
+    owner: "{{ lookup('env','USER') }}"
+    group: "{{ lookup('env','USER') }}"
+    mode: "0755"
+
+# -------------------------------------------------
+# Ajouter seulement si la section n'existe pas
+# -------------------------------------------------
+- name: Add nzbdav remote to rclone.conf if missing
+  blockinfile:
+    path: "/home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf"
+    create: yes
+    block: |
+      [nzbdav]
+      type = webdav
+      url = http://nzbdav:3000
+      vendor = other
+      user = {{ login.user_input }}
+      pass = {{ obscure_pw.stdout | trim }}
+  when: nzbdav_present.rc != 0
+
+- name: Deploying rclone
+  docker_container:
+    name: 'rclone'
+    image: 'rclone/rclone:latest'
+    privileged: true
+    volumes:
+      - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+      - "/home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf:/home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf"
+      - "/home/{{ lookup('env','USER') }}/.cache/rclone:/cache:rshared"
+      - "/mnt:/mnt:rshared"
+    env:
+      PUID: "{{ lookup('env','MYUID') }}"
+      PGID: "{{ lookup('env','MYGID') }}"
+      HOME: "/home/{{ lookup('env','USER') }}"
+    capabilities:
+      - SYS_ADMIN
+    devices:
+      - '/dev/fuse:/dev/fuse:rwm'
+    security_opts:
+      - apparmor:unconfined
+    command: >
+      mount nzbdav: /mnt/usenet
+      --config "{{ lookup('env','HOME') }}/.config/rclone/rclone.conf"
+      --allow-other
+      --allow-non-empty
+      --uid="{{ lookup('env','MYUID') }}"
+      --gid="{{ lookup('env','MYGID') }}"
+      --links
+      --use-cookies
+      --dir-cache-time=10s
+      --poll-interval=15s
+      --buffer-size=64M
+      --vfs-cache-mode=full
+      --vfs-cache-max-size=200G
+      --vfs-cache-max-age=4h
+      --vfs-read-chunk-size=128M
+      --vfs-read-chunk-size-limit=256M
+      --vfs-read-ahead 512M
+      --cache-dir=/cache
+    networks:
+      - name: traefik_proxy

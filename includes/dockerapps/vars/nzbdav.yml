@@ -1,0 +1,11 @@
+---
+pgrole: 'nzbdav'
+intport: '3000'
+image: 'ghcr.io/nzbdav-dev/nzbdav'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}:/config"
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+  - "/mnt/:/mnt/"
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
