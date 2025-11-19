@@ -1,7 +1,7 @@
 ---
 pgrole: 'webtop'
 intport: '3000'
-image: 'lscr.io/linuxserver/webtop:ubuntu-xfce'
+image: 'lscr.io/linuxserver/webtop:latest'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
   - "/etc/localtime:/etc/localtime:ro"
