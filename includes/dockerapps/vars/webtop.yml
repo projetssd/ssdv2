@@ -1,7 +1,7 @@
 ---
 pgrole: 'webtop'
 intport: '3000'
-image: 'lscr.io/linuxserver/webtop:ubuntu-icewm'
+image: 'lscr.io/linuxserver/webtop:ubuntu-xfce'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
   - "/etc/localtime:/etc/localtime:ro"
@@ -18,4 +18,4 @@ pg_env:
 specific_docker_info:
   privileged: yes
   security_opts: "seccomp:unconfined"
-  shm_size: '1G'
+  shm_size: '3G'
