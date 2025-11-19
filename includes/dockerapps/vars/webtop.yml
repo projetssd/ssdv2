@@ -1,21 +1,22 @@
 ---
 pgrole: 'webtop'
 intport: '3000'
-image: 'lscr.io/linuxserver/webtop:latest'
+image: 'lscr.io/linuxserver/webtop:debian-kde'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
   - "/etc/localtime:/etc/localtime:ro"
   - "/var/run/docker.sock:/var/run/docker.sock"
-extra_labels:
-  com.centurylinklabs.watchtower.enable: "false"
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}:rw"
+  - "/mnt:/mnt:rshared"
 pg_env:
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
   TZ: "Europe/Paris"
-  SUBFOLDER: "/"
+  LANG: "fr_FR.UTF-8"
+  LANGUAGE: "fr_FR:fr"
+  LC_ALL: "fr_FR.UTF-8"
   KEYBOARD: "fr-fr-azerty"
 
 specific_docker_info:
-  privileged: yes
   security_opts: "seccomp:unconfined"
   shm_size: '3G'
