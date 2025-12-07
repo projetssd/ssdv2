@@ -320,7 +320,7 @@ function install_traefik() {
 
   # choix authentification traefik
   echo ""
-  echo >&2 -n -e "${BWHITE}"$(gettext "Choix de Authentification pour traefik") "[ Enter ] 1 => basique | 2 => oauth | 3 => authelia :${CEND}"
+  echo >&2 -n -e "${BWHITE}"$(gettext "Choix de Authentification pour traefik") "[ Enter ] 1 => basique | 2 => oauth | 3 => authelia | 5 => oauth2-proxy :${CEND}"
   read AUTH
   case $AUTH in
   1)
@@ -333,6 +333,10 @@ function install_traefik() {
 
   3)
     TYPE_AUTH=authelia
+    ;;
+
+  5)
+    TYPE_AUTH=oauth2-proxy
     ;;
 
   *)
@@ -501,7 +505,7 @@ function auth() {
   echo ""
   for line in $(cat $SERVICESPERUSER); do
 
-    read -rp $'\e\033[1;37m --> Authentification '${line}' [ Enter ] 1 => basique (défaut) | 2 => oauth | 3 => authelia | 4 => aucune: ' AUTH
+    read -rp $'\e\033[1;37m --> Authentification '${line}' [ Enter ] 1 => basique (défaut) | 2 => oauth | 3 => authelia | 4 => aucune | 5 => oauth2-proxy: ' AUTH
 
     case $AUTH in
     1)
@@ -514,11 +518,14 @@ function auth() {
 
     3)
       TYPE_AUTH=authelia
-
       ;;
 
     4)
       TYPE_AUTH=aucune
+      ;;
+
+    5)
+      TYPE_AUTH=oauth2-proxy
       ;;
 
     *)
@@ -535,7 +542,7 @@ function auth_unitaire() {
   line=$1
   echo ""
 
-  read -rp $'\e\033[1;37m --> Authentification '${line}' [ Enter ] 1 => basique (défaut) | 2 => oauth | 3 => authelia | 4 => aucune: ' AUTH
+  read -rp $'\e\033[1;37m --> Authentification '${line}' [ Enter ] 1 => basique (défaut) | 2 => oauth | 3 => authelia | 4 => aucune | 5 => oauth2-proxy: ' AUTH
 
   case $AUTH in
   1)
@@ -548,11 +555,14 @@ function auth_unitaire() {
 
   3)
     TYPE_AUTH=authelia
-
     ;;
 
   4)
     TYPE_AUTH=aucune
+    ;;
+
+  5)
+    TYPE_AUTH=oauth2-proxy
     ;;
 
   *)
@@ -1324,7 +1334,7 @@ function affiche_menu_db() {
 
   # chargement des menus
   webui
-  request="select * from menu where parent_id ${start_menu}"
+  request="select * from menu where parent_id ${start_menu} ORDER BY ordre"
   sqlite3 "${SETTINGS_SOURCE}/menu" "${request}" | while read -a db_select; do
     IFS='|'
     read -ra db_select2 <<<"$db_select"

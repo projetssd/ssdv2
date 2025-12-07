@@ -5,6 +5,7 @@ traefik.http.routers.{{pgrole}}-rtr.rule: 'Host(`{{ sub[pgrole][pgrole] if sub_e
 traefik.http.routers.{{pgrole}}-rtr.tls: 'true'
 ## Middlewares
 traefik.http.routers.{{pgrole}}-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
+else 'chain-oauth2-proxy@file' if auth_enabled and sub[pgrole].auth == 'oauth2-proxy' | default(false)
 else 'chain-basic-auth@file' if auth_enabled and sub[pgrole].auth == 'basique' | default(false)
 else 'chain-oauth@file' if auth_enabled and sub[pgrole].auth == 'oauth' | default(false) 
 else 'chain-no-auth@file' if auth_enabled and sub[pgrole].auth == 'aucune'}}"

@@ -39,3 +39,10 @@
       address = "http://authelia:9091/api/verify?rd=https://authelia.{{user.domain}}"
       trustForwardHeader = true
       authResponseHeaders = ["Remote-User", "Remote-Groups"]
+    
+  [http.middlewares.middlewares-oauth2-proxy]
+  [http.middlewares.middlewares-oauth2-proxy.forwardAuth]
+    address = "http://oauth2-proxy:4180"
+    trustForwardHeader = true
+    authResponseHeaders = ["X-Forwarded-User"]
+

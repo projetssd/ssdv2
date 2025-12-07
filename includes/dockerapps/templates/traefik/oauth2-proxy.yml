@@ -1,0 +1,48 @@
+---
+- name: "Set DNS Record on CloudFlare (OAuth2 Proxy)"
+  include_tasks: '{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml'
+  vars:
+    subdomain: oauth2-proxy
+  when: cloudflare_enabled
+
+- name: 'Ajout labels OAuth2 Proxy'
+  set_fact:
+    oauth2_proxy_labels:
+      traefik.enable: 'true'
+      traefik.http.routers.oauth2proxy-rtr.entrypoints: 'http,https'
+      traefik.http.routers.oauth2proxy-rtr.rule: 'Host(`oauth2-proxy.{{ user.domain }}`)'
+      traefik.http.routers.oauth2proxy-rtr.tls: 'true'
+      traefik.http.routers.oauth2proxy-rtr.tls.certresolver: 'letsencrypt'
+      traefik.http.routers.oauth2proxy-rtr.service: 'oauth2proxy-svc'
+      traefik.http.services.oauth2proxy-svc.loadbalancer.server.port: '4180'
+      traefik.http.routers.oauth2proxy-rtr.middlewares: 'chain-no-auth@file'
+
+- name: Deploy OAuth2 Proxy
+  docker_container:
+    name: 'oauth2-proxy'
+    hostname: 'oauth2-proxy'
+    image: 'quay.io/oauth2-proxy/oauth2-proxy:v7.6.0'
+    pull: yes
+    restart_policy: unless-stopped
+    state: started
+    labels: '{{ oauth2_proxy_labels }}'
+    networks:
+      - name: traefik_proxy
+    ports:
+      - '127.0.0.1:4180:4180'
+    command:
+      - '--provider=google'
+      - '--client-id={{ oauth2proxy.client }}'
+      - '--client-secret={{ oauth2proxy.secret }}'
+      - '--redirect-url=https://oauth2-proxy.{{ user.domain }}/oauth2/callback'
+      - '--cookie-secret={{ oauth2proxy.openssl }}'
+      - '--cookie-secure=true'
+      - '--cookie-httponly=true'
+      - '--cookie-expire=720h'
+      - '--cookie-domain={{ user.domain }}'
+      - '--whitelist-domain=.{{ user.domain }}'
+      - '--email-domain=*'
+      - '--pass-authorization-header=true'
+      - '--pass-user-headers=true'
+      - '--reverse-proxy=true'
+      - '--http-address=0.0.0.0:4180'

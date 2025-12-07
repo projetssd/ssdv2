@@ -219,7 +219,7 @@
     - name: Deploy Traefik
       docker_container:
         name: '{{pgrole}}'
-        image: traefik:v3.1.6
+        image: traefik:v3.6.1
         pull: yes
         published_ports:
           - "80:80"
@@ -267,9 +267,18 @@
         networks:
           - name: traefik_proxy
 
-    - name: Google OAuth2 tasks
+    # OAuth Configuration - Support pour OAuth (ancien), OAuth2 Proxy et Authelia
+    - name: "Include OAuth (ancien - traefik-forward-auth)"
       include_tasks: "{{ settings.source }}/includes/dockerapps/templates/{{pgrole}}/oauth.yml"
-      when: oauth_enabled
+      when: oauth_enabled and oauth_type | default('oauth') == 'oauth'
+
+    - name: "Include OAuth2 Proxy"
+      include_tasks: "{{ settings.source }}/includes/dockerapps/templates/{{pgrole}}/oauth2-proxy.yml"
+      when: oauth2proxy_enabled
+
+    - name: "Include Authelia"
+      include_tasks: "{{ settings.source }}/includes/dockerapps/templates/{{pgrole}}/authelia.yml"
+      when: oauth_enabled and oauth_type == "authelia"
 
     - name: create {{pgrole}} state
       shell: |
@@ -288,4 +297,3 @@
               values
               ('traefik',2,'{{sub[pgrole][pgrole] if sub_enabled else pgrole}}',443);
           EOF
-
