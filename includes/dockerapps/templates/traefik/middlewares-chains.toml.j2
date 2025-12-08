@@ -1,20 +1,37 @@
-[http.middlewares]
-  [http.middlewares.chain-no-auth]
-    [http.middlewares.chain-no-auth.chain]
-      middlewares = [ "middlewares-rate-limit", "middlewares-secure-headers"]
+[http.middlewares.chain-no-auth.chain]
+  middlewares = [
+    "middlewares-rate-limit@file",
+    "middlewares-secure-headers@file"
+  ]
 
-  [http.middlewares.chain-basic-auth]
-    [http.middlewares.chain-basic-auth.chain]
-      middlewares = [ "middlewares-rate-limit", "middlewares-secure-headers", "middlewares-basic-auth"]
 
-  [http.middlewares.chain-oauth]
-    [http.middlewares.chain-oauth.chain]
-      middlewares = [ "middlewares-rate-limit", "middlewares-secure-headers", "middlewares-oauth"]
+[http.middlewares.chain-basic-auth.chain]
+  middlewares = [
+    "middlewares-rate-limit@file",
+    "middlewares-secure-headers@file",
+    "middlewares-basic-auth@file"
+  ]
 
-  [http.middlewares.chain-authelia]
-    [http.middlewares.chain-authelia.chain]
-      middlewares = [ "middlewares-rate-limit", "middlewares-secure-headers", "middlewares-authelia"]
 
-  [http.middlewares.chain-oauth2-proxy]
-  [http.middlewares.chain-oauth2-proxy.chain]
-    middlewares = [ "middlewares-rate-limit", "middlewares-secure-headers", "middlewares-oauth2-proxy"]
+[http.middlewares.chain-oauth.chain]
+  middlewares = [
+    "middlewares-rate-limit@file",
+    "middlewares-secure-headers@file",
+    "middlewares-oauth@file"
+  ]
+
+
+[http.middlewares.chain-authelia.chain]
+  middlewares = [
+    "middlewares-rate-limit@file",
+    "middlewares-secure-headers@file",
+    "middlewares-authelia@file"
+  ]
+
+
+[http.middlewares.chain-oauth2-proxy.chain]
+  middlewares = [
+    "middlewares-rate-limit@file",
+    "middlewares-secure-headers@file",
+    "middlewares-oauth2-proxy@file"
+  ]

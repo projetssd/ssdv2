@@ -30,19 +30,35 @@
       - name: traefik_proxy
     ports:
       - '127.0.0.1:4180:4180'
+    volumes:
+      - /etc/oauth2_proxy/emails.txt:/etc/oauth2_proxy/emails.txt:ro
     command:
+      # ⭐ Google OAuth
       - '--provider=google'
       - '--client-id={{ oauth2proxy.client }}'
       - '--client-secret={{ oauth2proxy.secret }}'
       - '--redirect-url=https://oauth2-proxy.{{ user.domain }}/oauth2/callback'
+      
+      # ⭐ CRITICAL: ForwardAuth mode
+      - '--reverse-proxy=true'
+      - '--skip-auth-route=^/oauth2/(start|callback|validate|sign_out)'
+      - '--set-xauthrequest=true'
+      - '--auth-logging=true'
+      - '--request-logging=true'
+      
+      # ⭐ Sécurité des cookies
+      - '--cookie-name=_oauth2_proxy'
       - '--cookie-secret={{ oauth2proxy.openssl }}'
       - '--cookie-secure=true'
       - '--cookie-httponly=true'
+      - '--cookie-samesite=lax'
       - '--cookie-expire=720h'
-      - '--cookie-domain={{ user.domain }}'
+      - '--cookie-refresh=1h'
+      - '--cookie-domain=.{{ user.domain }}'
+      
+      # ⭐ IMPORTANT: Autoriser tous les domaines du wildcard
       - '--whitelist-domain=.{{ user.domain }}'
-      - '--email-domain=*'
-      - '--pass-authorization-header=true'
-      - '--pass-user-headers=true'
-      - '--reverse-proxy=true'
+      - '--authenticated-emails-file=/etc/oauth2_proxy/emails.txt'
+      
+      # ⭐ Server
       - '--http-address=0.0.0.0:4180'
