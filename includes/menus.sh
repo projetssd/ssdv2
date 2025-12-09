@@ -222,6 +222,49 @@ menu_gestoutils_ygg-rss-proxy() {
   pause
 }
 
+menu_manage_apps_auth() {
+
+clear
+
+logo
+
+echo -e "${BLUE}### GESTION DE L'AUTHENTIFICATION DES APPLICATIONS ###${NC}"
+
+echo ""
+
+# Vérifier que le script Python existe
+if [ ! -f "${SETTINGS_SOURCE}/includes/config/scripts/manage_auth.py" ]; then
+    echo -e "${CRED}❌ Script manage_auth.py introuvable${CEND}"
+    echo -e "${CCYAN}Chemin attendu: ${SETTINGS_SOURCE}/includes/config/scripts/manage_auth.py${CEND}"
+    echo ""
+    echo -e "${BWHITE}ENTER pour continuer${CEND}"
+    read -r
+    return 1
+fi
+
+# Vérifier que le venv Python existe
+if [ ! -f "${SETTINGS_SOURCE}/venv/bin/activate" ]; then
+    echo -e "${CRED}❌ Environnement Python virtuel introuvable${CEND}"
+    echo ""
+    echo -e "${BWHITE}ENTER pour continuer${CEND}"
+    read -r
+    return 1
+fi
+
+# Activer le venv et lancer le script Python
+source "${SETTINGS_SOURCE}/venv/bin/activate"
+
+python3 "${SETTINGS_SOURCE}/includes/config/scripts/manage_auth.py"
+
+deactivate
+
+echo ""
+
+echo -e "${BWHITE}ENTER pour continuer${CEND}"
+
+read -r
+
+}
 
 
 function ajout_app_seedbox() {
@@ -268,3 +311,4 @@ function menu_reinit_container() {
   echo -e "\n $(gettext "Appuyer sur") ${CCYAN}[$(gettext "ENTREE")]${CEND} $(gettext "pour continuer")"
   read -r
 }
+
