@@ -34,6 +34,7 @@
         pg_volumes:
           - "/home/{{ lookup('env','USER') }}/scripts/{{pgrole}}:/config"
           - "/home/{{ lookup('env','USER') }}:/home/{{ lookup('env','USER') }}:ro"
+          - "/mnt:/mnt:rshared,ro"
           - '/etc/localtime:/etc/localtime:ro'
 
     - name: 'Setting PG ENV'
