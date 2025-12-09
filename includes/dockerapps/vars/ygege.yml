@@ -4,16 +4,13 @@ intport: '8715'
 image: 'uwucode/ygege:develop'
 
 pg_volumes:
-  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config/config.json:/app/config.json:ro"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config.json:/app/config.json:ro"
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/sessions:/app/sessions:rw"
   - '/etc/localtime:/etc/localtime:ro'
 
 pg_env:
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
-  HTTP_PROXY: "http://warp:1080"
-  HTTPS_PROXY: "http://warp:1080"
-  ALL_PROXY: "socks5://warp:1080"
 
 specific_docker_info:
   capabilities:
@@ -21,7 +18,7 @@ specific_docker_info:
   security_opts:
     - apparmor:unconfined
   ports:
-    - "8715:8715"
+    - "{{ intport }}:{{ intport }}"
   restart_policy: "unless-stopped"
   log_driver: 'journald'
   log_options:
@@ -31,9 +28,9 @@ specific_docker_info:
   healthcheck:
     test: >
       /bin/sh -c "
-      wget -qO- --timeout=2 http://localhost:8715/health 2>/dev/null || exit 0
+      curl --fail http://localhost:{{ intport }}/health || exit 1
       "
-    interval: "30s"
-    timeout: "10s"
+    interval: "1m30s"
+    timeout: "20s"
     retries: 3
     start_period: "10s"

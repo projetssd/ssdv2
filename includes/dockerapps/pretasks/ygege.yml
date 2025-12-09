@@ -1,0 +1,59 @@
+---
+
+- name: prompt for YGG username
+  pause:
+    prompt: "Enter value for YGG_USERNAME (your YGG account username)"
+    echo: "yes"
+  register: ygg_username_input
+
+- name: set YGG username var
+  set_fact:
+    ygg_username: "{{ ygg_username_input.user_input }}"
+
+- name: prompt for YGG password
+  pause:
+    prompt: "Enter value for YGG_PASSWORD (your YGG account password)"
+    echo: "yes"
+  register: ygg_password_input
+
+- name: set YGG password var
+  set_fact:
+    ygg_password: "{{ ygg_password_input.user_input }}"
+
+- name: Create ygege config directory
+  file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/ygege"
+    state: directory
+    owner: "{{ lookup('env','USER') }}"
+    group: "{{ lookup('env','USER') }}"
+    mode: '0755'
+  become: true
+
+- name: Create ygege sessions directory
+  file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/ygege/sessions"
+    state: directory
+    owner: "{{ lookup('env','USER') }}"
+    group: "{{ lookup('env','USER') }}"
+    mode: '0755'
+  become: true
+
+- name: Create ygege config.json from template
+  copy:
+    content: |
+      {
+        "username": "{{ ygg_username }}",
+        "password": "{{ ygg_password }}",
+        "bind_ip": "0.0.0.0",
+        "bind_port": 8715,
+        "log_level": "debug"
+      }
+    dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/ygege/config.json"
+    owner: "{{ lookup('env','USER') }}"
+    group: "{{ lookup('env','USER') }}"
+    mode: '0644'
+  become: true
+
+- name: Display configuration created
+  debug:
+    msg: "✅ Ygege configuration created successfully for user: {{ ygg_username }}"
