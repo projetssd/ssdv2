@@ -1,52 +1,40 @@
-#!/bin/bash
-#
-# Version:  Ansible-1
-# GitHub:   https://github.com/PGBlitz/PGBlitz.com
-# Author:   Admin9705 & Deiteq
-# URL:      https://pgblitz.com
-#
-# PGBlitz Copyright (C) 2018 PGBlitz.com
-# Licensed under GNU General Public License v3.0 GPL-3 (in short)
-#
-#   You may copy, distribute and modify the software as long as you track
-#   changes/dates in source templates. Any modifications to our software
-#   including (via compiler) GPL-licensed code must also be made available
-#   under the GPL along with build & install instructions.
-#
-############################################################# (KEY START)
 ---
 - hosts: localhost
   gather_facts: false
+
   tasks:
 
-    - name: Create directory if needed
+    - name: Create status directory if needed
       file:
         path: "{{ settings.storage }}/status"
         state: directory
+        mode: "0775"
 
-    - name: create watchtower state
+    - name: Create watchtower state
       shell: |
         echo "1" > "{{ settings.storage }}/status/watchtower"
 
     - name: Deploy watchtower
       docker_container:
         name: 'watchtower'
-        image: 'containrrr/watchtower'
+        image: 'containrrr/watchtower:latest'
         pull: yes
         command: '--cleanup --schedule "0 0 4 * * *"'
         state: started
+        restart_policy: unless-stopped
+        env:
+          DOCKER_API_VERSION: '1.52'
         volumes:
           - /var/run/docker.sock:/var/run/docker.sock
           - /etc/localtime:/etc/localtime:ro
-        restart_policy: unless-stopped
         networks:
           - name: traefik_proxy
-    
+
     - name: Insert watchtower into database
-      shell : 
+      shell:
         cmd: |
-          sqlite3 {{  settings.source }}/ssddb << EOF
-              replace into applications (name,status,subdomain,port)
-              values
+          sqlite3 {{ settings.source }}/ssddb << EOF
+              REPLACE INTO applications (name,status,subdomain,port)
+              VALUES
               ('watchtower',2,'',0);
           EOF

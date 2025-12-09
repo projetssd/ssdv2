@@ -4,38 +4,63 @@
       "{{user.htpwd}}",
     ]
 
-  [http.middlewares.middlewares-rate-limit]
-    [http.middlewares.middlewares-rate-limit.rateLimit]
-      average = 100
-      burst = 50
 
-  [http.middlewares.middlewares-secure-headers]
-    [http.middlewares.middlewares-secure-headers.headers]
-      accessControlAllowMethods= ["GET", "OPTIONS", "PUT"]
-      accessControlMaxAge = 100
-      hostsProxyHeaders = ["X-Forwarded-Host"]
-      sslRedirect = true
-      stsSeconds = 63072000
-      stsIncludeSubdomains = true
-      stsPreload = true
-      forceSTSHeader = true
-      customFrameOptionsValue = "SAMEORIGIN"
-      contentTypeNosniff = true 
-      browserXssFilter = true 
-      referrerPolicy = "same-origin" 
-      featurePolicy = "camera 'none'; geolocation 'none'; microphone 'none'; payment 'none'; usb 'none'; vr 'none';" 
-      [http.middlewares.middlewares-secure-headers.headers.customResponseHeaders]
-        X-Robots-Tag = "none,noarchive,nosnippet,notranslate,noimageindex,"
-        server = ""
+[http.middlewares.middlewares-rate-limit]
+  [http.middlewares.middlewares-rate-limit.rateLimit]
+    average = 100
+    burst = 50
 
-  [http.middlewares.middlewares-oauth]
-    [http.middlewares.middlewares-oauth.forwardAuth]
-      address = "http://oauth:4181"
-      trustForwardHeader = true
-      authResponseHeaders = ["X-Forwarded-User"]
 
-  [http.middlewares.middlewares-authelia]
-    [http.middlewares.middlewares-authelia.forwardAuth]
-      address = "http://authelia:9091/api/verify?rd=https://authelia.{{user.domain}}"
-      trustForwardHeader = true
-      authResponseHeaders = ["Remote-User", "Remote-Groups"]
+[http.middlewares.middlewares-secure-headers]
+  [http.middlewares.middlewares-secure-headers.headers]
+    accessControlAllowMethods = ["GET", "OPTIONS", "PUT"]
+    accessControlMaxAge = 100
+    hostsProxyHeaders = ["X-Forwarded-Host"]
+    sslRedirect = true
+    stsSeconds = 63072000
+    stsIncludeSubdomains = true
+    stsPreload = true
+    forceSTSHeader = true
+    customFrameOptionsValue = "SAMEORIGIN"
+    contentTypeNosniff = true 
+    browserXssFilter = true 
+    referrerPolicy = "same-origin" 
+    featurePolicy = "camera 'none'; geolocation 'none'; microphone 'none'; payment 'none'; usb 'none'; vr 'none';" 
+    [http.middlewares.middlewares-secure-headers.headers.customResponseHeaders]
+      X-Robots-Tag = "none,noarchive,nosnippet,notranslate,noimageindex,"
+      server = ""
+
+
+[http.middlewares.middlewares-oauth]
+  [http.middlewares.middlewares-oauth.forwardAuth]
+    address = "http://oauth:4181"
+    trustForwardHeader = true
+    authResponseHeaders = ["X-Forwarded-User"]
+
+
+[http.middlewares.middlewares-authelia]
+  [http.middlewares.middlewares-authelia.forwardAuth]
+    address = "http://authelia:9091/api/verify?rd=https://authelia.{{user.domain}}"
+    trustForwardHeader = true
+    authResponseHeaders = ["Remote-User", "Remote-Groups"]
+
+
+# ⭐ Error middleware pour redirection vers login OAuth2
+[http.middlewares.middlewares-oauth2-errors]
+  [http.middlewares.middlewares-oauth2-errors.errors]
+    status = ["401", "403"]
+    service = "oauth2-error-svc"
+    query = "/oauth2/sign_in?rd={url}"
+
+
+# ⭐ OAuth2 Proxy - ForwardAuth Configuration
+[http.middlewares.middlewares-oauth2-proxy]
+  [http.middlewares.middlewares-oauth2-proxy.forwardAuth]
+    address = "http://oauth2-proxy:4180/oauth2/auth"
+    trustForwardHeader = true
+    # ⭐ IMPORTANT: Headers renvoyés par oauth2-proxy au container upstream
+    authResponseHeaders = [
+      "X-Auth-Request-User",
+      "X-Auth-Request-Email",
+      "X-Auth-Request-Preferred-Username"
+    ]

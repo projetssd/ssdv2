@@ -1,17 +1,31 @@
 traefik.enable: 'true'
+
 ## HTTP Routers
 traefik.http.routers.{{pgrole}}-rtr.entrypoints: 'http,https'
-traefik.http.routers.{{pgrole}}-rtr.rule: 'Host(`{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}`)'
+traefik.http.routers.{{pgrole}}-rtr.rule: 'Host(`{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}`)' 
 traefik.http.routers.{{pgrole}}-rtr.tls: 'true'
+
 ## Middlewares
-traefik.http.routers.{{pgrole}}-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
-else 'chain-basic-auth@file' if auth_enabled and sub[pgrole].auth == 'basique' | default(false)
-else 'chain-oauth@file' if auth_enabled and sub[pgrole].auth == 'oauth' | default(false) 
-else 'chain-no-auth@file' if auth_enabled and sub[pgrole].auth == 'aucune'}}"
+# ⭐ Utiliser la chaîne complète avec oauth2-proxy
+{% if oauth2proxy_enabled %}
+traefik.http.routers.{{pgrole}}-rtr.middlewares: 'chain-oauth2-proxy@file'
+{% elif auth_enabled and sub[pgrole].auth | default('') == 'basique' %}
+traefik.http.routers.{{pgrole}}-rtr.middlewares: 'chain-basic-auth@file'
+{% elif auth_enabled and sub[pgrole].auth | default('') == 'oauth' %}
+traefik.http.routers.{{pgrole}}-rtr.middlewares: 'chain-oauth@file'
+{% elif auth_enabled and sub[pgrole].auth | default('') == 'authelia' %}
+traefik.http.routers.{{pgrole}}-rtr.middlewares: 'chain-authelia@file'
+{% else %}
+traefik.http.routers.{{pgrole}}-rtr.middlewares: 'chain-no-auth@file'
+{% endif %}
+
 traefik.http.routers.{{pgrole}}-rtr.service: '{{pgrole}}-svc'
-traefik.http.routers.{{pgrole}}-rtr.tls.certresolver: 'letsencrypt' 
+traefik.http.routers.{{pgrole}}-rtr.tls.certresolver: 'letsencrypt'
+
 ## HTTP Services
 traefik.http.services.{{pgrole}}-svc.loadbalancer.server.port: "{{ intport }}"
+
+## Extra labels (application-specific)
 {# AJOUT DES SPECIFIQUES #}
 {% for ligne in extra_labels|list %}
 {{ ligne }}: "{{ extra_labels[ligne] }}"

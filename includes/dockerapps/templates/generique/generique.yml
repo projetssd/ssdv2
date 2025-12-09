@@ -14,6 +14,7 @@ cloudflare_enabled: "{{ true if not(
     )
     else false }}"
 
+
 oauth_enabled: "{{ true if not(
     (oauth.client is undefined)
     or
@@ -35,6 +36,35 @@ oauth_enabled: "{{ true if not(
     )
     else false }}"
 
+
+oauth2proxy_enabled: "{{ true if not(
+    (oauth2proxy.client is undefined)
+    or
+    (oauth2proxy.client is none)
+    or
+    (oauth2proxy.client | trim | length == 0)
+    or
+    (oauth2proxy.secret is undefined)
+    or
+    (oauth2proxy.secret is none)
+    or
+    (oauth2proxy.secret | trim | length == 0)
+    or
+    (oauth2proxy.account is undefined)
+    or
+    (oauth2proxy.account is none)
+    or
+    (oauth2proxy.account | trim | length == 0)
+    or
+    (oauth2proxy.openssl is undefined)
+    or
+    (oauth2proxy.openssl is none)
+    or
+    (oauth2proxy.openssl | trim | length == 0)
+    )
+    else false }}"
+
+
 sub_enabled: "{{ true if not(
     (sub[pgrole][pgrole] is undefined)
     or
@@ -43,6 +73,7 @@ sub_enabled: "{{ true if not(
     (sub[pgrole][pgrole] | trim | length == 0)
     )
     else false }}"
+
 
 auth_enabled: "{{ true if not(
     (sub[pgrole].auth is undefined)
