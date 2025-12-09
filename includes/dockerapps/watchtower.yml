@@ -17,13 +17,13 @@
     - name: Deploy watchtower
       docker_container:
         name: 'watchtower'
-        image: 'containrrr/watchtower:latest'
+        image: 'nickfedor/watchtower:latest'
         pull: yes
         command: '--cleanup --schedule "0 0 4 * * *"'
         state: started
         restart_policy: unless-stopped
         env:
-          DOCKER_API_VERSION: '1.52'
+          DOCKER_API_VERSION: '1.44'  # ← Compatible avec 28.x ET 29.x
         volumes:
           - /var/run/docker.sock:/var/run/docker.sock
           - /etc/localtime:/etc/localtime:ro
@@ -38,3 +38,4 @@
               VALUES
               ('watchtower',2,'',0);
           EOF
+
