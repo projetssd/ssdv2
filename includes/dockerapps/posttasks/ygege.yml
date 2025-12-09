@@ -1,0 +1,35 @@
+---
+
+- name: Find Prowlarr custom indexers directory
+  stat:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/prowlarr/Custom"
+  register: prowlarr_custom_dir
+
+- name: Create Prowlarr Custom indexers directory if needed
+  file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/prowlarr/Custom"
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: Download ygege.yml from GitHub
+  get_url:
+    url: "https://raw.githubusercontent.com/UwUDev/ygege/refs/heads/master/ygege.yml"
+    dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/prowlarr/Custom/ygege.yml"
+    mode: '0644'
+    owner: "{{ lookup('env','USER') }}"
+    group: "{{ lookup('env','USER') }}"
+    force: yes
+  become: true
+  register: ygege_indexer_download
+  ignore_errors: yes
+
+- name: Display Prowlarr integration message
+  debug:
+    msg: "✅ Ygege indexer definition downloaded and placed in Prowlarr Custom indexers. Restart Prowlarr to see it."
+  when: ygege_indexer_download.status_code | default(200) == 200
+
+- name: Warn if download failed
+  debug:
+    msg: "⚠️ Failed to download ygege.yml from GitHub. You may need to add it manually."
+  when: ygege_indexer_download.failed | default(false)
