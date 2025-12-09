@@ -3,15 +3,24 @@ menu_ajout_supp_applis() {
   manage_apps
 }
 
+
 menu_change_domaine () {
   "${SETTINGS_SOURCE}/includes/config/scripts/domain.sh"
 }
+
 
 menu_secu_system_oauth2() {
   clear
   echo ""
   get_architecture
   "${SETTINGS_SOURCE}/includes/config/scripts/oauth.sh"
+}
+
+menu_secu_system_oauth2_proxy() {
+  clear
+  echo ""
+  get_architecture
+  "${SETTINGS_SOURCE}/includes/config/scripts/oauth2-proxy.sh"
 }
 
 menu_install_authelia() {
@@ -21,24 +30,28 @@ menu_install_authelia() {
   echo -e "${CCYAN}"$(gettext "INSTALLATION AUTHELIA")"${CEND}"
   echo -e "${CRED}-------------------------------------${CEND}"
 
+
   # Installation Authelia
   launch_service authelia
+
 
   echo -e "${CRED}---------------------------------------------------------------${CEND}"
   echo -e "${CRED}"$(gettext "Réinitialiser manuellement les applis qui seront")"${CEND}"
   echo -e "${CRED}"$(gettext "Concernées par l'authentification Authelia") "${CEND}"
   echo -e "${CRED}"$(gettext "Choix 1 puis 3 dans le menu")                     "${CEND}"
 
+
   echo -e "${CRED}---------------------------------------------------------------${CEND}"
   echo ""
   echo -e "${CRED}---------------------------------------------------------------${CEND}"
-  echo -e "${CCYAN}"    IMPORTANT:	$(gettext "Avant la 1ere connexion")"${CEND}"
-  echo -e "${CCYAN}"    		- $(gettext "Nettoyer l'historique de votre navigateur")"${CEND}"
+  echo -e "${CCYAN}"    IMPORTANT:  $(gettext "Avant la 1ere connexion")"${CEND}"
+  echo -e "${CCYAN}"        - $(gettext "Nettoyer l'historique de votre navigateur")"${CEND}"
   echo -e "${CRED}---------------------------------------------------------------${CEND}"
   echo ""
   echo -e "\n $(gettext "Appuyer sur") ${CCYAN}[$(gettext "ENTREE")]${CEND} $(gettext "pour continuer")"
   read -r
 }
+
 
 menu_ajout_users_authelia() {
   clear
@@ -52,6 +65,7 @@ menu_ajout_users_authelia() {
   echo -e "\n"$(gettext "Appuyer sur")"${CCYAN} ["$(gettext "ENTREE")"]${CEND}" $(gettext "pour continuer")
   read -r
 }
+
 
 menu_suppression_utilisateur_authelia() {
   clear
@@ -77,6 +91,7 @@ menu_suppression_utilisateur_authelia() {
   read -r
 }
 
+
 menu_secu_system_ajout_adresse_oauth2() {
   clear
   logo
@@ -86,13 +101,16 @@ menu_secu_system_ajout_adresse_oauth2() {
   manage_account_yml oauth.account $email
   ansible-playbook ${SETTINGS_SOURCE}/includes/dockerapps/traefik.yml
 
+
   echo -e "${CRED}---------------------------------------------------------------${CEND}"
   echo -e "${CRED}     /!\ "$(gettext "MISE A JOUR EFFECTUEE AVEC SUCCES")" /!\  ${CEND}"
   echo -e "${CRED}---------------------------------------------------------------${CEND}"
 
+
   echo -e "\n"$(gettext "Appuyer sur")"${CCYAN} ["$(gettext "ENTREE")"]${CEND}" $(gettext "pour continuer")
   read -r
 }
+
 
 menu_secu_systeme_iptables() {
   clear
@@ -100,15 +118,18 @@ menu_secu_systeme_iptables() {
   ${SETTINGS_SOURCE}/includes/config/scripts/iptables.sh
 }
 
+
 menu_secu_systeme_cloudflare() {
   ${SETTINGS_SOURCE}/includes/config/scripts/cloudflare.sh
 }
+
 
 menu_change_domaine() {
   clear
   echo ""
   ${SETTINGS_SOURCE}/includes/config/scripts/domain.sh
 }
+
 
 menu_change_sous_domaine() {
   ansible-playbook ${SETTINGS_SOURCE}/includes/dockerapps/templates/ansible/ansible.yml
@@ -118,11 +139,13 @@ menu_change_sous_domaine() {
   rm ${SETTINGS_STORAGE}/conf/* >/dev/null 2>&1
   subdomain
 
+
   grep "plex" $SERVICESPERUSER >/dev/null 2>&1
   if [ $? -eq 0 ]; then
     ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/plex/tasks/main.yml
     sed -i "/plex/d" $SERVICESPERUSER >/dev/null 2>&1
   fi
+
 
   install_services
   echo $(gettext "Changement effectué")
@@ -130,6 +153,7 @@ menu_change_sous_domaine() {
   echo -e "\n $(gettext "Appuyer sur") ${CCYAN}[$(gettext "ENTREE")]${CEND} $(gettext "pour continuer")"
   read -r
 }
+
 
 menu_gestion_rtorrent_cleaner() {
   clear
@@ -139,10 +163,12 @@ menu_gestion_rtorrent_cleaner() {
   pause
 }
 
+
 menu_gestion_ufw() {
   clear
   install_ufw
 }
+
 
 menu_gestion_backup() {
   clear
@@ -152,7 +178,9 @@ menu_gestion_backup() {
   echo -e "\n"$(gettext "Appuyer sur")"${CCYAN} ["$(gettext "ENTREE")"]${CEND}" $(gettext "pour continuer")
   read -r
 
+
 }
+
 
 menu_gestoutils_autoscan() {
   clear
@@ -160,6 +188,7 @@ menu_gestoutils_autoscan() {
   ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/autoscan/tasks/main.yml
   pause
 }
+
 
 menu_gestoutils_cloudplow() {
   clear
@@ -169,12 +198,14 @@ menu_gestoutils_cloudplow() {
   pause
 }
 
+
 menu_gestoutils_dupefinder() {
   clear
   plex_dupefinder
   echo ""
   pause
 }
+
 
 menu_gestoutils_kometa() {
   clear
@@ -183,12 +214,14 @@ menu_gestoutils_kometa() {
   pause
 }
 
+
 menu_gestoutils_ygg-rss-proxy() {
   clear
   echo""
   ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/ygg-rss-proxy/tasks/main.yml
   pause
 }
+
 
 
 function ajout_app_seedbox() {
@@ -199,6 +232,7 @@ function ajout_app_seedbox() {
   pause
 }
 
+
 function menu_suppression_application() {
   line=$1
   suppression_appli ${line} 1
@@ -206,11 +240,13 @@ function menu_suppression_application() {
   affiche_menu_db
 }
 
+
 function menu_reinit_container() {
   line=$1
   log_write "Reinit du container ${line}" >/dev/null 2>&1
   echo -e "\e[32m"$(gettext "Les volumes ne seront pas supprimés")"\e[0m" 
   subdomain=$(get_from_account_yml "sub.${line}.${line}")
+
 
   suppression_appli "${line}"
   rm -f "${SETTINGS_STORAGE}/conf/${line}.yml"

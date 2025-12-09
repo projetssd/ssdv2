@@ -1,18 +1,23 @@
 ---
+
 - hosts: localhost
+
   gather_facts: True
+
   vars_files:
     - "{{ settings.source }}/includes/dockerapps/templates/generique/generique.yml"
+
   vars:
     pgrole: 'traefik'
     pgerro: 'error-pages'
     subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
+    oauth2proxy_enabled: "{{ oauth_enabled and oauth_type | default('') == 'oauth2-proxy' }}"
 
   tasks:
 
     - name: create traefik state
       shell: |
-        echo "1" >  {{ settings.storage }}/status/{{pgrole}}
+        echo "1" > {{ settings.storage }}/status/{{pgrole}}
 
     - name: Checking for existing app data
       stat:
@@ -35,8 +40,8 @@
       command: dig +short {{ subdomain }}.{{ user.domain }} @1.1.1.1
       register: dig_output
       until: dig_output.stdout == network.ipv4
-      retries: 300  # Nombre de tentatives
-      delay: 10  # Temps (en secondes) entre chaque tentative
+      retries: 300 # Nombre de tentatives
+      delay: 10 # Temps (en secondes) entre chaque tentative
       changed_when: false
       when: not cloudflare_enabled
 
@@ -111,10 +116,7 @@
           ## Services - API
           traefik.http.routers.traefik-rtr.service: 'api@internal'
           ## Middlewares
-          traefik.http.routers.traefik-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
-            else 'chain-basic-auth@file,error-pages-middleware' if auth_enabled and sub[pgrole].auth == 'basique' | default(false)
-            else 'chain-oauth@file' if auth_enabled and sub[pgrole].auth == 'oauth' | default(false)
-            else 'chain-no-auth@file,error-pages-middleware' if auth_enabled and sub[pgrole].auth == 'aucune'}}"
+          traefik.http.routers.traefik-rtr.middlewares: "{{ 'chain-authelia@file' if (check.stat.exists and sub[pgrole].auth | default('') == 'authelia') else 'chain-basic-auth@file,error-pages-middleware' if (auth_enabled and sub[pgrole].auth | default('') == 'basique') else 'chain-oauth@file' if (auth_enabled and sub[pgrole].auth | default('') == 'oauth') else 'chain-oauth2-proxy@file' if (auth_enabled and sub[pgrole].auth | default('') == 'oauth2-proxy') else 'chain-no-auth@file,error-pages-middleware' if (auth_enabled and sub[pgrole].auth | default('') == 'aucune') else 'chain-no-auth@file' }}"
       when: cloudflare_enabled
 
     - name: label traefik without cloudflare
@@ -134,10 +136,7 @@
           ## Services - API
           traefik.http.routers.traefik-rtr.service: 'api@internal'
           ## Middlewares
-          traefik.http.routers.traefik-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
-            else 'chain-basic-auth@file,error-pages-middleware' if auth_enabled and sub[pgrole].auth == 'basique' | default(false)
-            else 'chain-oauth@file' if auth_enabled and sub[pgrole].auth == 'oauth' | default(false)
-            else 'chain-no-auth@file,error-pages-middleware' if auth_enabled and sub[pgrole].auth == 'aucune'}}"
+          traefik.http.routers.traefik-rtr.middlewares: "{{ 'chain-authelia@file' if (check.stat.exists and sub[pgrole].auth | default('') == 'authelia') else 'chain-basic-auth@file,error-pages-middleware' if (auth_enabled and sub[pgrole].auth | default('') == 'basique') else 'chain-oauth@file' if (auth_enabled and sub[pgrole].auth | default('') == 'oauth') else 'chain-oauth2-proxy@file' if (auth_enabled and sub[pgrole].auth | default('') == 'oauth2-proxy') else 'chain-no-auth@file,error-pages-middleware' if (auth_enabled and sub[pgrole].auth | default('') == 'aucune') else 'chain-no-auth@file' }}"
       when: not cloudflare_enabled
 
     - name: command traefik with cloudflare
@@ -219,7 +218,7 @@
     - name: Deploy Traefik
       docker_container:
         name: '{{pgrole}}'
-        image: traefik:v3.1.6
+        image: traefik:v3.6.1
         pull: yes
         published_ports:
           - "80:80"
@@ -267,25 +266,35 @@
         networks:
           - name: traefik_proxy
 
-    - name: Google OAuth2 tasks
+    # OAuth Configuration - Support pour OAuth (ancien), OAuth2 Proxy et Authelia
+
+    - name: "Include OAuth (ancien - traefik-forward-auth)"
       include_tasks: "{{ settings.source }}/includes/dockerapps/templates/{{pgrole}}/oauth.yml"
-      when: oauth_enabled
+      when: oauth_enabled and oauth_type | default('oauth') == 'oauth'
+
+    - name: "Include OAuth2 Proxy"
+      include_tasks: "{{ settings.source }}/includes/dockerapps/templates/{{pgrole}}/oauth2-proxy.yml"
+      when: oauth2proxy_enabled
+
+    - name: "Include Authelia"
+      include_tasks: "{{ settings.source }}/includes/dockerapps/templates/{{pgrole}}/authelia.yml"
+      when: oauth_enabled and oauth_type == "authelia"
 
     - name: create {{pgrole}} state
       shell: |
-        echo "2" >  {{ settings.storage }}/status/{{pgrole}}
+        echo "2" > {{ settings.storage }}/status/{{pgrole}}
 
     - name: create {{pgrole}} state
       shell: |
-        echo "2" >  {{ settings.storage }}/status/oauth
+        echo "2" > {{ settings.storage }}/status/oauth
       when: oauth_enabled
 
     - name: Insert traefik into database
       shell:
         cmd: |
-          sqlite3 {{  settings.source }}/ssddb << EOF
-              replace into applications (name,status,subdomain,port)
-              values
-              ('traefik',2,'{{sub[pgrole][pgrole] if sub_enabled else pgrole}}',443);
+          sqlite3 {{ settings.source }}/ssddb << EOF
+          replace into applications (name,status,subdomain,port)
+          values
+          ('traefik',2,'{{sub[pgrole][pgrole] if sub_enabled else pgrole}}',443);
           EOF
 
