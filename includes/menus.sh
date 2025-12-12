@@ -16,12 +16,31 @@ menu_secu_system_oauth2() {
   "${SETTINGS_SOURCE}/includes/config/scripts/oauth.sh"
 }
 
+
+menu_web_ui() {
+  clear
+  logo
+  cd "${SETTINGS_SOURCE}/includes/config/ssd-bootstrap" || return
+
+  # Fichier de log dans $HOME
+  LOG_FILE="${HOME}/web_ui.log"
+  echo "📜 Les logs seront enregistrés dans : $LOG_FILE"
+
+  # S'assurer que le pipeline échoue si make échoue
+  set -o pipefail
+
+  # Affiche à l'écran + enregistre dans le fichier (stdout + stderr)
+  make setup-all 2>&1 | tee "$LOG_FILE"
+}
+
+
 menu_secu_system_oauth2_proxy() {
   clear
   echo ""
   get_architecture
   "${SETTINGS_SOURCE}/includes/config/scripts/oauth2-proxy.sh"
 }
+
 
 menu_install_authelia() {
   clear

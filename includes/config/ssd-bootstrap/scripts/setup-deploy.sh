@@ -119,9 +119,9 @@ EOT
 # Backend
 log "♻️ Installation backend..."
 cd "$SSD_DIR"
-pip3 install poetry &> /dev/null || true
+pip3 install poetry || true
 poetry env use python3.11 || true
-poetry install &> /dev/null
+poetry install
 
 log "🚀 Lancement backend avec PM2..."
 pm2 start "poetry run bash start.sh" --name backend --cwd "$SSD_DIR"
@@ -129,16 +129,16 @@ pm2 start "poetry run bash start.sh" --name backend --cwd "$SSD_DIR"
 # Frontend
 log "♻️ Compilation frontend..."
 cd "$SSD_FRONTEND_DIR"
-pnpm install &> /dev/null
-pnpm run build &> /dev/null
+pnpm install
+pnpm run build
 pm2 start "ORIGIN=https://ssdv2.$domain node build" \
   --name frontend --cwd "$SSD_FRONTEND_DIR"
 
 # Saison-frontend
 log "♻️ Compilation saison-frontend..."
 cd "$SAISON_FRONTEND_DIR"
-pnpm install &> /dev/null
-pnpm run build &> /dev/null
+pnpm install
+pnpm run build
 PORT=8001 pm2 start "node build" \
   --name saison-frontend --cwd "$SAISON_FRONTEND_DIR"
 
