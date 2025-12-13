@@ -45,12 +45,20 @@
     authResponseHeaders = ["Remote-User", "Remote-Groups"]
 
 
-# ⭐ Error middleware pour redirection vers login OAuth2
-[http.middlewares.middlewares-oauth2-errors]
-  [http.middlewares.middlewares-oauth2-errors.errors]
-    status = ["401", "403"]
-    service = "oauth2-error-svc"
-    query = "/oauth2/sign_in?rd={url}"
+# ✅ Error middleware pour redirection vers login OAuth2
+[http.middlewares.middlewares-oauth2-errors.errors]
+  status = ["401-403"]
+  service = "oauth2proxy-svc@docker"
+  query = "/oauth2/sign_in?rd={url}"
+
+
+[http.routers.oauth2-proxy-path]
+  rule = "HostRegexp(`^[a-z0-9-]+[.]{{ user.domain }}$`) && PathPrefix(`/oauth2/`)"
+  entryPoints = ["https"]
+  service = "oauth2proxy-svc@docker"
+  middlewares = ["chain-no-auth@file"]
+  [http.routers.oauth2-proxy-path.tls]
+    certResolver = "letsencrypt"
 
 
 # ⭐ OAuth2 Proxy - ForwardAuth Configuration
