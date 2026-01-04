@@ -1,6 +1,6 @@
 ---
 pgrole: 'yourls'
-intport: '80'
+intport: '8080'
 image: 'yourls'
 pg_volumes:
   - '/etc/localtime:/etc/localtime:ro'
