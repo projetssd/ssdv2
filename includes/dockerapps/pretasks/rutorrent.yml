@@ -1,0 +1,5 @@
+---
+- name: Create directory
+  file:
+    path: "/home/{{ lookup('env','USER') }}/local/{{ pgrole }}"
+    state: directory

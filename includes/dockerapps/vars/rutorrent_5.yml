@@ -3,22 +3,26 @@ pgrole: 'rutorrent_5'
 intport: '8080'
 image: 'mondedie/rutorrent:latest'
 pg_volumes:
-  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
-  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/data:/data"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/data"
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/sock:/run/rtorrent"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
   - '/etc/localtime:/etc/localtime:ro'
 
 pg_env:
-  UID: '{{user.userid}}'
-  GID: '{{user.groupid}}'
+  UID: '{{ user.userid }}'
+  GID: '{{ user.groupid }}'
   TZ: 'Europe/Paris'
-  DOWNLOAD_DIRECTORY: "{{ lookup('env','HOME') }}"
+  DOWNLOAD_DIRECTORY: "{{ lookup('env','HOME') }}/local/{{ pgrole }}"
   PORT_RTORRENT: '45005'
 # tags spécifiques à ajouter à la construction du docker
 specific_docker_info:
   ports:
     - '45005:45005'
+
+pretasks:
+  - rutorrent
+
 #  Pour contourner l'authentification pour des outils de style nzb360, décommentez le pavé ci dessous
 #extra_labels:
 #  traefik.http.routers.rutorrent-rtr-bypass.rule: 'Path(`/RPC2`)'
@@ -26,5 +30,3 @@ specific_docker_info:
 #  traefik.http.routers.rutorrent-rtr-bypass.tls: 'true'
 #  traefik.http.routers.rutorrent-rtr-bypass.middlewares: 'chain-basic-auth@file'
 #  traefik.http.routers.rutorrent-rtr-bypass.service: 'rutorrent-svc'
-posttasks:
-  - rutorrent
