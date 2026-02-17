@@ -43,6 +43,7 @@
     executable: /bin/bash
 
 - name: Appliquer les bonnes permissions sur ~/.ssh/authorized_keys
+  become: true
   ansible.builtin.file:
     path: ~/.ssh/authorized_keys
     mode: '0600'
@@ -145,7 +146,7 @@
 
 - name: Changer le proprietaire du dossier coolify
   become: true
-  command: chown -R 9999:root /home/maman/seedbox/docker/maman/coolify
+  command: chown -R 9999:root "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}"
 
 
 

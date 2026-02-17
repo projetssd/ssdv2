@@ -4,7 +4,6 @@ airdcpp - Client AirDC++
 alfred - Symlink Manager
 authelia - Authentification applications Web
 autoindex - Générateur de liste de répertoires
-backend - backend de flixor
 baserow - Outil no-code pour BDD modulable
 baikal - logiciel de calendrier simple
 bazarr - Gestion de sous-titres Sonarr/Radarr
@@ -20,7 +19,6 @@ chevereto - Auto-hébergement photos en ligne
 cloudcmd - Gestionnaire de fichiers pour le web
 codif -  VS Code exécuté sur un serveur distant
 coolify - manage servers, applications, databases 
-cops - COPS est lié à vos données Calibre
 cypht - Centraliser plusieurs comptes mails
 decypharr - QbitTorrent with a Multiple Debrid
 dashdot - System Health intégrable avec Homarr
@@ -36,13 +34,11 @@ emby - Serveur multimédia
 fenrus - Passerelle vers le monde des sorciers
 filebot - Organiser vos films, séries et anime
 filebrowser - Gestion fichiers via une interface
-filerun - Gestion documents bureautiques, photos
 firefox - Un navigateur dans votre navigateur
 firefoxsyncserver - Navigateur Firefox
 flixor - interface modern plex
 foptimum - Performances serveur
 freshrss - Agrégateur de flux open source
-gethomepage - Gestion d'application
 gitea - Hébergement de développement logiciel
 gitlab - Hébergement de développement logiciel
 glftpd - Serveur FTP
@@ -63,7 +59,6 @@ jackettvpn - Indexeur de scraping
 jdownloader - Gestionnaire de téléchargements
 jellyseerr - Gestion de contenu Plex/Emby
 jellyfin - Serveur multimédia
-jellygrail - Serveur Webdav Real Debrid 
 jfago - Gestion des utilisateurs Jellyfin
 jitsi - Plateformes de visioconférence
 kasm - Streaming de conteneurs Docker
@@ -100,15 +95,11 @@ ntopng - Surveiller réseau informatique
 nZBHydra - Indexeurs newznab
 nzbdav - WebDAV Server Usenet
 ombi - Gestion de contenu Plex/Emby
-openvpn - Protocole de chiffrement de VPN
 organizr - Gestion des applications
 overseerr -  Gestion de contenu Plex/Emby
 pastebin - Mettre en ligne du texte
 paperless - Document management system
-petio - Gestion de contenu Plex/Emby
-picapport - Serveur photo avec galerie Web
 pingvin - Partage de fichiers auto-hébergée
-piped - interface YouTube sans publicité
 piwigo - Gestion d'albums photo
 plausible - Alternative  à Google Analytics
 plexautolanguages - Addon plex sous titres
@@ -129,15 +120,10 @@ recyclarr - Trash Guide Customs Formats
 rflood - Un gestionnaire de torrent
 rtorrentvpn - Gestionnaire de torrent VPN
 rutorrent_2 - Un gestionnaire de torrent
-rutorrent_3 - Un gestionnaire de torrent
-rutorrent_4 - Un gestionnaire de torrent
-rutorrent_5 - Un gestionnaire de torrent
-rutorrentcm - Un gestionnaire de torrent
 rutorrent - Un gestionnaire de torrent
 sabnzbd - Téléchargement de newsgroups
 scrutiny  - Solution de monitoring
 seafile - Stockage cloud open source
-sensorr - Enregistreur vidéo numérique
 shaarli - Bookmarking personnel
 sickchill - Gestion Films/Séries
 sickgear - Gestionnaire Films/Séries
@@ -165,11 +151,11 @@ transmissionvpn - Gestionnaire de torrent VPN
 ttrss - Agrégateur de flux d'actualités
 ubooquity - Gestion ebooks
 usenet - Un gestionnaire de nzb
-varken - Ecosystème Plex dans InfluxDB/Grafana
 vaultwarden - Serveur compatible Bitwarden
 vikunja - Application de liste de tâches
 wallos - Gestion des abonnements
 warp - VPN/proxy développé par Cloudflare
+watchtower - Mises à jour automatiques Docker
 webdav - Service d'hébergement de fichiers
 webtop - Gestion d'environnements
 weddingshare - Partage Moments Ensembles
@@ -181,7 +167,6 @@ wireguardui - Interface Web gestion/WireGuard
 wireguard - Protocole de communication (VPN).
 wizarr - Invitation utilisateurs Plex et Jellyfin
 wordpress - Gestion de contenu (CMS)
-xteve - Proxy M3U pour Plex DVR et Emby Live TV
 yacht - Gestion des conteneurs Docker
 ygege - Indexeur pour YggTorrent
 yourls - Gestion de liens

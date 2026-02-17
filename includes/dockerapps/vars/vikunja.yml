@@ -4,7 +4,7 @@ intport: '3456'
 image: 'vikunja/vikunja'
 
 pg_volumes:
-  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/app/vikunja/files"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/app/vikunja/files"
 
 pg_env:
   VIKUNJA_SERVICE_PUBLICURL: "https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{user.domain}}"
@@ -16,8 +16,7 @@ pg_env:
   VIKUNJA_SERVICE_JWTSECRET: "{{ vikunja.jwtsecret }}"
 
 specific_docker_info:
-  user: "{{user.userid}}:{{user.groupid}}"
+  user: "{{ lookup('env','MYUID') }}:{{ lookup('env','MYGID') }}"
 
 pretasks:
   - appkey
-  - postgresql15

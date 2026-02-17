@@ -1,0 +1,4 @@
+---
+pgrole: 'synclounge'
+docker_deploy_enabled: false
+traefik_labels_enabled: false

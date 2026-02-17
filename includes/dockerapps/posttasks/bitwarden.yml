@@ -1,0 +1,7 @@
+---
+- name: Add 'bw-net' to network
+  docker_network:
+    name: bw-net
+    connected:
+      - "{{ pgrole }}"
+    appends: yes

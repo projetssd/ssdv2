@@ -3,13 +3,16 @@
   docker_container:
     name: 'db-{{pgrole}}'
     recreate: true
-    image: 'postgres:16-alpine'
+    image: 'postgres:17.2-alpine'
     pull: yes
+    shm_size: 2G
     volumes:
-      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}:/var/lib/postgresql/data"
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}:/var/lib/postgresql/data/pgdata"
     env:
-      POSTGRES_USER: "{{pgrole}}"
+      POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: "{{pgrole}}"
+      POSTGRES_DB: "zilean"
+      PGDATA: "/var/lib/postgresql/data/pgdata"
     restart_policy: always
     networks:
       - name: 'traefik_proxy'

@@ -1,13 +1,15 @@
 ---
 pgrole: 'flixor'
 intport: '80'
-image: 'flixorui/flixor_web:latest'
-pg_volumes: []
+image: 'ghcr.io/flixorui/flixor:latest'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/app/config"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/cache:/app/cache"
 pg_env:
-  BACKEND_URL: "http://backend:3000"
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  NODE_ENV: "production"
 specific_docker_info:
-  ports:
-    - "8081:80"
   restart_policy: "always"
   log_driver: "journald"
   log_options:

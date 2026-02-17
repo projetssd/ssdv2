@@ -1,3 +1,9 @@
 ---
 - name: Launch Pretask
   include_tasks: "{{ settings.source }}/includes/dockerapps/templates/generique/postgresql.yml"
+
+- name: Restart kresus
+  community.docker.docker_container:
+    name: kresus
+    state: started
+    restart: true

@@ -1,0 +1,24 @@
+---
+- name: launch pure_ftp
+  docker_container:
+    image: stilliard/pure-ftpd:hardened
+    name: pureftpd
+    ports:
+      - "21:21"
+      - "30000-30099:30000-30099"
+    env:
+      FTP_MAX_CLIENTS: "50"
+      FTP_MAX_CONNECTIONS: "10"
+      FTP_PASSIVE_PORTS: "30000:30099"
+      PUBLICHOST: "{{ network.ipv4 }}"
+      UID: "{{ lookup('env','MYUID') }}"
+      GID: "{{ lookup('env','MYGID') }}"
+      FTP_USER_NAME: "{{ user.name }}"
+      FTP_USER_PASS: "{{ user.pass }}"
+      FTP_USER_HOME: "/home/{{ lookup('env','USER') }}"
+    state: started
+    restart_policy: unless-stopped
+    volumes:
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/pureftpd/config:/etc/pure-ftpd/passwd:rw"
+      - "/home/{{ lookup('env','USER') }}:/home/{{ lookup('env','USER') }}"
+      - "/etc/localtime:/etc/localtime:ro"

@@ -1,6 +1,6 @@
 ---
 pgrole: 'komga'
-intport: '8080'
+intport: '25600'
 image: 'gotson/komga:latest'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"

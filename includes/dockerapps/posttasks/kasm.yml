@@ -1,0 +1,21 @@
+---
+- name: DEBUG - Installation Kasm
+  ansible.builtin.debug:
+    msg:
+      - "=============================="
+      - "INSTALLATION KASM"
+      - "=============================="
+      - ""
+      - "1) Ouvrir temporairement le port 3000 (firewall/router)."
+      - "2) Aller sur : https://IP_DU_SERVEUR:3000"
+      - "3) Terminer le wizard."
+      - ""
+      - "Identifiants par défaut :"
+      - "  • admin@kasm.local  (admin + workspace)"
+      - "  • user@kasm.local   (workspace uniquement)"
+      - ""
+      - "Ensuite :"
+      - "  • Refermer le port 3000"
+      - "  • docker restart Traefik"
+      - "  • -> {{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}"
+

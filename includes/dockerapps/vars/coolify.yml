@@ -1,4 +1,3 @@
-# coolify.yml
 ---
 pgrole: 'coolify'
 intport: '8000'

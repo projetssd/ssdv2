@@ -1,3 +1,0 @@
----
-mounts:
-  unionfs: "{{ unionfs }}"

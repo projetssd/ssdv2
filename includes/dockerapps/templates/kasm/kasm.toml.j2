@@ -1,0 +1,24 @@
+[http.serversTransports]
+
+  [http.serversTransports.kasm-transport]
+    insecureSkipVerify = true
+
+
+[http.routers]
+
+  [http.routers.kasm-rtr]
+    entryPoints = ["https"]
+    rule = "Host(`{{sub.kasm.kasm if sub_enabled else kasm}}.{{user.domain}}`)"
+    service = "kasm-svc"
+    [http.routers.kasm-rtr.tls]
+      certresolver = "letsencrypt"
+
+
+[http.services]
+
+  [http.services.kasm-svc]
+    [http.services.kasm-svc.loadBalancer]
+      serversTransport = "kasm-transport"
+
+      [[http.services.kasm-svc.loadBalancer.servers]]
+        url = "https://kasm:443"

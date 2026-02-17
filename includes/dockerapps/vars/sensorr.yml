@@ -1,9 +1,0 @@
----
-pgrole: 'sensorr'
-intport: '5070'
-image: 'thcolin/sensorr'
-pg_volumes:
-  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
-  - "/home/{{ lookup('env','USER') }}/watch:/app/{{ pgrole }}/blackhole"
-  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
-  - '/etc/localtime:/etc/localtime:ro'

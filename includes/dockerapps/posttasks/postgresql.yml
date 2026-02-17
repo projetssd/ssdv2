@@ -11,7 +11,7 @@
     image: 'postgres'
     pull: yes
     volumes:
-      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}:/var/lib/postgresql/data"
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}:/var/lib/postgresql"
       - '/etc/localtime:/etc/localtime:ro'
       - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/init:/docker-entrypoint-initdb.d"
     env:

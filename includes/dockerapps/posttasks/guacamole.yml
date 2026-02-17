@@ -35,3 +35,16 @@
     networks:
     - name: traefik_proxy
     state: started
+
+- name: DEBUG - Installation guacamole
+  ansible.builtin.debug:
+    msg:
+      - "=============================="
+      - "INSTALLATION GUACAMOLE"
+      - "=============================="
+      - ""
+      - "Nom d’utilisateur : guacadmin"
+      - "Mot de passe : guacadmin"
+      - ""
+      - "  • -> {{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}/guacamole"
+

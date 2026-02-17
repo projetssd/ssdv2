@@ -1,0 +1,174 @@
+#
+# A lancer avec un fichier vars
+# Ex :
+# ansible-playbook ${settings.source}/includes/dockerapps/generique.yml --extra-vars "@${BASEDIR}/includes/dockerapps/vars/calibre.yml"
+# traefik_labels_enabled: false -> desactive les labels traefik + suppression variable intport mise par defaut a 0
+---
+- hosts: localhost
+  gather_facts: true
+  roles:
+    - kwoodson.yedit
+  vars_files:
+    - "{{ playbook_dir }}/../templates/generique/generique.yml"
+  vars:
+    subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
+
+  tasks:
+    # PRE TASKS ###################################################################
+
+    - name: Check that pretasks file exists
+      stat:
+        path: "{{ settings.source }}/includes/dockerapps/pretasks/{{ pgrole }}.yml"
+      register: stat_result
+
+    - name: Launch Pretask
+      include_tasks: "{{ settings.source }}/includes/dockerapps/pretasks/{{ pgrole }}.yml"
+      when: stat_result.stat.exists
+
+    - name: Launch Pretasks from yml
+      include_tasks: "{{ settings.source }}/includes/dockerapps/pretasks/{{ item }}.yml"
+      with_items: "{{ pretasks }}"
+      when: pretasks is defined
+        
+    # FACTS #######################################################################
+
+    - name: Checking for existing app data
+      stat:
+        path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/authelia/configuration.yml"
+      register: check
+
+    - name: Creating paths
+      become: yes
+      file: "path={{ item }} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID') }}"
+      with_items:
+        - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}"
+    
+    # LABELS ######################################################################
+
+    - name: Set traefik_labels_enabled to true by default if not defined
+      set_fact:
+        traefik_labels_enabled: "{{ traefik_labels_enabled | default(true) }}"
+
+    - name: Set docker_deploy_enabled to true by default if not defined
+      set_fact:
+        docker_deploy_enabled: "{{ docker_deploy_enabled | default(true) }}"
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
+      vars:
+        subdomain: "{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}"
+      when: cloudflare_enabled and traefik_labels_enabled == true
+
+    - name: "Prompt user to create A record for {{ subdomain }} with IP {{ network.ipv4 }}"
+      pause:
+        prompt: |
+          Please create an A record for the subdomain "{{ subdomain }}.{{ user.domain }}"
+          with the IP address "{{ network.ipv4 }}" in your DNS provider.
+          Press Enter to continue once the record has been created.
+      when: not cloudflare_enabled
+
+    - name: "Wait for subdomain to resolve to correct IP"
+      command: dig +short {{ subdomain }}.{{ user.domain }} @1.1.1.1
+      register: dig_output
+      until: dig_output.stdout == network.ipv4
+      retries: 300  # Nombre de tentatives
+      delay: 10  # Temps (en secondes) entre chaque tentative
+      changed_when: false
+      when: not cloudflare_enabled
+
+    - name: Initialize labels
+      set_fact:
+        pg_labels: {}
+      when: traefik_labels_enabled == false
+    
+    - name: Create temp file
+      tempfile:
+        state: file
+      register: tempfile_1
+      when: traefik_labels_enabled
+    
+    - name: fill temp file with labels
+      template:
+        src: "{{ settings.source }}/includes/dockerapps/templates/generique/traefik_labels.yml.j2"
+        dest: "{{ tempfile_1.path }}"
+        force: yes
+      when: traefik_labels_enabled
+    
+    - name: Import traefik labels
+      include_vars: 
+        file: "{{ tempfile_1.path }}"
+        name: pg_labels
+      when: traefik_labels_enabled
+        
+    - name: Delete temp file
+      file:
+        path: "{{ tempfile_1.path }}"
+        state: absent
+      when: traefik_labels_enabled
+
+    # SET DEFAULT intport IF TRAEFIK LABELS DISABLED ##############################
+    - name: Set default intport if traefik_labels_enabled is false and intport not defined
+      set_fact:
+        intport: 0
+      when: traefik_labels_enabled == false and intport is not defined
+  
+    ########################################################################
+    # DEPLOY
+    ########################################################################
+
+    - name: Prepare docker info
+      set_fact:
+        docker_info:
+          name: "{{ pgrole }}"
+          image: "{{ image }}"
+          volumes: "{{ pg_volumes | default([]) }}"
+          env: "{{ pg_env | default({}) }}"
+          restart_policy: unless-stopped
+          networks:
+            - name: traefik_proxy
+          state: started
+          labels: "{{ pg_labels | default({}) }}"
+      when: docker_deploy_enabled
+
+    - name: Add specific docker info
+      set_fact:
+        docker_info: "{{ docker_info | combine(specific_docker_info, recursive=True) }}"
+      when: docker_deploy_enabled and specific_docker_info is defined
+
+    - name: Deploy container {{ pgrole }}
+      docker_container:
+        name: "{{ docker_info.name }}"
+        image: "{{ docker_info.image }}"
+        volumes: "{{ docker_info.volumes }}"
+        env: "{{ docker_info.env }}"
+        restart_policy: "{{ docker_info.restart_policy }}"
+        networks: "{{ docker_info.networks }}"
+        state: "{{ docker_info.state }}"
+        labels: "{{ docker_info.labels }}"
+        ports: "{{ docker_info.ports | default(omit) }}"
+      when: docker_deploy_enabled
+    
+    # POST TASKS ###################################################################
+
+    - name: Check that posttasks file exists
+      stat:
+        path: "{{ settings.source }}/includes/dockerapps/posttasks/{{ pgrole }}.yml"
+      register: stat_result_post
+      
+    - name: Launch Posttask
+      include_tasks: "{{ settings.source }}/includes/dockerapps/posttasks/{{ pgrole }}.yml"
+      when: stat_result_post.stat.exists
+
+    - name: Launch Posttask from yml
+      include_tasks: "{{ settings.source }}/includes/dockerapps/posttasks/{{ item }}.yml"
+      with_items: "{{ posttasks }}"
+      when: posttasks is defined
+
+    - name: "Insert {{ pgrole }} into database"
+      shell: 
+        cmd: |
+          sqlite3 {{ settings.source }}/ssddb << EOF
+              replace into applications (name, status, subdomain, port)
+              values
+              ('{{ pgrole }}', 2, '{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}', {{ intport }});
+          EOF

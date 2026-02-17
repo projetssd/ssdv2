@@ -1,10 +1,16 @@
 ---
 pgrole: 'minecraft'
-intport: '8080'
-image: 'tekgator/docker-mcmyadmin'
+intport: '25565'
+image: 'itzg/minecraft-server'
 pg_volumes:
-  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/data:"
-  - '/etc/localtime:/etc/localtime:ro'
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/data"
 pg_env:
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
+  EULA: "true"
+traefik_labels_enabled: false
+specific_docker_info:
+  tty: "true"
+  ports:
+    - "25565:25565"
+

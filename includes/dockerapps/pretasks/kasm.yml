@@ -1,0 +1,7 @@
+---
+- name: Import toml
+  template:
+    src: "{{ settings.source }}/includes/dockerapps/templates/kasm/kasm.toml.j2"
+    dest: "{{ settings.storage }}/docker/traefik/rules/kasm.toml"
+
+

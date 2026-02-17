@@ -34,8 +34,6 @@ pg_env:
   #OPENAI_REQUEST_TIMEOUT: "60"         #The number of seconds to wait for an OpenAI request to complete before cancelling the request. Leave this empty unless you're running into timeout issues on slower hardware
   ###
 
-pretasks:
-  - postgresql15
 
 posttasks:
   - default_login_and_password

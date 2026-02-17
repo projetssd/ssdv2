@@ -1,7 +1,7 @@
 ---
 pgrole: 'readarr'
 intport: '8787'
-image: 'hotio/readarr:nightly'
+image: 'linuxserver/readarr:0.4.19-nightly'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"

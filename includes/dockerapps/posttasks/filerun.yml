@@ -1,3 +1,0 @@
----
-- name: Launch Pretask
-  include_tasks: "{{ settings.source }}/includes/dockerapps/templates/generique/mariadb.yml"

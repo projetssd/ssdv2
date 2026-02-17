@@ -1,0 +1,32 @@
+---
+- name: Fix vikunja permissions
+  become: yes
+  file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/vikunja/files"
+    state: directory
+    owner: "{{ lookup('env','MYUID') }}"
+    group: "{{ lookup('env','MYGID') }}"
+    recurse: yes
+
+- name: 'Deploying db-{{pgrole}}'
+  docker_container:
+    name: 'db-{{pgrole}}'
+    recreate: true
+    image: 'postgres:16-alpine'
+    pull: yes
+    volumes:
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}:/var/lib/postgresql"
+    env:
+      POSTGRES_USER: "{{pgrole}}"
+      POSTGRES_PASSWORD: "{{pgrole}}"
+    restart_policy: always
+    networks:
+      - name: 'traefik_proxy'
+    state: started
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U {{ pgrole }}"]
+      start_period: 60s
+
+- name: Wait for 10 seconds before continuing
+  wait_for:
+    timeout: 10

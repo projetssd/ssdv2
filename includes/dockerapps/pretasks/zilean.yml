@@ -1,15 +1,22 @@
 ---
-- name: Launch Pretask
-  include_tasks: "{{ settings.source }}/includes/dockerapps/pretasks/stremio/stremio_base.yml"
+- name: Create {{pgrole}}-net network
+  docker_network:
+    name: '{{pgrole}}-net'
+    state: present
 
-- name: Set PostgreSQL variables for Zilean
-  set_fact:
-    app_name: "Zilean"
-    postgres_container: "stremio-postgres"
-    postgres_user: "stremio"
-    postgres_password: "stremio"
-    required_databases:
-      - zilean
-
-- name: Setup PostgreSQL for Zilean
-  include_tasks: "{{ settings.source }}/includes/dockerapps/pretasks/stremio/postgres_setup.yml"
+- name: 'Deploying postgres'
+  docker_container:
+    name: 'postgres'
+    recreate: true
+    image: 'postgres:17.2-alpine'
+    pull: yes
+    volumes:
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}:/var/lib/postgresql/data"
+    env:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_DB: "zilean"
+    restart_policy: unless-stopped
+    networks:
+      - name: '{{pgrole}}-net'
+    state: started

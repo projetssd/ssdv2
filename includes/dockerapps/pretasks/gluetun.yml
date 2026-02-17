@@ -1,0 +1,34 @@
+---
+- name: gluetun
+  docker_container:
+    image: ghcr.io/qdm12/gluetun
+    name: gluetun
+    capabilities:
+      - NET_ADMIN
+    ports:
+      - "8888:8888/tcp"
+    devices:
+      - "/dev/net/tun:/dev/net/tun"
+    volumes:
+      - "{{ settings.storage }}/gluetun:/gluetun"
+    env:
+      PUID: "{{ lookup('env','MYUID') | string }}"
+      PGID: "{{ lookup('env','MYGID') | string }}"
+      VPN_SERVICE_PROVIDER: "{{ vpn.service_provider | default(omit) }}"
+      VPN_TYPE: "{{ vpn.type | default(omit) }}"
+      OPENVPN_USER: "{{ vpn.openvpn_user | default(omit) }}"
+      OPENVPN_PASSWORD: "{{ vpn.openvpn_password | default(omit) }}"
+      VPN_ENDPOINT_IP: "{{ vpn.endpoint | default(omit) }}"
+      VPN_ENDPOINT_PORT: "{{ vpn.port | default(omit) }}"
+      WIREGUARD_PUBLIC_KEY: "{{ vpn.wireguard_publique | default(omit) }}"
+      WIREGUARD_PRIVATE_KEY: "{{ vpn.wireguard_prive | default(omit) }}"
+      WIREGUARD_PRESHARED_KEY: "{{ vpn.wireguard_preshared | default(omit) }}"
+      WIREGUARD_ADDRESSES: "{{ vpn.adresse | default(omit) }}"
+      OPENVPN_CUSTOM_CONFIG: "{{ vpn.config | default(omit) }}"
+      SERVER_COUNTRIES: "{{ vpn.country | default(omit) }}"
+      OPENVPN_VERBOSITY: "4"
+      TZ: "Europe/Paris"
+    state: started
+    restart_policy: unless-stopped
+    networks:
+      - name: traefik_proxy

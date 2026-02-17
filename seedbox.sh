@@ -134,67 +134,11 @@ IS_INSTALLED=$(select_seedbox_param "installed")
 if [ $mode_install = "manuel" ]; then
 
   if [[ ${IS_INSTALLED} -eq 0 ]]; then
-    # Si on est là, c'est que le prérequis sont installés, mais c'est tout
-    # On propose donc l'install de la seedbox
-    echo -e "${CGREEN}"   $(gettext "1) Installation zurg - rclone")"${CEND}"
-    echo -e "${CGREEN}"   $(gettext "2) Installation Minimale sans zurg")"${CEND}"
-    echo -e "${CGREEN}"   $(gettext "3) Restauration Seedbox")"${CEND}"
-    echo -e ""
-    echo >&2 -n -e "${BWHITE}"$(gettext "Votre choix :") "${CEND}"
-    read CHOICE
-    echo ""
-    case $CHOICE in
-    1) ## Installation de la seedbox Zurg et rclone
-      # on stocke les patchs pour ne pas les appliquer
-      for patch in $(ls ${SETTINGS_SOURCE}/patches); do
-        echo "${patch}" >>"${HOME}/.config/ssd/patches"
-      done
-      if [[ ${IS_INSTALLED} -eq 0 ]]; then
-
-        clear
-        # Installation et configuration de rclone
-        install_zurg
-        # Install de watchtower
-        install_watchtower
-        # Install fail2ban
-        install_fail2ban
-        # Choix des dossiers et création de l'arborescence
-        create_folders
-        # Installation de mergerfs
-        # Cette install a une incidence sur docker (dépendances dans systemd)
-        # unionfs_fuse # non utile pour install zurg mais fonction laissée
-        # mise en place de la sauvegarde
-        sauve
-        # Affichage du résumé
-        # on marque la seedbox comme installée
-        update_seedbox_param "installed" 1
-        # installation environnement
-        install_environnement
-        echo $(gettext "L'installation est maintenant terminée.")
-        echo $(gettext "Pour le configurer ou modifier les applis, vous pouvez le relancer")
-        echo "cd ${SETTINGS_SOURCE}"
-        echo "./seedbox.sh"
-        exit 0
-      else
-        affiche_menu_db
-      fi
-      ;;
-
-    2) ## Installation personnalisée traefik - Cloudflare
-      echo "###################################################"
-      echo "# Installation minimale sans Zurg                 #"
-      echo "###################################################"
-      echo "Pour une installation at home sans zurg"
-      # on stocke les patchs pour ne pas les appliquer
       touch "${SETTINGS_STORAGE}/status/rclone"
       for patch in $(ls ${SETTINGS_SOURCE}/patches); do
         echo "${patch}" >>"${HOME}/.config/ssd/patches"
       done
       if [[ ${IS_INSTALLED} -eq 0 ]]; then
-        # Install de watchtower
-        install_watchtower
-        # Install fail2ban
-        install_fail2ban
         # Choix des dossiers et création de l'arborescence
         create_folders
         sauve
@@ -210,80 +154,6 @@ if [ $mode_install = "manuel" ]; then
       else
         affiche_menu_db
       fi
-      ;;
-
-    3) ## restauration de la seedbox
-      echo "###################################################"
-      echo "# ATTENTION !!                                    #"
-      echo "###################################################"
-      echo "A l'heure actuelle, la restauration ne fonctionne "
-      echo "que si le script a été installé depuis le même      "
-      echo "répertoire que celui qui a servi à faire la       "
-      echo "sauvegarde, et a été installé sur la même destination "
-      echo "------------------------------------------------------"
-      echo "Si vous avez déjà installé le script depuis un mauvais répertoire "
-      echo "ou vers une mauvaise destination, il faudra supprimer le fichier "
-      echo "${HOME}/.config/ssd/env et refaire l'installation "
-      echo "-------------------------------------------------------"
-      echo "Les chemins par défaut avant la v2.2 étaient "
-      echo "- source : /opt/seedbox-compose"
-      echo "- destination : /opt/seedbox"
-      pause
-      #check_dir "$PWD"
-      if [[ ${IS_INSTALLED} -eq 0 ]]; then
-        clear
-        # Installation et configuration de rclone
-        install_zurg
-        # Install de watchtower
-        install_watchtower
-        # Install fail2ban
-        install_fail2ban
-        # Choix des dossiers et création de l'arborescence
-        create_folders
-        # Installation de mergerfs
-        # Cette install a une incidence sur docker (dépendances dans systemd)
-        # unionfs_fuse # non utile pour install zurg mais fonction laissée
-        pause
-
-        # mise en place de la sauvegarde
-        sauve
-
-        ## On va garder ce qui a été saisi pour l'écraser plus tard
-        cp ${ANSIBLE_VARS} ${ANSIBLE_VARS}.temp
-        ## on sauvegarde le mot de passe de chiffrement
-        cp ${HOME}/.vault_pass ${HOME}/.vault_pass.temp
-
-        sudo restore
-        # on remet le account.yml précédent qui a été écrasé par la restauration
-        cp ${ANSIBLE_VARS} ${ANSIBLE_VARS}.restore
-        mv ${ANSIBLE_VARS}.temp ${ANSIBLE_VARS}
-        # pareil pour le mot de passe de chiffrement
-        cp ${HOME}/.vault_pass ${HOME}/.vault_pass.restore
-        mv ${HOME}/.vault_pass.temp ${HOME}/.vault_pass
-        stocke_public_ip
-        ## on remet les bonnes infos
-        userid=$(id -u)
-        grpid=$(id -g)
-
-        manage_account_yml user.userid "$userid"
-        manage_account_yml user.id "$userid"
-        manage_account_yml user.groupid "$grpid"
-        ## reinitialisation de toutes les applis
-        relance_tous_services
-        # on marque la seedbox comme installée
-        update_seedbox_param "installed" 1
-        affiche_menu_db
-      else
-        affiche_menu_db
-      fi
-      ;;
-
-    9)
-      exit 0
-      ;;
-
-    esac
-
   fi
 
   chmod 755 ${SETTINGS_SOURCE}/logs

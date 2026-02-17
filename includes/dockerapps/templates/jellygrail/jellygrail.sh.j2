@@ -1,6 +1,0 @@
-#!/bin/bash
-
-cd "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/jellygrail"
-chmod +x PREPARE.SH _MOUNT.SH
-sudo ./PREPARE.SH
-docker restart jellygrail

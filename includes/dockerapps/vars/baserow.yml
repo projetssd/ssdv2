@@ -1,7 +1,7 @@
 ---
 pgrole: 'baserow'
 intport: '80'
-image: 'baserow/baserow:1.33.3'
+image: 'baserow/baserow:latest'
 
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/baserow/data"
@@ -21,7 +21,3 @@ pg_env:
 # EMAIL_SMTP_USER: "user"
 # EMAIL_SMTP_PASSWORD: "password"
 # EMAIL_SMTP_USE_TLS: "yes/no"
-###########
-
-pretasks:
-  - postgresql15

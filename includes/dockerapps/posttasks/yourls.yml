@@ -1,3 +1,7 @@
 ---
 - name: Launch Pretask
   include_tasks: "{{ settings.source }}/includes/dockerapps/templates/generique/mariadb.yml"
+
+- debug:
+    msg: "Lancer -> {{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}/admin"
+

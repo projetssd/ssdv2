@@ -1,0 +1,20 @@
+---
+
+- name: Fix mattermost permissions
+  become: yes
+  file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/mattermost"
+    state: directory
+    owner: "{{ lookup('env','MYUID') }}"
+    group: "{{ lookup('env','MYGID') }}"
+    recurse: yes
+
+- name: Add 'mattermost-net' to network
+  docker_network:
+    name: 'mattermost-net'
+    connected:
+      - mattermost
+    appends: yes
+
+
+

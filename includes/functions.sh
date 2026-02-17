@@ -3,49 +3,43 @@
 
 function logo() {
 
-  color1='\033[1;31m' # Bold RED
-  color2='\033[1;35m' # Bold PURPLE
-  color3='\033[0;33m' # Regular YELLOW
-  nocolor='\033[0m'   # no color
-  colorp='\033[1;34m' # Bold BLUE
-  colora='\033[1;32m' # Bold GREEN
-  projetname='SSD - V2.2'
-  authors='Authors: laster13 - Merrick'
+  R='\033[38;5;196m'
+  P='\033[38;5;201m'
+  C='\033[38;5;45m'
+  W='\033[1;37m'
+  D='\033[38;5;245m'
+  L='\033[38;5;39m'
+  S='\033[38;5;51m'
+  X='\033[0m'
 
-  printf " \n"
-  printf " ${color1}███████╗ ${color2}███████╗ ${color3}██████╗  ${colorp}${projetname}${nocolor}\n"
-  printf " ${color1}██╔════╝ ${color2}██╔════╝ ${color3}██╔══██╗ ${colora}${authors}${nocolor}\n"
-  printf " ${color1}███████╗ ${color2}███████╗ ${color3}██║  ██║ ${nocolor}\n"
-  printf " ${color1}╚════██║ ${color2}╚════██║ ${color3}██║  ██║ $(uname -srmo)${nocolor}\n"
-  printf " ${color1}███████║ ${color2}███████║ ${color3}██████╔╝ $(lsb_release -sd)${nocolor}\n"
-  printf " ${color1}╚══════╝ ${color2}╚══════╝ ${color3}╚═════╝  ${nocolor}Uptime: $(/usr/bin/uptime -p)${nocolor}\n"
-  printf " \n"
+  OS="$(lsb_release -sd 2>/dev/null)"
+  KERNEL="$(uname -sr)"
+  UPTIME="$(uptime -p | sed 's/up //')"
 
+  printf "\n"
+
+  # Header accent
+  printf "  ${R}███${P}███${C}███${X}  ${C}S${P}S${R}D${X} ${D}•${X} ${L}V2.2${X}\n"
+  printf "  ${D}──────────────────────────────────────────────${X}\n"
+  printf "\n"
+
+  # System block
+  printf "  ${S}System${X}\n"
+  printf "     ${L}OS      ${D}│${X} ${W}%s${X}\n" "$OS"
+  printf "     ${L}Kernel  ${D}│${X} ${W}%s${X}\n" "$KERNEL"
+  printf "     ${L}Uptime  ${D}│${X} ${W}%s${X}\n" "$UPTIME"
+  printf "\n"
+
+  printf "  ${D}──────────────────────────────────────────────${X}\n"
+  printf "\n"
 }
+
 
 function update_system() {
   #Mise à jour systeme
   echo -e "${BLUE}###" $(gettext "MISE A JOUR DU SYSTEME") "###${NC}"
   ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/system/tasks/main.yml
   checking_errors $?
-}
-
-function status() {
-  # Créé les fichiers de service, comme quoi rien n'est encore installé
-  create_dir ${SETTINGS_STORAGE}/status
-  sudo chown -R ${USER}: ${SETTINGS_STORAGE}/status
-  for app in $(cat "${SETTINGS_SOURCE}/includes/config/services-available" | cut -d' ' -f1); do
-    echo "0" >${SETTINGS_STORAGE}/status/$app
-  done
-}
-
-function update_status() {
-
-  for i in $(docker ps --format "{{.Names}}" --filter "network=traefik_proxy"); do
-    echo "2" >${SETTINGS_STORAGE}/status/${i}
-
-  done
-
 }
 
 function cloudflare() {
@@ -152,19 +146,6 @@ function oauth() {
   echo ""
 }
 
-function install-rtorrent-cleaner() {
-  #configuration de rtorrent-cleaner avec ansible
-  echo -e "${BLUE}### RTORRENT-CLEANER ###${NC}"
-  echo ""
-  echo -e " ${BWHITE}"* $(gettext "Installation") RTORRENT-CLEANER"${NC}"
-
-  ## choix de l'utilisateur
-  #SEEDUSER=$(ls ${SETTINGS_STORAGE}/media* | cut -d '-' -f2)
-  sudo cp -r ${SETTINGS_SOURCE}/includes/config/rtorrent-cleaner/rtorrent-cleaner /usr/local/bin
-  sudo sed -i "s|%SEEDUSER%|${USER}|g" /usr/local/bin/rtorrent-cleaner
-  sudo sed -i "s|%SETTINGS_STORAGE%|${SETTINGS_STORAGE}|g" /usr/local/bin/rtorrent-cleaner
-}
-
 function sauve() {
   create_dir "/var/backup/local"
   #configuration Sauvegarde
@@ -180,14 +161,6 @@ function debug() {
   pause
 }
 
-function plex_dupefinder() {
-  #configuration plex_dupefinder avec ansible
-  echo -e "${BLUE}### PLEX_DUPEFINDER ###${NC}"
-  echo -e " ${BWHITE}"* $(gettext "Installation") plex_dupefinder"${NC}"
-  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/plex_dupefinder/tasks/main.yml
-  checking_errors $?
-}
-
 function update_logrotate() {
   ansible-playbook ${SETTINGS_SOURCE}/includes/config/playbooks/logrotate.yml
 }
@@ -197,15 +170,6 @@ function autoscan() {
   echo -e "${BLUE}### AUTOSCAN ###${NC}"
   echo -e " ${BWHITE}"* $(gettext "Installation") autoscan"${NC}"
   ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/autoscan/tasks/main.yml
-  checking_errors $?
-}
-
-function install_cloudplow() {
-  #configuration plex_autoscan avec ansible
-  echo -e "${BLUE}### CLOUDPLOW ###${NC}"
-  echo -e " ${BWHITE}"* $(gettext "Installation") cloudplow"${NC}"
-  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/cloudplow/tasks/main.yml
-  sudo chown -R ${USER} ${HOME}/scripts/cloudplow
   checking_errors $?
 }
 
@@ -242,16 +206,6 @@ function make_dir_writable() {
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/change_rights.yml" \
     --extra-vars '{"DIRECTORY":"'${1}'"}'
 
-}
-
-function install_base_packages() {
-  echo ""
-  echo -e "${BLUE}"### $(gettext "INSTALLATION DES") PACKAGES ###"${NC}"
-  echo ""
-  echo -e " ${BWHITE}"* $(gettext "Installation") apache2-utils, unzip, git, curl ..."${NC}"
-  ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/install/tasks/main.yml"
-  checking_errors $?
-  echo ""
 }
 
 function checking_errors() {
@@ -348,7 +302,7 @@ function install_traefik() {
 
   echo ""
   echo -e " ${BWHITE}"* $(gettext "Installation") Traefik"${NC}"
-  ansible-playbook ${SETTINGS_SOURCE}/includes/dockerapps/traefik.yml
+  ansible-playbook ${SETTINGS_SOURCE}/includes/dockerapps/vars/traefik.yml
   checking_errors $?
   if [[ ${CURRENT_ERROR} -eq 1 ]]; then
     echo -e "${CCYAN}"$(gettext "Cette étape peut ne pas aboutir lors d'une première installation")"${CEND}"
@@ -357,14 +311,6 @@ function install_traefik() {
     exit 1
   fi
 
-  echo ""
-}
-
-function install_watchtower() {
-  echo -e "${BLUE}### WATCHTOWER ###${NC}"
-  echo -e " ${BWHITE}"* $(gettext "Installation") Watchtower"${NC}"
-  ansible-playbook ${SETTINGS_SOURCE}/includes/dockerapps/watchtower.yml
-  checking_errors $?
   echo ""
 }
 
@@ -394,10 +340,8 @@ function install_common() {
   temppath=$(ls ${SETTINGS_SOURCE}/venv/lib)
   pythonpath=${SETTINGS_SOURCE}/venv/lib/${temppath}/site-packages
   export PYTHONPATH=${pythonpath}
-  # toutes les installs communes
   # installation des dépendances, permet de créer les docker network via ansible
   ansible-galaxy collection install community.general
-  #ansible-galaxy collection install community.docker
   # dépendence permettant de gérer les fichiers yml
   ansible-galaxy install kwoodson.yedit
   ansible-galaxy role install geerlingguy.docker
@@ -415,14 +359,7 @@ function install_common() {
   stocke_public_ip
   # On part à la pêche aux infos....
   ${SETTINGS_SOURCE}/includes/config/scripts/get_infos.sh
-  #pause
   echo ""
-  # On crée les fichier de status à 0
-  status
-  # Mise à jour du système
-  update_system
-  # Installation des packages de base
-  install_base_packages
   # Installation de docker
   install_docker
   # install de traefik
@@ -432,16 +369,7 @@ function install_common() {
   else
     install_traefik
   fi
-  #unionfs_fuse
 
-}
-
-function unionfs_fuse() {
-  echo -e "${BLUE}### Unionfs-Fuse ###${NC}"
-  echo -e " ${BWHITE}"* $(gettext "Installation") Mergerfs"${NC}"
-  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/unionfs/tasks/main.yml
-  checking_errors $?
-  echo ""
 }
 
 function install_docker() {
@@ -652,22 +580,17 @@ function launch_service() {
     echo ""
     echo -e " ${GREEN}"$(gettext "ATTENTION IMPORTANT - NE PAS FAIRE D'ERREUR - SINON DESINSTALLER ET REINSTALLER")"${NC}"
     "${SETTINGS_SOURCE}/includes/config/scripts/plex_token.sh"
-    ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/plex.yml"
-    echo "2" >"${SETTINGS_STORAGE}/status/plex"
+    ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/vars/plex.yml"
   else
     # On est dans le cas générique
     # on regarde s'i y a un playbook existant
     if [[ -f "${SETTINGS_STORAGE}/vars/${line}.yml" ]]; then
       # il y a des variables persos, on les lance
-      ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/generique.yml" --extra-vars "@${SETTINGS_STORAGE}/vars/${line}.yml"
-    elif [[ -f "${SETTINGS_SOURCE}/includes/dockerapps/${line}.yml" ]]; then
-      # pas de playbook perso ni de vars perso
-      # puis on le lance
-      ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/${line}.yml"
+      ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/vars/generique.yml" --extra-vars "@${SETTINGS_STORAGE}/vars/${line}.yml"
     elif [[ -f "${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml" ]]; then
       echo 
       # puis on lance le générique avec ce qu'on vient de copier
-      ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/generique.yml" --extra-vars "@${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml"
+      ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/vars/generique.yml" --extra-vars "@${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml"
     else
       log_write "Aucun fichier de configuration trouvé dans les sources, abandon"
       error=1
@@ -676,7 +599,6 @@ function launch_service() {
   if [ ${error} = 0 ]; then
     temp_subdomain=$(get_from_account_yml "sub.${line}.${line}")
     DOMAIN=$(get_from_account_yml user.domain)
-    echo "2" >"${SETTINGS_STORAGE}/status/${line}"
 
     FQDNTMP="${temp_subdomain}.$DOMAIN"
 
@@ -739,7 +661,7 @@ function suppression_appli() {
     ;;
   jitsi)
     docker rm -f prosody jicofo jvb
-    rm -rf ${SETTINGS_STORAGE}/docker/${USER}/.jitsi-meet-cfg
+    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/.jitsi-meet-cfg
     ;;
   nextcloud)
     docker rm -f collabora coturn office
@@ -863,7 +785,7 @@ function suppression_appli() {
 
   checking_errors $?
 
-  ansible-playbook -e pgrole=${APPSELECTED} ${SETTINGS_SOURCE}/includes/config/playbooks/remove_cf_record.yml
+  ansible-playbook -e pgrole="${APPSELECTED}" "${SETTINGS_SOURCE}/includes/config/playbooks/remove_cf_record.yml"
   docker system prune -af >/dev/null 2>&1
 
   echo""
@@ -875,9 +797,7 @@ function suppression_appli() {
   req=${req1}${APPSELECTED}${req2}
   sqlite3 ${SETTINGS_SOURCE}/ssddb <<EOF
 $req
-
 EOF
-
 }
 
 function check_and_remove_shared_containers() {
@@ -986,38 +906,6 @@ function get_from_account_yml() {
   echo "$tempresult"
 }
 
-function install_gui() {
-  domain=$(get_from_account_yml user.domain)
-  tempsubdomain=$(get_from_account_yml sub.gui.gui)
-  if [ "${tempsubdomain}" = notfound ]; then
-    subdomain_unitaire gui
-  fi
-  tempauth=$(get_from_account_yml sub.gui.auth)
-  if [ "${tempauth}" = notfound ]; then
-    auth_unitaire gui
-  fi
-  subomain=$(get_from_account_yml sub.gui.gui})
-
-  set +a
-  export gui_subdomain=$subdomain
-  # On install nginx
-  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/nginx/tasks/main.yml
-
-  echo -e "${CRED}---------------------------------------------------------------${CEND}"
-  echo -e "${CRED}          /!\ INSTALLATION EFFECTUEE AVEC SUCCES /!\           ${CEND}"
-  echo -e "${CRED}---------------------------------------------------------------${CEND}"
-  echo ""
-  echo -e "${CRED}---------------------------------------------------------------${CEND}"
-  echo -e "${CCYAN}              Adresse de l'interface WebUI                    ${CEND}"
-  echo -e "${CCYAN}              https://${subdomain}.${domain}              ${CEND}"
-  echo -e "${CRED}---------------------------------------------------------------${CEND}"
-  echo ""
-
-  echo -e "\nAppuyer sur ${CCYAN}[ENTREE]${CEND} pour sortir du script..."
-  read -r
-  exit 0
-}
-
 function premier_lancement() {
 
   sudo chown -R ${USER}: ${SETTINGS_SOURCE}/
@@ -1066,8 +954,7 @@ function premier_lancement() {
     inquirer \
     jsons \
     colorama \
-    requests==2.31
-  # requests bloqué sur version 2.31 au 28/05/2024, jusqu'à résolution
+    requests
 
   ##########################################
   # Pas de configuration existante
@@ -1341,7 +1228,7 @@ function affiche_menu_db() {
     echo -e "${CGREEN}""   ${db_select2[3]})" "$(gettext "${db_select2[1]}")" "${CEND}"
     IFS=$'\n'
   done
-  echo -e "${CGREEN}---------------------------------------${CEND}"
+  echo -e "  ${CGREEN}----------------------------------------------${CEND}"
   if [ "${precedent}" = "" ]; then
     :
   else
@@ -1349,7 +1236,7 @@ function affiche_menu_db() {
     echo -e "${CGREEN}"   $(gettext "  B) Retour au menu précédent")"${CEND}"
   fi
   echo -e "${CGREEN}"   $(gettext "  Q) Quitter")"${CEND}"
-  echo -e "${CGREEN}---------------------------------------${CEND}"
+  echo -e "  ${CGREEN}----------------------------------------------${CEND}"
   read -p "Votre choix : " PORT_CHOICE
 
   if [ "${PORT_CHOICE,,}" == "b" ]; then
@@ -1653,133 +1540,9 @@ function apply_patches() {
   done
 }
 
-function install_zurg() {
-  update_release_zurg
-  ARCHITECTURE=$(dpkg --print-architecture)
-  RCLONE_VERSION=$(get_from_account_yml rclone.architecture)
-  ZURG_VERSION=$(get_from_account_yml zurg.version)
-  create_dir "${HOME}/.config/rclone"
-  if [ ${RCLONE_VERSION} == notfound ]; then
-    manage_account_yml rclone.architecture "${ARCHITECTURE}"
-  fi
-  rm -rf "${HOME}/scripts/zurg" > /dev/null 2>&1
-  docker rm -f zurg > /dev/null 2>&1
-  docker system prune -af > /dev/null 2>&1
-  mkdir -p "${HOME}/scripts/zurg" && cd ${HOME}/scripts/zurg
-  wget https://github.com/debridmediamanager/zurg-testing/releases/download/${ZURG_VERSION}/zurg-${ZURG_VERSION}-linux-${ARCHITECTURE}.zip > /dev/null 2>&1
-  unzip zurg-${ZURG_VERSION}-linux-${ARCHITECTURE}.zip > /dev/null 2>&1
-  rm zurg-${ZURG_VERSION}-linux-${ARCHITECTURE}.zip > /dev/null 2>&1
-  ZURG_TOKEN=$(get_from_account_yml zurg.token)
-  if [ ${ZURG_TOKEN} == notfound ]; then
-    echo >&2 -n -e "${BLUE}"$(gettext "Token API pour Zurg (https://real-debrid.com/apitoken) | Appuyer sur [Enter]:") "${CEND}"
-    read ZURG_TOKEN
-    manage_account_yml zurg.token "${ZURG_TOKEN}"
-  else
-    echo -e "${BLUE}"$(gettext "Token Zurg déjà renseigné")"${CEND}"
-  fi
-  # launch zurg
-  ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/zurg.yml"
-  ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml"
-  echo -e "\n"$(gettext "Appuyer sur")"${CCYAN} ["$(gettext "ENTREE")"]${CEND}" $(gettext "pour continuer")
-  read -r
-}
-
-function install_zurg_docker() {
-  rm -rf "${HOME}/scripts/zurg" > /dev/null 2>&1
-  ZURG_TOKEN=$(get_from_account_yml zurg.token)
-  if [ ${ZURG_TOKEN} == notfound ]; then
-    echo >&2 -n -e "${BLUE}"$(gettext "Token API pour Zurg (https://real-debrid.com/apitoken) | Appuyer sur [Enter]:") "${CEND}"
-    read ZURG_TOKEN
-    manage_account_yml zurg.token "${ZURG_TOKEN}"
-  else
-    echo -e "${BLUE}"$(gettext "Token Zurg déjà renseigné")"${CEND}"
-  fi
-  # launch zurg
-  ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/generique.yml" --extra-vars "@${SETTINGS_SOURCE}/includes/dockerapps/vars/zurg.yml"
-  ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml"
-  echo -e "\n"$(gettext "Appuyer sur")"${CCYAN} ["$(gettext "ENTREE")"]${CEND}" $(gettext "pour continuer")
-  read -r
-}
-
-function create_folders() {
-  echo ""
-  create_dir "${HOME}/local"
-  create_dir "${HOME}/local/radarr"
-  create_dir "${HOME}/local/radarr4k"
-  create_dir "${HOME}/local/sonarr"
-  create_dir "${HOME}/local/sonarr4k"
-  create_dir "${HOME}/Medias"
-  echo -e "\e[36m"$(gettext "Noms de dossiers à créer dans Medias ex: Films, Series, Films d'animation etc .. [Enter] | Taper stop une fois terminé")"\e[0m"		
-  while :
-  do		
-    read -p "" EXCLUDEPATH
-    mkdir -p ${HOME}/Medias/$EXCLUDEPATH
-    if [[ "$EXCLUDEPATH" = "STOP" ]] || [[ "$EXCLUDEPATH" = "stop" ]]; then
-      rm -rf ${HOME}/Medias/$EXCLUDEPATH
-      break
-    fi
-  done
-}
-
 function install_gluetun {
   source ${SETTINGS_SOURCE}/includes/config/scripts/gluetun.sh
   launch_service gluetun
-}
-
-function update_release_zurg() {
-  wget https://api.github.com/repos/debridmediamanager/zurg-testing/releases > /dev/null 2>&1
-  CURRENT_VERSION=$(get_from_account_yml zurg.version)
-  LATEST_VERSION=$(jq '.[] | .tag_name' releases | tr -d '"' | sed -n "1p")
-  if [[ ${CURRENT_VERSION} == notfound ]] || [[ ${CURRENT_VERSION} != ${LATEST_VERSION} ]]; then
-    manage_account_yml zurg.version "${LATEST_VERSION}"
-    echo -e  "${BLUE}"$(gettext "Version Zurg :") "$LATEST_VERSION${CEND}"
-  else 
-    echo -e  "${BLUE}"$(gettext "Version Zurg :") "$LATEST_VERSION${CEND}"
-  fi
-  rm releases
-}
-
-function choose_version_zurg() {
-  echo ""
-  wget https://api.github.com/repos/debridmediamanager/zurg-testing/releases > /dev/null 2>&1
-  jq '.[] | .tag_name' releases | tr -d '"' | cat -n | sed 's/[ ]\+/ /g' | tr " " " " | tr "\t" " " > temp
-
-  while read LIGNE
-  do echo -e "${CCYAN}"$LIGNE"${CEND}"
-  done < temp
-  echo ""
-  echo >&2 -n -e "${CCYAN}"$(gettext "Choisir le numéro de la Version :") "${CEND}"
-  read NUMERO_LIGNE
-  VERSION=$(sed -n "${NUMERO_LIGNE}p" temp | cut -d ' ' -f 3) 
-  manage_account_yml zurg.version "${VERSION}"
-  echo -e  "${BLUE}"$(gettext "Version Zurg :") "$VERSION${CEND}"
-  ARCHITECTURE=$(dpkg --print-architecture)
-  RCLONE_VERSION=$(get_from_account_yml rclone.architecture)
-  ZURG_VERSION=$(get_from_account_yml zurg.version)
-  create_dir "${HOME}/.config/rclone"
-  if [ ${RCLONE_VERSION} == notfound ]; then
-    manage_account_yml rclone.architecture "${ARCHITECTURE}"
-  fi
-  rm -rf "${HOME}/scripts/zurg" > /dev/null 2>&1
-  docker rm -f zurg > /dev/null 2>&1
-  docker system prune -af > /dev/null 2>&1
-  mkdir -p "${HOME}/scripts/zurg" && cd ${HOME}/scripts/zurg
-  wget https://github.com/debridmediamanager/zurg-testing/releases/download/${ZURG_VERSION}/zurg-${ZURG_VERSION}-linux-${ARCHITECTURE}.zip > /dev/null 2>&1
-  unzip zurg-${ZURG_VERSION}-linux-${ARCHITECTURE}.zip > /dev/null 2>&1
-  rm zurg-${ZURG_VERSION}-linux-${ARCHITECTURE}.zip > /dev/null 2>&1
-  ZURG_TOKEN=$(get_from_account_yml zurg.token)
-  if [ ${ZURG_TOKEN} == notfound ]; then
-    echo >&2 -n -e "\e[32m"$(gettext "Token API pour Zurg (https://real-debrid.com/apitoken) | Appuyer sur [Enter]:") " \e[0m"
-    read ZURG_TOKEN
-    manage_account_yml zurg.token "${ZURG_TOKEN}"
-  else
-    echo -e "${BLUE}"$(gettext "Token Zurg déjà renseigné")"${CEND}"
-  fi
-  # launch zurg
-  ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/zurg.yml"
-  ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml"
-  echo -e "\n"$(gettext "Appuyer sur")"${CCYAN} ["$(gettext "ENTREE")"]${CEND}" $(gettext "pour continuer")
-  read -r
 }
 
 function get_architecture() {

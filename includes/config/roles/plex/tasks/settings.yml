@@ -1,6 +1,0 @@
----
-gpu:
-  intel: yes
-  nvidia:
-    enabled: no
-    driver: 410.78

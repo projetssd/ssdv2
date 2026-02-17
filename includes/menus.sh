@@ -209,35 +209,10 @@ menu_gestoutils_autoscan() {
 }
 
 
-menu_gestoutils_cloudplow() {
-  clear
-  logo
-  echo ""
-  install_cloudplow
-  pause
-}
-
-
-menu_gestoutils_dupefinder() {
-  clear
-  plex_dupefinder
-  echo ""
-  pause
-}
-
-
 menu_gestoutils_kometa() {
   clear
   echo""
   ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/kometa/tasks/main.yml
-  pause
-}
-
-
-menu_gestoutils_ygg-rss-proxy() {
-  clear
-  echo""
-  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/ygg-rss-proxy/tasks/main.yml
   pause
 }
 

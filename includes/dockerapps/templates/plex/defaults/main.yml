@@ -63,10 +63,7 @@ plex_docker_volumes:
   - "/etc/localtime:/etc/localtime:ro"
   - "/home/{{ lookup('env','USER') }}:/home/{{ lookup('env','USER') }}:rslave"
   - "/mnt:/mnt:rslave"
-  - "{{ settings.storage }}/zurg:/mnt/zurg:ro"
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/plex/config:/config:rw"
-  - "/tmp:/tmp:rw"
-  - "/dev/shm:/dev/shm:rw"
   - "{{ plex.transcodes }}/plex:/transcode:rw"
 
 ################################

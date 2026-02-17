@@ -9,11 +9,11 @@ pg_volumes:
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
 
 pg_env:
-  PUID: '{{user.userid}}'
-  PGID: '{{user.groupid}}'
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
   TZ: 'Europe/Paris'
   # interface webui
-  TRANSMISSION_WEB_HOME : /transmission-web-control/
+  #TRANSMISSION_WEB_HOME : /transmission-web-control/
   #TRANSMISSION_WEB_HOME : /flood-for-transmission/
   #TRANSMISSION_WEB_HOME : /combustion-release/
   #TRANSMISSION_WEB_HOME : /kettu/

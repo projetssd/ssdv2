@@ -1,6 +1,6 @@
 ---
 pgrole: 'jfago'
-intport: '8057'
+intport: '8056'
 image: 'hrfee/jfa-go'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/data"

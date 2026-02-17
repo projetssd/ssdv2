@@ -1,7 +1,7 @@
 ---
 pgrole: 'pterodactyl'
 intport: '80'
-image: 'ghcr.io/pterodactyl/panel:latest'
+image: 'ghcr.io/pterodactyl/panel:v1.11.11'
 pg_volumes:
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
   - "/srv/pterodactyl/logs/:/app/storage/logs"

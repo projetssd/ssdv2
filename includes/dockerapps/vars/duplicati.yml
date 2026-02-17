@@ -1,5 +1,5 @@
 ---
-pgrole: 'duplicati '
+pgrole: 'duplicati'
 intport: '8200'
 image: 'lscr.io/linuxserver/duplicati'
 pg_volumes:
@@ -7,8 +7,8 @@ pg_volumes:
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
   - '/:/source'
   - '/mnt/backups:/backups'
-
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
+  SETTINGS_ENCRYPTION_KEY: "{{ user.pass }}"

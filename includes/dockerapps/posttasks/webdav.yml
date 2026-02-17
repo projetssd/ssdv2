@@ -1,0 +1,9 @@
+---
+- name: Fix webdav permissions
+  become: yes
+  file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/webdav"
+    state: directory
+    owner: "{{ lookup('env','MYUID') }}"
+    group: "{{ lookup('env','MYGID') }}"
+    recurse: yes

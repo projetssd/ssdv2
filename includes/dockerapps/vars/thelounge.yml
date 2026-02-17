@@ -5,7 +5,7 @@ pgrole: 'thelounge'
 intport: '9000'
 image: 'ghcr.io/thelounge/thelounge:latest'
 pg_volumes:
-  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/thelounge://var/opt/thelounge:rw"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/thelounge:/var/opt/thelounge:rw"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:
   PUID: "{{ lookup('env','MYUID') }}"

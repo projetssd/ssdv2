@@ -1,0 +1,49 @@
+---
+# BITWARDEN BACKUP DEPLOYMENT #######################################################
+
+## Bitwarden Backup
+
+## To restore database from backup:
+# docker exec -it bitwarden bash
+# mv /data/db.sqlite3 /data/db.sqlite3.back
+# sqlite3 /data/db.sqlite3 ".restore '/data/db-backup/select_db_file'"
+# exit
+
+- name: "Set DNS Record on CloudFlare"
+  include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
+  vars:
+    subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
+  when: cloudflare_enabled
+
+- name: Create bw-net network
+  community.docker.docker_network:
+    name: bw-net
+    state: present
+
+- name: Setting Volumes
+  set_fact:
+    bw_volumes:
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}:/data"
+      - "/etc/localtime:/etc/localtime:ro"
+      - "/mnt/storage/backup/backup_databases/bitwarden:/dbbackup"
+
+- name: Setting ENV
+  set_fact:
+    bw_env:
+      DB_FILE: "/data/db.sqlite3"
+      BACKUP_FILE: "/dbbackup/backup.sqlite3"
+      CRON_TIME: "30 4 * * *"
+      TIMESTAMP: "true"
+      UID: "0"
+      GID: "0"
+
+- name: Deploying Bitwarden Backup
+  docker_container:
+    name: bw_backup
+    image: bruceforce/bw_backup
+    volumes: "{{ bw_volumes }}"
+    env: "{{ bw_env }}"
+    restart_policy: on-failure
+    networks:
+      - name: bw-net
+    state: started

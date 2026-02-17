@@ -1,14 +1,67 @@
 ---
-#basé sur bytemark/webdav avec PUID fonctionnel
-#https://hub.docker.com/r/bytemark/webdav
+# https://github.com/vaggeliskls/webdav-server/tree/main ( Modifier les variables environnement en fonction de vos besoins )
 pgrole: 'webdav'
 intport: '80'
-image: 'vladislavdp/webdav_vp'
+image: 'ghcr.io/vaggeliskls/webdav-server:latest'
 pg_volumes:
-  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/var/lib/dav"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/var/lib/dav/data"
 pg_env:
   #aucune authentification, on laisse le script la gerer par traefik
-  ANONYMOUS_METHODS: "ALL"
   UID: "{{ lookup('env','MYUID') }}"
   GID: "{{ lookup('env','MYUID') }}"
+  BASIC_AUTH_ENABLED: "false"
+  WEBDAV_OPERATIONS: "GET OPTIONS PROPFIND"
+
+  # # WebDAV Server Configuration
+  # WEBDAV_OPERATIONS: "GET OPTIONS PROPFIND"
+
+  # # LDAP Configuration
+  # LDAP_ENABLED: "false"
+  # LDAP_URL: "ldaps://ldap.example.com"
+  # LDAP_ATTRIBUTE: "uid"
+  # LDAP_BASE_DN: "ou=users,dc=example,dc=com"
+  # LDAP_BIND_DN: "uid=searchuser,ou=users,dc=example,dc=com"
+  # LDAP_BIND_PASSWORD: "securepassword"
+
+  # # OAUTH Configuration
+  # # Keycloak OIDC configuration
+  # OAUTH_ENABLED: "false"
+  # OIDCProviderMetadataURL: "http://keycloak/keycloak-auth/realms/master/.well-known/openid-configuration"
+  # OIDCRedirectURI: "http://my-domain.local/redirect_uri"
+  # OIDCCryptoPassphrase: "randomly_generated_secure_passphrase"
+  # OIDCClientID: "webdav-client"
+  # OIDCClientSecret: "ABC123def456GHI789jkl0mnopqrs"
+  # OIDCProviderTokenEndpointAuth: "client_secret_basic"
+  # OIDCRemoteUserClaim: "preferred_username"
+  # OIDCScope: "openid email profile"
+  # OIDCXForwardedHeaders: "X-Forwarded-Host"
+
+  # # Basic Digest Authentication with users space separated
+  # BASIC_AUTH_ENABLED: "false"
+  # BASIC_AUTH_REALM: "Webdev"
+  # BASIC_USERS: "alice:alice bob:bob"
+
+traefik_labels_enabled: false
+specific_docker_info:
+  labels:
+    traefik.enable: "true"
+    traefik.http.routers.webdav.service: "webdav"
+
+    # Register Middleware ====================================================
+    traefik.http.routers.webdav.middlewares: "compresstraefik,ratelimit"
+
+    # =================================================================================
+    traefik.http.middlewares.compresstraefik.compress: "true"
+    traefik.http.services.webdav.loadbalancer.server.port: "8080"
+    traefik.http.services.webdav.loadbalancer.passhostheader: "true"
+
+    # Use PathPrefix rule to catch all requests
+    traefik.http.routers.webdav.rule: "PathPrefix(`/`)"
+    traefik.http.routers.webdav.entrypoints: "http,https"
+
+    # Rate Limiting Middleware (Per IP) =====================================
+    traefik.http.middlewares.ratelimit.ratelimit.average: "5"
+    traefik.http.middlewares.ratelimit.ratelimit.burst: "6"
+    traefik.http.middlewares.ratelimit.ratelimit.sourcecriterion.ipstrategy.depth: "1"
+
 

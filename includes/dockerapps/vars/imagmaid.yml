@@ -1,0 +1,4 @@
+---
+pgrole: 'imagmaid'
+docker_deploy_enabled: false
+traefik_labels_enabled: false

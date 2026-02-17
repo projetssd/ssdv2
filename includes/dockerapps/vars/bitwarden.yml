@@ -1,0 +1,53 @@
+---
+pgrole: 'bitwarden'
+intport: '80'
+image: 'bitwardenrs/server:latest'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}:/data"
+  - '/var/log/docker:/var/log/docker'
+  - '/etc/localtime:/etc/localtime:ro'
+
+traefik_labels_enabled: false
+pg_env:
+  SIGNUPS_ALLOWED: 'true' # Change to false after first login
+  INVITATIONS_ALLOWED: 'true' # Send invitation using admin page
+  WEBSOCKET_ENABLED: 'true'
+  LOG_FILE: '/var/log/docker/bitwarden.log'
+  DOMAIN: 'https://bitwarden.{{user.domain}}'
+# SMTP_HOST: 'smtp.gmail.com'
+# SMTP_FROM: '$SMTP_EMAIL'
+# SMTP_PORT: '587'
+# SMTP_SSL: 'true'
+# SMTP_USERNAME: '$SMTP_EMAIL'
+# SMTP_PASSWORD: '$SMTP_PASS'
+# DISABLE_ADMIN_TOKEN=true ### USE WITH CAUTION!! Access admin page at bitwarden.$DOMAINNAME/admin to send invitations - anyone can access, add authorization!!!
+
+specific_docker_info:
+  labels:
+    traefik.enable: 'true'
+    ## HTTP Routers
+    traefik.http.routers.bitwarden-rtr.entrypoints: 'http,https'
+    traefik.http.routers.bitwarden-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
+    traefik.http.routers.bitwarden-rtr.priority: '1'
+    traefik.http.routers.bitwarden-rtr.tls: 'true'
+
+    ## HTTP Services
+    traefik.http.routers.bitwarden-rtr.service: 'bitwarden-svc'
+    traefik.http.services.bitwarden-svc.loadbalancer.server.port: '80'
+
+    ## Bitwarden WebSocket
+    traefik.http.routers.bitwardenHub-rtr.entrypoints: 'http,https'
+    traefik.http.routers.bitwardenHub-rtr.rule: '(Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`) && Path(`/notifications/hub`))'
+    traefik.http.routers.bitwardenHub-rtr.priority: '2'
+    traefik.http.routers.bitwardenHub-rtr.tls: 'true'
+    traefik.http.routers.bitwardenHub-rtr.service: 'bitwardenHub-svc'
+    traefik.http.services.bitwardenHub-svc.loadbalancer.server.port: '3012'
+
+    ### Admin Page - Used when DISABLE_ADMIN_TOKEN=true above
+    traefik.http.routers.bitwardenAdmin-rtr.entrypoints: 'http,https'
+    traefik.http.routers.bitwardenAdmin-rtr.rule: '(Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`) && Path(`/admin`))'
+    traefik.http.routers.bitwardenAdmin-rtr.priority: '3'
+    traefik.http.routers.bitwardenAdmin-rtr.tls: 'true'
+    traefik.http.routers.bitwardenAdmin-rtr.service: 'bitwarden-svc'
+
+

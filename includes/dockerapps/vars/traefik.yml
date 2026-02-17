@@ -1,0 +1,287 @@
+---
+
+- hosts: localhost
+
+  gather_facts: True
+
+  vars_files:
+    - "{{ playbook_dir }}/../templates/generique/generique.yml"
+
+  vars:
+    pgrole: 'traefik'
+    pgerro: 'error-pages'
+    subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
+    oauth2proxy_enabled: "{{ oauth_enabled and oauth_type | default('') == 'oauth2-proxy' }}"
+
+  tasks:
+
+    - name: Checking for existing app data
+      stat:
+        path: "{{ settings.storage }}/docker/{{user.name}}/authelia/configuration.yml"
+      register: check
+
+    - name: "Set DNS Record on CloudFlare"
+      include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
+      when: cloudflare_enabled
+
+    - name: "Prompt user to create A record for {{ subdomain }} with IP {{ network.ipv4 }}"
+      pause:
+        prompt: |
+          Please create an A record for the subdomain "{{ subdomain }}.{{ user.domain }}"
+          with the IP address "{{ network.ipv4 }}" in your DNS provider.
+          Press Enter to continue once the record has been created.
+      when: not cloudflare_enabled
+
+    - name: "Wait for subdomain to resolve to correct IP"
+      command: dig +short {{ subdomain }}.{{ user.domain }} @1.1.1.1
+      register: dig_output
+      until: dig_output.stdout == network.ipv4
+      retries: 300 # Nombre de tentatives
+      delay: 10 # Temps (en secondes) entre chaque tentative
+      changed_when: false
+      when: not cloudflare_enabled
+
+    - name: Remove {{pgrole}}
+      docker_container:
+        name: '{{pgrole}}'
+        state: absent
+
+    - name: Remove {{ pgerro }}
+      docker_container:
+        name: '{{ pgerro }}'
+        state: absent
+
+    - name: Create Basic Directories
+      become: yes
+      file:
+        path: "{{item}}"
+        state: "directory"
+        mode: "0775"
+        owner: "{{ lookup('env','USER') }}"
+        group: "{{ lookup('env','MYGIDNAME') }}"
+      with_items:
+        - "{{ settings.storage }}/docker/{{ pgrole }}"
+        - "{{ settings.storage }}/docker/{{ pgrole }}/acme"
+        - "{{ settings.storage }}/docker/{{ pgrole }}/rules"
+        - "{{ settings.storage }}/docker/{{ pgrole }}/logs"
+
+    - name: Check acme.json exists
+      stat:
+        path: " {{ settings.storage }}/docker/{{pgrole}}/acme/acme.json"
+      register: acme_json
+
+    - name: Create ACME empty file (touch)
+      file:
+        path: "{{ settings.storage }}/docker/{{pgrole}}/acme/acme.json"
+        state: touch
+        mode: 0600
+      when: acme_json.stat.exists == False
+
+    - name: Create access.log empty file (touch)
+      file:
+        path: "{{ settings.storage }}/docker/{{pgrole}}/logs/access.log"
+        state: touch
+        mode: 0600
+
+    - name: Import middlewares-chains.toml
+      template:
+        src: "{{ settings.source }}/includes/dockerapps/templates/{{pgrole}}/middlewares-chains.toml.j2"
+        dest: "{{ settings.storage }}/docker/{{pgrole}}/rules/middlewares-chains.toml"
+
+    - name: Import middlewares.toml
+      template:
+        src: "{{ settings.source }}/includes/dockerapps/templates/{{pgrole}}/middlewares.toml.j2"
+        dest: "{{ settings.storage }}/docker/{{pgrole}}/rules/middlewares.toml"
+
+    - name: label {{pgrole}} with cloudflare
+      set_fact:
+        labels:
+          traefik.enable: 'true'
+          ## HTTP-to-HTTPS Redirect
+          traefik.http.routers.http-catchall.entrypoints: 'http'
+          traefik.http.routers.http-catchall.rule: 'HostRegexp(`{host:.+}`)'
+          traefik.http.routers.http-catchall.middlewares: 'redirect-to-https'
+          traefik.http.middlewares.redirect-to-https.redirectscheme.scheme: 'https'
+          ## HTTP Routers
+          traefik.http.routers.traefik-rtr.entrypoints: 'http,https'
+          traefik.http.routers.traefik-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
+          traefik.http.routers.traefik-rtr.tls: 'true'
+          traefik.http.routers.traefik-rtr.tls.certresolver: 'letsencrypt'
+          traefik.http.routers.traefik-rtr.tls.domains[0].main: '{{user.domain}}'
+          traefik.http.routers.traefik-rtr.tls.domains[0].sans: '*.{{user.domain}}'
+          ## Services - API
+          traefik.http.routers.traefik-rtr.service: 'api@internal'
+          ## Middlewares
+          traefik.http.routers.traefik-rtr.middlewares: "{{ 'chain-authelia@file' if (check.stat.exists and sub[pgrole].auth | default('') == 'authelia') else 'chain-basic-auth@file,error-pages-middleware' if (auth_enabled and sub[pgrole].auth | default('') == 'basique') else 'chain-oauth@file' if (auth_enabled and sub[pgrole].auth | default('') == 'oauth') else 'chain-oauth2-proxy@file' if (auth_enabled and sub[pgrole].auth | default('') == 'oauth2-proxy') else 'chain-no-auth@file,error-pages-middleware' if (auth_enabled and sub[pgrole].auth | default('') == 'aucune') else 'chain-no-auth@file' }}"
+      when: cloudflare_enabled
+
+    - name: label traefik without cloudflare
+      set_fact:
+        labels:
+          traefik.enable: 'true'
+          ## HTTP-to-HTTPS Redirect
+          traefik.http.routers.http-catchall.entrypoints: 'http'
+          traefik.http.routers.http-catchall.rule: 'HostRegexp(`{host:.+}`)'
+          traefik.http.routers.http-catchall.middlewares: 'redirect-to-https'
+          traefik.http.middlewares.redirect-to-https.redirectscheme.scheme: 'https'
+          ## HTTP Routers
+          traefik.http.routers.traefik-rtr.entrypoints: 'http,https'
+          traefik.http.routers.traefik-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
+          traefik.http.routers.traefik-rtr.tls: 'true'
+          traefik.http.routers.traefik-rtr.tls.certresolver: 'letsencrypt'
+          ## Services - API
+          traefik.http.routers.traefik-rtr.service: 'api@internal'
+          ## Middlewares
+          traefik.http.routers.traefik-rtr.middlewares: "{{ 'chain-authelia@file' if (check.stat.exists and sub[pgrole].auth | default('') == 'authelia') else 'chain-basic-auth@file,error-pages-middleware' if (auth_enabled and sub[pgrole].auth | default('') == 'basique') else 'chain-oauth@file' if (auth_enabled and sub[pgrole].auth | default('') == 'oauth') else 'chain-oauth2-proxy@file' if (auth_enabled and sub[pgrole].auth | default('') == 'oauth2-proxy') else 'chain-no-auth@file,error-pages-middleware' if (auth_enabled and sub[pgrole].auth | default('') == 'aucune') else 'chain-no-auth@file' }}"
+      when: not cloudflare_enabled
+
+    - name: command traefik with cloudflare
+      set_fact:
+        command: # CLI arguments
+          - --global.checkNewVersion=true
+          - --global.sendAnonymousUsage=true
+          - --entrypoints.http.address=:80
+          - --entrypoints.https.address=:443
+          - --entrypoints.http.http.redirections.entrypoint.to=https
+          - --entrypoints.http.http.redirections.entrypoint.scheme=https
+          - --entrypoints.http.http.redirections.entrypoint.permanent=true
+          - --entrypoints.https.forwardedHeaders.trustedIPs=173.245.48.0/20,103.21.244.0/22,103.22.200.0/22,103.31.4.0/22,141.101.64.0/18,108.162.192.0/18,190.93.240.0/20,188.114.96.0/20,197.234.240.0/22,198.41.128.0/17,162.158.0.0/15,104.16.0.0/12,172.64.0.0/13,131.0.72.0/22
+          - --api=true
+          - --api.dashboard=true
+          - --providers.docker.endpoint=unix:///var/run/docker.sock
+          - --log=true
+          - --log.level=DEBUG # (Default: error) DEBUG, INFO, WARN, ERROR, FATAL, PANIC
+          - --accesslog=true
+          - --accesslog.filePath=/logs/access.log
+          - --accesslog.bufferingSize=100 # Configuring a buffer of 100 lines
+          - --accesslog.addinternals
+          - --providers.docker=true
+          - --providers.docker.exposedByDefault=false
+          - --providers.docker.network=traefik_proxy
+          - --entrypoints.https.http.tls.certresolver=letsencrypt
+          - --entrypoints.https.http.tls=true
+          - --providers.file.directory=/rules # Load dynamic configuration from one or more .toml or .yml files in a directory
+          - --providers.file.watch=true # Only works on top level files in the rules folder
+          - --certificatesresolvers.letsencrypt.acme.email={{cloudflare.login}}
+          - --certificatesresolvers.letsencrypt.acme.storage=/acme.json
+          - --certificatesresolvers.letsencrypt.acme.dnsChallenge.provider=cloudflare
+          - --certificatesresolvers.letsencrypt.acme.dnsChallenge.resolvers=1.1.1.1:53,1.0.0.1:53
+          - --certificatesresolvers.letsencrypt.acme.dnsChallenge.delayBeforeCheck=90 # To delay DNS check and reduce LE hitrate
+          # - --certificatesresolvers.letsencrypt.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory # LetsEncrypt Staging Server - uncomment when testing
+      when: cloudflare_enabled
+
+    - name: command traefik without cloudflare
+      set_fact:
+        command:
+          - --api=true
+          - --log=true
+          - --log.level=DEBUG
+          - --accesslog=true
+          - --accesslog.filePath=/logs/access.log
+          - --accesslog.bufferingSize=100 # Configuring a buffer of 100 lines
+          - --accesslog.addinternals
+          - --global.checkNewVersion=false
+          - --global.sendAnonymousUsage=false
+          - --entryPoints.http.address=:80
+          - --entryPoints.https.address=:443
+          - --entrypoints.https.http.tls.certresolver=letsencrypt
+          - --entrypoints.http.http.redirections.entrypoint.to=https
+          - --entrypoints.http.http.redirections.entrypoint.scheme=https
+          - --entrypoints.http.http.redirections.entrypoint.permanent=true
+          - --providers.docker=true
+          - --providers.docker.endpoint=unix:///var/run/docker.sock
+          - --providers.docker.exposedByDefault=false
+          - --providers.docker.network=traefik_proxy
+          - --providers.file.directory=/rules
+          - --providers.file.watch=true
+          - --certificatesresolvers.letsencrypt.acme.email={{user.mail}}
+          - --certificatesresolvers.letsencrypt.acme.storage=/acme.json
+          - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
+          #- --certificatesresolvers.letsencrypt.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory # LetsEncrypt Staging Server - uncomment when testing
+      when: not cloudflare_enabled
+
+    - name: Create a network
+      community.docker.docker_network:
+        name: traefik_proxy
+
+    - name: Set Cloudflare environment variables (if enabled)
+      set_fact:
+        traefik_env:
+          CF_API_EMAIL: '{{cloudflare.login}}'
+          CF_API_KEY: '{{cloudflare.api}}'
+      when: cloudflare_enabled
+
+    - name: Deploy Traefik
+      docker_container:
+        name: '{{pgrole}}'
+        image: traefik:v3.6.1
+        pull: yes
+        published_ports:
+          - "80:80"
+          - "443:443"
+        command: '{{command}}'
+        security_opts:
+          - no-new-privileges:true
+        env: '{{ traefik_env | default({}) }}'
+        volumes:
+          - "/var/run/docker.sock:/var/run/docker.sock:ro"
+          - "/etc/localtime:/etc/localtime:ro"
+          - "{{ settings.storage }}/docker/{{pgrole}}/acme/acme.json:/acme.json"
+          - "{{ settings.storage }}/docker/{{pgrole}}/rules:/rules"
+          - "{{ settings.storage }}/docker/{{pgrole}}/logs/:/logs"
+        labels: '{{labels}}'
+        restart_policy: unless-stopped
+        state: started
+        networks:
+          - name: traefik_proxy
+
+    - name: set labels error-page
+      set_fact:
+        labelserror:
+          traefik.enable: 'true'
+          traefik.http.routers.error-pages-rtr.rule: 'HostRegexp(`{host:.+}`)'
+          traefik.http.routers.error-pages-rtr.priority: '10'
+          traefik.http.routers.error-pages-rtr.entrypoints: 'http,https'
+          traefik.http.routers.error-pages-rtr.tls: 'true'
+          traefik.http.routers.error-pages-rtr.middlewares: 'error-pages-middleware'
+          traefik.http.middlewares.error-pages-middleware.errors.status: '400-599'
+          traefik.http.middlewares.error-pages-middleware.errors.service: 'error-pages-svc'
+          traefik.http.middlewares.error-pages-middleware.errors.query: '/{status}.html'
+          traefik.http.services.error-pages-svc.loadbalancer.server.port: '8080'
+
+    - name: Deploy tarampampam/error-pages
+      docker_container:
+        name: '{{ pgerro }}'
+        image: tarampampam/error-pages:latest
+        pull: yes
+        env:
+          TEMPLATE_NAME: app-down
+        labels: '{{labelserror}}'
+        restart_policy: unless-stopped
+        state: started
+        networks:
+          - name: traefik_proxy
+
+    # OAuth Configuration - Support pour OAuth (ancien), OAuth2 Proxy et Authelia
+
+    - name: "Include OAuth (ancien - traefik-forward-auth)"
+      include_tasks: "{{ settings.source }}/includes/dockerapps/templates/{{pgrole}}/oauth.yml"
+      when: oauth_enabled and oauth_type | default('oauth') == 'oauth'
+
+    - name: "Include OAuth2 Proxy"
+      include_tasks: "{{ settings.source }}/includes/dockerapps/templates/{{pgrole}}/oauth2-proxy.yml"
+      when: oauth2proxy_enabled
+
+    - name: "Include Authelia"
+      include_tasks: "{{ settings.source }}/includes/dockerapps/templates/{{pgrole}}/authelia.yml"
+      when: oauth_enabled and oauth_type == "authelia"
+
+    - name: Insert traefik into database
+      shell:
+        cmd: |
+          sqlite3 {{ settings.source }}/ssddb << EOF
+          replace into applications (name,status,subdomain,port)
+          values
+          ('traefik',2,'{{sub[pgrole][pgrole] if sub_enabled else pgrole}}',443);
+          EOF
+

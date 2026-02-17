@@ -37,9 +37,10 @@
     msg: "🚀🚀🚀 IMPORTANT 🚀🚀🚀 | 📚 CREATION UTILISATEUR → docker exec -ti pterodactyl sh -c 'php artisan p:user:mak'"
 
 - debug:
-    msg: "🚀🚀🚀 IMPORTANT 🚀🚀🚀 | 📚 DOCUMENTATION → https://belginux.com/pterodactyl/"
+    msg: "🚀🚀🚀 IMPORTANT 🚀🚀🚀 | 📚 PORT CREATION NODE WINGS → 443 | 📚 Utiliser wings.domain.eu pour la configuration du node"
 
 - debug:
-    msg: "🚀🚀🚀 IMPORTANT 🚀🚀🚀 | 📚 PORT CREATION NODE WINGS → 443 | 📚 Utiliser wings.domain.eu pour la configuration du node"
+    msg: "Actuellement c'est la version v1.11.11 qui est installée. Pour passer à la v1.12.0 -> docker rm -f pterodactyl, modifier le fichier $HOME/seedbox-compose/includes/dockerapps/vars/pterodactyl en changeant v1.11.11 par latest et relancer l'install"
+
 
 
