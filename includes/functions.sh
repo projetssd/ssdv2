@@ -3,44 +3,62 @@
 
 function logo() {
 
-  R='\033[38;5;196m'
-  P='\033[38;5;201m'
-  C='\033[38;5;45m'
-  W='\033[1;37m'
-  D='\033[38;5;245m'
-  L='\033[38;5;39m'
-  S='\033[38;5;51m'
-  X='\033[0m'
+  # ----- LOGO COLORS (inchangées) -----
+  RED=$'\033[38;5;196m'
+  PURPLE=$'\033[38;5;201m'
+  YELLOW=$'\033[38;5;220m'
 
-  OS="$(lsb_release -sd 2>/dev/null)"
+  # ----- PREMIUM PALETTE -----
+  FIRE1=$'\033[38;5;196m'
+  FIRE2=$'\033[38;5;202m'
+  FIRE3=$'\033[38;5;220m'
+
+  BLUE=$'\033[38;5;39m'      # bleu élégant
+  GREY=$'\033[38;5;244m'     # gris discret
+  LINEC=$'\033[38;5;45m'     # cyan subtil
+  RESET=$'\033[0m'
+
+  PROJECT="${FIRE1}S${FIRE2}S${FIRE3}D${RESET} ${GREY}v2.2${RESET}"
+
   KERNEL="$(uname -sr)"
+  OS="$(lsb_release -sd 2>/dev/null)"
   UPTIME="$(uptime -p | sed 's/up //')"
 
   printf "\n"
 
-  # Header accent
-  printf "  ${R}███${P}███${C}███${X}  ${C}S${P}S${R}D${X} ${D}•${X} ${L}V2.2${X}\n"
-  printf "  ${D}──────────────────────────────────────────────${X}\n"
-  printf "\n"
+  LEFTW=34
+  print_line() {
+      printf " %-${LEFTW}s   %s\n" "$1" "$2"
+  }
 
-  # System block
-  printf "  ${S}System${X}\n"
-  printf "     ${L}OS      ${D}│${X} ${W}%s${X}\n" "$OS"
-  printf "     ${L}Kernel  ${D}│${X} ${W}%s${X}\n" "$KERNEL"
-  printf "     ${L}Uptime  ${D}│${X} ${W}%s${X}\n" "$UPTIME"
-  printf "\n"
+  # ----- LOGO (STRICTEMENT INTACT) -----
+  L1="  ${RED}███████╗ ${PURPLE}███████╗ ${YELLOW}██████╗${RESET}"
+  L2="  ${RED}██╔════╝ ${PURPLE}██╔════╝ ${YELLOW}██╔══██╗${RESET}"
+  L3="  ${RED}███████╗ ${PURPLE}███████╗ ${YELLOW}██║  ██║${RESET}"
+  L4="  ${RED}╚════██║ ${PURPLE}╚════██║ ${YELLOW}██║  ██║${RESET}"
+  L5="  ${RED}███████║ ${PURPLE}███████║ ${YELLOW}██████╔╝${RESET}"
+  L6="  ${RED}╚══════╝ ${PURPLE}╚══════╝ ${YELLOW}╚═════╝${RESET}"
 
-  printf "  ${D}──────────────────────────────────────────────${X}\n"
+  # ----- BLOC DROITE PREMIUM -----
+  LINE="${LINEC}────────────────────────────────────${RESET}"
+
+  #R1="$LINE"
+  R2="$PROJECT"
+  R3="${BLUE}Kernel${RESET}  ${GREY}${KERNEL}${RESET}"
+  R4="${BLUE}OS${RESET}      ${GREY}${OS}${RESET}"
+  R5="${BLUE}Uptime${RESET}  ${GREY}${UPTIME}${RESET}"
+  # R6="$LINE"
+
+  print_line "$L1" "$R1"
+  print_line "$L2" "$R2"
+  print_line "$L3" "$R3"
+  print_line "$L4" "$R4"
+  print_line "$L5" "$R5"
+  print_line "$L6" "$R6"
+
   printf "\n"
 }
 
-
-function update_system() {
-  #Mise à jour systeme
-  echo -e "${BLUE}###" $(gettext "MISE A JOUR DU SYSTEME") "###${NC}"
-  ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/system/tasks/main.yml
-  checking_errors $?
-}
 
 function cloudflare() {
   #####################################
@@ -515,10 +533,6 @@ function choose_services() {
 function install_services() {
   if [ -f "$SERVICESPERUSER" ]; then
 
-    if [[ ! -d "${SETTINGS_STORAGE}/conf" ]]; then
-      mkdir -p "${SETTINGS_STORAGE}/conf" >/dev/null 2>&1
-    fi
-
     if [[ ! -d "${SETTINGS_STORAGE}/vars" ]]; then
       mkdir -p "${SETTINGS_STORAGE}/vars" >/dev/null 2>&1
     fi
@@ -541,7 +555,6 @@ function launch_service() {
 # Définir les chemins à vérifier
   paths=(
     "${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml"
-    "${SETTINGS_SOURCE}/includes/dockerapps/${line}.yml"
     "/home/${USER}/seedbox/vars/${line}.yml"
   )
 
@@ -1008,8 +1021,6 @@ EOF
   sudo chmod 755 "${SETTINGS_SOURCE}/logs"
 
   create_dir "${SETTINGS_STORAGE}"
-  create_dir "${SETTINGS_STORAGE}/variables"
-  create_dir "${SETTINGS_STORAGE}/conf"
   create_dir "${SETTINGS_STORAGE}/vars"
   if [ ! -f "${ANSIBLE_VARS}" ]; then
     mkdir -p "${HOME}/.ansible/inventories/group_vars"

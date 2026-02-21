@@ -134,7 +134,6 @@ IS_INSTALLED=$(select_seedbox_param "installed")
 if [ $mode_install = "manuel" ]; then
 
   if [[ ${IS_INSTALLED} -eq 0 ]]; then
-      touch "${SETTINGS_STORAGE}/status/rclone"
       for patch in $(ls ${SETTINGS_SOURCE}/patches); do
         echo "${patch}" >>"${HOME}/.config/ssd/patches"
       done
@@ -195,7 +194,6 @@ if [ $mode_install = "manuel" ]; then
   if [ "${emplacement_source}" == notfound ]; then
     manage_account_yml settings.source "${SETTINGS_SOURCE}"
   fi
-  update_status
   # Verif compatibilité v2/0 => V2.1
   # On regarde que settings.storage existe
   log_statusbar "$(echo $(gettext "Verification de l'emplacement du stockage"))"

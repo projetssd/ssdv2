@@ -39,6 +39,7 @@ firefoxsyncserver - Navigateur Firefox
 flixor - interface modern plex
 foptimum - Performances serveur
 freshrss - Agrégateur de flux open source
+gethomepage - dashboard Applications
 gitea - Hébergement de développement logiciel
 gitlab - Hébergement de développement logiciel
 glftpd - Serveur FTP
@@ -96,7 +97,6 @@ nZBHydra - Indexeurs newznab
 nzbdav - WebDAV Server Usenet
 ombi - Gestion de contenu Plex/Emby
 organizr - Gestion des applications
-overseerr -  Gestion de contenu Plex/Emby
 pastebin - Mettre en ligne du texte
 paperless - Document management system
 pingvin - Partage de fichiers auto-hébergée
@@ -124,6 +124,7 @@ rutorrent - Un gestionnaire de torrent
 sabnzbd - Téléchargement de newsgroups
 scrutiny  - Solution de monitoring
 seafile - Stockage cloud open source
+seerr -  Gestion de contenu Plex/Emby
 shaarli - Bookmarking personnel
 sickchill - Gestion Films/Séries
 sickgear - Gestionnaire Films/Séries
