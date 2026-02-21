@@ -1,0 +1,8 @@
+- name: Set ownership for pgrole directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}"
+    owner: "1000"
+    group: "1000"
+    recurse: true
+    state: directory

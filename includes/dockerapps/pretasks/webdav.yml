@@ -1,0 +1,6 @@
+---
+- name: Set DNS Record on CloudFlare
+  include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
+  vars:
+    subdomain: "{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}"
+  when: cloudflare_enabled
