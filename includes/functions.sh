@@ -240,13 +240,6 @@ function checking_errors() {
   fi
 }
 
-function install_fail2ban() {
-  echo -e "${BLUE}### FAIL2BAN ###${NC}"
-  ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/fail2ban/tasks/main.yml"
-  checking_errors $?
-  echo ""
-}
-
 function install_ufw() {
   #clear
   echo -e "${CCYAN}---------------------------------------------------------------${CEND}"
@@ -390,6 +383,7 @@ function install_common() {
     :
   else
     install_traefik
+    launch_service crowdsec
   fi
   update_logrotate
 }

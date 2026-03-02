@@ -140,7 +140,6 @@ if [ $mode_install = "manuel" ]; then
       if [[ ${IS_INSTALLED} -eq 0 ]]; then
         # Choix des dossiers et création de l'arborescence
         create_folders
-        sauve
         # on marque la seedbox comme installée
         update_seedbox_param "installed" 1
         # installation environnement
