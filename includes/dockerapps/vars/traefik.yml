@@ -1,7 +1,5 @@
 ---
-
 - hosts: localhost
-
   gather_facts: True
 
   vars_files:
@@ -83,6 +81,11 @@
         state: touch
         mode: 0600
 
+    - name: Import traefik.yml
+      template:
+        src: "{{ settings.source }}/includes/dockerapps/templates/{{pgrole}}/traefik.yml.j2"
+        dest: "{{ settings.storage }}/docker/{{pgrole}}/traefik.yml"
+
     - name: Import middlewares-chains.toml
       template:
         src: "{{ settings.source }}/includes/dockerapps/templates/{{pgrole}}/middlewares-chains.toml.j2"
@@ -154,7 +157,14 @@
           - --accesslog=true
           - --accesslog.filePath=/logs/access.log
           - --accesslog.bufferingSize=100 # Configuring a buffer of 100 lines
-          - --accesslog.addinternals
+          #- --accesslog.addinternals
+          - --accesslog.format=json
+          - --accesslog.filters.statuscodes=200-299,400-599
+          - --accesslog.fields.headers.defaultmode=drop
+          - --accesslog.fields.headers.names.User-Agent=keep
+          - --accesslog.fields.headers.names.X-Real-Ip=keep
+          - --accesslog.fields.headers.names.X-Forwarded-For=keep
+          - --accesslog.fields.headers.names.X-Forwarded-Proto=keep
           - --providers.docker=true
           - --providers.docker.exposedByDefault=false
           - --providers.docker.network=traefik_proxy
@@ -209,26 +219,23 @@
         traefik_env:
           CF_API_EMAIL: '{{cloudflare.login}}'
           CF_API_KEY: '{{cloudflare.api}}'
+          TZ: "Europe/Paris"
       when: cloudflare_enabled
 
     - name: Deploy Traefik
       docker_container:
         name: '{{pgrole}}'
         image: traefik:v3.6.1
-        pull: yes
         published_ports:
           - "80:80"
           - "443:443"
-        command: '{{command}}'
-        security_opts:
-          - no-new-privileges:true
         env: '{{ traefik_env | default({}) }}'
         volumes:
           - "/var/run/docker.sock:/var/run/docker.sock:ro"
-          - "/etc/localtime:/etc/localtime:ro"
           - "{{ settings.storage }}/docker/{{pgrole}}/acme/acme.json:/acme.json"
           - "{{ settings.storage }}/docker/{{pgrole}}/rules:/rules"
           - "{{ settings.storage }}/docker/{{pgrole}}/logs/:/logs"
+          - "{{ settings.storage }}/docker/{{pgrole}}/traefik.yml:/etc/traefik/traefik.yml:ro"
         labels: '{{labels}}'
         restart_policy: unless-stopped
         state: started

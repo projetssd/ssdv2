@@ -1,36 +1,61 @@
+# ==============================
+# CHAIN NO AUTH
+# ==============================
+
 [http.middlewares.chain-no-auth.chain]
   middlewares = [
+    "crowdsec@file",
     "middlewares-rate-limit@file",
     "middlewares-secure-headers@file"
   ]
 
 
+# ==============================
+# CHAIN BASIC AUTH
+# ==============================
+
 [http.middlewares.chain-basic-auth.chain]
   middlewares = [
+    "crowdsec@file",
     "middlewares-rate-limit@file",
     "middlewares-secure-headers@file",
     "middlewares-basic-auth@file"
   ]
 
 
+# ==============================
+# CHAIN OAUTH
+# ==============================
+
 [http.middlewares.chain-oauth.chain]
   middlewares = [
+    "crowdsec@file",
     "middlewares-rate-limit@file",
     "middlewares-secure-headers@file",
     "middlewares-oauth@file"
   ]
 
 
+# ==============================
+# CHAIN AUTHELIA
+# ==============================
+
 [http.middlewares.chain-authelia.chain]
   middlewares = [
+    "crowdsec@file",
     "middlewares-rate-limit@file",
     "middlewares-secure-headers@file",
     "middlewares-authelia@file"
   ]
 
 
+# ==============================
+# CHAIN OAUTH2 PROXY
+# ==============================
+
 [http.middlewares.chain-oauth2-proxy.chain]
   middlewares = [
+    "crowdsec@file",
     "middlewares-rate-limit@file",
     "middlewares-secure-headers@file",
     "middlewares-oauth2-errors@file",

@@ -1,0 +1,10 @@
+---
+- hosts: localhost
+  gather_facts: false
+  become: yes
+  tasks:
+  - name: traefik
+    template:
+      src: "{{ settings.source }}/includes/config/playbooks/templates/traefik.j2"
+      dest: /etc/logrotate.d/traefik
+      force: yes

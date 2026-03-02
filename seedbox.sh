@@ -155,8 +155,6 @@ if [ $mode_install = "manuel" ]; then
       fi
   fi
 
-  chmod 755 ${SETTINGS_SOURCE}/logs
-  #update_logrotate
   log_statusbar "$(echo $(gettext "Check de la dernière version sur git"))"
   git_branch=$(git rev-parse --abbrev-ref HEAD)
   if [ ${git_branch} == 'master' ]; then

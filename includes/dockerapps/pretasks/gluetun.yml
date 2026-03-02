@@ -10,7 +10,7 @@
     devices:
       - "/dev/net/tun:/dev/net/tun"
     volumes:
-      - "{{ settings.storage }}/gluetun:/gluetun"
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/gluetun:/gluetun"
     env:
       PUID: "{{ lookup('env','MYUID') | string }}"
       PGID: "{{ lookup('env','MYGID') | string }}"

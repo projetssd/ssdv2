@@ -1,0 +1,255 @@
+---
+- name: Vérifier que CrowdSec est lancé
+  become: true
+  ansible.builtin.command: docker ps --filter "name=crowdsec" --format "{{'{{'}}.Names{{'}}'}}"
+  register: crowdsec_running
+  changed_when: false
+
+- name: Échouer si CrowdSec n'est pas démarré
+  ansible.builtin.fail:
+    msg: "Le container CrowdSec n'est pas démarré."
+  when: crowdsec_running.stdout == ""
+
+- name: Supprimer le bouncer existant
+  become: true
+  ansible.builtin.command: docker exec crowdsec cscli bouncers delete traefik-bouncer
+  failed_when: false
+  changed_when: false
+
+- name: Ajouter le bouncer Traefik
+  become: true
+  ansible.builtin.command: docker exec crowdsec cscli bouncers add traefik-bouncer
+  register: crowdsec_bouncer
+
+- name: Extraire la clé API
+  no_log: true
+  ansible.builtin.set_fact:
+    traefik_bouncer_api_key: >-
+      {{
+        (
+          crowdsec_bouncer.stdout_lines
+          | map('trim')
+          | select('match', '^[A-Za-z0-9+/=]{20,}$')
+          | list
+        )[0] | default('')
+      }}
+
+- debug:
+    var: crowdsec_bouncer.stdout_lines
+
+- name: Vérifier que la clé API est définie
+  ansible.builtin.fail:
+    msg: "Impossible de récupérer la clé API du bouncer CrowdSec."
+  when: traefik_bouncer_api_key is not defined or traefik_bouncer_api_key == ""
+
+# Déploiement acquis.yaml
+- name: Déployer la configuration acquis.yaml pour CrowdSec
+  become: true
+  ansible.builtin.copy:
+    dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/crowdsec/etc/acquis.yaml"
+    content: |
+      filenames:
+       - /var/log/auth.log
+       - /var/log/syslog
+      labels:
+        type: syslog
+      ---
+      filenames:
+        - /var/log/traefik/*.log
+      labels:
+        type: traefik
+        use_x_forwarded_for: true
+    owner: root
+    group: root
+    mode: '0644'
+  register: acquis_copy
+
+# Déploiement config dynamique CrowdSec pour Traefik
+- name: Créer le fichier dynamic config CrowdSec pour Traefik
+  become: true
+  no_log: true
+  ansible.builtin.copy:
+    dest: "{{ settings.storage }}/docker/traefik/rules/config.yml"
+    owner: "{{ lookup('env','USER') }}"
+    group: "{{ lookup('env','MYGIDNAME') | default(lookup('env','USER')) }}"
+    mode: '0644'
+    content: |
+      http:
+        middlewares:
+          crowdsec:
+            plugin:
+              bouncer:
+                enabled: true
+                crowdsecMode: stream
+                updateIntervalSeconds: 10
+                remediationStatusCode: 403
+
+                crowdsecLapiHost: crowdsec:8080
+                crowdsecLapiKey: "{{ traefik_bouncer_api_key }}"
+                crowdsecLapiScheme: http
+                crowdsecLapiTLSInsecureVerify: false
+
+                # ✅ AppSec (WAF) CrowdSec
+                crowdsecAppsecEnabled: true
+                crowdsecAppsecHost: crowdsec:7422
+                crowdsecAppsecFailureBlock: true
+                crowdsecAppsecUnreachableBlock: true
+
+                forwardedHeadersTrustedIPs:
+                  # Réseaux internes
+                  - 10.0.0.0/8
+                  - 172.16.0.0/12
+                  - 192.168.0.0/16
+
+                  # Cloudflare IPv4
+                  - 173.245.48.0/20
+                  - 103.21.244.0/22
+                  - 103.22.200.0/22
+                  - 103.31.4.0/22
+                  - 141.101.64.0/18
+                  - 108.162.192.0/18
+                  - 190.93.240.0/20
+                  - 188.114.96.0/20
+                  - 197.234.240.0/22
+                  - 198.41.128.0/17
+                  - 162.158.0.0/15
+                  - 104.16.0.0/12
+                  - 172.64.0.0/13
+                  - 131.0.72.0/22
+
+                  # Cloudflare IPv6
+                  - 2400:cb00::/32
+                  - 2606:4700::/32
+                  - 2803:f800::/32
+                  - 2405:b500::/32
+                  - 2405:8100::/32
+                  - 2a06:98c0::/29
+                  - 2c0f:f248::/32
+
+                clientTrustedIPs:
+                  - 10.0.0.0/8
+                  - 172.16.0.0/12
+                  - 192.168.0.0/16
+  register: crowdsec_dynamic_config
+
+# --- Partie VI. Protéger l'hôte Docker avec CrowdSec (firewall bouncer iptables) ---
+
+- name: Vérifier que CrowdSec est lancé
+  become: true
+  ansible.builtin.command: docker ps --filter "name=crowdsec" --format "{{'{{'}}.Names{{'}}'}}"
+  register: crowdsec_running
+  changed_when: false
+
+- name: Échouer si CrowdSec n'est pas démarré
+  ansible.builtin.fail:
+    msg: "Le container CrowdSec n'est pas démarré."
+  when: crowdsec_running.stdout == ""
+
+# Ajout du repo + installation du bouncer iptables (Debian/Ubuntu)
+- name: Vérifier si le dépôt CrowdSec est déjà présent
+  become: true
+  ansible.builtin.stat:
+    path: /etc/apt/sources.list.d/crowdsec.list
+  register: crowdsec_repo
+
+- name: Ajouter le dépôt CrowdSec (script officiel)
+  become: true
+  ansible.builtin.shell: |
+    set -o pipefail
+    curl -s https://install.crowdsec.net | sh
+  args:
+    executable: /bin/bash
+  when: not crowdsec_repo.stat.exists
+  changed_when: true
+
+- name: Mettre à jour le cache APT
+  become: true
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Installer crowdsec-firewall-bouncer-iptables
+  become: true
+  ansible.builtin.apt:
+    name: crowdsec-firewall-bouncer-iptables
+    state: present
+
+# Création du bouncer firewall + récupération de la clé API (même logique que ton modèle)
+- name: Supprimer le bouncer existant (firewall-bouncer)
+  become: true
+  ansible.builtin.command: docker exec crowdsec cscli bouncers delete firewall-bouncer
+  failed_when: false
+  changed_when: false
+
+- name: Ajouter le bouncer firewall (iptables)
+  become: true
+  ansible.builtin.command: docker exec crowdsec cscli bouncers add firewall-bouncer
+  register: crowdsec_firewall_bouncer
+
+- name: Extraire la clé API du firewall-bouncer
+  no_log: true
+  ansible.builtin.set_fact:
+    firewall_bouncer_api_key: >-
+      {{
+        (
+          crowdsec_firewall_bouncer.stdout_lines
+          | map('trim')
+          | select('match', '^[A-Za-z0-9+/=]{20,}$')
+          | list
+        )[0] | default('')
+      }}
+
+- debug:
+    var: crowdsec_firewall_bouncer.stdout_lines
+
+- name: Vérifier que la clé API est définie
+  ansible.builtin.fail:
+    msg: "Impossible de récupérer la clé API du bouncer firewall CrowdSec."
+  when: firewall_bouncer_api_key is not defined or firewall_bouncer_api_key == ""
+
+# Déploiement de la conf du bouncer firewall
+# (Chemin standard : /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml)
+- name: Déployer la configuration du firewall bouncer (iptables)
+  become: true
+  no_log: true
+  ansible.builtin.copy:
+    dest: /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
+    owner: root
+    group: root
+    mode: '0600'
+    content: |
+      api_url: http://127.0.0.1:8181/
+      api_key: {{ firewall_bouncer_api_key }}
+
+      # Mode iptables (par défaut avec ce package)
+      mode: iptables
+
+      # Chaîne/sets : garde simple, le bouncer gère les règles.
+      # Tu peux étendre selon ton besoin (whitelists, interfaces, etc.)
+      log_level: info
+
+  register: firewall_bouncer_cfg
+
+- name: Déployer la configuration AppSec (appsec.yml)
+  become: true
+  ansible.builtin.copy:
+    dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/crowdsec/etc/acquis.d/appsec.yml"
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      appsec_config: crowdsecurity/appsec-default
+      labels:
+        type: appsec
+      listen_addr: 0.0.0.0:7422
+      source: appsec
+
+# Restart Traefik
+- name: Redémarrer Traefik si la config CrowdSec a changé
+  become: true
+  ansible.builtin.command: docker restart traefik
+
+# Restart CrowdSec
+- name: Redémarrer CrowdSec si acquis.yaml a changé
+  become: true
+  ansible.builtin.command: docker restart crowdsec

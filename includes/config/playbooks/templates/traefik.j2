@@ -1,0 +1,11 @@
+{{ settings.storage }}/docker/traefik/logs/*.log {
+  compress
+  size 16M
+  daily
+  rotate 31
+  missingok
+  notifempty
+  postrotate
+     docker kill --signal="USR1" traefik                                                  
+  endscript
+}

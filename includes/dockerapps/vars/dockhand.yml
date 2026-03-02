@@ -1,0 +1,8 @@
+---
+pgrole: 'dockhand'
+intport: '3000'
+image: 'fnsys/dockhand:latest'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/app/data"
+  - "/var/run/docker.sock:/var/run/docker.sock"
+

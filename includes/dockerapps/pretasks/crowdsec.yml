@@ -1,0 +1,23 @@
+---
+- name: crowdsec
+  docker_container:
+    image: crowdsecurity/crowdsec:latest
+    name: crowdsec
+    ports:
+      - "127.0.0.1:8181:8080"
+      - "7422" # AppSec (WAF)
+    volumes:
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/crowdsec/data:/var/lib/crowdsec/data"
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/crowdsec/etc:/etc/crowdsec"
+      - "/var/log/auth.log:/var/log/auth.log:ro"
+      - "/var/log/syslog:/var/log/syslog:ro"
+      - "{{ settings.storage }}/docker/traefik/logs:/var/log/traefik:ro"
+    env:
+      GID: "1000"
+      COLLECTIONS: "crowdsecurity/traefik crowdsecurity/http-cve crowdsecurity/base-http-scenarios crowdsecurity/sshd crowdsecurity/linux crowdsecurity/appsec-generic-rules crowdsecurity/appsec-virtual-patching crowdsecurity/appsec-crs"
+      CUSTOM_HOSTNAME: "Srv-Docker-Demo"
+      TZ: "Europe/Paris"
+    state: started
+    restart_policy: unless-stopped
+    networks:
+      - name: traefik_proxy

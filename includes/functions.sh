@@ -183,6 +183,10 @@ function update_logrotate() {
   ansible-playbook ${SETTINGS_SOURCE}/includes/config/playbooks/logrotate.yml
 }
 
+function update_log_traefik() {
+  ansible-playbook ${SETTINGS_SOURCE}/includes/config/playbooks/traefik.yml
+}
+
 function autoscan() {
   #configuration plex_autoscan avec ansible
   echo -e "${BLUE}### AUTOSCAN ###${NC}"
@@ -387,7 +391,7 @@ function install_common() {
   else
     install_traefik
   fi
-
+  update_logrotate
 }
 
 function install_docker() {
