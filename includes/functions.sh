@@ -998,7 +998,7 @@ EOF
   callback_whitelist = profile_tasks
   deprecation_warnings=False
   inventory = ~/.ansible/inventories/local
-  interpreter_python=/usr/bin/python3
+  interpreter_python=${SETTINGS_SOURCE}/venv/bin/python
   vault_password_file = ~/.vault_pass
   log_path=${SETTINGS_SOURCE}/logs/ansible.log
 EOF
@@ -1551,6 +1551,26 @@ function apply_patches() {
       echo "✔ Application du patch : ${patch}"
       bash "${SETTINGS_SOURCE}/patches/${patch}"
       echo "${patch}" >>"${HOME}/.config/ssd/patches"
+    fi
+  done
+}
+
+function create_folders() {
+  echo ""
+  create_dir "${HOME}/local"
+  create_dir "${HOME}/local/radarr"
+  create_dir "${HOME}/local/radarr4k"
+  create_dir "${HOME}/local/sonarr"
+  create_dir "${HOME}/local/sonarr4k"
+  create_dir "${HOME}/Medias"
+  echo -e "\e[36m"$(gettext "Noms de dossiers à créer dans Medias ex: Films, Series, Films d'animation etc .. [Enter] | Taper stop une fois terminé")"\e[0m"		
+  while :
+  do		
+    read -p "" EXCLUDEPATH
+    mkdir -p ${HOME}/Medias/$EXCLUDEPATH
+    if [[ "$EXCLUDEPATH" = "STOP" ]] || [[ "$EXCLUDEPATH" = "stop" ]]; then
+      rm -rf ${HOME}/Medias/$EXCLUDEPATH
+      break
     fi
   done
 }

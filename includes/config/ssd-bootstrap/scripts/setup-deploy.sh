@@ -118,9 +118,10 @@ EOT
 
 # Backend
 log "♻️ Installation backend..."
+pip install -U poetry
 cd "$SSD_DIR"
-pip3 install poetry || true
-poetry env use python3.11 || true
+poetry config virtualenvs.in-project true --local
+poetry env use "$(which python)"
 poetry install
 
 log "🚀 Lancement backend avec PM2..."
