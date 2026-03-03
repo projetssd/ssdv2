@@ -114,6 +114,7 @@ for PORT in 8080 8001 3000; do
   if ss -ltnp 2>/dev/null | grep -q ":$PORT "; then
     echo "⚠️ Le port $PORT est encore occupé :"
     ss -ltnp | grep ":$PORT "
+    sudo pkill -u ubuntu -f 'PM2|pm2|node' || true
   else
     echo "✅ Le port $PORT est libre."
   fi

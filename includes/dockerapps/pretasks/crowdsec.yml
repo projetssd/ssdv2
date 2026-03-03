@@ -1,4 +1,9 @@
 ---
+- name: Creating paths
+  file: 'path={{item}} state=directory mode=0775 owner={{user.userid}} group={{user.groupid}}'
+  with_items:
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}"
+
 - name: crowdsec
   docker_container:
     image: crowdsecurity/crowdsec:latest
