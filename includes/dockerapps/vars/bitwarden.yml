@@ -13,7 +13,7 @@ pg_env:
   INVITATIONS_ALLOWED: 'true' # Send invitation using admin page
   WEBSOCKET_ENABLED: 'true'
   LOG_FILE: '/var/log/docker/bitwarden.log'
-  DOMAIN: 'https://bitwarden.{{user.domain}}'
+  DOMAIN: "https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{user.domain}}"
 # SMTP_HOST: 'smtp.gmail.com'
 # SMTP_FROM: '$SMTP_EMAIL'
 # SMTP_PORT: '587'

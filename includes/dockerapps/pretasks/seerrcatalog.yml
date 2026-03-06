@@ -1,0 +1,16 @@
+---
+- name: Set DNS Record on CloudFlare
+  include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
+  vars:
+    subdomain: "{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}"
+  when: cloudflare_enabled
+
+- pause:
+    prompt: "Entrez une clé de votre choix pour la config des arrs"
+    echo: yes
+  register: arrs_input
+
+- pause:
+    prompt: "Entrez votre clé TMDB"
+    echo: yes
+  register: tmdb_input

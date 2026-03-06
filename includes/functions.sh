@@ -650,7 +650,6 @@ function suppression_appli() {
 
   rm ${SETTINGS_STORAGE}/conf/$APPSELECTED.yml >/dev/null 2>&1
   rm ${SETTINGS_STORAGE}/vars/$APPSELECTED.yml >/dev/null 2>&1
-  echo "0" >${SETTINGS_STORAGE}/status/$APPSELECTED
 
   case $APPSELECTED in
   oauth)

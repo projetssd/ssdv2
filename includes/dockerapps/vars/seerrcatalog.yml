@@ -1,0 +1,23 @@
+---
+pgrole: 'seerrcatalog'
+intport: '7000'
+image: 'ghcr.io/aerya/stremio-seerr-catalog:latest'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/app/data"
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  PORT: "7000"
+  HOST: "::"
+  TMDB_API_KEY: "{{ tmdb_input.user_input }}"
+  BASE_URL: "https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}"
+  API_KEY: "{{ arrs_input.user_input }}"
+specific_docker_info:
+  healthcheck:
+    test: ["CMD-SHELL", "wget -4 --no-verbose --tries=1 --spider http://127.0.0.1:7000/health || exit 1"]
+    interval: "30s"
+    timeout: "10s"
+    retries: 3
+    start_period: "10s"
+  ports:
+    - "7000:7000"

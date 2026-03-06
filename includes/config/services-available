@@ -41,6 +41,7 @@ firefoxsyncserver - Navigateur Firefox
 flixor - interface modern plex
 foptimum - Performances serveur
 freshrss - Agrégateur de flux open source
+frenchio - Stremio orienté contenu francophone
 gethomepage - dashboard Applications
 gitea - Hébergement de développement logiciel
 gitlab - Hébergement de développement logiciel
@@ -127,6 +128,7 @@ sabnzbd - Téléchargement de newsgroups
 scrutiny  - Solution de monitoring
 seafile - Stockage cloud open source
 seerr -  Gestion de contenu Plex/Emby
+seerrcatalog - Passerelle entre Jellyseerr et Stremio
 shaarli - Bookmarking personnel
 sickchill - Gestion Films/Séries
 sickgear - Gestionnaire Films/Séries
