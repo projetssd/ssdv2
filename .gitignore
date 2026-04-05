@@ -6,6 +6,10 @@ autoinstall.ini
 venv/**
 .vscode/**
 .DS_Store
+__pycache__/
+*.pyc
+diagnostic_output.txt
+temp
 
 # Created by https://www.toptal.com/developers/gitignore/api/cloud9,phpstorm
 # Edit at https://www.toptal.com/developers/gitignore?templates=cloud9,phpstorm
