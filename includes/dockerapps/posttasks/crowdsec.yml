@@ -64,74 +64,6 @@
     mode: '0644'
   register: acquis_copy
 
-# Déploiement config dynamique CrowdSec pour Traefik
-- name: Créer le fichier dynamic config CrowdSec pour Traefik
-  become: true
-  no_log: true
-  ansible.builtin.copy:
-    dest: "{{ settings.storage }}/docker/traefik/rules/config.yml"
-    owner: "{{ lookup('env','USER') }}"
-    group: "{{ lookup('env','MYGIDNAME') | default(lookup('env','USER')) }}"
-    mode: '0644'
-    content: |
-      http:
-        middlewares:
-          crowdsec:
-            plugin:
-              bouncer:
-                enabled: true
-                crowdsecMode: stream
-                updateIntervalSeconds: 10
-                remediationStatusCode: 403
-
-                crowdsecLapiHost: crowdsec:8080
-                crowdsecLapiKey: "{{ traefik_bouncer_api_key }}"
-                crowdsecLapiScheme: http
-                crowdsecLapiTLSInsecureVerify: false
-
-                # ✅ AppSec (WAF) CrowdSec
-                crowdsecAppsecEnabled: true
-                crowdsecAppsecHost: crowdsec:7422
-                crowdsecAppsecFailureBlock: true
-                crowdsecAppsecUnreachableBlock: true
-
-                forwardedHeadersTrustedIPs:
-                  # Réseaux internes
-                  - 10.0.0.0/8
-                  - 172.16.0.0/12
-                  - 192.168.0.0/16
-
-                  # Cloudflare IPv4
-                  - 173.245.48.0/20
-                  - 103.21.244.0/22
-                  - 103.22.200.0/22
-                  - 103.31.4.0/22
-                  - 141.101.64.0/18
-                  - 108.162.192.0/18
-                  - 190.93.240.0/20
-                  - 188.114.96.0/20
-                  - 197.234.240.0/22
-                  - 198.41.128.0/17
-                  - 162.158.0.0/15
-                  - 104.16.0.0/12
-                  - 172.64.0.0/13
-                  - 131.0.72.0/22
-
-                  # Cloudflare IPv6
-                  - 2400:cb00::/32
-                  - 2606:4700::/32
-                  - 2803:f800::/32
-                  - 2405:b500::/32
-                  - 2405:8100::/32
-                  - 2a06:98c0::/29
-                  - 2c0f:f248::/32
-
-                clientTrustedIPs:
-                  - 10.0.0.0/8
-                  - 172.16.0.0/12
-                  - 192.168.0.0/16
-  register: crowdsec_dynamic_config
-
 # --- Partie VI. Protéger l'hôte Docker avec CrowdSec (firewall bouncer iptables) ---
 
 - name: Vérifier que CrowdSec est lancé
@@ -243,13 +175,123 @@
         type: appsec
       listen_addr: 0.0.0.0:7422
       source: appsec
+  register: crowdsec_appsec_config
+
+- name: Installer explicitement la règle AppSec de base CrowdSec
+  become: true
+  ansible.builtin.command: docker exec crowdsec cscli appsec-rules install crowdsecurity/base-config
+  register: crowdsec_base_config_install
+  changed_when: "'Nothing to install or remove.' not in crowdsec_base_config_install.stdout"
+
+- name: Vérifier que les collections AppSec CrowdSec ne sont pas tainted
+  become: true
+  ansible.builtin.shell: |
+    set -o pipefail
+    docker exec crowdsec sh -lc 'cscli collections list -a | grep -E "crowdsecurity/appsec-(generic-rules|virtual-patching)" | grep -q tainted'
+  args:
+    executable: /bin/bash
+  register: crowdsec_collections_tainted
+  changed_when: false
+  failed_when: crowdsec_collections_tainted.rc == 0
+
+# Restart CrowdSec
+- name: Redémarrer CrowdSec si la configuration CrowdSec a changé
+  become: true
+  ansible.builtin.command: docker restart crowdsec
+  when: acquis_copy.changed or crowdsec_appsec_config.changed or crowdsec_base_config_install.changed
+
+- name: Attendre que CrowdSec soit relancé
+  become: true
+  ansible.builtin.command: docker inspect crowdsec --format "{{'{{'}}.State.Running{{'}}'}}"
+  register: crowdsec_running_after_restart
+  changed_when: false
+  retries: 12
+  delay: 5
+  until: crowdsec_running_after_restart.stdout == "true"
+
+- name: Vérifier que l'AppSec CrowdSec écoute sur 7422
+  become: true
+  ansible.builtin.shell: |
+    set -o pipefail
+    docker exec crowdsec sh -lc 'wget -S -O- http://127.0.0.1:7422/ 2>&1 | grep -q "401 Unauthorized"'
+  args:
+    executable: /bin/bash
+  register: crowdsec_appsec_health
+  changed_when: false
+  retries: 12
+  delay: 5
+  until: crowdsec_appsec_health.rc == 0
+
+# Déploiement config dynamique CrowdSec pour Traefik
+- name: Créer le fichier dynamic config CrowdSec pour Traefik
+  become: true
+  no_log: true
+  ansible.builtin.copy:
+    dest: "{{ settings.storage }}/docker/traefik/rules/config.yml"
+    owner: "{{ lookup('env','USER') }}"
+    group: "{{ lookup('env','MYGIDNAME') | default(lookup('env','USER')) }}"
+    mode: '0644'
+    content: |
+      http:
+        middlewares:
+          crowdsec:
+            plugin:
+              bouncer:
+                enabled: true
+                crowdsecMode: stream
+                updateIntervalSeconds: 10
+                remediationStatusCode: 403
+
+                crowdsecLapiHost: crowdsec:8080
+                crowdsecLapiKey: "{{ traefik_bouncer_api_key }}"
+                crowdsecLapiScheme: http
+                crowdsecLapiTLSInsecureVerify: false
+
+                # ✅ AppSec (WAF) CrowdSec
+                crowdsecAppsecEnabled: true
+                crowdsecAppsecHost: crowdsec:7422
+                crowdsecAppsecFailureBlock: true
+                crowdsecAppsecUnreachableBlock: true
+
+                forwardedHeadersTrustedIPs:
+                  # Réseaux internes
+                  - 10.0.0.0/8
+                  - 172.16.0.0/12
+                  - 192.168.0.0/16
+
+                  # Cloudflare IPv4
+                  - 173.245.48.0/20
+                  - 103.21.244.0/22
+                  - 103.22.200.0/22
+                  - 103.31.4.0/22
+                  - 141.101.64.0/18
+                  - 108.162.192.0/18
+                  - 190.93.240.0/20
+                  - 188.114.96.0/20
+                  - 197.234.240.0/22
+                  - 198.41.128.0/17
+                  - 162.158.0.0/15
+                  - 104.16.0.0/12
+                  - 172.64.0.0/13
+                  - 131.0.72.0/22
+
+                  # Cloudflare IPv6
+                  - 2400:cb00::/32
+                  - 2606:4700::/32
+                  - 2803:f800::/32
+                  - 2405:b500::/32
+                  - 2405:8100::/32
+                  - 2a06:98c0::/29
+                  - 2c0f:f248::/32
+
+                clientTrustedIPs:
+                  - 10.0.0.0/8
+                  - 172.16.0.0/12
+                  - 192.168.0.0/16
+  register: crowdsec_dynamic_config
 
 # Restart Traefik
 - name: Redémarrer Traefik si la config CrowdSec a changé
   become: true
   ansible.builtin.command: docker restart traefik
-
-# Restart CrowdSec
-- name: Redémarrer CrowdSec si acquis.yaml a changé
-  become: true
-  ansible.builtin.command: docker restart crowdsec
+  when: crowdsec_dynamic_config.changed
