@@ -1,21 +1,6 @@
 ---
-## This task file is used to setup PostgreSQL databases for all applications that require to share the same PostgreSQL instance.
-# Example usage:
-# ---
-# # - name: Launch Pretask
-# #   include_tasks: "{{ settings.source }}/includes/dockerapps/pretasks/stremio/stremio_base.yml"
-
-# # - name: Set PostgreSQL variables for MyApp
-# #   set_fact:
-# #     app_name: "MyApp"
-# #     postgres_container: "stremio-postgres"
-# #     postgres_user: "stremio"
-# #     postgres_password: "stremio"
-# #     required_databases:
-# #       - myapp-db
-
-# # - name: Setup PostgreSQL for Streamfusion
-# #   include_tasks: {{ settings.source }}/includes/dockerapps/pretasks/stremio/postgres_setup.yml
+## This task file is used to setup PostgreSQL roles and databases
+## for all applications that share the same PostgreSQL instance.
 
 - name: PostgreSQL Setup for {{ app_name }}
   block:
@@ -29,31 +14,76 @@
         msg: "The {{ postgres_container }} container does not exist. Please ensure it is running before proceeding."
       when: postgres_container_check.stdout == ""
 
-    - name: Check and create databases
+    - name: Check and create PostgreSQL roles and databases
       block:
+        - name: Get list of existing PostgreSQL roles
+          command: >
+            docker exec -e PGPASSWORD={{ postgres_admin_password }}
+            {{ postgres_container }}
+            psql -U {{ postgres_admin_user }} -d postgres -tAc "SELECT rolname FROM pg_roles;"
+          register: existing_roles
+          changed_when: false
+          no_log: true
+
+        - name: Create missing PostgreSQL roles
+          command: >
+            docker exec -e PGPASSWORD={{ postgres_admin_password }}
+            {{ postgres_container }}
+            psql -U {{ postgres_admin_user }} -d postgres
+            -c "CREATE ROLE \"{{ item.name }}\" WITH LOGIN PASSWORD '{{ item.password }}';"
+          loop: "{{ required_roles | default([]) }}"
+          when: item.name not in existing_roles.stdout_lines
+          register: role_create
+          changed_when: role_create.rc == 0
+          no_log: true
+
         - name: Get list of existing databases
-          command: docker exec {{ postgres_container }} psql -U {{ postgres_user }} -d postgres -tAc "SELECT datname FROM pg_database WHERE datistemplate = false;"
+          command: >
+            docker exec -e PGPASSWORD={{ postgres_admin_password }}
+            {{ postgres_container }}
+            psql -U {{ postgres_admin_user }} -d postgres -tAc "SELECT datname FROM pg_database WHERE datistemplate = false;"
           register: existing_databases
           changed_when: false
+          no_log: true
 
-        - name: Create missing databases
-          command: docker exec -e PGPASSWORD={{ postgres_password }} {{ postgres_container }} psql -U {{ postgres_user }} -d postgres -c "CREATE DATABASE \"{{ item }}\";"
+        - name: Create missing databases with owner
+          command: >
+            docker exec -e PGPASSWORD={{ postgres_admin_password }}
+            {{ postgres_container }}
+            psql -U {{ postgres_admin_user }} -d postgres
+            -c "CREATE DATABASE \"{{ item.name }}\" OWNER \"{{ item.owner }}\";"
           loop: "{{ required_databases }}"
-          when: item not in existing_databases.stdout_lines
+          when: item.name not in existing_databases.stdout_lines
           register: db_create
           changed_when: db_create.rc == 0
-          failed_when:
-            - db_create.rc != 0
-            - '"already exists" not in db_create.stderr'
+          no_log: true
+
+        - name: Grant privileges on databases
+          command: >
+            docker exec -e PGPASSWORD={{ postgres_admin_password }}
+            {{ postgres_container }}
+            psql -U {{ postgres_admin_user }} -d postgres
+            -c "GRANT ALL PRIVILEGES ON DATABASE \"{{ item.name }}\" TO \"{{ item.owner }}\";"
+          loop: "{{ required_databases }}"
+          register: db_grants
+          changed_when: false
+          no_log: true
+
+        - name: Summarize PostgreSQL role creation
+          debug:
+            msg: "Role '{{ item.item.name }}' {{ 'already existed' if item.skipped is defined else 'was created successfully' }}"
+          loop: "{{ role_create.results | default([]) }}"
+          loop_control:
+            label: "{{ item.item.name }}"
 
         - name: Summarize database creation
           debug:
-            msg: "Database '{{ item.item }}' {{ 'already existed' if item.skipped is defined else 'was created successfully' }}"
-          loop: "{{ db_create.results }}"
+            msg: "Database '{{ item.item.name }}' {{ 'already existed' if item.skipped is defined else 'was created successfully' }}"
+          loop: "{{ db_create.results | default([]) }}"
           loop_control:
-            label: "{{ item.item }}"
+            label: "{{ item.item.name }}"
 
   rescue:
     - name: Display global error message
       fail:
-        msg: "An error occurred while setting up PostgreSQL databases for {{ app_name }}. Please check the logs for more details."
+        msg: "An error occurred while setting up PostgreSQL roles/databases for {{ app_name }}. Please check the logs for more details."

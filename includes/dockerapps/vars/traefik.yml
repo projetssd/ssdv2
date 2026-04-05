@@ -229,12 +229,14 @@
         published_ports:
           - "80:80"
           - "443:443"
+          - "127.0.0.1:8443:8443"
         env: '{{ traefik_env | default({}) }}'
         volumes:
           - "/var/run/docker.sock:/var/run/docker.sock:ro"
           - "{{ settings.storage }}/docker/{{pgrole}}/acme/acme.json:/acme.json"
           - "{{ settings.storage }}/docker/{{pgrole}}/rules:/rules"
           - "{{ settings.storage }}/docker/{{pgrole}}/logs/:/logs"
+          - "{{ settings.storage }}/docker/{{pgrole}}/certs:/certs:ro"
           - "{{ settings.storage }}/docker/{{pgrole}}/traefik.yml:/etc/traefik/traefik.yml:ro"
         labels: '{{labels}}'
         restart_policy: unless-stopped

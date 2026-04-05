@@ -4,7 +4,17 @@ intport: '3000'
 image: 'ghcr.io/viren070/aiostreams:latest'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/app/data"
-specific_docker_info:
-  env_file:
-    "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/aiostreams/.env"
-
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  ADDON_NAME: "AIOStreams"
+  ADDON_ID: "aiostreams.viren070.com"
+  PORT: "3000"
+  BASE_URL: "https://aiostreams.{{ user.domain }}"
+  SECRET_KEY: "{{ random_key.stdout }}"
+  DATABASE_URI: "sqlite://./data/db.sqlite"
+  BUILTIN_STREMTHRU_URL: "https://stremthru.{{ user.domain }}"
+  LOG_LEVEL: "http"
+  LOG_FORMAT: "text"
+  LOG_SENSITIVE_INFO: "true"
+  LOG_TIMEZONE: "Europe/Paris"

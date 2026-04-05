@@ -100,7 +100,7 @@ providers:
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: laster13012@gmail.com
+      email: "{{ user.mail }}"
       storage: /acme.json
       caServer: https://acme-v02.api.letsencrypt.org/directory
       dnsChallenge:

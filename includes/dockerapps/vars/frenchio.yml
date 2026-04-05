@@ -1,3 +1,6 @@
+# doc: https://projetssd.github.io/ssdv2_docs/applications/media/frenchio/
+# https://github.com/aymene69/frenchio
+
 pgrole: "frenchio"
 intport: "7777"
 image: "ghcr.io/aymene69/frenchio:latest"
@@ -6,20 +9,16 @@ pg_volumes:
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
   - "/etc/localtime:/etc/localtime:ro"
 
-pg_env: {}
-# pg_env:
-#   PORT: "7777"
-#   HTTP_PROXY: "http://proxy.example.com:8080"
-#   HTTPS_PROXY: "http://proxy.example.com:8080"
-#   NO_PROXY: "localhost,127.0.0.1"
-#   QBITTORRENT_ENABLE: "true"
-#   MANIFEST_TITLE_SUFFIX: "| ElfHosted"
-#   MANIFEST_BLURB: "<b>Custom message here</b>"
+pg_env:
+  PORT: "7777"
+  QBITTORRENT_ENABLE: "false"
 
 specific_docker_info:
   healthcheck:
-    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:6969/manifest.json')"]
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:7777/manifest.json')"]
     interval: "30s"
     timeout: "10s"
     retries: "3"
     start_period: "5s"
+  ports:
+    - "7777:7777"

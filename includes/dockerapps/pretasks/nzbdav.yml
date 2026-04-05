@@ -63,7 +63,7 @@
 - name: Deploying rclone
   docker_container:
     name: 'rclone'
-    image: 'rclone/rclone:latest'
+    image: 'rclone/rclone:v1.72-stable'
     privileged: true
     volumes:
       - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"

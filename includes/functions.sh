@@ -544,78 +544,97 @@ function install_services() {
   rm $SERVICESPERUSER
 }
 
-function launch_service() {
+launch_service () {
+    line=$1
+    log_write "Installation de ${line}" > /dev/null 2>&1
+    error=0
+    rc=0
 
-  line=$1
-  log_write "Installation de ${line}" >/dev/null 2>&1
-  error=0
+    paths=(
+        "${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml"
+        "/home/${USER}/seedbox/vars/${line}.yml"
+    )
 
-# Définir les chemins à vérifier
-  paths=(
-    "${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml"
-    "/home/${USER}/seedbox/vars/${line}.yml"
-  )
+    for path in "${paths[@]}"; do
+        grep --color=auto "traefik_labels_enabled: false" "$path" > /dev/null 2>&1
+        if [ $? -eq 1 ]; then
+            tempsubdomain=$(get_from_account_yml sub.${line}.${line})
+            if [ "${tempsubdomain}" = notfound ]; then
+                subdomain_unitaire ${line}
+            fi
 
-  for path in "${paths[@]}"; do
-    # Vérifie la présence de "traefik_labels_enabled: false" dans le fichier
-    grep "traefik_labels_enabled: false" "$path" >/dev/null 2>&1
-    if [ $? -eq 1 ]; then
-      tempsubdomain=$(get_from_account_yml sub.${line}.${line})
-      if [ "${tempsubdomain}" = notfound ]; then
-        subdomain_unitaire ${line}
-      fi
-      tempauth=$(get_from_account_yml sub.${line}.auth)
-      if [ "${tempauth}" = notfound ]; then
-        auth_unitaire ${line}
-      fi
-    else
-      # Vérifie également la présence de "labels" dans le fichier si "traefik_labels_enabled: false" est trouvé
-      grep "labels:" "$path" >/dev/null 2>&1
-      if [ $? -eq 0 ]; then
-        tempsubdomain=$(get_from_account_yml sub.${line}.${line})
-        if [ "${tempsubdomain}" = notfound ]; then
-          subdomain_unitaire ${line}
+            tempauth=$(get_from_account_yml sub.${line}.auth)
+            if [ "${tempauth}" = notfound ]; then
+                auth_unitaire ${line}
+            fi
+        else
+            grep --color=auto "labels:" "$path" > /dev/null 2>&1
+            if [ $? -eq 0 ]; then
+                tempsubdomain=$(get_from_account_yml sub.${line}.${line})
+                if [ "${tempsubdomain}" = notfound ]; then
+                    subdomain_unitaire ${line}
+                fi
+
+                tempauth=$(get_from_account_yml sub.${line}.auth)
+                if [ "${tempauth}" = notfound ]; then
+                    auth_unitaire ${line}
+                fi
+            fi
         fi
-        tempauth=$(get_from_account_yml sub.${line}.auth)
-        if [ "${tempauth}" = notfound ]; then
-          auth_unitaire ${line}
+    done
+
+    if [[ "${line}" == "plex" ]]; then
+        echo ""
+        echo -e "${BLUE}### CONFIG POST COMPOSE PLEX ###${NC}"
+        echo -e " ${BWHITE}* Processing plex config file...${NC}"
+        echo ""
+        echo -e " ${GREEN}"$(gettext "ATTENTION IMPORTANT - NE PAS FAIRE D'ERREUR - SINON DESINSTALLER ET REINSTALLER")"${NC}"
+
+        "${SETTINGS_SOURCE}/includes/config/scripts/plex_token.sh"
+        rc=$?
+        if [ ${rc} -ne 0 ]; then
+            error=1
         fi
-      fi
-    fi
-  done
 
-  if [[ "${line}" == "plex" ]]; then
-    echo ""
-    echo -e "${BLUE}### CONFIG POST COMPOSE PLEX ###${NC}"
-    echo -e " ${BWHITE}* Processing plex config file...${NC}"
-    echo ""
-    echo -e " ${GREEN}"$(gettext "ATTENTION IMPORTANT - NE PAS FAIRE D'ERREUR - SINON DESINSTALLER ET REINSTALLER")"${NC}"
-    "${SETTINGS_SOURCE}/includes/config/scripts/plex_token.sh"
-    ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/vars/plex.yml"
-  else
-    # On est dans le cas générique
-    # on regarde s'i y a un playbook existant
-    if [[ -f "${SETTINGS_STORAGE}/vars/${line}.yml" ]]; then
-      # il y a des variables persos, on les lance
-      ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/vars/generique.yml" --extra-vars "@${SETTINGS_STORAGE}/vars/${line}.yml"
-    elif [[ -f "${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml" ]]; then
-      echo 
-      # puis on lance le générique avec ce qu'on vient de copier
-      ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/vars/generique.yml" --extra-vars "@${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml"
+        if [ ${error} -eq 0 ]; then
+            ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/vars/plex.yml"
+            rc=$?
+            if [ ${rc} -ne 0 ]; then
+                error=1
+            fi
+        fi
     else
-      log_write "Aucun fichier de configuration trouvé dans les sources, abandon"
-      error=1
+        if [[ -f "${SETTINGS_STORAGE}/vars/${line}.yml" ]]; then
+            ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/vars/generique.yml" --extra-vars "@${SETTINGS_STORAGE}/vars/${line}.yml"
+            rc=$?
+            if [ ${rc} -ne 0 ]; then
+                error=1
+            fi
+        else
+            if [[ -f "${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml" ]]; then
+                echo
+                ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/vars/generique.yml" --extra-vars "@${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml"
+                rc=$?
+                if [ ${rc} -ne 0 ]; then
+                    error=1
+                fi
+            else
+                log_write "Aucun fichier de configuration trouvé dans les sources, abandon"
+                error=1
+                rc=1
+            fi
+        fi
     fi
-  fi
-  if [ ${error} = 0 ]; then
-    temp_subdomain=$(get_from_account_yml "sub.${line}.${line}")
-    DOMAIN=$(get_from_account_yml user.domain)
 
-    FQDNTMP="${temp_subdomain}.$DOMAIN"
+    if [ ${error} = 0 ]; then
+        temp_subdomain=$(get_from_account_yml "sub.${line}.${line}")
+        DOMAIN=$(get_from_account_yml user.domain)
+        FQDNTMP="${temp_subdomain}.$DOMAIN"
+    fi
 
-  fi
-  FQDNTMP=""
+    return ${rc}
 }
+
 
 function manage_apps() {
   echo -e "${BLUE}#################################${NC}"

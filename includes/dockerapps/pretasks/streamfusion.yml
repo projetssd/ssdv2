@@ -20,10 +20,14 @@
   set_fact:
     app_name: "StreamFusion"
     postgres_container: "stremio-postgres"
-    postgres_user: "stremio"
-    postgres_password: "stremio"
+    postgres_admin_user: "streamfusion"
+    postgres_admin_password: "streamfusion"
+    required_roles:
+      - name: "streamfusion"
+        password: "streamfusion"
     required_databases:
-      - streamfusion
+      - name: "streamfusion"
+        owner: "streamfusion"
 
 - name: Setup PostgreSQL for Streamfusion
   include_tasks: "{{ settings.source }}/includes/dockerapps/pretasks/stremio/postgres_setup.yml"
@@ -73,52 +77,3 @@
         msg: "SECRET_API_KEY is required. Please provide a valid value."
       when: SECRET_API_KEY | length == 0
 
-    - name: Prompt for RD_TOKEN
-      pause:
-        prompt: "Enter Real-Debrid token (RD_TOKEN) (leave empty for null)"
-        echo: no
-      register: rd_token_input
-
-    - name: Set RD_TOKEN
-      set_fact:
-        RD_TOKEN: "{{ rd_token_input.user_input | default('', true) }}"
-
-    - name: Prompt for AD_TOKEN
-      pause:
-        prompt: "Enter AllDebrid token (AD_TOKEN) (leave empty for null)"
-        echo: no
-      register: ad_token_input
-
-    - name: Set AD_TOKEN
-      set_fact:
-        AD_TOKEN: "{{ ad_token_input.user_input | default('', true) }}"
-
-    - name: Prompt for YGG_PASSKEY
-      pause:
-        prompt: "Enter your YggTorrent passkey (YGG_PASSKEY) (must be 32 characters, leave empty for null)"
-        echo: no
-      register: ygg_passkey_input
-
-    - name: Validate and set YGG_PASSKEY
-      set_fact:
-        YGG_PASSKEY: "{{ ygg_passkey_input.user_input if ygg_passkey_input.user_input | length == 32 else '' }}"
-
-    - name: Warn if YGG_PASSKEY is invalid
-      debug:
-        msg: "Warning: YGG_PASSKEY must be 32 characters long. It has been set to null."
-      when: ygg_passkey_input.user_input != '' and ygg_passkey_input.user_input | length != 32
-
-    - name: Prompt for SHAREWOOD_PASSKEY
-      pause:
-        prompt: "Enter your Sharewood passkey (SHAREWOOD_PASSKEY) (must be 32 characters, leave empty for null)"
-        echo: no
-      register: sharewood_passkey_input
-
-    - name: Validate and set SHAREWOOD_PASSKEY
-      set_fact:
-        SHAREWOOD_PASSKEY: "{{ sharewood_passkey_input.user_input if sharewood_passkey_input.user_input | length == 32 else '' }}"
-
-    - name: Warn if SHAREWOOD_PASSKEY is invalid
-      debug:
-        msg: "Warning: SHAREWOOD_PASSKEY must be 32 characters long. It has been set to null."
-      when: sharewood_passkey_input.user_input != '' and sharewood_passkey_input.user_input | length != 32
