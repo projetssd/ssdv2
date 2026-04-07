@@ -162,6 +162,14 @@
 
   register: firewall_bouncer_cfg
 
+# Redémarrer le service firewall-bouncer après mise à jour de la config
+- name: Redémarrer le service crowdsec-firewall-bouncer
+  become: true
+  ansible.builtin.systemd:
+    name: crowdsec-firewall-bouncer
+    state: restarted
+    enabled: true
+
 - name: Déployer la configuration AppSec (appsec.yml)
   become: true
   ansible.builtin.copy:
