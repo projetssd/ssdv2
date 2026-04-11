@@ -135,17 +135,16 @@
         docker_info: "{{ docker_info | combine(specific_docker_info, recursive=True) }}"
       when: docker_deploy_enabled and specific_docker_info is defined
 
+    - name: Normalize security_opts for docker_container
+      set_fact:
+        docker_info: "{{ docker_info | combine({'security_opts': [docker_info.security_opts]}) }}"
+      when:
+        - docker_deploy_enabled
+        - docker_info.security_opts is defined
+        - docker_info.security_opts is string
+
     - name: Deploy container {{ pgrole }}
-      docker_container:
-        name: "{{ docker_info.name }}"
-        image: "{{ docker_info.image }}"
-        volumes: "{{ docker_info.volumes }}"
-        env: "{{ docker_info.env }}"
-        restart_policy: "{{ docker_info.restart_policy }}"
-        networks: "{{ docker_info.networks }}"
-        state: "{{ docker_info.state }}"
-        labels: "{{ docker_info.labels }}"
-        ports: "{{ docker_info.ports | default(omit) }}"
+      docker_container: "{{ docker_info }}"
       when: docker_deploy_enabled
     
     # POST TASKS ###################################################################
