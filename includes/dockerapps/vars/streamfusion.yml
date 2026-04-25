@@ -1,23 +1,49 @@
 ---
 pgrole: 'streamfusion'
 intport: '8080'
-image: 'ghcr.io/limehubs/stream-fusion:develop'
+image: 'limedrive/stream-fusion-reborn:latest'
 pg_volumes:
-  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}:/app/config"
+  - stream-fusion:/app/config
+  - taskiq-logs:/app/config/logs
+  - torrent-cache:/var/cache/torrents
+  - imdb-db:/data/imdb_db:ro
 pg_env:
-  LOG_LEVEL: "DEBUG"
-  PUID: "{{ lookup('env','MYUID') }}"
-  PGID: "{{ lookup('env','MYGID') }}"
+  RUN_MIGRATIONS: "true"
+  MEILI_MASTER_KEY: "{{ MEILI_MASTER_KEY }}"
+  PROXY_URL: http://warp:1080
+  MEILI_HOST: meilisearch
+  MEILI_PORT: "7700"
+  TASKIQ_REDIS_DB: "6"
   SECRET_API_KEY: "{{ SECRET_API_KEY }}"
-  TMDB_API_KEY: "{{ tmdb.apikey }}"
+  CONFIG_SECRET_KEY: "{{ CONFIG_SECRET_KEY }}"
+  TMDB_API_KEY: "{{ TMDB_API_KEY }}"
   REDIS_HOST: "stremio-redis"
-  PG_HOST: "stremio-postgres"
   PG_BASE: "streamfusion"
   PG_USER: "streamfusion"
   PG_PASS: "streamfusion"
   USE_HTTPS: "true"
   TZ: "Europe/Paris"
-docker_deploy_enabled: false
-
-pretasks:
-  - tmdb
+traefik_labels_enabled: false
+specific_docker_info:
+  expose:
+    - "8080"
+  cap_drop:
+    - ALL
+  security_opts:
+    - "no-new-privileges:true"
+  read_only: true
+  tmpfs:
+    - "/tmp:mode=1777"
+    - "/home/appuser:uid=1000,gid=1000,mode=0700"
+  labels:
+    traefik.enable: "true"
+    traefik.http.routers.stream-fusion-rtr.rule: "Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)"
+    traefik.http.routers.stream-fusion-rtr.entrypoints: "http,https"
+    traefik.http.routers.stream-fusion-rtr.tls: "true"
+    traefik.http.routers.stream-fusion-rtr.tls.certresolver: "letsencrypt"
+    traefik.http.routers.stream-fusion-rtr.service: "stream-fusion-svc"
+    traefik.http.services.stream-fusion-svc.loadbalancer.server.port: "8080"
+    traefik.http.services.stream-fusion-svc.loadbalancer.sticky.cookie: "true"
+    traefik.http.services.stream-fusion-svc.loadbalancer.sticky.cookie.name: "sfr_sticky"
+    traefik.http.services.stream-fusion-svc.loadbalancer.sticky.cookie.httpOnly: "true"
+    traefik.http.services.stream-fusion-svc.loadbalancer.sticky.cookie.secure: "true"

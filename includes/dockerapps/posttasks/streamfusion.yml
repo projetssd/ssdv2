@@ -1,0 +1,5 @@
+- name: Afficher les liens Stream Fusion
+  ansible.builtin.debug:
+    msg:
+      - "Configuration Stream Fusion : https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}/admin"
+      - "Documentation premier démarrage : https://docs.streamfusion.link/guides/premier-demarrage/"

@@ -752,38 +752,9 @@ function suppression_appli() {
     manage_account_yml sub.immich " "
     ;;
   streamfusion)
-    docker rm -f warp streamfusion >/dev/null 2>&1
+    docker rm -f warp streamfusion taskiq-worker taskiq-scheduler meilisearch stremio-redis stremio-postgres >/dev/null 2>&1
     if [ $DELETE -eq 1 ]; then
-        sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/${APPSELECTED}
-        docker volume rm warp-data >/dev/null 2>&1
-        # Il faut gérer les DB postgres dans la fonction 'check_and_remove_shared_containers'
-        check_and_remove_shared_containers ${APPSELECTED}
-        docker volume prune -f >/dev/null 2>&1
-    fi
-    ;;
-  stremiocatalogs)
-    docker rm -f ${APPSELECTED} >/dev/null 2>&1
-    if [ $DELETE -eq 1 ]; then
-        sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/${APPSELECTED}
-        # Il faut gérer les DB postgres dans la fonction 'check_and_remove_shared_containers'
-        check_and_remove_shared_containers ${APPSELECTED}
-    fi
-    ;;
-  stremiotrakt)
-    docker rm -f ${APPSELECTED} >/dev/null 2>&1
-    if [ $DELETE -eq 1 ]; then
-        sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/${APPSELECTED}
-        # Il faut gérer les DB postgres dans la fonction 'check_and_remove_shared_containers'
-        check_and_remove_shared_containers ${APPSELECTED}
-    fi
-    ;;
-  zilean)
-    docker rm -f zilean >/dev/null 2>&1
-    if [ $DELETE -eq 1 ]; then
-        sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/${APPSELECTED}
-        # Il faut gérer les DB postgres dans la fonction 'check_and_remove_shared_containers'
-        check_and_remove_shared_containers ${APPSELECTED}
-        docker volume prune -f >/dev/null 2>&1
+        docker volume prune -af >/dev/null 2>&1
     fi
     ;;
   coolify)
@@ -827,46 +798,6 @@ function suppression_appli() {
   sqlite3 ${SETTINGS_SOURCE}/ssddb <<EOF
 $req
 EOF
-}
-
-function check_and_remove_shared_containers() {
-  local app="$1"
-  # Stremio Base Removal
-  local stremio_apps=("zilean" "streamfusion" "stremiocatalogs" "stremiotrakt")
-  local stremio_apps_running=false
-
-  for stremio_app in "${stremio_apps[@]}"; do
-    if [ "$stremio_app" != "$app" ] && docker ps -q --filter name="$stremio_app" | grep -q .; then
-      stremio_apps_running=true
-      break
-    fi
-  done
-
-  if docker ps -a --filter "name=stremio-postgres" --format "{{.Names}}" | grep -q "stremio-postgres"; then
-      case "$app" in
-        streamfusion)
-          docker exec -e PGPASSWORD=stremio stremio-postgres psql -U stremio -d postgres -c "DROP DATABASE IF EXISTS \"streamfusion\";" || echo "Failed to drop streamfusion database."
-          ;;
-        stremiocatalogs)
-          docker exec -e PGPASSWORD=stremio stremio-postgres psql -U stremio -d postgres -c "DROP DATABASE IF EXISTS \"stremio-catalog-db\";" || echo "Failed to drop stremio-catalog-db database."
-          ;;
-        stremiotrakt)
-          docker exec -e PGPASSWORD=stremio stremio-postgres psql -U stremio -d postgres -c "DROP DATABASE IF EXISTS \"stremio-trakt-db\";" || echo "Failed to drop stremio-trakt-db database."
-          ;;
-        zilean)
-          docker exec -e PGPASSWORD=stremio stremio-postgres psql -U stremio -d postgres -c "DROP DATABASE IF EXISTS \"zilean\";" || echo "Failed to drop zilean database."
-          ;;
-        *)
-          docker exec -e PGPASSWORD=stremio stremio-postgres psql -U stremio -d postgres -c "DROP DATABASE IF EXISTS \"$app-db\";" || echo "Failed to drop $app-db database."
-          ;;
-      esac
-  fi
-
-  if ! $stremio_apps_running; then
-    docker rm -f stremio-postgres stremio-redis >/dev/null 2>&1 || echo "Failed to remove containers."
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/stremio-redis >/dev/null 2>&1
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/stremio-postgres >/dev/null 2>&1
-  fi
 }
 
 function pause() {

@@ -1,4 +1,70 @@
 ---
+- name: Ask for TMDB_API_KEY
+  pause:
+    prompt: "Entre ta clé TMDB_API_KEY"
+    echo: false
+  register: tmdb_api_key_prompt
+  no_log: true
+
+- name: Ask for SECRET_API_KEY
+  pause:
+    prompt: "Entre ta SECRET_API_KEY"
+    echo: false
+  register: secret_api_key_prompt
+  no_log: true
+
+- name: Set StreamFusion secrets directory
+  set_fact:
+    streamfusion_secret_dir: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/streamfusion-secrets"
+
+- name: Create StreamFusion secrets directory
+  file:
+    path: "{{ streamfusion_secret_dir }}"
+    state: directory
+    mode: "0700"
+
+- name: Generate persistent MEILI_MASTER_KEY
+  shell: |
+    if [ ! -f "{{ streamfusion_secret_dir }}/MEILI_MASTER_KEY" ]; then
+      openssl rand -hex 32 > "{{ streamfusion_secret_dir }}/MEILI_MASTER_KEY"
+      chmod 0600 "{{ streamfusion_secret_dir }}/MEILI_MASTER_KEY"
+    fi
+  args:
+    executable: /bin/bash
+  changed_when: false
+  no_log: true
+
+- name: Generate persistent CONFIG_SECRET_KEY
+  shell: |
+    if [ ! -f "{{ streamfusion_secret_dir }}/CONFIG_SECRET_KEY" ]; then
+      openssl rand -hex 32 > "{{ streamfusion_secret_dir }}/CONFIG_SECRET_KEY"
+      chmod 0600 "{{ streamfusion_secret_dir }}/CONFIG_SECRET_KEY"
+    fi
+  args:
+    executable: /bin/bash
+  changed_when: false
+  no_log: true
+
+- name: Read persistent MEILI_MASTER_KEY
+  slurp:
+    src: "{{ streamfusion_secret_dir }}/MEILI_MASTER_KEY"
+  register: meili_master_key_file
+  no_log: true
+
+- name: Read persistent CONFIG_SECRET_KEY
+  slurp:
+    src: "{{ streamfusion_secret_dir }}/CONFIG_SECRET_KEY"
+  register: config_secret_key_file
+  no_log: true
+
+- name: Set StreamFusion secret facts
+  set_fact:
+    MEILI_MASTER_KEY: "{{ meili_master_key_file.content | b64decode | trim }}"
+    CONFIG_SECRET_KEY: "{{ config_secret_key_file.content | b64decode | trim }}"
+    TMDB_API_KEY: "{{ tmdb_api_key_prompt.user_input }}"
+    SECRET_API_KEY: "{{ secret_api_key_prompt.user_input }}"
+  no_log: true
+
 - name: Stremio Base Pre-task Setup
   block:
     - name: Check if containers exist
@@ -8,6 +74,9 @@
       loop:
         - stremio-postgres
         - stremio-redis
+        - meilisearch
+        - warp
+        - taskiq-scheduler
 
     - name: Debug container check results
       debug:
@@ -17,30 +86,37 @@
       set_fact:
         postgres_exists: "{{ 'stremio-postgres' in container_check.results | map(attribute='stdout') | join(',') }}"
         redis_exists: "{{ 'stremio-redis' in container_check.results | map(attribute='stdout') | join(',') }}"
+        meilisearch_exists: "{{ 'meilisearch' in container_check.results | map(attribute='stdout') | join(',') }}"
+        warp_exists: "{{ 'warp' in container_check.results | map(attribute='stdout') | join(',') }}"
+        taskiq_scheduler_exists: "{{ 'taskiq-scheduler' in container_check.results | map(attribute='stdout') | join(',') }}"
 
     - name: Debug container existence
       debug:
         msg:
           - "Postgres exists: {{ postgres_exists }}"
           - "Redis exists: {{ redis_exists }}"
+          - "Meilisearch exists: {{ meilisearch_exists }}"
+          - "Warp exists: {{ warp_exists }}"
+          - "Taskiq scheduler exists: {{ taskiq_scheduler_exists }}"
 
     - name: Deploy stremio-postgres
       community.docker.docker_container:
         name: stremio-postgres
-        image: "postgres:16.3-alpine3.20"
+        image: "postgres:17-alpine"
+        state: started
         env:
           PGDATA: "/var/lib/postgresql/data/pgdata"
           POSTGRES_USER: "streamfusion"
           POSTGRES_PASSWORD: "streamfusion"
-          POSTGRES_DB: "shared"
+          POSTGRES_DB: "streamfusion"
         volumes:
-          - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/stremio-postgres:/var/lib/postgresql/data/pgdata"
+          - stremio-postgres:/var/lib/postgresql/data/pgdata
         restart_policy: always
         healthcheck:
-          test: ["CMD-SHELL", "pg_isready -U stremio -d shared"]
-          interval: 10s
+          test: ["CMD-SHELL", "pg_isready -U streamfusion -d streamfusion"]
+          interval: 5s
           timeout: 5s
-          retries: 5
+          retries: 10
         networks:
           - name: traefik_proxy
       when: not postgres_exists
@@ -48,21 +124,170 @@
     - name: Wait for PostgreSQL to be healthy
       command: docker inspect --format="{% raw %}{{.State.Health.Status}}{% endraw %}" stremio-postgres
       register: postgres_health
+      changed_when: false
       until: postgres_health.stdout == 'healthy'
       retries: 12
       delay: 10
-      when: not postgres_exists
 
     - name: Deploy stremio-redis
       community.docker.docker_container:
         name: stremio-redis
-        image: redis:latest
+        image: redis:7-alpine
+        state: started
+        command: redis-server --appendonly yes
+        exposed_ports:
+          - "6379"
         volumes:
-          - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/stremio-redis:/data"
-        restart_policy: always
+          - stremio-redis:/data
+        restart_policy: unless-stopped
+        healthcheck:
+          test: ["CMD", "redis-cli", "ping"]
+          interval: 5s
+          timeout: 5s
+          retries: 10
         networks:
           - name: traefik_proxy
       when: not redis_exists
+
+    - name: Wait for Redis to be healthy
+      command: docker inspect --format="{% raw %}{{.State.Health.Status}}{% endraw %}" stremio-redis
+      register: redis_health
+      changed_when: false
+      until: redis_health.stdout == 'healthy'
+      retries: 12
+      delay: 10
+
+    - name: Deploy Meilisearch
+      community.docker.docker_container:
+        name: sfr-meilisearch
+        image: getmeili/meilisearch:v1.41.0
+        state: started
+        env:
+          MEILI_MASTER_KEY: "{{ MEILI_MASTER_KEY }}"
+          MEILI_ENV: "production"
+          MEILI_EXPERIMENTAL_DUMPLESS_UPGRADE: "true"
+        exposed_ports:
+          - "7700"
+        volumes:
+          - meili-data:/meili_data
+        restart_policy: unless-stopped
+        healthcheck:
+          test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:7700/health || exit 1"]
+          interval: 5s
+          timeout: 5s
+          retries: 10
+        networks:
+          - name: traefik_proxy
+      when: not meilisearch_exists
+
+    - name: Wait for Meilisearch to be healthy
+      command: docker inspect --format="{% raw %}{{.State.Health.Status}}{% endraw %}" sfr-meilisearch
+      register: meilisearch_health
+      changed_when: false
+      until: meilisearch_health.stdout == 'healthy'
+      retries: 12
+      delay: 10
+
+    - name: Deploy Warp
+      community.docker.docker_container:
+        name: warp
+        image: caomingjun/warp:latest
+        state: started
+        restart_policy: always
+        exposed_ports:
+          - "1080"
+        env:
+          WARP_SLEEP: "2"
+        capabilities:
+          - NET_ADMIN
+        sysctls:
+          net.ipv6.conf.all.disable_ipv6: "0"
+          net.ipv4.conf.all.src_valid_mark: "1"
+        volumes:
+          - warp-data:/var/lib/cloudflare-warp
+        networks:
+          - name: traefik_proxy
+      when: not warp_exists
+
+    - name: Wait for stremio-redis to be healthy before Taskiq
+      command: docker inspect --format="{% raw %}{{.State.Health.Status}}{% endraw %}" stremio-redis
+      register: redis_health_taskiq
+      changed_when: false
+      retries: 12
+      delay: 5
+      until: redis_health_taskiq.stdout == 'healthy'
+
+    - name: Wait for Meilisearch to be running before Taskiq
+      command: docker inspect --format="{% raw %}{{.State.Running}}{% endraw %}" sfr-meilisearch
+      register: meilisearch_running
+      changed_when: false
+      retries: 12
+      delay: 5
+      until: meilisearch_running.stdout == 'true'
+
+    - name: Deploy Taskiq scheduler
+      community.docker.docker_container:
+        name: taskiq-scheduler
+        image: limedrive/stream-fusion-reborn:latest
+        state: started
+        command: python -m taskiq scheduler stream_fusion.tkq:scheduler
+        env:
+          PG_USER: "streamfusion"
+          PG_PASS: "streamfusion"
+          TZ: "Europe/Paris"
+          REDIS_HOST: stremio-redis
+          PG_HOST: stremio-postgres
+          TASKIQ_REDIS_DB: "6"
+        cap_drop:
+          - ALL
+        security_opts:
+          - "no-new-privileges:true"
+        read_only: true
+        tmpfs:
+          - "/tmp:mode=1777"
+          - "/home/appuser:uid=1000,gid=1000,mode=0700"
+        volumes:
+          - taskiq-logs:/app/config/logs
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+      when: not taskiq_scheduler_exists
+
+    - name: Deploy Taskiq workers
+      community.docker.docker_container:
+        name: "taskiq-worker"
+        image: limedrive/stream-fusion-reborn:latest
+        state: started
+        command: python -m taskiq worker stream_fusion.worker:broker
+        env:
+          SECRET_API_KEY: "{{ SECRET_API_KEY }}"
+          TMDB_API_KEY: "{{ TMDB_API_KEY }}"
+          REDIS_HOST: "stremio-redis"
+          PG_USER: "streamfusion"
+          PG_PASS: "streamfusion"
+          MEILI_MASTER_KEY: "{{ MEILI_MASTER_KEY }}
+          TZ: "Europe/Paris"
+          PROXY_URL: http://warp:1080
+          REDIS_HOST: stremio-redis
+          PG_HOST: stremio-postgres
+          MEILI_HOST: meilisearch
+          MEILI_PORT: "7700"
+          TASKIQ_REDIS_DB: "6"
+        cap_drop:
+          - ALL
+        security_opts:
+          - "no-new-privileges:true"
+        read_only: true
+        tmpfs:
+          - "/tmp:mode=1777,size=8g"
+          - "/home/appuser:uid=1000,gid=1000,mode=0700"
+        volumes:
+          - dmm-hashlists:/data/dmm_hashlists
+          - imdb-db:/data/imdb_db
+          - taskiq-logs:/app/config/logs
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
 
   rescue:
     - name: Display error message

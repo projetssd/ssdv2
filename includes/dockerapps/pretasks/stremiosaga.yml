@@ -1,6 +1,0 @@
----
-
-- pause:
-    prompt: "TMDB_API_KEY"
-    echo: yes
-  register: tmdb_api_key
