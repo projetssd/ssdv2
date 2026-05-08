@@ -17,6 +17,7 @@ pg_env:
   TASKIQ_REDIS_DB: "6"
   SECRET_API_KEY: "{{ SECRET_API_KEY }}"
   CONFIG_SECRET_KEY: "{{ CONFIG_SECRET_KEY }}"
+  PEER_MASTER_KEY: "{{ PEER_MASTER_KEY }}"
   TMDB_API_KEY: "{{ TMDB_API_KEY }}"
   REDIS_HOST: "stremio-redis"
   PG_BASE: "streamfusion"
@@ -43,6 +44,14 @@ specific_docker_info:
     traefik.http.routers.stream-fusion-rtr.tls: "true"
     traefik.http.routers.stream-fusion-rtr.tls.certresolver: "letsencrypt"
     traefik.http.routers.stream-fusion-rtr.service: "stream-fusion-svc"
+    traefik.http.routers.stream-fusion-rtr.middlewares: >-
+      {% if auth_enabled and sub[pgrole].auth | default('') == 'basique' %}chain-basic-auth@file
+      {% elif auth_enabled and sub[pgrole].auth | default('') == 'oauth' %}chain-oauth@file
+      {% elif auth_enabled and sub[pgrole].auth | default('') == 'authelia' %}chain-authelia@file
+      {% elif auth_enabled and sub[pgrole].auth | default('') == 'oauth2-proxy' %}chain-oauth2-proxy@file
+      {% elif oauth2proxy_enabled and sub[pgrole].auth | default('') != 'aucune' %}chain-oauth2-proxy@file
+      {% else %}chain-no-auth@file
+      {% endif %}
     traefik.http.services.stream-fusion-svc.loadbalancer.server.port: "8080"
     traefik.http.services.stream-fusion-svc.loadbalancer.sticky.cookie: "true"
     traefik.http.services.stream-fusion-svc.loadbalancer.sticky.cookie.name: "sfr_sticky"

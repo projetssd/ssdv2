@@ -583,6 +583,11 @@ launch_service () {
         fi
     done
 
+    extra_vars_args=()
+    if [[ -n "${ANSIBLE_EXTRA_VARS_FILE:-}" && -f "${ANSIBLE_EXTRA_VARS_FILE}" ]]; then
+        extra_vars_args+=(--extra-vars "@${ANSIBLE_EXTRA_VARS_FILE}")
+    fi
+
     if [[ "${line}" == "plex" ]]; then
         echo ""
         echo -e "${BLUE}### CONFIG POST COMPOSE PLEX ###${NC}"
@@ -597,7 +602,7 @@ launch_service () {
         fi
 
         if [ ${error} -eq 0 ]; then
-            ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/vars/plex.yml"
+            ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/vars/plex.yml" "${extra_vars_args[@]}"
             rc=$?
             if [ ${rc} -ne 0 ]; then
                 error=1
@@ -605,7 +610,10 @@ launch_service () {
         fi
     else
         if [[ -f "${SETTINGS_STORAGE}/vars/${line}.yml" ]]; then
-            ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/vars/generique.yml" --extra-vars "@${SETTINGS_STORAGE}/vars/${line}.yml"
+            ansible-playbook \
+                "${SETTINGS_SOURCE}/includes/dockerapps/vars/generique.yml" \
+                --extra-vars "@${SETTINGS_STORAGE}/vars/${line}.yml" \
+                "${extra_vars_args[@]}"
             rc=$?
             if [ ${rc} -ne 0 ]; then
                 error=1
@@ -613,7 +621,10 @@ launch_service () {
         else
             if [[ -f "${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml" ]]; then
                 echo
-                ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/vars/generique.yml" --extra-vars "@${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml"
+                ansible-playbook \
+                    "${SETTINGS_SOURCE}/includes/dockerapps/vars/generique.yml" \
+                    --extra-vars "@${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml" \
+                    "${extra_vars_args[@]}"
                 rc=$?
                 if [ ${rc} -ne 0 ]; then
                     error=1
@@ -634,7 +645,6 @@ launch_service () {
 
     return ${rc}
 }
-
 
 function manage_apps() {
   echo -e "${BLUE}#################################${NC}"

@@ -1,16 +1,32 @@
 ---
-- name: Ask for TMDB_API_KEY
+- name: Ask for TMDB_API_KEY only if not provided
   pause:
     prompt: "Entre ta clé TMDB_API_KEY"
     echo: false
   register: tmdb_api_key_prompt
+  when: streamfusion_tmdb_api_key is not defined or (streamfusion_tmdb_api_key | string | trim) == ""
   no_log: true
 
-- name: Ask for SECRET_API_KEY
+- name: Ask for SECRET_API_KEY only if not provided
   pause:
     prompt: "Entre ta SECRET_API_KEY"
     echo: false
   register: secret_api_key_prompt
+  when: streamfusion_secret_api_key is not defined or (streamfusion_secret_api_key | string | trim) == ""
+  no_log: true
+
+- name: Set provided StreamFusion secret facts
+  set_fact:
+    TMDB_API_KEY: "{{ (streamfusion_tmdb_api_key | default(tmdb_api_key_prompt.user_input | default(''), true) | string | trim) }}"
+    SECRET_API_KEY: "{{ (streamfusion_secret_api_key | default(secret_api_key_prompt.user_input | default(''), true) | string | trim) }}"
+  no_log: true
+
+- name: Validate StreamFusion provided secret facts
+  assert:
+    that:
+      - TMDB_API_KEY | length > 0
+      - SECRET_API_KEY | length > 0
+    fail_msg: "TMDB_API_KEY ou SECRET_API_KEY est vide ou non transmis."
   no_log: true
 
 - name: Set StreamFusion secrets directory
@@ -45,6 +61,17 @@
   changed_when: false
   no_log: true
 
+- name: Generate persistent PEER_MASTER_KEY
+  shell: |
+    if [ ! -f "{{ streamfusion_secret_dir }}/PEER_MASTER_KEY" ]; then
+      openssl rand -hex 32 > "{{ streamfusion_secret_dir }}/PEER_MASTER_KEY"
+      chmod 0600 "{{ streamfusion_secret_dir }}/PEER_MASTER_KEY"
+    fi
+  args:
+    executable: /bin/bash
+  changed_when: false
+  no_log: true
+
 - name: Read persistent MEILI_MASTER_KEY
   slurp:
     src: "{{ streamfusion_secret_dir }}/MEILI_MASTER_KEY"
@@ -57,12 +84,17 @@
   register: config_secret_key_file
   no_log: true
 
-- name: Set StreamFusion secret facts
+- name: Read persistent PEER_MASTER_KEY
+  slurp:
+    src: "{{ streamfusion_secret_dir }}/PEER_MASTER_KEY"
+  register: peer_master_key_file
+  no_log: true
+
+- name: Set generated StreamFusion secret facts
   set_fact:
     MEILI_MASTER_KEY: "{{ meili_master_key_file.content | b64decode | trim }}"
     CONFIG_SECRET_KEY: "{{ config_secret_key_file.content | b64decode | trim }}"
-    TMDB_API_KEY: "{{ tmdb_api_key_prompt.user_input }}"
-    SECRET_API_KEY: "{{ secret_api_key_prompt.user_input }}"
+    PEER_MASTER_KEY: "{{ peer_master_key_file.content | b64decode | trim }}"
   no_log: true
 
 - name: Stremio Base Pre-task Setup
@@ -88,7 +120,6 @@
   vars:
     subdomain: "{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}"
   when: cloudflare_enabled
-
 
 - name: Stremio Base Pre-task Setup
   block:
@@ -280,7 +311,7 @@
 
     - name: Deploy Taskiq workers
       community.docker.docker_container:
-        name: "taskiq-worker"
+        name: taskiq-worker
         image: limedrive/stream-fusion-reborn:latest
         state: started
         command: python -m taskiq worker stream_fusion.worker:broker
@@ -297,6 +328,7 @@
           MEILI_HOST: meilisearch
           MEILI_PORT: "7700"
           TASKIQ_REDIS_DB: "6"
+          PEER_MASTER_KEY: "{{ PEER_MASTER_KEY }}"
         cap_drop:
           - ALL
         security_opts:
