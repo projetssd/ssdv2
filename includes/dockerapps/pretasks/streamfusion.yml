@@ -81,6 +81,7 @@
         - imdb-db
         - torrent-cache
         - taskiq-logs
+        - db-backups
 
 - name: Set DNS Record on CloudFlare
   include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"

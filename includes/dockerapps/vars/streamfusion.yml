@@ -6,7 +6,8 @@ pg_volumes:
   - stream-fusion:/app/config
   - taskiq-logs:/app/config/logs
   - torrent-cache:/var/cache/torrents
-  - imdb-db:/data/imdb_db:ro
+  - imdb-db:/data/imdb_db
+  - db-backups:/data/backups
 pg_env:
   RUN_MIGRATIONS: "true"
   MEILI_MASTER_KEY: "{{ MEILI_MASTER_KEY }}"
