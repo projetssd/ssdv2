@@ -37,14 +37,31 @@ specific_docker_info:
   tmpfs:
     - "/tmp:mode=1777"
     - "/home/appuser:uid=1000,gid=1000,mode=0700"
+
   labels:
     traefik.enable: "true"
-    traefik.http.routers.stream-fusion-rtr.rule: "Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)"
-    traefik.http.routers.stream-fusion-rtr.entrypoints: "http,https"
-    traefik.http.routers.stream-fusion-rtr.tls: "true"
-    traefik.http.routers.stream-fusion-rtr.tls.certresolver: "letsencrypt"
-    traefik.http.routers.stream-fusion-rtr.service: "stream-fusion-svc"
-    traefik.http.routers.stream-fusion-rtr.middlewares: >-
+
+    # =========================
+    # ROUTER PUBLIC STREMIO
+    # =========================
+    traefik.http.routers.stream-fusion-public-rtr.rule: "Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)"
+    traefik.http.routers.stream-fusion-public-rtr.entrypoints: "http,https"
+    traefik.http.routers.stream-fusion-public-rtr.tls: "true"
+    traefik.http.routers.stream-fusion-public-rtr.tls.certresolver: "letsencrypt"
+    traefik.http.routers.stream-fusion-public-rtr.priority: "10"
+    traefik.http.routers.stream-fusion-public-rtr.service: "stream-fusion-svc"
+    traefik.http.routers.stream-fusion-public-rtr.middlewares: "chain-no-auth@file"
+
+    # =========================
+    # ROUTER ADMIN PROTÉGÉ
+    # =========================
+    traefik.http.routers.stream-fusion-admin-rtr.rule: "Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`) && PathPrefix(`/admin`)"
+    traefik.http.routers.stream-fusion-admin-rtr.entrypoints: "http,https"
+    traefik.http.routers.stream-fusion-admin-rtr.tls: "true"
+    traefik.http.routers.stream-fusion-admin-rtr.tls.certresolver: "letsencrypt"
+    traefik.http.routers.stream-fusion-admin-rtr.priority: "100"
+    traefik.http.routers.stream-fusion-admin-rtr.service: "stream-fusion-svc"
+    traefik.http.routers.stream-fusion-admin-rtr.middlewares: >-
       {% if auth_enabled and sub[pgrole].auth | default('') == 'basique' %}chain-basic-auth@file
       {% elif auth_enabled and sub[pgrole].auth | default('') == 'oauth' %}chain-oauth@file
       {% elif auth_enabled and sub[pgrole].auth | default('') == 'authelia' %}chain-authelia@file
@@ -52,6 +69,10 @@ specific_docker_info:
       {% elif oauth2proxy_enabled and sub[pgrole].auth | default('') != 'aucune' %}chain-oauth2-proxy@file
       {% else %}chain-no-auth@file
       {% endif %}
+
+    # =========================
+    # SERVICE
+    # =========================
     traefik.http.services.stream-fusion-svc.loadbalancer.server.port: "8080"
     traefik.http.services.stream-fusion-svc.loadbalancer.sticky.cookie: "true"
     traefik.http.services.stream-fusion-svc.loadbalancer.sticky.cookie.name: "sfr_sticky"
