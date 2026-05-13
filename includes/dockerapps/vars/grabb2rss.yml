@@ -1,0 +1,26 @@
+---
+pgrole: 'grabb2rss'
+intport: '8000'
+image: 'ghcr.io/kesurof/grabb2rss:latest'
+
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/app/data:rw"
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}:rw"
+
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  TZ: "Europe/Paris"
+
+specific_docker_info:
+  ports:
+    - '8000:8000'
+
+restart: unless-stopped
+healthcheck:
+  test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 10s
