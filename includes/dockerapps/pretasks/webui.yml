@@ -1,0 +1,350 @@
+---
+- name: Set SSD runtime facts
+  ansible.builtin.set_fact:
+    ssd_user: "{{ lookup('env', 'USER') }}"
+    ssd_home: "{{ lookup('env', 'HOME') }}"
+    ssd_uid: "{{ lookup('pipe', 'id -u') }}"
+    ssd_gid: "{{ lookup('pipe', 'id -g') }}"
+
+- name: Set SSD paths
+  ansible.builtin.set_fact:
+    ssd_project_dir: "/home/{{ ssd_user }}/seedbox/docker/{{ ssd_user }}/projet-ssd"
+    ssd_backend_dir: "/home/{{ ssd_user }}/seedbox/docker/{{ ssd_user }}/projet-ssd/ssd-backend"
+    ssd_frontend_dir: "/home/{{ ssd_user }}/seedbox/docker/{{ ssd_user }}/projet-ssd/ssd-frontend"
+    saison_frontend_dir: "/home/{{ ssd_user }}/seedbox/docker/{{ ssd_user }}/projet-ssd/saison-frontend"
+
+- name: Ensure ssd project directory exists
+  ansible.builtin.file:
+    path: "{{ ssd_project_dir }}"
+    state: directory
+    owner: "{{ ssd_uid }}"
+    group: "{{ ssd_gid }}"
+    mode: "0755"
+
+- name: Ensure ssd-frontend static directory has correct owner
+  ansible.builtin.file:
+    path: "{{ ssd_frontend_dir }}/static"
+    state: directory
+    owner: "{{ ssd_uid }}"
+    group: "{{ ssd_gid }}"
+    mode: "0755"
+    recurse: true
+
+- name: Ensure ssd-frontend scripts directory has correct owner
+  ansible.builtin.file:
+    path: "{{ ssd_frontend_dir }}/scripts"
+    state: directory
+    owner: "{{ ssd_uid }}"
+    group: "{{ ssd_gid }}"
+    mode: "0755"
+    recurse: true
+
+- name: Ensure ssd-backend data directory has correct owner
+  ansible.builtin.file:
+    path: "{{ ssd_backend_dir }}/data"
+    state: directory
+    owner: "{{ ssd_uid }}"
+    group: "{{ ssd_gid }}"
+    mode: "0755"
+    recurse: true
+
+- name: Ensure ssd-backend logs directory has correct owner
+  ansible.builtin.file:
+    path: "{{ ssd_backend_dir }}/logs"
+    state: directory
+    owner: "{{ ssd_uid }}"
+    group: "{{ ssd_gid }}"
+    mode: "0755"
+    recurse: true
+
+- name: Ensure saison-frontend data directory has correct owner
+  ansible.builtin.file:
+    path: "{{ saison_frontend_dir }}/data"
+    state: directory
+    owner: "{{ ssd_uid }}"
+    group: "{{ ssd_gid }}"
+    mode: "0755"
+    recurse: true
+
+- name: Generate JWT secret
+  ansible.builtin.set_fact:
+    jwt_secret_key: "{{ lookup('password', '/dev/null length=64 chars=ascii_letters,digits') }}"
+  no_log: true
+
+- name: Stat Docker socket
+  ansible.builtin.stat:
+    path: /var/run/docker.sock
+  register: docker_socket
+
+- name: Fail if Docker socket does not exist
+  ansible.builtin.fail:
+    msg: "/var/run/docker.sock introuvable"
+  when: not docker_socket.stat.exists
+
+- name: Set DOCKER_GID fact from Docker socket
+  ansible.builtin.set_fact:
+    docker_gid: "{{ docker_socket.stat.gid }}"
+
+- name: Set DNS Record on CloudFlare
+  include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
+  vars:
+    subdomain: "{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}"
+  when: cloudflare_enabled
+
+- name: Deploy ssd-frontend
+  community.docker.docker_container:
+    name: ssd-frontend
+    image: ghcr.io/laster13/ssd-frontend:latest
+    state: started
+    pull: true
+    recreate: true
+    restart_policy: unless-stopped
+
+    env:
+      SSD_USER: "{{ ssd_user }}"
+      SSD_UID: "{{ ssd_uid }}"
+      SSD_GID: "{{ ssd_gid }}"
+
+      USER: "{{ ssd_user }}"
+      HOME: "/home/{{ ssd_user }}"
+
+      ORIGIN: "https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}"
+      BACKEND_URL: "https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}"
+
+      HOST: "0.0.0.0"
+      PORT: "3000"
+      TZ: "Europe/Paris"
+
+      FRONTEND_SETTINGS_PATH: "/app/static/settings.json"
+      BACKEND_SETTINGS_PATH: "/app/backend-data/settings.json"
+      FRONTEND_SERVICES_PATH: "/app/static/services.json"
+      SERVICES_AVAILABLE_PATH: "/home/{{ ssd_user }}/seedbox-compose/includes/config/services-available"
+
+      VITE_BACKEND_URL_HTTPS: "https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}"
+      VITE_API_BASE_URL: "https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}/api/v1"
+      VITE_YOUTUBE_API_KEY: "AIzaSyD7anrVAEfpWPGviZPbnazwP0JB4ZV6ukU"
+
+    volumes:
+      - "{{ ssd_frontend_dir }}/static:/app/static"
+      - "{{ ssd_frontend_dir }}/scripts:/app/scripts"
+      - "{{ ssd_backend_dir }}/data:/app/backend-data"
+      - "/home/{{ ssd_user }}/seedbox-compose:/home/{{ ssd_user }}/seedbox-compose"
+
+    expose:
+      - "3000"
+
+    networks:
+      - name: traefik_proxy
+
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.ssd-frontend-rtr.entrypoints: "https"
+      traefik.http.routers.ssd-frontend-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
+      traefik.http.routers.ssd-frontend-rtr.service: "ssd-frontend-svc"
+      traefik.http.routers.ssd-frontend-rtr.middlewares: "{% if auth_enabled and sub[pgrole].auth | default('') == 'basique' %}chain-basic-auth@file{% elif auth_enabled and sub[pgrole].auth | default('') == 'oauth' %}chain-oauth@file{% elif auth_enabled and sub[pgrole].auth | default('') == 'authelia' %}chain-authelia@file{% elif auth_enabled and sub[pgrole].auth | default('') == 'oauth2-proxy' %}chain-oauth2-proxy@file{% elif oauth2proxy_enabled and sub[pgrole].auth | default('') != 'aucune' %}chain-oauth2-proxy@file{% else %}chain-no-auth@file{% endif %}"
+      traefik.http.routers.ssd-frontend-rtr.tls: "true"
+      traefik.http.routers.ssd-frontend-rtr.tls.certresolver: "letsencrypt"
+      traefik.http.routers.ssd-frontend-rtr.priority: "10"
+      traefik.http.services.ssd-frontend-svc.loadbalancer.server.port: "3000"
+
+- name: Deploy saison-frontend
+  community.docker.docker_container:
+    name: saison-frontend
+    image: ghcr.io/laster13/saison-frontend:latest
+    state: started
+    pull: true
+    recreate: true
+    restart_policy: unless-stopped
+
+    user: "{{ ssd_uid }}:{{ ssd_gid }}"
+
+    env:
+      NODE_ENV: "production"
+      HOST: "0.0.0.0"
+      PORT: "8001"
+      TZ: "Europe/Paris"
+
+      SSD_USER: "{{ ssd_user }}"
+      SSD_UID: "{{ ssd_uid }}"
+      SSD_GID: "{{ ssd_gid }}"
+      USER: "{{ ssd_user }}"
+      HOME: "/home/{{ ssd_user }}"
+
+      DATABASE_URL: "/app/data/local.db"
+
+    volumes:
+      - "{{ saison_frontend_dir }}/data:/app/data"
+
+    expose:
+      - "8001"
+
+    networks:
+      - name: traefik_proxy
+
+    labels:
+      traefik.enable: "true"
+
+      traefik.http.routers.saison-frontend-rtr.entrypoints: "https"
+      traefik.http.routers.saison-frontend-rtr.rule: '(Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`) && PathPrefix(`/season`))'
+      traefik.http.routers.saison-frontend-rtr.service: "saison-frontend-svc"
+      traefik.http.routers.saison-frontend-rtr.middlewares: "{% if auth_enabled and sub[pgrole].auth | default('') == 'basique' %}chain-basic-auth@file{% elif auth_enabled and sub[pgrole].auth | default('') == 'oauth' %}chain-oauth@file{% elif auth_enabled and sub[pgrole].auth | default('') == 'authelia' %}chain-authelia@file{% elif auth_enabled and sub[pgrole].auth | default('') == 'oauth2-proxy' %}chain-oauth2-proxy@file{% elif oauth2proxy_enabled and sub[pgrole].auth | default('') != 'aucune' %}chain-oauth2-proxy@file{% else %}chain-no-auth@file{% endif %}"
+      traefik.http.routers.saison-frontend-rtr.tls: "true"
+      traefik.http.routers.saison-frontend-rtr.tls.certresolver: "letsencrypt"
+      traefik.http.routers.saison-frontend-rtr.priority: "90"
+
+      traefik.http.services.saison-frontend-svc.loadbalancer.server.port: "8001"
+
+- name: Ask backend rshared mount paths
+  ansible.builtin.pause:
+    prompt: |
+      Indique les chemins de mount à exposer dans le backend.
+      Exemple: /mnt/alldebrid/__all__
+      Pour plusieurs mounts, sépare-les par des virgules.
+      Laisse vide pour utiliser: /mnt/alldebrid/__all__
+  register: ssd_backend_mounts_prompt
+
+- name: Build backend rshared mount paths
+  ansible.builtin.set_fact:
+    ssd_backend_mount_paths: >-
+      {{
+        (
+          ssd_backend_mounts_prompt.user_input
+          | default('')
+          | regex_replace('\n', ',')
+          | trim
+        )
+        | ternary(
+            (
+              ssd_backend_mounts_prompt.user_input
+              | default('')
+              | regex_replace('\n', ',')
+              | split(',')
+              | map('trim')
+              | reject('equalto', '')
+              | list
+            ),
+            ['/mnt/alldebrid/__all__']
+          )
+      }}
+
+- name: Build backend rshared volume entries
+  ansible.builtin.set_fact:
+    ssd_backend_rshared_volumes: >-
+      {{
+        ssd_backend_mount_paths
+        | map('regex_replace', '^(.*)$', '\1:\1:rshared')
+        | list
+      }}
+
+- name: Show backend rshared volumes
+  ansible.builtin.debug:
+    var: ssd_backend_rshared_volumes
+
+- name: Deploy ssd-backend
+  community.docker.docker_container:
+    name: ssd-backend
+    image: ghcr.io/laster13/ssd-backend:latest
+    state: started
+    pull: true
+    recreate: true
+    restart_policy: unless-stopped
+
+    groups:
+      - "{{ docker_gid }}"
+
+    env:
+      TZ: "Europe/Paris"
+
+      FRONTEND_CONTAINER: "ssd-frontend"
+      SAISON_FRONTEND_CONTAINER: "saison-frontend"
+
+      BACKEND_VERSION_PATH: "/app/version.json"
+      FRONTEND_VERSION_PATH: "/app/version.json"
+      SAISON_FRONTEND_VERSION_PATH: "/app/version.json"
+
+      SSD_USER: "{{ ssd_user }}"
+      SSD_UID: "{{ ssd_uid }}"
+      SSD_GID: "{{ ssd_gid }}"
+      SSD_DOMAIN: "{{ user.domain }}"
+      DOCKER_GID: "{{ docker_gid }}"
+
+      USER: "{{ ssd_user }}"
+      HOME: "/home/{{ ssd_user }}"
+
+      MYUID: "{{ ssd_uid }}"
+      MYGID: "{{ ssd_gid }}"
+      DATABASE_URL: "sqlite:////app/data/seasonarr.db"
+
+      PYTHONPATH: "/app/src"
+      PYTHONUNBUFFERED: "1"
+      FORCE_COLOR: "1"
+
+      ANSIBLE_VAULT_PASSWORD_FILE: "/home/{{ ssd_user }}/.vault_pass"
+      ANSIBLE_INVENTORY: "/home/{{ ssd_user }}/.ansible/inventories/local"
+      ANSIBLE_VARS: "/home/{{ ssd_user }}/.ansible/inventories/group_vars/all.yml"
+      ANSIBLE_PYTHON_INTERPRETER: "/usr/local/bin/python3"
+      ANSIBLE_LOCALHOST_WARNING: "False"
+      ANSIBLE_INVENTORY_UNPARSED_WARNING: "False"
+      ANSIBLE_ACTION_WARNINGS: "False"
+      ACTION_WARNINGS: "False"
+      ANSIBLE_COMMAND_WARNINGS: "False"
+      ANSIBLE_CONNECTION: "local"
+      ANSIBLE_REMOTE_TEMP: "/tmp/.ansible/tmp"
+      ANSIBLE_LOCAL_TEMP: "/tmp/.ansible/tmp"
+
+      DEBUG: "False"
+      COOKIE_SECURE: "True"
+      COOKIE_DOMAIN: "{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}"
+      JWT_SECRET_KEY: "{{ jwt_secret_key }}"
+      JWT_ALGORITHM: "HS256"
+
+      SETTINGS_SOURCE: "/home/{{ ssd_user }}/seedbox-compose"
+      SETTINGS_STORAGE: "/home/{{ ssd_user }}/seedbox"
+
+      SCRIPTS_DIR: "{{ ssd_frontend_dir }}/scripts"
+      FRONTEND_SETTINGS_PATH: "{{ ssd_frontend_dir }}/static/settings.json"
+      BACKEND_SETTINGS_PATH: "/app/data/settings.json"
+
+      RADARR_HOST: "radarr"
+      SONARR_HOST: "sonarr"
+      SONARR_URL: "http://sonarr:8989"
+
+    volumes: >-
+      {{
+        [
+          "/var/run/docker.sock:/var/run/docker.sock",
+
+          "/home/" ~ ssd_user ~ "/.ansible:/home/" ~ ssd_user ~ "/.ansible",
+          "/home/" ~ ssd_user ~ "/.vault_pass:/home/" ~ ssd_user ~ "/.vault_pass:ro",
+
+          "/home/" ~ ssd_user ~ "/seedbox:/home/" ~ ssd_user ~ "/seedbox",
+          "/home/" ~ ssd_user ~ "/seedbox-compose:/home/" ~ ssd_user ~ "/seedbox-compose",
+
+          ssd_frontend_dir ~ ":" ~ ssd_frontend_dir,
+          ssd_frontend_dir ~ ":/ssd-frontend:ro",
+          saison_frontend_dir ~ ":/saison-frontend:ro",
+
+          "/home/" ~ ssd_user ~ "/Medias:/home/" ~ ssd_user ~ "/Medias",
+          "/home/" ~ ssd_user ~ "/Backups:/home/" ~ ssd_user ~ "/Backups",
+
+          ssd_backend_dir ~ "/data:/app/data",
+          ssd_backend_dir ~ "/logs:/app/logs"
+        ]
+        + ssd_backend_rshared_volumes
+      }}
+
+    expose:
+      - "8080"
+
+    networks:
+      - name: traefik_proxy
+
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.ssd-backend-rtr.entrypoints: "https"
+      traefik.http.routers.ssd-backend-rtr.rule: '(Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`) && PathPrefix(`/api/v1`))'
+      traefik.http.routers.ssd-backend-rtr.service: "ssd-backend-svc"
+      traefik.http.routers.ssd-backend-rtr.tls: "true"
+      traefik.http.routers.ssd-backend-rtr.tls.certresolver: "letsencrypt"
+      traefik.http.routers.ssd-backend-rtr.priority: "100"
+      traefik.http.services.ssd-backend-svc.loadbalancer.server.port: "8080"

@@ -555,9 +555,22 @@ launch_service () {
         "/home/${USER}/seedbox/vars/${line}.yml"
     )
 
+    force_subdomain_auth=false
+
+    case "${line}" in
+        prestashop|webui)
+            force_subdomain_auth=true
+            ;;
+        *)
+            force_subdomain_auth=false
+            ;;
+    esac
+
     for path in "${paths[@]}"; do
-        grep --color=auto "traefik_labels_enabled: false" "$path" > /dev/null 2>&1
-        if [ $? -eq 1 ]; then
+        if ! grep -q "traefik_labels_enabled: false" "$path" 2>/dev/null \
+           || grep -q "labels:" "$path" 2>/dev/null \
+           || [ "$force_subdomain_auth" = true ]; then
+
             tempsubdomain=$(get_from_account_yml sub.${line}.${line})
             if [ "${tempsubdomain}" = notfound ]; then
                 subdomain_unitaire ${line}
@@ -566,19 +579,6 @@ launch_service () {
             tempauth=$(get_from_account_yml sub.${line}.auth)
             if [ "${tempauth}" = notfound ]; then
                 auth_unitaire ${line}
-            fi
-        else
-            grep --color=auto "labels:" "$path" > /dev/null 2>&1
-            if [ $? -eq 0 ]; then
-                tempsubdomain=$(get_from_account_yml sub.${line}.${line})
-                if [ "${tempsubdomain}" = notfound ]; then
-                    subdomain_unitaire ${line}
-                fi
-
-                tempauth=$(get_from_account_yml sub.${line}.auth)
-                if [ "${tempauth}" = notfound ]; then
-                    auth_unitaire ${line}
-                fi
             fi
         fi
     done
@@ -656,11 +656,11 @@ function manage_apps() {
 }
 
 function suppression_appli() {
+  APPSELECTED=$1
 
   sousdomaine=$(get_from_account_yml sub.${APPSELECTED}.${APPSELECTED})
   domaine=$(get_from_account_yml user.domain)
 
-  APPSELECTED=$1
   DELETE=0
   if [[ $# -eq 2 ]]; then
     if [ "$2" = "1" ]; then
@@ -765,6 +765,7 @@ function suppression_appli() {
     docker rm -f warp streamfusion taskiq-worker taskiq-scheduler meilisearch stremio-redis stremio-postgres >/dev/null 2>&1
     if [ $DELETE -eq 1 ]; then
         docker volume prune -af >/dev/null 2>&1
+        manage_account_yml sub.streamfusion " "
     fi
     ;;
   coolify)
@@ -777,6 +778,16 @@ function suppression_appli() {
 
       # Supprimer tous les volumes Docker liés à 'coolify'
       docker volume ls --format "{{.Name}}" | grep -i 'coolify' | xargs -r docker volume rm -f
+    fi
+    ;;
+
+  ssd-backend|ssd-frontend|saison-frontend)
+    docker rm -f ssd-backend ssd-frontend saison-frontend >/dev/null 2>&1
+
+    manage_account_yml sub.webui " "
+
+    if [ $DELETE -eq 1 ]; then
+      sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/projet-ssd >/dev/null 2>&1
     fi
     ;;
   esac
@@ -1080,92 +1091,6 @@ function install_environnement() {
   echo $(gettext "Pour bénéficer des changements, vous devez vous déconnecter/reconnecter")
 }
 
-webui() {
-    domain=$(get_from_account_yml user.domain)
-
-    PATCH_FILE="${HOME}/.config/ssd/patches"
-    PATCH_KEY="20250630_webui"
-    FLAG_FILE="${HOME}/.config/ssd/.webui_done"
-
-    local MODE="$1"
-
-    if [ "$MODE" = "force" ]; then
-        echo -e "\033[1;31m⚠ Relance forcée de l'installation et de l'animation\033[0m"
-        FORCE_PATCH=1 apply_patches
-    elif [ "$MODE" = "reinstall" ]; then
-        echo -e "\033[1;31m⚠ Réinstallation sélective du patch ${PATCH_KEY}\033[0m"
-        FORCE_PATCH="$PATCH_KEY" apply_patches
-    fi
-
-    # Vérifie si le patch est présent
-    if ! grep -q "$PATCH_KEY" "$PATCH_FILE" 2>/dev/null; then
-        [ "$MODE" != "force" ] && [ "$MODE" != "reinstall" ] && return 0
-    fi
-
-    # Si déjà installé et pas en mode forcé/réinstall → sortie silencieuse
-    if [ -f "$FLAG_FILE" ] && [ "$MODE" != "force" ] && [ "$MODE" != "reinstall" ]; then
-        return 0
-    fi
-
-    # -------------------------------------------------------------------
-    # Ici → soit première fois, soit relance forcée, soit réinstall sélective
-    # -------------------------------------------------------------------
-
-    logo_frames=("[SSD]" "<SSD>" "(SSD)" "{SSD}")
-    logo_length=${#logo_frames[@]}
-    i=0
-
-    duration=120
-    interval_ms=200
-    steps=$(( (duration * 1000) / interval_ms ))
-    bar_length=30
-
-    progress=0
-    start_time=$(date +%s)
-
-    for ((count=0; count<=steps; count++)); do
-        logo=${logo_frames[$((i % logo_length))]}
-        i=$((i+1))
-
-        progress=$((count * 100 / steps))
-        if [ $progress -gt 100 ]; then progress=100; fi
-
-        if   [ $progress -lt 30 ]; then phase="Préparation de l’interface..."
-        elif [ $progress -lt 70 ]; then phase="Compilation du frontend..."
-        elif [ $progress -lt 100 ]; then phase="Optimisation des assets..."
-        else phase="Finalisation..."
-        fi
-
-        now=$(date +%s)
-        elapsed=$((now - start_time))
-        remaining=$((duration - elapsed))
-        if [ $remaining -lt 0 ]; then remaining=0; fi
-        min=$((remaining / 60))
-        sec=$((remaining % 60))
-        time_left=$(printf "%dm%02ds restantes" "$min" "$sec")
-
-        filled=$((progress * bar_length / 100))
-        empty=$((bar_length - filled))
-        bar=$(printf "%0.s#" $(seq 1 $filled))
-        spaces=$(printf "%0.s." $(seq 1 $empty))
-
-        printf "\r  \033[1;36m%s\033[0m \033[1;33m[%s%s]\033[0m %3d%%  \033[1;37m%s\033[0m | \033[0;36m%s\033[0m" \
-          "$logo" "$bar" "$spaces" "$progress" "$phase" "$time_left"
-
-        sleep $(awk "BEGIN {print $interval_ms/1000}")
-    done
-
-    printf "\r\033[K"
-
-    # On ne réécrit pas le flag si mode réinstall forcée
-    if [ "$MODE" != "force" ] && [ "$MODE" != "reinstall" ]; then
-        touch "$FLAG_FILE"
-    fi
-
-    log_statusbar "\033[1;32m✔ Interface webui disponible : https://ssdv2.${domain}\033[0m"
-}
-
-
 function affiche_menu_db() {
   if [ -z "$OLDIFS" ]; then
     OLDIFS=${IFS}
@@ -1188,7 +1113,6 @@ function affiche_menu_db() {
   logo
 
   # chargement des menus
-  webui
   request="select * from menu where parent_id ${start_menu} ORDER BY ordre"
   sqlite3 "${SETTINGS_SOURCE}/menu" "${request}" | while read -a db_select; do
     IFS='|'

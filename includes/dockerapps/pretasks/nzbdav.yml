@@ -63,12 +63,11 @@
 - name: Deploying rclone
   docker_container:
     name: 'rclone'
-    image: 'rclone/rclone:v1.72-stable'
+    image: 'rclone/rclone:latest'
     privileged: true
     volumes:
       - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
-      - "/home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf:/home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf"
-      - "/home/{{ lookup('env','USER') }}/.cache/rclone:/cache:rshared"
+      - "/home/{{ lookup('env','USER') }}/.config/rclone/rclone.conf:/config/rclone/rclone.conf"
       - "/mnt:/mnt:rshared"
     env:
       PUID: "{{ lookup('env','MYUID') }}"
@@ -83,21 +82,16 @@
     command: >
       mount nzbdav: /mnt/usenet
       --config "{{ lookup('env','HOME') }}/.config/rclone/rclone.conf"
+      --uid=1000
+      --gid=1000
       --allow-other
-      --allow-non-empty
-      --uid="{{ lookup('env','MYUID') }}"
-      --gid="{{ lookup('env','MYGID') }}"
       --links
       --use-cookies
-      --dir-cache-time=10s
-      --poll-interval=15s
-      --buffer-size=64M
       --vfs-cache-mode=full
-      --vfs-cache-max-size=200G
-      --vfs-cache-max-age=4h
-      --vfs-read-chunk-size=128M
-      --vfs-read-chunk-size-limit=256M
-      --vfs-read-ahead 512M
-      --cache-dir=/cache
+      --vfs-cache-max-size=20G
+      --vfs-cache-max-age=24h
+      --buffer-size=0M
+      --vfs-read-ahead=512M
+      --dir-cache-time=20s
     networks:
       - name: traefik_proxy
