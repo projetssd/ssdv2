@@ -194,6 +194,38 @@
 
       traefik.http.services.saison-frontend-svc.loadbalancer.server.port: "8001"
 
+- name: Ask if AllDebrid WARP proxy should be enabled
+  ansible.builtin.pause:
+    prompt: |
+      Activer le proxy WARP pour AllDebrid ?
+      Recommandé uniquement sur Oracle Cloud si AllDebrid bloque magnet/upload.
+
+      Réponds oui/non.
+      Laisse vide pour: non
+  register: alldebrid_proxy_prompt
+
+- name: Build AllDebrid proxy value
+  ansible.builtin.set_fact:
+    alldebrid_proxy_enabled: >-
+      {{
+        (alldebrid_proxy_prompt.user_input | default('') | trim | lower)
+        in ['oui', 'o', 'yes', 'y', 'true', '1']
+      }}
+    alldebrid_proxy_url: >-
+      {{
+        (
+          (alldebrid_proxy_prompt.user_input | default('') | trim | lower)
+          in ['oui', 'o', 'yes', 'y', 'true', '1']
+        )
+        | ternary('socks5h://warp:1080', '')
+      }}
+
+- name: Show AllDebrid proxy status
+  ansible.builtin.debug:
+    msg: >-
+      AllDebrid proxy WARP:
+      {{ 'activé avec ' ~ alldebrid_proxy_url if alldebrid_proxy_enabled else 'désactivé' }}
+
 - name: Deploy ssd-backend
   community.docker.docker_container:
     name: ssd-backend
@@ -263,30 +295,27 @@
       SONARR_HOST: "sonarr"
       SONARR_URL: "http://sonarr:8989"
 
-    volumes: >-
-      {{
-        [
-          "/var/run/docker.sock:/var/run/docker.sock",
+      ALLDEBRID_PROXY: "{{ alldebrid_proxy_url }}"
 
-          "/home/" ~ ssd_user ~ "/.ansible:/home/" ~ ssd_user ~ "/.ansible",
-          "/home/" ~ ssd_user ~ "/.vault_pass:/home/" ~ ssd_user ~ "/.vault_pass:ro",
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
 
-          "/home/" ~ ssd_user ~ "/seedbox:/home/" ~ ssd_user ~ "/seedbox",
-          "/home/" ~ ssd_user ~ "/seedbox-compose:/home/" ~ ssd_user ~ "/seedbox-compose",
+      - "/home/{{ ssd_user }}/.ansible:/home/{{ ssd_user }}/.ansible"
+      - "/home/{{ ssd_user }}/.vault_pass:/home/{{ ssd_user }}/.vault_pass:ro"
 
-          ssd_frontend_dir ~ ":" ~ ssd_frontend_dir,
-          ssd_frontend_dir ~ ":/ssd-frontend:ro",
-          saison_frontend_dir ~ ":/saison-frontend:ro",
+      - "/home/{{ ssd_user }}/seedbox:/home/{{ ssd_user }}/seedbox"
+      - "/home/{{ ssd_user }}/seedbox-compose:/home/{{ ssd_user }}/seedbox-compose"
 
-          "/home/" ~ ssd_user ~ "/Medias:/home/" ~ ssd_user ~ "/Medias",
-          "/home/" ~ ssd_user ~ "/Backups:/home/" ~ ssd_user ~ "/Backups",
+      - "{{ ssd_frontend_dir }}:{{ ssd_frontend_dir }}"
+      - "{{ ssd_frontend_dir }}:/ssd-frontend:ro"
+      - "{{ saison_frontend_dir }}:/saison-frontend:ro"
 
-          ssd_backend_dir ~ "/data:/app/data",
-          ssd_backend_dir ~ "/logs:/app/logs",
+      - "/home/{{ ssd_user }}/Medias:/home/{{ ssd_user }}/Medias"
+      - "/home/{{ ssd_user }}/Backups:/home/{{ ssd_user }}/Backups"
 
-          "/mnt/alldebrid/__all__:/mnt/alldebrid/__all__:rshared"
-        ]
-      }}
+      - "{{ ssd_backend_dir }}/data:/app/data"
+      - "{{ ssd_backend_dir }}/logs:/app/logs"
+      - "/mnt:/mnt"
 
     expose:
       - "8080"
