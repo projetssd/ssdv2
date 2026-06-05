@@ -194,52 +194,6 @@
 
       traefik.http.services.saison-frontend-svc.loadbalancer.server.port: "8001"
 
-- name: Ask backend rshared mount paths
-  ansible.builtin.pause:
-    prompt: |
-      Indique les chemins de mount à exposer dans le backend.
-      Exemple: /mnt/alldebrid/__all__
-      Pour plusieurs mounts, sépare-les par des virgules.
-      Laisse vide pour utiliser: /mnt/alldebrid/__all__
-  register: ssd_backend_mounts_prompt
-
-- name: Build backend rshared mount paths
-  ansible.builtin.set_fact:
-    ssd_backend_mount_paths: >-
-      {{
-        (
-          ssd_backend_mounts_prompt.user_input
-          | default('')
-          | regex_replace('\n', ',')
-          | trim
-        )
-        | ternary(
-            (
-              ssd_backend_mounts_prompt.user_input
-              | default('')
-              | regex_replace('\n', ',')
-              | split(',')
-              | map('trim')
-              | reject('equalto', '')
-              | list
-            ),
-            ['/mnt/alldebrid/__all__']
-          )
-      }}
-
-- name: Build backend rshared volume entries
-  ansible.builtin.set_fact:
-    ssd_backend_rshared_volumes: >-
-      {{
-        ssd_backend_mount_paths
-        | map('regex_replace', '^(.*)$', '\1:\1:rshared')
-        | list
-      }}
-
-- name: Show backend rshared volumes
-  ansible.builtin.debug:
-    var: ssd_backend_rshared_volumes
-
 - name: Deploy ssd-backend
   community.docker.docker_container:
     name: ssd-backend
@@ -328,9 +282,10 @@
           "/home/" ~ ssd_user ~ "/Backups:/home/" ~ ssd_user ~ "/Backups",
 
           ssd_backend_dir ~ "/data:/app/data",
-          ssd_backend_dir ~ "/logs:/app/logs"
+          ssd_backend_dir ~ "/logs:/app/logs",
+
+          "/mnt/alldebrid/__all__:/mnt/alldebrid/__all__:rshared"
         ]
-        + ssd_backend_rshared_volumes
       }}
 
     expose:
