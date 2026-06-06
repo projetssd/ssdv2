@@ -236,7 +236,7 @@
     restart_policy: unless-stopped
 
     groups:
-      - "{{ docker_gid }}"
+      - "{{ docker_gid | string }}"
 
     env:
       TZ: "Europe/Paris"
@@ -249,16 +249,16 @@
       SAISON_FRONTEND_VERSION_PATH: "/app/version.json"
 
       SSD_USER: "{{ ssd_user }}"
-      SSD_UID: "{{ ssd_uid }}"
-      SSD_GID: "{{ ssd_gid }}"
+      SSD_UID: "{{ ssd_uid | string }}"
+      SSD_GID: "{{ ssd_gid | string }}"
       SSD_DOMAIN: "{{ user.domain }}"
-      DOCKER_GID: "{{ docker_gid }}"
+      DOCKER_GID: "{{ docker_gid | string }}"
 
       USER: "{{ ssd_user }}"
       HOME: "/home/{{ ssd_user }}"
 
-      MYUID: "{{ ssd_uid }}"
-      MYGID: "{{ ssd_gid }}"
+      MYUID: "{{ ssd_uid | string }}"
+      MYGID: "{{ ssd_gid | string }}"
       DATABASE_URL: "sqlite:////app/data/seasonarr.db"
 
       PYTHONPATH: "/app/src"
@@ -295,7 +295,7 @@
       SONARR_HOST: "sonarr"
       SONARR_URL: "http://sonarr:8989"
 
-      ALLDEBRID_PROXY: "{{ alldebrid_proxy_url }}"
+      ALLDEBRID_PROXY: "{{ alldebrid_proxy_url | default('') | string }}"
 
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
