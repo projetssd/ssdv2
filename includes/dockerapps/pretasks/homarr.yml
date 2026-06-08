@@ -1,0 +1,25 @@
+- name: Ensure Homarr appdata directory exists
+  ansible.builtin.file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/appdata"
+    state: directory
+    owner: '{{ user.userid }}'
+    group: '{{ user.groupid }}'
+    mode: "0755"
+
+- name: Check Homarr secret key file
+  ansible.builtin.stat:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/appdata/secret_encryption_key"
+  register: homarr_secret_key_file
+
+- name: Generate Homarr secret encryption key
+  ansible.builtin.shell: "openssl rand -hex 32 > {{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/appdata/secret_encryption_key"
+  when: not homarr_secret_key_file.stat.exists
+
+- name: Read Homarr secret encryption key
+  ansible.builtin.slurp:
+    src: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/appdata/secret_encryption_key"
+  register: homarr_secret_key
+
+- name: Set Homarr secret encryption key fact
+  ansible.builtin.set_fact:
+    homarr_secret_encryption_key: "{{ homarr_secret_key.content | b64decode | trim }}"
