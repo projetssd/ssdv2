@@ -1,10 +1,9 @@
 ---
 pgrole: 'homarr'
 intport: '7575'
-image: 'ghcr.io/ajnart/homarr:latest'
+image: 'ghcr.io/homarr-labs/homarr:latest'
 pg_volumes:
   - '/var/run/docker.sock:/var/run/docker.sock'
-  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/configs:/app/data/configs"
-  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/icons:/app/public/icons"
-  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/data"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/appdata:/appdata"
 pg_env:
+  SECRET_ENCRYPTION_KEY: "{{ homarr_secret_encryption_key }}"
