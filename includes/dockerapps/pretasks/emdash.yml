@@ -1,0 +1,65 @@
+---
+- name: EmDash | Présenter l'installation assistée
+  debug:
+    msg:
+      - "Installation assistée EmDash"
+      - "Aucune édition manuelle de fichier n'est nécessaire."
+      - "SSDV2 récupère le dépôt officiel, applique les correctifs nécessaires, prépare les dossiers persistants et construit l'image Docker locale."
+      - "URL publique utilisée pour les clés d'accès : {{ emdash_public_url }}"
+      - "Données persistantes : data et uploads."
+
+- name: EmDash | Préparer les dossiers persistants
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0775'
+    owner: "{{ lookup('env','MYUID') }}"
+    group: "{{ lookup('env','MYGID') }}"
+  loop:
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}"
+    - "{{ emdash_source_dir }}"
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data"
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/uploads"
+
+- name: EmDash | Récupérer ou mettre à jour le dépôt officiel
+  git:
+    repo: "{{ emdash_repo }}"
+    dest: "{{ emdash_source_dir }}"
+    version: "{{ emdash_ref }}"
+    update: yes
+    force: yes
+
+- name: EmDash | Vérifier la présence du Dockerfile
+  stat:
+    path: "{{ emdash_source_dir }}/Dockerfile"
+  register: emdash_dockerfile
+
+- name: EmDash | Arrêter si le Dockerfile est absent
+  fail:
+    msg: "Dockerfile introuvable dans {{ emdash_source_dir }}. Le dépôt EmDash n'a pas été récupéré correctement."
+  when: not emdash_dockerfile.stat.exists
+
+- name: EmDash | Corriger le Dockerfile officiel avant build
+  replace:
+    path: "{{ emdash_source_dir }}/Dockerfile"
+    regexp: '^RUN pnpm build && pnpm --filter @emdash-cms/template-blog build$'
+    replace: 'RUN pnpm install --frozen-lockfile && pnpm build && pnpm --filter @emdash-cms/template-blog build'
+
+- name: EmDash | Construire l'image Docker locale
+  command: docker build --progress=plain -t {{ image }} .
+  args:
+    chdir: "{{ emdash_source_dir }}"
+  register: emdash_build
+  changed_when: true
+
+- name: EmDash | Afficher le résultat du build Docker
+  debug:
+    var: emdash_build.stdout_lines
+  when: emdash_build.stdout_lines is defined
+
+- name: EmDash | Vérifier la présence de l'image locale
+  command: docker image inspect {{ image }}
+  register: emdash_image_check
+  changed_when: false
+  failed_when: emdash_image_check.rc != 0

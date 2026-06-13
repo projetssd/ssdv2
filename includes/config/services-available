@@ -33,6 +33,7 @@ dozzle - Affichage des logs de conteneurs
 duplicati - Application de sauvegarde
 espocrm - Customer Relationship Management
 emby - Serveur multimédia
+emdash - CMS TypeScript basé sur Astro
 fenrus - Passerelle vers le monde des sorciers
 filebot - Organiser vos films, séries et anime
 filebrowser - Gestion fichiers via une interface

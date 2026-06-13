@@ -1,0 +1,30 @@
+---
+pgrole: 'emdash'
+intport: '4321'
+image: 'emdash:ssdv2'
+
+# EmDash est construit localement depuis le dépôt officiel.
+# Le pretask récupère le dépôt, applique les correctifs nécessaires,
+# puis construit l'image Docker locale avec des logs lisibles.
+emdash_repo: 'https://github.com/emdash-cms/emdash.git'
+emdash_ref: 'main'
+emdash_source_dir: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/src"
+
+# URL publique réelle exposée par Traefik.
+# Indispensable pour WebAuthn / passkeys : le rp.id doit correspondre
+# au domaine réellement utilisé dans le navigateur.
+emdash_public_host: "{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}"
+emdash_public_url: "https://{{ emdash_public_host }}"
+
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/app/data"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/uploads:/app/uploads"
+
+pg_env:
+  HOST: '0.0.0.0'
+  PORT: '4321'
+  NODE_ENV: 'production'
+  TZ: 'Europe/Paris'
+  EMDASH_SITE_URL: "{{ emdash_public_url }}"
+  SITE_URL: "{{ emdash_public_url }}"
+  EMDASH_ALLOWED_ORIGINS: "{{ emdash_public_url }}"
