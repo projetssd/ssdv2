@@ -1,0 +1,19 @@
+---
+pgrole: 'beszel'
+intport: '8090'
+image: 'henrygd/beszel:latest'
+
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/beszel_data:/beszel_data:rw"
+
+pg_env:
+  APP_URL: "https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}"
+  USER_EMAIL: "{{ beszel_admin_email }}"
+  USER_PASSWORD: "{{ beszel_admin_password }}"
+  TZ: 'Europe/Paris'
+
+specific_docker_info:
+  restart_policy: unless-stopped
+
+beszel_agent_image: 'henrygd/beszel-agent:latest'
+beszel_agent_listen: '45876'

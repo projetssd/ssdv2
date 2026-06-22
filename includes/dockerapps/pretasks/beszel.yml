@@ -1,0 +1,24 @@
+---
+- name: Créer le dossier de données Beszel
+  become: true
+  ansible.builtin.file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/beszel_data"
+    state: directory
+    mode: '0755'
+    owner: "{{ lookup('env','MYUID') }}"
+    group: "{{ lookup('env','MYGID') }}"
+
+- pause:
+    prompt: "Adresse email de l'administrateur Beszel"
+    echo: yes
+  register: beszel_email_input
+
+- pause:
+    prompt: "Mot de passe de l'administrateur Beszel"
+    echo: no
+  register: beszel_password_input
+
+- name: Définir les identifiants Beszel
+  ansible.builtin.set_fact:
+    beszel_admin_email: "{{ beszel_email_input.user_input }}"
+    beszel_admin_password: "{{ beszel_password_input.user_input }}"
