@@ -7,6 +7,8 @@ pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/app/config:rw"
 
 pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
   TZ: 'Europe/Paris'
 
 specific_docker_info:
