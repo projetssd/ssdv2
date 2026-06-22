@@ -130,18 +130,6 @@
           labels: "{{ pg_labels | default({}) }}"
       when: docker_deploy_enabled
 
-    - name: Add default healthcheck
-      set_fact:
-        docker_info: "{{ docker_info | combine({'healthcheck': default_healthcheck}, recursive=True) }}"
-      vars:
-        default_healthcheck:
-          test: ['CMD-SHELL', 'curl -sf http://localhost:{{ intport }}/ || wget -qO- http://localhost:{{ intport }}/ || exit 1']
-          interval: 30s
-          timeout: 10s
-          retries: 3
-          start_period: 30s
-      when: docker_deploy_enabled and docker_info.healthcheck is not defined and intport != '0'
-
     - name: Add specific docker info
       set_fact:
         docker_info: "{{ docker_info | combine(specific_docker_info, recursive=True) }}"
