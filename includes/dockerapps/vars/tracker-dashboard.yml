@@ -1,0 +1,13 @@
+---
+pgrole: 'tracker-dashboard'
+intport: '3000'
+image: 'ghcr.io/tracker-dashboard/tracker-dashboard:latest'
+
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/app/config:rw"
+
+pg_env:
+  TZ: 'Europe/Paris'
+
+specific_docker_info:
+  restart_policy: unless-stopped
