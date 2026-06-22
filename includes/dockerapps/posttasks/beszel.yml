@@ -1,5 +1,15 @@
 ---
-# === Phase 0 : Résoudre l'IP du conteneur hub via son nom ===
+# === Phase 0 : Attendre que le hub soit Healthy ===
+- name: Attendre que le conteneur beszel soit Healthy
+  ansible.builtin.command: >
+    docker inspect -f '{% raw %}{{.State.Health.Status}}{% endraw %}' {{ pgrole }}
+  register: beszel_health_status
+  until: beszel_health_status.stdout == "healthy"
+  retries: 30
+  delay: 5
+  changed_when: false
+
+# === Phase 1 : Résoudre l'IP du conteneur hub via son nom ===
 - name: Résoudre l'IP du conteneur beszel
   ansible.builtin.shell:
     cmd: docker inspect -f '{% raw %}{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}{% endraw %}' {{ pgrole }}
@@ -10,7 +20,7 @@
   ansible.builtin.set_fact:
     beszel_hub_url: "http://{{ beszel_container_ip_raw.stdout }}:{{ intport }}"
 
-# === Phase 1 : Créer le superuser via le CLI Beszel ===
+# === Phase 2 : Créer le superuser via le CLI Beszel ===
 - name: Créer le superuser Beszel via CLI
   ansible.builtin.command: >
     docker exec {{ pgrole }} /beszel superuser upsert
@@ -19,7 +29,7 @@
   changed_when: "'created' in beszel_superuser.stdout or 'updated' in beszel_superuser.stdout"
   failed_when: beszel_superuser.rc != 0
 
-# === Phase 2 : Authentification PocketBase ===
+# === Phase 3 : Authentification PocketBase ===
 - name: Authentification superuser PocketBase
   ansible.builtin.uri:
     url: "{{ beszel_hub_url }}/api/collections/_superusers/auth-with-password"
@@ -35,7 +45,7 @@
   ansible.builtin.set_fact:
     beszel_pb_token: "{{ beszel_auth.json.token }}"
 
-# === Phase 3 : Récupération de la clé publique Hub ===
+# === Phase 4 : Récupération de la clé publique Hub ===
 - name: Extraire la clé publique depuis le fichier id_ed25519
   become: true
   ansible.builtin.command: >
@@ -48,7 +58,7 @@
   ansible.builtin.set_fact:
     beszel_hub_public_key: "{{ beszel_pubkey_raw.stdout }}"
 
-# === Phase 4 : Obtenir l'ID de l'utilisateur ===
+# === Phase 5 : Obtenir l'ID de l'utilisateur ===
 - name: Obtenir la liste des utilisateurs
   ansible.builtin.uri:
     url: "{{ beszel_hub_url }}/api/collections/users/records"
@@ -62,7 +72,7 @@
   ansible.builtin.set_fact:
     beszel_user_id: "{{ (beszel_users.json['items'] | selectattr('email', 'equalto', beszel_admin_email) | first).id }}"
 
-# === Phase 5 : Créer un token universel (idempotent) ===
+# === Phase 6 : Créer un token universel (idempotent) ===
 - name: Chercher un token existant pour cet utilisateur
   ansible.builtin.uri:
     url: "{{ beszel_hub_url }}/api/collections/universal_tokens/records?filter=user='{{ beszel_user_id }}'"
@@ -106,7 +116,7 @@
       token: "{{ beszel_agent_token }}"
     status_code: 200
 
-# === Phase 6 : Créer le système dans Beszel (idempotent) ===
+# === Phase 7 : Créer le système dans Beszel (idempotent) ===
 - name: Chercher un système existant
   ansible.builtin.uri:
     url: "{{ beszel_hub_url }}/api/collections/systems/records?filter=name='{{ pgrole }}'"
@@ -138,7 +148,7 @@
     beszel_system_result: "{{ { 'json': beszel_existing_systems.json['items'][0] } }}"
   when: beszel_existing_systems.json['items'] | length > 0
 
-# === Phase 7 : Déploiement de l'agent ===
+# === Phase 8 : Déploiement de l'agent ===
 - name: Créer le dossier de données de l'agent
   become: true
   ansible.builtin.file:

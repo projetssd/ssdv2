@@ -14,6 +14,11 @@ pg_env:
 
 specific_docker_info:
   restart_policy: unless-stopped
+  healthcheck:
+    test: ['CMD', '/beszel', 'health', '--url', 'http://localhost:8090']
+    interval: 30s
+    start_period: 10s
+    timeout: 5s
 
 beszel_agent_image: 'henrygd/beszel-agent:latest'
 beszel_agent_listen: '45876'
