@@ -5,6 +5,7 @@ ssddb
 autoinstall.ini
 venv/**
 .vscode/**
+.opencode/
 .DS_Store
 __pycache__/
 *.pyc

@@ -1,0 +1,18 @@
+---
+pgrole: 'seasonarr'
+intport: '8000'
+image: 'ghcr.io/d3v1l1989/seasonarr:latest'
+
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/app/data:rw"
+  - '/etc/localtime:/etc/localtime:ro'
+
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  TZ: 'Europe/Paris'
+  DATABASE_URL: 'sqlite:///./data/seasonarr.db'
+  JWT_SECRET_KEY: "{{ seasonarr.jwtsecret }}"
+
+pretasks:
+  - seasonarr
