@@ -158,7 +158,7 @@ thelounge - Web IRC client always connected
 transmission - Gestionnaire de torrent
 transmissionvpn - Gestionnaire de torrent VPN
 tracearr - Monitoring temps reel Plex Jellyfin Emby
-tracker-dashboard - Suivi stats trackers BitTorrent
+tracker_dashboard - Suivi stats trackers BitTorrent
 ttrss - Agrégateur de flux d'actualités
 ubooquity - Gestion ebooks
 usenet - Un gestionnaire de nzb

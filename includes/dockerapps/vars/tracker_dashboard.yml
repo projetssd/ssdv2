@@ -1,5 +1,5 @@
 ---
-pgrole: 'tracker-dashboard'
+pgrole: 'tracker_dashboard'
 intport: '3000'
 image: 'ghcr.io/tracker-dashboard/tracker-dashboard:latest'
 
