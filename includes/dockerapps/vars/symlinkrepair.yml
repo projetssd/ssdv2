@@ -1,0 +1,24 @@
+---
+pgrole: 'symlinkrepair'
+intport: '8000'
+image: 'ghcr.io/kesurof/symlinkrepair:latest'
+
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/app/data:rw"
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}:rw"
+  - "/mnt:/mnt:rw"
+  - "/var/run/docker.sock:/var/run/docker.sock:rw"
+
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  DATABASE_URL: "sqlite+aiosqlite:///data/symlinkrepair.db"
+  DATA_DIR: "/app/data"
+
+specific_docker_info:
+  restart_policy: unless-stopped
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+    interval: 30s
+    timeout: 5s
+    retries: 3
