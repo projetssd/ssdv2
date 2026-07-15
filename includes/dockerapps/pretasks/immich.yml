@@ -48,13 +48,12 @@
       POSTGRES_DB: immich
       POSTGRES_INITDB_ARGS: '--data-checksums'
     volumes:
-      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/immich-app/postgres:/var/lib/postgresql"
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/immich-app/postgres:/var/lib/postgresql/data"
     healthcheck:
       test: pg_isready --dbname='immich' --username='postgres' || exit 1; Chksum="$$(psql --dbname='immich' --username='postgres' --tuples-only --no-align --command='SELECT COALESCE(SUM(checksum_failures), 0) FROM pg_stat_database')"; echo "checksum failure count is $$Chksum"; [ "$$Chksum" = '0' ] || exit 1
       interval: 5m
       start_interval: 30s
       start_period: 5m
-    command: ["postgres", "-c" ,"shared_preload_libraries=vectors.so", "-c", 'search_path="$$user", public, vectors', "-c", "logging_collector=on", "-c", "max_wal_size=2GB", "-c", "shared_buffers=512MB", "-c", "wal_compression=on"]
     restart_policy: always
     networks:
       - name: traefik_proxy
@@ -92,10 +91,10 @@
       traefik.http.routers.immich.tls.certresolver: "letsencrypt"
       traefik.http.routers.immich.middlewares: "{{ middleware_chain }}"
     volumes:
-      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/immich-app/library:/usr/src/app/upload"
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/immich-app/library:/data"
       - /etc/localtime:/etc/localtime:ro
     ports:
-      - 2283:3001
+      - 2283:2283
     restart_policy: always
     networks:
       - name: traefik_proxy
