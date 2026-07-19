@@ -927,6 +927,7 @@ function premier_lancement() {
     pip
   pip install wheel
   pip install ansible \
+    python-debian \
     docker \
     shyaml \
     netaddr \
