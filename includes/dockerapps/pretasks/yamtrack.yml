@@ -1,0 +1,15 @@
+---
+- name: Generate random secret key
+  ansible.builtin.command: "openssl rand -hex 32"
+  register: random_key
+  changed_when: false
+
+- name: Deploy redis container for yamtrack
+  docker_container:
+    name: yamtrack-redis
+    image: redis:8-alpine
+    volumes:
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/yamtrack/redis:/data"
+    restart_policy: unless-stopped
+    networks:
+      - name: traefik_proxy

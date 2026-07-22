@@ -1,0 +1,12 @@
+---
+pgrole: 'yamtrack'
+intport: '8000'
+image: 'ghcr.io/fuzzygrim/yamtrack'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/db:/yamtrack/db:rw"
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  TZ: 'Europe/Paris'
+  SECRET: "{{ random_key.stdout }}"
+  REDIS_URL: "redis://yamtrack-redis:6379"
