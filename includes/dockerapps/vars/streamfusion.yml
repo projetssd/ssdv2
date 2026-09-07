@@ -1,7 +1,8 @@
 ---
 pgrole: 'streamfusion'
 intport: '8080'
-image: 'limedrive/stream-fusion-reborn:latest'
+# Image publique Docker Hub : pas de dépendance au dépôt/builder GitHub privé
+image: 'laster13/stream-fusion-reborn:latest'
 pg_volumes:
   - stream-fusion:/app/config
   - taskiq-logs:/app/config/logs
@@ -20,6 +21,7 @@ pg_env:
   PEER_MASTER_KEY: "{{ PEER_MASTER_KEY }}"
   TMDB_API_KEY: "{{ TMDB_API_KEY }}"
   REDIS_HOST: "stremio-redis"
+  PG_HOST: "stremio-postgres"
   PG_BASE: "streamfusion"
   PG_USER: "streamfusion"
   PG_PASS: "streamfusion"
