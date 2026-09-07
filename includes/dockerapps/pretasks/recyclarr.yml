@@ -9,7 +9,7 @@
 - name: Create a data container
   community.docker.docker_container:
     name: recyclarr
-    image: ghcr.io/recyclarr/recyclarr
+    image: ghcr.io/recyclarr/recyclarr/v8
     user: "{{ lookup('env','MYUID') }}:{{ lookup('env','MYGID') }}"
     volumes:
       - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/recyclarr/config:/config"
