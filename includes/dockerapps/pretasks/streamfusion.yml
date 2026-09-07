@@ -114,6 +114,61 @@
         - torrent-cache
         - taskiq-logs
         - db-backups
+        - meili-restore-control
+        - meili-wrapper
+
+    # Le dépôt/builder GitHub reste privé : les installations tirent l'image publique Docker Hub.
+    - name: Pull latest public Stream Fusion Reborn image
+      command: docker pull laster13/stream-fusion-reborn:latest
+      register: streamfusion_image_pull
+      changed_when: "'Downloaded newer image' in streamfusion_image_pull.stdout"
+
+    # Équivalent du service meili-init du docker-compose : prépare le wrapper
+    # d'auto-restauration et le volume de contrôle avant Meilisearch.
+    - name: Prepare Meilisearch auto-restore wrapper
+      shell: |
+        set -euo pipefail
+
+        docker run --rm \
+          --network none \
+          --user 0:0 \
+          --entrypoint /bin/sh \
+          -v meili-wrapper:/meili_wrapper \
+          -v meili-restore-control:/meili_restore_control \
+          laster13/stream-fusion-reborn:latest \
+          -c '
+            set -eu
+
+            echo "[meili-init] Préparation"
+
+            mkdir -p /meili_wrapper
+            mkdir -p /meili_restore_control
+
+            cp \
+              /opt/streamfusion/meili-auto-restore.sh \
+              /meili_wrapper/.meili-auto-restore.sh.tmp
+
+            chmod 0555 \
+              /meili_wrapper/.meili-auto-restore.sh.tmp
+
+            mv -f \
+              /meili_wrapper/.meili-auto-restore.sh.tmp \
+              /meili_wrapper/meili-auto-restore.sh
+
+            chown -R 1000:1000 \
+              /meili_restore_control
+
+            chmod 0770 \
+              /meili_restore_control
+
+            find /meili_restore_control \
+              -type f \
+              -exec chmod 0660 {} \;
+
+            echo "[meili-init] Terminé"
+          '
+      args:
+        executable: /bin/bash
 
 - name: Set DNS Record on CloudFlare
   include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
@@ -123,16 +178,14 @@
 
 - name: Stremio Base Pre-task Setup
   block:
-    - name: Check if containers exist
+    - name: Check if persistent infrastructure containers exist
       command: docker ps -a --filter "name={{ item }}" --format "{% raw %}{{.Names}}{% endraw %}"
       register: container_check
       changed_when: false
       loop:
         - stremio-postgres
         - stremio-redis
-        - meilisearch
         - warp
-        - taskiq-scheduler
 
     - name: Debug container check results
       debug:
@@ -142,18 +195,14 @@
       set_fact:
         postgres_exists: "{{ 'stremio-postgres' in container_check.results | map(attribute='stdout') | join(',') }}"
         redis_exists: "{{ 'stremio-redis' in container_check.results | map(attribute='stdout') | join(',') }}"
-        meilisearch_exists: "{{ 'meilisearch' in container_check.results | map(attribute='stdout') | join(',') }}"
         warp_exists: "{{ 'warp' in container_check.results | map(attribute='stdout') | join(',') }}"
-        taskiq_scheduler_exists: "{{ 'taskiq-scheduler' in container_check.results | map(attribute='stdout') | join(',') }}"
 
     - name: Debug container existence
       debug:
         msg:
           - "Postgres exists: {{ postgres_exists }}"
           - "Redis exists: {{ redis_exists }}"
-          - "Meilisearch exists: {{ meilisearch_exists }}"
           - "Warp exists: {{ warp_exists }}"
-          - "Taskiq scheduler exists: {{ taskiq_scheduler_exists }}"
 
     - name: Deploy stremio-postgres
       community.docker.docker_container:
@@ -213,6 +262,8 @@
       retries: 12
       delay: 10
 
+    # Toujours géré afin d'appliquer les nouveaux volumes/commande auto-restore
+    # même si un ancien conteneur Meilisearch existe déjà.
     - name: Deploy Meilisearch
       community.docker.docker_container:
         name: meilisearch
@@ -222,10 +273,15 @@
           MEILI_MASTER_KEY: "{{ MEILI_MASTER_KEY }}"
           MEILI_ENV: "production"
           MEILI_EXPERIMENTAL_DUMPLESS_UPGRADE: "true"
+          MEILI_DB_PATH: "/meili_data/data.ms"
         exposed_ports:
           - "7700"
         volumes:
           - meili-data:/meili_data
+          - db-backups:/imports:ro
+          - meili-wrapper:/meili_wrapper:ro
+          - meili-restore-control:/meili_restore_control
+        command: /meili_wrapper/meili-auto-restore.sh
         restart_policy: unless-stopped
         healthcheck:
           test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:7700/health || exit 1"]
@@ -234,7 +290,6 @@
           retries: 10
         networks:
           - name: traefik_proxy
-      when: not meilisearch_exists
 
     - name: Wait for Meilisearch to be healthy
       command: docker inspect --format="{% raw %}{{.State.Health.Status}}{% endraw %}" meilisearch
@@ -281,15 +336,18 @@
       delay: 5
       until: meilisearch_running.stdout == 'true'
 
+    # Toujours géré : indispensable pour appliquer PG_BASE à une installation existante.
     - name: Deploy Taskiq scheduler
       community.docker.docker_container:
         name: taskiq-scheduler
-        image: limedrive/stream-fusion-reborn:latest
+        image: laster13/stream-fusion-reborn:latest
         state: started
+        pull: true
         command: python -m taskiq scheduler stream_fusion.tkq:scheduler
         env:
           PG_USER: "streamfusion"
           PG_PASS: "streamfusion"
+          PG_BASE: "streamfusion"
           TZ: "Europe/Paris"
           REDIS_HOST: stremio-redis
           PG_HOST: stremio-postgres
@@ -307,19 +365,20 @@
         restart_policy: unless-stopped
         networks:
           - name: traefik_proxy
-      when: not taskiq_scheduler_exists
 
     - name: Deploy Taskiq workers
       community.docker.docker_container:
         name: taskiq-worker
-        image: limedrive/stream-fusion-reborn:latest
+        image: laster13/stream-fusion-reborn:latest
         state: started
+        pull: true
         command: python -m taskiq worker stream_fusion.worker:broker
         env:
           SECRET_API_KEY: "{{ SECRET_API_KEY }}"
           TMDB_API_KEY: "{{ TMDB_API_KEY }}"
           PG_USER: "streamfusion"
           PG_PASS: "streamfusion"
+          PG_BASE: "streamfusion"
           MEILI_MASTER_KEY: "{{ MEILI_MASTER_KEY }}"
           TZ: "Europe/Paris"
           PROXY_URL: http://warp:1080
@@ -340,6 +399,9 @@
         volumes:
           - dmm-hashlists:/data/dmm_hashlists
           - imdb-db:/data/imdb_db
+          - db-backups:/data/backups
+          - meili-data:/meili_data:ro
+          - meili-restore-control:/meili_restore_control
           - taskiq-logs:/app/config/logs
         restart_policy: unless-stopped
         networks:
