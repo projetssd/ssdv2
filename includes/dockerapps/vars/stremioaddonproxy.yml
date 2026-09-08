@@ -1,7 +1,7 @@
 ---
 pgrole: 'stremioaddonproxy'
 intport: '7000'
-image: 'ghcr.io/guiro28/stremio-addon-proxy:sha-32f0168'
+image: 'ghcr.io/guiro28/stremio-addon-proxy:latest'
 
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}:/app/data:rw"
