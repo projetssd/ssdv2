@@ -7,26 +7,26 @@
   when: streamfusion_tmdb_api_key is not defined or (streamfusion_tmdb_api_key | string | trim) == ""
   no_log: true
 
-- name: Ask for SECRET_API_KEY only if not provided
+- name: Ask for ADMIN_SECRET_KEY only if not provided
   pause:
-    prompt: "Entre ta SECRET_API_KEY"
+    prompt: "Entre ta ADMIN_KEY pour accéder à l'interface d'administration StreamFusion (minimum 32 caractères)"
     echo: false
-  register: secret_api_key_prompt
-  when: streamfusion_secret_api_key is not defined or (streamfusion_secret_api_key | string | trim) == ""
+  register: admin_secret_key_prompt
+  when: streamfusion_admin_secret_key is not defined or (streamfusion_admin_secret_key | string | trim) == ""
   no_log: true
 
 - name: Set provided StreamFusion secret facts
   set_fact:
     TMDB_API_KEY: "{{ (streamfusion_tmdb_api_key | default(tmdb_api_key_prompt.user_input | default(''), true) | string | trim) }}"
-    SECRET_API_KEY: "{{ (streamfusion_secret_api_key | default(secret_api_key_prompt.user_input | default(''), true) | string | trim) }}"
+    ADMIN_SECRET_KEY: "{{ (streamfusion_admin_secret_key | default(admin_secret_key_prompt.user_input | default(''), true) | string | trim) }}"
   no_log: true
 
-- name: Validate StreamFusion provided secret facts
+- name: Validate provided StreamFusion secret facts
   assert:
     that:
       - TMDB_API_KEY | length > 0
-      - SECRET_API_KEY | length > 0
-    fail_msg: "TMDB_API_KEY ou SECRET_API_KEY est vide ou non transmis."
+      - ADMIN_SECRET_KEY | length >= 32
+    fail_msg: "TMDB_API_KEY est vide ou ADMIN_KEY contient moins de 32 caractères."
   no_log: true
 
 - name: Set StreamFusion secrets directory
@@ -39,62 +39,83 @@
     state: directory
     mode: "0700"
 
-- name: Generate persistent MEILI_MASTER_KEY
-  shell: |
-    if [ ! -f "{{ streamfusion_secret_dir }}/MEILI_MASTER_KEY" ]; then
-      openssl rand -hex 32 > "{{ streamfusion_secret_dir }}/MEILI_MASTER_KEY"
-      chmod 0600 "{{ streamfusion_secret_dir }}/MEILI_MASTER_KEY"
-    fi
-  args:
+- name: Persist ADMIN_SECRET_KEY
+  copy:
+    content: "{{ ADMIN_SECRET_KEY }}\n"
+    dest: "{{ streamfusion_secret_dir }}/ADMIN_SECRET_KEY"
+    mode: "0600"
+    force: true
+  no_log: true
+
+- name: Generate persistent StreamFusion internal secrets
+  ansible.builtin.shell:
+    cmd: |
+      set -euo pipefail
+      umask 077
+
+      secret_file="{{ streamfusion_secret_dir }}/{{ item }}"
+      if [ ! -s "$secret_file" ]; then
+        openssl rand -hex 32 > "$secret_file"
+        chmod 0600 "$secret_file"
+      fi
     executable: /bin/bash
+  loop:
+    - SECRET_API_KEY
+    - MEILI_MASTER_KEY
+    - CONFIG_SECRET_KEY
+    - SESSION_KEY
+    - PEER_MASTER_KEY
+    - POSTGRES_PASSWORD
+    - PG_PASS
+    - PG_MIGRATION_PASS
   changed_when: false
   no_log: true
 
-- name: Generate persistent CONFIG_SECRET_KEY
-  shell: |
-    if [ ! -f "{{ streamfusion_secret_dir }}/CONFIG_SECRET_KEY" ]; then
-      openssl rand -hex 32 > "{{ streamfusion_secret_dir }}/CONFIG_SECRET_KEY"
-      chmod 0600 "{{ streamfusion_secret_dir }}/CONFIG_SECRET_KEY"
-    fi
-  args:
-    executable: /bin/bash
-  changed_when: false
-  no_log: true
-
-- name: Generate persistent PEER_MASTER_KEY
-  shell: |
-    if [ ! -f "{{ streamfusion_secret_dir }}/PEER_MASTER_KEY" ]; then
-      openssl rand -hex 32 > "{{ streamfusion_secret_dir }}/PEER_MASTER_KEY"
-      chmod 0600 "{{ streamfusion_secret_dir }}/PEER_MASTER_KEY"
-    fi
-  args:
-    executable: /bin/bash
-  changed_when: false
-  no_log: true
-
-- name: Read persistent MEILI_MASTER_KEY
+- name: Read persistent StreamFusion internal secrets
   slurp:
-    src: "{{ streamfusion_secret_dir }}/MEILI_MASTER_KEY"
-  register: meili_master_key_file
+    src: "{{ streamfusion_secret_dir }}/{{ item }}"
+  loop:
+    - SECRET_API_KEY
+    - MEILI_MASTER_KEY
+    - CONFIG_SECRET_KEY
+    - SESSION_KEY
+    - PEER_MASTER_KEY
+    - POSTGRES_PASSWORD
+    - PG_PASS
+    - PG_MIGRATION_PASS
+  register: streamfusion_internal_secret_files
   no_log: true
 
-- name: Read persistent CONFIG_SECRET_KEY
-  slurp:
-    src: "{{ streamfusion_secret_dir }}/CONFIG_SECRET_KEY"
-  register: config_secret_key_file
-  no_log: true
-
-- name: Read persistent PEER_MASTER_KEY
-  slurp:
-    src: "{{ streamfusion_secret_dir }}/PEER_MASTER_KEY"
-  register: peer_master_key_file
-  no_log: true
-
-- name: Set generated StreamFusion secret facts
+- name: Set generated StreamFusion internal secret facts
   set_fact:
-    MEILI_MASTER_KEY: "{{ meili_master_key_file.content | b64decode | trim }}"
-    CONFIG_SECRET_KEY: "{{ config_secret_key_file.content | b64decode | trim }}"
-    PEER_MASTER_KEY: "{{ peer_master_key_file.content | b64decode | trim }}"
+    SECRET_API_KEY: "{{ (streamfusion_internal_secret_files.results | selectattr('item', 'equalto', 'SECRET_API_KEY') | first).content | b64decode | trim }}"
+    MEILI_MASTER_KEY: "{{ (streamfusion_internal_secret_files.results | selectattr('item', 'equalto', 'MEILI_MASTER_KEY') | first).content | b64decode | trim }}"
+    CONFIG_SECRET_KEY: "{{ (streamfusion_internal_secret_files.results | selectattr('item', 'equalto', 'CONFIG_SECRET_KEY') | first).content | b64decode | trim }}"
+    SESSION_KEY: "{{ (streamfusion_internal_secret_files.results | selectattr('item', 'equalto', 'SESSION_KEY') | first).content | b64decode | trim }}"
+    PEER_MASTER_KEY: "{{ (streamfusion_internal_secret_files.results | selectattr('item', 'equalto', 'PEER_MASTER_KEY') | first).content | b64decode | trim }}"
+    POSTGRES_PASSWORD: "{{ (streamfusion_internal_secret_files.results | selectattr('item', 'equalto', 'POSTGRES_PASSWORD') | first).content | b64decode | trim }}"
+    PG_PASS: "{{ (streamfusion_internal_secret_files.results | selectattr('item', 'equalto', 'PG_PASS') | first).content | b64decode | trim }}"
+    PG_MIGRATION_PASS: "{{ (streamfusion_internal_secret_files.results | selectattr('item', 'equalto', 'PG_MIGRATION_PASS') | first).content | b64decode | trim }}"
+  no_log: true
+
+- name: Validate generated StreamFusion internal secret facts
+  assert:
+    that:
+      - SECRET_API_KEY | length == 64
+      - MEILI_MASTER_KEY | length == 64
+      - CONFIG_SECRET_KEY | length == 64
+      - SESSION_KEY | length == 64
+      - PEER_MASTER_KEY | length == 64
+      - POSTGRES_PASSWORD | length == 64
+      - PG_PASS | length == 64
+      - PG_MIGRATION_PASS | length == 64
+      - SECRET_API_KEY != ADMIN_SECRET_KEY
+      - SECRET_API_KEY != CONFIG_SECRET_KEY
+      - ADMIN_SECRET_KEY != CONFIG_SECRET_KEY
+      - POSTGRES_PASSWORD != PG_PASS
+      - POSTGRES_PASSWORD != PG_MIGRATION_PASS
+      - PG_PASS != PG_MIGRATION_PASS
+    fail_msg: "Un secret StreamFusion est invalide ou deux secrets qui doivent être distincts sont identiques."
   no_log: true
 
 - name: Stremio Base Pre-task Setup
@@ -113,9 +134,10 @@
         - imdb-db
         - torrent-cache
         - taskiq-logs
-        - db-backups
+        - sfr-db-backups
         - meili-restore-control
         - meili-wrapper
+        - pg-restore-secret
 
     # Le dépôt/builder GitHub reste privé : les installations tirent l'image publique Docker Hub.
     - name: Pull latest public Stream Fusion Reborn image
@@ -123,51 +145,90 @@
       register: streamfusion_image_pull
       changed_when: "'Downloaded newer image' in streamfusion_image_pull.stdout"
 
+    # Équivalent du service pg-restore-secret-init du docker-compose :
+    # le client n'a jamais à renseigner PG_RESTORE_PASS.
+    - name: Initialize persistent PostgreSQL restore secret
+      ansible.builtin.shell:
+        cmd: |
+          set -euo pipefail
+
+          docker run --rm \
+            --network none \
+            --user 0:0 \
+            --entrypoint /bin/sh \
+            -v pg-restore-secret:/run/pg-restore-secret \
+            postgres:17-alpine \
+            -c '
+              set -eu
+              umask 077
+
+              secret=/run/pg-restore-secret/pg_restore_pass
+
+              if [ ! -s "$secret" ]; then
+                tmp="${secret}.tmp.$$"
+
+                head -c 32 /dev/urandom \
+                  | od -An -tx1 \
+                  | tr -d " \n" \
+                  > "$tmp"
+
+                test "$(wc -c < "$tmp" | tr -d " ")" -eq 64
+                chmod 0444 "$tmp"
+                mv -f "$tmp" "$secret"
+              fi
+
+              test "$(wc -c < "$secret" | tr -d " ")" -eq 64
+              chmod 0444 "$secret"
+            '
+        executable: /bin/bash
+      changed_when: false
+      no_log: true
+
     # Équivalent du service meili-init du docker-compose : prépare le wrapper
     # d'auto-restauration et le volume de contrôle avant Meilisearch.
     - name: Prepare Meilisearch auto-restore wrapper
-      shell: |
-        set -euo pipefail
+      ansible.builtin.shell:
+        cmd: |
+          set -euo pipefail
 
-        docker run --rm \
-          --network none \
-          --user 0:0 \
-          --entrypoint /bin/sh \
-          -v meili-wrapper:/meili_wrapper \
-          -v meili-restore-control:/meili_restore_control \
-          laster13/stream-fusion-reborn:latest \
-          -c '
-            set -eu
+          docker run --rm \
+            --network none \
+            --user 0:0 \
+            --entrypoint /bin/sh \
+            -v meili-wrapper:/meili_wrapper \
+            -v meili-restore-control:/meili_restore_control \
+            laster13/stream-fusion-reborn:latest \
+            -c '
+              set -eu
 
-            echo "[meili-init] Préparation"
+              echo "[meili-init] Préparation"
 
-            mkdir -p /meili_wrapper
-            mkdir -p /meili_restore_control
+              mkdir -p /meili_wrapper
+              mkdir -p /meili_restore_control
 
-            cp \
-              /opt/streamfusion/meili-auto-restore.sh \
-              /meili_wrapper/.meili-auto-restore.sh.tmp
+              cp \
+                /opt/streamfusion/meili-auto-restore.sh \
+                /meili_wrapper/.meili-auto-restore.sh.tmp
 
-            chmod 0555 \
-              /meili_wrapper/.meili-auto-restore.sh.tmp
+              chmod 0555 \
+                /meili_wrapper/.meili-auto-restore.sh.tmp
 
-            mv -f \
-              /meili_wrapper/.meili-auto-restore.sh.tmp \
-              /meili_wrapper/meili-auto-restore.sh
+              mv -f \
+                /meili_wrapper/.meili-auto-restore.sh.tmp \
+                /meili_wrapper/meili-auto-restore.sh
 
-            chown -R 1000:1000 \
-              /meili_restore_control
+              chown -R 1000:1000 \
+                /meili_restore_control
 
-            chmod 0770 \
-              /meili_restore_control
+              chmod 0770 \
+                /meili_restore_control
 
-            find /meili_restore_control \
-              -type f \
-              -exec chmod 0660 {} \;
+              find /meili_restore_control \
+                -type f \
+                -exec chmod 0660 {} \;
 
-            echo "[meili-init] Terminé"
-          '
-      args:
+              echo "[meili-init] Terminé"
+            '
         executable: /bin/bash
 
 - name: Set DNS Record on CloudFlare
@@ -212,19 +273,19 @@
         env:
           PGDATA: "/var/lib/postgresql/data/pgdata"
           POSTGRES_USER: "streamfusion"
-          POSTGRES_PASSWORD: "streamfusion"
+          POSTGRES_PASSWORD: "{{ POSTGRES_PASSWORD }}"
           POSTGRES_DB: "streamfusion"
         volumes:
           - stremio-postgres:/var/lib/postgresql/data/pgdata
         restart_policy: always
         healthcheck:
-          test: ["CMD-SHELL", "pg_isready -U streamfusion -d streamfusion"]
+          test: ["CMD-SHELL", "pg_isready -U streamfusion_runtime -d streamfusion"]
           interval: 5s
           timeout: 5s
           retries: 10
         networks:
           - name: traefik_proxy
-      when: not postgres_exists
+      no_log: true
 
     - name: Wait for PostgreSQL to be healthy
       command: docker inspect --format="{% raw %}{{.State.Health.Status}}{% endraw %}" stremio-postgres
@@ -233,6 +294,346 @@
       until: postgres_health.stdout == 'healthy'
       retries: 12
       delay: 10
+
+    # Équivalent Ansible du bootstrap PostgreSQL sécurisé du docker-compose.
+    # Fonctionne aussi lors du passage d'une ancienne installation utilisant
+    # directement le rôle bootstrap "streamfusion".
+    - name: Ensure hardened PostgreSQL roles and privileges
+      ansible.builtin.shell:
+        cmd: |
+          set -euo pipefail
+
+          docker exec -i stremio-postgres \
+            psql \
+              --no-psqlrc \
+              --set=ON_ERROR_STOP=1 \
+              --username=streamfusion \
+              --dbname=streamfusion <<'SQL'
+          DO $$
+          BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'streamfusion_owner') THEN
+              CREATE ROLE streamfusion_owner;
+            END IF;
+
+            IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'streamfusion_runtime') THEN
+              CREATE ROLE streamfusion_runtime LOGIN;
+            END IF;
+
+            IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'streamfusion_migration') THEN
+              CREATE ROLE streamfusion_migration LOGIN;
+            END IF;
+
+            IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'streamfusion_restore') THEN
+              CREATE ROLE streamfusion_restore LOGIN;
+            END IF;
+          END
+          $$;
+
+          ALTER ROLE streamfusion_owner
+            WITH NOLOGIN NOSUPERUSER CREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS;
+
+          ALTER ROLE streamfusion_runtime
+            WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS;
+
+          ALTER ROLE streamfusion_migration
+            WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS;
+
+          ALTER ROLE streamfusion_restore
+            WITH LOGIN NOSUPERUSER CREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS;
+
+          GRANT streamfusion_owner
+            TO streamfusion_migration
+            WITH INHERIT FALSE, SET TRUE;
+
+          GRANT streamfusion_owner
+            TO streamfusion_restore
+            WITH INHERIT FALSE, SET TRUE;
+
+          GRANT pg_signal_backend
+            TO streamfusion_restore
+            WITH INHERIT TRUE, SET TRUE;
+
+          -- Le rôle runtime ne doit jamais hériter du rôle propriétaire.
+          DO $$
+          BEGIN
+            IF EXISTS (
+              SELECT 1
+              FROM pg_auth_members m
+              JOIN pg_roles parent ON parent.oid = m.roleid
+              JOIN pg_roles member ON member.oid = m.member
+              WHERE parent.rolname = 'streamfusion_owner'
+                AND member.rolname = 'streamfusion_runtime'
+            ) THEN
+              EXECUTE 'REVOKE streamfusion_owner FROM streamfusion_runtime';
+            END IF;
+          END
+          $$;
+
+          ALTER DATABASE streamfusion OWNER TO streamfusion_owner;
+          ALTER SCHEMA public OWNER TO streamfusion_owner;
+
+          -- Conversion ciblée d'une ancienne installation.
+          -- REASSIGN OWNED est volontairement interdit ici : le rôle bootstrap
+          -- possède aussi des objets internes PostgreSQL qui ne doivent jamais
+          -- être transférés. On ne change que les relations applicatives du
+          -- schéma public et on ignore les membres d'extensions.
+          DO $$
+          DECLARE
+            obj record;
+            ddl text;
+          BEGIN
+            FOR obj IN
+              SELECT
+                n.nspname,
+                c.relname,
+                c.relkind
+              FROM pg_class c
+              JOIN pg_namespace n ON n.oid = c.relnamespace
+              WHERE n.nspname = 'public'
+                AND pg_get_userbyid(c.relowner) = 'streamfusion'
+                AND c.relkind IN ('r', 'p', 'S', 'v', 'm', 'f')
+                AND NOT EXISTS (
+                  SELECT 1
+                  FROM pg_depend d
+                  WHERE d.classid = 'pg_class'::regclass
+                    AND d.objid = c.oid
+                    AND d.deptype = 'e'
+                )
+              ORDER BY
+                CASE c.relkind
+                  WHEN 'S' THEN 2
+                  ELSE 1
+                END,
+                c.relname
+            LOOP
+              ddl := CASE obj.relkind
+                WHEN 'S' THEN format(
+                  'ALTER SEQUENCE %I.%I OWNER TO streamfusion_owner',
+                  obj.nspname, obj.relname
+                )
+                WHEN 'v' THEN format(
+                  'ALTER VIEW %I.%I OWNER TO streamfusion_owner',
+                  obj.nspname, obj.relname
+                )
+                WHEN 'm' THEN format(
+                  'ALTER MATERIALIZED VIEW %I.%I OWNER TO streamfusion_owner',
+                  obj.nspname, obj.relname
+                )
+                WHEN 'f' THEN format(
+                  'ALTER FOREIGN TABLE %I.%I OWNER TO streamfusion_owner',
+                  obj.nspname, obj.relname
+                )
+                ELSE format(
+                  'ALTER TABLE %I.%I OWNER TO streamfusion_owner',
+                  obj.nspname, obj.relname
+                )
+              END;
+
+              EXECUTE ddl;
+            END LOOP;
+          END
+          $$;
+
+          REVOKE ALL ON DATABASE streamfusion FROM PUBLIC;
+          GRANT CONNECT ON DATABASE streamfusion
+            TO streamfusion_runtime, streamfusion_migration, streamfusion_restore;
+
+          REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+          REVOKE CREATE ON SCHEMA public FROM streamfusion_runtime;
+          GRANT USAGE ON SCHEMA public TO streamfusion_runtime;
+
+          -- Nécessaire lors de la conversion d'une base existante : les objets déjà
+          -- présents doivent devenir immédiatement utilisables par le rôle runtime.
+          GRANT SELECT, INSERT, UPDATE, DELETE
+            ON ALL TABLES IN SCHEMA public
+            TO streamfusion_runtime;
+
+          GRANT USAGE, SELECT, UPDATE
+            ON ALL SEQUENCES IN SCHEMA public
+            TO streamfusion_runtime;
+
+          ALTER DEFAULT PRIVILEGES FOR ROLE streamfusion_owner IN SCHEMA public
+            GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO streamfusion_runtime;
+
+          ALTER DEFAULT PRIVILEGES FOR ROLE streamfusion_owner IN SCHEMA public
+            GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO streamfusion_runtime;
+          SQL
+        executable: /bin/bash
+      changed_when: false
+
+    - name: Set hardened PostgreSQL role passwords
+      ansible.builtin.shell:
+        cmd: |
+          set -euo pipefail
+          umask 077
+
+          RESTORE_PASS="$(
+            docker run --rm \
+              --network none \
+              --entrypoint /bin/sh \
+              -v pg-restore-secret:/run/pg-restore-secret:ro \
+              postgres:17-alpine \
+              -c 'cat /run/pg-restore-secret/pg_restore_pass'
+          )"
+
+          printf '%s\n' "$RESTORE_PASS" | grep -Eq '^[0-9a-f]{64}$'
+
+          if [ "$RESTORE_PASS" = "{{ POSTGRES_PASSWORD }}" ] || \
+             [ "$RESTORE_PASS" = "{{ PG_PASS }}" ] || \
+             [ "$RESTORE_PASS" = "{{ PG_MIGRATION_PASS }}" ]; then
+            exit 1
+          fi
+
+          docker exec -i \
+            -e SFR_POSTGRES_PASSWORD="{{ POSTGRES_PASSWORD }}" \
+            -e SFR_RUNTIME_PASSWORD="{{ PG_PASS }}" \
+            -e SFR_MIGRATION_PASSWORD="{{ PG_MIGRATION_PASS }}" \
+            -e SFR_RESTORE_PASSWORD="$RESTORE_PASS" \
+            stremio-postgres \
+            /bin/sh -ec '
+              psql \
+                --no-psqlrc \
+                --set=ON_ERROR_STOP=1 \
+                --username=streamfusion \
+                --dbname=streamfusion \
+                --set=bootstrap_password="$SFR_POSTGRES_PASSWORD" \
+                --set=runtime_password="$SFR_RUNTIME_PASSWORD" \
+                --set=migration_password="$SFR_MIGRATION_PASSWORD" \
+                --set=restore_password="$SFR_RESTORE_PASSWORD"
+            ' <<'SQL'
+          ALTER ROLE streamfusion
+            WITH PASSWORD :'bootstrap_password';
+
+          ALTER ROLE streamfusion_runtime
+            WITH PASSWORD :'runtime_password';
+
+          ALTER ROLE streamfusion_migration
+            WITH PASSWORD :'migration_password';
+
+          ALTER ROLE streamfusion_restore
+            WITH PASSWORD :'restore_password';
+          SQL
+        executable: /bin/bash
+      changed_when: false
+      no_log: true
+
+    - name: Validate hardened PostgreSQL roles
+      ansible.builtin.shell:
+        cmd: |
+          set -euo pipefail
+
+          docker exec -i stremio-postgres \
+            psql \
+              --no-psqlrc \
+              --set=ON_ERROR_STOP=1 \
+              --username=streamfusion \
+              --dbname=streamfusion \
+              --tuples-only \
+              --no-align <<'SQL' \
+            | grep -Fx 'OK'
+          SELECT CASE
+            WHEN
+              EXISTS (
+                SELECT 1
+                FROM pg_roles
+                WHERE rolname = 'streamfusion_owner'
+                  AND NOT rolcanlogin
+                  AND NOT rolsuper
+                  AND rolcreatedb
+                  AND NOT rolcreaterole
+                  AND NOT rolinherit
+                  AND NOT rolreplication
+                  AND NOT rolbypassrls
+              )
+              AND EXISTS (
+                SELECT 1
+                FROM pg_roles
+                WHERE rolname = 'streamfusion_runtime'
+                  AND rolcanlogin
+                  AND NOT rolsuper
+                  AND NOT rolcreatedb
+                  AND NOT rolcreaterole
+                  AND NOT rolinherit
+                  AND NOT rolreplication
+                  AND NOT rolbypassrls
+              )
+              AND EXISTS (
+                SELECT 1
+                FROM pg_roles
+                WHERE rolname = 'streamfusion_migration'
+                  AND rolcanlogin
+                  AND NOT rolsuper
+                  AND NOT rolcreatedb
+                  AND NOT rolcreaterole
+                  AND NOT rolinherit
+                  AND NOT rolreplication
+                  AND NOT rolbypassrls
+              )
+              AND EXISTS (
+                SELECT 1
+                FROM pg_roles
+                WHERE rolname = 'streamfusion_restore'
+                  AND rolcanlogin
+                  AND NOT rolsuper
+                  AND rolcreatedb
+                  AND NOT rolcreaterole
+                  AND NOT rolinherit
+                  AND NOT rolreplication
+                  AND NOT rolbypassrls
+              )
+              AND EXISTS (
+                SELECT 1
+                FROM pg_auth_members m
+                JOIN pg_roles parent ON parent.oid = m.roleid
+                JOIN pg_roles member ON member.oid = m.member
+                WHERE parent.rolname = 'streamfusion_owner'
+                  AND member.rolname = 'streamfusion_migration'
+                  AND NOT m.inherit_option
+                  AND m.set_option
+              )
+              AND EXISTS (
+                SELECT 1
+                FROM pg_auth_members m
+                JOIN pg_roles parent ON parent.oid = m.roleid
+                JOIN pg_roles member ON member.oid = m.member
+                WHERE parent.rolname = 'streamfusion_owner'
+                  AND member.rolname = 'streamfusion_restore'
+                  AND NOT m.inherit_option
+                  AND m.set_option
+              )
+              AND pg_has_role('streamfusion_restore', 'pg_signal_backend', 'MEMBER')
+              AND pg_has_role('streamfusion_restore', 'pg_signal_backend', 'USAGE')
+              AND (
+                SELECT pg_get_userbyid(datdba)
+                FROM pg_database
+                WHERE datname = 'streamfusion'
+              ) = 'streamfusion_owner'
+              AND (
+                SELECT pg_get_userbyid(nspowner)
+                FROM pg_namespace
+                WHERE nspname = 'public'
+              ) = 'streamfusion_owner'
+              AND NOT EXISTS (
+                SELECT 1
+                FROM pg_class c
+                JOIN pg_namespace n ON n.oid = c.relnamespace
+                WHERE n.nspname = 'public'
+                  AND pg_get_userbyid(c.relowner) = 'streamfusion'
+                  AND c.relkind IN ('r', 'p', 'S', 'v', 'm', 'f')
+                  AND NOT EXISTS (
+                    SELECT 1
+                    FROM pg_depend d
+                    WHERE d.classid = 'pg_class'::regclass
+                      AND d.objid = c.oid
+                      AND d.deptype = 'e'
+                  )
+              )
+            THEN 'OK'
+            ELSE 'ERROR'
+          END;
+          SQL
+        executable: /bin/bash
+      changed_when: false
 
     - name: Deploy stremio-redis
       community.docker.docker_container:
@@ -278,7 +679,7 @@
           - "7700"
         volumes:
           - meili-data:/meili_data
-          - db-backups:/imports:ro
+          - sfr-db-backups:/imports:ro
           - meili-wrapper:/meili_wrapper:ro
           - meili-restore-control:/meili_restore_control
         command: /meili_wrapper/meili-auto-restore.sh
@@ -290,6 +691,7 @@
           retries: 10
         networks:
           - name: traefik_proxy
+      no_log: true
 
     - name: Wait for Meilisearch to be healthy
       command: docker inspect --format="{% raw %}{{.State.Health.Status}}{% endraw %}" meilisearch
@@ -336,7 +738,7 @@
       delay: 5
       until: meilisearch_running.stdout == 'true'
 
-    # Toujours géré : indispensable pour appliquer PG_BASE à une installation existante.
+    # Toujours géré : le scheduler utilise uniquement le rôle runtime.
     - name: Deploy Taskiq scheduler
       community.docker.docker_container:
         name: taskiq-scheduler
@@ -345,12 +747,13 @@
         pull: true
         command: python -m taskiq scheduler stream_fusion.tkq:scheduler
         env:
-          PG_USER: "streamfusion"
-          PG_PASS: "streamfusion"
+          SESSION_KEY: "{{ SESSION_KEY }}"
+          PG_USER: "streamfusion_runtime"
+          PG_PASS: "{{ PG_PASS }}"
           PG_BASE: "streamfusion"
           TZ: "Europe/Paris"
-          REDIS_HOST: stremio-redis
-          PG_HOST: stremio-postgres
+          REDIS_HOST: "stremio-redis"
+          PG_HOST: "stremio-postgres"
           TASKIQ_REDIS_DB: "6"
         cap_drop:
           - ALL
@@ -365,6 +768,7 @@
         restart_policy: unless-stopped
         networks:
           - name: traefik_proxy
+      no_log: true
 
     - name: Deploy Taskiq workers
       community.docker.docker_container:
@@ -375,17 +779,26 @@
         command: python -m taskiq worker stream_fusion.worker:broker
         env:
           SECRET_API_KEY: "{{ SECRET_API_KEY }}"
+          CONFIG_SECRET_KEY: "{{ CONFIG_SECRET_KEY }}"
+          SESSION_KEY: "{{ SESSION_KEY }}"
           TMDB_API_KEY: "{{ TMDB_API_KEY }}"
-          PG_USER: "streamfusion"
-          PG_PASS: "streamfusion"
+
+          PG_USER: "streamfusion_runtime"
+          PG_PASS: "{{ PG_PASS }}"
           PG_BASE: "streamfusion"
+          PG_HOST: "stremio-postgres"
+
+          PG_RESTORE_USER: "streamfusion_restore"
+          PG_RESTORE_PASS_FILE: "/run/pg-restore-secret/pg_restore_pass"
+          PG_OWNER_ROLE: "streamfusion_owner"
+
           MEILI_MASTER_KEY: "{{ MEILI_MASTER_KEY }}"
-          TZ: "Europe/Paris"
-          PROXY_URL: http://warp:1080
-          REDIS_HOST: stremio-redis
-          PG_HOST: stremio-postgres
-          MEILI_HOST: meilisearch
+          MEILI_HOST: "meilisearch"
           MEILI_PORT: "7700"
+
+          TZ: "Europe/Paris"
+          PROXY_URL: "http://warp:1080"
+          REDIS_HOST: "stremio-redis"
           TASKIQ_REDIS_DB: "6"
           PEER_MASTER_KEY: "{{ PEER_MASTER_KEY }}"
         cap_drop:
@@ -394,18 +807,20 @@
           - "no-new-privileges:true"
         read_only: true
         tmpfs:
-          - "/tmp:mode=1777,size=8g"
+          - "/tmp:mode=1777,size=4g"
           - "/home/appuser:uid=1000,gid=1000,mode=0700"
         volumes:
           - dmm-hashlists:/data/dmm_hashlists
           - imdb-db:/data/imdb_db
-          - db-backups:/data/backups
+          - sfr-db-backups:/data/backups
           - meili-data:/meili_data:ro
           - meili-restore-control:/meili_restore_control
           - taskiq-logs:/app/config/logs
+          - pg-restore-secret:/run/pg-restore-secret:ro
         restart_policy: unless-stopped
         networks:
           - name: traefik_proxy
+      no_log: true
 
   rescue:
     - name: Display error message
