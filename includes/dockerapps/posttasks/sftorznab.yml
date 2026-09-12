@@ -1,0 +1,9 @@
+---
+- name: Afficher la configuration Prowlarr de sftorznab
+  ansible.builtin.debug:
+    msg:
+      - "Prowlarr > Indexeurs > Ajouter > Generic Torznab"
+      - "URL : http://{{ pgrole }}:{{ intport }}/torznab"
+      - "API Path : /api"
+      - "API Key : {{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/INDEXER_API_KEY"
+      - "Test : docker exec {{ pgrole }} python -c \"import urllib.request;print(urllib.request.urlopen('http://127.0.0.1:{{ intport }}/health').read())\""

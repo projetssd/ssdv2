@@ -1,0 +1,24 @@
+---
+pgrole: 'sftorznab'
+intport: '8080'
+image: 'laster13/streamfusion-torznab-indexer:latest'
+
+pg_volumes: []
+
+pg_env:
+  DATABASE_URL: "{{ DATABASE_URL }}"
+  INDEXER_NAME: 'StreamFusion PostgreSQL'
+  INDEXER_API_KEY: "{{ INDEXER_API_KEY }}"
+  DEFAULT_LIMIT: '100'
+  MAX_LIMIT: '200'
+  DB_POOL_SIZE: '10'
+  DB_MAX_OVERFLOW: '20'
+  ALLDEBRID_API_KEY: "{{ ALLDEBRID_API_KEY }}"
+  ALLDEBRID_CACHE_ONLY: "{{ sftorznab_alldebrid.cache_only }}"
+  ALLDEBRID_CHECK_LIMIT: '30'
+  ALLDEBRID_BATCH_SIZE: '10'
+  ALLDEBRID_MAX_CHECK: '30'
+  TZ: 'Europe/Paris'
+
+# Pas d'interface Web : API Torznab consommée par Prowlarr via le réseau docker.
+traefik_labels_enabled: false

@@ -1,0 +1,94 @@
+---
+- name: Vérifier le conteneur PostgreSQL StreamFusion
+  community.docker.docker_container_info:
+    name: 'stremio-postgres'
+  register: sftorznab_pg_info
+  when: sftorznab_database_url is not defined or (sftorznab_database_url | string | trim) == ""
+
+- name: Contrôler que la base StreamFusion est démarrée
+  assert:
+    that:
+      - sftorznab_pg_info.exists | default(false)
+      - sftorznab_pg_info.container.State.Running | default(false)
+    fail_msg: >-
+      Le conteneur stremio-postgres (StreamFusion) est introuvable ou arrêté.
+      Installer d'abord l'application streamfusion, ou définir sftorznab_database_url
+      dans une application personnalisée.
+  when: sftorznab_database_url is not defined or (sftorznab_database_url | string | trim) == ""
+
+- name: Définir DATABASE_URL
+  set_fact:
+    DATABASE_URL: >-
+      {{ (sftorznab_database_url | default('postgresql+asyncpg://streamfusion:streamfusion@stremio-postgres:5432/streamfusion', true) | string | trim) }}
+  no_log: true
+
+- name: Demander la clé API AllDebrid si elle n'est pas fournie
+  pause:
+    prompt: "Entre ta clé API AllDebrid (https://alldebrid.com/apikeys/)"
+    echo: false
+  register: sftorznab_alldebrid_api_key_prompt
+  when:
+    - sftorznab_alldebrid_cache_only | default('true') | bool
+    - sftorznab_alldebrid_api_key is not defined or (sftorznab_alldebrid_api_key | string | trim) == ""
+  no_log: true
+
+# Les valeurs sont stockées dans un dictionnaire : ansible convertit en booléen
+# toute chaîne 'true'/'false' posée directement en fait, ce que docker_container
+# refuse pour les variables d'environnement.
+- name: Définir les variables AllDebrid
+  set_fact:
+    sftorznab_alldebrid: >-
+      {{ {'api_key': (sftorznab_alldebrid_api_key | default(sftorznab_alldebrid_api_key_prompt.user_input | default(''), true) | string | trim),
+          'cache_only': ('true' if (sftorznab_alldebrid_cache_only | default('true') | bool) else 'false')} }}
+  no_log: true
+
+- name: Définir la variable ALLDEBRID_API_KEY
+  set_fact:
+    ALLDEBRID_API_KEY: "{{ sftorznab_alldebrid.api_key }}"
+  no_log: true
+
+- name: Contrôler la clé API AllDebrid
+  assert:
+    that:
+      - sftorznab_alldebrid.api_key | length > 0
+    fail_msg: >-
+      ALLDEBRID_CACHE_ONLY=true exige une clé API AllDebrid, sinon toutes les
+      recherches renvoient 503. Fournir une clé ou passer
+      sftorznab_alldebrid_cache_only=false dans une application personnalisée.
+  no_log: true
+  when: sftorznab_alldebrid.cache_only | bool
+
+- name: Définir le dossier applicatif
+  set_fact:
+    sftorznab_dir: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}"
+
+- name: Créer le dossier applicatif
+  file:
+    path: "{{ sftorznab_dir }}"
+    state: directory
+    owner: "{{ lookup('env','USER') }}"
+    group: "{{ lookup('env','USER') }}"
+    mode: '0750'
+  become: true
+
+- name: Générer une INDEXER_API_KEY persistante
+  shell: |
+    if [ ! -f "{{ sftorznab_dir }}/INDEXER_API_KEY" ]; then
+      openssl rand -hex 32 > "{{ sftorznab_dir }}/INDEXER_API_KEY"
+      chmod 0600 "{{ sftorznab_dir }}/INDEXER_API_KEY"
+    fi
+  args:
+    executable: /bin/bash
+  changed_when: false
+  no_log: true
+
+- name: Lire la INDEXER_API_KEY persistante
+  slurp:
+    src: "{{ sftorznab_dir }}/INDEXER_API_KEY"
+  register: sftorznab_indexer_api_key_file
+  no_log: true
+
+- name: Définir la variable INDEXER_API_KEY
+  set_fact:
+    INDEXER_API_KEY: "{{ sftorznab_indexer_api_key_file.content | b64decode | trim }}"
+  no_log: true
