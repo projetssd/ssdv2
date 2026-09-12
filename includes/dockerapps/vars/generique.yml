@@ -59,13 +59,23 @@
         subdomain: "{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}"
       when: cloudflare_enabled and traefik_labels_enabled == true
 
+    # Un enregistrement DNS n'est utile que si un router Traefik est exposé :
+    # labels génériques, ou labels spécifiques fournis par l'application
+    # (specific_docker_info.labels ou labels consommés par une posttask).
+    - name: "Set dns_required fact"
+      set_fact:
+        dns_required: >-
+          {{ traefik_labels_enabled == true
+             or (specific_docker_info | default({})).labels is defined
+             or (labels | default('') | length > 0) }}
+
     - name: "Prompt user to create A record for {{ subdomain }} with IP {{ network.ipv4 }}"
       pause:
         prompt: |
           Please create an A record for the subdomain "{{ subdomain }}.{{ user.domain }}"
           with the IP address "{{ network.ipv4 }}" in your DNS provider.
           Press Enter to continue once the record has been created.
-      when: not cloudflare_enabled
+      when: not cloudflare_enabled and dns_required
 
     - name: "Wait for subdomain to resolve to correct IP"
       command: dig +short {{ subdomain }}.{{ user.domain }} @1.1.1.1
@@ -74,7 +84,7 @@
       retries: 300  # Nombre de tentatives
       delay: 10  # Temps (en secondes) entre chaque tentative
       changed_when: false
-      when: not cloudflare_enabled
+      when: not cloudflare_enabled and dns_required
 
     - name: Initialize labels
       set_fact:
