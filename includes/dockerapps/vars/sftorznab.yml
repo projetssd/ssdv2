@@ -18,6 +18,10 @@ pg_env:
   ALLDEBRID_CHECK_LIMIT: '30'
   ALLDEBRID_BATCH_SIZE: '10'
   ALLDEBRID_MAX_CHECK: '30'
+  # AllDebrid bloque l'ajout de magnets depuis une IP de serveur
+  # (erreur NO_SERVER). L'indexeur interroge l'API via le proxy warp.
+  HTTP_PROXY: 'http://warp:1080'
+  HTTPS_PROXY: 'http://warp:1080'
   TZ: 'Europe/Paris'
 
 # Pas d'interface Web : API Torznab consommée par Prowlarr via le réseau docker.
