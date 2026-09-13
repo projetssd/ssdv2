@@ -1,9 +1,15 @@
 ---
 - name: Afficher la configuration Prowlarr de sftorznab
   ansible.builtin.debug:
-    msg:
-      - "Prowlarr > Indexeurs > Ajouter > Generic Torznab"
-      - "URL : http://{{ pgrole }}:{{ intport }}/torznab"
-      - "API Path : /api"
-      - "API Key : {{ INDEXER_API_KEY }}"
-      - "Test : docker exec {{ pgrole }} python -c \"import urllib.request;print(urllib.request.urlopen('http://127.0.0.1:{{ intport }}/torznab/api?t=caps&apikey={{ INDEXER_API_KEY }}').status)\""
+    msg: >-
+      {{
+        [
+          'Prowlarr > Indexeurs > Ajouter > Generic Torznab',
+          ('URL (public) : https://' ~ (sub[pgrole][pgrole] if sub_enabled else pgrole) ~ '.' ~ user.domain ~ '/torznab')
+            if (sftorznab_expose_public | default(false) | bool)
+            else ('URL (interne) : http://' ~ pgrole ~ ':' ~ intport ~ '/torznab'),
+          'API Path : /api',
+          'API Key : ' ~ INDEXER_API_KEY,
+          'Test : docker exec ' ~ pgrole ~ ' python -c "import urllib.request;print(urllib.request.urlopen(\'http://127.0.0.1:' ~ intport ~ '/torznab/api?t=caps&apikey=' ~ INDEXER_API_KEY ~ '\').status)"'
+        ]
+      }}

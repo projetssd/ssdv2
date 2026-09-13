@@ -24,5 +24,45 @@ pg_env:
   HTTPS_PROXY: 'http://warp:1080'
   TZ: 'Europe/Paris'
 
-# Pas d'interface Web : API Torznab consommée par Prowlarr via le réseau docker.
-traefik_labels_enabled: false
+# Pas d'interface Web : API Torznab consommée par Prowlarr.
+# Par défaut l'indexeur reste interne au réseau Docker ; l'exposition Traefik
+# publique est activée par le prompt d'installation (sftorznab_expose_public).
+traefik_labels_enabled: "{{ sftorznab_expose_public | default(false) | bool }}"
+
+# Deux routers sur le même host :
+#   - sftorznab-torznab-rtr : /torznab/ en chain-no-auth (priorité haute) afin
+#     que Prowlarr ne soit jamais bloqué par l'authentification (oauth, etc.) ;
+#   - sftorznab-rtr : le reste du host, protégé par la chaîne d'auth choisie.
+specific_docker_info: >-
+  {{
+    {
+      'labels': {
+        'traefik.enable': 'true',
+
+        'traefik.http.routers.sftorznab-torznab-rtr.entrypoints': 'http,https',
+        'traefik.http.routers.sftorznab-torznab-rtr.rule': 'Host(`' ~ (sub[pgrole][pgrole] if sub_enabled else pgrole) ~ '.' ~ user.domain ~ '`) && PathPrefix(`/torznab/`)',
+        'traefik.http.routers.sftorznab-torznab-rtr.priority': '100',
+        'traefik.http.routers.sftorznab-torznab-rtr.tls': 'true',
+        'traefik.http.routers.sftorznab-torznab-rtr.tls.certresolver': 'letsencrypt',
+        'traefik.http.routers.sftorznab-torznab-rtr.service': 'sftorznab-svc',
+        'traefik.http.routers.sftorznab-torznab-rtr.middlewares': 'chain-no-auth@file',
+
+        'traefik.http.routers.sftorznab-rtr.entrypoints': 'http,https',
+        'traefik.http.routers.sftorznab-rtr.rule': 'Host(`' ~ (sub[pgrole][pgrole] if sub_enabled else pgrole) ~ '.' ~ user.domain ~ '`)',
+        'traefik.http.routers.sftorznab-rtr.priority': '10',
+        'traefik.http.routers.sftorznab-rtr.tls': 'true',
+        'traefik.http.routers.sftorznab-rtr.tls.certresolver': 'letsencrypt',
+        'traefik.http.routers.sftorznab-rtr.service': 'sftorznab-svc',
+        'traefik.http.routers.sftorznab-rtr.middlewares': (
+          'chain-basic-auth@file' if (auth_enabled and sub[pgrole].auth | default('') == 'basique')
+          else 'chain-oauth@file' if (auth_enabled and sub[pgrole].auth | default('') == 'oauth')
+          else 'chain-authelia@file' if (auth_enabled and sub[pgrole].auth | default('') == 'authelia')
+          else 'chain-oauth2-proxy@file' if (auth_enabled and sub[pgrole].auth | default('') == 'oauth2-proxy')
+          else 'chain-oauth2-proxy@file' if (oauth2proxy_enabled and sub[pgrole].auth | default('') != 'aucune')
+          else 'chain-no-auth@file'
+        ),
+
+        'traefik.http.services.sftorznab-svc.loadbalancer.server.port': intport
+      }
+    } if (sftorznab_expose_public | default(false) | bool) else {}
+  }}

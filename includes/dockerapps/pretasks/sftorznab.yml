@@ -99,6 +99,21 @@
   no_log: true
   when: sftorznab_alldebrid.cache_only | bool
 
+# Expose l'indexeur via Traefik. Par défaut (non interactif) il reste interne
+# au réseau Docker, accessible uniquement par container_name:8080.
+- name: Demander s'il faut exposer l'indexeur Torznab via Traefik
+  pause:
+    prompt: "Exposer l'indexeur Torznab via Traefik (accès public protégé par l'apikey) ? (o/n)"
+  register: sftorznab_expose_public_prompt
+  when: sftorznab_expose_public is not defined
+
+- name: Définir sftorznab_expose_public
+  set_fact:
+    sftorznab_expose_public: >-
+      {{ (sftorznab_expose_public_prompt.user_input | default('', true) | lower | trim)
+         in ['o', 'oui', 'y', 'yes'] }}
+  when: sftorznab_expose_public is not defined
+
 - name: Définir le dossier applicatif
   set_fact:
     sftorznab_dir: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}"
