@@ -16,10 +16,51 @@
       dans une application personnalisée.
   when: sftorznab_database_url is not defined or (sftorznab_database_url | string | trim) == ""
 
-- name: Définir DATABASE_URL
+- name: Vérifier le conteneur proxy warp
+  community.docker.docker_container_info:
+    name: 'warp'
+  register: sftorznab_warp_info
+
+- name: Contrôler que le proxy warp est démarré
+  assert:
+    that:
+      - sftorznab_warp_info.exists | default(false)
+      - sftorznab_warp_info.container.State.Running | default(false)
+    fail_msg: >-
+      Le conteneur warp est introuvable ou arrêté. AllDebrid refuse l'ajout de
+      magnets depuis une IP de serveur (NO_SERVER) : l'indexeur doit passer par
+      le proxy warp. Installer d'abord l'application streamfusion.
+
+- name: Définir DATABASE_URL personnalisée
+  set_fact:
+    DATABASE_URL: "{{ sftorznab_database_url | string | trim }}"
+  when: sftorznab_database_url is defined and (sftorznab_database_url | string | trim) != ""
+  no_log: true
+
+- name: Lire le mot de passe PostgreSQL runtime StreamFusion
+  slurp:
+    src: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/streamfusion-secrets/PG_PASS"
+  register: sftorznab_pg_pass_file
+  when: sftorznab_database_url is not defined or (sftorznab_database_url | string | trim) == ""
+  no_log: true
+
+- name: Contrôler la présence du secret PostgreSQL StreamFusion
+  assert:
+    that:
+      - sftorznab_pg_pass_file.content is defined
+      - (sftorznab_pg_pass_file.content | b64decode | trim) | length == 64
+    fail_msg: >-
+      Le secret streamfusion-secrets/PG_PASS est introuvable ou invalide.
+      Installer d'abord l'application streamfusion, ou définir sftorznab_database_url
+      dans une application personnalisée.
+  when: sftorznab_database_url is not defined or (sftorznab_database_url | string | trim) == ""
+  no_log: true
+
+- name: Définir DATABASE_URL par défaut (rôle runtime StreamFusion)
   set_fact:
     DATABASE_URL: >-
-      {{ (sftorznab_database_url | default('postgresql+asyncpg://streamfusion:streamfusion@stremio-postgres:5432/streamfusion', true) | string | trim) }}
+      postgresql+asyncpg://streamfusion_runtime:{{ sftorznab_pg_pass_file.content | b64decode | trim }}@stremio-postgres:5432/streamfusion
+  when: sftorznab_database_url is not defined or (sftorznab_database_url | string | trim) == ""
   no_log: true
 
 - name: Demander la clé API AllDebrid si elle n'est pas fournie
