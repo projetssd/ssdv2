@@ -1,0 +1,12 @@
+---
+pgrole: 'remux'
+intport: '3000'
+image: 'ghcr.io/lostb1t/remux:latest'
+
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/data:rw"
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+  - '/etc/localtime:/etc/localtime:ro'
+
+pg_env:
+  TZ: 'Europe/Paris'
