@@ -667,6 +667,7 @@ function suppression_appli() {
       DELETE=1
     fi
   fi
+  EXTRA_SUBDOMAIN=""
   manage_account_yml sub.${APPSELECTED} " "
 
   docker rm -f "$APPSELECTED" >/dev/null 2>&1
@@ -771,6 +772,10 @@ function suppression_appli() {
   mediaflowproxy)
     docker rm -f redis-mediaflowproxy >/dev/null 2>&1
     ;;
+  sftorznab)
+    docker rm -f sftorznab-broker sftorznab-meili >/dev/null 2>&1
+    EXTRA_SUBDOMAIN="${sousdomaine}-meili"
+    ;;
   coolify)
     # Supprimer tous les conteneurs dont le nom contient 'coolify'
     docker ps -a --filter "name=coolify" --format "{{.ID}}" | xargs -r docker rm -f
@@ -809,7 +814,7 @@ function suppression_appli() {
 
   checking_errors $?
 
-  ansible-playbook -e pgrole="${APPSELECTED}" "${SETTINGS_SOURCE}/includes/config/playbooks/remove_cf_record.yml"
+  ansible-playbook -e pgrole="${APPSELECTED}" -e extra_subdomain="${EXTRA_SUBDOMAIN}" "${SETTINGS_SOURCE}/includes/config/playbooks/remove_cf_record.yml"
   docker system prune -af >/dev/null 2>&1
 
   echo""
