@@ -1,4 +1,8 @@
 ---
+# Indexeur Torznab StreamFusion (image commune, 3 conteneurs) :
+#   - sftorznab        : indexeur PostgreSQL  (conteneur principal, déployé ici)
+#   - sftorznab-meili  : indexeur Meilisearch (déployé en posttask)
+#   - sftorznab-broker : broker AllDebrid     (déployé en posttask)
 pgrole: 'sftorznab'
 intport: '8080'
 image: 'laster13/streamfusion-torznab-indexer:latest'
@@ -11,31 +15,44 @@ pg_env:
   INDEXER_API_KEY: "{{ INDEXER_API_KEY }}"
   DEFAULT_LIMIT: '100'
   MAX_LIMIT: '200'
-  DB_POOL_SIZE: '10'
-  DB_MAX_OVERFLOW: '20'
+  DB_POOL_SIZE: '5'
+  DB_MAX_OVERFLOW: '10'
   ALLDEBRID_API_KEY: "{{ ALLDEBRID_API_KEY }}"
   ALLDEBRID_CACHE_ONLY: "{{ sftorznab_alldebrid.cache_only }}"
   ALLDEBRID_CHECK_LIMIT: '30'
   ALLDEBRID_BATCH_SIZE: '10'
   ALLDEBRID_MAX_CHECK: '30'
+  ALLDEBRID_BROKER_URL: 'http://sftorznab-broker:8080'
+  ALLDEBRID_BROKER_TOKEN: "{{ ALLDEBRID_BROKER_TOKEN }}"
+  ALLDEBRID_BROKER_TIMEOUT: '45'
+  ALLDEBRID_GLOBAL_REDIS_URL: "{{ SFTORZNAB_REDIS_URL }}"
+  ALLDEBRID_GLOBAL_SECOND_LIMIT: '8'
+  ALLDEBRID_GLOBAL_MINUTE_LIMIT: '450'
   # AllDebrid bloque l'ajout de magnets depuis une IP de serveur
-  # (erreur NO_SERVER). L'indexeur interroge l'API via le proxy warp.
+  # (erreur NO_SERVER). Les appels AllDebrid passent via le proxy warp.
+  # NO_PROXY empêche de proxifier les appels internes (broker, Redis...).
   HTTP_PROXY: 'http://warp:1080'
   HTTPS_PROXY: 'http://warp:1080'
+  NO_PROXY: 'localhost,127.0.0.1,sftorznab-broker,sftorznab-meili,stremio-postgres,stremio-redis,meilisearch'
   TZ: 'Europe/Paris'
 
 # Pas d'interface Web : API Torznab consommée par Prowlarr.
-# Par défaut l'indexeur reste interne au réseau Docker ; l'exposition Traefik
-# publique est activée par le prompt d'installation (sftorznab_expose_public).
+# Par défaut les indexeurs restent internes au réseau Docker ; l'exposition
+# Traefik publique (deux sous-domaines) est activée par le prompt d'installation
+# (sftorznab_expose_public). L'indexeur Meilisearch (sftorznab-meili) est exposé
+# sur son propre sous-domaine par la posttask.
 traefik_labels_enabled: "{{ sftorznab_expose_public | default(false) | bool }}"
 
 # Deux routers sur le même host :
 #   - sftorznab-torznab-rtr : /torznab/ en chain-no-auth (priorité haute) afin
 #     que Prowlarr ne soit jamais bloqué par l'authentification (oauth, etc.) ;
 #   - sftorznab-rtr : le reste du host, protégé par la chaîne d'auth choisie.
+# L'indexeur Meilisearch (sftorznab-meili) est exposé sur un second sous-domaine
+# (voir posttask) quand cette exposition est activée.
 specific_docker_info: >-
   {{
     {
+      'pull': true,
       'labels': {
         'traefik.enable': 'true',
 
@@ -64,5 +81,5 @@ specific_docker_info: >-
 
         'traefik.http.services.sftorznab-svc.loadbalancer.server.port': intport
       }
-    } if (sftorznab_expose_public | default(false) | bool) else {}
+    } if (sftorznab_expose_public | default(false) | bool) else {'pull': true}
   }}

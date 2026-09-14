@@ -28,8 +28,41 @@
       - sftorznab_warp_info.container.State.Running | default(false)
     fail_msg: >-
       Le conteneur warp est introuvable ou arrêté. AllDebrid refuse l'ajout de
-      magnets depuis une IP de serveur (NO_SERVER) : l'indexeur doit passer par
-      le proxy warp. Installer d'abord l'application streamfusion.
+      magnets depuis une IP de serveur (NO_SERVER) : les indexeurs et le broker
+      doivent passer par le proxy warp. Installer d'abord l'application streamfusion.
+
+- name: Vérifier le conteneur Redis StreamFusion
+  community.docker.docker_container_info:
+    name: 'stremio-redis'
+  register: sftorznab_redis_info
+
+- name: Contrôler que Redis StreamFusion est démarré
+  assert:
+    that:
+      - sftorznab_redis_info.exists | default(false)
+      - sftorznab_redis_info.container.State.Running | default(false)
+    fail_msg: >-
+      Le conteneur stremio-redis (StreamFusion) est introuvable ou arrêté.
+      Le quota AllDebrid partagé et le broker en ont besoin. Installer d'abord
+      l'application streamfusion.
+
+- name: Vérifier le conteneur Meilisearch StreamFusion
+  community.docker.docker_container_info:
+    name: 'meilisearch'
+  register: sftorznab_meili_info
+
+- name: Contrôler que Meilisearch StreamFusion est démarré
+  assert:
+    that:
+      - sftorznab_meili_info.exists | default(false)
+      - sftorznab_meili_info.container.State.Running | default(false)
+    fail_msg: >-
+      Le conteneur meilisearch (StreamFusion) est introuvable ou arrêté.
+      L'indexeur Meilisearch en a besoin. Installer d'abord l'application streamfusion.
+
+# ---------------------------------------------------------------
+# Base PostgreSQL StreamFusion
+# ---------------------------------------------------------------
 
 - name: Définir DATABASE_URL personnalisée
   set_fact:
@@ -62,6 +95,44 @@
       postgresql+asyncpg://streamfusion_runtime:{{ sftorznab_pg_pass_file.content | b64decode | trim }}@stremio-postgres:5432/streamfusion
   when: sftorznab_database_url is not defined or (sftorznab_database_url | string | trim) == ""
   no_log: true
+
+# ---------------------------------------------------------------
+# Redis partagé (quota global AllDebrid)
+# ---------------------------------------------------------------
+
+# Nom unique à rectifier si le Redis de StreamFusion change.
+- name: Définir l'URL Redis partagée
+  set_fact:
+    SFTORZNAB_REDIS_URL: "{{ sftorznab_redis_url | default('redis://stremio-redis:6379/0') }}"
+
+# ---------------------------------------------------------------
+# Meilisearch StreamFusion
+# ---------------------------------------------------------------
+
+- name: Lire la clé Meilisearch StreamFusion
+  slurp:
+    src: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/streamfusion-secrets/MEILI_MASTER_KEY"
+  register: sftorznab_meili_key_file
+  no_log: true
+
+- name: Contrôler la présence du secret Meilisearch StreamFusion
+  assert:
+    that:
+      - sftorznab_meili_key_file.content is defined
+      - (sftorznab_meili_key_file.content | b64decode | trim) | length > 0
+    fail_msg: >-
+      Le secret streamfusion-secrets/MEILI_MASTER_KEY est introuvable.
+      Installer d'abord l'application streamfusion.
+  no_log: true
+
+- name: Définir la clé de recherche Meilisearch
+  set_fact:
+    MEILI_TORZNAB_SEARCH_KEY: "{{ sftorznab_meili_key_file.content | b64decode | trim }}"
+  no_log: true
+
+# ---------------------------------------------------------------
+# AllDebrid
+# ---------------------------------------------------------------
 
 - name: Demander la clé API AllDebrid si elle n'est pas fournie
   pause:
@@ -99,11 +170,18 @@
   no_log: true
   when: sftorznab_alldebrid.cache_only | bool
 
-# Expose l'indexeur via Traefik. Par défaut (non interactif) il reste interne
-# au réseau Docker, accessible uniquement par container_name:8080.
-- name: Demander s'il faut exposer l'indexeur Torznab via Traefik
+# ---------------------------------------------------------------
+# Exposition Traefik
+# ---------------------------------------------------------------
+
+# Expose les indexeurs via Traefik sur deux sous-domaines :
+#   - sftorznab.<domaine>       : indexeur PostgreSQL
+#   - sftorznab-meili.<domaine> : indexeur Meilisearch
+# Par défaut (non interactif) les indexeurs restent internes au réseau Docker,
+# accessibles par Prowlarr via sftorznab:8080 et sftorznab-meili:8080.
+- name: Demander s'il faut exposer les indexeurs Torznab via Traefik
   pause:
-    prompt: "Exposer l'indexeur Torznab via Traefik (accès public protégé par l'apikey) ? (o/n)"
+    prompt: "Exposer les indexeurs Torznab (PostgreSQL + Meilisearch) via Traefik sur deux sous-domaines (accès public protégé par l'apikey) ? (o/n)"
   register: sftorznab_expose_public_prompt
   when: sftorznab_expose_public is not defined
 
@@ -113,6 +191,10 @@
       {{ (sftorznab_expose_public_prompt.user_input | default('', true) | lower | trim)
          in ['o', 'oui', 'y', 'yes'] }}
   when: sftorznab_expose_public is not defined
+
+# ---------------------------------------------------------------
+# Secrets persistants
+# ---------------------------------------------------------------
 
 - name: Définir le dossier applicatif
   set_fact:
@@ -127,24 +209,46 @@
     mode: '0750'
   become: true
 
-- name: Générer une INDEXER_API_KEY persistante
-  shell: |
-    if [ ! -f "{{ sftorznab_dir }}/INDEXER_API_KEY" ]; then
-      openssl rand -hex 32 > "{{ sftorznab_dir }}/INDEXER_API_KEY"
-      chmod 0600 "{{ sftorznab_dir }}/INDEXER_API_KEY"
-    fi
-  args:
+- name: Générer les secrets persistants
+  ansible.builtin.shell:
+    cmd: |
+      set -euo pipefail
+      umask 077
+      secret_file="{{ sftorznab_dir }}/{{ item }}"
+      if [ ! -s "$secret_file" ]; then
+        openssl rand -hex 32 > "$secret_file"
+        chmod 0600 "$secret_file"
+      fi
     executable: /bin/bash
+  loop:
+    - INDEXER_API_KEY
+    - MEILI_INDEXER_API_KEY
+    - ALLDEBRID_BROKER_TOKEN
   changed_when: false
   no_log: true
 
-- name: Lire la INDEXER_API_KEY persistante
+- name: Lire les secrets persistants
   slurp:
-    src: "{{ sftorznab_dir }}/INDEXER_API_KEY"
-  register: sftorznab_indexer_api_key_file
+    src: "{{ sftorznab_dir }}/{{ item }}"
+  loop:
+    - INDEXER_API_KEY
+    - MEILI_INDEXER_API_KEY
+    - ALLDEBRID_BROKER_TOKEN
+  register: sftorznab_secret_files
   no_log: true
 
-- name: Définir la variable INDEXER_API_KEY
+- name: Définir les secrets persistants
   set_fact:
-    INDEXER_API_KEY: "{{ sftorznab_indexer_api_key_file.content | b64decode | trim }}"
+    INDEXER_API_KEY: "{{ (sftorznab_secret_files.results | selectattr('item', 'equalto', 'INDEXER_API_KEY') | first).content | b64decode | trim }}"
+    MEILI_INDEXER_API_KEY: "{{ (sftorznab_secret_files.results | selectattr('item', 'equalto', 'MEILI_INDEXER_API_KEY') | first).content | b64decode | trim }}"
+    ALLDEBRID_BROKER_TOKEN: "{{ (sftorznab_secret_files.results | selectattr('item', 'equalto', 'ALLDEBRID_BROKER_TOKEN') | first).content | b64decode | trim }}"
+  no_log: true
+
+- name: Contrôler les secrets persistants
+  assert:
+    that:
+      - INDEXER_API_KEY | length >= 32
+      - MEILI_INDEXER_API_KEY | length >= 32
+      - ALLDEBRID_BROKER_TOKEN | length >= 32
+    fail_msg: "Un secret sftorznab persisté est invalide."
   no_log: true

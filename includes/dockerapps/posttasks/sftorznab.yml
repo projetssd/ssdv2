@@ -1,19 +1,215 @@
 ---
-- name: Afficher la configuration Prowlarr de sftorznab
+# Déploiement des conteneurs compagnons de l'indexeur Torznab StreamFusion.
+#   - sftorznab        : indexeur PostgreSQL   (conteneur principal, playbook générique)
+#   - sftorznab-broker : broker AllDebrid      (ci-dessous)
+#   - sftorznab-meili  : indexeur Meilisearch  (ci-dessous)
+# Les trois services partagent la même image mais exécutent un processus différent.
+
+- name: Définir l'état d'exposition Traefik
+  set_fact:
+    sftorznab_expose: "{{ sftorznab_expose_public | default(false) | bool }}"
+
+# Sous-domaine dédié à l'indexeur Meilisearch : dérivé du sous-domaine principal,
+# surchargeable via sftorznab_meili_subdomain (ex. sftorznab-meili.2000851.xyz).
+- name: Définir le sous-domaine Meilisearch
+  set_fact:
+    sftorznab_meili_host: >-
+      {{ sftorznab_meili_subdomain | default(
+           (sub[pgrole][pgrole] if sub_enabled else pgrole) ~ '-meili') }}
+
+- name: Préparer les labels Traefik de l'indexeur Meilisearch
+  set_fact:
+    sftorznab_meili_labels: >-
+      {{
+        {
+          'traefik.enable': 'true',
+
+          'traefik.http.routers.sftorznab-meili-torznab-rtr.entrypoints': 'http,https',
+          'traefik.http.routers.sftorznab-meili-torznab-rtr.rule': 'Host(`' ~ sftorznab_meili_host ~ '.' ~ user.domain ~ '`) && PathPrefix(`/torznab/`)',
+          'traefik.http.routers.sftorznab-meili-torznab-rtr.priority': '100',
+          'traefik.http.routers.sftorznab-meili-torznab-rtr.tls': 'true',
+          'traefik.http.routers.sftorznab-meili-torznab-rtr.tls.certresolver': 'letsencrypt',
+          'traefik.http.routers.sftorznab-meili-torznab-rtr.service': 'sftorznab-meili-svc',
+          'traefik.http.routers.sftorznab-meili-torznab-rtr.middlewares': 'chain-no-auth@file',
+
+          'traefik.http.routers.sftorznab-meili-rtr.entrypoints': 'http,https',
+          'traefik.http.routers.sftorznab-meili-rtr.rule': 'Host(`' ~ sftorznab_meili_host ~ '.' ~ user.domain ~ '`)',
+          'traefik.http.routers.sftorznab-meili-rtr.priority': '10',
+          'traefik.http.routers.sftorznab-meili-rtr.tls': 'true',
+          'traefik.http.routers.sftorznab-meili-rtr.tls.certresolver': 'letsencrypt',
+          'traefik.http.routers.sftorznab-meili-rtr.service': 'sftorznab-meili-svc',
+          'traefik.http.routers.sftorznab-meili-rtr.middlewares': (
+            'chain-basic-auth@file' if (auth_enabled and sub[pgrole].auth | default('') == 'basique')
+            else 'chain-oauth@file' if (auth_enabled and sub[pgrole].auth | default('') == 'oauth')
+            else 'chain-authelia@file' if (auth_enabled and sub[pgrole].auth | default('') == 'authelia')
+            else 'chain-oauth2-proxy@file' if (auth_enabled and sub[pgrole].auth | default('') == 'oauth2-proxy')
+            else 'chain-oauth2-proxy@file' if (oauth2proxy_enabled and sub[pgrole].auth | default('') != 'aucune')
+            else 'chain-no-auth@file'
+          ),
+
+          'traefik.http.services.sftorznab-meili-svc.loadbalancer.server.port': '8080'
+        } if sftorznab_expose else {}
+      }}
+
+- name: Déployer le broker AllDebrid
+  community.docker.docker_container:
+    name: 'sftorznab-broker'
+    image: "{{ image }}"
+    state: started
+    pull: true
+    command:
+      - uvicorn
+      - app.alldebrid_broker:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - '8080'
+      - --no-access-log
+    env:
+      DATABASE_URL: "{{ DATABASE_URL }}"
+      ALLDEBRID_API_KEY: "{{ ALLDEBRID_API_KEY }}"
+      BROKER_TOKEN: "{{ ALLDEBRID_BROKER_TOKEN }}"
+      REDIS_URL: "{{ SFTORZNAB_REDIS_URL }}"
+      ALLDEBRID_GLOBAL_REDIS_URL: "{{ SFTORZNAB_REDIS_URL }}"
+      ALLDEBRID_GLOBAL_SECOND_LIMIT: '8'
+      ALLDEBRID_GLOBAL_MINUTE_LIMIT: '450'
+      BROKER_BATCH_SIZE: '20'
+      BROKER_PARALLEL_BATCHES: '4'
+      BROKER_COALESCE_MS: '80'
+      BROKER_POSITIVE_TTL: '300'
+      HTTP_PROXY: 'http://warp:1080'
+      HTTPS_PROXY: 'http://warp:1080'
+      NO_PROXY: 'localhost,127.0.0.1,sftorznab-broker,sftorznab-meili,stremio-postgres,stremio-redis,meilisearch'
+      TZ: 'Europe/Paris'
+    networks:
+      - name: traefik_proxy
+    restart_policy: unless-stopped
+    read_only: true
+    tmpfs:
+      - '/tmp:mode=1777'
+    cap_drop:
+      - ALL
+    security_opts:
+      - no-new-privileges:true
+  no_log: true
+
+- name: Déployer l'indexeur Meilisearch Torznab
+  community.docker.docker_container:
+    name: 'sftorznab-meili'
+    image: "{{ image }}"
+    state: started
+    pull: true
+    command:
+      - uvicorn
+      - app.meili_main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - '8080'
+      - --no-access-log
+    env:
+      INDEXER_NAME: 'StreamFusion Meilisearch FR'
+      INDEXER_API_KEY: "{{ MEILI_INDEXER_API_KEY }}"
+      MEILI_URL: 'http://meilisearch:7700'
+      MEILI_INDEX: 'torrents'
+      MEILI_API_KEY: "{{ MEILI_TORZNAB_SEARCH_KEY }}"
+      DATABASE_URL: "{{ DATABASE_URL }}"
+      DEFAULT_LIMIT: '100'
+      MAX_LIMIT: '200'
+      DB_POOL_SIZE: '5'
+      DB_MAX_OVERFLOW: '10'
+      MEILI_CANDIDATE_LIMIT: '600'
+      MEILI_TIMEOUT: '10'
+      PG_SEEDERS_REQUIRED: 'false'
+      ACCEPT_MULTI_WITHOUT_LANG: 'true'
+      ALLDEBRID_API_KEY: "{{ ALLDEBRID_API_KEY }}"
+      ALLDEBRID_CACHE_ONLY: "{{ sftorznab_alldebrid.cache_only }}"
+      ALLDEBRID_CHECK_LIMIT: '30'
+      ALLDEBRID_BATCH_SIZE: '10'
+      ALLDEBRID_MAX_CHECK: '30'
+      ALLDEBRID_BROKER_URL: 'http://sftorznab-broker:8080'
+      ALLDEBRID_BROKER_TOKEN: "{{ ALLDEBRID_BROKER_TOKEN }}"
+      ALLDEBRID_BROKER_TIMEOUT: '45'
+      ALLDEBRID_GLOBAL_REDIS_URL: "{{ SFTORZNAB_REDIS_URL }}"
+      ALLDEBRID_GLOBAL_SECOND_LIMIT: '8'
+      ALLDEBRID_GLOBAL_MINUTE_LIMIT: '450'
+      HTTP_PROXY: 'http://warp:1080'
+      HTTPS_PROXY: 'http://warp:1080'
+      NO_PROXY: 'localhost,127.0.0.1,sftorznab-broker,sftorznab-meili,stremio-postgres,stremio-redis,meilisearch'
+      TZ: 'Europe/Paris'
+    networks:
+      - name: traefik_proxy
+    restart_policy: unless-stopped
+    read_only: true
+    tmpfs:
+      - '/tmp:mode=1777'
+    cap_drop:
+      - ALL
+    security_opts:
+      - no-new-privileges:true
+    labels: "{{ sftorznab_meili_labels }}"
+  no_log: true
+
+- name: Enregistrer le sous-domaine Meilisearch sur Cloudflare
+  include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
+  vars:
+    subdomain: "{{ sftorznab_meili_host }}"
+  when:
+    - sftorznab_expose
+    - cloudflare_enabled
+
+- name: Préparer le compte rendu Prowlarr
+  set_fact:
+    sftorznab_report: >-
+      {{
+        [
+          '══════════════════════════════════════════════════════════════',
+          '   StreamFusion Torznab  ·  configuration Prowlarr',
+          '══════════════════════════════════════════════════════════════',
+          '',
+          '  [1/2]  Indexeur PostgreSQL',
+          '         Nom           : StreamFusion PostgreSQL'
+        ]
+        + (
+          ['         URL publique  : https://' ~ (sub[pgrole][pgrole] if sub_enabled else pgrole) ~ '.' ~ user.domain ~ '/torznab']
+          if sftorznab_expose else []
+        )
+        + (
+          ['         URL interne   : http://' ~ pgrole ~ ':' ~ intport ~ '/torznab']
+          if sftorznab_expose else
+          ['         URL           : http://' ~ pgrole ~ ':' ~ intport ~ '/torznab']
+        )
+        + [
+          '         API Path      : /api',
+          '         API Key       : ' ~ INDEXER_API_KEY,
+          '',
+          '  [2/2]  Indexeur Meilisearch',
+          '         Nom           : StreamFusion Meilisearch FR'
+        ]
+        + (
+          ['         URL publique  : https://' ~ sftorznab_meili_host ~ '.' ~ user.domain ~ '/torznab']
+          if sftorznab_expose else []
+        )
+        + (
+          ['         URL interne   : http://sftorznab-meili:8080/torznab']
+          if sftorznab_expose else
+          ['         URL           : http://sftorznab-meili:8080/torznab']
+        )
+        + [
+          '         API Path      : /api',
+          '         API Key       : ' ~ MEILI_INDEXER_API_KEY,
+          '',
+          '  Broker AllDebrid : http://sftorznab-broker:8080   (interne, sans auth)',
+          '',
+          '  ── Vérification ───────────────────────────────────────────────',
+          '     docker exec ' ~ pgrole ~ ' python -c "import urllib.request;print(urllib.request.urlopen(' ~ "'" ~ 'http://127.0.0.1:' ~ intport ~ '/torznab/api?t=caps&apikey=' ~ INDEXER_API_KEY ~ "'" ~ ').status)"',
+          '     docker exec sftorznab-meili python -c "import urllib.request;print(urllib.request.urlopen(' ~ "'" ~ 'http://127.0.0.1:8080/torznab/api?t=caps&apikey=' ~ MEILI_INDEXER_API_KEY ~ "'" ~ ').status)"',
+          '',
+          '  Prowlarr > Indexeurs > Ajouter > Generic Torznab',
+          '══════════════════════════════════════════════════════════════'
+        ]
+      }}
+
+- name: Compte rendu de l'installation
   ansible.builtin.debug:
-    msg:
-      - "Prowlarr > Indexeurs > Ajouter > Generic Torznab"
-      - >-
-          {{
-            ('URL (public) : https://' ~
-             (sub[pgrole][pgrole] if sub_enabled else pgrole) ~
-             '.' ~ user.domain ~ '/torznab')
-            if (sftorznab_expose_public | default(false) | bool)
-            else
-            ('URL (interne) : http://' ~ pgrole ~ ':' ~ intport ~ '/torznab')
-          }}
-      - "API Path : /api"
-      - "API Key : {{ INDEXER_API_KEY }}"
-      - >-
-          Test : docker exec {{ pgrole }} python -c
-          "import urllib.request;print(urllib.request.urlopen('http://127.0.0.1:{{ intport }}/torznab/api?t=caps&apikey={{ INDEXER_API_KEY }}').status)"
+    msg: "{{ sftorznab_report }}"
