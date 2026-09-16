@@ -1,0 +1,22 @@
+#!/bin/bash
+##############################################################################
+# Ajoute l'entree de menu "Diagnostic / Nettoyage" (groupe Gestion).
+##############################################################################
+
+set -u
+
+if [ -z "${SETTINGS_SOURCE:-}" ] && [ -f "${HOME}/.config/ssd/env" ]; then
+  # shellcheck disable=SC1090
+  source "${HOME}/.config/ssd/env"
+fi
+SETTINGS_SOURCE="${SETTINGS_SOURCE:-${HOME}/seedbox-compose}"
+
+MENU="${SETTINGS_SOURCE}/menu"
+[ -f "$MENU" ] || exit 0
+command -v sqlite3 >/dev/null 2>&1 || exit 0
+
+sqlite3 "$MENU" "insert into menu (texte,parent_id,ordre,action)
+select 'Diagnostic / Nettoyage',2,5,'menu_diagnostic_nettoyage'
+where not exists (select 1 from menu where action='menu_diagnostic_nettoyage');" 2>/dev/null
+echo "[patch] entree de menu 'Diagnostic / Nettoyage' ajoutee"
+exit 0

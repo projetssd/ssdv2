@@ -679,7 +679,10 @@ function suppression_appli() {
   # `docker rm -v` supprime les conteneurs ET leurs volumes anonymes (éphémères),
   # y compris lors d'un reinit. Les volumes nommés sont conservés et gérés via
   # le registre (supprimés uniquement si DELETE=1).
-  collect_app_containers "${APPSELECTED}" | xargs -r docker rm -f -v >/dev/null 2>&1
+  local target_containers
+  target_containers=$(collect_app_containers "${APPSELECTED}")
+  log_write "Suppression de ${APPSELECTED} - conteneurs ciblés: $(printf '%s' "${target_containers}" | tr '\n' ' ')" >/dev/null 2>&1
+  printf '%s\n' "${target_containers}" | xargs -r docker rm -f -v >/dev/null 2>&1
 
   if [ $DELETE -eq 1 ]; then
     log_write "Suppresion de ${APPSELECTED}, données supprimées" >/dev/null 2>&1
@@ -696,6 +699,11 @@ function suppression_appli() {
   rm ${SETTINGS_STORAGE}/conf/$APPSELECTED.yml >/dev/null 2>&1
   rm ${SETTINGS_STORAGE}/vars/$APPSELECTED.yml >/dev/null 2>&1
 
+  # Fallback legacy (EVO-04) : nettoyages spécifiques (dossiers, clés vault,
+  # sous-domaines). Les conteneurs sont désormais couverts par
+  # collect_app_containers (label + registre + conventions). Ce bloc reste
+  # nécessaire pour les installations antérieures au label ssdv2.app et sera
+  # retiré progressivement.
   case $APPSELECTED in
   oauth)
     manage_account_yml oauth.client " "
