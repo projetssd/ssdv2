@@ -160,6 +160,8 @@
 
 - name: Déployer beszel-agent
   community.docker.docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: beszel-agent
     image: "{{ beszel_agent_image }}"
     state: started

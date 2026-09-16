@@ -53,6 +53,8 @@
 
 - name: Déployer le broker AllDebrid
   community.docker.docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: 'sftorznab-broker'
     image: "{{ image }}"
     state: started
@@ -147,7 +149,7 @@
       - ALL
     security_opts:
       - no-new-privileges:true
-    labels: "{{ sftorznab_meili_labels }}"
+    labels: "{{ (sftorznab_meili_labels) | default({}) | combine({'ssdv2.app': pgrole}) }}"
   no_log: true
 
 - name: Enregistrer le sous-domaine Meilisearch sur Cloudflare

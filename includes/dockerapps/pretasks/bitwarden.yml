@@ -39,6 +39,8 @@
 
 - name: Deploying Bitwarden Backup
   docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: bw_backup
     image: bruceforce/bw_backup
     volumes: "{{ bw_volumes }}"

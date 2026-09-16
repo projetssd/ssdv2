@@ -22,6 +22,7 @@
       WINGS_GID: "988"
       WINGS_USERNAME: pterodactyl
     labels:
+      ssdv2.app: "{{pgrole}}"
       traefik.enable: "true"
       traefik.http.routers.wings-rtr.entrypoints: 'http,https'
       traefik.http.routers.wings-rtr.rule: "Host(`wings.{{ user.domain }}`)"

@@ -6,6 +6,8 @@
 
 - name: 'Deploying redis'
   docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: 'redis-{{pgrole}}'
     image: 'redis'
     pull: yes

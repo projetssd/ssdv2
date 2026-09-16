@@ -29,6 +29,8 @@
 
 - name: 'Deploying guacd'
   docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: 'guacd'
     image: "guacamole/guacd"
     restart_policy: unless-stopped

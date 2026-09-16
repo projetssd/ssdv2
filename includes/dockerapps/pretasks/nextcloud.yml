@@ -57,7 +57,7 @@
       - name: traefik_proxy
     restart_policy: unless-stopped
     state: started
-    labels: '{{nextcloud_labels}}'
+    labels: "{{ (nextcloud_labels) | default({}) | combine({'ssdv2.app': pgrole}) }}"
 
 - name: Launch Pretask
   include_tasks: "{{ settings.source }}/includes/dockerapps/templates/generique/mariadb.yml"
@@ -87,6 +87,8 @@
 
 - name: Create and start coturn container
   docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: coturn
     hostname: coturn
     image: 'woahbase/alpine-coturn'
@@ -133,7 +135,7 @@
       - name: traefik_proxy
     restart_policy: unless-stopped
     state: started
-    labels: '{{co_labels}}'
+    labels: "{{ (co_labels) | default({}) | combine({'ssdv2.app': pgrole}) }}"
 
 #####################OnllyOffice###############################################################
 
@@ -167,4 +169,4 @@
       - name: traefik_proxy
     restart_policy: unless-stopped
     state: started
-    labels: '{{off_labels}}'
+    labels: "{{ (off_labels) | default({}) | combine({'ssdv2.app': pgrole}) }}"

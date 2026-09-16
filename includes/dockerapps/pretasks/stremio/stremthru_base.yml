@@ -26,6 +26,8 @@
 
     - name: Deploy stremthru-postgres
       community.docker.docker_container:
+        labels:
+          ssdv2.app: "{{pgrole}}"
         name: stremthru-postgres
         image: "postgres:16.6-alpine"
         env:
@@ -55,6 +57,8 @@
 
     - name: Deploy stremthru-redis
       community.docker.docker_container:
+        labels:
+          ssdv2.app: "{{pgrole}}"
         name: stremthru-redis
         image: redis:latest
         volumes:

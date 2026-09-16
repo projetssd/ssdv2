@@ -6,6 +6,8 @@
 
 - name: 'Deploying memcached-{{pgrole}}'
   docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: 'memcached-{{pgrole}}'
     recreate: true
     image: 'memcached'

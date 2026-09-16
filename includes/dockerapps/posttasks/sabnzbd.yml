@@ -12,6 +12,8 @@
         
 - name: 'Stopping {{ pgrole }}'
   docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: '{{ pgrole }}'
     state: stopped
 

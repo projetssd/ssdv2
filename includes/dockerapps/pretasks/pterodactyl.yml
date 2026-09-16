@@ -1,6 +1,8 @@
 ---
 - name: 'Deploying db-{{pgrole}}'
   docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: 'db-{{pgrole}}'
     recreate: true
     image: 'mariadb:10.6.4'
@@ -21,6 +23,8 @@
 
 - name: 'Deploying redis-{{pgrole}}'
   docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: 'redis-{{pgrole}}'
     recreate: true
     image: 'redis:7.2-alpine'
