@@ -1,5 +1,7 @@
 16/09/2026
 
+- rechargement automatique des fonctions du shell après un git pull
+  (PROMPT_COMMAND, empreinte stat) : plus besoin de re-sourcer profile.sh
 - ajout du label ssdv2.app sur le conteneur principal et les compagnons
 - registres par application : <app>.containers / .volumes / .dns
 - suppression unifiée (label + registres + conventions + fallback)

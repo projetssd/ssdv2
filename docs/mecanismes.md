@@ -71,6 +71,26 @@ seule fois (`apply_patches`), de façon idempotente.
   `/var/run/docker.sock` (nécessaire à ses métriques). À installer en
   connaissance de cause ; il donne un accès équivalent root à l'hôte.
 
+## Rechargement automatique après une mise à jour
+
+Les fonctions interactives (`suppression_appli`, `launch_service`, …) sont
+chargées dans le shell au login via `profile.sh`. Après un `git pull`, un shell
+**déjà ouvert** garderait l'ancienne version en mémoire (un script exécuté ne
+peut pas modifier le shell parent).
+
+`profile.sh` installe donc un contrôle léger dans `PROMPT_COMMAND` : à chaque
+invite, il compare une **empreinte `stat`** (mtime + taille) de
+`includes/{variables,functions,menus}.sh` et de `profile.sh`. Si elle change, il
+recharge automatiquement et affiche `[SSDV2] fonctions rechargées (commit X)`.
+
+- Aucune action nécessaire après un `git pull` (au prompt suivant).
+- L'enregistrement dans `PROMPT_COMMAND` est idempotent et préserve un
+  `PROMPT_COMMAND` existant.
+- Portée : **bash interactif** uniquement (zsh non géré).
+- **Premier déploiement** : un shell déjà ouvert avant l'ajout de ce mécanisme
+  doit être rechargé **une fois** (`source ~/seedbox-compose/profile.sh`) ou
+  reconnecté ; ensuite, c'est automatique.
+
 ## Tests
 
 - `bats tests/bats` : tests unitaires des fonctions pures.
