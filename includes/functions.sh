@@ -666,7 +666,10 @@ function suppression_appli() {
   registry="${SETTINGS_STORAGE}/conf/${APPSELECTED}.containers"
   volreg="${SETTINGS_STORAGE}/conf/${APPSELECTED}.volumes"
 
-  collect_app_containers "${APPSELECTED}" | xargs -r docker rm -f >/dev/null 2>&1
+  # `docker rm -v` supprime les conteneurs ET leurs volumes anonymes (éphémères),
+  # y compris lors d'un reinit. Les volumes nommés sont conservés et gérés via
+  # le registre (supprimés uniquement si DELETE=1).
+  collect_app_containers "${APPSELECTED}" | xargs -r docker rm -f -v >/dev/null 2>&1
 
   if [ $DELETE -eq 1 ]; then
     log_write "Suppresion de ${APPSELECTED}, données supprimées" >/dev/null 2>&1
