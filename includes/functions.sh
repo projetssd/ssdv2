@@ -894,9 +894,74 @@ function manage_account_yml() {
   return ${rc}
 }
 
+# Cache de session des variables account.yml (déchiffré une seule fois par run
+# au lieu d'un ansible-playbook par lecture). Fichier 0600, supprimé en sortie.
+function account_cache_file() {
+  echo "${SETTINGS_STORAGE}/.account.cache.json"
+}
+
+function account_cache_build() {
+  local cache
+  cache=$(account_cache_file)
+  rm -f "${cache}"
+  ansible-vault view "${ANSIBLE_VARS}" 2>/dev/null \
+    | python3 -c 'import sys, json, yaml; json.dump(yaml.safe_load(sys.stdin) or {}, sys.stdout)' \
+    > "${cache}" 2>/dev/null
+  chmod 600 "${cache}" 2>/dev/null
+  [ -s "${cache}" ]
+}
+
+function account_cache_ensure() {
+  local cache
+  cache=$(account_cache_file)
+  if [ ! -s "${cache}" ] || [ "${cache}" -ot "${ANSIBLE_VARS}" ]; then
+    account_cache_build
+  fi
+  [ -s "${cache}" ]
+}
+
+function account_cache_get() {
+  local cache
+  cache=$(account_cache_file)
+  ACCOUNT_CACHE_FILE="${cache}" SSD_KEY="$1" python3 -c '
+import json, os
+key = os.environ["SSD_KEY"]
+try:
+    with open(os.environ["ACCOUNT_CACHE_FILE"]) as fh:
+        data = json.load(fh)
+except Exception:
+    print("")
+    raise SystemExit(0)
+for part in key.split("."):
+    if isinstance(data, dict) and part in data:
+        data = data[part]
+    else:
+        data = None
+        break
+if data is None:
+    print("")
+elif isinstance(data, str):
+    print(data)
+else:
+    print(json.dumps(data))
+' 2>/dev/null
+}
+
 function get_from_account_yml() {
   local tmpfile tempresult
   tmpfile=$(mktemp)
+
+  if account_cache_ensure; then
+    tempresult=$(account_cache_get "$1")
+    rm -f "$tmpfile"
+    if [ -z "$tempresult" ]; then
+      tempresult=notfound
+    fi
+    echo "$tempresult"
+    return 0
+  fi
+
+  # Repli : lecture via playbook (si le cache ne peut pas être construit)
   ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/get_var.yml" \
     -e "myvar=${1}" -e "tempfile=${tmpfile}" >/dev/null 2>&1
 
@@ -1097,7 +1162,15 @@ function check_docker_group() {
 
 function stocke_public_ip() {
   echo $(gettext "Stockage des adresses ip publiques")
-  IPV4=$(curl -s -4 https://ip4.mn83.fr)
+  IPV4=$(curl -s --max-time 10 -4 https://ip4.mn83.fr)
+  if [ -z "$IPV4" ]; then
+    echo $(gettext "Récupération de l'IP publique via le service principal impossible, essai alternatif")
+    IPV4=$(curl -s --max-time 10 -4 https://ifconfig.me 2>/dev/null)
+  fi
+  if [ -z "$IPV4" ]; then
+    echo $(gettext "Impossible de récupérer l'adresse IP publique, conservation de la valeur existante")
+    return 0
+  fi
   echo "IPV4 = ${IPV4}"
   manage_account_yml network.ipv4 ${IPV4}
   #IPV6=$(dig @resolver1.ipv6-sandbox.opendns.com AAAA myip.opendns.com +short -6)
@@ -1439,7 +1512,10 @@ EOF
 function apply_patches() {
   touch "${HOME}/.config/ssd/patches"
 
-  for patch in $(ls ${SETTINGS_SOURCE}/patches); do
+  shopt -s nullglob
+  local patch_path patch
+  for patch_path in "${SETTINGS_SOURCE}"/patches/*; do
+    patch=$(basename "$patch_path")
     # Si on a demandé un patch spécifique
     if [ -n "$FORCE_PATCH" ] && [ "$FORCE_PATCH" != "1" ] && [ "$patch" != "$FORCE_PATCH" ]; then
       continue
@@ -1460,6 +1536,7 @@ function apply_patches() {
       echo "${patch}" >>"${HOME}/.config/ssd/patches"
     fi
   done
+  shopt -u nullglob
 }
 
 function create_folders() {

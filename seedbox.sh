@@ -16,6 +16,10 @@ source "${SETTINGS_SOURCE}/includes/functions.sh"
 source "${SETTINGS_SOURCE}/includes/variables.sh"
 source "${SETTINGS_SOURCE}/includes/menus.sh"
 
+# Le cache de session des variables account.yml contient des secrets
+# dechiffres : il est systematiquement supprime en sortie.
+trap 'rm -f "${SETTINGS_STORAGE}/.account.cache.json"' EXIT
+
 # récupération des parametres
 # valeurs par défaut
 FORCE_ROOT=0
