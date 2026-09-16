@@ -4,7 +4,24 @@
     path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config/config/system.xml"
   register: xmlcheck
 
-- name: 'Check'
+- name: 'Create config and cache directories'
+  become: true
+  file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/{{ item }}"
+    state: directory
+    mode: '0775'
+    owner: "{{ lookup('env','MYUID') }}"
+    group: "{{ lookup('env','MYGID') }}"
+  loop:
+    - config
+    - cache
+
+- name: 'Check /dev/dri'
   stat:
     path: '/dev/dri'
   register: dev_dri
+
+- name: 'Enable hardware transcoding devices'
+  set_fact:
+    specific_docker_info: "{{ specific_docker_info | default({}) | combine({'devices': ['/dev/dri:/dev/dri']}) }}"
+  when: dev_dri.stat.exists

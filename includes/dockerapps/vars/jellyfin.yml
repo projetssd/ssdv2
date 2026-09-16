@@ -4,10 +4,15 @@ intport: '8096'
 image: 'jellyfin/jellyfin:latest'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
-  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
-  - '/var/run/docker.sock:/var/run/docker.sock'
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/cache:/cache:rw"
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}:ro"
+  - '/mnt:/mnt:rslave'
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:
-  UID: "{{ lookup('env','MYUID') }}"
-  GID: "{{ lookup('env','MYGID') }}" 
-  JELLYFIN_PublishedServerUrl: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}"
+  TZ: 'Europe/Paris'
+  JELLYFIN_PublishedServerUrl: "https://{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}"
+specific_docker_info:
+  user: "{{ lookup('env','MYUID') }}:{{ lookup('env','MYGID') }}"
+  ports:
+    - '7359:7359/udp'
+  restart_policy: unless-stopped
