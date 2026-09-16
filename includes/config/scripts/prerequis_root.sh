@@ -12,7 +12,9 @@ if [ "$USER" != "root" ]; then
 fi
 
 ## Constants
+# shellcheck disable=SC2034  # conservés pour référence
 readonly PIP="9.0.3"
+# shellcheck disable=SC2034  # conservé pour référence
 readonly ANSIBLE="2.9"
 
 ## Environmental Variables

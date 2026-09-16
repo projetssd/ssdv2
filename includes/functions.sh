@@ -632,6 +632,16 @@ function manage_apps() {
 
 }
 
+# Convertit une liste de valeurs en tableau JSON compact (une par ligne,
+# dédupliquées). Utilisé pour transmettre les sous-domaines DNS à Ansible.
+function json_array_from_lines() {
+  if [ "$#" -eq 0 ]; then
+    echo "[]"
+  else
+    printf '%s\n' "$@" | sed '/^[[:space:]]*$/d' | sort -u | jq -R . | jq -s -c .
+  fi
+}
+
 # Liste les conteneurs rattachés à une application : label ssdv2.app (nouvelles
 # installations), registre enregistré à l'installation, puis conventions de
 # nommage SSDV2. Ne supprime rien, retourne une liste triée unique.
@@ -818,10 +828,8 @@ function suppression_appli() {
   # DNS : sous-domaine principal + sous-domaines supplémentaires de l'app
   # (ex. nextcloud -> collabora/office, sftorznab -> meili). La liste est
   # transmise en JSON pour gérer plusieurs sous-domaines.
-  local extra_json="[]"
-  if [ ${#EXTRA_SUBDOMAINS[@]} -gt 0 ]; then
-    extra_json=$(printf '%s\n' "${EXTRA_SUBDOMAINS[@]}" | sort -u | jq -R . | jq -s -c .)
-  fi
+  local extra_json
+  extra_json=$(json_array_from_lines "${EXTRA_SUBDOMAINS[@]+"${EXTRA_SUBDOMAINS[@]}"}")
   ansible-playbook \
     -e "{\"pgrole\": \"${APPSELECTED}\", \"extra_subdomains\": ${extra_json}}" \
     "${SETTINGS_SOURCE}/includes/config/playbooks/remove_cf_record.yml"
@@ -1248,7 +1256,7 @@ function affiche_menu_db() {
   request="select * from menu where parent_id ${start_menu} ORDER BY ordre"
   sqlite3 "${SETTINGS_SOURCE}/menu" "${request}" | while read -a db_select; do
     IFS='|'
-    read -ra db_select2 <<<"$db_select"
+    read -ra db_select2 <<<"${db_select[0]}"
     echo -e "${CGREEN}""   ${db_select2[3]})" "$(gettext "${db_select2[1]}")" "${CEND}"
     IFS=$'\n'
   done
@@ -1321,7 +1329,9 @@ function sauve_symlinks() {
   echo -e "${CRED}----------------------------------------${CEND}"
   local tempfile
   tempfile=$(mktemp)
-  ls -1 /home/${USER}/Medias | xargs -I {} sh -c 'if [ -d "/home/${USER}/Medias/{}" ]; then echo {}; fi' | cat -n | sed 's/[ ]\+/ /g' | tr "\t" " " > "$tempfile"
+  for _dir in /home/${USER}/Medias/*/; do
+    [ -d "$_dir" ] && printf '%s\n' "$(basename "$_dir")"
+  done | cat -n | sed 's/[ ]\+/ /g' | tr "\t" " " > "$tempfile"
 
   # nombre total de lignes dans le fichier temp
   total_lines=$(wc -l < "$tempfile")
@@ -1463,13 +1473,13 @@ function sauve_one_appli() {
   fi
 
   # Nombre de sauvegardes effectuées
-  nbBackup=$(find $BACKUP_PARTITION -type f -name $APPLI-* | wc -l)
+  nbBackup=$(find $BACKUP_PARTITION -type f -name "$APPLI-*" | wc -l)
   if [ $ALL_RETENTION -eq 0 ]; then
     if [[ "$nbBackup" -gt "$NB_MAX_BACKUP" ]]; then
 
       # Archive la plus ancienne
-      oldestBackupPath=$(find $BACKUP_PARTITION/$APPLI -type f -name $APPLI-* -printf '%T+ %p\n' | sort | head -n 1 | awk '{print $2}')
-      oldestBackupFile=$(find $BACKUP_PARTITION/$APPLI -type f -name $APPLI-* -printf '%T+ %p\n' | sort | head -n 1 | awk '{split($0,a,/\//); print a[6]}')
+      oldestBackupPath=$(find $BACKUP_PARTITION/$APPLI -type f -name "$APPLI-*" -printf '%T+ %p\n' | sort | head -n 1 | awk '{print $2}')
+      oldestBackupFile=$(find $BACKUP_PARTITION/$APPLI -type f -name "$APPLI-*" -printf '%T+ %p\n' | sort | head -n 1 | awk '{split($0,a,/\//); print a[6]}')
 
       # Suppression du backup local
       sudo rm "$oldestBackupPath"
@@ -1610,7 +1620,7 @@ function liste_perso() {
   echo ""
 
   folder_path="${SETTINGS_STORAGE}/vars"
-  files=$(ls -p "$folder_path" | grep -v /)
+  files=$(find "$folder_path" -maxdepth 1 -type f -printf '%f\n' 2>/dev/null | sort)
   echo -e "\e[32m"$(gettext "Applications Personnalisées : ")"\e[0m"
   if [ -n "$files" ]; then
     echo -e "\e[36m$files\e[0m"

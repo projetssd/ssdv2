@@ -9,7 +9,7 @@ CURRENT_SCRIPT=$(readlink -f "$0")
 # Absolute path this script is in.
 SETTINGS_SOURCE=$(dirname "$CURRENT_SCRIPT")
 export SETTINGS_SOURCE
-cd ${SETTINGS_SOURCE}
+cd "${SETTINGS_SOURCE}" || exit 1
 export TEXTDOMAINDIR="${SETTINGS_SOURCE}/i18n"
 export TEXTDOMAIN=ks
 source "${SETTINGS_SOURCE}/includes/functions.sh"
@@ -17,8 +17,10 @@ source "${SETTINGS_SOURCE}/includes/variables.sh"
 source "${SETTINGS_SOURCE}/includes/menus.sh"
 
 # Le cache de session des variables account.yml contient des secrets
-# dechiffres : il est systematiquement supprime en sortie.
+# dechiffres : il est systematiquement supprime en sortie, et purge au demarrage
+# (au cas ou un run precedent ait ete tue brutalement).
 trap 'rm -f "${SETTINGS_STORAGE}/.account.cache.json"' EXIT
+rm -f "${SETTINGS_STORAGE}/.account.cache.json" >/dev/null 2>&1
 
 # récupération des parametres
 # valeurs par défaut
@@ -101,6 +103,7 @@ install_gui)
     echo "ERREUR, fichier d'autoinstall non trouvé !"
     exit 1
   fi
+  # shellcheck disable=SC1090
   source <(grep '=' "${INI_FILE}")
   install_gui
 
@@ -163,10 +166,10 @@ if [ $mode_install = "manuel" ]; then
   log_statusbar "$(echo $(gettext "Check de la dernière version sur git"))"
   git_branch=$(git rev-parse --abbrev-ref HEAD)
   if [ ${git_branch} == 'master' ]; then
-    cd ${SETTINGS_SOURCE}
+    cd "${SETTINGS_SOURCE}" || exit 1
     git fetch >>/dev/null 2>&1
     current_hash=$(git rev-parse HEAD)
-    distant_hash=$(git rev-parse master@{upstream})
+    distant_hash=$(git rev-parse 'master@{upstream}')
     if [ ${current_hash} != ${distant_hash} ]; then
       clear
       echo "==============================================="

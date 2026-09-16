@@ -263,8 +263,7 @@ function menu_suppression_application() {
 function menu_reinit_container() {
   line=$1
   log_write "Reinit du container ${line}" >/dev/null 2>&1
-  echo -e "\e[32m"$(gettext "Les volumes ne seront pas supprimés")"\e[0m" 
-  subdomain=$(get_from_account_yml "sub.${line}.${line}")
+  echo -e "\e[32m"$(gettext "Les volumes ne seront pas supprimés")"\e[0m"
 
 
   # suppression_appli retire déjà les volumes anonymes de l'app (FIX-07) ;
