@@ -1381,8 +1381,9 @@ function relance_container() {
   log_write "Relance du container ${line}" >/dev/null 2>&1
   echo -e "\e[32m"$(gettext "Les volumes ne seront pas supprimés")"\e[0m" 
   echo -e "\e[32m"$(gettext "L'image sera mise à jour si nécessaire")"\e[0m" 
+  img=$(docker inspect --format '{{.Image}}' "$line" 2>/dev/null)
   docker rm -f ${line} > /dev/null 2>&1
-  docker rmi $(docker images | grep "$line" | tr -s ' ' | cut -d ' ' -f 3) > /dev/null 2>&1
+  [ -n "$img" ] && docker rmi "$img" > /dev/null 2>&1
   echo ""
   launch_service ${line}
   pause

@@ -131,6 +131,7 @@
         docker_info:
           name: "{{ pgrole }}"
           image: "{{ image }}"
+          pull: "{{ pull_image | default(true) }}"
           volumes: "{{ pg_volumes | default([]) }}"
           env: "{{ pg_env | default({}) }}"
           restart_policy: unless-stopped
