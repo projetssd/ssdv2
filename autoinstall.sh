@@ -33,6 +33,10 @@ DOCKER_RUNTIME_STAMP="${STATE_DIR}/docker-runtime.ok"
 export SETTINGS_SOURCE
 export SETTINGS_STORAGE
 
+# Le cache de session des variables account.yml contient des secrets
+# dechiffres : il est systematiquement supprime en sortie.
+trap 'rm -f "${SETTINGS_STORAGE}/.account.cache.json"' EXIT
+
 log() {
 	echo "[install.sh] $*"
 }
