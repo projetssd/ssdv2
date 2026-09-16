@@ -1,3 +1,5 @@
+# shellcheck shell=bash
+
 ## PARAMETERS
 
 CSI="\033["

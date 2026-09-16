@@ -1,3 +1,5 @@
+# shellcheck shell=bash
+
 menu_ajout_supp_applis() {
   clear
   manage_apps

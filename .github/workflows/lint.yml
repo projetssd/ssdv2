@@ -1,0 +1,78 @@
+name: Lint
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: ShellCheck (erreurs uniquement)
+        run: |
+          mapfile -t files < <(git ls-files '*.sh')
+          shellcheck -S error "${files[@]}"
+
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: py_compile
+        run: |
+          mapfile -t files < <(git ls-files '*.py')
+          if [ "${#files[@]}" -gt 0 ]; then
+            python -m py_compile "${files[@]}"
+          fi
+
+  ansible-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install ansible
+        run: pip install ansible
+      - name: ansible-playbook --syntax-check
+        run: |
+          for f in includes/config/playbooks/*.yml includes/dockerapps/vars/generique.yml; do
+            echo "syntax-check: $f"
+            ansible-playbook --syntax-check "$f"
+          done
+
+  yaml:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Validate dockerapps YAML (hors fichiers a syntaxe Jinja avancee)
+        run: |
+          pip install pyyaml
+          python3 - <<'PY'
+          import glob, yaml, sys
+          # stremio_base.yml contient des constructions Jinja non parsables par PyYAML
+          skip = {'includes/dockerapps/pretasks/stremio/stremio_base.yml'}
+          failed = []
+          files = glob.glob('includes/dockerapps/**/*.yml', recursive=True)
+          for f in files:
+              if f in skip:
+                  continue
+              try:
+                  yaml.safe_load(open(f).read())
+              except Exception as exc:
+                  failed.append((f, str(exc).splitlines()[0]))
+          if failed:
+              for f, e in failed:
+                  print(f"YAML invalide: {f} -> {e}")
+              sys.exit(1)
+          print(f"YAML OK ({len(files) - len(skip)} fichiers)")
+          PY
