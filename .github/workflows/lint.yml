@@ -63,6 +63,10 @@ jobs:
           python-version: '3.x'
       - name: Install ansible
         run: pip install ansible
+      - name: Install roles and collections
+        run: |
+          ansible-galaxy role install kwoodson.yedit
+          ansible-galaxy collection install community.general community.docker
       - name: ansible-playbook --syntax-check
         run: |
           for f in includes/config/playbooks/*.yml includes/dockerapps/vars/generique.yml; do
