@@ -44,7 +44,7 @@ manage_account_yml oauth.openssl $openssl
 
 ## reinstallation traefik
 echo ""
-suppression_appli traefik
+suppression_appli traefik 0
 install_traefik
 
     echo -e "${CRED}---------------------------------------------------------------${CEND}"

@@ -14,6 +14,18 @@
     subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
 
   tasks:
+    # SNAPSHOT (base de calcul du registre des conteneurs/volumes de l'app) ######
+
+    - name: "Snapshot conteneurs avant installation"
+      shell: "docker ps -a --format '{% raw %}{{.Names}}{% endraw %}' | sort"
+      register: ssdv2_containers_before
+      changed_when: false
+
+    - name: "Snapshot volumes avant installation"
+      shell: "docker volume ls -q | sort"
+      register: ssdv2_volumes_before
+      changed_when: false
+
     # PRE TASKS ###################################################################
 
     - name: Check that pretasks file exists
@@ -173,6 +185,63 @@
       include_tasks: "{{ settings.source }}/includes/dockerapps/posttasks/{{ item }}.yml"
       with_items: "{{ posttasks }}"
       when: posttasks is defined
+
+    # REGISTRE CONTENEURS / VOLUMES ###############################################
+    # Mémorise les conteneurs et volumes créés pour l'app (compagnons inclus)
+    # afin de pouvoir les supprimer proprement lors de suppression_appli.
+
+    - name: "Snapshot conteneurs après installation"
+      shell: "docker ps -a --format '{% raw %}{{.Names}}{% endraw %}' | sort"
+      register: ssdv2_containers_after
+      changed_when: false
+
+    - name: "Snapshot volumes après installation"
+      shell: "docker volume ls -q | sort"
+      register: ssdv2_volumes_after
+      changed_when: false
+
+    - name: "Créer le dossier de registre"
+      file:
+        path: "{{ settings.storage }}/conf"
+        state: directory
+        mode: '0775'
+
+    - name: "Lire le registre conteneurs existant"
+      slurp:
+        src: "{{ settings.storage }}/conf/{{ pgrole }}.containers"
+      register: ssdv2_reg_containers
+      failed_when: false
+
+    - name: "Lire le registre volumes existant"
+      slurp:
+        src: "{{ settings.storage }}/conf/{{ pgrole }}.volumes"
+      register: ssdv2_reg_volumes
+      failed_when: false
+
+    - name: "Écrire le registre conteneurs de {{ pgrole }}"
+      copy:
+        dest: "{{ settings.storage }}/conf/{{ pgrole }}.containers"
+        content: |
+          {{
+            (
+              (ssdv2_reg_containers.content | default('') | b64decode).splitlines()
+              + (ssdv2_containers_after.stdout_lines | difference(ssdv2_containers_before.stdout_lines))
+              + [pgrole]
+            ) | reject('equalto', '') | unique | sort | join('\n')
+          }}
+        mode: '0664'
+
+    - name: "Écrire le registre volumes de {{ pgrole }}"
+      copy:
+        dest: "{{ settings.storage }}/conf/{{ pgrole }}.volumes"
+        content: |
+          {{
+            (
+              (ssdv2_reg_volumes.content | default('') | b64decode).splitlines()
+              + (ssdv2_volumes_after.stdout_lines | difference(ssdv2_volumes_before.stdout_lines))
+            ) | reject('equalto', '') | unique | sort | join('\n')
+          }}
+        mode: '0664'
 
     - name: "Insert {{ pgrole }} into database"
       shell: 

@@ -662,21 +662,36 @@ function suppression_appli() {
   domaine=$(get_from_account_yml user.domain)
 
   DELETE=0
-  if [[ $# -eq 2 ]]; then
-    if [ "$2" = "1" ]; then
-      DELETE=1
-    fi
+  if [[ $# -ge 2 ]]; then
+    [ "$2" = "1" ] && DELETE=1
+  else
+    while [[ ! "${rep,,}" =~ ^(o|n)$ ]]; do
+      read -rp "Conserver les données de ${APPSELECTED} ? (o/n) : " rep
+    done
+    [ "${rep,,}" = o ] && DELETE=0 || DELETE=1
   fi
   EXTRA_SUBDOMAIN=""
   manage_account_yml sub.${APPSELECTED} " "
 
+  registry="${SETTINGS_STORAGE}/conf/${APPSELECTED}.containers"
+  volreg="${SETTINGS_STORAGE}/conf/${APPSELECTED}.volumes"
+
   docker rm -f "$APPSELECTED" >/dev/null 2>&1
+  if [ -f "$registry" ]; then
+    xargs -r docker rm -f < "$registry" >/dev/null 2>&1
+  fi
+
   if [ $DELETE -eq 1 ]; then
     log_write "Suppresion de ${APPSELECTED}, données supprimées" >/dev/null 2>&1
     sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/$APPSELECTED >/dev/null 2>&1
+    if [ -f "$volreg" ]; then
+      xargs -r docker volume rm -f < "$volreg" >/dev/null 2>&1
+    fi
   else
     log_write "Suppresion de ${APPSELECTED}, données conservées" >/dev/null 2>&1
   fi
+
+  rm -f "$registry" "$volreg"
 
   rm ${SETTINGS_STORAGE}/conf/$APPSELECTED.yml >/dev/null 2>&1
   rm ${SETTINGS_STORAGE}/vars/$APPSELECTED.yml >/dev/null 2>&1
@@ -765,7 +780,6 @@ function suppression_appli() {
   streamfusion)
     docker rm -f warp streamfusion taskiq-worker taskiq-scheduler meilisearch stremio-redis stremio-postgres >/dev/null 2>&1
     if [ $DELETE -eq 1 ]; then
-        docker volume prune -af >/dev/null 2>&1
         manage_account_yml sub.streamfusion " "
     fi
     ;;
@@ -800,15 +814,15 @@ function suppression_appli() {
     ;;
   esac
 
-  if docker ps | grep -q db-$APPSELECTED; then
+  if docker ps -a | grep -q db-$APPSELECTED; then
     docker rm -f db-$APPSELECTED >/dev/null 2>&1
   fi
 
-  if docker ps | grep -q redis-$APPSELECTED; then
+  if docker ps -a | grep -q redis-$APPSELECTED; then
     docker rm -f redis-$APPSELECTED >/dev/null 2>&1
   fi
 
-  if docker ps | grep -q memcached-$APPSELECTED; then
+  if docker ps -a | grep -q memcached-$APPSELECTED; then
     docker rm -f memcached-$APPSELECTED >/dev/null 2>&1
   fi
 

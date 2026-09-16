@@ -268,7 +268,7 @@ function menu_reinit_container() {
   subdomain=$(get_from_account_yml "sub.${line}.${line}")
 
 
-  suppression_appli "${line}"
+  suppression_appli "${line}" 0
   rm -f "${SETTINGS_STORAGE}/conf/${line}.yml"
   rm -f "${SETTINGS_STORAGE}/vars/${line}.yml"
   docker volume rm $(docker volume ls -qf "dangling=true") >/dev/null 2>&1
