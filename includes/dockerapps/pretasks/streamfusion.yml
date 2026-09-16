@@ -267,6 +267,8 @@
 
     - name: Deploy stremio-postgres
       community.docker.docker_container:
+        labels:
+          ssdv2.app: "{{pgrole}}"
         name: stremio-postgres
         image: "postgres:17-alpine"
         state: started
@@ -637,6 +639,8 @@
 
     - name: Deploy stremio-redis
       community.docker.docker_container:
+        labels:
+          ssdv2.app: "{{pgrole}}"
         name: stremio-redis
         image: redis:7-alpine
         state: started
@@ -667,6 +671,8 @@
     # même si un ancien conteneur Meilisearch existe déjà.
     - name: Deploy Meilisearch
       community.docker.docker_container:
+        labels:
+          ssdv2.app: "{{pgrole}}"
         name: meilisearch
         image: getmeili/meilisearch:v1.41.0
         state: started
@@ -703,6 +709,8 @@
 
     - name: Deploy Warp
       community.docker.docker_container:
+        labels:
+          ssdv2.app: "{{pgrole}}"
         name: warp
         image: caomingjun/warp:latest
         state: started
@@ -741,6 +749,8 @@
     # Toujours géré : le scheduler utilise uniquement le rôle runtime.
     - name: Deploy Taskiq scheduler
       community.docker.docker_container:
+        labels:
+          ssdv2.app: "{{pgrole}}"
         name: taskiq-scheduler
         image: laster13/stream-fusion-reborn:latest
         state: started
@@ -772,6 +782,8 @@
 
     - name: Deploy Taskiq workers
       community.docker.docker_container:
+        labels:
+          ssdv2.app: "{{pgrole}}"
         name: taskiq-worker
         image: laster13/stream-fusion-reborn:latest
         state: started

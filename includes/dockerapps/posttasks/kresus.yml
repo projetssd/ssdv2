@@ -4,6 +4,8 @@
 
 - name: Restart kresus
   community.docker.docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: kresus
     state: started
     restart: true

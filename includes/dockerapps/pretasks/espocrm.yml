@@ -1,6 +1,8 @@
 ---
 - name: Create espocrm-daemon
   docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: mysql
     image: mysql:8
     env:

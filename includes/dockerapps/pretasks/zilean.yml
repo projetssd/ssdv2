@@ -6,6 +6,8 @@
 
 - name: 'Deploying postgres'
   docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: 'postgres'
     recreate: true
     image: 'postgres:17.2-alpine'

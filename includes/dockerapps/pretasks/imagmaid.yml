@@ -18,6 +18,8 @@
 
 - name: Create a data container
   community.docker.docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: imagmaid
     image: meisnate12/plex-image-cleanup
     user: "{{ lookup('env','MYUID') }}:{{ lookup('env','MYGID') }}"

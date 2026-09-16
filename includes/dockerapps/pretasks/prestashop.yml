@@ -78,6 +78,8 @@
 
 - name: Deploying db-prestashop
   docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: "db-prestashop"
     recreate: true
     image: "lscr.io/linuxserver/mariadb"
@@ -121,4 +123,4 @@
       - name: prestashop-net
     restart_policy: unless-stopped
     state: started
-    labels: "{{ pg_labels }}"
+    labels: "{{ (pg_labels) | default({}) | combine({'ssdv2.app': pgrole}) }}"

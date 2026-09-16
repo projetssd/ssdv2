@@ -23,6 +23,8 @@
 
 - name: Deploy Redis for MediaFlow Proxy
   community.docker.docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: redis-mediaflowproxy
     image: 'redis:7-alpine'
     restart_policy: unless-stopped

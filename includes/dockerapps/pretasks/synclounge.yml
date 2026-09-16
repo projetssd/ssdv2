@@ -104,4 +104,4 @@
     networks:
       - name: traefik_proxy
     state: started
-    labels: "{{ pg_labels }}"
+    labels: "{{ (pg_labels) | default({}) | combine({'ssdv2.app': pgrole}) }}"
