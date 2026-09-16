@@ -64,3 +64,25 @@ teardown() {
   result="$(account_cache_file)"
   [ "$result" = "$SETTINGS_STORAGE/.account.cache.json" ]
 }
+
+@test "demander_conservation_donnees: o => 0 (conserver)" {
+  result="$(printf 'o\n' | demander_conservation_donnees app)"
+  [ "$result" = "0" ]
+}
+
+@test "demander_conservation_donnees: n => 1 (supprimer)" {
+  result="$(printf 'n\n' | demander_conservation_donnees app)"
+  [ "$result" = "1" ]
+}
+
+@test "demander_conservation_donnees: reponse invalide puis n => 1" {
+  result="$(printf 'x\nn\n' | demander_conservation_donnees app)"
+  [ "$result" = "1" ]
+}
+
+@test "demander_conservation_donnees: EOF => 2 (abandon)" {
+  local st=0
+  result="$(printf '' | demander_conservation_donnees app)" || st=$?
+  [ "$st" -eq 2 ]
+  [ -z "$result" ]
+}

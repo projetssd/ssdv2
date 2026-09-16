@@ -254,7 +254,8 @@ function ajout_app_seedbox() {
 
 function menu_suppression_application() {
   line=$1
-  suppression_appli ${line} 1
+  # Sans second argument : demande si les données doivent être conservées.
+  suppression_appli "${line}"
   pause
   affiche_menu_db
 }
