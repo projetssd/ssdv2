@@ -155,7 +155,7 @@
           - xmpp.meet.jitsi
       - name: traefik_proxy
     state: started
-    labels: "{{ pg_labels }}"
+    labels: "{{ (pg_labels) | default({}) | combine({'ssdv2.app': pgrole}) }}"
 
 # PROSODY
 
@@ -189,6 +189,8 @@
 
 - name: Deploying prosody
   docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: "prosody"
     image: "jitsi/prosody:stable"
     pull: yes
@@ -231,6 +233,8 @@
 
 - name: Deploying jicofo
   docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: "jicofo"
     image: "jitsi/jicofo:stable"
     pull: yes
@@ -266,6 +270,8 @@
 
 - name: Deploying jvb
   docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: "jvb"
     image: "jitsi/jvb:stable"
     published_ports:

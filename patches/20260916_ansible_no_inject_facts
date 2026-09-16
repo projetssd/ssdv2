@@ -1,0 +1,28 @@
+#!/bin/bash
+##############################################################################
+# Ajoute inject_facts_as_vars = False dans ~/.ansible.cfg
+#
+# Supprime l'avertissement "Using a template for task args is unsafe"
+# (docker_container: "{{ docker_info }}") et le risque d'écrasement des
+# arguments de tâche par des facts. SSDV2 ne dépend d'aucun fact non préfixé.
+##############################################################################
+
+set -u
+CFG="${HOME}/.ansible.cfg"
+[ -f "$CFG" ] || exit 0
+
+if grep -qiE '^[[:space:]]*inject_facts_as_vars[[:space:]]*=' "$CFG"; then
+  echo "[patch] inject_facts_as_vars déjà présent"
+  exit 0
+fi
+
+line=$(grep -nE '^[[:space:]]*\[defaults\]' "$CFG" | head -1 | cut -d: -f1)
+if [ -n "$line" ]; then
+  indent=$(sed -n "${line}p" "$CFG" | sed 's/\[defaults\].*//')
+  sed -i "${line}a\\${indent}inject_facts_as_vars = False" "$CFG"
+else
+  printf '\n[defaults]\ninject_facts_as_vars = False\n' >>"$CFG"
+fi
+
+echo "[patch] inject_facts_as_vars = False ajouté dans ~/.ansible.cfg"
+exit 0

@@ -124,6 +124,8 @@
 
 - name: Deploying {{ pgrole }} DB
   docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: "db-{{ pgrole }}"
     image: "postgres:16-alpine"
     pull: yes
@@ -140,6 +142,8 @@
 
 - name: Deploying {{ pgrole }} clickhouse
   docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: "clickhouse-{{ pgrole }}"
     image: "clickhouse/clickhouse-server:24.3.3.102-alpine"
     pull: yes
@@ -169,7 +173,7 @@
       - name: traefik_proxy
       - name: "{{ pgrole }}-net"
     state: started
-    labels: "{{ pg_labels }}"
+    labels: "{{ (pg_labels) | default({}) | combine({'ssdv2.app': pgrole}) }}"
     command: sh -c "sleep 10 && /entrypoint.sh db migrate && /entrypoint.sh db init-admin && /entrypoint.sh run"
 
 # Administratif pour ssd

@@ -1,6 +1,8 @@
 ---
 - name: Create redis
   docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: broker
     image: docker.io/library/redis:7
     volumes:
@@ -11,6 +13,8 @@
 
 - name: Create mariadb
   docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: mariadb
     image: docker.io/library/mariadb:11
     restart_policy: always

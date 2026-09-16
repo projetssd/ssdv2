@@ -1,0 +1,21 @@
+#!/bin/bash
+##############################################################################
+# Supprime l'entree de menu "Restauration Application" (action: restore),
+# qui ne correspond a aucune fonction et reste donc inoperante.
+##############################################################################
+
+set -u
+
+if [ -z "${SETTINGS_SOURCE:-}" ] && [ -f "${HOME}/.config/ssd/env" ]; then
+  # shellcheck disable=SC1090
+  source "${HOME}/.config/ssd/env"
+fi
+SETTINGS_SOURCE="${SETTINGS_SOURCE:-${HOME}/seedbox-compose}"
+
+MENU="${SETTINGS_SOURCE}/menu"
+[ -f "$MENU" ] || exit 0
+command -v sqlite3 >/dev/null 2>&1 || exit 0
+
+sqlite3 "$MENU" "delete from menu where action='restore';" 2>/dev/null
+echo "[patch] entree de menu 'restore' supprimee"
+exit 0

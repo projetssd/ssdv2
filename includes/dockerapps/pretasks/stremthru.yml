@@ -24,6 +24,8 @@
 
     - name: Deploy warp container
       community.docker.docker_container:
+        labels:
+          ssdv2.app: "{{pgrole}}"
         name: warp
         image: caomingjun/warp:latest
         exposed_ports:

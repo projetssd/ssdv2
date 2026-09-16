@@ -1,0 +1,103 @@
+#!/bin/bash
+##############################################################################
+# Backfill des registres <app>.containers / <app>.volumes
+#
+# Les applications installees avant l'introduction du registre (commit 5c7eaee8)
+# n'ont pas de fichier de registre. Ce patch, applique une seule fois, reconstruit
+# l'inventaire a partir du label ssdv2.app, des conventions de nommage SSDV2 et
+# d'une table de correspondance reprenant le case historique de suppression_appli.
+# Idempotent : n'ecrit rien si le registre existe deja et n'est pas vide.
+##############################################################################
+
+set -u
+
+if [ -z "${SETTINGS_SOURCE:-}" ] && [ -f "${HOME}/.config/ssd/env" ]; then
+  # shellcheck disable=SC1090
+  source "${HOME}/.config/ssd/env"
+fi
+SETTINGS_SOURCE="${SETTINGS_SOURCE:-${HOME}/seedbox-compose}"
+SETTINGS_STORAGE="${SETTINGS_STORAGE:-${HOME}/seedbox}"
+
+command -v docker >/dev/null 2>&1 || exit 0
+command -v sqlite3 >/dev/null 2>&1 || exit 0
+
+DB="${SETTINGS_SOURCE}/ssddb"
+CONF="${SETTINGS_STORAGE}/conf"
+[ -f "$DB" ] || exit 0
+mkdir -p "$CONF"
+
+# Compagnons non conventionnels (miroir du case de suppression_appli)
+declare -A EXTRA=(
+  [seafile]="memcached db-seafile"
+  [varken]="influxdb telegraf grafana"
+  [jitsi]="prosody jicofo jvb"
+  [nextcloud]="collabora coturn office"
+  [jackett]="flaresolverr"
+  [petio]="mongo"
+  [vinkunja]="vikunja-api"
+  [piped]="nginx piped-frontend piped-backend postgres piped-proxy hyperpipe-backend hyperpipe-frontend"
+  [hyperpipe]="nginx piped-frontend piped-backend postgres piped-proxy hyperpipe-backend hyperpipe-frontend"
+  [nginx]="nginx piped-frontend piped-backend postgres piped-proxy hyperpipe-backend hyperpipe-frontend"
+  [espocrm]="espocrm-websocket espocrm-daemon mysql"
+  [paperless]="paperless broker mariadb"
+  [immich_server]="database redis immich-machine-learning"
+  [streamfusion]="warp taskiq-worker taskiq-scheduler meilisearch stremio-redis stremio-postgres"
+  [sftorznab]="sftorznab-broker sftorznab-meili"
+  [mediaflowproxy]="redis-mediaflowproxy"
+)
+
+# Compagnons non conventionnels (miroir du case de suppression_appli)
+declare -A EXTRA_VOLUMES=(
+  [immich_server]="model-cache"
+)
+
+EXISTING_CONTAINERS=$(docker ps -a --format '{{.Names}}' 2>/dev/null)
+EXISTING_VOLUMES=$(docker volume ls --format '{{.Name}}' 2>/dev/null)
+
+container_exists() {
+  printf '%s\n' "$EXISTING_CONTAINERS" | grep -qx -- "$1"
+}
+
+volume_exists() {
+  printf '%s\n' "$EXISTING_VOLUMES" | grep -qx -- "$1"
+}
+
+sqlite3 "$DB" "select name from applications;" 2>/dev/null | while IFS= read -r app; do
+  [ -n "$app" ] || continue
+  [ "$app" = "traefik" ] && continue
+
+  reg="${CONF}/${app}.containers"
+  vreg="${CONF}/${app}.volumes"
+
+  if [ -s "$reg" ]; then
+    continue
+  fi
+
+  candidates="$(printf '%s\n' "$app" "db-${app}" "redis-${app}" "memcached-${app}" \
+    "$(docker ps -a --filter "label=ssdv2.app=${app}" --format '{{.Names}}' 2>/dev/null)" \
+    "${EXTRA[$app]:-}")"
+
+  found=""
+  for c in $candidates; do
+    container_exists "$c" && found="${found}${c}"$'\n'
+  done
+  found="$(printf '%s\n' "$found" | sed '/^[[:space:]]*$/d' | sort -u)"
+
+  if [ -n "$found" ]; then
+    printf '%s\n' "$found" > "$reg"
+    echo "[backfill] ${app}: conteneurs -> $(printf '%s' "$found" | tr '\n' ' ')"
+  fi
+
+  volfound=""
+  for v in $app "${EXTRA_VOLUMES[$app]:-}"; do
+    volume_exists "$v" && volfound="${volfound}${v}"$'\n'
+  done
+  volfound="$(printf '%s\n' "$volfound" | sed '/^[[:space:]]*$/d' | sort -u)"
+  if [ -n "$volfound" ]; then
+    printf '%s\n' "$volfound" > "$vreg"
+    echo "[backfill] ${app}: volumes -> $(printf '%s' "$volfound" | tr '\n' ' ')"
+  fi
+done
+
+echo "[backfill] terminé"
+exit 0

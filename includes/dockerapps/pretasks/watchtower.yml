@@ -7,6 +7,8 @@
 
 - name: Deploy watchtower
   docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: "watchtower"
     image: "nickfedor/watchtower:1.22.0"
     pull: yes

@@ -1,5 +1,8 @@
+# shellcheck shell=bash
+
 ## PARAMETERS
 
+# shellcheck disable=SC2034  # couleurs et variables utilisées par les scripts sourcés
 CSI="\033["
 CEND="${CSI}0m"
 CRED="${CSI}1;31m"
@@ -111,6 +114,6 @@ export TMPNAME=${SETTINGS_SOURCE}/tmp/name
 export TMPGROUP=${SETTINGS_SOURCE}/tmp/group
 export ANSIBLE_VARS="${HOME}/.ansible/inventories/group_vars/all.yml"
 # On risque d'avoir besoin de ces variables d'environnement par la suite
-export MYUID=$(id -u)
-export MYGID=$(id -g)
-export MYGIDNAME=$(id -gn)
+MYUID=$(id -u); export MYUID
+MYGID=$(id -g); export MYGID
+MYGIDNAME=$(id -gn); export MYGIDNAME

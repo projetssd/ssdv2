@@ -6,6 +6,8 @@
 
 - name: crowdsec
   docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     image: crowdsecurity/crowdsec:latest
     name: crowdsec
     ports:

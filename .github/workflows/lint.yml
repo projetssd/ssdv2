@@ -1,0 +1,127 @@
+name: Lint
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: ShellCheck (erreurs)
+        run: |
+          mapfile -t files < <(git ls-files '*.sh')
+          shellcheck -S error "${files[@]}"
+      - name: ShellCheck (warnings, hors bruit gettext accepté)
+        run: |
+          mapfile -t files < <(git ls-files '*.sh')
+          shellcheck -S warning -e SC2046,SC2027 "${files[@]}"
+
+  catalogue:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Validation du catalogue
+        run: python3 includes/config/scripts/validate_catalogue.py
+
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: py_compile
+        run: |
+          mapfile -t files < <(git ls-files '*.py')
+          if [ "${#files[@]}" -gt 0 ]; then
+            python -m py_compile "${files[@]}"
+          fi
+
+  bats:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install bats et jq
+        run: sudo apt-get update && sudo apt-get install -y bats jq
+      - name: Tests unitaires
+        run: bats tests/bats
+
+  ansible-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install ansible
+        run: pip install ansible
+      - name: Install roles and collections
+        run: |
+          retry() {
+            for i in 1 2 3 4 5; do
+              "$@" && return 0
+              echo "Tentative ${i} échouée, nouvel essai dans 15s..."; sleep 15
+            done
+            return 1
+          }
+          retry ansible-galaxy role install kwoodson.yedit
+          retry ansible-galaxy collection install community.general community.docker
+          test -d "${HOME}/.ansible/roles/kwoodson.yedit"
+      - name: ansible-playbook --syntax-check
+        run: |
+          for f in includes/config/playbooks/*.yml includes/dockerapps/vars/generique.yml; do
+            echo "syntax-check: $f"
+            ansible-playbook --syntax-check "$f"
+          done
+
+  yaml:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Validate dockerapps YAML
+        run: |
+          pip install pyyaml
+          python3 - <<'PY'
+          import glob, yaml, sys
+          # stremio_base.yml contient des constructions Jinja non parsables par PyYAML
+          skip = {'includes/dockerapps/pretasks/stremio/stremio_base.yml'}
+          failed = []
+          files = glob.glob('includes/dockerapps/**/*.yml', recursive=True)
+          for f in files:
+              if f in skip:
+                  continue
+              try:
+                  yaml.safe_load(open(f).read())
+              except Exception as exc:
+                  failed.append((f, str(exc).splitlines()[0]))
+          if failed:
+              for f, e in failed:
+                  print(f"YAML invalide: {f} -> {e}")
+              sys.exit(1)
+          print(f"YAML OK ({len(files) - len(skip)} fichiers)")
+          PY
+
+  ansible-lint:
+    runs-on: ubuntu-latest
+    # Informatif : ne bloque pas tant que la base existante n'est pas assainie.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install ansible-lint
+        run: pip install ansible-lint
+      - name: ansible-lint (informatif)
+        run: ansible-lint includes/config/playbooks includes/dockerapps/vars/generique.yml || true

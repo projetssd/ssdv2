@@ -7,7 +7,6 @@ autoindex - Générateur de liste de répertoires
 baserow - Outil no-code pour BDD modulable
 baikal - logiciel de calendrier simple
 bazarr - Gestion de sous-titres Sonarr/Radarr
-benphelps - Intégrations Docker et API de service
 beszel - Monitoring de serveur avec alertes
 bitwarden - Gestionnaire de mots de passeL
 bookstack - Wiki gratuit et open source
@@ -47,7 +46,6 @@ frenchio - Stremio orienté contenu francophone
 gethomepage - dashboard Applications
 gitea - Hébergement de développement logiciel
 gitlab - Hébergement de développement logiciel
-glftpd - Serveur FTP
 goaccess - Visual Web Log Analyzer
 gotify - Envoyer et recevoir des messages
 grabb2rss - centralise les grabs de vos instances Arrs
@@ -61,10 +59,8 @@ huntarr - Chasseur médias automatisé
 imagmaid - Plex Image Cleanup
 immich - self-hosted photo video management
 jackett - Indexeur de scraping
-jackettstremio - Indexeur de scraping
 jackettvpn - Indexeur de scraping
 jdownloader - Gestionnaire de téléchargements
-jellyseerr - Gestion de contenu Plex/Emby
 jellyfin - Serveur multimédia
 jfago - Gestion des utilisateurs Jellyfin
 jitsi - Plateformes de visioconférence
@@ -79,7 +75,7 @@ lidarr - Gestionnaire de musiques
 linkding - Gestionnaire de favoris
 logarr - Gestion des logs
 mango - Serveur de mangas auto-hébergé
-Mattermost - Plateforme de collaboration
+mattermost - Plateforme de collaboration
 mealie - Gestion de vos recettes
 mediawiki - plateforme pour Wikipédia
 mediaflowproxy - Proxy de streaming MediaFlow pour Stremio et IPTV
@@ -89,7 +85,7 @@ metube - Téléchargement YouTube auto-hébergé
 microbin - Application Web paste bin
 minecraft - Jeu d'aventure immersif
 mkvtoolnix - Gestion de fichiers MKV
-monicaHQ - CRM pour votre vie personnelle
+monicahq - CRM pour votre vie personnelle
 monitorr - Gérer votre système et réseau
 n8nio - Outil de Workflow open-source
 navidrome - Serveur de streaming musical
@@ -99,7 +95,7 @@ nextcloud - Stockage et partage de fichiers
 nocodb - Plateforme NoCode open source
 nowshowing - Addon Plex
 ntopng - Surveiller réseau informatique
-nZBHydra - Indexeurs newznab
+nzbhydra - Indexeurs newznab
 nzbdav - WebDAV Server Usenet
 ombi - Gestion de contenu Plex/Emby
 organizr - Gestion des applications
@@ -111,6 +107,7 @@ plausible - Alternative  à Google Analytics
 plexautolanguages - Addon plex sous titres
 plex - Serveur multimédia
 portainer - Gestion docker
+prestashop - Plateforme e-commerce
 prowlarr - Indexeur de scraping
 pterodactyl - game server management panel
 pureftpd - Serveur FTP
@@ -148,11 +145,6 @@ speedtesttracker - Teste vitesse Internet
 statping - Surveillance de vos sites Web
 stirlingpdf - Boite à outils PDF
 streamfusion - addon for Stremio streaming
-stremiocatalogs - addon for Stremio that provides catalogs
-stremiotrakt - addon for Stremio that provides trakt lists
-stremiosaga - addon for Stremio that provides saga infos
-stremiotmdbdice - addon for Stremio that provides shuffle movies suggestions
-stremiomanager - App for re-organizing your Stremio addons
 stremioaddonproxy - Proxy pour les addons Stremio
 stremthru - Proxy pour Stremio
 subsonic - Serveur multimédia
@@ -167,9 +159,9 @@ tracearr - Monitoring temps reel Plex Jellyfin Emby
 tracker_dashboard - Suivi stats trackers BitTorrent
 ttrss - Agrégateur de flux d'actualités
 ubooquity - Gestion ebooks
-usenet - Un gestionnaire de nzb
 vaultwarden - Serveur compatible Bitwarden
 vikunja - Application de liste de tâches
+vnstat - Surveillance du trafic réseau
 wallos - Gestion des abonnements
 warp - VPN/proxy développé par Cloudflare
 watchtower - Mises à jour automatiques Docker
@@ -177,7 +169,6 @@ webdav - Service d'hébergement de fichiers
 webui - Interface gestion ssdv2
 webtop - Gestion d'environnements
 weddingshare - Partage Moments Ensembles
-wetty - Terminal sur HTTP et https
 wgeasy - Gestion WireGuard
 whisparr - Gestionnaire de films pour adultes
 wikijs - Une application wiki moderne

@@ -9,12 +9,18 @@ CURRENT_SCRIPT=$(readlink -f "$0")
 # Absolute path this script is in.
 SETTINGS_SOURCE=$(dirname "$CURRENT_SCRIPT")
 export SETTINGS_SOURCE
-cd ${SETTINGS_SOURCE}
+cd "${SETTINGS_SOURCE}" || exit 1
 export TEXTDOMAINDIR="${SETTINGS_SOURCE}/i18n"
 export TEXTDOMAIN=ks
 source "${SETTINGS_SOURCE}/includes/functions.sh"
 source "${SETTINGS_SOURCE}/includes/variables.sh"
 source "${SETTINGS_SOURCE}/includes/menus.sh"
+
+# Le cache de session des variables account.yml contient des secrets
+# dechiffres : il est systematiquement supprime en sortie, et purge au demarrage
+# (au cas ou un run precedent ait ete tue brutalement).
+trap 'rm -f "${SETTINGS_STORAGE}/.account.cache.json"' EXIT
+rm -f "${SETTINGS_STORAGE}/.account.cache.json" >/dev/null 2>&1
 
 # récupération des parametres
 # valeurs par défaut
@@ -93,11 +99,12 @@ export PYTHONPATH=${pythonpath}
 
 case "$action" in
 install_gui)
-  if [ ! -f ${INI_FILE} ]; then
+  if [ ! -f "${INI_FILE}" ]; then
     echo "ERREUR, fichier d'autoinstall non trouvé !"
     exit 1
   fi
-  source <(grep = ${INI_FILE})
+  # shellcheck disable=SC1090
+  source <(grep '=' "${INI_FILE}")
   install_gui
 
   exit 0
@@ -134,9 +141,11 @@ IS_INSTALLED=$(select_seedbox_param "installed")
 if [ $mode_install = "manuel" ]; then
 
   if [[ ${IS_INSTALLED} -eq 0 ]]; then
-      for patch in $(ls ${SETTINGS_SOURCE}/patches); do
-        echo "${patch}" >>"${HOME}/.config/ssd/patches"
+      shopt -s nullglob
+      for patch_path in "${SETTINGS_SOURCE}"/patches/*; do
+        echo "$(basename "${patch_path}")" >>"${HOME}/.config/ssd/patches"
       done
+      shopt -u nullglob
       if [[ ${IS_INSTALLED} -eq 0 ]]; then
         # Choix des dossiers et création de l'arborescence
         create_folders
@@ -157,10 +166,10 @@ if [ $mode_install = "manuel" ]; then
   log_statusbar "$(echo $(gettext "Check de la dernière version sur git"))"
   git_branch=$(git rev-parse --abbrev-ref HEAD)
   if [ ${git_branch} == 'master' ]; then
-    cd ${SETTINGS_SOURCE}
+    cd "${SETTINGS_SOURCE}" || exit 1
     git fetch >>/dev/null 2>&1
     current_hash=$(git rev-parse HEAD)
-    distant_hash=$(git rev-parse master@{upstream})
+    distant_hash=$(git rev-parse 'master@{upstream}')
     if [ ${current_hash} != ${distant_hash} ]; then
       clear
       echo "==============================================="

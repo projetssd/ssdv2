@@ -14,6 +14,8 @@
 
 - name: Create immich-machine-learning
   community.docker.docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: immich-machine-learning
     image: ghcr.io/immich-app/immich-machine-learning:release
     env:
@@ -30,6 +32,8 @@
 
 - name: Create redis
   community.docker.docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: redis
     image: docker.io/redis:6.2-alpine@sha256:328fe6a5822256d065debb36617a8169dbfbd77b797c525288e465f56c1d392b
     healthcheck:
@@ -40,6 +44,8 @@
 
 - name: Create database
   community.docker.docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: database
     image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0@sha256:bcf63357191b76a916ae5eb93464d65c07511da41e3bf7a8416db519b40b1c23
     env:
@@ -84,6 +90,7 @@
       DB_DATA_LOCATION: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/immich-app/postgres"
       UPLOAD_LOCATION: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/immich-app/library"
     labels:
+      ssdv2.app: "{{pgrole}}"
       traefik.enable: "true" 
       traefik.http.routers.immich.entrypoints: "https"
       traefik.http.routers.immich.rule: "Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)"
