@@ -66,7 +66,7 @@ manage_account_yml oauth_enabled "true"
 ## reinstallation traefik
 
 echo ""
-suppression_appli traefik
+suppression_appli traefik 0
 install_traefik
 
 echo -e "${CRED}---------------------------------------------------------------${CEND}"
