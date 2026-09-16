@@ -28,7 +28,7 @@ if [[ "$reponse" = "Y" ]] || [[ "$reponse" = "y" ]]; then
 
   echo -e "\e[32m"$(gettext "Nom du protocole (openvpn ou wireguard) :")"\e[0m"
   read VPN_TYPE
-  VPN_TYPE=$(echo $VPN_TYPE | tr ‘[A-Z]’ ‘[a-z]’)
+  VPN_TYPE=$(echo $VPN_TYPE | tr '[A-Z]' '[a-z]')
   manage_account_yml vpn.type "$VPN_TYPE"
 
   if [[ $VPN_TYPE = wireguard ]]; then
@@ -60,7 +60,7 @@ if [[ "$reponse" = "Y" ]] || [[ "$reponse" = "y" ]]; then
 
     echo -e "\e[32m"$(gettext "Entrer le chemin ou se situe votre custom.conf openvpn ex: /home/toto/custom.conf")"\e[0m"
     read OPENVPN_CUSTOM_CONFIG
-    OPENVPN_CUSTOM_CONFIG=$(echo $OPENVPN_CUSTOM_CONFIG  | tr ‘[A-Z]’ ‘[a-z]’)
+    OPENVPN_CUSTOM_CONFIG=$(echo $OPENVPN_CUSTOM_CONFIG  | tr '[A-Z]' '[a-z]')
     manage_account_yml vpn.config "$OPENVPN_CUSTOM_CONFIG"
 
     echo -e "\e[32m"$(gettext "Nom d'utilsateur openvpn :")"\e[0m"
@@ -77,12 +77,12 @@ else
 
   echo -e "\e[32m"$(gettext "Nom de votre provider :")"\e[0m"
   read VPN_SERVICE_PROVIDER
-  VPN_SERVICE_PROVIDER=$(echo $VPN_SERVICE_PROVIDER  | tr ‘[A-Z]’ ‘[a-z]’)
+  VPN_SERVICE_PROVIDER=$(echo $VPN_SERVICE_PROVIDER  | tr '[A-Z]' '[a-z]')
   manage_account_yml vpn.service_provider "$VPN_SERVICE_PROVIDER"
 
   echo -e "\e[32m"$(gettext "Nom du protocole (openvpn ou wireguard) :")"\e[0m"
   read VPN_TYPE
-  VPN_TYPE=$(echo $VPN_TYPE  | tr ‘[A-Z]’ ‘[a-z]’)
+  VPN_TYPE=$(echo $VPN_TYPE  | tr '[A-Z]' '[a-z]')
   manage_account_yml vpn.type "$VPN_TYPE"
 
   if [[ "$VPN_TYPE" = "openvpn" ]]; then
@@ -96,7 +96,7 @@ else
 
     echo -e "\e[32m"$(gettext "Localité du serveur vpn :")"\e[0m"
     read SERVER_COUNTRIES
-    SERVER_COUNTRIES=$(echo $SERVER_COUNTRIES  | tr ‘[A-Z]’ ‘[a-z]’)
+    SERVER_COUNTRIES=$(echo $SERVER_COUNTRIES  | tr '[A-Z]' '[a-z]')
     manage_account_yml vpn.country "$SERVER_COUNTRIES"
 
   elif [[ "$VPN_TYPE" = "wireguard" ]]; then
@@ -110,7 +110,7 @@ else
 
     echo -e "\e[32m"$(gettext "Localité du serveur vpn :")"\e[0m"
     read SERVER_COUNTRIES
-    SERVER_COUNTRIES=$(echo $SERVER_COUNTRIES  | tr ‘[A-Z]’ ‘[a-z]’)
+    SERVER_COUNTRIES=$(echo $SERVER_COUNTRIES  | tr '[A-Z]' '[a-z]')
     manage_account_yml vpn.country "$SERVER_COUNTRIES"
 
   fi

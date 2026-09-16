@@ -34,8 +34,9 @@ export SETTINGS_SOURCE
 export SETTINGS_STORAGE
 
 # Le cache de session des variables account.yml contient des secrets
-# dechiffres : il est systematiquement supprime en sortie.
+# dechiffres : il est systematiquement supprime en sortie, et purge au demarrage.
 trap 'rm -f "${SETTINGS_STORAGE}/.account.cache.json"' EXIT
+rm -f "${SETTINGS_STORAGE}/.account.cache.json" >/dev/null 2>&1
 
 log() {
 	echo "[install.sh] $*"
