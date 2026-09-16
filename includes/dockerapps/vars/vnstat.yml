@@ -3,9 +3,9 @@ pgrole: 'vnstat'
 intport: '8685'
 image: 'vergoh/vnstat'
 pg_volumes:
-  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/etc/ntopng"
-  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/var/lib/ntopng"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/etc/vnstat:rw"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/var/lib/vnstat:rw"
   - '/etc/localtime:/etc/localtime:ro'
-  - '/etc/timezone:/etc/timezone:ro'
 pg_env:
   HTTP_PORT: "8685"
+  TZ: "Europe/Paris"
