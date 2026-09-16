@@ -1121,7 +1121,8 @@ EOF
   # Les tâches peuvent passer leurs arguments complets en template
   # (docker_container: "{{ docker_info }}"). On désactive l'injection des facts
   # comme variables pour supprimer l'avertissement args-template et le risque
-  # d'écrasement : aucun playbook SSDV2 ne dépend de facts non préfixés.
+  # d'écrasement. Les playbooks doivent donc utiliser ansible_facts['...']
+  # (ex. ansible_facts['env']) et non ansible_env / ansible_default_ipv4.
   inject_facts_as_vars = False
   inventory = ~/.ansible/inventories/local
   interpreter_python=${SETTINGS_SOURCE}/venv/bin/python
