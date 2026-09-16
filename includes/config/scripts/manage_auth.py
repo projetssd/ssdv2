@@ -10,13 +10,15 @@ from typing import Dict, List
 
 # --- Configuration ---
 USER_HOME = os.path.expanduser("~")
-FUNCTIONS_SCRIPT = os.path.join(USER_HOME, "seedbox-compose/includes/functions.sh")
 
 ENV_VARS = os.environ.copy()
 if "SETTINGS_SOURCE" not in ENV_VARS:
     ENV_VARS["SETTINGS_SOURCE"] = os.path.join(USER_HOME, "seedbox-compose")
 if "SETTINGS_STORAGE" not in ENV_VARS:
-    ENV_VARS["SETTINGS_STORAGE"] = "/opt/seedbox"
+    ENV_VARS["SETTINGS_STORAGE"] = os.path.join(USER_HOME, "seedbox")
+
+FUNCTIONS_SCRIPT = os.path.join(ENV_VARS["SETTINGS_SOURCE"], "includes/functions.sh")
+ENV_VARS["FUNCTIONS_SCRIPT"] = FUNCTIONS_SCRIPT
 
 class Colors:
     BLUE = '\033[0;34m'
@@ -71,20 +73,20 @@ def read_key() -> str:
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
 # ---------- Pont Bash ----------
+#
+# La fonction bash est appelée sans interpolation de chaîne : le nom de la
+# fonction et ses arguments sont passés comme argv à `bash -c`, ce qui évite
+# toute injection shell via des valeurs contrôlées par l'utilisateur.
+
+BASH_RUNNER = 'source "$FUNCTIONS_SCRIPT"; "$0" "$@"'
+
+def _bash_argv(func_name: str, *args):
+    return ['/bin/bash', '-c', BASH_RUNNER, func_name, *args]
 
 def call_bash_function(func_name: str, *args) -> str:
-    args_str = " ".join(f"'{arg}'" for arg in args)
-    bash_script = f"""
-    export SETTINGS_SOURCE="{ENV_VARS['SETTINGS_SOURCE']}"
-    export SETTINGS_STORAGE="{ENV_VARS['SETTINGS_STORAGE']}"
-    [ -f "{FUNCTIONS_SCRIPT}" ] && source "{FUNCTIONS_SCRIPT}"
-    {func_name} {args_str}
-    """
     try:
         result = subprocess.run(
-            bash_script,
-            shell=True,
-            executable='/bin/bash',
+            _bash_argv(func_name, *args),
             capture_output=True,
             text=True,
             env=ENV_VARS
@@ -95,18 +97,9 @@ def call_bash_function(func_name: str, *args) -> str:
         return ""
 
 def call_bash_function_live(func_name: str, *args) -> bool:
-    args_str = " ".join(f"'{arg}'" for arg in args)
-    bash_script = f"""
-    export SETTINGS_SOURCE="{ENV_VARS['SETTINGS_SOURCE']}"
-    export SETTINGS_STORAGE="{ENV_VARS['SETTINGS_STORAGE']}"
-    [ -f "{FUNCTIONS_SCRIPT}" ] && source "{FUNCTIONS_SCRIPT}"
-    {func_name} {args_str}
-    """
     try:
         proc = subprocess.run(
-            bash_script,
-            shell=True,
-            executable='/bin/bash',
+            _bash_argv(func_name, *args),
             env=ENV_VARS
         )
         return proc.returncode == 0
