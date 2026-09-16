@@ -65,8 +65,16 @@ jobs:
         run: pip install ansible
       - name: Install roles and collections
         run: |
-          ansible-galaxy role install kwoodson.yedit
-          ansible-galaxy collection install community.general community.docker
+          retry() {
+            for i in 1 2 3 4 5; do
+              "$@" && return 0
+              echo "Tentative ${i} échouée, nouvel essai dans 15s..."; sleep 15
+            done
+            return 1
+          }
+          retry ansible-galaxy role install kwoodson.yedit
+          retry ansible-galaxy collection install community.general community.docker
+          test -d "${HOME}/.ansible/roles/kwoodson.yedit"
       - name: ansible-playbook --syntax-check
         run: |
           for f in includes/config/playbooks/*.yml includes/dockerapps/vars/generique.yml; do
