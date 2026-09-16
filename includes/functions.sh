@@ -632,6 +632,19 @@ function manage_apps() {
 
 }
 
+# Liste les conteneurs rattachés à une application : label ssdv2.app (nouvelles
+# installations), registre enregistré à l'installation, puis conventions de
+# nommage SSDV2. Ne supprime rien, retourne une liste triée unique.
+function collect_app_containers() {
+  local app="$1"
+  local registry="${SETTINGS_STORAGE}/conf/${app}.containers"
+  {
+    docker ps -a --filter "label=ssdv2.app=${app}" --format '{{.Names}}' 2>/dev/null
+    [ -f "$registry" ] && cat "$registry"
+    printf '%s\n' "${app}" "db-${app}" "redis-${app}" "memcached-${app}"
+  } | sed '/^[[:space:]]*$/d' | sort -u
+}
+
 function suppression_appli() {
   APPSELECTED=$1
   local rc=0
@@ -653,10 +666,7 @@ function suppression_appli() {
   registry="${SETTINGS_STORAGE}/conf/${APPSELECTED}.containers"
   volreg="${SETTINGS_STORAGE}/conf/${APPSELECTED}.volumes"
 
-  docker rm -f "$APPSELECTED" >/dev/null 2>&1
-  if [ -f "$registry" ]; then
-    xargs -r docker rm -f < "$registry" >/dev/null 2>&1
-  fi
+  collect_app_containers "${APPSELECTED}" | xargs -r docker rm -f >/dev/null 2>&1
 
   if [ $DELETE -eq 1 ]; then
     log_write "Suppresion de ${APPSELECTED}, données supprimées" >/dev/null 2>&1
@@ -739,7 +749,6 @@ function suppression_appli() {
   immich_server)
     sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/immich-app >/dev/null 2>&1
     docker rm -f immich_server database redis immich-machine-learning >/dev/null 2>&1
-    docker volume prune -f >/dev/null 2>&1
     docker volume rm model-cache >/dev/null 2>&1
     manage_account_yml sub.immich " "
     ;;
@@ -779,12 +788,6 @@ function suppression_appli() {
     fi
     ;;
   esac
-
-  for companion in "db-${APPSELECTED}" "redis-${APPSELECTED}" "memcached-${APPSELECTED}"; do
-    if docker ps -a --format '{{.Names}}' | grep -qx "${companion}"; then
-      docker rm -f "${companion}" >/dev/null 2>&1 || rc=1
-    fi
-  done
 
   if docker ps -a --format '{{.Names}}' | grep -qx "${APPSELECTED}"; then
     rc=1
@@ -855,7 +858,7 @@ function manage_account_yml() {
   # Les valeurs (dont des secrets) sont écrites dans un fichier extra-vars
   # temporaire en 0600 plutôt que passées en ligne de commande, où elles
   # seraient visibles via `ps`.
-  local vars_file state
+  local vars_file state rc
   vars_file=$(mktemp "${TMPDIR:-/tmp}/ssd-account-XXXXXX.json")
   chmod 600 "${vars_file}"
 
@@ -865,15 +868,30 @@ function manage_account_yml() {
     state=present
   fi
 
-  SSD_ACCOUNT_KEY="${1}" SSD_ACCOUNT_VALUE="${2}" SSD_STATE="${state}" SSD_VARS_FILE="${vars_file}" \
-    python3 -c 'import json, os; json.dump({"account_key": os.environ["SSD_ACCOUNT_KEY"], "account_value": os.environ["SSD_ACCOUNT_VALUE"], "state": os.environ["SSD_STATE"]}, open(os.environ["SSD_VARS_FILE"], "w"))'
+  if ! SSD_ACCOUNT_KEY="${1}" SSD_ACCOUNT_VALUE="${2}" SSD_STATE="${state}" SSD_VARS_FILE="${vars_file}" \
+    python3 -c 'import json, os; json.dump({"account_key": os.environ["SSD_ACCOUNT_KEY"], "account_value": os.environ["SSD_ACCOUNT_VALUE"], "state": os.environ["SSD_STATE"]}, open(os.environ["SSD_VARS_FILE"], "w"))'; then
+    rm -f "${vars_file}" "${SETTINGS_STORAGE}/.account.lock"
+    return 1
+  fi
 
-  ansible-vault decrypt "${ANSIBLE_VARS}" >/dev/null 2>&1
-  ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/manage_account_yml.yml" --extra-vars "@${vars_file}"
-  ansible-vault encrypt "${ANSIBLE_VARS}" >/dev/null 2>&1
+  # Sous-shell + trap EXIT : le vault est toujours re-chiffré et le fichier
+  # temporaire supprimé, même en cas d'erreur ou d'interruption.
+  (
+    trap 'ansible-vault encrypt "${ANSIBLE_VARS}" >/dev/null 2>&1; rm -f "${vars_file}"' EXIT
+    ansible-vault decrypt "${ANSIBLE_VARS}" >/dev/null 2>&1
+    ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/manage_account_yml.yml" --extra-vars "@${vars_file}"
+    rc=$?
+    ansible-vault encrypt "${ANSIBLE_VARS}" >/dev/null 2>&1
+    exit ${rc}
+  )
+  rc=$?
 
   rm -f "${vars_file}"
   rm -f "${SETTINGS_STORAGE}/.account.lock"
+  # Invalide le cache de session pour forcer un rechargement cohérent.
+  [ ${rc} -eq 0 ] && rm -f "${SETTINGS_STORAGE}/.account.cache.json"
+
+  return ${rc}
 }
 
 function get_from_account_yml() {
