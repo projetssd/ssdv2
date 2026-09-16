@@ -12,7 +12,7 @@
 ---
 pgrole: 'nom de l appli' # doit être identique au nom du fichier yml
 intport: 'port'
-image: 'nom de l'image'
+image: 'nom-image:tag'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"

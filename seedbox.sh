@@ -97,11 +97,11 @@ export PYTHONPATH=${pythonpath}
 
 case "$action" in
 install_gui)
-  if [ ! -f ${INI_FILE} ]; then
+  if [ ! -f "${INI_FILE}" ]; then
     echo "ERREUR, fichier d'autoinstall non trouvé !"
     exit 1
   fi
-  source <(grep = ${INI_FILE})
+  source <(grep '=' "${INI_FILE}")
   install_gui
 
   exit 0
@@ -138,9 +138,11 @@ IS_INSTALLED=$(select_seedbox_param "installed")
 if [ $mode_install = "manuel" ]; then
 
   if [[ ${IS_INSTALLED} -eq 0 ]]; then
-      for patch in $(ls ${SETTINGS_SOURCE}/patches); do
-        echo "${patch}" >>"${HOME}/.config/ssd/patches"
+      shopt -s nullglob
+      for patch_path in "${SETTINGS_SOURCE}"/patches/*; do
+        echo "$(basename "${patch_path}")" >>"${HOME}/.config/ssd/patches"
       done
+      shopt -u nullglob
       if [[ ${IS_INSTALLED} -eq 0 ]]; then
         # Choix des dossiers et création de l'arborescence
         create_folders
