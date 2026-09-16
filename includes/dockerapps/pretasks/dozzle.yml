@@ -1,0 +1,38 @@
+---
+- name: Créer le dossier de données Dozzle
+  become: true
+  file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data"
+    state: directory
+    mode: '0775'
+    owner: "{{ lookup('env','MYUID') }}"
+    group: "{{ lookup('env','MYGID') }}"
+
+- pause:
+    prompt: "Activer un mot de passe pour Dozzle ? (o/N)"
+    echo: yes
+  register: dozzle_auth_input
+
+- name: Définir le fournisseur d'authentification Dozzle
+  set_fact:
+    dozzle_auth_provider: "{{ 'simple' if (dozzle_auth_input.user_input | default('n') | lower) in ['o', 'oui', 'y', 'yes'] else 'none' }}"
+
+- block:
+    - pause:
+        prompt: "Nom d'utilisateur pour Dozzle"
+        echo: yes
+      register: dozzle_user_input
+
+    - pause:
+        prompt: "Mot de passe pour Dozzle"
+        echo: no
+      register: dozzle_pass_input
+
+    - name: Générer users.yml pour l'authentification Dozzle
+      shell: |
+        docker run -i --rm amir20/dozzle generate "{{ dozzle_user_input.user_input }}" > "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data/users.yml"
+      args:
+        executable: /bin/bash
+        stdin: "{{ dozzle_pass_input.user_input }}"
+      no_log: true
+  when: dozzle_auth_provider == "simple"

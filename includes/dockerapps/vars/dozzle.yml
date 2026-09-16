@@ -5,6 +5,8 @@ image: 'amir20/dozzle'
 pg_volumes:
   - '/var/run/docker.sock:/var/run/docker.sock'
   - '/etc/localtime:/etc/localtime:ro'
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/data:rw"
 pg_env:
+  DOZZLE_AUTH_PROVIDER: "{{ dozzle_auth_provider | default('none') }}"
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
