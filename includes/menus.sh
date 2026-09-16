@@ -4,11 +4,6 @@ menu_ajout_supp_applis() {
 }
 
 
-menu_change_domaine () {
-  "${SETTINGS_SOURCE}/includes/config/scripts/domain.sh"
-}
-
-
 menu_secu_system_oauth2() {
   clear
   echo ""
@@ -76,16 +71,18 @@ menu_suppression_utilisateur_authelia() {
   echo -e "${CRED}"$(gettext "Suppression Utilisateurs Authelia")               "${CEND}"
   echo -e "${CRED}---------------------------------------------------------------${CEND}"
   echo ""
-  grep displayname "${SETTINGS_STORAGE}/docker/${USER}/authelia/users.yml" | cut -d: -f2 | tr -d '"' | cat -n | sed 's/[ ]\+/ /g' | tr " " " " | tr "\t" " " > temp
-  while read LIGNE
+  local tempfile
+  tempfile=$(mktemp)
+  grep displayname "${SETTINGS_STORAGE}/docker/${USER}/authelia/users.yml" | cut -d: -f2 | tr -d '"' | cat -n | sed 's/[ ]\+/ /g' | tr " " " " | tr "\t" " " > "$tempfile"
+  while read -r LIGNE
   do echo -e "${CCYAN}"$LIGNE"${CEND}"
-  done < temp
+  done < "$tempfile"
   echo ""
   echo >&2 -n -e "${CCYAN}"$(gettext "Choisir le numéro de l'utilisateur :") "${CEND}"
-  read NUMERO_LIGNE
-  UTILISATEUR=$(sed -n "${NUMERO_LIGNE}p" temp | cut -d ' ' -f 4)
+  read -r NUMERO_LIGNE
+  UTILISATEUR=$(sed -n "${NUMERO_LIGNE}p" "$tempfile" | cut -d ' ' -f 4)
   sed -i "/##${UTILISATEUR}##/,/##${UTILISATEUR}##/d" "${SETTINGS_STORAGE}/docker/${USER}/authelia/users.yml"
-  rm temp
+  rm -f "$tempfile"
   echo ""
   echo -e "\e[32m"$(gettext "L'utilisateur ${UTILISATEUR} a été supprimé")"\e[0m"
   docker restart authelia >/dev/null 2>&1
