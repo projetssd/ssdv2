@@ -655,6 +655,23 @@ function collect_app_containers() {
   } | sed '/^[[:space:]]*$/d' | sort -u
 }
 
+# Demande si les données d'une application doivent être conservées.
+# Sortie : 0 = conserver, 1 = supprimer, 2 = abandon (EOF / interruption).
+function demander_conservation_donnees() {
+  local app="$1"
+  local rep=""
+  while :; do
+    if ! read -rp "Conserver les données de ${app} ? (o/n) : " rep; then
+      # EOF (Ctrl-D ou stdin épuisé) : on n'entame pas la suppression.
+      return 2
+    fi
+    case "${rep,,}" in
+      o) echo 0; return 0 ;;
+      n) echo 1; return 0 ;;
+    esac
+  done
+}
+
 function suppression_appli() {
   APPSELECTED=$1
   local rc=0
@@ -665,10 +682,13 @@ function suppression_appli() {
   if [[ $# -ge 2 ]]; then
     [ "$2" = "1" ] && DELETE=1
   else
-    while [[ ! "${rep,,}" =~ ^(o|n)$ ]]; do
-      read -rp "Conserver les données de ${APPSELECTED} ? (o/n) : " rep
-    done
-    [ "${rep,,}" = o ] && DELETE=0 || DELETE=1
+    local _keep
+    _keep=$(demander_conservation_donnees "${APPSELECTED}")
+    case "$_keep" in
+      0) DELETE=0 ;;
+      1) DELETE=1 ;;
+      *) echo "Suppression annulée."; return 1 ;;
+    esac
   fi
   EXTRA_SUBDOMAINS=()
   manage_account_yml sub.${APPSELECTED} " "
