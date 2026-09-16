@@ -660,7 +660,7 @@ function suppression_appli() {
     done
     [ "${rep,,}" = o ] && DELETE=0 || DELETE=1
   fi
-  EXTRA_SUBDOMAIN=""
+  EXTRA_SUBDOMAINS=()
   manage_account_yml sub.${APPSELECTED} " "
 
   registry="${SETTINGS_STORAGE}/conf/${APPSELECTED}.containers"
@@ -708,6 +708,7 @@ function suppression_appli() {
   nextcloud)
     docker rm -f collabora coturn office
     rm -rf ${SETTINGS_STORAGE}/docker/${USER}/coturn
+    EXTRA_SUBDOMAINS+=("collabora" "office")
     ;;
   rtorrentvpn)
     rm ${SETTINGS_STORAGE}/conf/rutorrent-vpn.yml
@@ -763,7 +764,7 @@ function suppression_appli() {
     ;;
   sftorznab)
     docker rm -f sftorznab-broker sftorznab-meili >/dev/null 2>&1
-    EXTRA_SUBDOMAIN="${sousdomaine}-meili"
+    EXTRA_SUBDOMAINS+=("${sousdomaine}-meili")
     ;;
   coolify)
     # Supprimer tous les conteneurs dont le nom contient 'coolify'
@@ -795,7 +796,16 @@ function suppression_appli() {
 
   checking_errors ${rc}
 
-  ansible-playbook -e pgrole="${APPSELECTED}" -e extra_subdomain="${EXTRA_SUBDOMAIN}" "${SETTINGS_SOURCE}/includes/config/playbooks/remove_cf_record.yml"
+  # DNS : sous-domaine principal + sous-domaines supplémentaires de l'app
+  # (ex. nextcloud -> collabora/office, sftorznab -> meili). La liste est
+  # transmise en JSON pour gérer plusieurs sous-domaines.
+  local extra_json="[]"
+  if [ ${#EXTRA_SUBDOMAINS[@]} -gt 0 ]; then
+    extra_json=$(printf '%s\n' "${EXTRA_SUBDOMAINS[@]}" | jq -R . | jq -s -c .)
+  fi
+  ansible-playbook \
+    -e "{\"pgrole\": \"${APPSELECTED}\", \"extra_subdomains\": ${extra_json}}" \
+    "${SETTINGS_SOURCE}/includes/config/playbooks/remove_cf_record.yml"
 
   echo""
   echo -e "${BLUE}### $APPSELECTED" $(gettext "a été supprimée") "###${NC}"
