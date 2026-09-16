@@ -941,20 +941,25 @@ function manage_account_yml() {
 
   # Sous-shell + trap EXIT : le vault est toujours re-chiffré et le fichier
   # temporaire supprimé, même en cas d'erreur ou d'interruption.
+  # `set +e` dans le sous-shell et `( ... ) || rc=$?` rendent la fonction
+  # sûre sous `set -e` (contexte autoinstall) : un échec n'avortera pas le
+  # parent avant le nettoyage du fichier temporaire et du verrou.
+  rc=0
   (
+    set +e
     trap 'ansible-vault encrypt "${ANSIBLE_VARS}" >/dev/null 2>&1; rm -f "${vars_file}"' EXIT
     ansible-vault decrypt "${ANSIBLE_VARS}" >/dev/null 2>&1
     ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/manage_account_yml.yml" --extra-vars "@${vars_file}"
     rc=$?
-    ansible-vault encrypt "${ANSIBLE_VARS}" >/dev/null 2>&1
     exit ${rc}
-  )
-  rc=$?
+  ) || rc=$?
 
   rm -f "${vars_file}"
   rm -f "${SETTINGS_STORAGE}/.account.lock"
   # Invalide le cache de session pour forcer un rechargement cohérent.
-  [ ${rc} -eq 0 ] && rm -f "${SETTINGS_STORAGE}/.account.cache.json"
+  if [ ${rc} -eq 0 ]; then
+    rm -f "${SETTINGS_STORAGE}/.account.cache.json"
+  fi
 
   return ${rc}
 }
