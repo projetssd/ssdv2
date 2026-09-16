@@ -44,11 +44,6 @@
         
     # FACTS #######################################################################
 
-    - name: Checking for existing app data
-      stat:
-        path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/authelia/configuration.yml"
-      register: check
-
     - name: Creating paths
       become: yes
       file: "path={{ item }} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID') }}"
