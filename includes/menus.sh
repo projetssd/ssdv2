@@ -288,3 +288,68 @@ function menu_reinit_container() {
   read -r
 }
 
+
+function menu_diagnostic_nettoyage() {
+  clear
+  logo
+  echo -e "${BLUE}### DIAGNOSTIC / NETTOYAGE ###${NC}"
+  echo ""
+
+  local db="${SETTINGS_SOURCE}/ssddb"
+  local conf="${SETTINGS_STORAGE}/conf"
+  local apps
+  mapfile -t apps < <(sqlite3 "$db" "select name from applications;" 2>/dev/null)
+
+  echo "-- Registres conteneurs manquants --"
+  local missing=0
+  local a
+  for a in "${apps[@]}"; do
+    # traefik n'a pas de registre applicatif (géré à part)
+    [ "$a" = "traefik" ] && continue
+    if [ ! -s "${conf}/${a}.containers" ]; then
+      echo "   ${a}"
+      missing=$((missing + 1))
+    fi
+  done
+  [ "$missing" -eq 0 ] && echo "   aucun"
+
+  echo ""
+  echo "-- Conteneurs orphelins (label ssdv2.app sans application en base) --"
+  local name label
+  local orphans=()
+  while read -r name label; do
+    [ -z "$name" ] && continue
+    printf '%s\n' "${apps[@]}" | grep -qx "$label" || orphans+=("$name")
+  done < <(docker ps -a --filter label=ssdv2.app --format '{{.Names}} {{.Label "ssdv2.app"}}' 2>/dev/null)
+  if [ ${#orphans[@]} -eq 0 ]; then
+    echo "   aucun"
+  else
+    printf '   %s\n' "${orphans[@]}"
+  fi
+
+  echo ""
+  echo "-- Volumes anonymes orphelins --"
+  local nvol
+  nvol=$(docker volume ls -qf dangling=true | wc -l)
+  echo "   ${nvol}"
+
+  echo ""
+  local resp
+  if [ "$missing" -gt 0 ]; then
+    read -rp "Régénérer les registres manquants ? (y/n) : " resp
+    [[ "$resp" == "y" ]] && bash "${SETTINGS_SOURCE}/patches/20260916_backfill_registries"
+  fi
+  if [ ${#orphans[@]} -gt 0 ]; then
+    read -rp "Supprimer les conteneurs orphelins listés ? (y/n) : " resp
+    [[ "$resp" == "y" ]] && docker rm -f -v "${orphans[@]}"
+  fi
+  if [ "$nvol" -gt 0 ]; then
+    read -rp "Supprimer les volumes anonymes orphelins ? (y/n) : " resp
+    if [[ "$resp" == "y" ]]; then
+      docker volume ls -qf dangling=true | xargs -r docker volume rm -f
+    fi
+  fi
+
+  pause
+}
+
