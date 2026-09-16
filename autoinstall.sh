@@ -190,6 +190,9 @@ EOF
 [defaults]
 command_warnings = False
 deprecation_warnings = False
+# Supprime l'avertissement "args template" (docker_container: "{{ docker_info }}")
+# et le risque d'écrasement par des facts : aucune dépendance à des facts non préfixés.
+inject_facts_as_vars = False
 inventory = ${CURRENT_HOME}/.ansible/inventories/local
 interpreter_python = ${SETTINGS_SOURCE}/venv/bin/python
 vault_password_file = ${CURRENT_HOME}/.vault_pass
