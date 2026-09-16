@@ -29,6 +29,24 @@
   debug:
     msg: "DNS Record for '{{ record }}' set to '{{ network.ipv4 }}'."
 
+# Registre des sous-domaines DNS créés pour l'application : permet à la
+# suppression de retirer tous les enregistrements, y compris les sous-domaines
+# additionnels (ex. nextcloud -> collabora/office, pterodactyl -> wings).
+- name: Ensure DNS registry directory exists
+  file:
+    path: "{{ settings.storage }}/conf"
+    state: directory
+    mode: '0775'
+  when: pgrole is defined and settings.storage is defined
+
+- name: Record DNS subdomain in app registry
+  lineinfile:
+    path: "{{ settings.storage }}/conf/{{ pgrole }}.dns"
+    line: "{{ subdomain }}"
+    create: yes
+    mode: '0664'
+  when: pgrole is defined and subdomain is defined
+
 #- name: Set record for ipv6
 #  block:
 #  - name: get ipv6

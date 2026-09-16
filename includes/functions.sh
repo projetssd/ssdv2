@@ -764,7 +764,13 @@ function suppression_appli() {
     ;;
   sftorznab)
     docker rm -f sftorznab-broker sftorznab-meili >/dev/null 2>&1
+    # Fallback legacy : le registre <app>.dns couvre le cas personnalisé.
     EXTRA_SUBDOMAINS+=("${sousdomaine}-meili")
+    ;;
+  pterodactyl)
+    docker rm -f wings >/dev/null 2>&1
+    # Fallback legacy : wings.<domaine> créé par le posttask.
+    EXTRA_SUBDOMAINS+=("wings")
     ;;
   coolify)
     # Supprimer tous les conteneurs dont le nom contient 'coolify'
@@ -796,12 +802,22 @@ function suppression_appli() {
 
   checking_errors ${rc}
 
+  # Sous-domaines additionnels enregistrés à l'installation (<app>.dns),
+  # en complément du fallback legacy codé dans le case ci-dessus.
+  if [ -f "${SETTINGS_STORAGE}/conf/${APPSELECTED}.dns" ]; then
+    local _sd
+    while IFS= read -r _sd; do
+      [ -n "$_sd" ] && EXTRA_SUBDOMAINS+=("$_sd")
+    done < "${SETTINGS_STORAGE}/conf/${APPSELECTED}.dns"
+    rm -f "${SETTINGS_STORAGE}/conf/${APPSELECTED}.dns"
+  fi
+
   # DNS : sous-domaine principal + sous-domaines supplémentaires de l'app
   # (ex. nextcloud -> collabora/office, sftorznab -> meili). La liste est
   # transmise en JSON pour gérer plusieurs sous-domaines.
   local extra_json="[]"
   if [ ${#EXTRA_SUBDOMAINS[@]} -gt 0 ]; then
-    extra_json=$(printf '%s\n' "${EXTRA_SUBDOMAINS[@]}" | jq -R . | jq -s -c .)
+    extra_json=$(printf '%s\n' "${EXTRA_SUBDOMAINS[@]}" | sort -u | jq -R . | jq -s -c .)
   fi
   ansible-playbook \
     -e "{\"pgrole\": \"${APPSELECTED}\", \"extra_subdomains\": ${extra_json}}" \
