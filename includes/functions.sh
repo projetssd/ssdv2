@@ -1098,6 +1098,11 @@ EOF
   command_warnings = False
   callback_whitelist = profile_tasks
   deprecation_warnings=False
+  # Les tâches peuvent passer leurs arguments complets en template
+  # (docker_container: "{{ docker_info }}"). On désactive l'injection des facts
+  # comme variables pour supprimer l'avertissement args-template et le risque
+  # d'écrasement : aucun playbook SSDV2 ne dépend de facts non préfixés.
+  inject_facts_as_vars = False
   inventory = ~/.ansible/inventories/local
   interpreter_python=${SETTINGS_SOURCE}/venv/bin/python
   vault_password_file = ~/.vault_pass
