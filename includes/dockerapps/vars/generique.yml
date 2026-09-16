@@ -12,6 +12,8 @@
     - "{{ playbook_dir }}/../templates/generique/generique.yml"
   vars:
     subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
+    # Vrai saut de ligne (un "\n" littéral dans un bloc YAML n'est pas converti)
+    nl: "\n"
 
   tasks:
     # SNAPSHOT (base de calcul du registre des conteneurs/volumes de l'app) ######
@@ -214,6 +216,13 @@
       register: ssdv2_reg_volumes
       failed_when: false
 
+    # Inventaire par label : capture les compagnons préexistants qu'un simple
+    # diff avant/après ne verrait pas (rend le registre exhaustif).
+    - name: "Lister les conteneurs labelisés ssdv2.app={{ pgrole }}"
+      shell: "docker ps -a --filter 'label=ssdv2.app={{ pgrole }}' --format '{% raw %}{{.Names}}{% endraw %}'"
+      register: ssdv2_containers_labeled
+      changed_when: false
+
     - name: "Écrire le registre conteneurs de {{ pgrole }}"
       copy:
         dest: "{{ settings.storage }}/conf/{{ pgrole }}.containers"
@@ -222,8 +231,9 @@
             (
               (ssdv2_reg_containers.content | default('') | b64decode).splitlines()
               + (ssdv2_containers_after.stdout_lines | difference(ssdv2_containers_before.stdout_lines))
+              + ssdv2_containers_labeled.stdout_lines
               + [pgrole]
-            ) | reject('equalto', '') | unique | sort | join('\n')
+            ) | reject('equalto', '') | unique | sort | join(nl)
           }}
         mode: '0664'
 
@@ -235,7 +245,7 @@
             (
               (ssdv2_reg_volumes.content | default('') | b64decode).splitlines()
               + (ssdv2_volumes_after.stdout_lines | difference(ssdv2_volumes_before.stdout_lines))
-            ) | reject('equalto', '') | unique | sort | join('\n')
+            ) | reject('equalto', '') | unique | sort | join(nl)
           }}
         mode: '0664'
 
