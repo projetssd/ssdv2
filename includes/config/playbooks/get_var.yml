@@ -17,14 +17,22 @@
     - name: set variables
       set_fact:
         myresult: "{{ myresult[item] }}"
-      with_items: "{{ myindexes }}"
+      loop: "{{ myindexes }}"
 
     rescue:
     - name: set empty var
       set_fact:
         myresult: "notfound"
 
+  # Écriture dans un fichier plutôt qu'un parsing de stdout : préserve
+  # espaces, guillemets et retours à la ligne de la valeur.
+  - name: Écrire le résultat dans le fichier temporaire
+    copy:
+      content: "{{ myresult }}"
+      dest: "{{ tempfile }}"
+      mode: '0600'
+    when: tempfile is defined and (tempfile | length > 0)
+
   - name: debug
     debug:
       msg: "##RESULT##{{ myresult }}##RESULT##"
-    

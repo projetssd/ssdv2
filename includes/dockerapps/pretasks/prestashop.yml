@@ -37,16 +37,16 @@
 - name: Variables | Set 'sub' variable
   set_fact:
     sub_enabled: "{{ true if not(
-        (sub.prestashop is undefined)
-        or (sub.prestashop is none)
-        or (sub.prestashop | trim | length == 0)
+        (sub.prestashop.prestashop is undefined)
+        or (sub.prestashop.prestashop is none)
+        or (sub.prestashop.prestashop | trim | length == 0)
       )
         else false }}"
 
 - name: Set DNS Record on CloudFlare
   include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
   vars:
-    subdomain: "{{ sub.prestashop if sub_enabled else 'prestashop' }}"
+    subdomain: "{{ sub.prestashop.prestashop if sub_enabled else 'prestashop' }}"
   when: cloudflare_enabled
 
 - name: Set Known Facts
@@ -68,7 +68,7 @@
       traefik.enable: "true"
       ## HTTP Routers
       traefik.http.routers.prestashop-rtr.entrypoints: "http,https"
-      traefik.http.routers.prestashop-rtr.rule: "Host(`{{ sub.prestashop if sub_enabled else pgrole }}.{{ user.domain }}`)"
+      traefik.http.routers.prestashop-rtr.rule: "Host(`{{ sub.prestashop.prestashop if sub_enabled else pgrole }}.{{ user.domain }}`)"
       traefik.http.routers.prestashop-rtr.tls: "true"
       ## Middlewares
       traefik.http.routers.prestashop-rtr.middlewares: "{{ 'chain-authelia@file' if check.stat.exists | default(false) else 'chain-oauth@file' if oauth_enabled | default(false) else 'chain-basic-auth@file' }}"
@@ -78,6 +78,8 @@
 
 - name: Deploying db-prestashop
   docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: "db-prestashop"
     recreate: true
     image: "lscr.io/linuxserver/mariadb"
@@ -121,4 +123,4 @@
       - name: prestashop-net
     restart_policy: unless-stopped
     state: started
-    labels: "{{ pg_labels }}"
+    labels: "{{ (pg_labels) | default({}) | combine({'ssdv2.app': pgrole}) }}"

@@ -1,6 +1,8 @@
 ---
 - name: launch pure_ftp
   docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     image: stilliard/pure-ftpd:hardened
     name: pureftpd
     ports:

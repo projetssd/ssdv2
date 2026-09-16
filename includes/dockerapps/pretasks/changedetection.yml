@@ -4,6 +4,8 @@
 
 - name: 'Deploying sockpuppetbrowser'
   docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: 'sockpuppetbrowser'
     recreate: true
     image: 'dgtlmoon/sockpuppetbrowser:latest'
@@ -23,6 +25,8 @@
 
 - name: 'Deploying browser-chrome'
   docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: 'browser-chrome'
     recreate: true
     image: 'selenium/standalone-chromium:latest'

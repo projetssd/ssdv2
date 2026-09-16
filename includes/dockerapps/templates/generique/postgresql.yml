@@ -6,6 +6,9 @@
 
 - name: 'Deploying db-{{pgrole}}'
   docker_container:
+    keep_volumes: false
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: 'db-{{pgrole}}'
     recreate: true
     image: 'postgres'

@@ -8,16 +8,27 @@
     owner: "{{ lookup('env','MYUID') }}"
     group: "{{ lookup('env','MYGID') }}"
 
-- name: Prepare database dump
-  shell: 
-    chdir: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}/init"
-    cmd: "docker run --rm guacamole/guacamole /opt/guacamole/bin/initdb.sh --mysql > /tmp/initdb.sql"
+# La génération du schéma peut échouer selon l'architecture (image amd64).
+# On isole cette étape fragile pour ne pas interrompre l'installation
+# (sinon : conteneur + DNS créés mais ni registre ni entrée SQLite).
+- name: Préparer le schéma de base de données
+  block:
+    - name: Prepare database dump
+      shell:
+        chdir: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}/init"
+        cmd: "docker run --rm guacamole/guacamole /opt/guacamole/bin/initdb.sh --mysql > /tmp/initdb.sql"
 
-- name: Copy file
-  become: yes
-  copy:
-    src: /tmp/initdb.sql
-    dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}/init/initdb.sql"
+    - name: Copy file
+      become: yes
+      copy:
+        src: /tmp/initdb.sql
+        dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}/init/initdb.sql"
+  rescue:
+    - name: Avertissement (schéma non généré)
+      debug:
+        msg:
+          - "Impossible de générer le schéma guacamole (image incompatible avec l'architecture ?)."
+          - "L'installation continue ; la base devra être initialisée manuellement."
 
 
 - name: Launch Pretask
@@ -29,6 +40,8 @@
 
 - name: 'Deploying guacd'
   docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: 'guacd'
     image: "guacamole/guacd"
     restart_policy: unless-stopped

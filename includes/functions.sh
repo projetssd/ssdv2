@@ -329,26 +329,6 @@ function install_traefik() {
   echo ""
 }
 
-function install_rclone() {
-ARCHITECTURE=$(dpkg --print-architecture)
-RCLONE_VERSION=$(get_from_account_yml rclone.architecture)
-  if [ ${RCLONE_VERSION} == notfound ]; then
-    manage_account_yml rclone.architecture "${ARCHITECTURE}"
-  fi
-  fusermount -uz ${SETTINGS_STORAGE} }}/seedbox/zurg >>/dev/null 2>&1
-  manage_account_yml rclone.architecture "${ARCHITECTURE}"
-  if [ ! -f  "${SETTINGS_STORAGE}/status/rclone" ]; then
-    echo -e "\e[32m"$(gettext "INSTALLATION") ZURG"\e[0m"   				
-    install_zurg
-    ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml"
-  else
-    echo -e "\e[32m"$(gettext "INSTALLATION") RCLONE"\e[0m"   				
-    ansible-playbook "${SETTINGS_SOURCE}/includes/config/roles/rclone/tasks/main.yml"
-  fi
-    checking_errors $?
-  echo ""
-}
-
 function install_common() {
   source "${SETTINGS_SOURCE}/venv/bin/activate"
   # on contre le bug de debian et du venv qui ne trouve pas les paquets installés par galaxy
@@ -412,9 +392,10 @@ function subdomain() {
     echo ""
     for line in $(cat $SERVICESPERUSER); do
 
+      SUBDOMAIN=""
       while [ -z "$SUBDOMAIN" ]; do
         echo >&2 -n -e "${BWHITE}"$(gettext "Sous domaine pour") ${line} "${CEND}"
-        read SUBDOMAIN
+        read -r SUBDOMAIN
       done
       manage_account_yml sub.${line}.${line} $SUBDOMAIN
     done
@@ -535,8 +516,6 @@ function install_services() {
       mkdir -p "${SETTINGS_STORAGE}/vars" >/dev/null 2>&1
     fi
 
-    create_file "${SETTINGS_STORAGE}/temp.txt"
-
     for line in $(cat $SERVICESPERUSER); do
       launch_service "${line}"
     done
@@ -550,11 +529,6 @@ launch_service () {
     error=0
     rc=0
 
-    paths=(
-        "${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml"
-        "/home/${USER}/seedbox/vars/${line}.yml"
-    )
-
     force_subdomain_auth=false
 
     case "${line}" in
@@ -566,9 +540,18 @@ launch_service () {
             ;;
     esac
 
-    for path in "${paths[@]}"; do
-        if ! grep -q "traefik_labels_enabled: false" "$path" 2>/dev/null \
-           || grep -q "labels:" "$path" 2>/dev/null \
+    # Fichier effectivement utilisé par l'installation : version personnalisée
+    # dans le stockage utilisateur, sinon version source.
+    effective_path=""
+    if [[ -f "${SETTINGS_STORAGE}/vars/${line}.yml" ]]; then
+        effective_path="${SETTINGS_STORAGE}/vars/${line}.yml"
+    elif [[ -f "${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml" ]]; then
+        effective_path="${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml"
+    fi
+
+    if [ -n "${effective_path}" ]; then
+        if ! grep -q "traefik_labels_enabled: false" "$effective_path" 2>/dev/null \
+           || grep -q "labels:" "$effective_path" 2>/dev/null \
            || [ "$force_subdomain_auth" = true ]; then
 
             tempsubdomain=$(get_from_account_yml sub.${line}.${line})
@@ -581,7 +564,7 @@ launch_service () {
                 auth_unitaire ${line}
             fi
         fi
-    done
+    fi
 
     extra_vars_args=()
     if [[ -n "${ANSIBLE_EXTRA_VARS_FILE:-}" && -f "${ANSIBLE_EXTRA_VARS_FILE}" ]]; then
@@ -637,12 +620,6 @@ launch_service () {
         fi
     fi
 
-    if [ ${error} = 0 ]; then
-        temp_subdomain=$(get_from_account_yml "sub.${line}.${line}")
-        DOMAIN=$(get_from_account_yml user.domain)
-        FQDNTMP="${temp_subdomain}.$DOMAIN"
-    fi
-
     return ${rc}
 }
 
@@ -655,31 +632,77 @@ function manage_apps() {
 
 }
 
+# Convertit une liste de valeurs en tableau JSON compact (une par ligne,
+# dédupliquées). Utilisé pour transmettre les sous-domaines DNS à Ansible.
+function json_array_from_lines() {
+  if [ "$#" -eq 0 ]; then
+    echo "[]"
+  else
+    printf '%s\n' "$@" | sed '/^[[:space:]]*$/d' | sort -u | jq -R . | jq -s -c .
+  fi
+}
+
+# Liste les conteneurs rattachés à une application : label ssdv2.app (nouvelles
+# installations), registre enregistré à l'installation, puis conventions de
+# nommage SSDV2. Ne supprime rien, retourne une liste triée unique.
+function collect_app_containers() {
+  local app="$1"
+  local registry="${SETTINGS_STORAGE}/conf/${app}.containers"
+  {
+    docker ps -a --filter "label=ssdv2.app=${app}" --format '{{.Names}}' 2>/dev/null
+    [ -f "$registry" ] && cat "$registry"
+    printf '%s\n' "${app}" "db-${app}" "redis-${app}" "memcached-${app}"
+  } | sed '/^[[:space:]]*$/d' | sort -u
+}
+
+# Demande si les données d'une application doivent être conservées.
+# Sortie : 0 = conserver, 1 = supprimer, 2 = abandon (EOF / interruption).
+function demander_conservation_donnees() {
+  local app="$1"
+  local rep=""
+  while :; do
+    if ! read -rp "Conserver les données de ${app} ? (o/n) : " rep; then
+      # EOF (Ctrl-D ou stdin épuisé) : on n'entame pas la suppression.
+      return 2
+    fi
+    case "${rep,,}" in
+      o) echo 0; return 0 ;;
+      n) echo 1; return 0 ;;
+    esac
+  done
+}
+
 function suppression_appli() {
   APPSELECTED=$1
+  local rc=0
 
   sousdomaine=$(get_from_account_yml sub.${APPSELECTED}.${APPSELECTED})
-  domaine=$(get_from_account_yml user.domain)
 
   DELETE=0
   if [[ $# -ge 2 ]]; then
     [ "$2" = "1" ] && DELETE=1
   else
-    while [[ ! "${rep,,}" =~ ^(o|n)$ ]]; do
-      read -rp "Conserver les données de ${APPSELECTED} ? (o/n) : " rep
-    done
-    [ "${rep,,}" = o ] && DELETE=0 || DELETE=1
+    local _keep
+    _keep=$(demander_conservation_donnees "${APPSELECTED}")
+    case "$_keep" in
+      0) DELETE=0 ;;
+      1) DELETE=1 ;;
+      *) echo "Suppression annulée."; return 1 ;;
+    esac
   fi
-  EXTRA_SUBDOMAIN=""
+  EXTRA_SUBDOMAINS=()
   manage_account_yml sub.${APPSELECTED} " "
 
   registry="${SETTINGS_STORAGE}/conf/${APPSELECTED}.containers"
   volreg="${SETTINGS_STORAGE}/conf/${APPSELECTED}.volumes"
 
-  docker rm -f "$APPSELECTED" >/dev/null 2>&1
-  if [ -f "$registry" ]; then
-    xargs -r docker rm -f < "$registry" >/dev/null 2>&1
-  fi
+  # `docker rm -v` supprime les conteneurs ET leurs volumes anonymes (éphémères),
+  # y compris lors d'un reinit. Les volumes nommés sont conservés et gérés via
+  # le registre (supprimés uniquement si DELETE=1).
+  local target_containers
+  target_containers=$(collect_app_containers "${APPSELECTED}")
+  log_write "Suppression de ${APPSELECTED} - conteneurs ciblés: $(printf '%s' "${target_containers}" | tr '\n' ' ')" >/dev/null 2>&1
+  printf '%s\n' "${target_containers}" | xargs -r docker rm -f -v >/dev/null 2>&1
 
   if [ $DELETE -eq 1 ]; then
     log_write "Suppresion de ${APPSELECTED}, données supprimées" >/dev/null 2>&1
@@ -696,6 +719,11 @@ function suppression_appli() {
   rm ${SETTINGS_STORAGE}/conf/$APPSELECTED.yml >/dev/null 2>&1
   rm ${SETTINGS_STORAGE}/vars/$APPSELECTED.yml >/dev/null 2>&1
 
+  # Fallback legacy (EVO-04) : nettoyages spécifiques (dossiers, clés vault,
+  # sous-domaines). Les conteneurs sont désormais couverts par
+  # collect_app_containers (label + registre + conventions). Ce bloc reste
+  # nécessaire pour les installations antérieures au label ssdv2.app et sera
+  # retiré progressivement.
   case $APPSELECTED in
   oauth)
     manage_account_yml oauth.client " "
@@ -721,6 +749,7 @@ function suppression_appli() {
   nextcloud)
     docker rm -f collabora coturn office
     rm -rf ${SETTINGS_STORAGE}/docker/${USER}/coturn
+    EXTRA_SUBDOMAINS+=("collabora" "office")
     ;;
   rtorrentvpn)
     rm ${SETTINGS_STORAGE}/conf/rutorrent-vpn.yml
@@ -737,23 +766,12 @@ function suppression_appli() {
   zurg)
     sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/zurg
     ;;
-  piped*)
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/piped
-    docker rm -f nginx piped-frontend piped-backend postgres piped-proxy hyperpipe-backend hyperpipe-frontend >/dev/null 2>&1
-    manage_account_yml sub.piped " "
-    ;;
-  nginx)
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/piped
-    docker rm -f nginx piped-frontend piped-backend postgres piped-proxy hyperpipe-backend hyperpipe-frontend >/dev/null 2>&1
-    manage_account_yml sub.piped " "
-    ;;
-  hyperpipe*)
+  piped*|nginx|hyperpipe*)
     sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/piped
     docker rm -f nginx piped-frontend piped-backend postgres piped-proxy hyperpipe-backend hyperpipe-frontend >/dev/null 2>&1
     manage_account_yml sub.piped " "
     ;;
   jellygrail)
-    sudo fusermount -uz ${SETTINGS_STORAGE}/docker/${USER}/jellygrail/Video_Library
     sudo fusermount -uz ${SETTINGS_STORAGE}/docker/${USER}/jellygrail/Video_Library
     sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/jellygrail
     ;;
@@ -761,7 +779,7 @@ function suppression_appli() {
     sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/mysql
     sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/espocrm >/dev/null 2>&1
     docker rm -f espocrm espocrm-websocket espocrm-daemon mysql >/dev/null 2>&1
-    manage_account_yml sub.piped " "
+    manage_account_yml sub.espocrm " "
     ;;
   paperless)
     sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/mariadb
@@ -773,7 +791,6 @@ function suppression_appli() {
   immich_server)
     sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/immich-app >/dev/null 2>&1
     docker rm -f immich_server database redis immich-machine-learning >/dev/null 2>&1
-    docker volume prune -f >/dev/null 2>&1
     docker volume rm model-cache >/dev/null 2>&1
     manage_account_yml sub.immich " "
     ;;
@@ -788,7 +805,13 @@ function suppression_appli() {
     ;;
   sftorznab)
     docker rm -f sftorznab-broker sftorznab-meili >/dev/null 2>&1
-    EXTRA_SUBDOMAIN="${sousdomaine}-meili"
+    # Fallback legacy : le registre <app>.dns couvre le cas personnalisé.
+    EXTRA_SUBDOMAINS+=("${sousdomaine}-meili")
+    ;;
+  pterodactyl)
+    docker rm -f wings >/dev/null 2>&1
+    # Fallback legacy : wings.<domaine> créé par le posttask.
+    EXTRA_SUBDOMAINS+=("wings")
     ;;
   coolify)
     # Supprimer tous les conteneurs dont le nom contient 'coolify'
@@ -814,22 +837,30 @@ function suppression_appli() {
     ;;
   esac
 
-  if docker ps -a | grep -q db-$APPSELECTED; then
-    docker rm -f db-$APPSELECTED >/dev/null 2>&1
+  if docker ps -a --format '{{.Names}}' | grep -qx "${APPSELECTED}"; then
+    rc=1
   fi
 
-  if docker ps -a | grep -q redis-$APPSELECTED; then
-    docker rm -f redis-$APPSELECTED >/dev/null 2>&1
+  checking_errors ${rc}
+
+  # Sous-domaines additionnels enregistrés à l'installation (<app>.dns),
+  # en complément du fallback legacy codé dans le case ci-dessus.
+  if [ -f "${SETTINGS_STORAGE}/conf/${APPSELECTED}.dns" ]; then
+    local _sd
+    while IFS= read -r _sd; do
+      [ -n "$_sd" ] && EXTRA_SUBDOMAINS+=("$_sd")
+    done < "${SETTINGS_STORAGE}/conf/${APPSELECTED}.dns"
+    rm -f "${SETTINGS_STORAGE}/conf/${APPSELECTED}.dns"
   fi
 
-  if docker ps -a | grep -q memcached-$APPSELECTED; then
-    docker rm -f memcached-$APPSELECTED >/dev/null 2>&1
-  fi
-
-  checking_errors $?
-
-  ansible-playbook -e pgrole="${APPSELECTED}" -e extra_subdomain="${EXTRA_SUBDOMAIN}" "${SETTINGS_SOURCE}/includes/config/playbooks/remove_cf_record.yml"
-  docker system prune -af >/dev/null 2>&1
+  # DNS : sous-domaine principal + sous-domaines supplémentaires de l'app
+  # (ex. nextcloud -> collabora/office, sftorznab -> meili). La liste est
+  # transmise en JSON pour gérer plusieurs sous-domaines.
+  local extra_json
+  extra_json=$(json_array_from_lines "${EXTRA_SUBDOMAINS[@]+"${EXTRA_SUBDOMAINS[@]}"}")
+  ansible-playbook \
+    -e "{\"pgrole\": \"${APPSELECTED}\", \"extra_subdomains\": ${extra_json}}" \
+    "${SETTINGS_SOURCE}/includes/config/playbooks/remove_cf_record.yml"
 
   echo""
   echo -e "${BLUE}### $APPSELECTED" $(gettext "a été supprimée") "###${NC}"
@@ -851,18 +882,19 @@ function pause() {
 }
 
 select_seedbox_param() {
-  if [ ! -f ${SETTINGS_SOURCE}/ssddb ]; then
+  if [ ! -f "${SETTINGS_SOURCE}/ssddb" ]; then
     # le fichier de base de données n'est pas là
     # on sort avant de faire une requête, sinon il va se créer
     # et les tests ne seront pas bons
+    echo 0
     return 0
   fi
   request="select value from seedbox_params where param ='"${1}"'"
-  RETURN=$(sqlite3 ${SETTINGS_SOURCE}/ssddb "${request}")
+  RETURN=$(sqlite3 "${SETTINGS_SOURCE}/ssddb" "${request}")
   if [ $? != 0 ]; then
     echo 0
   else
-    echo $RETURN
+    echo "${RETURN}"
   fi
 }
 
@@ -879,28 +911,130 @@ function manage_account_yml() {
   # pour supprimer une clé, il faut que le value soit égale à un espace
   # ex : manage_account_yml sub.toto.toto toto => va créer la clé sub.toto.toto et lui mettre à la valeur toto
   # ex : manage_account_yml sub.toto.toto " " => va supprimer la clé sub.toto.toto et toutes les sous clés
-  if [ -f ${SETTINGS_STORAGE}/.account.lock ]; then
+  if [ -f "${SETTINGS_STORAGE}/.account.lock" ]; then
     echo $(gettext "Fichier account locké, impossible de continuer")
     echo "----------------------------------------------"
     echo $(gettext "Présence du fichier") "${SETTINGS_STORAGE}/.account.lock"
     exit 1
-  else
-    touch ${SETTINGS_STORAGE}/.account.lock
-    ansible-vault decrypt "${ANSIBLE_VARS}" >/dev/null 2>&1
-    if [ "${2}" = " " ]; then
-      ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/manage_account_yml.yml" -e "account_key=${1} account_value=${2}  state=absent"
-    else
-      ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/manage_account_yml.yml" -e "account_key=${1} account_value=${2} state=present"
-    fi
-    ansible-vault encrypt "${ANSIBLE_VARS}" >/dev/null 2>&1
-    rm -f ${SETTINGS_STORAGE}/.account.lock
   fi
+
+  touch "${SETTINGS_STORAGE}/.account.lock"
+
+  # Les valeurs (dont des secrets) sont écrites dans un fichier extra-vars
+  # temporaire en 0600 plutôt que passées en ligne de commande, où elles
+  # seraient visibles via `ps`.
+  local vars_file state rc
+  vars_file=$(mktemp "${TMPDIR:-/tmp}/ssd-account-XXXXXX.json")
+  chmod 600 "${vars_file}"
+
+  if [ "${2}" = " " ]; then
+    state=absent
+  else
+    state=present
+  fi
+
+  if ! SSD_ACCOUNT_KEY="${1}" SSD_ACCOUNT_VALUE="${2}" SSD_STATE="${state}" SSD_VARS_FILE="${vars_file}" \
+    python3 -c 'import json, os; json.dump({"account_key": os.environ["SSD_ACCOUNT_KEY"], "account_value": os.environ["SSD_ACCOUNT_VALUE"], "state": os.environ["SSD_STATE"]}, open(os.environ["SSD_VARS_FILE"], "w"))'; then
+    rm -f "${vars_file}" "${SETTINGS_STORAGE}/.account.lock"
+    return 1
+  fi
+
+  # Sous-shell + trap EXIT : le vault est toujours re-chiffré et le fichier
+  # temporaire supprimé, même en cas d'erreur ou d'interruption.
+  (
+    trap 'ansible-vault encrypt "${ANSIBLE_VARS}" >/dev/null 2>&1; rm -f "${vars_file}"' EXIT
+    ansible-vault decrypt "${ANSIBLE_VARS}" >/dev/null 2>&1
+    ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/manage_account_yml.yml" --extra-vars "@${vars_file}"
+    rc=$?
+    ansible-vault encrypt "${ANSIBLE_VARS}" >/dev/null 2>&1
+    exit ${rc}
+  )
+  rc=$?
+
+  rm -f "${vars_file}"
+  rm -f "${SETTINGS_STORAGE}/.account.lock"
+  # Invalide le cache de session pour forcer un rechargement cohérent.
+  [ ${rc} -eq 0 ] && rm -f "${SETTINGS_STORAGE}/.account.cache.json"
+
+  return ${rc}
+}
+
+# Cache de session des variables account.yml (déchiffré une seule fois par run
+# au lieu d'un ansible-playbook par lecture). Fichier 0600, supprimé en sortie.
+function account_cache_file() {
+  echo "${SETTINGS_STORAGE}/.account.cache.json"
+}
+
+function account_cache_build() {
+  local cache
+  cache=$(account_cache_file)
+  rm -f "${cache}"
+  ansible-vault view "${ANSIBLE_VARS}" 2>/dev/null \
+    | python3 -c 'import sys, json, yaml; json.dump(yaml.safe_load(sys.stdin) or {}, sys.stdout)' \
+    > "${cache}" 2>/dev/null
+  chmod 600 "${cache}" 2>/dev/null
+  [ -s "${cache}" ]
+}
+
+function account_cache_ensure() {
+  local cache
+  cache=$(account_cache_file)
+  if [ ! -s "${cache}" ] || [ "${cache}" -ot "${ANSIBLE_VARS}" ]; then
+    account_cache_build
+  fi
+  [ -s "${cache}" ]
+}
+
+function account_cache_get() {
+  local cache
+  cache=$(account_cache_file)
+  ACCOUNT_CACHE_FILE="${cache}" SSD_KEY="$1" python3 -c '
+import json, os
+key = os.environ["SSD_KEY"]
+try:
+    with open(os.environ["ACCOUNT_CACHE_FILE"]) as fh:
+        data = json.load(fh)
+except Exception:
+    print("")
+    raise SystemExit(0)
+for part in key.split("."):
+    if isinstance(data, dict) and part in data:
+        data = data[part]
+    else:
+        data = None
+        break
+if data is None:
+    print("")
+elif isinstance(data, str):
+    print(data)
+else:
+    print(json.dumps(data))
+' 2>/dev/null
 }
 
 function get_from_account_yml() {
+  local tmpfile tempresult
   tmpfile=$(mktemp)
-  tempresult=$(ansible-playbook ${SETTINGS_SOURCE}/includes/config/playbooks/get_var.yml \
-    -e myvar=$1 -e tempfile=${tmpfile} | grep "##RESULT##" | awk -F'##RESULT##' '{print $2}' | xargs)
+
+  if account_cache_ensure; then
+    tempresult=$(account_cache_get "$1")
+    rm -f "$tmpfile"
+    if [ -z "$tempresult" ]; then
+      tempresult=notfound
+    fi
+    echo "$tempresult"
+    return 0
+  fi
+
+  # Repli : lecture via playbook (si le cache ne peut pas être construit)
+  ansible-playbook "${SETTINGS_SOURCE}/includes/config/playbooks/get_var.yml" \
+    -e "myvar=${1}" -e "tempfile=${tmpfile}" >/dev/null 2>&1
+
+  if [ -s "$tmpfile" ]; then
+    tempresult=$(cat "$tmpfile")
+  else
+    tempresult=""
+  fi
   rm -f "$tmpfile"
 
   if [ -z "$tempresult" ]; then
@@ -984,6 +1118,11 @@ EOF
   command_warnings = False
   callback_whitelist = profile_tasks
   deprecation_warnings=False
+  # Les tâches peuvent passer leurs arguments complets en template
+  # (docker_container: "{{ docker_info }}"). On désactive l'injection des facts
+  # comme variables pour supprimer l'avertissement args-template et le risque
+  # d'écrasement : aucun playbook SSDV2 ne dépend de facts non préfixés.
+  inject_facts_as_vars = False
   inventory = ~/.ansible/inventories/local
   interpreter_python=${SETTINGS_SOURCE}/venv/bin/python
   vault_password_file = ~/.vault_pass
@@ -1008,7 +1147,7 @@ EOF
   ##################################################
   # Account.yml
   sudo mkdir "${SETTINGS_SOURCE}/logs" > /dev/null 2>&1
-  sudo chown -R ${user}: "${SETTINGS_SOURCE}/logs"
+  sudo chown -R "${USER}:" "${SETTINGS_SOURCE}/logs"
   sudo chmod 755 "${SETTINGS_SOURCE}/logs"
 
   create_dir "${SETTINGS_STORAGE}"
@@ -1093,7 +1232,18 @@ function check_docker_group() {
 
 function stocke_public_ip() {
   echo $(gettext "Stockage des adresses ip publiques")
-  IPV4=$(curl -s -4 https://ip4.mn83.fr)
+  IPV4=""
+  for source in "https://ip4.mn83.fr" "https://ifconfig.me" "https://api.ipify.org"; do
+    candidate=$(curl -s --max-time 10 -4 "$source" 2>/dev/null | tr -d '[:space:]')
+    if [[ "$candidate" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
+      IPV4="$candidate"
+      break
+    fi
+  done
+  if [ -z "$IPV4" ]; then
+    echo $(gettext "Impossible de récupérer une adresse IPv4 valide, conservation de la valeur existante")
+    return 0
+  fi
   echo "IPV4 = ${IPV4}"
   manage_account_yml network.ipv4 ${IPV4}
   #IPV6=$(dig @resolver1.ipv6-sandbox.opendns.com AAAA myip.opendns.com +short -6)
@@ -1139,7 +1289,7 @@ function affiche_menu_db() {
   request="select * from menu where parent_id ${start_menu} ORDER BY ordre"
   sqlite3 "${SETTINGS_SOURCE}/menu" "${request}" | while read -a db_select; do
     IFS='|'
-    read -ra db_select2 <<<"$db_select"
+    read -ra db_select2 <<<"${db_select[0]}"
     echo -e "${CGREEN}""   ${db_select2[3]})" "$(gettext "${db_select2[1]}")" "${CEND}"
     IFS=$'\n'
   done
@@ -1210,21 +1360,25 @@ function sauve_symlinks() {
   echo -e "${CRED}----------------------------------------${CEND}"
   echo -e "${CCYAN}"$(gettext "Sauvegarde des Symlinks")"${CEND}"
   echo -e "${CRED}----------------------------------------${CEND}"
-  ls -1 /home/${USER}/Medias | xargs -I {} sh -c 'if [ -d "/home/${USER}/Medias/{}" ]; then echo {}; fi' | cat -n | sed 's/[ ]\+/ /g' | tr "\t" " " > temp
+  local tempfile
+  tempfile=$(mktemp)
+  for _dir in /home/${USER}/Medias/*/; do
+    [ -d "$_dir" ] && printf '%s\n' "$(basename "$_dir")"
+  done | cat -n | sed 's/[ ]\+/ /g' | tr "\t" " " > "$tempfile"
 
   # nombre total de lignes dans le fichier temp
-  total_lines=$(wc -l < temp)
+  total_lines=$(wc -l < "$tempfile")
 
   # Ajoutez 1 au nombre total de lignes pour obtenir le numéro suivant
   next_line_number=$((total_lines + 1))
 
   # Incrémentez le numéro de ligne avant d'ajouter "Medias" au fichier temporaire
-  echo " $next_line_number Medias" >> temp
+  echo " $next_line_number Medias" >> "$tempfile"
 
-  while read LIGNE
-  do 
+  while read -r LIGNE
+  do
     echo -e "${BLUE}  "$LIGNE"${CEND}"
-  done < temp
+  done < "$tempfile"
 
   echo -e "${CGREEN}---------------------------------------${CEND}"
   echo -e "${CGREEN}  "$(gettext "H) Retour au menu principal")"${CEND}"
@@ -1232,15 +1386,15 @@ function sauve_symlinks() {
   echo -e "${CGREEN}---------------------------------------${CEND}"
   echo ""
   echo >&2 -n -e "${CGREEN}"$(gettext "Votre choix :") "${CEND}"
-  read DOSSIER
-  if [ $DOSSIER == h ] || [ $DOSSIER == H ]; then
+  read -r DOSSIER
+  if [ "$DOSSIER" == h ] || [ "$DOSSIER" == H ]; then
     affiche_menu_db
-  elif [ $DOSSIER == q ] || [ $DOSSIER == Q ]; then
+  elif [ "$DOSSIER" == q ] || [ "$DOSSIER" == Q ]; then
     exit 1
   fi
-  APPLI=$(grep $DOSSIER temp | cut -d ' ' -f3)
-  
-  rm temp
+  APPLI=$(grep -- "$DOSSIER" "$tempfile" | cut -d ' ' -f3)
+
+  rm -f "$tempfile"
   sauve_one_appli $APPLI
 }
 
@@ -1283,7 +1437,7 @@ function sauve_one_appli() {
   fi
 
   REMOTE=$(get_from_account_yml rclone.remote)
-  if [ ${REMOTE} == notfound ]; then
+  if [[ "${REMOTE}" == notfound ]]; then
     RCLONE=$(grep -B 1 "type" "/home/${USER}/.config/rclone/rclone.conf" | grep -oP '^\[\K[^]]+' | grep -v "zurg" | cat -n | tr "\t" " ")
     if [ -n "$RCLONE" ]; then
       echo ""
@@ -1311,8 +1465,8 @@ function sauve_one_appli() {
 
   NB_MAX_BACKUP=3
   ALL_RETENTION=0
-  if [ $# == 2 ]; then
-    if [ "$2" == 0 ]; then
+  if [[ $# -eq 2 ]]; then
+    if [[ "$2" == 0 ]]; then
       ALL_RETENTION=1
     else
       NB_MAX_BACKUP=$2
@@ -1345,25 +1499,25 @@ function sauve_one_appli() {
   sleep 5
   fi
 
-  if [ ${REMOTE} != notfound ]; then
+  if [[ "${REMOTE}" != notfound ]]; then
     echo -e "${CCYAN}>" $(gettext "Envoie Archive vers Google Drive")"${CEND}"
     # Envoie Archive vers Google Drive
     rclone copy "$BACKUP_FOLDER" "$REMOTE:/$remote_backups/$APPLI" --progress
   fi
 
   # Nombre de sauvegardes effectuées
-  nbBackup=$(find $BACKUP_PARTITION -type f -name $APPLI-* | wc -l)
+  nbBackup=$(find $BACKUP_PARTITION -type f -name "$APPLI-*" | wc -l)
   if [ $ALL_RETENTION -eq 0 ]; then
     if [[ "$nbBackup" -gt "$NB_MAX_BACKUP" ]]; then
 
       # Archive la plus ancienne
-      oldestBackupPath=$(find $BACKUP_PARTITION/$APPLI -type f -name $APPLI-* -printf '%T+ %p\n' | sort | head -n 1 | awk '{print $2}')
-      oldestBackupFile=$(find $BACKUP_PARTITION/$APPLI -type f -name $APPLI-* -printf '%T+ %p\n' | sort | head -n 1 | awk '{split($0,a,/\//); print a[6]}')
+      oldestBackupPath=$(find $BACKUP_PARTITION/$APPLI -type f -name "$APPLI-*" -printf '%T+ %p\n' | sort | head -n 1 | awk '{print $2}')
+      oldestBackupFile=$(find $BACKUP_PARTITION/$APPLI -type f -name "$APPLI-*" -printf '%T+ %p\n' | sort | head -n 1 | awk '{split($0,a,/\//); print a[6]}')
 
       # Suppression du backup local
       sudo rm "$oldestBackupPath"
 
-      if [ ${REMOTE} != notfound ]; then
+      if [[ "${REMOTE}" != notfound ]]; then
         # Suppression Archive Google Drive
         echo -e "${CCYAN}>" $(gettext "Suppression de l'archive la plus ancienne")"${CEND}"
         rclone delete "$REMOTE:/$remote_backups/$APPLI/$oldestBackupFile" --progress
@@ -1383,9 +1537,9 @@ function change_password() {
   echo $(gettext "Cette procédure va redémarrer traefik")
   echo $(gettext "Pendant cette opération, les interfaces web seront inaccessibles")
   echo >&2 -n -e "${BWHITE}"$(gettext "Saisissez le nouveau password :") "${CEND}"
-  read NEWPASS
+  read -r NEWPASS
   manage_account_yml user.pass "${NEWPASS}"
-  manage_account_yml user.htpwd $(htpasswd -nb ${USER} ${NEWPASS})
+  manage_account_yml user.htpwd "$(htpasswd -nb "${USER}" "${NEWPASS}")"
   docker rm -f traefik
   launch_service traefik
 }
@@ -1433,7 +1587,10 @@ EOF
 function apply_patches() {
   touch "${HOME}/.config/ssd/patches"
 
-  for patch in $(ls ${SETTINGS_SOURCE}/patches); do
+  shopt -s nullglob
+  local patch_path patch
+  for patch_path in "${SETTINGS_SOURCE}"/patches/*; do
+    patch=$(basename "$patch_path")
     # Si on a demandé un patch spécifique
     if [ -n "$FORCE_PATCH" ] && [ "$FORCE_PATCH" != "1" ] && [ "$patch" != "$FORCE_PATCH" ]; then
       continue
@@ -1454,6 +1611,7 @@ function apply_patches() {
       echo "${patch}" >>"${HOME}/.config/ssd/patches"
     fi
   done
+  shopt -u nullglob
 }
 
 function create_folders() {
@@ -1466,13 +1624,13 @@ function create_folders() {
   create_dir "${HOME}/Medias"
   echo -e "\e[36m"$(gettext "Noms de dossiers à créer dans Medias ex: Films, Series, Films d'animation etc .. [Enter] | Taper stop une fois terminé")"\e[0m"		
   while :
-  do		
-    read -p "" EXCLUDEPATH
-    mkdir -p ${HOME}/Medias/$EXCLUDEPATH
+  do
+    read -rp "" EXCLUDEPATH
     if [[ "$EXCLUDEPATH" = "STOP" ]] || [[ "$EXCLUDEPATH" = "stop" ]]; then
-      rm -rf ${HOME}/Medias/$EXCLUDEPATH
       break
     fi
+    [ -z "$EXCLUDEPATH" ] && continue
+    mkdir -p "${HOME}/Medias/${EXCLUDEPATH}"
   done
 }
 
@@ -1495,7 +1653,7 @@ function liste_perso() {
   echo ""
 
   folder_path="${SETTINGS_STORAGE}/vars"
-  files=$(ls -p "$folder_path" | grep -v /)
+  files=$(find "$folder_path" -maxdepth 1 -type f -printf '%f\n' 2>/dev/null | sort)
   echo -e "\e[32m"$(gettext "Applications Personnalisées : ")"\e[0m"
   if [ -n "$files" ]; then
     echo -e "\e[36m$files\e[0m"

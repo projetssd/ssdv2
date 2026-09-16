@@ -16,6 +16,8 @@
 
 - name: Redémarrer le conteneur decypharrseed
   community.docker.docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: "decypharrseed"
     state: started
     restart: yes

@@ -137,6 +137,7 @@
       - name: traefik_proxy
 
     labels:
+      ssdv2.app: "{{pgrole}}"
       traefik.enable: "true"
       traefik.http.routers.ssd-frontend-rtr.entrypoints: "https"
       traefik.http.routers.ssd-frontend-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
@@ -182,6 +183,7 @@
       - name: traefik_proxy
 
     labels:
+      ssdv2.app: "{{pgrole}}"
       traefik.enable: "true"
 
       traefik.http.routers.saison-frontend-rtr.entrypoints: "https"
@@ -324,6 +326,7 @@
       - name: traefik_proxy
 
     labels:
+      ssdv2.app: "{{pgrole}}"
       traefik.enable: "true"
       traefik.http.routers.ssd-backend-rtr.entrypoints: "https"
       traefik.http.routers.ssd-backend-rtr.rule: '(Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`) && PathPrefix(`/api/v1`))'

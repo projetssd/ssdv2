@@ -6,6 +6,8 @@
 
 - name: Deploy redis container for yamtrack
   docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: yamtrack-redis
     image: redis:8-alpine
     volumes:

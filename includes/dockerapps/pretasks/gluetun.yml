@@ -1,6 +1,8 @@
 ---
 - name: gluetun
   docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     image: ghcr.io/qdm12/gluetun
     name: gluetun
     capabilities:

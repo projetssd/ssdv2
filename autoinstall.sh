@@ -33,6 +33,11 @@ DOCKER_RUNTIME_STAMP="${STATE_DIR}/docker-runtime.ok"
 export SETTINGS_SOURCE
 export SETTINGS_STORAGE
 
+# Le cache de session des variables account.yml contient des secrets
+# dechiffres : il est systematiquement supprime en sortie, et purge au demarrage.
+trap 'rm -f "${SETTINGS_STORAGE}/.account.cache.json"' EXIT
+rm -f "${SETTINGS_STORAGE}/.account.cache.json" >/dev/null 2>&1
+
 log() {
 	echo "[install.sh] $*"
 }
@@ -185,6 +190,9 @@ EOF
 [defaults]
 command_warnings = False
 deprecation_warnings = False
+# Supprime l'avertissement "args template" (docker_container: "{{ docker_info }}")
+# et le risque d'écrasement par des facts : aucune dépendance à des facts non préfixés.
+inject_facts_as_vars = False
 inventory = ${CURRENT_HOME}/.ansible/inventories/local
 interpreter_python = ${SETTINGS_SOURCE}/venv/bin/python
 vault_password_file = ${CURRENT_HOME}/.vault_pass

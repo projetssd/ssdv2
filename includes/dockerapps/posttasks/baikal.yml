@@ -1,6 +1,8 @@
 ---
 - name: 'Stop {{ pgrole }}'
   docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: '{{ pgrole }}'
     state: stopped
 - name: Creating paths

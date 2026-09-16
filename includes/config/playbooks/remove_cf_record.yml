@@ -11,8 +11,9 @@
       subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
     when: cloudflare_enabled
 
-  - name: "Remove extra DNS Record on CloudFlare"
+  - name: "Remove extra DNS Records on CloudFlare"
     include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/uninstall.yml"
     vars:
-      subdomain: "{{ extra_subdomain }}"
-    when: cloudflare_enabled and (extra_subdomain | default('') | length > 0)
+      subdomain: "{{ item }}"
+    loop: "{{ extra_subdomains | default([]) }}"
+    when: cloudflare_enabled and (item | default('') | length > 0)

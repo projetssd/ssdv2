@@ -14,9 +14,9 @@ if [[ ! -d "${SETTINGS_STORAGE}/docker/geerlingguy.security" ]]; then
 	echo -e "\n${CCYAN} /!\ Par mesure de sécurité il est fortement consseillé de changer le port ssh /!\ ${CEND}"
 	echo ""
 	cp "${SETTINGS_SOURCE}/includes/dockerapps/templates/ssh/defaults/main.yml.j2" "${SETTINGS_STORAGE}/docker/geerlingguy.security/defaults/main.yml"
-	ansible-playbook ${SETTINGS_STORAGE}/docker/geerlingguy.security/main.yml
+	ansible-playbook ${SETTINGS_STORAGE}/docker/geerlingguy.security/main.yml; rc=$?
 	echo ""
-	checking_errors $?
+	checking_errors $rc
 	echo ""
 
 else
@@ -27,9 +27,9 @@ else
 	echo ""
 	mkdir -p ${SETTINGS_STORAGE}/docker/geerlingguy.security/defaults
 	cp "${SETTINGS_SOURCE}/includes/dockerapps/templates/ssh/defaults/main.yml.j2" "${SETTINGS_STORAGE}/docker/geerlingguy.security/defaults/main.yml"
-	ansible-playbook ${SETTINGS_STORAGE}/docker/geerlingguy.security/main.yml
+	ansible-playbook ${SETTINGS_STORAGE}/docker/geerlingguy.security/main.yml; rc=$?
 	echo ""
-	checking_errors $?
+	checking_errors $rc
 	echo ""
 fi
 

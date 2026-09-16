@@ -7,6 +7,8 @@
 
 - name: Create espocrm-daemon
   docker_container:
+    labels:
+      ssdv2.app: "{{pgrole}}"
     name: espocrm-daemon
     image: espocrm/espocrm
     volumes:
@@ -29,6 +31,7 @@
       - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/espocrm:/var/www/html"
     entrypoint: docker-websocket.sh
     labels:
+      ssdv2.app: "{{pgrole}}"
       traefik.enable: "true"
       traefik.http.routers.espocrm-ws.rule: "Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`) && PathPrefix(`/ws`)"
       traefik.http.routers.espocrm-ws.entrypoints: "https"
