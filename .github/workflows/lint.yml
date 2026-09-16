@@ -30,6 +30,8 @@ jobs:
           python-version: '3.x'
       - name: Validation du catalogue
         run: python3 includes/config/scripts/validate_catalogue.py
+      - name: Validation des facts Ansible (inject_facts_as_vars=False)
+        run: python3 includes/config/scripts/validate_ansible_facts.py
 
   python:
     runs-on: ubuntu-latest

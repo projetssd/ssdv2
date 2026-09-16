@@ -26,11 +26,11 @@
     - name: 'recuperation port ssh'
       debug:
         msg:
-          - "{{ ansible_env['SSH_CLIENT'].split() | last }}"
+          - "{{ ansible_facts['env']['SSH_CLIENT'].split() | last }}"
     - name: 'recuperation ip connection'
       debug:
         msg:
-          - "{{ ansible_env['SSH_CLIENT'].split() | first }}"
+          - "{{ ansible_facts['env']['SSH_CLIENT'].split() | first }}"
 
     - name: Enable ufw
       become: yes
@@ -40,12 +40,12 @@
       become: yes
       ufw:
         rule: allow
-        port: "{{ ansible_env['SSH_CLIENT'].split() | last }}"
+        port: "{{ ansible_facts['env']['SSH_CLIENT'].split() | last }}"
     - name: Open Current IP
       become: yes
       ufw:
         rule: allow
-        from_ip: "{{ ansible_env['SSH_CLIENT'].split() | first }}"
+        from_ip: "{{ ansible_facts['env']['SSH_CLIENT'].split() | first }}"
     - name: Open for authorized IPs
       become: yes
       ufw:
