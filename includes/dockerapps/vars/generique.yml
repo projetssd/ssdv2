@@ -170,19 +170,30 @@
     
     # POST TASKS ###################################################################
 
-    - name: Check that posttasks file exists
-      stat:
-        path: "{{ settings.source }}/includes/dockerapps/posttasks/{{ pgrole }}.yml"
-      register: stat_result_post
-      
-    - name: Launch Posttask
-      include_tasks: "{{ settings.source }}/includes/dockerapps/posttasks/{{ pgrole }}.yml"
-      when: stat_result_post.stat.exists
+    # Une posttask en échec ne doit pas empêcher l'enregistrement de l'app
+    # (registre + SQLite), sinon l'application reste partiellement installée et
+    # ne peut pas être gérée/supprimée proprement.
+    - name: Exécuter les posttasks
+      block:
+        - name: Check that posttasks file exists
+          stat:
+            path: "{{ settings.source }}/includes/dockerapps/posttasks/{{ pgrole }}.yml"
+          register: stat_result_post
 
-    - name: Launch Posttask from yml
-      include_tasks: "{{ settings.source }}/includes/dockerapps/posttasks/{{ item }}.yml"
-      with_items: "{{ posttasks }}"
-      when: posttasks is defined
+        - name: Launch Posttask
+          include_tasks: "{{ settings.source }}/includes/dockerapps/posttasks/{{ pgrole }}.yml"
+          when: stat_result_post.stat.exists
+
+        - name: Launch Posttask from yml
+          include_tasks: "{{ settings.source }}/includes/dockerapps/posttasks/{{ item }}.yml"
+          with_items: "{{ posttasks }}"
+          when: posttasks is defined
+      rescue:
+        - name: Avertissement (posttask en échec)
+          debug:
+            msg:
+              - "Une posttask de {{ pgrole }} a échoué : l'application est enregistrée"
+              - "mais peut nécessiter une réparation (réinstallation)."
 
     # REGISTRE CONTENEURS / VOLUMES ###############################################
     # Mémorise les conteneurs et volumes créés pour l'app (compagnons inclus)

@@ -1191,13 +1191,16 @@ function check_docker_group() {
 
 function stocke_public_ip() {
   echo $(gettext "Stockage des adresses ip publiques")
-  IPV4=$(curl -s --max-time 10 -4 https://ip4.mn83.fr)
+  IPV4=""
+  for source in "https://ip4.mn83.fr" "https://ifconfig.me" "https://api.ipify.org"; do
+    candidate=$(curl -s --max-time 10 -4 "$source" 2>/dev/null | tr -d '[:space:]')
+    if [[ "$candidate" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
+      IPV4="$candidate"
+      break
+    fi
+  done
   if [ -z "$IPV4" ]; then
-    echo $(gettext "Récupération de l'IP publique via le service principal impossible, essai alternatif")
-    IPV4=$(curl -s --max-time 10 -4 https://ifconfig.me 2>/dev/null)
-  fi
-  if [ -z "$IPV4" ]; then
-    echo $(gettext "Impossible de récupérer l'adresse IP publique, conservation de la valeur existante")
+    echo $(gettext "Impossible de récupérer une adresse IPv4 valide, conservation de la valeur existante")
     return 0
   fi
   echo "IPV4 = ${IPV4}"
