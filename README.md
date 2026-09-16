@@ -5,6 +5,10 @@
 
 [![Discord: https://discord.gg/ZhWvKVmTuh](https://img.shields.io/badge/Discord-gray.svg?style=for-the-badge)](https://discordapp.com/invite/ZhWvKVmTuh)
 
+## Mécanismes internes
+
+- [Label `ssdv2.app`, registres conteneurs/volumes/DNS, cache `account.yml` et notes de sécurité](docs/mecanismes.md)
+
 ## JetBrains
 merci à  [<img src="/images/jetbrains-training-partner.svg" alt="JetBrains" width="32"> JetBrains](http://www.jetbrains.com/) pour les licences open source qui nous permettent de travailler sur ce projet.
 

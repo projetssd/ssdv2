@@ -1,3 +1,17 @@
+16/09/2026
+
+- ajout du label ssdv2.app sur le conteneur principal et les compagnons
+- registres par application : <app>.containers / .volumes / .dns
+- suppression unifiée (label + registres + conventions + fallback)
+- cache account.yml par session (déchiffrement unique, fichier 0600)
+- patch de backfill des registres pour les installations existantes
+- corrections : fuite DNS (nextcloud/pterodactyl/sftorznab), volumes anonymes,
+  séparation des entrées de registre, secrets hors ligne de commande,
+  injection shell Python, catalogue (entrées mortes, casse), vnstat/prestashop
+- robustesse : posttask en échec n'empêche plus l'enregistrement de l'app
+- CI : shellcheck, catalogue, bats, py_compile, syntax-check, YAML
+- documentation : docs/mecanismes.md (dont notes sécurité SEC-01/SEC-02)
+
 30/12/2020
 
 - passage à python3 pour Ansible
