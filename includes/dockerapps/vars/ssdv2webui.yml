@@ -1,0 +1,38 @@
+---
+# SSDV2 WebUI — application SSDV2 standard (ADR-0020 côté WebUI).
+# Image publique multiarch, sans dépendance aux chemins de développement :
+# CLI Docker et ssdv2ctl sont embarqués dans l'image, PUID/PGID/TZ suivent les
+# conventions linuxserver, les données vivent sous {{ settings.storage }}.
+# Le compte admin est créé par l'assistant de premier démarrage (/setup) : aucun
+# secret n'est stocké dans les variables de l'application.
+pgrole: 'ssdv2webui'
+intport: '8000'
+image: 'ghcr.io/kesurof/ssdv2-webui:latest'
+
+pg_volumes:
+  - '/var/run/docker.sock:/var/run/docker.sock'
+  - '/etc/localtime:/etc/localtime:ro'
+  # Métriques hôte (page Santé) : lecture seule, sans namespace hôte.
+  - '/proc/stat:/host/proc/stat:ro'
+  - '/proc/meminfo:/host/proc/meminfo:ro'
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/data"
+  - "{{ settings.source }}:{{ settings.source }}"
+  - "{{ settings.storage }}:{{ settings.storage }}"
+  - "/home/{{ lookup('env','USER') }}/.config/ssd/env:/home/{{ lookup('env','USER') }}/.config/ssd/env:ro"
+  - "/home/{{ lookup('env','USER') }}/.vault_pass:/home/{{ lookup('env','USER') }}/.vault_pass:ro"
+  - "/home/{{ lookup('env','USER') }}/.ansible/inventories:/home/{{ lookup('env','USER') }}/.ansible/inventories"
+  - "/home/{{ lookup('env','USER') }}/backup:/home/{{ lookup('env','USER') }}/backup"
+
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  DOCKER_GID: "{{ lookup('pipe','getent group docker | cut -d: -f3') }}"
+  HOME: "/home/{{ lookup('env','USER') }}"
+  TZ: "Europe/Paris"
+  SSDV2_SOURCE: "{{ settings.source }}"
+  SSDV2_STORAGE: "{{ settings.storage }}"
+  BACKUP_DIR: "/home/{{ lookup('env','USER') }}/backup"
+  ANSIBLE_INVENTORY: "/home/{{ lookup('env','USER') }}/.ansible/inventories/local"
+  ANSIBLE_VAULT_PASSWORD_FILE: "/home/{{ lookup('env','USER') }}/.vault_pass"
+  WEBUI_DATA: "/data"
+  COOKIE_SECURE: "true"

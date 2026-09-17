@@ -1,0 +1,97 @@
+---
+# Le conteneur opère l'hôte : il monte le socket Docker, la source/le stockage
+# SSDV2, le coffre Ansible, l'inventaire et les sauvegardes. Sur une installation
+# vierge ces chemins peuvent ne pas encore exister ; Docker créerait alors des
+# dossiers à la place des fichiers attendus. En particulier includes/variables.sh
+# source ~/.config/ssd/env : sans ce fichier, chaque mutation ssdv2ctl tenterait
+# une saisie interactive (stdin fermé) puis échouerait.
+
+- name: Définir les chemins hôte de SSDV2 WebUI
+  ansible.builtin.set_fact:
+    ssdv2webui_home: "/home/{{ lookup('env','USER') }}"
+    ssdv2webui_uid: "{{ lookup('env','MYUID') }}"
+    ssdv2webui_gid: "{{ lookup('env','MYGID') }}"
+
+- name: Vérifier la présence du socket Docker
+  ansible.builtin.stat:
+    path: /var/run/docker.sock
+  register: ssdv2webui_docker_socket
+
+- name: Échouer si Docker est absent
+  ansible.builtin.fail:
+    msg: "/var/run/docker.sock introuvable : SSDV2 WebUI pilote Docker."
+  when: not ssdv2webui_docker_socket.stat.exists
+
+- name: Créer les dossiers hôte requis
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ ssdv2webui_uid }}"
+    group: "{{ ssdv2webui_gid }}"
+  loop:
+    - "{{ ssdv2webui_home }}/.config/ssd"
+    - "{{ ssdv2webui_home }}/.ansible/inventories"
+    - "{{ ssdv2webui_home }}/backup"
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data"
+
+# ~/.config/ssd/env : fichier shell sourcé par includes/variables.sh.
+- name: Vérifier ~/.config/ssd/env
+  ansible.builtin.stat:
+    path: "{{ ssdv2webui_home }}/.config/ssd/env"
+  register: ssdv2webui_env
+
+- name: Supprimer un dossier au chemin de ~/.config/ssd/env
+  become: true
+  ansible.builtin.file:
+    path: "{{ ssdv2webui_home }}/.config/ssd/env"
+    state: absent
+  when: ssdv2webui_env.stat.isdir | default(false)
+
+- name: Créer ~/.config/ssd/env si nécessaire
+  ansible.builtin.copy:
+    dest: "{{ ssdv2webui_home }}/.config/ssd/env"
+    content: |
+      SETTINGS_SOURCE={{ settings.source }}
+      SETTINGS_STORAGE={{ settings.storage }}
+    owner: "{{ ssdv2webui_uid }}"
+    group: "{{ ssdv2webui_gid }}"
+    mode: '0644'
+    force: false
+  when: not ssdv2webui_env.stat.exists or ssdv2webui_env.stat.isdir
+
+# ~/.vault_pass : nécessaire au déchiffrement d'account.yml côté conteneur.
+- name: Vérifier ~/.vault_pass
+  ansible.builtin.stat:
+    path: "{{ ssdv2webui_home }}/.vault_pass"
+  register: ssdv2webui_vault
+
+- name: Supprimer un dossier au chemin de ~/.vault_pass
+  become: true
+  ansible.builtin.file:
+    path: "{{ ssdv2webui_home }}/.vault_pass"
+    state: absent
+  when: ssdv2webui_vault.stat.isdir | default(false)
+
+- name: Générer ~/.vault_pass si absent (méthode SSDV2)
+  ansible.builtin.shell:
+    cmd: |
+      set -eu
+      umask 077
+      tr -dc 'A-Za-z0-9' </dev/urandom | head -c 25 > "{{ ssdv2webui_home }}/.vault_pass"
+      printf '\n' >> "{{ ssdv2webui_home }}/.vault_pass"
+      chmod 600 "{{ ssdv2webui_home }}/.vault_pass"
+    creates: "{{ ssdv2webui_home }}/.vault_pass"
+  no_log: true
+
+# Inventaire Ansible attendu par ANSIBLE_INVENTORY dans le conteneur.
+- name: Créer l'inventaire Ansible local si absent
+  ansible.builtin.copy:
+    dest: "{{ ssdv2webui_home }}/.ansible/inventories/local"
+    content: |
+      [local]
+      127.0.0.1 ansible_connection=local
+    owner: "{{ ssdv2webui_uid }}"
+    group: "{{ ssdv2webui_gid }}"
+    mode: '0644'
+    force: false
