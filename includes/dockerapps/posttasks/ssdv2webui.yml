@@ -1,0 +1,63 @@
+---
+# Instructions après installation : le compte administrateur est créé par
+# l'assistant /setup (ADR-0019). Le jeton est journalisé par l'application au
+# premier démarrage et reste disponible dans son volume de données jusqu'à la
+# création du compte (il est ensuite supprimé). Il est affiché ici pour éviter
+# d'avoir à consulter les journaux.
+
+- name: Définir l'URL et le dossier de données de la WebUI
+  ansible.builtin.set_fact:
+    ssdv2webui_url: "https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}"
+    ssdv2webui_data_dir: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data"
+
+- name: Attendre le jeton d'installation (premier démarrage)
+  ansible.builtin.wait_for:
+    path: "{{ ssdv2webui_data_dir }}/setup-token"
+    timeout: 60
+  register: ssdv2webui_token_wait
+  failed_when: false
+  changed_when: false
+
+- name: Lire le jeton d'installation
+  ansible.builtin.slurp:
+    src: "{{ ssdv2webui_data_dir }}/setup-token"
+  register: ssdv2webui_token_raw
+  failed_when: false
+  when: ssdv2webui_token_wait is succeeded
+
+- name: Définir le jeton d'installation
+  ansible.builtin.set_fact:
+    ssdv2webui_setup_token: "{{ ssdv2webui_token_raw.content | b64decode | trim }}"
+  when:
+    - ssdv2webui_token_wait is succeeded
+    - ssdv2webui_token_raw.content is defined
+
+- name: Afficher les instructions de premier démarrage
+  ansible.builtin.debug:
+    msg:
+      - "=================================================="
+      - "SSDV2 WEBUI - INSTALLATION TERMINEE"
+      - "=================================================="
+      - "URL : {{ ssdv2webui_url }}"
+      - "Authentification SSDV2 : {{ sub[pgrole].auth | default('aucune', true) }}"
+      - ""
+      - "Assistant /setup : création du compte administrateur"
+      - "  1. Ouvrez {{ ssdv2webui_url }}/setup"
+      - "  2. Jeton d'installation : {{ ssdv2webui_setup_token }}"
+      - "     (également dans les journaux : docker logs ssdv2webui 2>&1 | grep -i jeton)"
+      - "  3. Identifiant + mot de passe (>= 12 caractères), puis choix de"
+      - "     l'authentification interne."
+      - "=================================================="
+  when: ssdv2webui_setup_token is defined
+
+- name: Afficher les instructions (compte déjà initialisé)
+  ansible.builtin.debug:
+    msg:
+      - "=================================================="
+      - "SSDV2 WEBUI - INSTALLATION TERMINEE"
+      - "=================================================="
+      - "URL : {{ ssdv2webui_url }}"
+      - "Aucun jeton d'installation : un compte administrateur existe déjà"
+      - "(ou WEBUI_ADMIN_PASSWORD est fourni). Connectez-vous directement."
+      - "=================================================="
+  when: ssdv2webui_setup_token is not defined
