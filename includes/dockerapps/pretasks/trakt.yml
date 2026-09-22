@@ -6,14 +6,18 @@
 
 - name: Ask TRAKT_CLIENT_ID if missing
   pause:
-    prompt: "Please enter your TRAKT_CLIENT_ID"
+    prompt: |
+      SSDV2_PROMPT {"id": "trakt.client_id", "label": "Client ID Trakt", "kind": "text", "secret": false}
+      Please enter your TRAKT_CLIENT_ID
     echo: yes
   register: trakt_client_id_input
   when: not trakt_client_id_exists
 
 - name: Ask TRAKT_CLIENT_SECRET if missing
   pause:
-    prompt: "Please enter your TRAKT_CLIENT_SECRET"
+    prompt: |
+      SSDV2_PROMPT {"id": "trakt.client_secret", "label": "Client secret Trakt", "kind": "secret", "secret": true}
+      Please enter your TRAKT_CLIENT_SECRET
     echo: yes
   register: trakt_client_secret_input
   when: not trakt_client_secret_exists

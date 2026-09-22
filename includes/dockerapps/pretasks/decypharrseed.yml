@@ -1,10 +1,14 @@
 ---
 - pause:
-    prompt: "Choisir votre login"
+    prompt: |
+      SSDV2_PROMPT {"id": "decypharrseed.login", "label": "Login", "kind": "text", "secret": false}
+      Choisir votre login
     echo: yes
   register: login
 
 - pause:
-    prompt: "Choisir votre password"
+    prompt: |
+      SSDV2_PROMPT {"id": "decypharrseed.password", "label": "Mot de passe", "kind": "secret", "secret": true}
+      Choisir votre password
     echo: yes
   register: password
