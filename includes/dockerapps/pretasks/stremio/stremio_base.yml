@@ -1,14 +1,18 @@
 ---
 - name: Ask for TMDB_API_KEY
   pause:
-    prompt: "Entre ta clé TMDB_API_KEY"
+    prompt: |
+      SSDV2_PROMPT {"id": "stremio.tmdb_key", "label": "Clé TMDB", "kind": "secret", "secret": true}
+      Entre ta clé TMDB_API_KEY
     echo: false
   register: tmdb_api_key_prompt
   no_log: true
 
 - name: Ask for SECRET_API_KEY
   pause:
-    prompt: "Entre ta SECRET_API_KEY"
+    prompt: |
+      SSDV2_PROMPT {"id": "stremio.secret_key", "label": "Clé secrète", "kind": "secret", "secret": true}
+      Entre ta SECRET_API_KEY
     echo: false
   register: secret_api_key_prompt
   no_log: true

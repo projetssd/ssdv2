@@ -1,7 +1,9 @@
 ---
 - name: Ask for TMDB_API_KEY only if not provided
   pause:
-    prompt: "Entre ta clé TMDB_API_KEY"
+    prompt: |
+      SSDV2_PROMPT {"id": "streamfusion.tmdb_key", "label": "Clé TMDB", "kind": "secret", "secret": true}
+      Entre ta clé TMDB_API_KEY
     echo: false
   register: tmdb_api_key_prompt
   when: streamfusion_tmdb_api_key is not defined or (streamfusion_tmdb_api_key | string | trim) == ""
@@ -9,7 +11,9 @@
 
 - name: Ask for ADMIN_SECRET_KEY only if not provided
   pause:
-    prompt: "Entre ta ADMIN_KEY pour accéder à l'interface d'administration StreamFusion (minimum 32 caractères)"
+    prompt: |
+      SSDV2_PROMPT {"id": "streamfusion.admin_key", "label": "Clé ADMIN", "kind": "secret", "secret": true}
+      Entre ta ADMIN_KEY pour accéder à l'interface d'administration StreamFusion (minimum 32 caractères)
     echo: false
   register: admin_secret_key_prompt
   when: streamfusion_admin_secret_key is not defined or (streamfusion_admin_secret_key | string | trim) == ""

@@ -48,7 +48,9 @@
 
     - name: Prompt for AD_PSEUDO
       pause:
-        prompt: "Entrer le pseudo Alldebrid"
+        prompt: |
+          SSDV2_PROMPT {"id": "stremthru.alldebrid_pseudo", "label": "Pseudo Alldebrid", "kind": "text", "secret": false}
+          Entrer le pseudo Alldebrid
         echo: no
       register: ad_pseudo_input
 
@@ -58,7 +60,9 @@
 
     - name: Prompt for AD_PASSWORD
       pause:
-        prompt: "Entrer le password Alldebrid"
+        prompt: |
+          SSDV2_PROMPT {"id": "stremthru.alldebrid_password", "label": "Mot de passe Alldebrid", "kind": "secret", "secret": true}
+          Entrer le password Alldebrid
         echo: no
       register: ad_password_input
 
@@ -68,7 +72,9 @@
 
     - name: Prompt for AD_TOKEN
       pause:
-        prompt: "Entrer le token Alldebrid"
+        prompt: |
+          SSDV2_PROMPT {"id": "stremthru.alldebrid_token", "label": "Token Alldebrid", "kind": "secret", "secret": true}
+          Entrer le token Alldebrid
         echo: no
       register: ad_token_input
 

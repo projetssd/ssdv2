@@ -25,6 +25,7 @@
     - name: "Prompt user to create A record for {{ subdomain }} with IP {{ network.ipv4 }}"
       pause:
         prompt: |
+          SSDV2_PROMPT {"id": "dns.create_record", "label": "Créer l'enregistrement A", "kind": "confirm", "secret": false}
           Please create an A record for the subdomain "{{ subdomain }}.{{ user.domain }}"
           with the IP address "{{ network.ipv4 }}" in your DNS provider.
           Press Enter to continue once the record has been created.

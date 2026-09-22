@@ -6,11 +6,15 @@
   when: cloudflare_enabled
 
 - pause:
-    prompt: "Entrez une clé de votre choix pour la config des arrs"
+    prompt: |
+      SSDV2_PROMPT {"id": "seerrcatalog.arrs_key", "label": "Clé de configuration arrs", "kind": "secret", "secret": true}
+      Entrez une clé de votre choix pour la config des arrs
     echo: yes
   register: arrs_input
 
 - pause:
-    prompt: "Entrez votre clé TMDB"
+    prompt: |
+      SSDV2_PROMPT {"id": "seerrcatalog.tmdb_key", "label": "Clé TMDB", "kind": "secret", "secret": true}
+      Entrez votre clé TMDB
     echo: yes
   register: tmdb_input

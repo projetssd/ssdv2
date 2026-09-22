@@ -10,6 +10,13 @@
     ssdv2webui_url: "https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}"
     ssdv2webui_data_dir: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data"
 
+- name: Vérifier la présence du jeton d'installation
+  ansible.builtin.stat:
+    path: "{{ ssdv2webui_data_dir }}/setup-token"
+  register: ssdv2webui_token_file
+
+# Premier démarrage uniquement : on attend brièvement que l'application écrive
+# le jeton. En réinstallation (base existante), on n'attend pas.
 - name: Attendre le jeton d'installation (premier démarrage)
   ansible.builtin.wait_for:
     path: "{{ ssdv2webui_data_dir }}/setup-token"
@@ -17,19 +24,27 @@
   register: ssdv2webui_token_wait
   failed_when: false
   changed_when: false
+  when:
+    - not (ssdv2webui_existing_db.stat.exists | default(false))
+    - not ssdv2webui_token_file.stat.exists
+
+- name: Relire la présence du jeton
+  ansible.builtin.stat:
+    path: "{{ ssdv2webui_data_dir }}/setup-token"
+  register: ssdv2webui_token_final
 
 - name: Lire le jeton d'installation
   ansible.builtin.slurp:
     src: "{{ ssdv2webui_data_dir }}/setup-token"
   register: ssdv2webui_token_raw
   failed_when: false
-  when: ssdv2webui_token_wait is succeeded
+  when: ssdv2webui_token_final.stat.exists
 
 - name: Définir le jeton d'installation
   ansible.builtin.set_fact:
     ssdv2webui_setup_token: "{{ ssdv2webui_token_raw.content | b64decode | trim }}"
   when:
-    - ssdv2webui_token_wait is succeeded
+    - ssdv2webui_token_raw is not skipped
     - ssdv2webui_token_raw.content is defined
 
 - name: Afficher les instructions de premier démarrage

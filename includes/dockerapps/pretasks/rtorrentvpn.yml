@@ -1,12 +1,16 @@
 ---
 - pause:
-    prompt: "Serveur VPN utilisé ( openvpn ou wireguard uniquement )"
+    prompt: |
+      SSDV2_PROMPT {"id": "rtorrentvpn.vpn", "label": "Serveur VPN", "kind": "choice", "secret": false, "options": ["openvpn", "wireguard"]}
+      Serveur VPN utilisé ( openvpn ou wireguard uniquement )
     echo: yes
   register: vpn
 - set_fact:
     vpn: "{{ vpn.user_input }}"
 - pause:
-    prompt: "Port forwarded ouvert sur votr serveur vpn pour rtorrent (ex: 45000)"
+    prompt: |
+      SSDV2_PROMPT {"id": "rtorrentvpn.port", "label": "Port forwarded", "kind": "text", "secret": false}
+      Port forwarded ouvert sur votr serveur vpn pour rtorrent (ex: 45000)
     echo: yes
   register: portforwarded
 - set_fact:

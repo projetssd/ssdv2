@@ -6,4 +6,6 @@
 
 - name: Prendre connaissance du message ci dessus
   pause:
-    prompt: "Prendre connaissance du message ci dessus, puis faire entrée"
+    prompt: |
+      SSDV2_PROMPT {"id": "wireguard.ack", "label": "Continuer", "kind": "confirm", "secret": false}
+      Prendre connaissance du message ci dessus, puis faire entrée
