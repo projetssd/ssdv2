@@ -35,6 +35,13 @@
     - "{{ ssdv2webui_home }}/backup"
     - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data"
 
+# Réinstallation : si la base existe déjà, le compte a été initialisé et le
+# jeton de premier démarrage ne sera pas régénéré.
+- name: Vérifier si l'instance WebUI a déjà démarré
+  ansible.builtin.stat:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data/webui.sqlite3"
+  register: ssdv2webui_existing_db
+
 # ~/.config/ssd/env : fichier shell sourcé par includes/variables.sh.
 - name: Vérifier ~/.config/ssd/env
   ansible.builtin.stat:

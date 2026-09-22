@@ -9,7 +9,9 @@
     group: "{{ lookup('env','MYGID') }}"
 
 - pause:
-    prompt: "Activer un mot de passe pour Dozzle ? (o/N)"
+    prompt: |
+      SSDV2_PROMPT {"id": "dozzle.enable_auth", "label": "Activer un mot de passe pour Dozzle ?", "kind": "confirm", "secret": false}
+      Activer un mot de passe pour Dozzle ? (o/N)
     echo: yes
   register: dozzle_auth_input
 
@@ -19,12 +21,16 @@
 
 - block:
     - pause:
-        prompt: "Nom d'utilisateur pour Dozzle"
+        prompt: |
+          SSDV2_PROMPT {"id": "dozzle.username", "label": "Nom d'utilisateur pour Dozzle", "kind": "text", "secret": false}
+          Nom d'utilisateur pour Dozzle
         echo: yes
       register: dozzle_user_input
 
     - pause:
-        prompt: "Mot de passe pour Dozzle"
+        prompt: |
+          SSDV2_PROMPT {"id": "dozzle.password", "label": "Mot de passe pour Dozzle", "kind": "secret", "secret": true}
+          Mot de passe pour Dozzle
         echo: no
       register: dozzle_pass_input
 

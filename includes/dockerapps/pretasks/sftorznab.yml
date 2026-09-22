@@ -136,7 +136,9 @@
 
 - name: Demander la clé API AllDebrid si elle n'est pas fournie
   pause:
-    prompt: "Entre ta clé API AllDebrid (https://alldebrid.com/apikeys/)"
+    prompt: |
+      SSDV2_PROMPT {"id": "sftorznab.alldebrid_key", "label": "Clé API AllDebrid", "kind": "secret", "secret": true}
+      Entre ta clé API AllDebrid (https://alldebrid.com/apikeys/)
     echo: false
   register: sftorznab_alldebrid_api_key_prompt
   when:
@@ -181,7 +183,9 @@
 # accessibles par Prowlarr via sftorznab:8080 et sftorznab-meili:8080.
 - name: Demander s'il faut exposer les indexeurs Torznab via Traefik
   pause:
-    prompt: "Exposer les indexeurs Torznab (PostgreSQL + Meilisearch) via Traefik sur deux sous-domaines (accès public protégé par l'apikey) ? (o/n)"
+    prompt: |
+      SSDV2_PROMPT {"id": "sftorznab.expose_public", "label": "Exposer les indexeurs ?", "kind": "confirm", "secret": false}
+      Exposer les indexeurs Torznab (PostgreSQL + Meilisearch) via Traefik sur deux sous-domaines (accès public protégé par l'apikey) ? (o/n)
   register: sftorznab_expose_public_prompt
   when: sftorznab_expose_public is not defined
 

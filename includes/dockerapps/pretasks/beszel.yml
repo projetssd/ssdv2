@@ -9,12 +9,16 @@
     group: "{{ lookup('env','MYGID') }}"
 
 - pause:
-    prompt: "Adresse email de l'administrateur Beszel"
+    prompt: |
+      SSDV2_PROMPT {"id": "beszel.email", "label": "Email administrateur Beszel", "kind": "text", "secret": false}
+      Adresse email de l'administrateur Beszel
     echo: yes
   register: beszel_email_input
 
 - pause:
-    prompt: "Mot de passe de l'administrateur Beszel"
+    prompt: |
+      SSDV2_PROMPT {"id": "beszel.password", "label": "Mot de passe administrateur Beszel", "kind": "secret", "secret": true}
+      Mot de passe de l'administrateur Beszel
     echo: no
   register: beszel_password_input
 

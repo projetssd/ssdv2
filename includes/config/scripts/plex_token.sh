@@ -14,12 +14,14 @@ source "${SETTINGS_SOURCE}/includes/variables.sh"
 #########################################################################
 
 
+>&2 printf 'SSDV2_PROMPT %s\n' 'SSDV2_PROMPT {"id": "plex.login", "label": "Login Plex", "kind": "text", "secret": false}'
 >&2 echo -n $(gettext "Votre login Plex (e-mail or username) : ")
 read PLEX_LOGIN
 manage_account_yml plex.ident $PLEX_LOGIN
 
 
 
+>&2 printf 'SSDV2_PROMPT %s\n' 'SSDV2_PROMPT {"id": "plex.password", "label": "Mot de passe Plex", "kind": "secret", "secret": true}'
 >&2 echo -n $(gettext "Votre password Plex : ")
 read PLEX_PASSWORD
 manage_account_yml plex.sesame $PLEX_PASSWORD
