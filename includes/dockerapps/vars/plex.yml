@@ -153,7 +153,7 @@
         published_ports: "{{ plex_main_ports }}"
         env:
           PUID: "{{ lookup('env','MYUID')}}"
-          GUID: "{{ lookup('env','MYGID')}}"
+          PGID: "{{ lookup('env','MYGID')}}"
           PLEX_CLAIM: "{{ (plex_claim_code) | default(omit) }}"
           TZ: "Europe/Paris"
         volumes: "{{ plex_docker_volumes }}"
@@ -178,6 +178,27 @@
     - name: Extra Tasks
       import_tasks: "{{ settings.source }}/includes/dockerapps/templates/plex/tasks/subtasks/extra.yml"
       ignore_errors: yes
+
+    - name: "Wait for Plex to be ready for Remote Access configuration"
+      wait_for:
+        port: 32400
+        host: 127.0.0.1
+        timeout: 60
+
+    - name: "Set Custom server access URL for Remote Access"
+      uri:
+        url: "http://127.0.0.1:32400/:/prefs"
+        method: PUT
+        headers:
+          X-Plex-Token: "{{ plex.token }}"
+        body_format: form-urlencoded
+        body:
+          customConnections: "https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}:443"
+      register: custom_connections_resp
+      retries: 5
+      delay: 5
+      until: custom_connections_resp.status == 200
+      when: plex_account_enabled
 
     - name: Insert plex into database
       shell :
