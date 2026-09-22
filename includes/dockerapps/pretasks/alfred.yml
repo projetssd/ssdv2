@@ -1,10 +1,14 @@
 ---
 - pause:
-    prompt: "Entrez le chemin pour SYMLINK_DIR (ex: /home/ubuntu/Medias)"
+    prompt: |
+      SSDV2_PROMPT {"id": "alfred.symlink_dir", "label": "Chemin SYMLINK_DIR", "kind": "text", "secret": false}
+      Entrez le chemin pour SYMLINK_DIR (ex: /home/ubuntu/Medias)
     echo: yes
   register: symlink_input
 
 - pause:
-    prompt: "Entrez le chemin pour TORRENTS_DIR (ex: /home/ubuntu/seedbox/zurg)"
+    prompt: |
+      SSDV2_PROMPT {"id": "alfred.torrents_dir", "label": "Chemin TORRENTS_DIR", "kind": "text", "secret": false}
+      Entrez le chemin pour TORRENTS_DIR (ex: /home/ubuntu/seedbox/zurg)
     echo: yes
   register: torrents_input

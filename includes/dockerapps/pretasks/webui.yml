@@ -199,6 +199,7 @@
 - name: Ask if AllDebrid WARP proxy should be enabled
   ansible.builtin.pause:
     prompt: |
+      SSDV2_PROMPT {"id": "webui.warp", "label": "Activer le proxy WARP ?", "kind": "confirm", "secret": false}
       Activer le proxy WARP pour AllDebrid ?
       Recommandé uniquement sur Oracle Cloud si AllDebrid bloque magnet/upload.
 

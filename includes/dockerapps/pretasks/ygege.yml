@@ -2,7 +2,9 @@
 
 - name: prompt for YGG username
   pause:
-    prompt: "Enter value for YGG_USERNAME (your YGG account username)"
+    prompt: |
+      SSDV2_PROMPT {"id": "ygege.username", "label": "Identifiant YGG", "kind": "text", "secret": false}
+      Enter value for YGG_USERNAME (your YGG account username)
     echo: "yes"
   register: ygg_username_input
 
@@ -12,7 +14,9 @@
 
 - name: prompt for YGG password
   pause:
-    prompt: "Enter value for YGG_PASSWORD (your YGG account password)"
+    prompt: |
+      SSDV2_PROMPT {"id": "ygege.password", "label": "Mot de passe YGG", "kind": "secret", "secret": true}
+      Enter value for YGG_PASSWORD (your YGG account password)
     echo: "yes"
   register: ygg_password_input
 

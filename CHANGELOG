@@ -13,6 +13,8 @@
 - robustesse : posttask en échec n'empêche plus l'enregistrement de l'app
 - CI : shellcheck, catalogue, bats, py_compile, syntax-check, YAML
 - documentation : docs/mecanismes.md (dont notes sécurité SEC-01/SEC-02)
+- documentation : marqueur SSDV2_PROMPT (format, utilisation Ansible/Bash,
+  erreurs à éviter) dans docs/mecanismes.md
 
 30/12/2020
 
