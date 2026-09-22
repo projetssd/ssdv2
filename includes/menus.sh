@@ -143,7 +143,7 @@ menu_change_sous_domaine() {
 
   grep "plex" $SERVICESPERUSER >/dev/null 2>&1
   if [ $? -eq 0 ]; then
-    ansible-playbook ${SETTINGS_SOURCE}/includes/config/roles/plex/tasks/main.yml
+    ansible-playbook ${SETTINGS_SOURCE}/includes/dockerapps/vars/plex.yml
     sed -i "/plex/d" $SERVICESPERUSER >/dev/null 2>&1
   fi
 

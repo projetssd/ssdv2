@@ -64,6 +64,8 @@ plex_docker_volumes:
   - "/home/{{ lookup('env','USER') }}:/home/{{ lookup('env','USER') }}:rslave"
   - "/mnt:/mnt:rslave"
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/plex/config:/config:rw"
+  - "/tmp:/tmp:rw"
+  - "/dev/shm:/dev/shm:rw"
   - "{{ plex.transcodes }}/plex:/transcode:rw"
 
 ################################

@@ -1,0 +1,13 @@
+---
+pgrole: 'maintainerr'
+intport: '6246'
+image: 'ghcr.io/maintainerr/maintainerr:latest'
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}:/opt/data:rw"
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
+  - "/mnt:/mnt:rw"
+  - '/etc/localtime:/etc/localtime:ro'
+pg_env:
+  TZ: 'Europe/Paris'
+specific_docker_info:
+  user: "{{ lookup('env','MYUID') }}:{{ lookup('env','MYGID') }}"
