@@ -15,10 +15,7 @@ pg_volumes:
 pg_env:
   RUN_MIGRATIONS: "true"
 
-  MEILI_MASTER_KEY: "{{ MEILI_MASTER_KEY }}"
   PROXY_URL: "http://warp:1080"
-  MEILI_HOST: "meilisearch"
-  MEILI_PORT: "7700"
   TASKIQ_REDIS_DB: "6"
 
   SECRET_API_KEY: "{{ SECRET_API_KEY }}"

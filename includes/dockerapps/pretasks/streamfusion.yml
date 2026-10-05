@@ -65,7 +65,6 @@
     executable: /bin/bash
   loop:
     - SECRET_API_KEY
-    - MEILI_MASTER_KEY
     - CONFIG_SECRET_KEY
     - SESSION_KEY
     - PEER_MASTER_KEY
@@ -80,7 +79,6 @@
     src: "{{ streamfusion_secret_dir }}/{{ item }}"
   loop:
     - SECRET_API_KEY
-    - MEILI_MASTER_KEY
     - CONFIG_SECRET_KEY
     - SESSION_KEY
     - PEER_MASTER_KEY
@@ -93,7 +91,6 @@
 - name: Set generated StreamFusion internal secret facts
   set_fact:
     SECRET_API_KEY: "{{ (streamfusion_internal_secret_files.results | selectattr('item', 'equalto', 'SECRET_API_KEY') | first).content | b64decode | trim }}"
-    MEILI_MASTER_KEY: "{{ (streamfusion_internal_secret_files.results | selectattr('item', 'equalto', 'MEILI_MASTER_KEY') | first).content | b64decode | trim }}"
     CONFIG_SECRET_KEY: "{{ (streamfusion_internal_secret_files.results | selectattr('item', 'equalto', 'CONFIG_SECRET_KEY') | first).content | b64decode | trim }}"
     SESSION_KEY: "{{ (streamfusion_internal_secret_files.results | selectattr('item', 'equalto', 'SESSION_KEY') | first).content | b64decode | trim }}"
     PEER_MASTER_KEY: "{{ (streamfusion_internal_secret_files.results | selectattr('item', 'equalto', 'PEER_MASTER_KEY') | first).content | b64decode | trim }}"
@@ -106,7 +103,6 @@
   assert:
     that:
       - SECRET_API_KEY | length == 64
-      - MEILI_MASTER_KEY | length == 64
       - CONFIG_SECRET_KEY | length == 64
       - SESSION_KEY | length == 64
       - PEER_MASTER_KEY | length == 64
@@ -133,14 +129,11 @@
         - stremio-redis
         - stream-fusion
         - warp-data
-        - meili-data
         - dmm-hashlists
         - imdb-db
         - torrent-cache
         - taskiq-logs
         - sfr-db-backups
-        - meili-restore-control
-        - meili-wrapper
         - pg-restore-secret
 
     # Le dépôt/builder GitHub reste privé : les installations tirent l'image publique Docker Hub.
@@ -187,53 +180,6 @@
         executable: /bin/bash
       changed_when: false
       no_log: true
-
-    # Équivalent du service meili-init du docker-compose : prépare le wrapper
-    # d'auto-restauration et le volume de contrôle avant Meilisearch.
-    - name: Prepare Meilisearch auto-restore wrapper
-      ansible.builtin.shell:
-        cmd: |
-          set -euo pipefail
-
-          docker run --rm \
-            --network none \
-            --user 0:0 \
-            --entrypoint /bin/sh \
-            -v meili-wrapper:/meili_wrapper \
-            -v meili-restore-control:/meili_restore_control \
-            laster13/stream-fusion-reborn:latest \
-            -c '
-              set -eu
-
-              echo "[meili-init] Préparation"
-
-              mkdir -p /meili_wrapper
-              mkdir -p /meili_restore_control
-
-              cp \
-                /opt/streamfusion/meili-auto-restore.sh \
-                /meili_wrapper/.meili-auto-restore.sh.tmp
-
-              chmod 0555 \
-                /meili_wrapper/.meili-auto-restore.sh.tmp
-
-              mv -f \
-                /meili_wrapper/.meili-auto-restore.sh.tmp \
-                /meili_wrapper/meili-auto-restore.sh
-
-              chown -R 1000:1000 \
-                /meili_restore_control
-
-              chmod 0770 \
-                /meili_restore_control
-
-              find /meili_restore_control \
-                -type f \
-                -exec chmod 0660 {} \;
-
-              echo "[meili-init] Terminé"
-            '
-        executable: /bin/bash
 
 - name: Set DNS Record on CloudFlare
   include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
@@ -671,45 +617,11 @@
       retries: 12
       delay: 10
 
-    # Toujours géré afin d'appliquer les nouveaux volumes/commande auto-restore
-    # même si un ancien conteneur Meilisearch existe déjà.
-    - name: Deploy Meilisearch
+    - name: Remove obsolete Meilisearch container
       community.docker.docker_container:
-        labels:
-          ssdv2.app: "{{pgrole}}"
         name: meilisearch
-        image: getmeili/meilisearch:v1.41.0
-        state: started
-        env:
-          MEILI_MASTER_KEY: "{{ MEILI_MASTER_KEY }}"
-          MEILI_ENV: "production"
-          MEILI_EXPERIMENTAL_DUMPLESS_UPGRADE: "true"
-          MEILI_DB_PATH: "/meili_data/data.ms"
-        exposed_ports:
-          - "7700"
-        volumes:
-          - meili-data:/meili_data
-          - sfr-db-backups:/imports:ro
-          - meili-wrapper:/meili_wrapper:ro
-          - meili-restore-control:/meili_restore_control
-        command: /meili_wrapper/meili-auto-restore.sh
-        restart_policy: unless-stopped
-        healthcheck:
-          test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:7700/health || exit 1"]
-          interval: 5s
-          timeout: 5s
-          retries: 10
-        networks:
-          - name: traefik_proxy
-      no_log: true
-
-    - name: Wait for Meilisearch to be healthy
-      command: docker inspect --format="{% raw %}{{.State.Health.Status}}{% endraw %}" meilisearch
-      register: meilisearch_health
-      changed_when: false
-      until: meilisearch_health.stdout == 'healthy'
-      retries: 12
-      delay: 10
+        state: absent
+        force_kill: true
 
     - name: Deploy Warp
       community.docker.docker_container:
@@ -741,14 +653,6 @@
       retries: 12
       delay: 5
       until: redis_health_taskiq.stdout == 'healthy'
-
-    - name: Wait for Meilisearch to be running before Taskiq
-      command: docker inspect --format="{% raw %}{{.State.Running}}{% endraw %}" meilisearch
-      register: meilisearch_running
-      changed_when: false
-      retries: 12
-      delay: 5
-      until: meilisearch_running.stdout == 'true'
 
     # Toujours géré : le scheduler utilise uniquement le rôle runtime.
     - name: Deploy Taskiq scheduler
@@ -808,10 +712,6 @@
           PG_RESTORE_PASS_FILE: "/run/pg-restore-secret/pg_restore_pass"
           PG_OWNER_ROLE: "streamfusion_owner"
 
-          MEILI_MASTER_KEY: "{{ MEILI_MASTER_KEY }}"
-          MEILI_HOST: "meilisearch"
-          MEILI_PORT: "7700"
-
           TZ: "Europe/Paris"
           PROXY_URL: "http://warp:1080"
           REDIS_HOST: "stremio-redis"
@@ -829,8 +729,6 @@
           - dmm-hashlists:/data/dmm_hashlists
           - imdb-db:/data/imdb_db
           - sfr-db-backups:/data/backups
-          - meili-data:/meili_data:ro
-          - meili-restore-control:/meili_restore_control
           - taskiq-logs:/app/config/logs
           - pg-restore-secret:/run/pg-restore-secret:ro
         restart_policy: unless-stopped
