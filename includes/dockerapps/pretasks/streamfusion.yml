@@ -66,7 +66,6 @@
   loop:
     - SECRET_API_KEY
     - CONFIG_SECRET_KEY
-    - SESSION_KEY
     - PEER_MASTER_KEY
     - POSTGRES_PASSWORD
     - PG_PASS
@@ -80,7 +79,6 @@
   loop:
     - SECRET_API_KEY
     - CONFIG_SECRET_KEY
-    - SESSION_KEY
     - PEER_MASTER_KEY
     - POSTGRES_PASSWORD
     - PG_PASS
@@ -92,7 +90,6 @@
   set_fact:
     SECRET_API_KEY: "{{ (streamfusion_internal_secret_files.results | selectattr('item', 'equalto', 'SECRET_API_KEY') | first).content | b64decode | trim }}"
     CONFIG_SECRET_KEY: "{{ (streamfusion_internal_secret_files.results | selectattr('item', 'equalto', 'CONFIG_SECRET_KEY') | first).content | b64decode | trim }}"
-    SESSION_KEY: "{{ (streamfusion_internal_secret_files.results | selectattr('item', 'equalto', 'SESSION_KEY') | first).content | b64decode | trim }}"
     PEER_MASTER_KEY: "{{ (streamfusion_internal_secret_files.results | selectattr('item', 'equalto', 'PEER_MASTER_KEY') | first).content | b64decode | trim }}"
     POSTGRES_PASSWORD: "{{ (streamfusion_internal_secret_files.results | selectattr('item', 'equalto', 'POSTGRES_PASSWORD') | first).content | b64decode | trim }}"
     PG_PASS: "{{ (streamfusion_internal_secret_files.results | selectattr('item', 'equalto', 'PG_PASS') | first).content | b64decode | trim }}"
@@ -104,7 +101,6 @@
     that:
       - SECRET_API_KEY | length == 64
       - CONFIG_SECRET_KEY | length == 64
-      - SESSION_KEY | length == 64
       - PEER_MASTER_KEY | length == 64
       - POSTGRES_PASSWORD | length == 64
       - PG_PASS | length == 64
@@ -130,20 +126,12 @@
         - stream-fusion
         - warp-data
         - dmm-hashlists
+        - sfr-db-backups
         - imdb-db
         - torrent-cache
         - taskiq-logs
-        - sfr-db-backups
         - pg-restore-secret
 
-    # Le dépôt/builder GitHub reste privé : les installations tirent l'image publique Docker Hub.
-    - name: Pull latest public Stream Fusion Reborn image
-      command: docker pull laster13/stream-fusion-reborn:latest
-      register: streamfusion_image_pull
-      changed_when: "'Downloaded newer image' in streamfusion_image_pull.stdout"
-
-    # Équivalent du service pg-restore-secret-init du docker-compose :
-    # le client n'a jamais à renseigner PG_RESTORE_PASS.
     - name: Initialize persistent PostgreSQL restore secret
       ansible.builtin.shell:
         cmd: |
@@ -151,90 +139,73 @@
 
           docker run --rm \
             --network none \
-            --user 0:0 \
+            --cap-drop ALL \
+            --security-opt no-new-privileges:true \
+            --read-only \
             --entrypoint /bin/sh \
             -v pg-restore-secret:/run/pg-restore-secret \
             postgres:17-alpine \
-            -c '
-              set -eu
+            -ec '
               umask 077
 
               secret=/run/pg-restore-secret/pg_restore_pass
+              tmp="${secret}.tmp"
 
               if [ ! -s "$secret" ]; then
-                tmp="${secret}.tmp.$$"
+                rm -f "$tmp"
 
-                head -c 32 /dev/urandom \
-                  | od -An -tx1 \
+                od -An -N32 -tx1 /dev/urandom \
                   | tr -d " \n" \
                   > "$tmp"
 
-                test "$(wc -c < "$tmp" | tr -d " ")" -eq 64
+                test "$(wc -c < "$tmp")" -eq 64
+
                 chmod 0444 "$tmp"
-                mv -f "$tmp" "$secret"
+                mv "$tmp" "$secret"
               fi
 
-              test "$(wc -c < "$secret" | tr -d " ")" -eq 64
+              test "$(wc -c < "$secret")" -eq 64
               chmod 0444 "$secret"
             '
         executable: /bin/bash
       changed_when: false
       no_log: true
 
-- name: Set DNS Record on CloudFlare
-  include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
-  vars:
-    subdomain: "{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}"
-  when: cloudflare_enabled
-
 - name: Stremio Base Pre-task Setup
   block:
-    - name: Check if persistent infrastructure containers exist
-      command: docker ps -a --filter "name={{ item }}" --format "{% raw %}{{.Names}}{% endraw %}"
-      register: container_check
-      changed_when: false
-      loop:
-        - stremio-postgres
-        - stremio-redis
-        - warp
-
-    - name: Debug container check results
-      debug:
-        var: container_check
-
-    - name: Set facts for container existence
-      set_fact:
-        postgres_exists: "{{ 'stremio-postgres' in container_check.results | map(attribute='stdout') | join(',') }}"
-        redis_exists: "{{ 'stremio-redis' in container_check.results | map(attribute='stdout') | join(',') }}"
-        warp_exists: "{{ 'warp' in container_check.results | map(attribute='stdout') | join(',') }}"
-
-    - name: Debug container existence
-      debug:
-        msg:
-          - "Postgres exists: {{ postgres_exists }}"
-          - "Redis exists: {{ redis_exists }}"
-          - "Warp exists: {{ warp_exists }}"
-
     - name: Deploy stremio-postgres
       community.docker.docker_container:
-        labels:
-          ssdv2.app: "{{pgrole}}"
         name: stremio-postgres
-        image: "postgres:17-alpine"
+        image: postgres:17-alpine
         state: started
+        restart_policy: unless-stopped
         env:
           PGDATA: "/var/lib/postgresql/data/pgdata"
           POSTGRES_USER: "streamfusion"
           POSTGRES_PASSWORD: "{{ POSTGRES_PASSWORD }}"
           POSTGRES_DB: "streamfusion"
+        exposed_ports:
+          - "5432"
         volumes:
           - stremio-postgres:/var/lib/postgresql/data/pgdata
-        restart_policy: always
         healthcheck:
-          test: ["CMD-SHELL", "pg_isready -U streamfusion_runtime -d streamfusion"]
+          test:
+            - CMD-SHELL
+            - >-
+              PGPASSWORD="$POSTGRES_PASSWORD"
+              psql
+              -h 127.0.0.1
+              -U "$POSTGRES_USER"
+              -d "$POSTGRES_DB"
+              -X
+              -qAt
+              -v ON_ERROR_STOP=1
+              -c "SELECT 1"
+              | grep -qx 1
           interval: 5s
           timeout: 5s
-          retries: 10
+          retries: 20
+          start_period: 5s
         networks:
           - name: traefik_proxy
       no_log: true
@@ -244,12 +215,9 @@
       register: postgres_health
       changed_when: false
       until: postgres_health.stdout == 'healthy'
-      retries: 12
-      delay: 10
+      retries: 30
+      delay: 5
 
-    # Équivalent Ansible du bootstrap PostgreSQL sécurisé du docker-compose.
-    # Fonctionne aussi lors du passage d'une ancienne installation utilisant
-    # directement le rôle bootstrap "streamfusion".
     - name: Ensure hardened PostgreSQL roles and privileges
       ansible.builtin.shell:
         cmd: |
@@ -589,44 +557,23 @@
 
     - name: Deploy stremio-redis
       community.docker.docker_container:
-        labels:
-          ssdv2.app: "{{pgrole}}"
         name: stremio-redis
         image: redis:7-alpine
         state: started
-        command: redis-server --appendonly yes
+        command:
+          - redis-server
+          - --appendonly
+          - "yes"
         exposed_ports:
           - "6379"
         volumes:
           - stremio-redis:/data
         restart_policy: unless-stopped
-        healthcheck:
-          test: ["CMD", "redis-cli", "ping"]
-          interval: 5s
-          timeout: 5s
-          retries: 10
         networks:
           - name: traefik_proxy
-      when: not redis_exists
-
-    - name: Wait for Redis to be healthy
-      command: docker inspect --format="{% raw %}{{.State.Health.Status}}{% endraw %}" stremio-redis
-      register: redis_health
-      changed_when: false
-      until: redis_health.stdout == 'healthy'
-      retries: 12
-      delay: 10
-
-    - name: Remove obsolete Meilisearch container
-      community.docker.docker_container:
-        name: meilisearch
-        state: absent
-        force_kill: true
 
     - name: Deploy Warp
       community.docker.docker_container:
-        labels:
-          ssdv2.app: "{{pgrole}}"
         name: warp
         image: caomingjun/warp:latest
         state: started
@@ -644,32 +591,65 @@
           - warp-data:/var/lib/cloudflare-warp
         networks:
           - name: traefik_proxy
-      when: not warp_exists
 
-    - name: Wait for stremio-redis to be healthy before Taskiq
-      command: docker inspect --format="{% raw %}{{.State.Health.Status}}{% endraw %}" stremio-redis
-      register: redis_health_taskiq
-      changed_when: false
-      retries: 12
-      delay: 5
-      until: redis_health_taskiq.stdout == 'healthy'
-
-    # Toujours géré : le scheduler utilise uniquement le rôle runtime.
-    - name: Deploy Taskiq scheduler
+    - name: Deploy Taskiq worker
       community.docker.docker_container:
-        labels:
-          ssdv2.app: "{{pgrole}}"
-        name: taskiq-scheduler
+        name: taskiq-worker
         image: laster13/stream-fusion-reborn:latest
         state: started
-        pull: true
-        command: python -m taskiq scheduler stream_fusion.tkq:scheduler
+        command: python -m taskiq worker stream_fusion.worker:broker
         env:
-          SESSION_KEY: "{{ SESSION_KEY }}"
+          SECRET_API_KEY: "{{ SECRET_API_KEY }}"
+          CONFIG_SECRET_KEY: "{{ CONFIG_SECRET_KEY }}"
+          PEER_MASTER_KEY: "{{ PEER_MASTER_KEY }}"
+          TMDB_API_KEY: "{{ TMDB_API_KEY }}"
+
           PG_USER: "streamfusion_runtime"
           PG_PASS: "{{ PG_PASS }}"
           PG_BASE: "streamfusion"
+
+          PG_RESTORE_USER: "streamfusion_restore"
+          PG_RESTORE_PASS_FILE: "/run/pg-restore-secret/pg_restore_pass"
+          PG_OWNER_ROLE: "streamfusion_owner"
+
           TZ: "Europe/Paris"
+          PROXY_URL: "http://warp:1080"
+
+          REDIS_HOST: "stremio-redis"
+          PG_HOST: "stremio-postgres"
+          TASKIQ_REDIS_DB: "6"
+        cap_drop:
+          - ALL
+        security_opts:
+          - "no-new-privileges:true"
+        read_only: true
+        tmpfs:
+          - "/tmp:mode=1777,size=4g"
+          - "/home/appuser:uid=1000,gid=1000,mode=0700"
+        volumes:
+          - dmm-hashlists:/data/dmm_hashlists
+          - imdb-db:/data/imdb_db
+          - sfr-db-backups:/data/backups
+          - pg-restore-secret:/run/pg-restore-secret:ro
+          - taskiq-logs:/app/config/logs
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik_proxy
+      no_log: true
+
+    - name: Deploy Taskiq scheduler
+      community.docker.docker_container:
+        name: taskiq-scheduler
+        image: laster13/stream-fusion-reborn:latest
+        state: started
+        command: python -m taskiq scheduler stream_fusion.tkq:scheduler
+        env:
+          PG_USER: "streamfusion_runtime"
+          PG_PASS: "{{ PG_PASS }}"
+          PG_BASE: "streamfusion"
+
+          TZ: "Europe/Paris"
+
           REDIS_HOST: "stremio-redis"
           PG_HOST: "stremio-postgres"
           TASKIQ_REDIS_DB: "6"
@@ -683,54 +663,6 @@
           - "/home/appuser:uid=1000,gid=1000,mode=0700"
         volumes:
           - taskiq-logs:/app/config/logs
-        restart_policy: unless-stopped
-        networks:
-          - name: traefik_proxy
-      no_log: true
-
-    - name: Deploy Taskiq workers
-      community.docker.docker_container:
-        labels:
-          ssdv2.app: "{{pgrole}}"
-        name: taskiq-worker
-        image: laster13/stream-fusion-reborn:latest
-        state: started
-        pull: true
-        command: python -m taskiq worker stream_fusion.worker:broker
-        env:
-          SECRET_API_KEY: "{{ SECRET_API_KEY }}"
-          CONFIG_SECRET_KEY: "{{ CONFIG_SECRET_KEY }}"
-          SESSION_KEY: "{{ SESSION_KEY }}"
-          TMDB_API_KEY: "{{ TMDB_API_KEY }}"
-
-          PG_USER: "streamfusion_runtime"
-          PG_PASS: "{{ PG_PASS }}"
-          PG_BASE: "streamfusion"
-          PG_HOST: "stremio-postgres"
-
-          PG_RESTORE_USER: "streamfusion_restore"
-          PG_RESTORE_PASS_FILE: "/run/pg-restore-secret/pg_restore_pass"
-          PG_OWNER_ROLE: "streamfusion_owner"
-
-          TZ: "Europe/Paris"
-          PROXY_URL: "http://warp:1080"
-          REDIS_HOST: "stremio-redis"
-          TASKIQ_REDIS_DB: "6"
-          PEER_MASTER_KEY: "{{ PEER_MASTER_KEY }}"
-        cap_drop:
-          - ALL
-        security_opts:
-          - "no-new-privileges:true"
-        read_only: true
-        tmpfs:
-          - "/tmp:mode=1777,size=4g"
-          - "/home/appuser:uid=1000,gid=1000,mode=0700"
-        volumes:
-          - dmm-hashlists:/data/dmm_hashlists
-          - imdb-db:/data/imdb_db
-          - sfr-db-backups:/data/backups
-          - taskiq-logs:/app/config/logs
-          - pg-restore-secret:/run/pg-restore-secret:ro
         restart_policy: unless-stopped
         networks:
           - name: traefik_proxy
