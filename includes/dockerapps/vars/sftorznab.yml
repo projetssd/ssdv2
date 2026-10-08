@@ -1,7 +1,6 @@
 ---
-# Indexeur Torznab StreamFusion (image commune, 3 conteneurs) :
+# Indexeur Torznab StreamFusion (image commune, 2 conteneurs) :
 #   - sftorznab        : indexeur PostgreSQL  (conteneur principal, déployé ici)
-#   - sftorznab-meili  : indexeur Meilisearch (déployé en posttask)
 #   - sftorznab-broker : broker AllDebrid     (déployé en posttask)
 pgrole: 'sftorznab'
 intport: '8080'
@@ -33,21 +32,19 @@ pg_env:
   # NO_PROXY empêche de proxifier les appels internes (broker, Redis...).
   HTTP_PROXY: 'http://warp:1080'
   HTTPS_PROXY: 'http://warp:1080'
-  NO_PROXY: 'localhost,127.0.0.1,sftorznab-broker,sftorznab-meili,stremio-postgres,stremio-redis,meilisearch'
+  NO_PROXY: 'localhost,127.0.0.1,sftorznab-broker,stremio-postgres,stremio-redis'
   TZ: 'Europe/Paris'
 
 # Pas d'interface Web : API Torznab consommée par Prowlarr.
 # Par défaut les indexeurs restent internes au réseau Docker ; l'exposition
-# Traefik publique (deux sous-domaines) est activée par le prompt d'installation
-# (sftorznab_expose_public). L'indexeur Meilisearch (sftorznab-meili) est exposé
-# sur son propre sous-domaine par la posttask.
+# L'exposition publique via Traefik (un seul sous-domaine) est activée
+# par le prompt d'installation (sftorznab_expose_public).
 traefik_labels_enabled: "{{ sftorznab_expose_public | default(false) | bool }}"
 
 # Deux routers sur le même host :
 #   - sftorznab-torznab-rtr : /torznab/ en chain-no-auth (priorité haute) afin
 #     que Prowlarr ne soit jamais bloqué par l'authentification (oauth, etc.) ;
 #   - sftorznab-rtr : le reste du host, protégé par la chaîne d'auth choisie.
-# L'indexeur Meilisearch (sftorznab-meili) est exposé sur un second sous-domaine
 # (voir posttask) quand cette exposition est activée.
 specific_docker_info: >-
   {{
