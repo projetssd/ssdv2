@@ -1,0 +1,13 @@
+---
+- name: Créer les dossiers audiobookshelf (propriétaire = utilisateur)
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ lookup('env','MYUID') }}"
+    group: "{{ lookup('env','MYGID') }}"
+    mode: '0775'
+  loop:
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/audiobookshelf"
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/audiobookshelf/config"
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/audiobookshelf/metadata"
