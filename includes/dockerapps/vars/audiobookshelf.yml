@@ -1,0 +1,16 @@
+---
+pgrole: 'audiobookshelf'
+intport: '80'
+image: 'ghcr.io/advplyr/audiobookshelf:latest'
+
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/metadata:/metadata:rw"
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}:rw"
+  - '/etc/localtime:/etc/localtime:ro'
+
+pg_env:
+  TZ: 'Europe/Paris'
+
+specific_docker_info:
+  user: "{{ lookup('env','MYUID') }}:{{ lookup('env','MYGID') }}"
