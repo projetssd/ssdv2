@@ -1,13 +1,9 @@
 ---
-# L'application journalise un « Code de configuration » au démarrage tant que la
-# configuration initiale (administrateur + adresse publique) n'est pas terminée.
-# On l'affiche pour éviter de consulter les journaux.
-#
-# Idempotence (skill SSDV2) : on interroge /api/setup pour connaître l'état réel.
-# Le code n'est recherché que si une configuration est encore requise, sinon une
-# réinstallation attendrait inutilement un élément propre au premier démarrage.
+# Attend que l'application réponde, puis affiche les instructions d'accès.
+# Idempotent (skill SSDV2) : on n'attend rien d'unique au premier démarrage
+# (les versions récentes n'utilisent plus de « code de configuration »).
 
-- name: État de configuration de l'application (attendre qu'elle réponde)
+- name: Attendre que l'application réponde
   ansible.builtin.shell: docker exec {{ pgrole }} wget -qO- http://127.0.0.1:3100/api/setup 2>/dev/null || true
   register: nuviomanager_state
   changed_when: false
@@ -16,26 +12,7 @@
   delay: 2
   until: "'required' in nuviomanager_state.stdout"
 
-- name: Déterminer si une configuration initiale est requise
-  ansible.builtin.set_fact:
-    nuviomanager_needs_setup: >-
-      {{ not ('"required":false' in (nuviomanager_state.stdout | default(''))
-               and '"publicUrlRequired":false' in (nuviomanager_state.stdout | default(''))) }}
-
-- name: Lire les journaux de l'application
-  ansible.builtin.shell: docker logs {{ pgrole }} 2>&1
-  register: nuviomanager_logs
-  changed_when: false
-  failed_when: false
-  when: nuviomanager_needs_setup | bool
-
-- name: Extraire le code de configuration
-  ansible.builtin.set_fact:
-    nuviomanager_setup_code: >-
-      {{ (nuviomanager_logs.stdout | default('') | regex_findall('Code de configuration\s*:\s*([A-Za-z0-9]+)') | first) | default('') }}
-  when: nuviomanager_needs_setup | bool
-
-- name: Afficher les instructions d'installation (code de configuration)
+- name: Afficher les instructions d'installation
   ansible.builtin.debug:
     msg:
       - "=============================================="
@@ -44,18 +21,6 @@
       - "URL : https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}"
       - "Authentification SSDV2 : {{ sub[pgrole].auth | default('aucune', true) }}"
       - ""
-      - "Code de configuration : {{ nuviomanager_setup_code }}"
-      - "(également disponible : docker logs {{ pgrole }} 2>&1 | grep -i 'Code de configuration')"
+      - "Première ouverture : crée le compte administrateur (nom, mot de passe, adresse publique)."
+      - "Aucun code de configuration n'est requis (versions récentes)."
       - "=============================================="
-  when: nuviomanager_setup_code is defined and nuviomanager_setup_code | length > 0
-
-- name: Afficher les instructions (configuration déjà réalisée ou via l'interface)
-  ansible.builtin.debug:
-    msg:
-      - "=============================================="
-      - "NUVIO MANAGER - INSTALLATION TERMINEE"
-      - "=============================================="
-      - "URL : https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}"
-      - "Aucun code de configuration requis (déjà configuré, ou à terminer depuis l'interface)."
-      - "=============================================="
-  when: nuviomanager_setup_code is not defined or nuviomanager_setup_code | length == 0

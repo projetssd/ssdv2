@@ -6,12 +6,16 @@ image: 'ghcr.io/guiro28/nuvio-manager:dev'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/app/data:rw"
 
+# Choix de l'authentification (interne/externe) géré par l'assistant de l'app.
 pg_env:
   TZ: 'Europe/Paris'
 
 extra_labels:
+  # Priorité basse du router principal : garantit que le router /relay/
+  # (priorité 100) l'emporte même si la règle Host générée est longue.
+  traefik.http.routers.nuviomanager-rtr.priority: '10'
   traefik.http.routers.nuviomanager-relay-rtr.entrypoints: 'http,https'
-  traefik.http.routers.nuviomanager-relay-rtr.rule: "Host(`{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}`) && PathPrefix(`/relay`)"
+  traefik.http.routers.nuviomanager-relay-rtr.rule: "Host(`{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}`) && PathPrefix(`/relay/`)"
   traefik.http.routers.nuviomanager-relay-rtr.priority: '100'
   traefik.http.routers.nuviomanager-relay-rtr.tls: 'true'
   traefik.http.routers.nuviomanager-relay-rtr.tls.certresolver: 'letsencrypt'
