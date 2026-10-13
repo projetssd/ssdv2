@@ -9,6 +9,11 @@ pg_volumes:
 # Choix de l'authentification (interne/externe) géré par l'assistant de l'app.
 pg_env:
   TZ: 'Europe/Paris'
+  # Derrière Traefik : fait confiance à X-Forwarded-* (avec les plages privées
+  # Docker par défaut). Sans cela, l'app répond 403 « Hôte non autorisé » sur
+  # /api/* tant que PUBLIC_URL n'est pas encore défini, et le middleware d'erreur
+  # oauth2-proxy transforme ce 403 en page de connexion → boucle.
+  TRUST_PROXY_IPS: '127.0.0.0/8,::1/128,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,169.254.0.0/16,fc00::/7,fe80::/10'
 
 extra_labels:
   # Priorité basse du router principal : garantit que le router /relay/
