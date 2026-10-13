@@ -1,0 +1,9 @@
+---
+- name: Créer le dossier de données Nuvio Manager
+  become: true
+  ansible.builtin.file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data"
+    state: directory
+    mode: '0775'
+    owner: '1000'
+    group: '1000'

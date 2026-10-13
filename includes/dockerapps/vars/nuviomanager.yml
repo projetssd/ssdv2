@@ -1,0 +1,19 @@
+---
+pgrole: 'nuviomanager'
+intport: '3100'
+image: 'ghcr.io/guiro28/nuvio-manager:latest'
+
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/app/data:rw"
+
+pg_env:
+  TZ: 'Europe/Paris'
+
+extra_labels:
+  traefik.http.routers.nuviomanager-relay-rtr.entrypoints: 'http,https'
+  traefik.http.routers.nuviomanager-relay-rtr.rule: "Host(`{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}`) && PathPrefix(`/relay`)"
+  traefik.http.routers.nuviomanager-relay-rtr.priority: '100'
+  traefik.http.routers.nuviomanager-relay-rtr.tls: 'true'
+  traefik.http.routers.nuviomanager-relay-rtr.tls.certresolver: 'letsencrypt'
+  traefik.http.routers.nuviomanager-relay-rtr.service: 'nuviomanager-svc'
+  traefik.http.routers.nuviomanager-relay-rtr.middlewares: 'chain-no-auth@file'

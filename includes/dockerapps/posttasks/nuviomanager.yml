@@ -1,0 +1,44 @@
+---
+# Le code de configuration est journalisé par l'application au premier démarrage,
+# tant que la configuration initiale n'a pas été réalisée. Il est affiché ici
+# pour éviter d'avoir à consulter les journaux manuellement.
+
+- name: Attendre l'apparition du code de configuration dans les journaux
+  ansible.builtin.shell: docker logs {{ pgrole }} 2>&1
+  register: nuviomanager_logs
+  until: "'Code de configuration' in nuviomanager_logs.stdout"
+  retries: 30
+  delay: 2
+  changed_when: false
+  failed_when: false
+
+- name: Extraire le code de configuration
+  ansible.builtin.set_fact:
+    nuviomanager_setup_code: >-
+      {{ (nuviomanager_logs.stdout | regex_findall('Code de configuration\s*:\s*([A-Za-z0-9]+)') | first) | default('') }}
+  when: "'Code de configuration' in nuviomanager_logs.stdout"
+
+- name: Afficher les instructions d'installation
+  ansible.builtin.debug:
+    msg:
+      - "=============================================="
+      - "NUVIO MANAGER - INSTALLATION TERMINEE"
+      - "=============================================="
+      - "URL : https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}"
+      - "Authentification SSDV2 : {{ sub[pgrole].auth | default('aucune', true) }}"
+      - ""
+      - "Code de configuration : {{ nuviomanager_setup_code }}"
+      - "(également disponible : docker logs {{ pgrole }} 2>&1 | grep -i 'Code de configuration')"
+      - "=============================================="
+  when: nuviomanager_setup_code is defined and nuviomanager_setup_code | length > 0
+
+- name: Afficher les instructions (configuration déjà réalisée)
+  ansible.builtin.debug:
+    msg:
+      - "=============================================="
+      - "NUVIO MANAGER - INSTALLATION TERMINEE"
+      - "=============================================="
+      - "URL : https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}"
+      - "Aucun code de configuration détecté (configuration initiale déjà réalisée)."
+      - "=============================================="
+  when: nuviomanager_setup_code is not defined or nuviomanager_setup_code | length == 0
