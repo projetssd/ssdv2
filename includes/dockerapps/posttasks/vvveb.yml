@@ -31,35 +31,19 @@
   failed_when: false
   changed_when: false
 
-- name: Lire le mot de passe admin enregistré
-  ansible.builtin.shell: |
-    source ${SETTINGS_SOURCE}/profile.sh
-    get_from_account_yml vvveb.admin_password
-  args:
-    executable: /bin/bash
-  register: vvveb_admin_password_lookup
-  changed_when: false
-  failed_when: false
+# Le mot de passe admin est stocké dans un fichier persistant (hors coffre) :
+# `lookup('password', ...)` le génère au premier passage puis le relit, ce qui
+# fonctionne aussi bien en CLI que depuis la WebUI (pas de dépendance au coffre
+# Ansible ni au venv, absent/cassé dans le conteneur WebUI).
+- name: Créer le dossier des secrets Vvveb
+  ansible.builtin.file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/vvveb-secrets"
+    state: directory
+    mode: '0700'
 
-- name: Préparer le mot de passe admin (réutilisé si déjà présent)
+- name: Définir le mot de passe administrateur (persistant, généré une fois)
   ansible.builtin.set_fact:
-    vvveb_admin_password: >-
-      {{ vvveb_admin_password_lookup.stdout | trim
-         if (vvveb_admin_password_lookup.stdout | default('') | trim | length > 0
-             and (vvveb_admin_password_lookup.stdout | trim) != 'notfound')
-         else lookup('password', '/dev/null length=20 chars=ascii_letters,digits') }}
-    vvveb_admin_password_is_new: >-
-      {{ not (vvveb_admin_password_lookup.stdout | default('') | trim | length > 0
-              and (vvveb_admin_password_lookup.stdout | trim) != 'notfound') }}
-
-- name: Enregistrer un nouveau mot de passe admin dans le coffre
-  ansible.builtin.shell: |
-    source ${SETTINGS_SOURCE}/profile.sh
-    manage_account_yml vvveb.admin_password "{{ vvveb_admin_password }}"
-  args:
-    executable: /bin/bash
-  no_log: true
-  when: vvveb_admin_password_is_new | bool
+    vvveb_admin_password: "{{ lookup('password', settings.storage + '/docker/' + lookup('env','USER') + '/vvveb-secrets/admin_password length=20 chars=ascii_letters,digits') }}"
 
 # Première installation uniquement. En réinstallation, config/db.php existe et
 # l'installation est sautée : aucune attente de type « premier démarrage ».
