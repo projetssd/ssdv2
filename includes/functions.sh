@@ -1602,7 +1602,25 @@ EOF
 }
 
 function apply_patches() {
-  touch "${HOME}/.config/ssd/patches"
+  # Marqueur partagé, stocké côté stockage : il est visible ET inscriptible
+  # aussi bien en CLI que depuis la WebUI (qui monte ${SETTINGS_STORAGE}).
+  # L'ancien emplacement ~/.config/ssd/patches n'était pas partagé avec le
+  # conteneur WebUI et provoquait des réapplications à répétition.
+  local marker="${SETTINGS_STORAGE}/conf/.ssdv2-patches"
+  local legacy_marker="${HOME}/.config/ssd/patches"
+  mkdir -p "$(dirname "${marker}")" 2>/dev/null
+
+  # Reprise de l'historique existant lors du premier passage.
+  if [ ! -f "${marker}" ] && [ -f "${legacy_marker}" ]; then
+    cp "${legacy_marker}" "${marker}" 2>/dev/null || true
+  fi
+
+  # Si le marqueur n'est pas exploitable, on n'exécute rien : mieux vaut ne pas
+  # patcher que rejouer les patchs en boucle à chaque action.
+  if ! touch "${marker}" 2>/dev/null; then
+    echo "⚠ Marqueur de patchs non inscriptible (${marker}) : patchs ignorés." >&2
+    return 0
+  fi
 
   shopt -s nullglob
   local patch_path patch
@@ -1613,10 +1631,10 @@ function apply_patches() {
       continue
     fi
 
-    if grep -q "${patch}" "${HOME}/.config/ssd/patches"; then
+    if grep -qxF -- "${patch}" "${marker}"; then
       if [ "$FORCE_PATCH" = "1" ] || [ "$FORCE_PATCH" = "$patch" ]; then
         echo "⚠ Réinstallation forcée du patch : ${patch}"
-        bash "${SETTINGS_SOURCE}/patches/${patch}" >> "${HOME}/.config/ssd/${patch}.log" 2>&1
+        bash "${SETTINGS_SOURCE}/patches/${patch}" >> "${SETTINGS_STORAGE}/conf/${patch}.log" 2>&1
       else
         # patch déjà appliqué → on ne fait rien
         :
@@ -1625,7 +1643,7 @@ function apply_patches() {
       # première installation du patch
       echo "✔ Application du patch : ${patch}"
       bash "${SETTINGS_SOURCE}/patches/${patch}"
-      echo "${patch}" >>"${HOME}/.config/ssd/patches"
+      echo "${patch}" >>"${marker}"
     fi
   done
   shopt -u nullglob
