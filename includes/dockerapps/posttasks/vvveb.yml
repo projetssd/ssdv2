@@ -1,0 +1,115 @@
+---
+# Vvveb est déployé par le playbook générique (contrainte : le conteneur doit
+# exister avant de le connecter à son réseau dédié). Cette posttask :
+#   1. déploie la base MariaDB (template commun) et connecte l'app au réseau ;
+#   2. attend l'extraction de la source (l'image télécharge Vvveb au 1er boot) ;
+#   3. installe la base et le compte admin en CLI, de façon idempotente ;
+#   4. affiche les identifiants générés.
+
+# Image MariaDB officielle : son datadir est réellement /var/lib/mysql, donc la
+# base est persistée dans le dossier applicatif (le bind), et non dans un volume
+# anonyme comme avec l'image linuxserver (datadir /config).
+- name: Déployer la base MariaDB de {{ pgrole }}
+  include_tasks: "{{ settings.source }}/includes/dockerapps/templates/generique/mariadb_officiel.yml"
+
+- name: Attendre l'extraction de la source Vvveb
+  community.docker.docker_container_exec:
+    container: "{{ pgrole }}"
+    command: test -f /var/www/html/public/index.php
+  register: vvveb_source_ready
+  until: vvveb_source_ready.rc == 0
+  retries: 60
+  delay: 5
+  failed_when: false
+  changed_when: false
+
+- name: Vérifier si Vvveb est déjà installé
+  community.docker.docker_container_exec:
+    container: "{{ pgrole }}"
+    command: test -f /var/www/html/config/db.php
+  register: vvveb_installed
+  failed_when: false
+  changed_when: false
+
+- name: Lire le mot de passe admin enregistré
+  ansible.builtin.shell: |
+    source ${SETTINGS_SOURCE}/profile.sh
+    get_from_account_yml vvveb.admin_password
+  args:
+    executable: /bin/bash
+  register: vvveb_admin_password_lookup
+  changed_when: false
+  failed_when: false
+
+- name: Préparer le mot de passe admin (réutilisé si déjà présent)
+  ansible.builtin.set_fact:
+    vvveb_admin_password: >-
+      {{ vvveb_admin_password_lookup.stdout | trim
+         if (vvveb_admin_password_lookup.stdout | default('') | trim | length > 0
+             and (vvveb_admin_password_lookup.stdout | trim) != 'notfound')
+         else lookup('password', '/dev/null length=20 chars=ascii_letters,digits') }}
+    vvveb_admin_password_is_new: >-
+      {{ not (vvveb_admin_password_lookup.stdout | default('') | trim | length > 0
+              and (vvveb_admin_password_lookup.stdout | trim) != 'notfound') }}
+
+- name: Enregistrer un nouveau mot de passe admin dans le coffre
+  ansible.builtin.shell: |
+    source ${SETTINGS_SOURCE}/profile.sh
+    manage_account_yml vvveb.admin_password "{{ vvveb_admin_password }}"
+  args:
+    executable: /bin/bash
+  no_log: true
+  when: vvveb_admin_password_is_new | bool
+
+# Première installation uniquement. En réinstallation, config/db.php existe et
+# l'installation est sautée : aucune attente de type « premier démarrage ».
+- name: Installer Vvveb en CLI (base + compte admin)
+  community.docker.docker_container_exec:
+    container: "{{ pgrole }}"
+    chdir: /var/www/html
+    argv:
+      - php
+      - cli.php
+      - install
+      - engine=mysqli
+      - host=db-{{ pgrole }}
+      - user={{ pgrole }}
+      - password={{ pgrole }}
+      - database={{ pgrole }}
+      - admin[email]=admin@{{ user.domain }}
+      - admin[username]=admin
+      - admin[password]={{ vvveb_admin_password }}
+  register: vvveb_install_cmd
+  until: vvveb_install_cmd.rc == 0
+  retries: 30
+  delay: 5
+  failed_when: false
+  no_log: true
+  when: vvveb_installed.rc != 0
+
+- name: Avertir si l'installation CLI a échoué
+  ansible.builtin.debug:
+    msg:
+      - "L'installation automatique de Vvveb a échoué (base non prête ?)."
+      - "Terminez l'installation depuis l'interface web : https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}/install"
+  when: vvveb_installed.rc != 0 and vvveb_install_cmd.rc | default(1) != 0
+
+- name: Afficher les identifiants administrateur Vvveb
+  ansible.builtin.debug:
+    msg:
+      - "=================================================="
+      - "VVVEB - INSTALLATION TERMINEE"
+      - "=================================================="
+      - "Instance : https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}"
+      - "Administration : https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}/admin"
+      - "Utilisateur : admin"
+      - "Mot de passe : {{ vvveb_admin_password }}"
+      - "=================================================="
+  when: vvveb_install_cmd.rc | default(1) == 0
+
+- name: Indiquer qu'un compte existe déjà (réinstallation)
+  ansible.builtin.debug:
+    msg:
+      - "Vvveb est déjà installé : configuration et compte administrateur conservés."
+      - "Instance : https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}"
+  when: vvveb_installed.rc == 0
