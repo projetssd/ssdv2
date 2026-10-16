@@ -844,7 +844,10 @@ function suppression_appli() {
     # Le réseau dédié (créé par la posttask mariadb) n'est pas tracké par le
     # registre conteneurs/volumes : suppression ciblée ici.
     docker network rm vvveb-net >/dev/null 2>&1
-    manage_account_yml vvveb.admin_password " "
+    # Secret hors dossier applicatif : suppression en mode complet uniquement.
+    if [ $DELETE -eq 1 ]; then
+      sudo rm -rf "${SETTINGS_STORAGE}/docker/${USER}/vvveb-secrets" >/dev/null 2>&1
+    fi
     ;;
   esac
 
