@@ -1,12 +1,24 @@
 #!/bin/bash
 
 
+# Active le venv SSDV2 uniquement s'il est exploitable. Le venv est construit
+# sur l'hôte avec un shebang vers /usr/bin/python3 ; dans le conteneur WebUI ce
+# binaire n'existe pas, et l'activer casserait ansible-vault/ansible-playbook
+# (utilisés par manage_account_yml). On laisse alors le PATH ambiant (ansible
+# système fourni par l'image).
+_ssdv2_activate_venv() {
+  "${SETTINGS_SOURCE}/venv/bin/python" -c 'import sys' >/dev/null 2>&1 || return 1
+  # shellcheck disable=SC1091
+  source "${SETTINGS_SOURCE}/venv/bin/activate"
+  return 0
+}
+
 # Si le fichier n'existe pas, on ne fait rien
 if [ -f "${HOME}/.config/ssd/env" ]; then
   source "${HOME}/.config/ssd/env"
   export PATH="$HOME/.local/bin:$PATH"
   # On rentre dans le venv
-  source ${SETTINGS_SOURCE}/venv/bin/activate
+  _ssdv2_activate_venv
   # On charge les variables
   source ${SETTINGS_SOURCE}/includes/variables.sh
   # On charge les fonctions
@@ -14,10 +26,12 @@ if [ -f "${HOME}/.config/ssd/env" ]; then
   # On charge les fonctions qui sont lancées par le menu
   source ${SETTINGS_SOURCE}/includes/menus.sh
 
-  PYTHONPATH=${SETTINGS_SOURCE}/venv/lib/$(ls ${SETTINGS_SOURCE}/venv/lib)/site-packages
-  export PYTHONPATH
-  # le fonction nous a probablement fait sortir du venv, on le recharge
-  source ${SETTINGS_SOURCE}/venv/bin/activate
+  # PYTHONPATH n'est renseigné que si le venv est exploitable (sinon il
+  # fausserait l'ansible système du conteneur WebUI).
+  if _ssdv2_activate_venv; then
+    PYTHONPATH=${SETTINGS_SOURCE}/venv/lib/$(ls ${SETTINGS_SOURCE}/venv/lib)/site-packages
+    export PYTHONPATH
+  fi
 
   # ------------------------------------------------------------------
   # Rechargement automatique après une mise à jour (git pull)
