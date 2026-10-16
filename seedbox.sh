@@ -141,9 +141,10 @@ IS_INSTALLED=$(select_seedbox_param "installed")
 if [ $mode_install = "manuel" ]; then
 
   if [[ ${IS_INSTALLED} -eq 0 ]]; then
+      mkdir -p "${SETTINGS_STORAGE}/conf"
       shopt -s nullglob
       for patch_path in "${SETTINGS_SOURCE}"/patches/*; do
-        echo "$(basename "${patch_path}")" >>"${HOME}/.config/ssd/patches"
+        echo "$(basename "${patch_path}")" >>"${SETTINGS_STORAGE}/conf/.ssdv2-patches"
       done
       shopt -u nullglob
       if [[ ${IS_INSTALLED} -eq 0 ]]; then

@@ -4,6 +4,17 @@
     name: '{{pgrole}}-net'
     state: present
 
+# Le registre peut renvoyer une limite de débit transitoire (toomanyrequests).
+# On réessaie le pull ; l'image n'est téléchargée que si elle est absente.
+- name: 'Récupérer l''image MariaDB (résiste aux limites de débit du registre)'
+  community.docker.docker_image:
+    name: 'mariadb:10.6.4'
+    source: pull
+  register: mariadb_pull
+  until: mariadb_pull is not failed
+  retries: 12
+  delay: 15
+
 - name: 'Deploying db-{{pgrole}}'
   docker_container:
     keep_volumes: false
@@ -12,7 +23,7 @@
     name: 'db-{{pgrole}}'
     recreate: true
     image: 'mariadb:10.6.4'
-    pull: yes
+    pull: false
     volumes:
       - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}/data:/var/lib/mysql"
       - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}/init:/docker-entrypoint-initdb.d"

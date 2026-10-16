@@ -4,6 +4,18 @@
     name: '{{pgrole}}-net'
     state: present
 
+# Le registre (lscr.io -> ghcr.io) renvoie parfois une limite de débit
+# transitoire (toomanyrequests) qui ferait échouer le déploiement. On réessaie
+# le pull ; l'image n'est téléchargée que si elle est absente localement.
+- name: 'Récupérer l''image MariaDB (résiste aux limites de débit du registre)'
+  community.docker.docker_image:
+    name: 'lscr.io/linuxserver/mariadb'
+    source: pull
+  register: mariadb_pull
+  until: mariadb_pull is not failed
+  retries: 12
+  delay: 15
+
 - name: 'Deploying db-{{pgrole}}'
   docker_container:
     keep_volumes: false
@@ -12,9 +24,12 @@
     name: 'db-{{pgrole}}'
     recreate: true
     image: 'lscr.io/linuxserver/mariadb'
-    pull: yes
+    pull: false
     volumes:
-      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}:/var/lib/mysql"
+      # L'image linuxserver/mariadb stocke ses données dans /config
+      # (MYSQL_DIR=/config, DATADIR=/config/databases) : le bind doit cibler
+      # /config, sinon la base part dans un volume anonyme (perdue au rm -v).
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/db-{{pgrole}}:/config"
     env:
       MYSQL_ROOT_PASSWORD: "{{user.pass}}"
       MYSQL_USER: "{{pgrole}}"

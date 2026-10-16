@@ -12,4 +12,10 @@
 source "${SETTINGS_SOURCE}/includes/variables.sh"
 source "${SETTINGS_SOURCE}/includes/menus.sh"
 source "${SETTINGS_SOURCE}/includes/functions.sh"
+
+# Toute action de gestion lancée via ce wrapper (WebUI et scripts Python)
+# applique d'abord les patchs SSDV2 en attente. Idempotent : sans effet si
+# rien n'est en attente. Un échec ne doit jamais bloquer l'action demandée.
+apply_patches || true
+
 "$@"

@@ -1,0 +1,142 @@
+#!/bin/bash
+##############################################################################
+# Migration du datadir MariaDB (image linuxserver) : /var/lib/mysql -> /config
+#
+# L'image lscr.io/linuxserver/mariadb stocke ses données dans /config
+# (Environnement de l'image : MYSQL_DIR=/config, DATADIR=/config/databases ;
+# volume déclaré : /config). Le template generique/mariadb.yml montait un bind
+# inutilisé sur /var/lib/mysql : la base finissait dans un volume anonyme
+# /config, donc supprimée par `docker rm -v` lors d'une suppression partielle
+# ou d'une recréation.
+#
+# Ce patch, appliqué une seule fois :
+#   1. détecte les apps dont db-<app> utilise l'image linuxserver/mariadb avec
+#      un volume (anonyme) monté sur /config ;
+#   2. déplace les données vers le bind applicatif .../<app>/db-<app> ;
+#   3. recrée le conteneur db-<app> avec le bon montage /config ;
+#   4. supprime le volume anonyme devenu inutile et le retire du registre.
+#
+# Idempotent : ne fait rien si le bind contient déjà les données.
+##############################################################################
+
+set -u
+
+if [ -z "${SETTINGS_SOURCE:-}" ] && [ -f "${HOME}/.config/ssd/env" ]; then
+  # shellcheck disable=SC1090
+  source "${HOME}/.config/ssd/env"
+fi
+SETTINGS_SOURCE="${SETTINGS_SOURCE:-${HOME}/seedbox-compose}"
+SETTINGS_STORAGE="${SETTINGS_STORAGE:-${HOME}/seedbox}"
+USER="${USER:-$(id -un)}"
+
+command -v docker >/dev/null 2>&1 || exit 0
+command -v sqlite3 >/dev/null 2>&1 || exit 0
+
+DB="${SETTINGS_SOURCE}/ssddb"
+[ -f "$DB" ] || exit 0
+
+# Retire du registre <app>.volumes les entrées de volumes qui n'existent plus
+# (ex. volume anonyme supprimé après migration). Idempotent.
+prune_vol_registry() {
+  local app="$1"
+  local volfile="${SETTINGS_STORAGE}/conf/${app}.volumes"
+  local tmp="${volfile}.tmp" existing v
+  [ -s "$volfile" ] || return 0
+  existing="$(docker volume ls -q 2>/dev/null)"
+  while IFS= read -r v; do
+    [ -n "$v" ] || continue
+    printf '%s\n' "$existing" | grep -qxF -- "$v" && echo "$v"
+  done < "$volfile" > "$tmp"
+  mv "$tmp" "$volfile"
+}
+
+migrate_one() {
+  local app="$1"
+  local ctr="db-${app}"
+  local img anon dest restart
+
+  docker inspect "$ctr" >/dev/null 2>&1 || return 0
+
+  img="$(docker inspect -f '{{.Config.Image}}' "$ctr" 2>/dev/null)"
+  case "$img" in
+    *linuxserver/mariadb*) : ;;
+    *) return 0 ;;
+  esac
+
+  prune_vol_registry "$app"
+
+  # Volume (anonyme ou nommé) monté sur /config
+  anon="$(docker inspect -f '{{range .Mounts}}{{if and (eq .Destination "/config") (eq .Type "volume")}}{{.Name}}{{end}}{{end}}' "$ctr" 2>/dev/null)"
+  [ -n "$anon" ] || return 0
+
+  dest="${SETTINGS_STORAGE}/docker/${USER}/${app}/db-${app}"
+
+  # Déjà migré ?
+  if [ -d "${dest}/databases" ] || [ -d "${dest}/mysql" ]; then
+    return 0
+  fi
+
+  # Le volume est root-only sur l'hôte : on l'inspecte et on copie via un
+  # conteneur jetable (image déjà présente), sans dépendre des droits hôte.
+  if ! docker run --rm --entrypoint /bin/sh -v "${anon}:/from:ro" "$img" \
+       -c '[ -d /from/databases ] || [ -d /from/mysql ]' >/dev/null 2>&1; then
+    return 0
+  fi
+
+  echo "==> Migration MariaDB de ${app} (${ctr})"
+
+  restart="$(docker inspect -f '{{.HostConfig.RestartPolicy.Name}}' "$ctr" 2>/dev/null)"
+  [ -n "$restart" ] || restart=unless-stopped
+
+  local -a env_args=() label_args=() net_args=()
+  local line
+  while IFS= read -r line; do [ -n "$line" ] && env_args+=(--env "$line"); done \
+    < <(docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' "$ctr" 2>/dev/null)
+  while IFS= read -r line; do [ -n "$line" ] && label_args+=(--label "$line"); done \
+    < <(docker inspect -f '{{range $k,$v := .Config.Labels}}{{$k}}={{$v}}{{"\n"}}{{end}}' "$ctr" 2>/dev/null)
+
+  local nets primary
+  nets="$(docker inspect -f '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{"\n"}}{{end}}' "$ctr" 2>/dev/null)"
+  primary="$(printf '%s\n' "$nets" | sed '/^$/d' | head -n1)"
+  [ -n "$primary" ] && net_args=(--network "$primary")
+
+  docker stop "$ctr" >/dev/null 2>&1
+  mkdir -p "$dest"
+  # Copie volume -> bind via conteneur (ro sur /from).
+  if ! docker run --rm --entrypoint /bin/sh \
+       -v "${anon}:/from:ro" -v "${dest}:/to" "$img" \
+       -c 'cp -a /from/. /to/' >/dev/null 2>&1; then
+    echo "    ATTENTION : copie impossible pour ${app}. Aucun changement."
+    docker start "$ctr" >/dev/null 2>&1
+    return 0
+  fi
+
+  # On retire le conteneur SANS -v : le volume anonyme reste en secours.
+  docker rm -f "$ctr" >/dev/null 2>&1
+
+  docker run -d --name "$ctr" --restart "$restart" \
+    "${env_args[@]}" "${label_args[@]}" "${net_args[@]}" \
+    -v "${dest}:/config" \
+    "$img" >/dev/null 2>&1
+
+  printf '%s\n' "$nets" | sed '/^$/d' | tail -n +2 | while IFS= read -r n; do
+    docker network connect "$n" "$ctr" >/dev/null 2>&1
+  done
+
+  sleep 5
+  if [ "$(docker inspect -f '{{.State.Running}}' "$ctr" 2>/dev/null)" = "true" ]; then
+    docker volume rm "$anon" >/dev/null 2>&1
+    prune_vol_registry "$app"
+    echo "    OK : données -> ${dest}, volume anonyme supprimé"
+  else
+    echo "    ATTENTION : ${ctr} ne redémarre pas. Le volume ${anon} est conservé."
+  fi
+}
+
+while IFS= read -r app; do
+  [ -n "$app" ] || continue
+  [ "$app" = "traefik" ] && continue
+  migrate_one "$app"
+done < <(sqlite3 "$DB" "select name from applications;" 2>/dev/null)
+
+exit 0

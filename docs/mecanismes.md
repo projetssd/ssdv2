@@ -143,6 +143,20 @@ La suppression combine : **label `ssdv2.app`** + **registres** + **conventions d
 nommage** (`db-`, `redis-`, `memcached-`) + **fallback historique** (cas
 particuliers codés).
 
+### Persistance des bases de données
+
+Le bind doit cibler le **datadir réel** de l'image, sinon la base part dans un
+volume anonyme (supprimé par `docker rm -v` en suppression partielle ou lors
+d'une recréation) :
+
+- `lscr.io/linuxserver/mariadb` → `MYSQL_DIR=/config`, `DATADIR=/config/databases` :
+  monter `{{pgrole}}/db-{{pgrole}}:/config` (corrigé par le patch
+  `patches/20261015_mariadb_config_datadir`).
+- `mariadb:<tag>` (image officielle) → `.../db-{{pgrole}}/data:/var/lib/mysql`.
+
+Règle générale : vérifier `docker inspect` de l'image (`Volumes`, env
+`DATADIR`) avant de choisir le point de montage.
+
 ## Cache `account.yml`
 
 `account.yml` (chiffré par Ansible Vault) est déchiffré **une fois par session**
@@ -190,6 +204,21 @@ recharge automatiquement et affiche `[SSDV2] fonctions rechargées (commit X)`.
 - **Premier déploiement** : un shell déjà ouvert avant l'ajout de ce mécanisme
   doit être rechargé **une fois** (`source ~/seedbox-compose/profile.sh`) ou
   reconnecté ; ensuite, c'est automatique.
+
+## Application des patchs (`apply_patches`)
+
+Les patchs de `patches/` sont appliqués **au démarrage du menu CLI**
+(`./seedbox.sh`) **et à chaque action de gestion** lancée via le wrapper
+`includes/config/scripts/generique.sh` (utilisé par la WebUI et les scripts
+Python). Tout patch non encore tracé est donc appliqué avant l'action demandée.
+
+- Marqueur d'état : `${SETTINGS_STORAGE}/conf/.ssdv2-patches` (partagé entre CLI
+  et WebUI, la WebUI montant `${SETTINGS_STORAGE}`). L'ancien
+  `~/.config/ssd/patches` est repris automatiquement au premier passage.
+- Idempotent : un patch déjà tracé n'est pas réexécuté. Si le marqueur n'est
+  pas inscriptible, aucun patch n'est lancé (pour éviter toute réapplication en
+  boucle).
+- Force : `FORCE_PATCH=<nom>` ou `FORCE_PATCH=1` (réexécution).
 
 ## Tests
 
