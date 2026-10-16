@@ -840,6 +840,12 @@ function suppression_appli() {
       sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/projet-ssd >/dev/null 2>&1
     fi
     ;;
+  vvveb)
+    # Le réseau dédié (créé par la posttask mariadb) n'est pas tracké par le
+    # registre conteneurs/volumes : suppression ciblée ici.
+    docker network rm vvveb-net >/dev/null 2>&1
+    manage_account_yml vvveb.admin_password " "
+    ;;
   esac
 
   if docker ps -a --format '{{.Names}}' | grep -qx "${APPSELECTED}"; then

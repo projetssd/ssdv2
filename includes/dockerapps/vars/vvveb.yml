@@ -1,0 +1,16 @@
+---
+pgrole: 'vvveb'
+intport: '80'
+image: 'vvveb/vvvebcms:latest'
+
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}:/var/www/html"
+
+pg_env:
+  TZ: "Europe/Paris"
+  DB_ENGINE: "mysqli"
+  DB_HOST: "db-{{ pgrole }}"
+  DB_DATABASE: "{{ pgrole }}"
+  DB_USER: "{{ pgrole }}"
+  DB_PASSWORD: "{{ pgrole }}"
+  DB_PORT: "3306"
