@@ -5,7 +5,9 @@ image: 'lscr.io/linuxserver/sonarr:develop'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
-  - "/mnt:/mnt:rw"
+  # rshared : suit les (re)montages FUSE Decypharr sous /mnt (sinon montage mort après
+  # un redémarrage de Decypharr : « Transport endpoint is not connected »).
+  - "/mnt:/mnt:rshared,rw"
 pg_env:
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
