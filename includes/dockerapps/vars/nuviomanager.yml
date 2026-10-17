@@ -1,7 +1,7 @@
 ---
 pgrole: 'nuviomanager'
 intport: '3100'
-image: 'ghcr.io/guiro28/nuvio-manager:dev'
+image: 'ghcr.io/guiro28/nuvio-manager:latest'
 
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/app/data:rw"
