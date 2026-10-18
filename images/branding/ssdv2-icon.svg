@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600" role="img" aria-label="SSDv2 - icon"><title>SSDv2 - icon</title><defs id="ssdv2-gradients">
+<linearGradient id="top" x1="205" y1="245" x2="835" y2="206" gradientUnits="userSpaceOnUse"><stop stop-color="#249efa" /><stop offset=".56" stop-color="#34bbfb" /><stop offset="1" stop-color="#0ae6ef" /></linearGradient>
+<linearGradient id="leftSide" x1="188" y1="355" x2="393" y2="596" gradientUnits="userSpaceOnUse"><stop stop-color="#128cfa" /><stop offset=".58" stop-color="#1361ed" /><stop offset="1" stop-color="#2844de" /></linearGradient>
+<linearGradient id="cross" x1="180" y1="560" x2="755" y2="814" gradientUnits="userSpaceOnUse"><stop stop-color="#2059f9" /><stop offset=".52" stop-color="#2269ff" /><stop offset="1" stop-color="#2995fb" /></linearGradient>
+<linearGradient id="middle" x1="480" y1="520" x2="1048" y2="666" gradientUnits="userSpaceOnUse"><stop stop-color="#268cfb" /><stop offset=".52" stop-color="#2ab3fa" /><stop offset="1" stop-color="#20c8f7" /></linearGradient>
+<linearGradient id="rightSide" x1="790" y1="726" x2="1101" y2="947" gradientUnits="userSpaceOnUse"><stop stop-color="#1676ed" /><stop offset="1" stop-color="#285ef7" /></linearGradient>
+<linearGradient id="bottom" x1="474" y1="1110" x2="1033" y2="931" gradientUnits="userSpaceOnUse"><stop stop-color="#7641fb" /><stop offset=".42" stop-color="#365afa" /><stop offset="1" stop-color="#256efb" /></linearGradient>
+<linearGradient id="cyanTab" x1="754" y1="321" x2="1071" y2="526" gradientUnits="userSpaceOnUse"><stop stop-color="#00edeb" /><stop offset=".62" stop-color="#09dfee" /><stop offset="1" stop-color="#03cfe9" /></linearGradient>
+<linearGradient id="violetTab" x1="200" y1="840" x2="513" y2="875" gradientUnits="userSpaceOnUse"><stop stop-color="#7c2fff" /><stop offset=".62" stop-color="#9339ff" /><stop offset="1" stop-color="#9b46f8" /></linearGradient>
+<linearGradient id="violetFace" x1="182" y1="847" x2="287" y2="947" gradientUnits="userSpaceOnUse"><stop stop-color="#7f2cf5" /><stop offset="1" stop-color="#9030fa" /></linearGradient>
+</defs><g transform="translate(23 22) scale(0.445)"><g id="ssdv2-symbol">
+<path d="M182 336 Q182 319 200 309 L387 420 L389 550 Q387 559 399 566 L608 682 L594 852 L207 638 Q179 623 178 590 Z" fill="url(#leftSide)" />
+<path d="M839 730 L1039 647 Q1067 658 1071 687 L1071 903 Q1071 929 1045 950 L847 1063 L740 932 L839 785 Q850 779 850 766 L850 747 Q850 738 839 730Z" fill="url(#rightSide)" />
+<path d="M204 308 L632 70 Q656 56 676 63 L869 169 Q887 179 878 196 Q874 201 860 210 L389 473 L204 368 Q182 356 182 341 Q182 322 204 308Z" fill="url(#top)" />
+<path d="M382 471 L864 202 Q872 198 875 193 L870 206 L389 481Z" fill="#16d0fe" opacity=".48" />
+<path d="M471 498 L629 423 Q643 414 655 423 L1048 647 Q1071 662 1071 682 L1071 760 Q1071 772 1062 779 L852 779 L852 756 Q852 740 839 731 L474 516 Q462 510 471 498Z" fill="url(#middle)" />
+<path d="M728 362 L920 251 Q937 242 955 251 L1045 304 Q1070 320 1070 341 L1070 551 Q1069 580 1044 568 L729 389 Q709 376 728 362Z" fill="url(#cyanTab)" />
+
+<path d="M178 542 Q178 561 198 577 L578 848 Q592 860 608 851 L742 783 Q759 775 743 761 L395 561 Q386 554 388 542 L388 473 L182 354Z" fill="url(#cross)" />
+<path d="M188 571 L583 853 Q596 861 608 854 L742 788 L610 858 Q592 869 579 858Z" fill="#2172f9" opacity=".5" />
+<path d="M176 710 Q176 697 185 698 Q192 697 200 702 L369 810 L380 806 Q388 801 397 806 L515 876 Q531 887 520 899 L331 994 Q304 1007 280 995 L194 947 Q176 936 176 916 Z" fill="url(#violetTab)" />
+<path d="M176 710 Q176 697 185 698 Q192 697 200 702 L369 810 L185 918 Q176 921 176 915Z" fill="url(#violetFace)" opacity=".48" />
+<path d="M386 1039 L844 780 Q852 775 852 765 L852 755 L1046 866 Q1071 881 1071 903 Q1071 932 1043 950 L629 1183 Q611 1195 591 1185 L390 1071 Q365 1058 386 1039Z" fill="url(#bottom)" />
+</g></g></svg>
