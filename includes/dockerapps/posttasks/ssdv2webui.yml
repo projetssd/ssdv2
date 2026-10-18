@@ -60,8 +60,9 @@
       - "  1. Ouvrez {{ ssdv2webui_url }}/setup"
       - "  2. Jeton d'installation : {{ ssdv2webui_setup_token }}"
       - "     (également dans les journaux : docker logs ssdv2webui 2>&1 | grep -i jeton)"
-      - "  3. Identifiant + mot de passe (>= 12 caractères), puis choix de"
-      - "     l'authentification interne."
+      - "  3. Identifiant + mot de passe (>= 12 caractères)."
+      - "  4. Étape « Sécurité » : le mode d'authentification est détecté"
+      - "     (interne par défaut ; proxy si un proxy de confiance est configuré)."
       - "=================================================="
   when: ssdv2webui_setup_token is defined
 
