@@ -99,7 +99,7 @@
       - name: "Backup 'Preferences.xml' before removal (malformed)"
         copy:
           src: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
-          dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml.bak-{{ ansible_date_time.iso8601_basic_short }}"
+          dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml.bak-{{ ansible_facts['date_time']['iso8601_basic_short'] }}"
           remote_src: true
         when: (preferences_xml_resp is failed)
 
