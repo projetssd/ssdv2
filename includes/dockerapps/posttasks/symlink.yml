@@ -1,0 +1,86 @@
+---
+# Instructions après installation : le compte administrateur est créé par
+# l'assistant /setup. Le jeton est journalisé par l'application au premier
+# démarrage et conservé dans le volume de données jusqu'à la création du compte
+# (il est ensuite supprimé). Il est affiché ici pour éviter d'avoir à consulter
+# les journaux.
+
+- name: Définir l'URL et le dossier de données de Symlink
+  ansible.builtin.set_fact:
+    symlink_url: "https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}"
+    symlink_data_dir: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data"
+
+# Réinstallation : si la base existe déjà, le compte a été initialisé et le jeton
+# de premier démarrage ne sera pas régénéré.
+- name: Vérifier si l'instance Symlink a déjà démarré
+  ansible.builtin.stat:
+    path: "{{ symlink_data_dir }}/{{ pgrole }}.sqlite3"
+  register: symlink_existing_db
+
+- name: Vérifier la présence du jeton d'installation
+  ansible.builtin.stat:
+    path: "{{ symlink_data_dir }}/setup-token"
+  register: symlink_token_file
+
+# Premier démarrage uniquement : on attend brièvement que l'application écrive
+# le jeton. En réinstallation (base existante), on n'attend pas.
+- name: Attendre le jeton d'installation (premier démarrage)
+  ansible.builtin.wait_for:
+    path: "{{ symlink_data_dir }}/setup-token"
+    timeout: 60
+  register: symlink_token_wait
+  failed_when: false
+  changed_when: false
+  when:
+    - not (symlink_existing_db.stat.exists | default(false))
+    - not symlink_token_file.stat.exists
+
+- name: Relire la présence du jeton
+  ansible.builtin.stat:
+    path: "{{ symlink_data_dir }}/setup-token"
+  register: symlink_token_final
+
+- name: Lire le jeton d'installation
+  ansible.builtin.slurp:
+    src: "{{ symlink_data_dir }}/setup-token"
+  register: symlink_token_raw
+  failed_when: false
+  when: symlink_token_final.stat.exists
+
+- name: Définir le jeton d'installation
+  ansible.builtin.set_fact:
+    symlink_setup_token: "{{ symlink_token_raw.content | b64decode | trim }}"
+  when:
+    - symlink_token_raw is not skipped
+    - symlink_token_raw.content is defined
+
+- name: Afficher les instructions de premier démarrage
+  ansible.builtin.debug:
+    msg:
+      - "=================================================="
+      - "SYMLINK - INSTALLATION TERMINEE"
+      - "=================================================="
+      - "URL : {{ symlink_url }}"
+      - "Authentification SSDV2 : {{ sub[pgrole].auth | default('aucune', true) }}"
+      - ""
+      - "Assistant /setup : création du compte administrateur"
+      - "  1. Ouvrez {{ symlink_url }}/setup"
+      - "  2. Jeton d'installation : {{ symlink_setup_token }}"
+      - "     (également dans les journaux : docker logs symlink 2>&1 | grep -i 'jeton d''installation')"
+      - "  3. Identifiant + mot de passe (>= 12 caractères)."
+      - ""
+      - "Ensuite, dans l'interface : Radarr/Sonarr (URL + clé API), import Radarr, AllDebrid."
+      - "=================================================="
+  when: symlink_setup_token is defined
+
+- name: Afficher les instructions (compte déjà initialisé)
+  ansible.builtin.debug:
+    msg:
+      - "=================================================="
+      - "SYMLINK - INSTALLATION TERMINEE"
+      - "=================================================="
+      - "URL : {{ symlink_url }}"
+      - "Aucun jeton d'installation : un compte administrateur existe déjà"
+      - "(ou SYMLINK_ADMIN_PASSWORD est fourni). Connectez-vous directement."
+      - "=================================================="
+  when: symlink_setup_token is not defined

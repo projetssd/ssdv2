@@ -153,6 +153,7 @@ streamfusion - addon for Stremio streaming
 stremioaddonproxy - Proxy pour les addons Stremio
 stremthru - Proxy pour Stremio
 subsonic - Serveur multimédia
+symlink - Gestion seedbox : nettoyage de liens cassés (Radarr/Sonarr), import Radarr et nettoyage AllDebrid
 synclounge - Adon Plex
 syncthing - Synchronisation de fichiers
 tautulli - Monitoring de Plex

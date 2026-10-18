@@ -1,0 +1,42 @@
+---
+# Traefik, HTTPS et authentification sont configurés par SSDV2.
+# Pas de pretask, pas d'extra_labels spécifique.
+pgrole: 'symlink'
+intport: '8000'
+image: 'ghcr.io/kesurof/ssdv2-symlink:latest'
+
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/data:rw"
+  # Sélecteurs Radarr : navigation en lecture seule sur le home, bibliothèques de films en
+  # lecture/écriture pour retirer les liens cassés, préfixes cibles /mnt en lecture seule.
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}:ro"
+  - "{{ lookup('env','HOME') }}/Medias:{{ lookup('env','HOME') }}/Medias:rw"
+  # `rshared` est indispensable : les cibles des liens vivent sur les montages FUSE Decypharr
+  # sous /mnt. Sans propagation partagée, un (re)montage FUSE postérieur au démarrage du
+  # conteneur laisse un montage mort (Transport endpoint is not connected) et tous les liens
+  # paraissent cassés. Convention SSDV2 : decypharr.yml, autoscan, jellyfin.
+  - "/mnt:/mnt:rshared,ro"
+  # Bases lues en lecture seule : dossier de configuration de chaque application.
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/radarr/config:/radarr-config:ro"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/sonarr/config:/sonarr-config:ro"
+
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  TZ: "Europe/Paris"
+
+  # Derrière Traefik (HTTPS), les cookies de session sont sécurisés.
+  COOKIE_SECURE: "true"
+
+  # Connexion interne par défaut, même derrière l'authentification SSDV2.
+  # Le mode proxy avancé reste paramétrable dans SymLink, sans lien avec SSDV2.
+  SESSION_TTL_HOURS: "168"
+
+specific_docker_info:
+  restart_policy: unless-stopped
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+    start_period: 10s
