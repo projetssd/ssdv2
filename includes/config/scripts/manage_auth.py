@@ -122,6 +122,11 @@ def manage_account_yml(key: str, value: str) -> bool:
 def launch_service(app_name: str) -> bool:
     return call_bash_function_live("launch_service", app_name)
 
+
+def apply_auth_label(app_name: str) -> bool:
+    """Applique l'auth en ne recréant que le label Traefik (sans playbook)."""
+    return call_bash_function_live("apply_auth_label", app_name)
+
 # ---------- Gestion Auth Apps ----------
 
 class AuthManager:
@@ -284,14 +289,14 @@ class AuthManager:
             return
 
         print("")
-        restart = input("Relancer les apps modifiées (launch_service) ? (y/n): ").lower()
+        restart = input("Appliquer l'authentification (recréation label-only, sans playbook) ? (y/n): ").lower()
         if restart == 'y':
             print("")
             for app in successful_changes:
-                choice = input(f"Recréer {app}? (y/n): ").lower()
+                choice = input(f"Appliquer à {app}? (y/n): ").lower()
                 if choice == 'y':
-                    print(f"{Colors.WHITE}Lancement du playbook pour {app}...{Colors.NC}")
-                    if launch_service(app):
+                    print(f"{Colors.WHITE}Application du label d'authentification pour {app}...{Colors.NC}")
+                    if apply_auth_label(app):
                         print(f"{Colors.GREEN}✓ Service {app} OK{Colors.NC}")
                     else:
                         print(f"{Colors.RED}❌ Service {app} FAIL{Colors.NC}")

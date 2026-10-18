@@ -1,0 +1,1118 @@
+#!/usr/bin/env python3
+"""ssdv2ctl — interface non interactive et JSON avec le moteur SSDV2.
+
+Palier lecture seule :
+
+    ssdv2ctl apps list [--json]
+    ssdv2ctl app status <app> [--json]
+
+Palier actions (conteneurs existants de l'application) :
+
+    ssdv2ctl app start <app> [--json]
+    ssdv2ctl app stop <app> [--json]
+    ssdv2ctl app restart <app> [--json]
+
+Palier cycle de vie :
+
+    ssdv2ctl app install <app> [--subdomain <sous-domaine>] [--auth <type>]
+    ssdv2ctl app remove <app> [--delete-data]
+    ssdv2ctl app reinstall <app>
+    ssdv2ctl app recreate <app>
+    ssdv2ctl app update <app>
+    ssdv2ctl app backup <app>
+    ssdv2ctl auth get <app>
+    ssdv2ctl auth set <app> <type>
+    ssdv2ctl auth apply <app> [<type>]
+    ssdv2ctl auth list
+    ssdv2ctl auth set-many <type> <app> [<app>...]
+    ssdv2ctl config get <clé>
+    ssdv2ctl config list
+
+``install`` exige que ``sub.<app>.<app>`` et ``sub.<app>.auth`` existent dans account.yml
+ou soient fournis par les options ; sinon la commande échoue avec ``interactive_required``
+(aucune invite interactive). ``reinstall`` reproduit la séquence de ``menu_reinit_container``
+sans invite (suppression avec conservation des données, restauration des valeurs
+sub/auth, lancement) et échoue avec ``interactive_required`` si ces valeurs manquent ;
+``recreate`` recrée les conteneurs avec mise à jour de l'image en conservant volumes et
+configuration (rejoue le playbook).
+
+``update`` met à jour l'image des conteneurs de l'application **sans rejouer le playbook**
+(pull + recréation à l'identique des conteneurs courants). ``auth apply`` applique le type
+d'authentification en ne modifiant que le label Traefik du router principal (recréation
+label-only, sans playbook) ; il écrit d'abord ``sub.<app>.auth`` si un type est fourni.
+
+``restart`` correspond à ``docker restart`` sur les conteneurs existants ; le « relancer »
+SSDV2 (``relance_container``), qui recrée le conteneur avec mise à jour de l'image,
+correspond à ``recreate``.
+
+Diagnostics :
+
+    ssdv2ctl diagnostics run
+    ssdv2ctl diagnostics rebuild-registries
+    ssdv2ctl diagnostics cleanup-orphan-containers
+    ssdv2ctl diagnostics cleanup-dangling-volumes
+
+Conventions de sortie :
+
+    - stdout : JSON uniquement (`--json` est accepté et correspond au format par défaut) ;
+    - stderr : erreur JSON structurée ``{"error": {"code", "message"}}`` ;
+    - codes de sortie : 0 succès, 1 erreur métier, 2 usage invalide (argparse).
+
+Les chemins proviennent de ``SETTINGS_SOURCE`` / ``SETTINGS_STORAGE``, sinon de
+``~/.config/ssd/env``, sinon des valeurs par défaut ``~/seedbox-compose`` et ``~/seedbox``.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import sqlite3
+import subprocess
+import sys
+from pathlib import Path
+
+VERSION = "0.5.0"
+SCHEMA_VERSION = 1
+
+EXIT_OK = 0
+EXIT_ERROR = 1
+EXIT_USAGE = 2
+
+ACTION_COMMANDS = ("start", "stop", "restart")
+AUTH_TYPES = ("aucune", "basique", "authelia", "oauth", "oauth2-proxy")
+SUBDOMAIN_PATTERN = re.compile(r"^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$")
+
+ACTION_TIMEOUT = 300
+INSTALL_TIMEOUT = 1800
+DIAGNOSTICS_TIMEOUT = 60
+OUTPUT_TAIL_LINES = 40
+
+CATALOGUE_RELATIVE = Path("includes/config/services-available")
+SSDDB_RELATIVE = Path("ssddb")
+GENERIQUE_RELATIVE = Path("includes/config/scripts/generique.sh")
+PATCH_REGISTRIES_RELATIVE = Path("patches/20260916_backfill_registries")
+REGISTRY_KINDS = ("containers", "volumes", "dns")
+
+SEPARATOR = " - "
+NO_SPACE_SEPARATOR = re.compile(r"^(?P<name>\S+?)\s*-\s+(?P<description>.*)$")
+ENV_FILE = Path.home() / ".config" / "ssd" / "env"
+SUBPROCESS_TIMEOUT = 30
+
+
+class CtlError(Exception):
+    def __init__(self, code: str, message: str, exit_code: int = EXIT_ERROR) -> None:
+        super().__init__(message)
+        self.code = code
+        self.message = message
+        self.exit_code = exit_code
+
+
+def load_env_file(path: Path) -> dict[str, str]:
+    values: dict[str, str] = {}
+    if not path.is_file():
+        return values
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        values[key.strip()] = value.strip().strip('"').strip("'")
+    return values
+
+
+def resolve_settings() -> tuple[Path, Path]:
+    env_file = load_env_file(ENV_FILE)
+    source = (
+        os.environ.get("SETTINGS_SOURCE")
+        or env_file.get("SETTINGS_SOURCE")
+        or str(Path.home() / "seedbox-compose")
+    )
+    storage = (
+        os.environ.get("SETTINGS_STORAGE")
+        or env_file.get("SETTINGS_STORAGE")
+        or str(Path.home() / "seedbox")
+    )
+    return Path(source), Path(storage)
+
+
+def parse_catalogue(text: str) -> list[dict[str, str]]:
+    entries: list[dict[str, str]] = []
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if SEPARATOR in line:
+            name, description = line.split(SEPARATOR, 1)
+        else:
+            match = NO_SPACE_SEPARATOR.match(line)
+            if match:
+                name, description = match.group("name"), match.group("description")
+            else:
+                name, description = line, ""
+        name = name.strip()
+        if not name:
+            continue
+        entries.append({"name": name, "description": description.strip()})
+    return sorted(entries, key=lambda entry: entry["name"].lower())
+
+
+def read_catalogue(source: Path) -> list[dict[str, str]]:
+    path = source / CATALOGUE_RELATIVE
+    if not path.is_file():
+        raise CtlError("catalogue_unavailable", f"catalogue introuvable: {path}")
+    try:
+        return parse_catalogue(path.read_text(encoding="utf-8"))
+    except OSError as exc:
+        raise CtlError("catalogue_unavailable", f"catalogue illisible: {exc}") from exc
+
+
+def require_app(source: Path, app: str) -> str:
+    for entry in read_catalogue(source):
+        if entry["name"] == app:
+            return entry["description"]
+    raise CtlError("unknown_app", f"application inconnue du catalogue: {app}")
+
+
+def read_ssddb(source: Path, app: str) -> tuple[dict | None, str | None]:
+    path = source / SSDDB_RELATIVE
+    if not path.is_file():
+        return None, "ssddb_unavailable"
+    try:
+        with sqlite3.connect(f"file:{path}?mode=ro", uri=True) as connection:
+            connection.row_factory = sqlite3.Row
+            row = connection.execute(
+                "select name, status, subdomain, port from applications where name = ?",
+                (app,),
+            ).fetchone()
+            domain_row = connection.execute(
+                "select value from seedbox_params where param = 'domain'"
+            ).fetchone()
+        domain = domain_row["value"] if domain_row else None
+        if row is None:
+            return None, None
+        return {
+            "status": row["status"],
+            "subdomain": row["subdomain"],
+            "port": row["port"],
+            "domain": domain,
+        }, None
+    except sqlite3.Error:
+        return None, "ssddb_unavailable"
+
+
+def read_registries(storage: Path, app: str) -> tuple[dict[str, list[str]], bool]:
+    registries: dict[str, list[str]] = {}
+    present = False
+    for kind in REGISTRY_KINDS:
+        path = storage / "conf" / f"{app}.{kind}"
+        registries[kind] = []
+        if not path.is_file():
+            continue
+        present = True
+        try:
+            registries[kind] = [
+                line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()
+            ]
+        except OSError:
+            registries[kind] = []
+    return registries, present
+
+
+def usable_venv_bin(source: Path) -> Path | None:
+    venv_bin = source / "venv" / "bin"
+    python = venv_bin / "python"
+    if not python.exists():
+        return None
+    try:
+        result = subprocess.run(
+            [str(python), "--version"],
+            capture_output=True,
+            timeout=10,
+            check=False,
+            stdin=subprocess.DEVNULL,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    return venv_bin if result.returncode == 0 else None
+
+
+BACKUP_TIMEOUT = 1800
+RCLONE_CONFIG = Path(".config") / "rclone" / "rclone.conf"
+
+CONFIG_KEYS = (
+    "settings.source",
+    "settings.storage",
+    "user.domain",
+    "user.mail",
+    "user.name",
+    "oauth_enabled",
+    "oauth_type",
+    "rclone.remote",
+)
+
+
+def _bash_environment(source: Path, storage: Path) -> dict[str, str]:
+    environment = os.environ.copy()
+    environment["SETTINGS_SOURCE"] = str(source)
+    environment["SETTINGS_STORAGE"] = str(storage)
+    if not environment.get("USER"):
+        environment["USER"] = Path(environment.get("HOME", str(Path.home()))).name
+    venv_bin = usable_venv_bin(source)
+    if venv_bin is not None:
+        environment["PATH"] = f"{venv_bin}{os.pathsep}{environment.get('PATH', '')}"
+    return environment
+
+
+def _run_bash(
+    source: Path,
+    storage: Path,
+    argv: list[str],
+    timeout: int,
+    stdin_text: str | None = None,
+) -> subprocess.CompletedProcess:
+    kwargs = (
+        {"input": stdin_text}
+        if stdin_text is not None
+        else {"stdin": subprocess.DEVNULL}
+    )
+    try:
+        return subprocess.run(
+            argv,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            env=_bash_environment(source, storage),
+            check=False,
+            **kwargs,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise CtlError("timeout", f"{argv[-1]} a dépassé {timeout}s sans terminer") from exc
+    except OSError as exc:
+        raise CtlError("ssdv2_functions_unavailable", str(exc)) from exc
+
+
+def run_bash_function(
+    source: Path,
+    storage: Path,
+    function: str,
+    *args: str,
+    timeout: int = ACTION_TIMEOUT,
+    stdin_text: str | None = None,
+) -> subprocess.CompletedProcess:
+    script = source / GENERIQUE_RELATIVE
+    if not script.is_file():
+        raise CtlError("ssdv2_functions_unavailable", f"dispatcher SSDV2 introuvable: {script}")
+    return _run_bash(
+        source, storage, ["bash", str(script), function, *args], timeout, stdin_text
+    )
+
+
+def run_bash_script(
+    source: Path, storage: Path, script: Path, timeout: int = ACTION_TIMEOUT
+) -> subprocess.CompletedProcess:
+    if not script.is_file():
+        raise CtlError("script_unavailable", f"script SSDV2 introuvable: {script}")
+    return _run_bash(source, storage, ["bash", str(script)], timeout)
+
+
+def collect_candidates(source: Path, storage: Path, app: str) -> list[str]:
+    try:
+        result = run_bash_function(source, storage, "collect_app_containers", app)
+    except CtlError:
+        return []
+    return [line.strip() for line in result.stdout.splitlines() if line.strip()]
+
+
+def read_account_value(source: Path, storage: Path, key: str) -> str | None:
+    result = run_bash_function(
+        source, storage, "get_from_account_yml", key, timeout=DIAGNOSTICS_TIMEOUT
+    )
+    if result.returncode != 0:
+        raise CtlError(
+            "account_read_failed",
+            f"lecture de {key} impossible: {result.stderr.strip() or result.stdout.strip()}",
+        )
+    value = result.stdout.strip()
+    if not value or value.lower() in ("notfound", "none"):
+        return None
+    return value
+
+
+def write_account_value(source: Path, storage: Path, key: str, value: str) -> None:
+    result = run_bash_function(
+        source, storage, "manage_account_yml", key, value, timeout=DIAGNOSTICS_TIMEOUT
+    )
+    if result.returncode != 0:
+        raise CtlError(
+            "account_write_failed",
+            f"écriture de {key} impossible: {result.stderr.strip() or result.stdout.strip()}",
+        )
+
+
+def inspect_containers(names: list[str]) -> tuple[list[dict], bool]:
+    if not names:
+        return [], True
+    try:
+        result = subprocess.run(
+            ["docker", "inspect", *names],
+            capture_output=True,
+            text=True,
+            timeout=SUBPROCESS_TIMEOUT,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return [], False
+    if not result.stdout.strip():
+        return [], False
+    try:
+        raw_containers = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        return [], False
+    containers = []
+    for raw in raw_containers:
+        state = raw.get("State", {})
+        containers.append(
+            {
+                "name": str(raw.get("Name", "")).lstrip("/"),
+                "image": raw.get("Config", {}).get("Image"),
+                "state": state.get("Status"),
+                "health": state.get("Health", {}).get("Status"),
+            }
+        )
+    return sorted(containers, key=lambda container: container["name"]), True
+
+
+def run_container_action(action: str, names: list[str]) -> list[dict]:
+    results = []
+    for name in names:
+        try:
+            result = subprocess.run(
+                ["docker", action, name],
+                capture_output=True,
+                text=True,
+                timeout=SUBPROCESS_TIMEOUT,
+                check=False,
+            )
+            ok = result.returncode == 0
+            results.append(
+                {
+                    "name": name,
+                    "ok": ok,
+                    "error": None if ok else (result.stderr.strip() or "échec de la commande"),
+                }
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            results.append({"name": name, "ok": False, "error": "docker indisponible"})
+    return results
+
+
+def command_app_action(source: Path, storage: Path, app: str, action: str) -> dict:
+    require_app(source, app)
+    candidates = collect_candidates(source, storage, app)
+    containers, docker_ok = inspect_containers(candidates)
+    if not docker_ok:
+        raise CtlError("docker_unavailable", "Docker est indisponible")
+    names = [container["name"] for container in containers]
+    if not names:
+        raise CtlError("no_containers", f"aucun conteneur existant pour l'application: {app}")
+    results = run_container_action(action, names)
+    return {
+        "schema": SCHEMA_VERSION,
+        "app": app,
+        "action": action,
+        "ok": all(result["ok"] for result in results),
+        "containers": results,
+    }
+
+
+def command_apps_list(source: Path) -> dict:
+    entries = read_catalogue(source)
+    return {"schema": SCHEMA_VERSION, "count": len(entries), "apps": entries}
+
+
+def command_app_status(source: Path, storage: Path, app: str) -> dict:
+    description = require_app(source, app)
+    ssddb, ssddb_warning = read_ssddb(source, app)
+    registries, registries_present = read_registries(storage, app)
+    candidates = collect_candidates(source, storage, app)
+    containers, docker_ok = inspect_containers(candidates)
+
+    warnings = []
+    if ssddb_warning:
+        warnings.append(ssddb_warning)
+    if not docker_ok:
+        warnings.append("docker_unavailable")
+
+    return {
+        "schema": SCHEMA_VERSION,
+        "app": app,
+        "available": True,
+        "description": description,
+        "ssddb": ssddb,
+        "registries": registries,
+        "containers": containers,
+        "sources": {
+            "ssddb": ssddb is not None,
+            "registries": registries_present,
+            "docker": bool(containers),
+        },
+        "warnings": warnings,
+    }
+
+
+def list_ssddb_apps(source: Path) -> tuple[list[str], str | None]:
+    path = source / SSDDB_RELATIVE
+    if not path.is_file():
+        return [], "ssddb_unavailable"
+    try:
+        with sqlite3.connect(f"file:{path}?mode=ro", uri=True) as connection:
+            names = [
+                row[0] for row in connection.execute("select name from applications order by name")
+            ]
+        return names, None
+    except sqlite3.Error:
+        return [], "ssddb_unavailable"
+
+
+def is_installed(source: Path, storage: Path, app: str) -> bool:
+    names, _ = list_ssddb_apps(source)
+    if app in names:
+        return True
+    if any((storage / "conf" / f"{app}.{kind}").is_file() for kind in REGISTRY_KINDS):
+        return True
+    containers, _ = inspect_containers(collect_candidates(source, storage, app))
+    return bool(containers)
+
+
+def tail_lines(text: str, limit: int = OUTPUT_TAIL_LINES) -> list[str]:
+    lines = [line for line in text.splitlines() if line.strip()]
+    return lines[-limit:]
+
+
+def mutation_payload(app: str, action: str, result: subprocess.CompletedProcess) -> dict:
+    return {
+        "schema": SCHEMA_VERSION,
+        "app": app,
+        "action": action,
+        "ok": result.returncode == 0,
+        "exit_code": result.returncode,
+        "stdout_tail": tail_lines(result.stdout),
+        "stderr_tail": tail_lines(result.stderr),
+    }
+
+
+def run_ssdv2_mutation(
+    source: Path,
+    storage: Path,
+    app: str,
+    action: str,
+    function: str,
+    *args: str,
+    timeout: int = ACTION_TIMEOUT,
+) -> dict:
+    result = run_bash_function(source, storage, function, *args, timeout=timeout)
+    return mutation_payload(app, action, result)
+
+
+def command_app_install(
+    source: Path, storage: Path, app: str, subdomain: str | None, auth: str | None
+) -> dict:
+    require_app(source, app)
+    if auth is not None and auth not in AUTH_TYPES:
+        raise CtlError(
+            "invalid_auth",
+            f"type d'authentification invalide: {auth} (valeurs: {', '.join(AUTH_TYPES)})",
+        )
+    if subdomain is not None and not SUBDOMAIN_PATTERN.match(subdomain):
+        raise CtlError("invalid_subdomain", f"sous-domaine invalide: {subdomain}")
+    if is_installed(source, storage, app):
+        raise CtlError(
+            "already_installed",
+            f"{app} est déjà installé (utiliser recreate ou reinstall)",
+        )
+
+    missing = []
+    if subdomain is None and read_account_value(source, storage, f"sub.{app}.{app}") is None:
+        missing.append("--subdomain")
+    if auth is None and read_account_value(source, storage, f"sub.{app}.auth") is None:
+        missing.append("--auth")
+    if missing:
+        raise CtlError(
+            "interactive_required",
+            f"valeurs absentes de account.yml : fournir {' et '.join(missing)}",
+        )
+    if subdomain is not None:
+        write_account_value(source, storage, f"sub.{app}.{app}", subdomain)
+    if auth is not None:
+        write_account_value(source, storage, f"sub.{app}.auth", auth)
+    return run_ssdv2_mutation(
+        source,
+        storage,
+        app,
+        "install",
+        "launch_service",
+        app,
+        timeout=INSTALL_TIMEOUT,
+    )
+
+
+def command_app_remove(source: Path, storage: Path, app: str, delete_data: bool) -> dict:
+    require_app(source, app)
+    if not is_installed(source, storage, app):
+        raise CtlError("not_installed", f"{app} n'est pas installé")
+    return run_ssdv2_mutation(
+        source,
+        storage,
+        app,
+        "remove",
+        "suppression_appli",
+        app,
+        "1" if delete_data else "0",
+    )
+
+
+def command_app_backup(source: Path, storage: Path, app: str) -> dict:
+    require_app(source, app)
+    if not is_installed(source, storage, app):
+        raise CtlError("not_installed", f"{app} n'est pas installé")
+    remote = read_account_value(source, storage, "rclone.remote")
+    rclone_config = Path(os.environ.get("HOME", str(Path.home()))) / RCLONE_CONFIG
+    if remote is None and rclone_config.is_file():
+        raise CtlError(
+            "interactive_required",
+            "rclone.remote absent de account.yml : configurer le backup dans le menu SSDV2",
+        )
+    result = run_bash_function(
+        source, storage, "sauve_one_appli", app, timeout=BACKUP_TIMEOUT, stdin_text="\n"
+    )
+    return mutation_payload(app, "backup", result)
+
+
+def command_app_reinstall(source: Path, storage: Path, app: str) -> dict:
+    require_app(source, app)
+    if not is_installed(source, storage, app):
+        raise CtlError("not_installed", f"{app} n'est pas installé")
+    subdomain = read_account_value(source, storage, f"sub.{app}.{app}")
+    auth = read_account_value(source, storage, f"sub.{app}.auth")
+    if subdomain is None or auth is None:
+        raise CtlError(
+            "interactive_required",
+            f"valeurs account.yml manquantes pour {app} (sub.{app}.{app} / sub.{app}.auth)",
+        )
+
+    removal = run_bash_function(source, storage, "suppression_appli", app, "0")
+    if removal.returncode != 0:
+        return mutation_payload(app, "reinstall", removal)
+
+    for path in (storage / "conf" / f"{app}.yml", storage / "vars" / f"{app}.yml"):
+        path.unlink(missing_ok=True)
+    write_account_value(source, storage, f"sub.{app}.{app}", subdomain)
+    write_account_value(source, storage, f"sub.{app}.auth", auth)
+    install = run_bash_function(source, storage, "launch_service", app, timeout=INSTALL_TIMEOUT)
+    return mutation_payload(app, "reinstall", install)
+
+
+def command_app_recreate(source: Path, storage: Path, app: str) -> dict:
+    require_app(source, app)
+    if not is_installed(source, storage, app):
+        raise CtlError("not_installed", f"{app} n'est pas installé")
+    return run_ssdv2_mutation(
+        source,
+        storage,
+        app,
+        "recreate",
+        "relance_container",
+        app,
+        timeout=INSTALL_TIMEOUT,
+    )
+
+
+def command_app_update(source: Path, storage: Path, app: str) -> dict:
+    """Mise à jour « image seule » : pull + recréation, sans playbook."""
+    require_app(source, app)
+    if not is_installed(source, storage, app):
+        raise CtlError("not_installed", f"{app} n'est pas installé")
+    return run_ssdv2_mutation(
+        source,
+        storage,
+        app,
+        "update",
+        "update_container",
+        app,
+        timeout=INSTALL_TIMEOUT,
+    )
+
+
+def command_auth_list(source: Path, storage: Path) -> dict:
+    apps, warning = list_ssddb_apps(source)
+    if warning:
+        raise CtlError(warning, "impossible de lire ssddb")
+    entries = [
+        {"app": app, "auth": read_account_value(source, storage, f"sub.{app}.auth")}
+        for app in apps
+    ]
+    return {"schema": SCHEMA_VERSION, "count": len(entries), "apps": entries}
+
+
+def command_auth_set_many(source: Path, storage: Path, auth: str, apps: list[str]) -> dict:
+    if auth not in AUTH_TYPES:
+        raise CtlError(
+            "invalid_auth",
+            f"type d'authentification invalide: {auth} (valeurs: {', '.join(AUTH_TYPES)})",
+        )
+    if not apps:
+        raise CtlError("invalid_arguments", "aucune application fournie")
+    results = []
+    for app in apps:
+        result = {"app": app, "previous": None, "changed": False, "error": None}
+        try:
+            require_app(source, app)
+            if not is_installed(source, storage, app):
+                raise CtlError("not_installed", f"{app} n'est pas installé")
+            previous = read_account_value(source, storage, f"sub.{app}.auth")
+            result["previous"] = previous
+            if previous != auth:
+                write_account_value(source, storage, f"sub.{app}.auth", auth)
+                result["changed"] = True
+        except CtlError as error:
+            result["error"] = error.message
+        results.append(result)
+    failed = [result for result in results if result["error"]]
+    return {
+        "schema": SCHEMA_VERSION,
+        "auth": auth,
+        "ok": not failed,
+        "results": results,
+    }
+
+
+def command_config_get(source: Path, storage: Path, key: str) -> dict:
+    if key not in CONFIG_KEYS:
+        raise CtlError(
+            "unknown_key",
+            f"clé non supportée: {key} (valeurs: {', '.join(CONFIG_KEYS)})",
+        )
+    return {
+        "schema": SCHEMA_VERSION,
+        "key": key,
+        "value": read_account_value(source, storage, key),
+    }
+
+
+def command_config_list(source: Path, storage: Path) -> dict:
+    values = {
+        key: read_account_value(source, storage, key) for key in CONFIG_KEYS
+    }
+    return {"schema": SCHEMA_VERSION, "config": values}
+
+
+def command_auth_get(source: Path, storage: Path, app: str) -> dict:
+    require_app(source, app)
+    return {
+        "schema": SCHEMA_VERSION,
+        "app": app,
+        "auth": read_account_value(source, storage, f"sub.{app}.auth"),
+    }
+
+
+def command_auth_set(source: Path, storage: Path, app: str, auth: str) -> dict:
+    require_app(source, app)
+    if auth not in AUTH_TYPES:
+        raise CtlError(
+            "invalid_auth",
+            f"type d'authentification invalide: {auth} (valeurs: {', '.join(AUTH_TYPES)})",
+        )
+    if not is_installed(source, storage, app):
+        raise CtlError("not_installed", f"{app} n'est pas installé")
+    previous = read_account_value(source, storage, f"sub.{app}.auth")
+    if previous == auth:
+        return {
+            "schema": SCHEMA_VERSION,
+            "app": app,
+            "auth": auth,
+            "previous": previous,
+            "changed": False,
+        }
+    write_account_value(source, storage, f"sub.{app}.auth", auth)
+    return {
+        "schema": SCHEMA_VERSION,
+        "app": app,
+        "auth": auth,
+        "previous": previous,
+        "changed": True,
+        "applied": False,
+    }
+
+
+def command_auth_apply(source: Path, storage: Path, app: str, auth: str | None) -> dict:
+    """Applique l'auth en ne recréant que le label Traefik (sans playbook)."""
+    require_app(source, app)
+    if auth is not None and auth not in AUTH_TYPES:
+        raise CtlError(
+            "invalid_auth",
+            f"type d'authentification invalide: {auth} (valeurs: {', '.join(AUTH_TYPES)})",
+        )
+    if not is_installed(source, storage, app):
+        raise CtlError("not_installed", f"{app} n'est pas installé")
+    current = read_account_value(source, storage, f"sub.{app}.auth")
+    if auth is not None and auth != current:
+        write_account_value(source, storage, f"sub.{app}.auth", auth)
+    result = run_bash_function(
+        source, storage, "apply_auth_label", app, timeout=INSTALL_TIMEOUT
+    )
+    payload = mutation_payload(app, "apply", result)
+    payload["auth"] = auth or current
+    return payload
+
+
+def docker_cli(args: list[str], timeout: int = DIAGNOSTICS_TIMEOUT) -> subprocess.CompletedProcess:
+    try:
+        return subprocess.run(
+            ["docker", *args],
+            capture_output=True,
+            text=True,
+            stdin=subprocess.DEVNULL,
+            timeout=timeout,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise CtlError("docker_unavailable", "Docker est indisponible") from exc
+
+
+def list_all_containers() -> tuple[list[tuple[str, str | None]], bool]:
+    try:
+        result = docker_cli(["ps", "-a", "--format", '{{.Names}}\t{{.Label "ssdv2.app"}}'])
+    except CtlError:
+        return [], False
+    if result.returncode != 0:
+        return [], False
+    containers = []
+    for line in result.stdout.splitlines():
+        if not line.strip():
+            continue
+        name, _, label = line.partition("\t")
+        containers.append((name.strip(), label.strip() or None))
+    return containers, True
+
+
+def find_orphan_containers(source: Path) -> tuple[list[str], str | None]:
+    ssddb_apps, ssddb_warning = list_ssddb_apps(source)
+    if ssddb_warning:
+        return [], ssddb_warning
+    containers, docker_ok = list_all_containers()
+    if not docker_ok:
+        return [], "docker_unavailable"
+    return sorted(
+        name for name, label in containers if label and label not in ssddb_apps
+    ), None
+
+
+def find_dangling_volumes() -> tuple[list[str], str | None]:
+    try:
+        result = docker_cli(["volume", "ls", "-qf", "dangling=true"])
+    except CtlError:
+        return [], "docker_unavailable"
+    if result.returncode != 0:
+        return [], "docker_unavailable"
+    return [line.strip() for line in result.stdout.splitlines() if line.strip()], None
+
+
+def command_diagnostics_run(source: Path, storage: Path) -> dict:
+    warnings: list[str] = []
+    ssddb_apps, ssddb_warning = list_ssddb_apps(source)
+    if ssddb_warning:
+        warnings.append(ssddb_warning)
+
+    missing_registries = [
+        app
+        for app in ssddb_apps
+        if app != "traefik" and not (storage / "conf" / f"{app}.containers").is_file()
+    ]
+
+    orphan_containers, orphans_warning = find_orphan_containers(source)
+    if orphans_warning:
+        warnings.append(orphans_warning)
+    dangling, dangling_warning = find_dangling_volumes()
+    if dangling_warning:
+        warnings.append(dangling_warning)
+
+    return {
+        "schema": SCHEMA_VERSION,
+        "checks": {
+            "missing_registries": missing_registries,
+            "orphan_containers": orphan_containers,
+            "dangling_volumes": len(dangling),
+        },
+        "warnings": warnings,
+    }
+
+
+def command_diagnostics_rebuild_registries(source: Path, storage: Path) -> dict:
+    result = run_bash_script(source, storage, source / PATCH_REGISTRIES_RELATIVE)
+    return {
+        "schema": SCHEMA_VERSION,
+        "action": "rebuild-registries",
+        "ok": result.returncode == 0,
+        "exit_code": result.returncode,
+        "stdout_tail": tail_lines(result.stdout),
+        "stderr_tail": tail_lines(result.stderr),
+    }
+
+
+def command_diagnostics_cleanup_containers(source: Path) -> dict:
+    names, warning = find_orphan_containers(source)
+    if warning:
+        raise CtlError(warning, "impossible de déterminer les conteneurs orphelins")
+    removed: list[str] = []
+    failed: list[str] = []
+    for name in names:
+        result = docker_cli(["rm", "-f", "-v", name], timeout=ACTION_TIMEOUT)
+        if result.returncode == 0:
+            removed.append(name)
+        else:
+            failed.append(name)
+    return {
+        "schema": SCHEMA_VERSION,
+        "action": "cleanup-orphan-containers",
+        "ok": not failed,
+        "removed": removed,
+        "failed": failed,
+    }
+
+
+def command_diagnostics_cleanup_volumes() -> dict:
+    names, warning = find_dangling_volumes()
+    if warning:
+        raise CtlError(warning, "impossible de déterminer les volumes orphelins")
+    if not names:
+        return {
+            "schema": SCHEMA_VERSION,
+            "action": "cleanup-dangling-volumes",
+            "ok": True,
+            "removed": [],
+        }
+    result = docker_cli(["volume", "rm", "-f", *names], timeout=ACTION_TIMEOUT)
+    removed = (
+        names
+        if result.returncode == 0
+        else [line.strip() for line in result.stdout.splitlines() if line.strip()]
+    )
+    return {
+        "schema": SCHEMA_VERSION,
+        "action": "cleanup-dangling-volumes",
+        "ok": result.returncode == 0,
+        "removed": removed,
+    }
+
+
+def emit(payload: dict) -> None:
+    json.dump(payload, sys.stdout, ensure_ascii=False, indent=2)
+    sys.stdout.write("\n")
+
+
+def fail(error: CtlError) -> int:
+    json.dump(
+        {"error": {"code": error.code, "message": error.message}},
+        sys.stderr,
+        ensure_ascii=False,
+        indent=2,
+    )
+    sys.stderr.write("\n")
+    return error.exit_code
+
+
+def add_app_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("app", help="nom de l'application (catalogue SSDV2)")
+    parser.add_argument("--json", action="store_true", help="sortie JSON (défaut)")
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="ssdv2ctl",
+        description="Interface non interactive et JSON avec le moteur SSDV2.",
+    )
+    parser.add_argument("--version", action="version", version=f"%(prog)s {VERSION}")
+    commands = parser.add_subparsers(dest="command", required=True)
+
+    apps = commands.add_parser("apps", help="commandes sur le catalogue")
+    apps_commands = apps.add_subparsers(dest="apps_command", required=True)
+    apps_list = apps_commands.add_parser("list", help="liste le catalogue")
+    apps_list.add_argument("--json", action="store_true", help="sortie JSON (défaut)")
+
+    app = commands.add_parser("app", help="commandes sur une application")
+    app_commands = app.add_subparsers(dest="app_command", required=True)
+    app_status = app_commands.add_parser("status", help="état factuel d'une application")
+    add_app_arguments(app_status)
+    actions = {
+        "start": "démarre les conteneurs de l'application",
+        "stop": "arrête les conteneurs de l'application",
+        "restart": "redémarre les conteneurs de l'application",
+        "reinstall": "réinstalle l'application (données conservées)",
+        "recreate": "recrée les conteneurs (playbook, données conservées)",
+        "update": "met à jour l'image des conteneurs (sans playbook)",
+        "backup": "sauvegarde l'application",
+    }
+    for name, help_text in actions.items():
+        action_parser = app_commands.add_parser(name, help=help_text)
+        add_app_arguments(action_parser)
+
+    app_install = app_commands.add_parser("install", help="installe l'application")
+    add_app_arguments(app_install)
+    app_install.add_argument("--subdomain", help="sous-domaine (défaut: valeur account.yml)")
+    app_install.add_argument("--auth", choices=AUTH_TYPES, help="type d'authentification")
+
+    app_remove = app_commands.add_parser("remove", help="supprime l'application")
+    add_app_arguments(app_remove)
+    app_remove.add_argument(
+        "--delete-data",
+        action="store_true",
+        help="supprime aussi les données (par défaut: conservation)",
+    )
+
+    auth = commands.add_parser("auth", help="authentification des applications")
+    auth_commands = auth.add_subparsers(dest="auth_command", required=True)
+    auth_get = auth_commands.add_parser("get", help="lit le type d'authentification")
+    auth_get.add_argument("app", help="nom de l'application (catalogue SSDV2)")
+    auth_set = auth_commands.add_parser("set", help="définit le type d'authentification")
+    auth_set.add_argument("app", help="nom de l'application (catalogue SSDV2)")
+    auth_set.add_argument("auth", choices=AUTH_TYPES, help="type d'authentification")
+    auth_apply = auth_commands.add_parser(
+        "apply", help="applique l'auth (recréation label-only, sans playbook)"
+    )
+    auth_apply.add_argument("app", help="nom de l'application (catalogue SSDV2)")
+    auth_apply.add_argument(
+        "auth", nargs="?", choices=AUTH_TYPES, help="type (défaut: valeur account.yml)"
+    )
+    auth_commands.add_parser("list", help="liste les applications installées et leur auth")
+    auth_set_many = auth_commands.add_parser(
+        "set-many", help="définit l'authentification de plusieurs applications"
+    )
+    auth_set_many.add_argument("auth", choices=AUTH_TYPES, help="type d'authentification")
+    auth_set_many.add_argument("apps", nargs="+", help="noms des applications")
+
+    config = commands.add_parser("config", help="configuration SSDV2 (lecture seule)")
+    config_commands = config.add_subparsers(dest="config_command", required=True)
+    config_get = config_commands.add_parser("get", help="lit une clé de configuration")
+    config_get.add_argument("key", help="clé supportée")
+    config_commands.add_parser("list", help="liste les clés supportées et leurs valeurs")
+
+    diagnostics = commands.add_parser("diagnostics", help="diagnostics SSDV2")
+    diagnostics_commands = diagnostics.add_subparsers(dest="diagnostics_command", required=True)
+    diagnostics_commands.add_parser("run", help="exécute les contrôles (lecture seule)")
+    diagnostics_commands.add_parser(
+        "rebuild-registries", help="régénère les registres de conteneurs manquants"
+    )
+    diagnostics_commands.add_parser(
+        "cleanup-orphan-containers", help="supprime les conteneurs orphelins"
+    )
+    diagnostics_commands.add_parser(
+        "cleanup-dangling-volumes", help="supprime les volumes anonymes orphelins"
+    )
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    source, storage = resolve_settings()
+    try:
+        if args.command == "apps" and args.apps_command == "list":
+            emit(command_apps_list(source))
+        elif args.command == "app" and args.app_command == "status":
+            emit(command_app_status(source, storage, args.app))
+        elif args.command == "app" and args.app_command in ACTION_COMMANDS:
+            payload = command_app_action(source, storage, args.app, args.app_command)
+            emit(payload)
+            if not payload["ok"]:
+                failed = sum(1 for item in payload["containers"] if not item["ok"])
+                return fail(
+                    CtlError(
+                        "action_failed",
+                        f"{failed} conteneur(s) en échec sur {len(payload['containers'])}",
+                    )
+                )
+        elif args.command == "app" and args.app_command == "install":
+            payload = command_app_install(source, storage, args.app, args.subdomain, args.auth)
+            emit(payload)
+            if not payload["ok"]:
+                return fail(CtlError("action_failed", f"installation de {args.app} en échec"))
+        elif args.command == "app" and args.app_command == "remove":
+            payload = command_app_remove(source, storage, args.app, args.delete_data)
+            emit(payload)
+            if not payload["ok"]:
+                return fail(CtlError("action_failed", f"suppression de {args.app} en échec"))
+        elif args.command == "app" and args.app_command == "reinstall":
+            payload = command_app_reinstall(source, storage, args.app)
+            emit(payload)
+            if not payload["ok"]:
+                return fail(CtlError("action_failed", f"réinstallation de {args.app} en échec"))
+        elif args.command == "app" and args.app_command == "backup":
+            payload = command_app_backup(source, storage, args.app)
+            emit(payload)
+            if not payload["ok"]:
+                return fail(CtlError("action_failed", f"sauvegarde de {args.app} en échec"))
+        elif args.command == "app" and args.app_command == "recreate":
+            payload = command_app_recreate(source, storage, args.app)
+            emit(payload)
+            if not payload["ok"]:
+                return fail(CtlError("action_failed", f"recréation de {args.app} en échec"))
+        elif args.command == "app" and args.app_command == "update":
+            payload = command_app_update(source, storage, args.app)
+            emit(payload)
+            if not payload["ok"]:
+                return fail(CtlError("action_failed", f"mise à jour de {args.app} en échec"))
+        elif args.command == "auth" and args.auth_command == "get":
+            emit(command_auth_get(source, storage, args.app))
+        elif args.command == "auth" and args.auth_command == "set":
+            emit(command_auth_set(source, storage, args.app, args.auth))
+        elif args.command == "auth" and args.auth_command == "apply":
+            payload = command_auth_apply(source, storage, args.app, args.auth)
+            emit(payload)
+            if not payload["ok"]:
+                return fail(
+                    CtlError(
+                        "action_failed",
+                        f"application de l'authentification de {args.app} en échec",
+                    )
+                )
+        elif args.command == "auth" and args.auth_command == "list":
+            emit(command_auth_list(source, storage))
+        elif args.command == "auth" and args.auth_command == "set-many":
+            payload = command_auth_set_many(source, storage, args.auth, args.apps)
+            emit(payload)
+            if not payload["ok"]:
+                return fail(
+                    CtlError("action_failed", "changement d'authentification en échec")
+                )
+        elif args.command == "config" and args.config_command == "get":
+            emit(command_config_get(source, storage, args.key))
+        elif args.command == "config" and args.config_command == "list":
+            emit(command_config_list(source, storage))
+        elif args.command == "diagnostics" and args.diagnostics_command == "run":
+            emit(command_diagnostics_run(source, storage))
+        elif args.command == "diagnostics" and args.diagnostics_command == "rebuild-registries":
+            payload = command_diagnostics_rebuild_registries(source, storage)
+            emit(payload)
+            if not payload["ok"]:
+                return fail(CtlError("action_failed", "régénération des registres en échec"))
+        elif args.command == "diagnostics" and args.diagnostics_command == "cleanup-orphan-containers":
+            payload = command_diagnostics_cleanup_containers(source)
+            emit(payload)
+            if not payload["ok"]:
+                return fail(CtlError("action_failed", "suppression de conteneurs orphelins en échec"))
+        elif args.command == "diagnostics" and args.diagnostics_command == "cleanup-dangling-volumes":
+            payload = command_diagnostics_cleanup_volumes()
+            emit(payload)
+            if not payload["ok"]:
+                return fail(CtlError("action_failed", "suppression de volumes orphelins en échec"))
+        else:
+            raise CtlError("invalid_command", "commande inconnue", EXIT_USAGE)
+    except CtlError as error:
+        return fail(error)
+    return EXIT_OK
+
+
+if __name__ == "__main__":
+    sys.exit(main())

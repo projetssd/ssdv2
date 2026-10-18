@@ -1583,6 +1583,94 @@ function relance_container() {
   pause
 }
 
+# Recrée les conteneurs d'une application à l'identique en mettant l'image à
+# jour, SANS rejouer le playbook de configuration (équivalent « docker pull &&
+# recreate »). Utilisable par le menu, ssdv2ctl et la WebUI.
+function update_container() {
+  local app="$1"
+  local helper="${SETTINGS_SOURCE}/includes/config/scripts/recreate_app_container.py"
+  if [ ! -f "$helper" ]; then
+    echo "Helper introuvable : $helper" >&2
+    return 1
+  fi
+  # Python du venv SSDV2 s'il est exploitable (SDK docker), sinon python3 ambiant
+  # (ex. conteneur WebUI où le venv hôte n'est pas exécutable).
+  local py="python3"
+  if [ -x "${SETTINGS_SOURCE}/venv/bin/python" ]; then
+    py="${SETTINGS_SOURCE}/venv/bin/python"
+  fi
+  local conteneurs
+  conteneurs=$(collect_app_containers "$app")
+  if [ -z "${conteneurs}" ]; then
+    echo "Aucun conteneur pour ${app}" >&2
+    return 1
+  fi
+  local rc=0 c found=0
+  while IFS= read -r c; do
+    [ -z "${c}" ] && continue
+    # collect_app_containers renvoie aussi des noms de convention (db-<app>…) :
+    # on ne traite que les conteneurs qui existent réellement.
+    if ! docker inspect "$c" >/dev/null 2>&1; then
+      continue
+    fi
+    found=1
+    echo "Mise à jour du conteneur ${c} (image seule, sans playbook)..."
+    "$py" "$helper" "$c" || rc=1
+  done <<< "${conteneurs}"
+  if [ "${found}" -eq 0 ]; then
+    echo "Aucun conteneur existant pour ${app}" >&2
+    return 1
+  fi
+  return ${rc}
+}
+
+# Applique le type d'authentification d'une application en ne modifiant QUE le
+# label Traefik du router principal (aucun playbook de configuration).
+function apply_auth_label() {
+  local app="$1"
+  local helper="${SETTINGS_SOURCE}/includes/config/scripts/recreate_app_container.py"
+  if [ ! -f "$helper" ]; then
+    echo "Helper introuvable : $helper" >&2
+    return 1
+  fi
+  local auth chain
+  auth=$(get_from_account_yml "sub.${app}.auth")
+  if [ -z "${auth}" ] || [ "${auth}" = "notfound" ]; then
+    echo "Authentification absente de account.yml pour ${app}" >&2
+    return 1
+  fi
+  case "${auth}" in
+    basique)      chain="chain-basic-auth@file" ;;
+    oauth)        chain="chain-oauth@file" ;;
+    authelia)     chain="chain-authelia@file" ;;
+    oauth2-proxy) chain="chain-oauth2-proxy@file" ;;
+    *)            chain="chain-no-auth@file" ;;
+  esac
+  local conteneurs
+  conteneurs=$(collect_app_containers "$app")
+  if [ -z "${conteneurs}" ]; then
+    echo "Aucun conteneur pour ${app}" >&2
+    return 1
+  fi
+  local label="traefik.http.routers.${app}-rtr.middlewares"
+  local py="python3"
+  if [ -x "${SETTINGS_SOURCE}/venv/bin/python" ]; then
+    py="${SETTINGS_SOURCE}/venv/bin/python"
+  fi
+  local rc=0 c current
+  while IFS= read -r c; do
+    [ -z "${c}" ] && continue
+    current=$(docker inspect --format "{{ index .Config.Labels \"${label}\" }}" "$c" 2>/dev/null)
+    if [ -z "${current}" ]; then
+      echo "${c} : pas de router « ${app}-rtr », ignoré (label inchangé)"
+      continue
+    fi
+    echo "${c} : « ${current} » → « ${chain} »"
+    "$py" "$helper" "$c" --no-pull --label "${label}=${chain}" || rc=1
+  done <<< "${conteneurs}"
+  return ${rc}
+}
+
 function install_plextraktsync() {
   echo -e "\e[32m"$(gettext "Préparation pour le premier lancement de configuration")"\e[0m" 
   echo -e "\e[32m"$(gettext "Assurez vous d'avoir les api Trakt avant de continuer") "https://trakt.tv/oauth/applications/new)""\e[0m" 
@@ -1763,6 +1851,15 @@ function reinit_container() {
   logo
   liste_perso
   python3 "${SETTINGS_SOURCE}/includes/config/scripts/generique_python.py" reinit_container
+}
+
+# Action du menu : sélection interactive d'une application puis mise à jour
+# « image seule » (voir update_container).
+function maj_container() {
+  clear
+  logo
+  liste_perso
+  python3 "${SETTINGS_SOURCE}/includes/config/scripts/generique_python.py" maj_container
 }
 
 function install_applis() {
