@@ -137,6 +137,7 @@ seerrcatalog - Passerelle entre Jellyseerr et Stremio
 seasonarr - Assistant Sonarr pour packs de saisons
 sftorznab - Indexeurs Torznab StreamFusion (PostgreSQL + Meilisearch) pour Prowlarr
 shaarli - Bookmarking personnel
+shieldcontroller - Gestion NVIDIA Shield / Android TV (écran, APK, applications)
 sickchill - Gestion Films/Séries
 sickgear - Gestionnaire Films/Séries
 slicksync - Gestion des utilisateurs et addons Stremio/Nuvio

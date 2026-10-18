@@ -1,0 +1,11 @@
+---
+pgrole: 'shieldcontroller'
+intport: '8000'
+image: 'ghcr.io/aerya/shield-controller:latest'
+
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/data:rw"
+
+pg_env:
+  TZ: 'Europe/Paris'
+  WS_SCRCPY_ALLOW_REMOTE_ADMIN: "1"
