@@ -91,6 +91,24 @@ def reinit_container():
     else:
         print(_('Vous avez choisi de quitter le script.'))
 
+def maj_container():
+    init(autoreset=True)
+    client = docker.from_env()
+    translation =_('Sélectionner l\'application à mettre à jour')
+    quit = _('Quitter le script')
+    print(f"{Fore.CYAN}{_('Sélectionner `Quitter le script` pour revenir au menu précédent')}{Style.RESET_ALL}")
+    choices = [container.name for container in client.containers.list(all=True)] + [(_('Quitter le script'))]
+    selected_container = inquirer.prompt([
+        inquirer.List('container',
+                      message=f'{Fore.GREEN}{translation}{Style.RESET_ALL}',
+                      choices=choices)
+    ])['container']
+    if selected_container != quit:
+        print(f"{Fore.GREEN}{_('Application en cours de mise à jour (image seule) :')}{Style.RESET_ALL}", selected_container)
+        run_bash_function('menu_maj_container', selected_container)
+    else:
+        print(_('Vous avez choisi de quitter le script.'))
+
 def suppression_application():
     init(autoreset=True)
     client = docker.from_env()

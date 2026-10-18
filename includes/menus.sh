@@ -290,6 +290,22 @@ function menu_reinit_container() {
 }
 
 
+function menu_maj_container() {
+  line=$1
+  log_write "Mise à jour du container ${line}" >/dev/null 2>&1
+  echo -e "\e[32m"$(gettext "Mise à jour de l'image (sans réinstallation)")"\e[0m"
+  echo -e "\e[32m"$(gettext "Les volumes ne seront pas supprimés")"\e[0m"
+  echo ""
+  update_container "${line}"
+  checking_errors $?
+  echo ""
+  echo -e "${BLUE}### ${line}" $(gettext "a été mis à jour") "###${NC}"
+  echo ""
+  echo -e "\n $(gettext "Appuyer sur") ${CCYAN}[$(gettext "ENTREE")]${CEND} $(gettext "pour continuer")"
+  read -r
+}
+
+
 function menu_diagnostic_nettoyage() {
   clear
   logo
