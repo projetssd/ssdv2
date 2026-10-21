@@ -23,6 +23,7 @@ coolify - manage servers, applications, databases
 crowdsec - Detection et blocage des attaques
 cypht - Centraliser plusieurs comptes mails
 decypharr - QbitTorrent with a Multiple Debrid
+decypharrgate - Cache gate Decypharr pour Sonarr v5 (file d'attente propre, sans blocklist)
 dashdot - System Health intégrable avec Homarr
 davos - Outils de programmation
 decypharrseed- decypharr Seed

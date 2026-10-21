@@ -1,0 +1,19 @@
+---
+# Passerelle interne entre Sonarr v5 et decypharr.
+# Aucun port publie, aucun DNS, aucun label Traefik : le conteneur n'est
+# joignable que depuis le reseau Docker traefik_proxy.
+pgrole: 'decypharrgate'
+image: 'nginx:1.27-alpine'
+traefik_labels_enabled: false
+
+pg_volumes:
+  - "{{ settings.source }}/includes/dockerapps/templates/decypharrgate/default.conf:/etc/nginx/conf.d/default.conf:ro"
+
+specific_docker_info:
+  restart_policy: unless-stopped
+  healthcheck:
+    test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8282/api/v2/app/version >/dev/null || exit 1"]
+    interval: 30s
+    timeout: 5s
+    retries: 3
+    start_period: 10s

@@ -1,0 +1,123 @@
+---
+# Post-installation de decypharrgate.
+# - attend que la gate soit prete ;
+# - propose de pointer Sonarr vers la gate (si decypharrsonarr est detecte) ;
+# - propose d'augmenter le cache DFS de decypharrsonarr (si encore a 500 Mo).
+# Toutes les questions utilisent SSDV2_PROMPT pour rester compatibles WebUI.
+
+- name: Attendre que decypharrgate soit pret
+  ansible.builtin.command:
+    argv:
+      - docker
+      - exec
+      - decypharrgate
+      - wget
+      - -qO-
+      - http://127.0.0.1:8282/api/v2/app/version
+  register: decypharrgate_version
+  until: decypharrgate_version.rc == 0
+  retries: 30
+  delay: 2
+  changed_when: false
+  failed_when: false
+
+- name: Lire l'etat de decypharrgate
+  ansible.builtin.command:
+    argv:
+      - python3
+      - "{{ settings.source }}/includes/config/scripts/decypharrgate.py"
+      - status
+  register: decypharrgate_status_raw
+  changed_when: false
+  failed_when: false
+
+- name: Analyser l'etat de decypharrgate
+  ansible.builtin.set_fact:
+    decypharrgate_status: "{{ decypharrgate_status_raw.stdout | from_json }}"
+  when:
+    - decypharrgate_status_raw.rc == 0
+    - decypharrgate_status_raw.stdout | default('') | trim | length > 0
+
+- name: Avertissement si l'etat est indisponible
+  ansible.builtin.debug:
+    msg: >-
+      Etat de decypharrgate indisponible. Verifier le conteneur puis relancer
+      l'option de menu « Cache gate Decypharr ».
+  when: decypharrgate_status is not defined
+
+- name: Proposer de configurer Sonarr
+  ansible.builtin.pause:
+    prompt: |
+      SSDV2_PROMPT {"id":"decypharrgate.configure_sonarr","label":"Configurer Sonarr pour utiliser la gate ?","kind":"confirm","secret":false}
+      Le download client Sonarr sera pointe vers decypharrgate:8282.
+      Repondre o (oui) ou n (non). Entree = oui.
+  register: decypharrgate_sonarr_answer
+  when:
+    - decypharrgate_status is defined
+    - decypharrgate_status.sonarr_installed | default(false)
+    - (decypharrgate_status.sonarr_host | default('')) == 'decypharrsonarr'
+
+- name: Configurer Sonarr
+  ansible.builtin.command:
+    argv:
+      - python3
+      - "{{ settings.source }}/includes/config/scripts/decypharrgate.py"
+      - configure-sonarr
+  register: decypharrgate_sonarr_result
+  changed_when: "'-> decypharrgate' in (decypharrgate_sonarr_result.stdout | default(''))"
+  failed_when: false
+  when:
+    - decypharrgate_sonarr_answer is defined
+    - not (decypharrgate_sonarr_answer.skipped | default(false))
+    - (decypharrgate_sonarr_answer.user_input | default('')) | lower in ['', 'o', 'oui', 'y', 'yes']
+
+- name: Afficher le resultat de la configuration Sonarr
+  ansible.builtin.debug:
+    var: decypharrgate_sonarr_result.stdout_lines
+  when:
+    - decypharrgate_sonarr_result is defined
+    - not (decypharrgate_sonarr_result.skipped | default(false))
+
+- name: Proposer d'augmenter le cache DFS
+  ansible.builtin.pause:
+    prompt: |
+      SSDV2_PROMPT {"id":"decypharrgate.increase_cache","label":"Passer le cache DFS de decypharrsonarr a 20 Go ?","kind":"confirm","secret":false}
+      Un backup de config.json sera cree, puis decypharrsonarr sera redemarre.
+      Recommande si les logs contiennent « disk limit reached ».
+      Repondre o (oui) ou n (non). Entree = non.
+  register: decypharrgate_cache_answer
+  when:
+    - decypharrgate_status is defined
+    - decypharrgate_status.decypharr_installed | default(false)
+    - (decypharrgate_status.cache_size | default('')) == '500MB'
+
+- name: Augmenter le cache DFS
+  ansible.builtin.command:
+    argv:
+      - python3
+      - "{{ settings.source }}/includes/config/scripts/decypharrgate.py"
+      - increase-cache
+  register: decypharrgate_cache_result
+  changed_when: "'-> 20GB' in (decypharrgate_cache_result.stdout | default(''))"
+  failed_when: false
+  when:
+    - decypharrgate_cache_answer is defined
+    - not (decypharrgate_cache_answer.skipped | default(false))
+    - (decypharrgate_cache_answer.user_input | default('n')) | lower in ['o', 'oui', 'y', 'yes']
+
+- name: Afficher le resultat du cache DFS
+  ansible.builtin.debug:
+    var: decypharrgate_cache_result.stdout_lines
+  when:
+    - decypharrgate_cache_result is defined
+    - not (decypharrgate_cache_result.skipped | default(false))
+
+- name: Resume de decypharrgate
+  ansible.builtin.debug:
+    msg:
+      - "Gate           : {{ decypharrgate_status.gate | default('inconnu') }}"
+      - "Sonarr         : {{ decypharrgate_status.sonarr_host | default('non detecte') }}"
+      - "Cache DFS      : {{ decypharrgate_status.cache_size | default('inconnu') }}"
+      - "Blocklist      : inchangee"
+      - "download_uncached : inchange"
+  when: decypharrgate_status is defined
