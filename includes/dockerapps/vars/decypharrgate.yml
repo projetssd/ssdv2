@@ -3,7 +3,7 @@
 # Aucun port publie, aucun DNS, aucun label Traefik : le conteneur n'est
 # joignable que depuis le reseau Docker traefik_proxy.
 pgrole: 'decypharrgate'
-image: 'nginx:1.27-alpine'
+image: 'openresty/openresty:1.27.1.2-alpine'
 traefik_labels_enabled: false
 
 pg_volumes:

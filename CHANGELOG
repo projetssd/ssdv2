@@ -7,6 +7,10 @@
 - documentation et guide questions/reponses : docs/decypharrgate.md
 - decypharrgate : mapper les 502 provider_error en 409 pour eviter les pending
   et permettre a Sonarr d'essayer les releases suivantes (ex. Ragnarok S01).
+- decypharrgate : passerelle OpenResty/Lua avec inspection du corps JSON
+  (404 non cache, 502 provider_error, 503 provider -> 409 ; 509 et vraie
+  panne 502 conserves en pending).
+- decypharrgate : rechargement nginx automatique apres mise a jour.
 - decypharrgate : monter le dossier de configuration (mise a jour sans probleme
   d'inode).
 
