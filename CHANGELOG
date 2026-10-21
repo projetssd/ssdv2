@@ -11,6 +11,13 @@
   (404 non cache, 502 provider_error, 503 provider -> 409 ; 509 et vraie
   panne 502 conserves en pending).
 - decypharrgate : rechargement nginx automatique apres mise a jour.
+- decypharrgate : generalisation Sonarr v5+ (detection de l'upstream, gate par
+  instance decypharr, gates custom decypharrgate-<instance>).
+- decypharrgate : Radarr v6 et Sonarr v4 ne sont pas configures (ils skippent
+  deja les echecs generiques).
+- decypharrgate : configuration nginx generee par pretask dans le dossier de
+  l'app ; plus d'upstream code en dur.
+- decypharrgate : action cache DFS separee, applicable a toute instance decypharr.
 - decypharrgate : monter le dossier de configuration (mise a jour sans probleme
   d'inode).
 

@@ -1,0 +1,67 @@
+#!/bin/bash
+##############################################################################
+# Generalise decypharrgate : Sonarr v5+, multi-instances, cache separe.
+#
+# Ce patch ne modifie pas les gates ni les Arrs existants. Il met a jour :
+#   - le libelle de l'entree de menu ;
+#   - la ligne du catalogue des applications.
+#
+# Idempotent : peut etre rejoue via FORCE_PATCH.
+##############################################################################
+
+set -u
+
+if [ -z "${SETTINGS_SOURCE:-}" ] && [ -f "${HOME}/.config/ssd/env" ]; then
+  # shellcheck disable=SC1090
+  source "${HOME}/.config/ssd/env"
+fi
+SETTINGS_SOURCE="${SETTINGS_SOURCE:-${HOME}/seedbox-compose}"
+
+MENU="${SETTINGS_SOURCE}/menu"
+CATALOG="${SETTINGS_SOURCE}/includes/config/services-available"
+
+command -v sqlite3 >/dev/null 2>&1 || exit 0
+
+# 1. Entree de menu (cree si absente, met a jour sinon).
+if [ -f "$MENU" ]; then
+  parent=7
+  ordre=4
+  if ! sqlite3 "$MENU" "select 1 from menu where id=7" 2>/dev/null | grep -qx 1; then
+    parent=2
+    ordre=6
+  fi
+  sqlite3 "$MENU" "insert into menu (texte,parent_id,ordre,action)
+  select 'Cache gate Decypharr (Sonarr v5+)',${parent},${ordre},'menu_decypharrgate'
+  where not exists (select 1 from menu where action='menu_decypharrgate');" 2>/dev/null
+  sqlite3 "$MENU" "update menu set texte='Cache gate Decypharr (Sonarr v5+)',
+  parent_id=${parent}, ordre=${ordre}
+  where action='menu_decypharrgate';" 2>/dev/null
+fi
+
+# 2. Ligne catalogue.
+old_line="decypharrgate - Cache gate Decypharr pour Sonarr v5 (file d'attente propre, sans blocklist)"
+new_line="decypharrgate - Cache gate Decypharr pour Sonarr v5+ (multi-instances)"
+if [ -f "$CATALOG" ]; then
+  if grep -qxF -- "$old_line" "$CATALOG"; then
+    sed -i "s|^${old_line}$|${new_line}|" "$CATALOG"
+  elif ! grep -qxF -- "$new_line" "$CATALOG"; then
+    printf '%s\n' "$new_line" >>"$CATALOG"
+  fi
+fi
+
+# 3. Verification des fichiers applicatifs (livres avec le depot).
+for f in \
+  includes/dockerapps/vars/decypharrgate.yml \
+  includes/dockerapps/pretasks/decypharrgate.yml \
+  includes/dockerapps/posttasks/decypharrgate.yml \
+  includes/dockerapps/templates/decypharrgate/default.conf.j2 \
+  includes/config/scripts/decypharrgate.py \
+  includes/menus-decypharrgate.sh \
+  docs/decypharrgate.md; do
+  if [ ! -f "${SETTINGS_SOURCE}/${f}" ]; then
+    echo "[patch] ATTENTION : fichier manquant ${f}" >&2
+  fi
+done
+
+echo "[patch] decypharrgate generalise (Sonarr v5+, multi-instances)"
+exit 0

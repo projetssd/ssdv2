@@ -1,0 +1,145 @@
+---
+# Pretask de decypharrgate (gate par defaut et gates custom via pretasks: [decypharrgate]).
+# - choisit l'upstream decypharr (var custom, etat, migration, detection, prompt) ;
+# - ecrit conf/<gate>.upstream ;
+# - rend default.conf depuis default.conf.j2 dans le dossier de l'app.
+
+- name: Creer le dossier de configuration de {{ pgrole }}
+  ansible.builtin.file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}"
+    state: directory
+    mode: '0775'
+    owner: "{{ lookup('env','MYUID') }}"
+    group: "{{ lookup('env','MYGID') }}"
+
+- name: Detecter les instances decypharr
+  ansible.builtin.command:
+    argv:
+      - python3
+      - "{{ settings.source }}/includes/config/scripts/decypharrgate.py"
+      - detect-upstreams
+  register: decypharrgate_detect_raw
+  changed_when: false
+  failed_when: false
+
+- name: Analyser les instances detectees
+  ansible.builtin.set_fact:
+    decypharrgate_detected: "{{ decypharrgate_detect_raw.stdout | from_json }}"
+  when:
+    - decypharrgate_detect_raw.rc == 0
+    - decypharrgate_detect_raw.stdout | default('') | trim | length > 0
+
+- name: Lire l'etat upstream existant
+  ansible.builtin.slurp:
+    src: "{{ settings.storage }}/conf/{{ pgrole }}.upstream"
+  register: decypharrgate_state_raw
+  failed_when: false
+
+- name: Lire l'upstream actuel de la gate
+  ansible.builtin.command:
+    argv:
+      - python3
+      - "{{ settings.source }}/includes/config/scripts/decypharrgate.py"
+      - current-upstream
+      - --gate
+      - "{{ pgrole }}"
+  register: decypharrgate_current_raw
+  changed_when: false
+  failed_when: false
+
+- name: Utiliser l'upstream fourni par les vars
+  ansible.builtin.set_fact:
+    decypharrgate_target_upstream: "{{ decypharrgate_upstream | trim }}"
+  when:
+    - decypharrgate_upstream is defined
+    - decypharrgate_upstream | trim | length > 0
+
+- name: Utiliser l'upstream de l'etat existant
+  ansible.builtin.set_fact:
+    decypharrgate_target_upstream: "{{ (decypharrgate_state_raw.content | b64decode) | trim }}"
+  when:
+    - decypharrgate_target_upstream is not defined
+    - decypharrgate_state_raw.content is defined
+    - (decypharrgate_state_raw.content | b64decode) | trim | length > 0
+
+- name: Utiliser l'upstream actuel de la gate (migration)
+  ansible.builtin.set_fact:
+    decypharrgate_target_upstream: "{{ decypharrgate_current_raw.stdout | trim }}"
+  when:
+    - decypharrgate_target_upstream is not defined
+    - decypharrgate_current_raw.rc == 0
+    - (decypharrgate_current_raw.stdout | trim) | length > 0
+    - decypharrgate_detected is defined
+    - (decypharrgate_current_raw.stdout | trim) in (decypharrgate_detected | map(attribute='upstream') | list)
+
+- name: Utiliser l'unique instance detectee
+  ansible.builtin.set_fact:
+    decypharrgate_target_upstream: "{{ decypharrgate_detected[0].upstream }}"
+  when:
+    - decypharrgate_target_upstream is not defined
+    - decypharrgate_detected is defined
+    - decypharrgate_detected | length == 1
+
+- name: Choisir l'instance decypharr pour {{ pgrole }}
+  ansible.builtin.pause:
+    prompt: |
+      SSDV2_PROMPT {"id":"decypharrgate.upstream","label":"Instance decypharr pour {{ pgrole }}","kind":"text","secret":false}
+      Instances detectees :
+      {% for item in decypharrgate_detected | default([]) %}
+      - {{ item.name }} ({{ item.upstream }})
+      {% endfor %}
+      Entrer le nom de l'instance :
+  register: decypharrgate_upstream_answer
+  when:
+    - decypharrgate_target_upstream is not defined
+    - decypharrgate_detected is defined
+    - decypharrgate_detected | length > 1
+
+- name: Resoudre l'instance choisie
+  ansible.builtin.set_fact:
+    decypharrgate_target_upstream: "{{ item.upstream }}"
+  loop: "{{ decypharrgate_detected | default([]) }}"
+  when:
+    - decypharrgate_target_upstream is not defined
+    - decypharrgate_upstream_answer is defined
+    - not (decypharrgate_upstream_answer.skipped | default(false))
+    - item.name == (decypharrgate_upstream_answer.user_input | default('') | trim)
+
+- name: Aucune instance decypharr disponible
+  ansible.builtin.fail:
+    msg: >-
+      Aucune instance decypharr detectee pour {{ pgrole }}. Installez decypharr
+      ou renseignez decypharrgate_upstream dans les vars de la gate.
+  when: decypharrgate_target_upstream is not defined
+
+- name: Verifier que l'upstream cible est une instance detectee
+  ansible.builtin.debug:
+    msg: >-
+      ATTENTION: upstream '{{ decypharrgate_target_upstream }}' absent de la
+      liste detectee. La gate demarrera mais sera unhealthy tant que
+      l'instance ne repondra pas.
+  when:
+    - decypharrgate_detected is defined
+    - decypharrgate_target_upstream not in (decypharrgate_detected | map(attribute='upstream') | list)
+
+- name: Enregistrer l'upstream de {{ pgrole }}
+  ansible.builtin.copy:
+    content: "{{ decypharrgate_target_upstream }}\n"
+    dest: "{{ settings.storage }}/conf/{{ pgrole }}.upstream"
+    mode: '0664'
+    owner: "{{ lookup('env','MYUID') }}"
+    group: "{{ lookup('env','MYGID') }}"
+
+- name: Generer la configuration nginx de {{ pgrole }}
+  ansible.builtin.template:
+    src: "{{ settings.source }}/includes/dockerapps/templates/decypharrgate/default.conf.j2"
+    dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/default.conf"
+    mode: '0644'
+    owner: "{{ lookup('env','MYUID') }}"
+    group: "{{ lookup('env','MYGID') }}"
+  vars:
+    decypharrgate_upstream: "{{ decypharrgate_target_upstream }}"
+
+- name: Resume upstream {{ pgrole }}
+  ansible.builtin.debug:
+    msg: "decypharrgate {{ pgrole }} -> {{ decypharrgate_target_upstream }}"
