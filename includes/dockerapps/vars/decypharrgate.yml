@@ -7,7 +7,9 @@ image: 'nginx:1.27-alpine'
 traefik_labels_enabled: false
 
 pg_volumes:
-  - "{{ settings.source }}/includes/dockerapps/templates/decypharrgate/default.conf:/etc/nginx/conf.d/default.conf:ro"
+  # Monter le dossier (et non le fichier) : une mise a jour de default.conf
+  # est ainsi visible apres recreation/redemarrage, sans probleme d'inode.
+  - "{{ settings.source }}/includes/dockerapps/templates/decypharrgate:/etc/nginx/conf.d:ro"
 
 specific_docker_info:
   restart_policy: unless-stopped
