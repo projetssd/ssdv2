@@ -25,13 +25,20 @@ decypharrgate (nginx)
 decypharrsonarr:8282
   |
   +- 200 / autre -> renvoye tel quel
-  +- 404         -> 409 Conflict
+  +- 404         -> 409 Conflict (torrent non cache)
+  +- 502         -> 409 Conflict (erreur provider, ex. "no peer")
 ```
 
 Le client qBittorrent de Sonarr v5 convertit `409` en
 `DownloadClientRejectedReleaseException` : la release est skippee, sans pending,
 sans file, sans blocklist. Elle reste eligible pour un prochain RSS si elle
 devient cachee.
+
+Les erreurs provider `502` (par exemple `File not available due to no peer`)
+sont egalement converties en `409`. Sonarr skippe la release et continue avec
+les candidats suivants au lieu de bloquer toute la recherche. Un `502` global
+(decypharr/provider indisponible) est donc traite comme un rejet temporaire :
+pas de pending ni de blocklist, la release sera retentee au prochain RSS.
 
 ## Installation
 
@@ -73,7 +80,8 @@ Non pris en charge dans cette version. Perimetre Sonarr.
 
 ### Est-ce que ca blocklist ?
 
-Non. `404` -> `409`, Sonarr skippe sans blocklist. La release reste eligible.
+Non. `404` (non cache) et `502` (erreur provider) -> `409`, Sonarr skippe sans
+blocklist. La release reste eligible.
 
 ### Est-ce que ca change `download_uncached` ?
 

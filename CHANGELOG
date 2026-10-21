@@ -5,6 +5,10 @@
   Disponible dans Gestion > Utilitaires et dans le catalogue des applications.
 - configuration optionnelle de Sonarr et du cache DFS (500 Mo -> 20 Go).
 - documentation et guide questions/reponses : docs/decypharrgate.md
+- decypharrgate : mapper les 502 provider_error en 409 pour eviter les pending
+  et permettre a Sonarr d'essayer les releases suivantes (ex. Ragnarok S01).
+- decypharrgate : monter le dossier de configuration (mise a jour sans probleme
+  d'inode).
 
 16/09/2026
 
