@@ -62,9 +62,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: '3.12'
       - name: Install ansible
-        run: pip install ansible
+        # Version epinglee : ansible 14 casse l'installation des roles/collections
+        # du job (run 39632808452). Aligner sur la version locale validee.
+        run: pip install 'ansible==11.13.0'
       - name: Install roles and collections
         run: |
           retry() {
