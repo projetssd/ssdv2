@@ -21,6 +21,38 @@
   changed_when: false
   failed_when: false
 
+- name: Verifier la configuration nginx de decypharrgate
+  ansible.builtin.command:
+    argv:
+      - docker
+      - exec
+      - decypharrgate
+      - nginx
+      - -t
+  register: decypharrgate_nginx_test
+  changed_when: false
+  failed_when: false
+
+- name: Recharger nginx de decypharrgate
+  ansible.builtin.command:
+    argv:
+      - docker
+      - exec
+      - decypharrgate
+      - nginx
+      - -s
+      - reload
+  when: decypharrgate_nginx_test.rc == 0
+  changed_when: false
+  failed_when: false
+
+- name: Avertissement si la configuration nginx est invalide
+  ansible.builtin.debug:
+    msg: >-
+      Configuration nginx de decypharrgate invalide :
+      {{ decypharrgate_nginx_test.stderr | default('') }}
+  when: decypharrgate_nginx_test.rc != 0
+
 - name: Lire l'etat de decypharrgate
   ansible.builtin.command:
     argv:

@@ -19,14 +19,17 @@ ce comportement sans downgrade.
 Sonarr v5
   |  POST /api/v2/torrents/add
   v
-decypharrgate (nginx)
-  |  proxy_pass
+decypharrgate (OpenResty + Lua)
+  |  inspection du corps JSON
   v
 decypharrsonarr:8282
   |
-  +- 200 / autre -> renvoye tel quel
-  +- 404         -> 409 Conflict (torrent non cache)
-  +- 502         -> 409 Conflict (erreur provider, ex. "no peer")
+  +- 404 torrent_not_cached / torrent_not_found -> 409 Conflict
+  +- 502 provider_error                         -> 409 Conflict
+  +- 503 traffic_exceeded / hoster_unavailable  -> 409 Conflict
+  +- 509 too_many_active_downloads              -> 509 (pending)
+  +- 502 autre (vraie panne)                   -> 502 (pending)
+  +- 200 / autre                                -> renvoye tel quel
 ```
 
 Le client qBittorrent de Sonarr v5 convertit `409` en
@@ -34,11 +37,14 @@ Le client qBittorrent de Sonarr v5 convertit `409` en
 sans file, sans blocklist. Elle reste eligible pour un prochain RSS si elle
 devient cachee.
 
-Les erreurs provider `502` (par exemple `File not available due to no peer`)
-sont egalement converties en `409`. Sonarr skippe la release et continue avec
-les candidats suivants au lieu de bloquer toute la recherche. Un `502` global
-(decypharr/provider indisponible) est donc traite comme un rejet temporaire :
-pas de pending ni de blocklist, la release sera retentee au prochain RSS.
+La gate lit le corps JSON de decypharr et ne convertit que les vrais rejets :
+torrent non cache, `provider_error` (ex. « no peer ») et erreurs provider 503.
+Une vraie panne 502 (sans `provider_error`) et le 509 « trop de telechargements
+actifs » restent des indisponibilites temporaires : Sonarr les garde en pending
+et reessaiera, sans blocklist.
+
+Apres une mise a jour via le menu, la posttask recharge nginx automatiquement
+(`nginx -t` puis `nginx -s reload`).
 
 ## Installation
 
@@ -80,8 +86,9 @@ Non pris en charge dans cette version. Perimetre Sonarr.
 
 ### Est-ce que ca blocklist ?
 
-Non. `404` (non cache) et `502` (erreur provider) -> `409`, Sonarr skippe sans
-blocklist. La release reste eligible.
+Non. Les rejets `404` (non cache), `502 provider_error` et `503` provider sont
+convertis en `409` ; Sonarr skippe sans blocklist. Le `509` et une vraie panne
+`502` restent des pending (client indisponible/occupe).
 
 ### Est-ce que ca change `download_uncached` ?
 
