@@ -370,3 +370,11 @@ function menu_diagnostic_nettoyage() {
   pause
 }
 
+# BEGIN decypharrgate
+# Menu de gestion de la cache gate decypharr (Sonarr v5).
+if [ -f "${SETTINGS_SOURCE}/includes/menus-decypharrgate.sh" ]; then
+  # shellcheck source=menus-decypharrgate.sh
+  source "${SETTINGS_SOURCE}/includes/menus-decypharrgate.sh"
+fi
+# END decypharrgate
+

@@ -1,3 +1,11 @@
+21/10/2026
+
+- nouvelle application optionnelle decypharrgate : passerelle interne entre
+  Sonarr v5 et decypharr (404 torrent non cache -> 409), sans blocklist.
+  Disponible dans Gestion > Utilitaires et dans le catalogue des applications.
+- configuration optionnelle de Sonarr et du cache DFS (500 Mo -> 20 Go).
+- documentation et guide questions/reponses : docs/decypharrgate.md
+
 16/09/2026
 
 - rechargement automatique des fonctions du shell après un git pull
