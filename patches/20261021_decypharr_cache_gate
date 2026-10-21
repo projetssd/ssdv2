@@ -63,8 +63,9 @@ fi
 # 4. Verification des fichiers applicatifs (livres avec le depot).
 for f in \
   includes/dockerapps/vars/decypharrgate.yml \
+  includes/dockerapps/pretasks/decypharrgate.yml \
   includes/dockerapps/posttasks/decypharrgate.yml \
-  includes/dockerapps/templates/decypharrgate/default.conf \
+  includes/dockerapps/templates/decypharrgate/default.conf.j2 \
   includes/config/scripts/decypharrgate.py \
   includes/menus-decypharrgate.sh \
   docs/decypharrgate.md; do

@@ -1,15 +1,17 @@
 ---
-# Passerelle interne entre Sonarr v5 et decypharr.
+# Passerelle interne entre Sonarr v5+ et une instance decypharr.
 # Aucun port publie, aucun DNS, aucun label Traefik : le conteneur n'est
 # joignable que depuis le reseau Docker traefik_proxy.
+#
+# La configuration nginx est generee par la pretask dans le dossier de l'app
+# (upstream detecte/choisi), puis montee ici. Cela permet plusieurs gates,
+# une par instance decypharr.
 pgrole: 'decypharrgate'
 image: 'openresty/openresty:1.27.1.2-alpine'
 traefik_labels_enabled: false
 
 pg_volumes:
-  # Monter le dossier (et non le fichier) : une mise a jour de default.conf
-  # est ainsi visible apres recreation/redemarrage, sans probleme d'inode.
-  - "{{ settings.source }}/includes/dockerapps/templates/decypharrgate:/etc/nginx/conf.d:ro"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}:/etc/nginx/conf.d:ro"
 
 specific_docker_info:
   restart_policy: unless-stopped
