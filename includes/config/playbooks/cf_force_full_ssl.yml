@@ -1,30 +1,26 @@
 ---
-- hosts: localhost
+- name: Force full SSL on Cloudflare
+  hosts: localhost
   gather_facts: false
-    
-  
-  
   tasks:
-  
-  - name: Get CF zone id 
-    uri:
-      url: "https://api.cloudflare.com/client/v4/zones?name={{ user.domain }}&status=active&match=all"
-      method: GET
-      headers:
-        X-Auth-Email: "{{ cloudflare.login }}"
-        X-Auth-Key: "{{ cloudflare.api }}"
-      return_content: yes
-    register: cf_zone_id
-      
-  - name: Force ssl on the zone
-    uri:
-      url: "https://api.cloudflare.com/client/v4/zones/{{ (cf_zone_id.content| from_json).result[0].id }}/settings/ssl"
-      method: PATCH
-      headers:
-        X-Auth-Email: "{{ cloudflare.login }}"
-        X-Auth-Key: "{{ cloudflare.api }}"
-        Content-Type: application/json
-      body: '{"value":"full"}'
-      body_format: json
-      
-      
+
+    - name: Get Cloudflare zone id
+      ansible.builtin.uri:
+        url: "https://api.cloudflare.com/client/v4/zones?name={{ user.domain }}&status=active&match=all"
+        method: GET
+        headers:
+          X-Auth-Email: "{{ cloudflare.login }}"
+          X-Auth-Key: "{{ cloudflare.api }}"
+        return_content: true
+      register: cf_zone_id
+
+    - name: Force SSL on the zone
+      ansible.builtin.uri:
+        url: "https://api.cloudflare.com/client/v4/zones/{{ (cf_zone_id.content | from_json).result[0].id }}/settings/ssl"
+        method: PATCH
+        headers:
+          X-Auth-Email: "{{ cloudflare.login }}"
+          X-Auth-Key: "{{ cloudflare.api }}"
+          Content-Type: application/json
+        body: '{"value":"full"}'
+        body_format: json

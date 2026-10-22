@@ -1,10 +1,12 @@
 ---
-- hosts: localhost
+- name: Configure logrotate
+  hosts: localhost
   gather_facts: false
-  become: yes
+  become: true
   tasks:
-  - name: Logrotate
-    template:
-      src: "{{ settings.source }}/includes/config/playbooks/templates/logrotate.j2"
-      dest: /etc/logrotate.d/ansible
-      force: yes
+    - name: Logrotate
+      ansible.builtin.template:
+        src: "{{ settings.source }}/includes/config/playbooks/templates/logrotate.j2"
+        dest: /etc/logrotate.d/ansible
+        mode: "0644"
+        force: true

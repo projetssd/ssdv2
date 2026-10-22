@@ -1,11 +1,12 @@
 ---
-- hosts: localhost
+- name: Change file owner
+  hosts: localhost
   gather_facts: false
-  become: yes
+  become: true
   tasks:
-  - name: "Change owner of the file {{ FILE }}"
-    file:
-      path: "{{ FILE }}"
-      state: file
-      owner: "{{ lookup('env','USER') }}"
-      group: "{{ lookup('env','MYGIDNAME') }}"
+    - name: "Change owner of file: {{ FILE }}"
+      ansible.builtin.file:
+        path: "{{ FILE }}"
+        state: file
+        owner: "{{ lookup('env', 'USER') }}"
+        group: "{{ lookup('env', 'MYGIDNAME') }}"

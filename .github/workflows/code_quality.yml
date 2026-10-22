@@ -4,13 +4,13 @@ on:
 
 jobs:
   qodana:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
       pull-requests: write
       checks: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0  # a full history is required for pull request analysis
       - name: 'Qodana Scan'

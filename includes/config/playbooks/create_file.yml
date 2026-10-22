@@ -1,11 +1,13 @@
 ---
-- hosts: localhost
+- name: Create file
+  hosts: localhost
   gather_facts: false
-  become: yes
+  become: true
   tasks:
-  - name: Make sure file is present
-    file:
-      path: "{{ FILE }}"
-      state: touch
-      owner: "{{ lookup('env','USER') }}"
-      group: "{{ lookup('env','MYGIDNAME') }}"
+    - name: Make sure file is present
+      ansible.builtin.file:
+        path: "{{ FILE }}"
+        state: touch
+        mode: "0664"
+        owner: "{{ lookup('env', 'USER') }}"
+        group: "{{ lookup('env', 'MYGIDNAME') }}"

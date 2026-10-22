@@ -4,14 +4,15 @@
 # ansible-playbook ${settings.source}/includes/dockerapps/generique.yml --extra-vars "@${BASEDIR}/includes/dockerapps/vars/calibre.yml"
 # traefik_labels_enabled: false -> desactive les labels traefik + suppression variable intport mise par defaut a 0
 ---
-- hosts: localhost
+- name: Deploy a docker application
+  hosts: localhost
   gather_facts: true
   roles:
     - kwoodson.yedit
   vars_files:
     - "{{ playbook_dir }}/../templates/generique/generique.yml"
   vars:
-    subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
+    subdomain: "{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}"
     # Vrai saut de ligne (un "\n" littéral dans un bloc YAML n'est pas converti)
     nl: "\n"
 
@@ -19,67 +20,80 @@
     # SNAPSHOT (base de calcul du registre des conteneurs/volumes de l'app) ######
 
     - name: "Snapshot conteneurs avant installation"
-      shell: "docker ps -a --format '{% raw %}{{.Names}}{% endraw %}' | sort"
+      ansible.builtin.shell: |
+        set -o pipefail
+        docker ps -a --format '{% raw %}{{.Names}}{% endraw %}' | sort
+      args:
+        executable: /bin/bash
       register: ssdv2_containers_before
       changed_when: false
 
     - name: "Snapshot volumes avant installation"
-      shell: "docker volume ls -q | sort"
+      ansible.builtin.shell: |
+        set -o pipefail
+        docker volume ls -q | sort
+      args:
+        executable: /bin/bash
       register: ssdv2_volumes_before
       changed_when: false
 
     # PRE TASKS ###################################################################
 
     - name: Check that pretasks file exists
-      stat:
+      ansible.builtin.stat:
         path: "{{ settings.source }}/includes/dockerapps/pretasks/{{ pgrole }}.yml"
       register: stat_result
 
     - name: Launch Pretask
-      include_tasks: "{{ settings.source }}/includes/dockerapps/pretasks/{{ pgrole }}.yml"
+      ansible.builtin.include_tasks: "{{ settings.source }}/includes/dockerapps/pretasks/{{ pgrole }}.yml"
       when: stat_result.stat.exists
 
     - name: Launch Pretasks from yml
-      include_tasks: "{{ settings.source }}/includes/dockerapps/pretasks/{{ item }}.yml"
-      with_items: "{{ pretasks }}"
+      ansible.builtin.include_tasks: "{{ settings.source }}/includes/dockerapps/pretasks/{{ item }}.yml"
+      loop: "{{ pretasks }}"
       when: pretasks is defined
-        
+
     # FACTS #######################################################################
 
     - name: Creating paths
-      become: yes
-      file: "path={{ item }} state=directory mode=0775 owner={{ lookup('env','MYUID') }} group={{ lookup('env','MYGID') }}"
-      with_items:
-        - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}"
-    
+      become: true
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0775"
+        owner: "{{ lookup('env', 'MYUID') }}"
+        group: "{{ lookup('env', 'MYGID') }}"
+      loop:
+        - "{{ settings.storage }}/docker/{{ lookup('env', 'USER') }}/{{ pgrole }}"
+
     # LABELS ######################################################################
 
     - name: Set traefik_labels_enabled to true by default if not defined
-      set_fact:
+      ansible.builtin.set_fact:
         traefik_labels_enabled: "{{ traefik_labels_enabled | default(true) }}"
 
     - name: Set docker_deploy_enabled to true by default if not defined
-      set_fact:
+      ansible.builtin.set_fact:
         docker_deploy_enabled: "{{ docker_deploy_enabled | default(true) }}"
 
     - name: "Set DNS Record on CloudFlare"
-      include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
+      ansible.builtin.include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
       vars:
         subdomain: "{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}"
-      when: cloudflare_enabled and traefik_labels_enabled == true
+      when: cloudflare_enabled and (traefik_labels_enabled | bool)
 
     # Un enregistrement DNS n'est utile que si un router Traefik est exposé :
     # labels génériques, ou labels spécifiques fournis par l'application
     # (specific_docker_info.labels ou labels consommés par une posttask).
     - name: "Set dns_required fact"
-      set_fact:
+      ansible.builtin.set_fact:
         dns_required: >-
-          {{ traefik_labels_enabled == true
+          {{ (traefik_labels_enabled | bool)
              or (specific_docker_info | default({})).labels is defined
              or (labels | default('') | length > 0) }}
 
-    - name: "Prompt user to create A record for {{ subdomain }} with IP {{ network.ipv4 }}"
-      pause:
+    - name: "Prompt user to create an A record"
+      ansible.builtin.pause:
         prompt: |
           SSDV2_PROMPT {"id": "dns.create_record", "label": "Créer l'enregistrement A", "kind": "confirm", "secret": false}
           Please create an A record for the subdomain "{{ subdomain }}.{{ user.domain }}"
@@ -88,7 +102,12 @@
       when: not cloudflare_enabled and dns_required
 
     - name: "Wait for subdomain to resolve to correct IP"
-      command: dig +short {{ subdomain }}.{{ user.domain }} @1.1.1.1
+      ansible.builtin.command:
+        argv:
+          - dig
+          - +short
+          - "{{ subdomain }}.{{ user.domain }}"
+          - "@1.1.1.1"
       register: dig_output
       until: dig_output.stdout == network.ipv4
       retries: 300  # Nombre de tentatives
@@ -97,47 +116,48 @@
       when: not cloudflare_enabled and dns_required
 
     - name: Initialize labels
-      set_fact:
+      ansible.builtin.set_fact:
         pg_labels: {}
-      when: traefik_labels_enabled == false
-    
+      when: not (traefik_labels_enabled | bool)
+
     - name: Create temp file
-      tempfile:
+      ansible.builtin.tempfile:
         state: file
       register: tempfile_1
       when: traefik_labels_enabled
-    
-    - name: fill temp file with labels
-      template:
+
+    - name: Fill temp file with labels
+      ansible.builtin.template:
         src: "{{ settings.source }}/includes/dockerapps/templates/generique/traefik_labels.yml.j2"
         dest: "{{ tempfile_1.path }}"
-        force: yes
+        mode: "0600"
+        force: true
       when: traefik_labels_enabled
-    
+
     - name: Import traefik labels
-      include_vars: 
+      ansible.builtin.include_vars:
         file: "{{ tempfile_1.path }}"
         name: pg_labels
       when: traefik_labels_enabled
-        
+
     - name: Delete temp file
-      file:
+      ansible.builtin.file:
         path: "{{ tempfile_1.path }}"
         state: absent
       when: traefik_labels_enabled
 
     # SET DEFAULT intport IF TRAEFIK LABELS DISABLED ##############################
     - name: Set default intport if traefik_labels_enabled is false and intport not defined
-      set_fact:
+      ansible.builtin.set_fact:
         intport: 0
-      when: traefik_labels_enabled == false and intport is not defined
-  
+      when: not (traefik_labels_enabled | bool) and intport is not defined
+
     ########################################################################
     # DEPLOY
     ########################################################################
 
     - name: Prepare docker info
-      set_fact:
+      ansible.builtin.set_fact:
         docker_info:
           name: "{{ pgrole }}"
           image: "{{ image }}"
@@ -153,12 +173,12 @@
       when: docker_deploy_enabled
 
     - name: Add specific docker info
-      set_fact:
+      ansible.builtin.set_fact:
         docker_info: "{{ docker_info | combine(specific_docker_info, recursive=True) }}"
       when: docker_deploy_enabled and specific_docker_info is defined
 
     - name: Normalize security_opts for docker_container
-      set_fact:
+      ansible.builtin.set_fact:
         docker_info: "{{ docker_info | combine({'security_opts': [docker_info.security_opts]}) }}"
       when:
         - docker_deploy_enabled
@@ -166,9 +186,9 @@
         - docker_info.security_opts is string
 
     - name: Deploy container {{ pgrole }}
-      docker_container: "{{ docker_info }}"
+      community.docker.docker_container: "{{ docker_info }}"  # noqa: args[module]
       when: docker_deploy_enabled
-    
+
     # POST TASKS ###################################################################
 
     # Une posttask en échec ne doit pas empêcher l'enregistrement de l'app
@@ -177,21 +197,21 @@
     - name: Exécuter les posttasks
       block:
         - name: Check that posttasks file exists
-          stat:
+          ansible.builtin.stat:
             path: "{{ settings.source }}/includes/dockerapps/posttasks/{{ pgrole }}.yml"
           register: stat_result_post
 
         - name: Launch Posttask
-          include_tasks: "{{ settings.source }}/includes/dockerapps/posttasks/{{ pgrole }}.yml"
+          ansible.builtin.include_tasks: "{{ settings.source }}/includes/dockerapps/posttasks/{{ pgrole }}.yml"
           when: stat_result_post.stat.exists
 
         - name: Launch Posttask from yml
-          include_tasks: "{{ settings.source }}/includes/dockerapps/posttasks/{{ item }}.yml"
-          with_items: "{{ posttasks }}"
+          ansible.builtin.include_tasks: "{{ settings.source }}/includes/dockerapps/posttasks/{{ item }}.yml"
+          loop: "{{ posttasks }}"
           when: posttasks is defined
       rescue:
         - name: Avertissement (posttask en échec)
-          debug:
+          ansible.builtin.debug:
             msg:
               - "Une posttask de {{ pgrole }} a échoué : l'application est enregistrée"
               - "mais peut nécessiter une réparation (réinstallation)."
@@ -201,29 +221,37 @@
     # afin de pouvoir les supprimer proprement lors de suppression_appli.
 
     - name: "Snapshot conteneurs après installation"
-      shell: "docker ps -a --format '{% raw %}{{.Names}}{% endraw %}' | sort"
+      ansible.builtin.shell: |
+        set -o pipefail
+        docker ps -a --format '{% raw %}{{.Names}}{% endraw %}' | sort
+      args:
+        executable: /bin/bash
       register: ssdv2_containers_after
       changed_when: false
 
     - name: "Snapshot volumes après installation"
-      shell: "docker volume ls -q | sort"
+      ansible.builtin.shell: |
+        set -o pipefail
+        docker volume ls -q | sort
+      args:
+        executable: /bin/bash
       register: ssdv2_volumes_after
       changed_when: false
 
     - name: "Créer le dossier de registre"
-      file:
+      ansible.builtin.file:
         path: "{{ settings.storage }}/conf"
         state: directory
         mode: '0775'
 
     - name: "Lire le registre conteneurs existant"
-      slurp:
+      ansible.builtin.slurp:
         src: "{{ settings.storage }}/conf/{{ pgrole }}.containers"
       register: ssdv2_reg_containers
       failed_when: false
 
     - name: "Lire le registre volumes existant"
-      slurp:
+      ansible.builtin.slurp:
         src: "{{ settings.storage }}/conf/{{ pgrole }}.volumes"
       register: ssdv2_reg_volumes
       failed_when: false
@@ -231,12 +259,20 @@
     # Inventaire par label : capture les compagnons préexistants qu'un simple
     # diff avant/après ne verrait pas (rend le registre exhaustif).
     - name: "Lister les conteneurs labelisés ssdv2.app={{ pgrole }}"
-      shell: "docker ps -a --filter 'label=ssdv2.app={{ pgrole }}' --format '{% raw %}{{.Names}}{% endraw %}'"
+      ansible.builtin.command:
+        argv:
+          - docker
+          - ps
+          - -a
+          - --filter
+          - "label=ssdv2.app={{ pgrole }}"
+          - --format
+          - "{% raw %}{{.Names}}{% endraw %}"
       register: ssdv2_containers_labeled
       changed_when: false
 
     - name: "Écrire le registre conteneurs de {{ pgrole }}"
-      copy:
+      ansible.builtin.copy:
         dest: "{{ settings.storage }}/conf/{{ pgrole }}.containers"
         content: |
           {{
@@ -250,7 +286,7 @@
         mode: '0664'
 
     - name: "Écrire le registre volumes de {{ pgrole }}"
-      copy:
+      ansible.builtin.copy:
         dest: "{{ settings.storage }}/conf/{{ pgrole }}.volumes"
         content: |
           {{
@@ -261,11 +297,12 @@
           }}
         mode: '0664'
 
-    - name: "Insert {{ pgrole }} into database"
-      shell: 
+    - name: "Insert application into database: {{ pgrole }}"
+      ansible.builtin.shell:
         cmd: |
           sqlite3 {{ settings.source }}/ssddb << EOF
               replace into applications (name, status, subdomain, port)
               values
               ('{{ pgrole }}', 2, '{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}', {{ intport }});
           EOF
+      changed_when: false

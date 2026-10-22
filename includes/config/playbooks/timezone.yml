@@ -1,13 +1,14 @@
 ---
-- hosts: localhost
+- name: Set timezone
+  hosts: localhost
   gather_facts: false
-  become: yes
+  become: true
   tasks:
-  - name: set timezone 
-    timezone:
-      name: Europe/Paris
-  - name: create /etc/localtime
-    file:
-      path: /etc/localtime
-      state: link
-      src: /usr/share/zoneinfo/Europe/Paris
+    - name: Set timezone to Europe/Paris
+      community.general.timezone:
+        name: Europe/Paris
+    - name: Create /etc/localtime symlink
+      ansible.builtin.file:
+        path: /etc/localtime
+        state: link
+        src: /usr/share/zoneinfo/Europe/Paris

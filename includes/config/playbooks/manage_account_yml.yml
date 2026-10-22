@@ -1,12 +1,13 @@
 ---
-- hosts: localhost
+- name: Manage account.yml
+  hosts: localhost
   gather_facts: false
   roles:
     - kwoodson.yedit
   tasks:
-  - name: "Gestion du fichier account.yml - clé {{ account_key }}"
-    yedit:
-      src: "{{ lookup('env','HOME') }}/.ansible/inventories/group_vars/all.yml"
-      key: "{{ account_key }}"
-      value: "{{ account_value }}"
-      state: "{{ state }}"
+    - name: "Gestion du fichier account.yml - clé {{ account_key }}"
+      yedit:
+        src: "{{ lookup('env', 'HOME') }}/.ansible/inventories/group_vars/all.yml"
+        key: "{{ account_key }}"
+        value: "{{ account_value }}"
+        state: "{{ state }}"

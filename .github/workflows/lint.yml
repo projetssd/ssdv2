@@ -7,9 +7,9 @@ on:
 
 jobs:
   shellcheck:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install shellcheck
         run: sudo apt-get update && sudo apt-get install -y shellcheck
       - name: ShellCheck (erreurs)
@@ -22,10 +22,10 @@ jobs:
           shellcheck -S warning -e SC2046,SC2027 "${files[@]}"
 
   catalogue:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.x'
       - name: Validation du catalogue
@@ -34,10 +34,10 @@ jobs:
         run: python3 includes/config/scripts/validate_ansible_facts.py
 
   python:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.x'
       - name: py_compile
@@ -48,19 +48,19 @@ jobs:
           fi
 
   bats:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install bats et jq
         run: sudo apt-get update && sudo apt-get install -y bats jq
       - name: Tests unitaires
         run: bats tests/bats
 
   ansible-syntax:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
       - name: Install ansible
@@ -87,10 +87,10 @@ jobs:
           done
 
   yaml:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.x'
       - name: Validate dockerapps YAML
@@ -117,15 +117,17 @@ jobs:
           PY
 
   ansible-lint:
-    runs-on: ubuntu-latest
-    # Informatif : ne bloque pas tant que la base existante n'est pas assainie.
-    continue-on-error: true
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.x'
       - name: Install ansible-lint
-        run: pip install ansible-lint
-      - name: ansible-lint (informatif)
-        run: ansible-lint includes/config/playbooks includes/dockerapps/vars/generique.yml || true
+        run: pip install 'ansible-lint==26.10.1'
+      - name: Install roles and collections
+        run: |
+          ansible-galaxy role install kwoodson.yedit
+          ansible-galaxy collection install community.general community.docker
+      - name: ansible-lint
+        run: ansible-lint includes/config/playbooks includes/dockerapps/vars/generique.yml
