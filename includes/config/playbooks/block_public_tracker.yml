@@ -1,28 +1,31 @@
 ---
-- hosts: localhost
+- name: Block public trackers
+  hosts: localhost
   gather_facts: false
   tasks:
 
-  - name: install ipset
-    become: yes
-    apt:
-      name: ipset
-      state: present
+    - name: Install ipset
+      become: true
+      ansible.builtin.apt:
+        name: ipset
+        state: present
 
-  - name: create directory
-    file:
-      path: "{{ lookup('env','HOME') }}/scripts/block_public_tracker"
-      state: directory
+    - name: Create directory
+      ansible.builtin.file:
+        path: "{{ lookup('env', 'HOME') }}/scripts/block_public_tracker"
+        state: directory
+        mode: "0775"
 
-  - name: Get repo
-    git:
-      repo: "https://github.com/Merrick28/block_public_tracker.git"
-      dest: "{{ lookup('env','HOME') }}/scripts/block_public_tracker"
+    - name: Get repository
+      ansible.builtin.git:
+        repo: "https://github.com/Merrick28/block_public_tracker.git"
+        dest: "{{ lookup('env', 'HOME') }}/scripts/block_public_tracker"
+        version: 376275854f5759a8db578abeece7aa09db3b653e
 
-  - name: Add to cron
-    become: yes
-    cron:
-      name: "Block public trackers"
-      minute: "0"
-      hour: "0"
-      job: "{{ lookup('env','HOME') }}/scripts/block_public_tracker/block_ipset.sh"
+    - name: Add to cron
+      become: true
+      ansible.builtin.cron:
+        name: "Block public trackers"
+        minute: "0"
+        hour: "0"
+        job: "{{ lookup('env', 'HOME') }}/scripts/block_public_tracker/block_ipset.sh"

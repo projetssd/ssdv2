@@ -1,11 +1,13 @@
 ---
-- hosts: localhost
+- name: Create directory
+  hosts: localhost
   gather_facts: false
-  become: yes
+  become: true
   tasks:
-  - name: "Make sure directory {{ DIRECTORY }} is present"
-    file:
-      path: "{{ DIRECTORY }}"
-      state: directory
-      owner: "{{ lookup('env','USER') }}"
-      group: "{{ lookup('env','MYGIDNAME') }}"
+    - name: "Make sure directory is present: {{ DIRECTORY }}"
+      ansible.builtin.file:
+        path: "{{ DIRECTORY }}"
+        state: directory
+        mode: "0775"
+        owner: "{{ lookup('env', 'USER') }}"
+        group: "{{ lookup('env', 'MYGIDNAME') }}"

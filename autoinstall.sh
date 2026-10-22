@@ -62,8 +62,9 @@ require_sudo() {
 }
 
 ensure_ssdv2ctl_wrapper() {
+	local script="${SETTINGS_SOURCE}/includes/config/scripts/ensure_ssdv2ctl_wrapper.sh"
 	HOME="$CURRENT_HOME" SETTINGS_SOURCE="$SETTINGS_SOURCE" OWNER="$CURRENT_USER" \
-		"${SETTINGS_SOURCE}/includes/config/scripts/ensure_ssdv2ctl_wrapper.sh" >/dev/null 2>&1 || true
+		"$script" >/dev/null 2>&1 || true
 }
 
 write_env_file() {

@@ -1,10 +1,12 @@
 ---
-- hosts: localhost
+- name: Configure Traefik logrotate
+  hosts: localhost
   gather_facts: false
-  become: yes
+  become: true
   tasks:
-  - name: traefik
-    template:
-      src: "{{ settings.source }}/includes/config/playbooks/templates/traefik.j2"
-      dest: /etc/logrotate.d/traefik
-      force: yes
+    - name: Traefik
+      ansible.builtin.template:
+        src: "{{ settings.source }}/includes/config/playbooks/templates/traefik.j2"
+        dest: /etc/logrotate.d/traefik
+        mode: "0644"
+        force: true

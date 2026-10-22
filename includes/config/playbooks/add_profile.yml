@@ -1,10 +1,11 @@
 ---
-- hosts: localhost
+- name: Configure the shell profile
+  hosts: localhost
   gather_facts: false
   tasks:
-  - name: set path
-    lineinfile:
-      path: "{{ lookup('env','HOME') }}/.bashrc"
-      line: "{{ item }}"
-    loop:
-      - "alias seedbox='{{ settings.source }}/seedbox.sh'"
+    - name: Set path alias
+      ansible.builtin.lineinfile:
+        path: "{{ lookup('env', 'HOME') }}/.bashrc"
+        line: "{{ item }}"
+      loop:
+        - "alias seedbox='{{ settings.source }}/seedbox.sh'"

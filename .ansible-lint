@@ -1,0 +1,3 @@
+---
+kinds:
+  - playbook: "includes/dockerapps/vars/generique.yml"

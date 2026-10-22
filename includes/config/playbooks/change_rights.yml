@@ -1,10 +1,11 @@
 ---
-- hosts: localhost
+- name: Change directory rights
+  hosts: localhost
   gather_facts: false
-  become: yes
+  become: true
   tasks:
-  - name: "Change directory {{ DIRECTORY }} rights"
-    file:
-      path: "{{ DIRECTORY }}"
-      state: directory
-      mode: 0777
+    - name: "Change directory rights: {{ DIRECTORY }}"
+      ansible.builtin.file:
+        path: "{{ DIRECTORY }}"
+        state: directory
+        mode: "0777"

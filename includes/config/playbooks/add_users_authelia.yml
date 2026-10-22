@@ -1,5 +1,6 @@
 ---
-- hosts: all
+- name: Add users to Authelia
+  hosts: all
   vars_prompt:
 
     - name: username
@@ -8,7 +9,7 @@
 
     - name: password
       prompt: Password
-      private: false
+      private: true
 
     - name: mail
       prompt: Mail
@@ -16,31 +17,31 @@
 
   tasks:
 
-    - name: Create new hashed
-      shell: |
-        docker run --rm authelia/authelia:latest authelia hash-password {{ password }} | cut -d: -f2 | sed 's/ //g'
-      register: password
+    - name: Create new hashed password
+      ansible.builtin.shell: |
+        set -o pipefail
+        docker run --rm authelia/authelia:latest authelia hash-password "$AUTHELIA_PASSWORD" | cut -d: -f2 | sed 's/ //g'
+      args:
+        executable: /bin/bash
+      environment:
+        AUTHELIA_PASSWORD: "{{ password }}"
+      register: password_hash
+      changed_when: false
+      no_log: true
 
-    - name: Modify rclone.conf
-      blockinfile:
+    - name: Modify users.yml
+      ansible.builtin.blockinfile:
         marker: "##{{ username }}##"
-        path: "{{ settings.storage }}/docker/{{user.name}}/authelia/users.yml"
-        block: |2 
-            "{{ username }}":
-              disabled: false
-              displayname: "{{ username }}"
-              password: "{{ password.stdout }}"
-              email: {{ mail }}
-              groups:
-               - admins
+        path: "{{ settings.storage }}/docker/{{ user.name }}/authelia/users.yml"
+        block: |
+          "{{ username }}":
+            disabled: false
+            displayname: "{{ username }}"
+            password: "{{ password_hash.stdout }}"
+            email: "{{ mail }}"
+            groups:
+              - admins
 
     - name: Print a message
       ansible.builtin.debug:
         msg: 'Logging authelia in as {{ username }}'
-
-    - name: Print a message
-      ansible.builtin.debug:
-        msg: 'Logging authelia in as {{ password }}'
-
-
-
