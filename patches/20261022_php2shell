@@ -1,0 +1,67 @@
+#!/bin/bash
+##############################################################################
+# Ajoute l'utilitaire "Audit PHP (php2shell)" pour les CVE
+# CVE-2026-109618 / CVE-2026-109619.
+#
+# Ce patch n'installe rien : il ajoute l'option de menu et le chargement du
+# fichier de menu. L'audit et les correctifs se font ensuite depuis le menu,
+# au choix de l'utilisateur.
+#
+# Idempotent : peut etre rejoue via FORCE_PATCH.
+##############################################################################
+
+set -u
+
+if [ -z "${SETTINGS_SOURCE:-}" ] && [ -f "${HOME}/.config/ssd/env" ]; then
+  # shellcheck disable=SC1090
+  source "${HOME}/.config/ssd/env"
+fi
+SETTINGS_SOURCE="${SETTINGS_SOURCE:-${HOME}/seedbox-compose}"
+
+MENU="${SETTINGS_SOURCE}/menu"
+MENUS="${SETTINGS_SOURCE}/includes/menus.sh"
+
+command -v sqlite3 >/dev/null 2>&1 || exit 0
+
+# 1. Entree de menu sous "Gestion -> Securisation systeme" (parent 6).
+#    Fallback sous "Gestion" (parent 2) si le parent 6 n'existe pas.
+if [ -f "$MENU" ]; then
+  parent=6
+  ordre=11
+  if ! sqlite3 "$MENU" "select 1 from menu where id=6" 2>/dev/null | grep -qx 1; then
+    parent=2
+    ordre=7
+  fi
+  sqlite3 "$MENU" "insert into menu (texte,parent_id,ordre,action)
+  select 'Audit PHP (php2shell - CVE-2026-109618/109619)',${parent},${ordre},'menu_phpcve'
+  where not exists (select 1 from menu where action='menu_phpcve');" 2>/dev/null
+  sqlite3 "$MENU" "update menu set texte='Audit PHP (php2shell - CVE-2026-109618/109619)',
+  parent_id=${parent}, ordre=${ordre}
+  where action='menu_phpcve';" 2>/dev/null
+fi
+
+# 2. Chargement du fichier de menu (bloc protege par marqueur).
+if [ -f "$MENUS" ] && ! grep -q '# BEGIN phpcve' "$MENUS"; then
+  cat >>"$MENUS" <<'EOF'
+# BEGIN phpcve
+# Menu d'audit et de remediation des CVE PHP2Shell.
+if [ -f "${SETTINGS_SOURCE}/includes/menus-phpcve.sh" ]; then
+  # shellcheck source=menus-phpcve.sh
+  source "${SETTINGS_SOURCE}/includes/menus-phpcve.sh"
+fi
+# END phpcve
+EOF
+fi
+
+# 3. Verification des fichiers applicatifs (livres avec le depot).
+for f in \
+  includes/config/scripts/phpcve.py \
+  includes/menus-phpcve.sh \
+  docs/php2shell.md; do
+  if [ ! -f "${SETTINGS_SOURCE}/${f}" ]; then
+    echo "[patch] ATTENTION : fichier manquant ${f}" >&2
+  fi
+done
+
+echo "[patch] option 'Audit PHP (php2shell)' ajoutee"
+exit 0

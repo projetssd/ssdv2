@@ -378,3 +378,10 @@ if [ -f "${SETTINGS_SOURCE}/includes/menus-decypharrgate.sh" ]; then
 fi
 # END decypharrgate
 
+# BEGIN phpcve
+# Menu d'audit et de remediation des CVE PHP2Shell.
+if [ -f "${SETTINGS_SOURCE}/includes/menus-phpcve.sh" ]; then
+  # shellcheck source=menus-phpcve.sh
+  source "${SETTINGS_SOURCE}/includes/menus-phpcve.sh"
+fi
+# END phpcve

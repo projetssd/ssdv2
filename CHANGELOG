@@ -1,3 +1,15 @@
+22/10/2026
+
+- nouveau menu Gestion > Securisation systeme > Audit PHP (php2shell) pour les
+  CVE-2026-109618 / CVE-2026-109619 (RCE non authentifiee dans le coeur de PHP).
+- audit de l'hote (paquets de distribution, SAPI, services), des conteneurs
+  (PHP compile ou paquet) et des applications PHP du catalogue SSDV2.
+- correction de l'hote par mise a jour ciblee des paquets PHP ; mise a jour des
+  conteneurs SSDV2 par pull + recreation, sans suppression des volumes.
+- commandes non interactives ssdv2ctl security php-cve (scan, report, fix-host,
+  fix-app, fix-container, stop, harden-host).
+- documentation et rappel des limites des mitigations partielles.
+
 21/10/2026
 
 - nouvelle application optionnelle decypharrgate : passerelle interne entre
