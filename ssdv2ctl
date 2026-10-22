@@ -52,6 +52,16 @@ Diagnostics :
     ssdv2ctl diagnostics cleanup-orphan-containers
     ssdv2ctl diagnostics cleanup-dangling-volumes
 
+Sécurité :
+
+    ssdv2ctl security php-cve scan [--deep]
+    ssdv2ctl security php-cve report
+    ssdv2ctl security php-cve fix-host
+    ssdv2ctl security php-cve fix-app <app>
+    ssdv2ctl security php-cve fix-container <conteneur> [--force]
+    ssdv2ctl security php-cve stop <conteneur> [--force]
+    ssdv2ctl security php-cve harden-host
+
 Conventions de sortie :
 
     - stdout : JSON uniquement (`--json` est accepté et correspond au format par défaut) ;
@@ -73,7 +83,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-VERSION = "0.5.0"
+VERSION = "0.6.0"
 SCHEMA_VERSION = 1
 
 EXIT_OK = 0
@@ -92,6 +102,7 @@ OUTPUT_TAIL_LINES = 40
 CATALOGUE_RELATIVE = Path("includes/config/services-available")
 SSDDB_RELATIVE = Path("ssddb")
 GENERIQUE_RELATIVE = Path("includes/config/scripts/generique.sh")
+PHPCVE_RELATIVE = Path("includes/config/scripts/phpcve.py")
 PATCH_REGISTRIES_RELATIVE = Path("patches/20260916_backfill_registries")
 REGISTRY_KINDS = ("containers", "volumes", "dns")
 
@@ -907,6 +918,41 @@ def command_diagnostics_cleanup_volumes() -> dict:
     }
 
 
+def command_phpcve(
+    source: Path, storage: Path, argv: list[str], timeout: int = INSTALL_TIMEOUT
+) -> dict:
+    """Exécute le backend phpcve.py et retourne son JSON."""
+    script = source / PHPCVE_RELATIVE
+    if not script.is_file():
+        raise CtlError("phpcve_unavailable", f"backend php-cve introuvable: {script}")
+    python = sys.executable or "python3"
+    try:
+        result = subprocess.run(
+            [python, str(script), *argv, "--json"],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            env=_bash_environment(source, storage),
+            check=False,
+            stdin=subprocess.DEVNULL,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise CtlError("phpcve_failed", f"exécution php-cve impossible: {exc}") from exc
+    text = result.stdout.strip()
+    start = text.find("{")
+    end = text.rfind("}")
+    payload = None
+    if start >= 0 and end > start:
+        try:
+            payload = json.loads(text[start : end + 1])
+        except json.JSONDecodeError:
+            payload = None
+    if not isinstance(payload, dict):
+        detail = result.stderr.strip() or text or "sortie vide"
+        raise CtlError("phpcve_failed", f"réponse php-cve invalide: {detail}")
+    return payload
+
+
 def emit(payload: dict) -> None:
     json.dump(payload, sys.stdout, ensure_ascii=False, indent=2)
     sys.stdout.write("\n")
@@ -1010,6 +1056,48 @@ def build_parser() -> argparse.ArgumentParser:
     diagnostics_commands.add_parser(
         "cleanup-dangling-volumes", help="supprime les volumes anonymes orphelins"
     )
+
+    security = commands.add_parser("security", help="sécurité et vulnérabilités")
+    security_commands = security.add_subparsers(dest="security_command", required=True)
+    php_cve = security_commands.add_parser(
+        "php-cve", help="audit et remédiation PHP2Shell (CVE-2026-109618/109619)"
+    )
+    php_cve_commands = php_cve.add_subparsers(dest="phpcve_command", required=True)
+    php_cve_common = argparse.ArgumentParser(add_help=False)
+    php_cve_common.add_argument(
+        "--json", action="store_true", help="sortie JSON (défaut)"
+    )
+    php_cve_scan = php_cve_commands.add_parser(
+        "scan", parents=[php_cve_common], help="audit hôte + conteneurs + SSDV2"
+    )
+    php_cve_scan.add_argument(
+        "--deep", action="store_true", help="inspecter aussi les conteneurs arrêtés"
+    )
+    php_cve_commands.add_parser("report", parents=[php_cve_common], help="rapport lisible")
+    php_cve_commands.add_parser(
+        "fix-host", parents=[php_cve_common], help="met à jour PHP sur l'hôte"
+    )
+    php_cve_fix_app = php_cve_commands.add_parser(
+        "fix-app", parents=[php_cve_common], help="met à jour les conteneurs PHP d'une application"
+    )
+    php_cve_fix_app.add_argument("app", help="nom de l'application SSDV2")
+    php_cve_fix_container = php_cve_commands.add_parser(
+        "fix-container", parents=[php_cve_common], help="met à jour un conteneur PHP"
+    )
+    php_cve_fix_container.add_argument("container", help="nom du conteneur")
+    php_cve_fix_container.add_argument(
+        "--force", action="store_true", help="autoriser un conteneur hors SSDV2"
+    )
+    php_cve_stop = php_cve_commands.add_parser(
+        "stop", parents=[php_cve_common], help="arrête un conteneur PHP vulnérable"
+    )
+    php_cve_stop.add_argument("container", help="nom du conteneur")
+    php_cve_stop.add_argument(
+        "--force", action="store_true", help="autoriser un conteneur hors SSDV2"
+    )
+    php_cve_commands.add_parser(
+        "harden-host", parents=[php_cve_common], help="applique les mitigations partielles sur l'hôte"
+    )
     return parser
 
 
@@ -1107,6 +1195,30 @@ def main(argv: list[str] | None = None) -> int:
             emit(payload)
             if not payload["ok"]:
                 return fail(CtlError("action_failed", "suppression de volumes orphelins en échec"))
+        elif args.command == "security" and args.security_command == "php-cve":
+            argv = [args.phpcve_command]
+            if args.phpcve_command == "scan" and args.deep:
+                argv.append("--deep")
+            if args.phpcve_command == "fix-app":
+                argv.append(args.app)
+            if args.phpcve_command in ("fix-container", "stop"):
+                argv.append(args.container)
+                if args.force:
+                    argv.append("--force")
+            payload = command_phpcve(source, storage, argv)
+            emit(payload)
+            if args.phpcve_command in ("scan", "report"):
+                if payload.get("error") or "summary" not in payload:
+                    return EXIT_ERROR
+                if int((payload.get("summary") or {}).get("vulnerable", 0)) > 0:
+                    return EXIT_ERROR
+            elif not payload.get("ok"):
+                return fail(
+                    CtlError(
+                        "php_cve_failed",
+                        payload.get("message") or "action php-cve en échec",
+                    )
+                )
         else:
             raise CtlError("invalid_command", "commande inconnue", EXIT_USAGE)
     except CtlError as error:
