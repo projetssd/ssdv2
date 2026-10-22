@@ -96,17 +96,19 @@
         register: preferences_xml_resp
         ignore_errors: yes
 
-      - name: "Backup 'Preferences.xml' before removal (malformed)"
+      - name: "Backup 'Preferences.xml' before abort"
         copy:
           src: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
           dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml.bak-{{ ansible_facts['date_time']['iso8601_basic_short'] }}"
           remote_src: true
         when: (preferences_xml_resp is failed)
 
-      - name: "Remove 'Preferences.xml' if malformed"
-        file:
-          path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
-          state: absent
+      - name: "Abort if 'Preferences.xml' cannot be read"
+        fail:
+          msg: >-
+            Impossible de lire 'Preferences.xml' (XML invalide, permissions ou lxml indisponible).
+            Aucune modification de Preferences.xml n'a été effectuée. Une sauvegarde .bak-* a été créée.
+            Le conteneur Plex a été arrêté par le playbook ; corrigez la cause puis relancez.
         when: (preferences_xml_resp is failed)
 
       - name: Set 'transcoder_path_fix' variable
@@ -190,17 +192,16 @@
       wait_for:
         port: 32400
         host: 127.0.0.1
-        timeout: 60
+        timeout: 300
 
     - name: "Set Custom server access URL for Remote Access"
+      vars:
+        plex_custom_url: "https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}:443"
       uri:
-        url: "http://127.0.0.1:32400/:/prefs"
+        url: "http://127.0.0.1:32400/:/prefs?customConnections={{ plex_custom_url | urlencode }}"
         method: PUT
         headers:
           X-Plex-Token: "{{ plex.token }}"
-        body_format: form-urlencoded
-        body:
-          customConnections: "https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}:443"
       register: custom_connections_resp
       retries: 5
       delay: 5
