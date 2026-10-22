@@ -61,6 +61,11 @@ require_sudo() {
 	fi
 }
 
+ensure_ssdv2ctl_wrapper() {
+	HOME="$CURRENT_HOME" SETTINGS_SOURCE="$SETTINGS_SOURCE" OWNER="$CURRENT_USER" \
+		"${SETTINGS_SOURCE}/includes/config/scripts/ensure_ssdv2ctl_wrapper.sh" >/dev/null 2>&1 || true
+}
+
 write_env_file() {
 	mkdir -p "${CURRENT_HOME}/.config/ssd" 2>/dev/null || true
 
@@ -431,6 +436,7 @@ cd "${SETTINGS_SOURCE}"
 mkdir -p "${STATE_DIR}"
 
 write_env_file
+ensure_ssdv2ctl_wrapper
 
 # shellcheck disable=SC1091
 source "${SETTINGS_SOURCE}/includes/functions.sh"
