@@ -10,12 +10,6 @@
 #   Based on the work by Michael Zemsky (https://github.com/zmike808)    #
 ##########################################################################
 ---
-- name: Settings | Forced Quality | Install lxml pip module
-  pip:
-    virtualenv: '{{ settings.source }}/venv'
-    name: lxml
-    state: present
-
 - name: Settings | Forced Quality | Wait for 'Preferences.xml' to be created by Plex
   wait_for:
     path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"

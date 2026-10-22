@@ -18,6 +18,7 @@
       password: "{{ plex.sesame }}"
       force_basic_auth: yes
     register: plex_claim
+    no_log: true
 
   - name: "Claim Server | Set 'plex_claim_code' variable"
     set_fact:
@@ -47,7 +48,3 @@
       - "plex_claim_code is defined"
       - "plex_claim_code is not none"
       - "plex_claim_code | trim | length > 0"
-
-- name: "Claim Server | Display Plex Media Server claim code"
-  debug:
-    msg: "Using Plex Claim Code{{ ':' }} {{ plex_claim_code }}"
