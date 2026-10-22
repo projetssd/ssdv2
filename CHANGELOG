@@ -1,5 +1,8 @@
 22/10/2026
 
+- creation automatique du wrapper ~/.local/bin/ssdv2ctl (profile.sh,
+  seedbox.sh, autoinstall.sh) pour rendre la commande ssdv2ctl disponible
+  sans chemin explicite.
 - nouveau menu Gestion > Securisation systeme > Audit PHP (php2shell) pour les
   CVE-2026-109618 / CVE-2026-109619 (RCE non authentifiee dans le coeur de PHP).
 - audit de l'hote (paquets de distribution, SAPI, services), des conteneurs

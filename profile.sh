@@ -23,6 +23,8 @@ if [ -f "${HOME}/.config/ssd/env" ]; then
   source ${SETTINGS_SOURCE}/includes/variables.sh
   # On charge les fonctions
   source ${SETTINGS_SOURCE}/includes/functions.sh
+  # On garantit la commande ssdv2ctl dans ~/.local/bin
+  "${SETTINGS_SOURCE}/includes/config/scripts/ensure_ssdv2ctl_wrapper.sh" >/dev/null 2>&1 || true
   # On charge les fonctions qui sont lancées par le menu
   source ${SETTINGS_SOURCE}/includes/menus.sh
 

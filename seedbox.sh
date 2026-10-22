@@ -10,6 +10,8 @@ CURRENT_SCRIPT=$(readlink -f "$0")
 SETTINGS_SOURCE=$(dirname "$CURRENT_SCRIPT")
 export SETTINGS_SOURCE
 cd "${SETTINGS_SOURCE}" || exit 1
+# On garantit la commande ssdv2ctl dans ~/.local/bin
+"${SETTINGS_SOURCE}/includes/config/scripts/ensure_ssdv2ctl_wrapper.sh" >/dev/null 2>&1 || true
 export TEXTDOMAINDIR="${SETTINGS_SOURCE}/i18n"
 export TEXTDOMAIN=ks
 source "${SETTINGS_SOURCE}/includes/functions.sh"
