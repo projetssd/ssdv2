@@ -85,7 +85,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-VERSION = "0.6.1"
+VERSION = "0.7.0"
 SCHEMA_VERSION = 1
 
 EXIT_OK = 0
@@ -106,6 +106,7 @@ CATALOGUE_RELATIVE = Path("includes/config/services-available")
 SSDDB_RELATIVE = Path("ssddb")
 GENERIQUE_RELATIVE = Path("includes/config/scripts/generique.sh")
 PHPCVE_RELATIVE = Path("includes/config/scripts/phpcve.py")
+PLEXCVE_RELATIVE = Path("includes/config/scripts/plexcve.py")
 PATCH_REGISTRIES_RELATIVE = Path("patches/20260916_backfill_registries")
 REGISTRY_KINDS = ("containers", "volumes", "dns")
 
@@ -657,12 +658,24 @@ def command_app_reinstall(source: Path, storage: Path, app: str) -> dict:
             f"valeurs account.yml manquantes pour {app} ({' / '.join(required)})",
         )
 
+    saved_overrides: dict[Path, str] = {}
+    for path in (storage / "conf" / f"{app}.yml", storage / "vars" / f"{app}.yml"):
+        if path.is_file():
+            try:
+                saved_overrides[path] = path.read_text(encoding="utf-8")
+            except OSError:
+                pass
+
     removal = run_bash_function(source, storage, "suppression_appli", app, "0")
     if removal.returncode != 0:
         return mutation_payload(app, "reinstall", removal)
 
-    for path in (storage / "conf" / f"{app}.yml", storage / "vars" / f"{app}.yml"):
-        path.unlink(missing_ok=True)
+    # suppression_appli supprime les overrides. On les restaure avant
+    # l'installation pour que launch_service les applique (et pour ne pas
+    # perdre le durcissement utilisateur).
+    for path, content in saved_overrides.items():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
     if subdomain is not None:
         write_account_value(source, storage, f"sub.{app}.{app}", subdomain)
     if auth is not None:
@@ -999,6 +1012,41 @@ def command_phpcve(
     return payload
 
 
+def command_plexcve(
+    source: Path, storage: Path, argv: list[str], timeout: int = INSTALL_TIMEOUT
+) -> dict:
+    """Exécute le backend plexcve.py et retourne son JSON."""
+    script = source / PLEXCVE_RELATIVE
+    if not script.is_file():
+        raise CtlError("plexcve_unavailable", f"backend plex-cve introuvable: {script}")
+    python = sys.executable or "python3"
+    try:
+        result = subprocess.run(
+            [python, str(script), *argv, "--json"],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            env=_bash_environment(source, storage),
+            check=False,
+            stdin=subprocess.DEVNULL,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise CtlError("plexcve_failed", f"exécution plex-cve impossible: {exc}") from exc
+    text = result.stdout.strip()
+    start = text.find("{")
+    end = text.rfind("}")
+    payload = None
+    if start >= 0 and end > start:
+        try:
+            payload = json.loads(text[start : end + 1])
+        except json.JSONDecodeError:
+            payload = None
+    if not isinstance(payload, dict):
+        detail = result.stderr.strip() or text or "sortie vide"
+        raise CtlError("plexcve_failed", f"réponse plex-cve invalide: {detail}")
+    return payload
+
+
 def emit(payload: dict) -> None:
     json.dump(payload, sys.stdout, ensure_ascii=False, indent=2)
     sys.stdout.write("\n")
@@ -1119,7 +1167,12 @@ def build_parser() -> argparse.ArgumentParser:
     php_cve_scan.add_argument(
         "--deep", action="store_true", help="inspecter aussi les conteneurs arrêtés"
     )
-    php_cve_commands.add_parser("report", parents=[php_cve_common], help="rapport lisible")
+    php_cve_report = php_cve_commands.add_parser(
+        "report", parents=[php_cve_common], help="rapport lisible"
+    )
+    php_cve_report.add_argument(
+        "--input", dest="php_report_input", help="lire un scan JSON deja produit"
+    )
     php_cve_commands.add_parser(
         "fix-host", parents=[php_cve_common], help="met à jour PHP sur l'hôte"
     )
@@ -1143,6 +1196,105 @@ def build_parser() -> argparse.ArgumentParser:
     )
     php_cve_commands.add_parser(
         "harden-host", parents=[php_cve_common], help="applique les mitigations partielles sur l'hôte"
+    )
+
+    plex_cve = security_commands.add_parser(
+        "plex-cve", help="audit et remédiation Plex2Shell (CVE-2026-96652/96654/96655/96656)"
+    )
+    plex_cve_commands = plex_cve.add_subparsers(
+        dest="plexcve_command", required=True
+    )
+    plex_cve_common = argparse.ArgumentParser(add_help=False)
+    plex_cve_common.add_argument(
+        "--json", action="store_true", help="sortie JSON (défaut)"
+    )
+    plex_cve_scan = plex_cve_commands.add_parser(
+        "scan", parents=[plex_cve_common], help="audit Plex"
+    )
+    plex_cve_scan.add_argument(
+        "--deep", action="store_true", help="inspection approfondie des .so"
+    )
+    plex_cve_scan.add_argument(
+        "--fixture", help="répertoire de test (sans Docker)"
+    )
+    plex_cve_scan.add_argument(
+        "--traefik-log", help="log d'accès Traefik"
+    )
+    plex_cve_commands.add_parser(
+        "status", parents=[plex_cve_common], help="résumé JSON"
+    )
+    plex_cve_report = plex_cve_commands.add_parser(
+        "report", parents=[plex_cve_common], help="rapport lisible"
+    )
+    plex_cve_report.add_argument(
+        "--input", dest="plex_report_input", help="lire un scan JSON deja produit"
+    )
+    plex_cve_logs = plex_cve_commands.add_parser(
+        "logs", parents=[plex_cve_common], help="analyse des logs Plex"
+    )
+    plex_cve_logs.add_argument(
+        "--input", dest="plex_logs_input", help="lire un scan JSON deja produit"
+    )
+    plex_cve_fix = plex_cve_commands.add_parser(
+        "fix-plex", parents=[plex_cve_common], help="corrige Plex avec sauvegarde/rollback"
+    )
+    plex_cve_fix.add_argument("--apply", action="store_true", help="appliquer")
+    plex_cve_fix.add_argument("--dry-run", action="store_true", help="afficher le plan")
+    plex_cve_fix.add_argument(
+        "--force", action="store_true", help="continuer même si IoC"
+    )
+    plex_cve_fix.add_argument(
+        "--media-path", action="append", default=[], help="chemin média à monter"
+    )
+    plex_cve_fix.add_argument(
+        "--media-mode",
+        choices=("generic", "strict"),
+        default="generic",
+        help="generic=/mnt ro,rslave ; strict=cibles de symlinks en ro",
+    )
+    plex_cve_fix.add_argument(
+        "--localhost-port", action="store_true", help="publier 32400 sur 127.0.0.1"
+    )
+    plex_cve_fix.add_argument(
+        "--no-pull", action="store_true", help="ne pas puller l'image"
+    )
+    plex_cve_fix.add_argument(
+        "--use-cache",
+        action="store_true",
+        help="utiliser le dernier scan en cache (pas de scan implicite)",
+    )
+    plex_cve_close = plex_cve_commands.add_parser(
+        "close-port", parents=[plex_cve_common], help="ferme les ports via DOCKER-USER"
+    )
+    plex_cve_close.add_argument("--apply", action="store_true", help="appliquer")
+    plex_cve_close.add_argument("--dry-run", action="store_true", help="afficher les commandes")
+    plex_cve_close.add_argument(
+        "--ports", default="32400", help="liste séparée par des virgules"
+    )
+    plex_cve_close.add_argument(
+        "--allow-lan", help="CIDR LAN à autoriser avant le DROP"
+    )
+    plex_cve_close.add_argument(
+        "--rollback", action="store_true", help="supprimer les règles"
+    )
+    plex_cve_remote = plex_cve_commands.add_parser(
+        "fix-remote", parents=[plex_cve_common],
+        help="customConnections HTTPS et désactivation du port manuel 32400",
+    )
+    plex_cve_remote.add_argument("--apply", action="store_true", help="appliquer")
+    plex_cve_quarantine = plex_cve_commands.add_parser(
+        "quarantine", parents=[plex_cve_common], help="arrête et isole Plex"
+    )
+    plex_cve_quarantine.add_argument("--apply", action="store_true", help="appliquer")
+    plex_cve_rollback = plex_cve_commands.add_parser(
+        "rollback", parents=[plex_cve_common], help="restaure une sauvegarde fix-plex"
+    )
+    plex_cve_rollback.add_argument(
+        "--backup", required=True, help="dossier de sauvegarde"
+    )
+    plex_cve_rollback.add_argument("--apply", action="store_true", help="appliquer")
+    plex_cve_commands.add_parser(
+        "selftest", parents=[plex_cve_common], help="tests internes"
     )
     return parser
 
@@ -1245,6 +1397,8 @@ def main(argv: list[str] | None = None) -> int:
             argv = [args.phpcve_command]
             if args.phpcve_command == "scan" and args.deep:
                 argv.append("--deep")
+            if args.phpcve_command == "report" and getattr(args, "php_report_input", None):
+                argv.extend(["--input", args.php_report_input])
             if args.phpcve_command == "fix-app":
                 argv.append(args.app)
             if args.phpcve_command in ("fix-container", "stop"):
@@ -1263,6 +1417,78 @@ def main(argv: list[str] | None = None) -> int:
                     CtlError(
                         "php_cve_failed",
                         payload.get("message") or "action php-cve en échec",
+                    )
+                )
+        elif args.command == "security" and args.security_command == "plex-cve":
+            argv = [args.plexcve_command]
+            if args.plexcve_command == "scan":
+                if args.deep:
+                    argv.append("--deep")
+                if args.fixture:
+                    argv.extend(["--fixture", args.fixture])
+                if args.traefik_log:
+                    argv.extend(["--traefik-log", args.traefik_log])
+            elif args.plexcve_command in ("report", "logs"):
+                input_path = getattr(
+                    args,
+                    "plex_report_input" if args.plexcve_command == "report" else "plex_logs_input",
+                    None,
+                )
+                if input_path:
+                    argv.extend(["--input", input_path])
+            elif args.plexcve_command == "fix-plex":
+                if args.apply:
+                    argv.append("--apply")
+                if args.dry_run:
+                    argv.append("--dry-run")
+                if args.force:
+                    argv.append("--force")
+                if args.localhost_port:
+                    argv.append("--localhost-port")
+                if args.no_pull:
+                    argv.append("--no-pull")
+                if args.use_cache:
+                    argv.append("--use-cache")
+                for media_path in args.media_path:
+                    argv.extend(["--media-path", media_path])
+                if args.media_mode:
+                    argv.extend(["--media-mode", args.media_mode])
+            elif args.plexcve_command == "close-port":
+                if args.apply:
+                    argv.append("--apply")
+                if args.dry_run:
+                    argv.append("--dry-run")
+                if args.ports:
+                    argv.extend(["--ports", args.ports])
+                if args.allow_lan:
+                    argv.extend(["--allow-lan", args.allow_lan])
+                if args.rollback:
+                    argv.append("--rollback")
+            elif args.plexcve_command == "fix-remote":
+                if args.apply:
+                    argv.append("--apply")
+            elif args.plexcve_command == "quarantine":
+                if args.apply:
+                    argv.append("--apply")
+            elif args.plexcve_command == "rollback":
+                argv.extend(["--backup", args.backup])
+                if args.apply:
+                    argv.append("--apply")
+            payload = command_plexcve(source, storage, argv)
+            emit(payload)
+            if args.plexcve_command in ("scan", "report", "status"):
+                if payload.get("error") or "summary" not in payload:
+                    return EXIT_ERROR
+                if (payload.get("summary") or {}).get("status") != "ok":
+                    return EXIT_ERROR
+            elif args.plexcve_command == "logs":
+                if payload.get("error"):
+                    return EXIT_ERROR
+            elif not payload.get("ok"):
+                return fail(
+                    CtlError(
+                        "plex_cve_failed",
+                        payload.get("message") or "action plex-cve en échec",
                     )
                 )
         else:

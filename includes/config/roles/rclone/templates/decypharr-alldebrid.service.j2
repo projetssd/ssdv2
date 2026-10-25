@@ -24,12 +24,7 @@ ExecStart=/usr/bin/rclone mount decypharr-alldebrid: {{ lookup('env','HOME') }}/
     --cache-dir={{ lookup('env','HOME') }}/.config/rclone/cache/alldebrid \
     --gid {{ user.groupid }} \
     --uid {{ user.userid }} \
-    --log-level=INFO \
-    --rc \
-    --rc-addr=localhost:5573 \
-    --rc-no-auth \
-    --rc-web-gui \
-    --rc-web-gui-no-open-browser
+    --log-level=INFO
 
 ExecStop=/bin/bash -c '/bin/fusermount -uz {{ lookup('env','HOME') }}/alldebrid || umount {{ lookup('env','HOME') }}/alldebrid'
 Restart=always

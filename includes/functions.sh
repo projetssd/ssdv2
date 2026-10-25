@@ -589,7 +589,11 @@ launch_service () {
         fi
 
         if [ ${error} -eq 0 ]; then
-            ansible-playbook "${SETTINGS_SOURCE}/includes/dockerapps/vars/plex.yml" "${extra_vars_args[@]}"
+            plex_vars="${SETTINGS_SOURCE}/includes/dockerapps/vars/plex.yml"
+            if [[ -f "${SETTINGS_STORAGE}/vars/plex.yml" ]]; then
+                plex_vars="${SETTINGS_STORAGE}/vars/plex.yml"
+            fi
+            ansible-playbook "${plex_vars}" "${extra_vars_args[@]}"
             rc=$?
             if [ ${rc} -ne 0 ]; then
                 error=1

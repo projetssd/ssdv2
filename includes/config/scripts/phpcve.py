@@ -1035,6 +1035,18 @@ def build_scan(source: Path, storage: Path, deep: bool = False) -> dict:
         "not_php": len(containers) - len(php_containers),
     }
     summary["ok"] = summary["vulnerable"] == 0
+    recommendations = []
+    if host.get("status") == "vulnerable":
+        recommendations.append("Corriger les paquets PHP de l'hote (option 2).")
+    if vulnerable_containers:
+        recommendations.append(
+            "Mettre a jour ou isoler les conteneurs PHP vulnerables (options 3/5)."
+        )
+    if not recommendations:
+        recommendations.append(
+            "Aucune action requise. Continuer a surveiller les mises a jour."
+        )
+    summary["recommendations"] = recommendations
     return {
         "schema": SCHEMA_VERSION,
         "version": VERSION,
@@ -1125,6 +1137,14 @@ def report_text(payload: dict) -> str:
         f"{summary.get('unknown', 0)} inconnu(s), "
         f"{summary.get('not_php', 0)} non PHP."
     )
+    lines.append("")
+    lines.append("Recommandations :")
+    recommendations = summary.get("recommendations") or []
+    if recommendations:
+        for recommendation in recommendations:
+            lines.append(f"  -> {recommendation}")
+    else:
+        lines.append("  -> Aucune action requise.")
     lines.append(
         "Rappel : les mitigations sont partielles ; le patch PHP reste obligatoire."
     )
@@ -1655,7 +1675,8 @@ def build_parser() -> argparse.ArgumentParser:
     scan.add_argument("--deep", action="store_true", help="inspecter les conteneurs arretes")
 
     commands.add_parser("status", parents=[common], help="audit JSON")
-    commands.add_parser("report", parents=[common], help="rapport lisible")
+    report_parser = commands.add_parser("report", parents=[common], help="rapport lisible")
+    report_parser.add_argument("--input", type=Path, help="lire un scan JSON deja produit")
 
     fix_host_parser = commands.add_parser(
         "fix-host", parents=[common], help="mettre a jour PHP sur l'hote"
@@ -1703,9 +1724,17 @@ def main(argv: list[str] | None = None) -> int:
             emit(payload, as_json=args.json or args.command == "status")
             return 1 if payload["summary"]["vulnerable"] else 0
         if args.command == "report":
-            payload = build_scan(source, storage)
+            if args.input:
+                try:
+                    payload = json.loads(args.input.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError) as exc:
+                    raise ToolError(f"scan JSON illisible: {exc}") from exc
+                if not isinstance(payload, dict):
+                    raise ToolError("scan JSON invalide")
+            else:
+                payload = build_scan(source, storage)
             emit(payload, as_json=args.json)
-            return 1 if payload["summary"]["vulnerable"] else 0
+            return 1 if payload.get("summary", {}).get("vulnerable") else 0
         if args.command == "fix-host":
             payload = fix_host(source, storage, no_restart=args.no_restart)
             emit(payload, as_json=args.json)

@@ -17,10 +17,7 @@ ExecStart=/usr/bin/rclone mount zurg: {{ lookup('env','HOME') }}/seedbox/zurg \
   --cache-dir={{ lookup('env','HOME') }}/.cache/rclone \
   --vfs-cache-mode=full \
   --vfs-cache-max-size=25G \
-  --rc \
-  --rc-addr=172.17.0.1:5572 \
-  --rc-web-gui-no-open-browser \
-  --rc-no-auth
+  --allow-other
 ExecStop=/bin/fusermount -uz {{ lookup('env','HOME') }}/seedbox/zurg
 Restart=always
 RestartSec=5
