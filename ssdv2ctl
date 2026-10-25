@@ -28,11 +28,13 @@ Palier cycle de vie :
     ssdv2ctl config get <clé>
     ssdv2ctl config list
 
-``install`` exige que ``sub.<app>.<app>`` et ``sub.<app>.auth`` existent dans account.yml
-ou soient fournis par les options ; sinon la commande échoue avec ``interactive_required``
-(aucune invite interactive). ``reinstall`` reproduit la séquence de ``menu_reinit_container``
-sans invite (suppression avec conservation des données, restauration des valeurs
-sub/auth, lancement) et échoue avec ``interactive_required`` si ces valeurs manquent ;
+``install`` exige ``sub.<app>.<app>`` et ``sub.<app>.auth`` dans account.yml ou via
+les options uniquement pour les applications exposant un router Traefik ; sinon la
+commande échoue avec ``interactive_required`` (aucune invite interactive).
+``reinstall`` reproduit la séquence de ``menu_reinit_container`` sans invite
+(suppression avec conservation des données, restauration des valeurs sub/auth,
+lancement) et applique la même règle ; les applications sans Traefik (ex. warp)
+ne nécessitent ni sous-domaine ni authentification ;
 ``recreate`` recrée les conteneurs avec mise à jour de l'image en conservant volumes et
 configuration (rejoue le playbook).
 
@@ -83,7 +85,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-VERSION = "0.6.0"
+VERSION = "0.6.1"
 SCHEMA_VERSION = 1
 
 EXIT_OK = 0
@@ -93,6 +95,7 @@ EXIT_USAGE = 2
 ACTION_COMMANDS = ("start", "stop", "restart")
 AUTH_TYPES = ("aucune", "basique", "authelia", "oauth", "oauth2-proxy")
 SUBDOMAIN_PATTERN = re.compile(r"^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$")
+FORCE_SUBDOMAIN_AUTH = frozenset({"prestashop", "webui"})
 
 ACTION_TIMEOUT = 300
 INSTALL_TIMEOUT = 1800
@@ -527,6 +530,32 @@ def run_ssdv2_mutation(
     return mutation_payload(app, action, result)
 
 
+def app_requires_subdomain(source: Path, storage: Path, app: str) -> bool:
+    """Indique si l'application expose un router Traefik (sous-domaine requis).
+
+    Miroir de la condition de ``launch_service`` : une application dont le
+    fichier vars désactive les labels Traefik et n'en définit aucun n'a ni
+    sous-domaine ni authentification (ex. warp). Le fichier du stockage
+    utilisateur prime sur celui du dépôt.
+    """
+    if app in FORCE_SUBDOMAIN_AUTH:
+        return True
+    for path in (
+        storage / "vars" / f"{app}.yml",
+        source / "includes" / "dockerapps" / "vars" / f"{app}.yml",
+    ):
+        if not path.is_file():
+            continue
+        try:
+            content = path.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            return True
+        return not (
+            "traefik_labels_enabled: false" in content and "labels:" not in content
+        )
+    return True
+
+
 def command_app_install(
     source: Path, storage: Path, app: str, subdomain: str | None, auth: str | None
 ) -> dict:
@@ -545,9 +574,18 @@ def command_app_install(
         )
 
     missing = []
-    if subdomain is None and read_account_value(source, storage, f"sub.{app}.{app}") is None:
+    needs_router = app_requires_subdomain(source, storage, app)
+    if (
+        needs_router
+        and subdomain is None
+        and read_account_value(source, storage, f"sub.{app}.{app}") is None
+    ):
         missing.append("--subdomain")
-    if auth is None and read_account_value(source, storage, f"sub.{app}.auth") is None:
+    if (
+        needs_router
+        and auth is None
+        and read_account_value(source, storage, f"sub.{app}.auth") is None
+    ):
         missing.append("--auth")
     if missing:
         raise CtlError(
@@ -607,10 +645,16 @@ def command_app_reinstall(source: Path, storage: Path, app: str) -> dict:
         raise CtlError("not_installed", f"{app} n'est pas installé")
     subdomain = read_account_value(source, storage, f"sub.{app}.{app}")
     auth = read_account_value(source, storage, f"sub.{app}.auth")
-    if subdomain is None or auth is None:
+    required = []
+    needs_router = app_requires_subdomain(source, storage, app)
+    if needs_router and subdomain is None:
+        required.append(f"sub.{app}.{app}")
+    if needs_router and auth is None:
+        required.append(f"sub.{app}.auth")
+    if required:
         raise CtlError(
             "interactive_required",
-            f"valeurs account.yml manquantes pour {app} (sub.{app}.{app} / sub.{app}.auth)",
+            f"valeurs account.yml manquantes pour {app} ({' / '.join(required)})",
         )
 
     removal = run_bash_function(source, storage, "suppression_appli", app, "0")
@@ -619,8 +663,10 @@ def command_app_reinstall(source: Path, storage: Path, app: str) -> dict:
 
     for path in (storage / "conf" / f"{app}.yml", storage / "vars" / f"{app}.yml"):
         path.unlink(missing_ok=True)
-    write_account_value(source, storage, f"sub.{app}.{app}", subdomain)
-    write_account_value(source, storage, f"sub.{app}.auth", auth)
+    if subdomain is not None:
+        write_account_value(source, storage, f"sub.{app}.{app}", subdomain)
+    if auth is not None:
+        write_account_value(source, storage, f"sub.{app}.auth", auth)
     install = run_bash_function(source, storage, "launch_service", app, timeout=INSTALL_TIMEOUT)
     return mutation_payload(app, "reinstall", install)
 

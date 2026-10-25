@@ -185,6 +185,20 @@ seule fois (`apply_patches`), de façon idempotente.
   `/var/run/docker.sock` (nécessaire à ses métriques). À installer en
   connaissance de cause ; il donne un accès équivalent root à l'hôte.
 
+## Mise à jour « image seule »
+
+`ssdv2ctl app update <app>` (et l'entrée de menu équivalente) recrée les
+conteneurs existants avec la dernière image **sans rejouer le playbook**.
+`includes/config/scripts/recreate_app_container.py` rejoue la configuration
+inspectée (env, labels, binds, volumes, ports, devices, healthcheck, réseau).
+
+- Les volumes nommés déjà présents dans `HostConfig.Binds` ne sont plus
+  réinjectés dans `mounts` (évite l'erreur Docker `Duplicate mount point`).
+- La recréation est **non destructive** : le nouveau conteneur est créé avant
+  la suppression de l'ancien et l'ancien est restauré en cas d'échec.
+- L'IP statique et les alias des réseaux définis par l'utilisateur sont
+  conservés (ex. `warp` en `172.18.0.250`, utilisé par `decypharr`).
+
 ## Rechargement automatique après une mise à jour
 
 Les fonctions interactives (`suppression_appli`, `launch_service`, …) sont
