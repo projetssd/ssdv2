@@ -151,6 +151,7 @@
           traefik.http.routers.plex-rtr.tls: 'true'
           traefik.http.routers.plex-rtr.service: 'plex-svc'
           traefik.http.routers.plex-rtr.tls.certresolver: 'letsencrypt'
+          traefik.http.routers.plex-rtr.middlewares: 'chain-no-auth@file'
           ## HTTP Services
           traefik.http.services.plex-svc.loadbalancer.server.port: '32400'
 
@@ -159,13 +160,19 @@
         name: plex
         image: "{{ plex_docker_image }}"
         pull: yes
-        published_ports: "{{ plex_main_ports }}"
+        published_ports: "{{ plex_published_ports }}"
         env:
           PUID: "{{ lookup('env','MYUID')}}"
           PGID: "{{ lookup('env','MYGID')}}"
           PLEX_CLAIM: "{{ (plex_claim_code) | default(omit) }}"
+          VERSION: "latest"
           TZ: "Europe/Paris"
         volumes: "{{ plex_docker_volumes }}"
+        security_opts: "{{ plex_security_opts }}"
+        cap_drop: "{{ plex_cap_drop }}"
+        cap_add: "{{ plex_cap_add }}"
+        tmpfs: "{{ plex_tmpfs }}"
+        shm_size: "{{ plex_shm_size }}"
         devices: "{{ '/dev/dri:/dev/dri' if (gpu.intel and dev_dri.stat.exists) | default(false) else omit }}"
         etc_hosts: "{{ plex_docker_hosts }}"
         networks:
@@ -198,7 +205,7 @@
       vars:
         plex_custom_url: "https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}:443"
       uri:
-        url: "http://127.0.0.1:32400/:/prefs?customConnections={{ plex_custom_url | urlencode }}"
+        url: "http://127.0.0.1:32400/:/prefs?customConnections={{ plex_custom_url | urlencode }}&ManualPortMappingMode=0&ManualPortMappingPort=0"
         method: PUT
         headers:
           X-Plex-Token: "{{ plex.token }}"

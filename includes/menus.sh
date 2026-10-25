@@ -385,3 +385,11 @@ if [ -f "${SETTINGS_SOURCE}/includes/menus-phpcve.sh" ]; then
   source "${SETTINGS_SOURCE}/includes/menus-phpcve.sh"
 fi
 # END phpcve
+
+# BEGIN plexcve
+# Menu d'audit et de remediation Plex2Shell.
+if [ -f "${SETTINGS_SOURCE}/includes/menus-plexcve.sh" ]; then
+  # shellcheck source=menus-plexcve.sh
+  source "${SETTINGS_SOURCE}/includes/menus-plexcve.sh"
+fi
+# END plexcve

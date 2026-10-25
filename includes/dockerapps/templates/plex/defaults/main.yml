@@ -36,6 +36,11 @@ plex_docker_image: "lscr.io/linuxserver/plex:latest"
 plex_main_ports:
   - "32400:32400/tcp"
 
+# Publication locale uniquement : Traefik joint Plex par traefik_proxy.
+# Ne jamais remettre 0.0.0.0:32400.
+plex_published_ports:
+  - "127.0.0.1:32400:32400"
+
 plex_extra_ports:
   - "3005:3005/tcp"
   - "8324:8324/tcp"
@@ -61,12 +66,35 @@ plex_docker_ports: "{{ (web_tools_ports + plex_main_ports) if (plex.open_main_po
 
 plex_docker_volumes:
   - "/etc/localtime:/etc/localtime:ro"
-  - "/home/{{ lookup('env','USER') }}:/home/{{ lookup('env','USER') }}:rslave"
-  - "/mnt:/mnt:rslave"
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/plex/config:/config:rw"
-  - "/tmp:/tmp:rw"
-  - "/dev/shm:/dev/shm:rw"
   - "{{ plex.transcodes }}/plex:/transcode:rw"
+  # Medias en lecture seule, chemins scopés (pas de $HOME entier).
+  - "{{ lookup('env','HOME') }}/Medias:{{ lookup('env','HOME') }}/Medias:ro"
+  - "{{ lookup('env','HOME') }}/local:{{ lookup('env','HOME') }}/local:ro"
+  - "/data:/data:ro"
+  # /mnt est le point de montage generique SSDV2 (FUSE decypharr, rclone...).
+  # rslave propage les sous-montages ; ro evite tout acces en ecriture.
+  - "/mnt:/mnt:ro,rslave"
+
+plex_security_opts:
+  - no-new-privileges:true
+
+plex_cap_drop:
+  - ALL
+
+# LinuxServer Plex a besoin de ces capabilities pour s6 (setgroups/setuid)
+# et pour l'initialisation du /config. Sans elles, s6-applyuidgid echoue.
+plex_cap_add:
+  - CHOWN
+  - DAC_OVERRIDE
+  - FOWNER
+  - SETGID
+  - SETUID
+
+plex_tmpfs:
+  - "/tmp:rw,noexec,nosuid,size=256m"
+
+plex_shm_size: "256m"
 
 ################################
 # Docker Hosts

@@ -1,3 +1,40 @@
+25/10/2026 — securite Plex2Shell
+
+- nouveau module `ssdv2ctl security plex-cve` et menu
+  Gestion > Securisation systeme > Audit Plex (plex2shell) pour les CVE
+  CVE-2026-96652 / 96654 / 96655 / 96656.
+- audit : version PMS, VERSION, port 32400, montages, capabilities, middleware
+  Traefik, Preferences.xml, Codecs (zz*.so), logs Plex. Corrélation avec le log
+  d'acces Traefik pour determiner si les tentatives viennent de 32400 direct ou
+  de 443 via Traefik.
+- actions : fix-plex (VERSION, port local, middleware, montages medias,
+  no-new-privileges, cap_drop) avec sauvegarde, healthcheck et rollback ;
+  close-port via DOCKER-USER ; quarantine ; rollback depuis une sauvegarde.
+- Plex par defaut : VERSION=latest, publication limitee a 127.0.0.1:32400,
+  middleware chain-no-auth@file, medias en lecture seule, suppression de
+  $HOME, /tmp et /dev/shm, cap_drop ALL et no-new-privileges.
+- `ssdv2ctl app reinstall` conserve les overrides `~/seedbox/vars/`.
+- `launch_service plex` honore `~/seedbox/vars/plex.yml`.
+- `recreate_app_container.py` : options ports, binds, security opts, tmpfs,
+  shm-size, rootfs read-only et rollback depuis un inspect sauvegarde.
+- CrowdSec AppSec 7422 n'est plus publie sur l'hote (expose seulement).
+- rclone : suppression du RC non authentifie des services hote.
+- gethomepage : correction du chemin docker.sock.
+- CrowdSec : les cles bouncer ne sont plus affichees dans les logs ; config
+  dynamique en 0600.
+- Plex : le jeton temporaire n'est plus ecrit dans /tmp en clair.
+- menus plex2shell/php2shell : boucle interne et cache de statut ; seul
+  l'option 1 lance un scan. Les options rapport/logs lisent le cache ;
+  fix-plex accepte --use-cache. Les actions ne relancent plus de scan.
+- menus plex2shell/php2shell : confirmations explicites (o/n) et
+  recommandations prioritaires dans l'entete et le rapport.
+- Plex : montage /mnt en lecture seule avec propagation rslave, detection des
+  cibles de symlinks (FUSE decypharr, rclone), modes media generic/strict.
+  Correction des erreurs « fichier introuvable » apres durcissement.
+- Plex acces distant : customConnections HTTPS uniquement, desactivation du
+  port manuel 32400 et du fallback HTTP ; commande fix-remote. Le statut Plex
+  peut rester « non disponible » car il teste 32400.
+
 25/10/2026
 
 - correction de la mise a jour « image seule » : les volumes nommes deja

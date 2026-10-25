@@ -48,6 +48,19 @@ paquets PHP installés. L'option 3 utilise le mécanisme SSDV2 de mise à jour
 d'image (pull + recréation), sans suppression des volumes. Les images épinglées
 ou les conteneurs hors SSDV2 sont signalés, pas modifiés automatiquement.
 
+## Menu et cache
+
+Le menu **Gestion → Sécurisation système → Audit PHP (php2shell)** travaille
+sur le dernier audit en cache (`${SETTINGS_STORAGE}/conf/phpcve-status.json`).
+
+- **Option 1** : seul scan du menu ; écrit le cache puis affiche le rapport.
+- **Options 3, 5 et 6** : utilisent le cache, sans relancer de scan.
+- **Options 2, 3, 4 et 5** : suppriment le cache après action ; relancer
+  l'option 1 pour actualiser.
+- Le menu reste ouvert après chaque action ; seul **8** revient au menu parent.
+- Les confirmations affichent explicitement `(o/n)`.
+- L'entête et le rapport affichent une **recommandation prioritaire**.
+
 ## Commandes
 
 ```bash

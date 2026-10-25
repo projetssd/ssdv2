@@ -24,12 +24,7 @@ ExecStart=/usr/bin/rclone mount decypharr-realdebrid: {{ lookup('env','HOME') }}
     --cache-dir={{ lookup('env','HOME') }}/.config/rclone/cache/realdebrid \
     --gid {{ user.groupid }} \
     --uid {{ user.userid }} \
-    --log-level=INFO \
-    --rc \
-    --rc-addr=localhost:5572 \
-    --rc-no-auth \
-    --rc-web-gui \
-    --rc-web-gui-no-open-browser
+    --log-level=INFO
 
 ExecStop=/bin/bash -c '/bin/fusermount -uz {{ lookup('env','HOME') }}/realdebrid || umount {{ lookup('env','HOME') }}/realdebrid '
 Restart=always

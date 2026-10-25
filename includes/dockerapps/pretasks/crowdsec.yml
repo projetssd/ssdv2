@@ -12,7 +12,8 @@
     name: crowdsec
     ports:
       - "127.0.0.1:8181:8080"
-      - "7422" # AppSec (WAF)
+    exposed_ports:
+      - "7422" # AppSec (WAF), non publie sur l'hote
     volumes:
       - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/crowdsec/data:/var/lib/crowdsec/data"
       - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/crowdsec/etc:/etc/crowdsec"

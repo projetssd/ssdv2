@@ -184,6 +184,24 @@ seule fois (`apply_patches`), de façon idempotente.
 - **`dashdot` (`SEC-02`)** : conteneur `privileged` avec montage de
   `/var/run/docker.sock` (nécessaire à ses métriques). À installer en
   connaissance de cause ; il donne un accès équivalent root à l'hôte.
+- **Plex2Shell (`SEC-03`)** : CVE-2026-96652/96654/96655/96656, corrigées
+  dans Plex 1.43.3.10861. Utiliser `ssdv2ctl security plex-cve scan` puis
+  `report`, et `fix-plex --apply` pour ajouter `VERSION`, le middleware 443,
+  retirer 32400 et les montages dangereux. Si un IoC est détecté, utiliser
+  `quarantine` et non un nettoyage automatique.
+- **Plex montages médias** : `/mnt:ro,rslave`, `~/Medias:ro`, `~/local:ro`.
+  Ne jamais remonter `$HOME` ou `/mnt` en `rw`. Les symlinks vers
+  `/mnt/decypharr/...` nécessitent `/mnt` (mode générique) ou les cibles
+  spécifiques (mode strict). `ssdv2ctl security plex-cve scan` détecte
+  `symlink_target_not_mounted`.
+- **Plex 32400 vs 443** : les logs Plex ne donnent pas le port de destination.
+  Utiliser `ssdv2ctl security plex-cve scan --json` qui corrèle avec le log
+  d'accès Traefik (`attack_path`). Voir `docs/verification-32400-443.md`.
+- **RC rclone de decypharr (`SEC-04`)** : decypharr lance son propre rclone RC
+  sur le port 5572, sans authentification, accessible depuis les conteneurs du
+  même réseau. Le service rclone de l'hôte n'expose plus de RC (corrigé), mais
+  la configuration interne de decypharr doit être restreinte séparément
+  (réseau dédié, règle `INPUT`, ou auth dans sa configuration).
 
 ## Mise à jour « image seule »
 

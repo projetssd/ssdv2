@@ -1,0 +1,68 @@
+#!/bin/bash
+##############################################################################
+# Ajoute l'utilitaire "Audit Plex (plex2shell)" pour les CVE
+# CVE-2026-96652 / CVE-2026-96654 / CVE-2026-96655 / CVE-2026-96656.
+#
+# Ce patch n'installe rien : il ajoute l'option de menu et le chargement du
+# fichier de menu. L'audit et les correctifs se font ensuite depuis le menu,
+# au choix de l'utilisateur.
+#
+# Idempotent : peut etre rejoue via FORCE_PATCH.
+##############################################################################
+
+set -u
+
+if [ -z "${SETTINGS_SOURCE:-}" ] && [ -f "${HOME}/.config/ssd/env" ]; then
+  # shellcheck disable=SC1090
+  source "${HOME}/.config/ssd/env"
+fi
+SETTINGS_SOURCE="${SETTINGS_SOURCE:-${HOME}/seedbox-compose}"
+
+MENU="${SETTINGS_SOURCE}/menu"
+MENUS="${SETTINGS_SOURCE}/includes/menus.sh"
+
+command -v sqlite3 >/dev/null 2>&1 || exit 0
+
+# 1. Entree de menu sous "Gestion -> Securisation systeme" (parent 6).
+#    Fallback sous "Gestion" (parent 2) si le parent 6 n'existe pas.
+if [ -f "$MENU" ]; then
+  parent=6
+  ordre=12
+  if ! sqlite3 "$MENU" "select 1 from menu where id=6" 2>/dev/null | grep -qx 1; then
+    parent=2
+    ordre=8
+  fi
+  sqlite3 "$MENU" "insert into menu (texte,parent_id,ordre,action)
+  select 'Audit Plex (plex2shell - CVE-2026-96652/96654/96655/96656)',${parent},${ordre},'menu_plexcve'
+  where not exists (select 1 from menu where action='menu_plexcve');" 2>/dev/null
+  sqlite3 "$MENU" "update menu set texte='Audit Plex (plex2shell - CVE-2026-96652/96654/96655/96656)',
+  parent_id=${parent}, ordre=${ordre}
+  where action='menu_plexcve';" 2>/dev/null
+fi
+
+# 2. Chargement du fichier de menu (bloc protege par marqueur).
+if [ -f "$MENUS" ] && ! grep -q '# BEGIN plexcve' "$MENUS"; then
+  cat >>"$MENUS" <<'EOF'
+# BEGIN plexcve
+# Menu d'audit et de remediation Plex2Shell.
+if [ -f "${SETTINGS_SOURCE}/includes/menus-plexcve.sh" ]; then
+  # shellcheck source=menus-plexcve.sh
+  source "${SETTINGS_SOURCE}/includes/menus-plexcve.sh"
+fi
+# END plexcve
+EOF
+fi
+
+# 3. Verification des fichiers applicatifs (livres avec le depot).
+for f in \
+  includes/config/scripts/plexcve.py \
+  includes/menus-plexcve.sh \
+  docs/plex2shell.md \
+  docs/verification-32400-443.md; do
+  if [ ! -f "${SETTINGS_SOURCE}/${f}" ]; then
+    echo "[patch] ATTENTION : fichier manquant ${f}" >&2
+  fi
+done
+
+echo "[patch] option 'Audit Plex (plex2shell)' ajoutee"
+exit 0

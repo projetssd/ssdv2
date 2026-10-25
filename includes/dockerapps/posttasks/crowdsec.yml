@@ -34,9 +34,6 @@
         )[0] | default('')
       }}
 
-- debug:
-    var: crowdsec_bouncer.stdout_lines
-
 - name: Vérifier que la clé API est définie
   ansible.builtin.fail:
     msg: "Impossible de récupérer la clé API du bouncer CrowdSec."
@@ -54,7 +51,7 @@
     dest: "{{ settings.storage }}/docker/traefik/rules/config.yml"
     owner: "{{ lookup('env','USER') }}"
     group: "{{ lookup('env','MYGIDNAME') | default(lookup('env','USER')) }}"
-    mode: '0644'
+    mode: '0600'
     content: |
       http:
         middlewares:
@@ -207,9 +204,6 @@
           | list
         )[0] | default('')
       }}
-
-- debug:
-    var: crowdsec_firewall_bouncer.stdout_lines
 
 - name: Vérifier que la clé API est définie
   ansible.builtin.fail:
