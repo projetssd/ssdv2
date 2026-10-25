@@ -8,6 +8,8 @@
 - conservation du reseau a la recreation : IP statique et alias des reseaux
   definis par l'utilisateur (ex. warp 172.18.0.250 utilise par decypharr).
 - selftest du helper de recreation et tests bats associes.
+- selftest du helper de recreation rendu independant du SDK Python docker
+  (executable en CI minimale, sans daemon ni paquet docker installe).
 - ssdv2ctl 0.6.1 : reinstall/install n'exigent plus de sous-domaine ni
   d'authentification pour les applications sans router Traefik (ex. warp).
 - installations deja cassees : relancer `ssdv2ctl app reinstall warp` (donnees

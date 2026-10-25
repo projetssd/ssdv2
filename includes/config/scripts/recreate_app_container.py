@@ -28,8 +28,12 @@ import json
 import re
 import sys
 
-import docker
-from docker.types import Mount
+try:  # le selftest doit rester utilisable sans SDK Docker (CI minimale)
+    import docker
+    from docker.types import Mount
+except ImportError:  # pragma: no cover - dépend de l'environnement d'exécution
+    docker = None  # type: ignore[assignment]
+    Mount = None  # type: ignore[assignment]
 
 
 def _bind_destinations(binds: list | None) -> set[str]:
@@ -42,8 +46,8 @@ def _bind_destinations(binds: list | None) -> set[str]:
     return destinations
 
 
-def _build_mounts(mounts: list | None, binds: list | None = None) -> list[Mount] | None:
-    """Reconstruit les montages absents de HostConfig.Binds.
+def _mount_specs(mounts: list | None, binds: list | None = None) -> list[dict]:
+    """Sélectionne les montages absents de HostConfig.Binds (sans SDK Docker).
 
     Docker refuse (« Duplicate mount point ») une destination présente à la
     fois dans ``binds`` et ``mounts``. Les volumes nommés et les binds sont
@@ -51,9 +55,9 @@ def _build_mounts(mounts: list | None, binds: list | None = None) -> list[Mount]
     montages qui n'y figurent pas (volumes anonymes, ``--mount`` explicites…).
     """
     if not mounts:
-        return None
+        return []
     covered = _bind_destinations(binds)
-    result: list[Mount] = []
+    result: list[dict] = []
     for mount in mounts:
         destination = mount.get("Destination")
         source = mount.get("Source")
@@ -63,15 +67,23 @@ def _build_mounts(mounts: list | None, binds: list | None = None) -> list[Mount]
         if mount_type not in ("volume", "bind"):
             continue
         result.append(
-            Mount(
-                target=destination,
-                source=source,
-                type=mount_type,
-                read_only=not mount.get("RW", True),
-                propagation=mount.get("Propagation"),
-            )
+            {
+                "target": destination,
+                "source": source,
+                "type": mount_type,
+                "read_only": not mount.get("RW", True),
+                "propagation": mount.get("Propagation"),
+            }
         )
-    return result or None
+    return result
+
+
+def _build_mounts(mounts: list | None, binds: list | None = None) -> list[Mount] | None:
+    """Convertit les montages à rejouer en objets ``docker.types.Mount``."""
+    specs = _mount_specs(mounts, binds)
+    if not specs:
+        return None
+    return [Mount(**spec) for spec in specs]
 
 
 def _ulimits(raw: list | None) -> list[dict] | None:
@@ -314,11 +326,11 @@ def run_selftest() -> int:
             {"Type": "bind", "Source": "/other", "Destination": "/other", "RW": True},
             {"Type": "tmpfs", "Source": "", "Destination": "/tmp", "RW": True},
         ]
-        result = _build_mounts(mounts, binds) or []
-        targets = sorted(mount["Target"] for mount in result)
+        result = _mount_specs(mounts, binds)
+        targets = sorted(mount["target"] for mount in result)
         assert targets == ["/anon", "/other"], targets
-        anonymous = next(mount for mount in result if mount["Target"] == "/anon")
-        assert anonymous["ReadOnly"] is True
+        anonymous = next(mount for mount in result if mount["target"] == "/anon")
+        assert anonymous["read_only"] is True
 
         attrs = {
             "HostConfig": {"NetworkMode": "traefik_proxy"},
@@ -364,6 +376,10 @@ def main(argv: list[str] | None = None) -> int:
 
     env_overrides = _pairs(args.env, "--env")
     label_overrides = _pairs(args.label, "--label")
+
+    if docker is None:
+        print(json.dumps({"ok": False, "error": "SDK Python docker introuvable"}))
+        return 1
 
     client = docker.from_env()
     try:
