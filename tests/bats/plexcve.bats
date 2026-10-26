@@ -168,6 +168,26 @@ PY
   [ "$(printf '%s' "$output" | jq -r '[.summary.issues[] | select(.code == "symlink_target_not_mounted")] | length')" -ge 1 ]
 }
 
+@test "plexcve: fix-plex remonte /mnt deja monte" {
+  cat >"$FIXTURE/check_mnt.py" <<'PY'
+import importlib.util
+import sys
+
+spec = importlib.util.spec_from_file_location("plexcve", sys.argv[1])
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+
+attrs = {"Mounts": [{"Destination": "/mnt", "Source": "/mnt", "RW": True}]}
+mounts, _paths, _warnings = module._find_media_mounts(
+    attrs, None, [sys.argv[2]], media_mode="generic"
+)
+print("\n".join(mounts))
+PY
+  run python3 "$FIXTURE/check_mnt.py" "$PLEXCVE" "$FIXTURE/Medias"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"/mnt:/mnt:ro,rslave"* ]]
+}
+
 @test "plexcve: report --input affiche les recommandations" {
   python3 "$PLEXCVE" scan --fixture "$FIXTURE" --json >"$FIXTURE/scan.json" || true
   run python3 "$PLEXCVE" report --input "$FIXTURE/scan.json"

@@ -170,7 +170,7 @@
         volumes: "{{ plex_docker_volumes }}"
         security_opts: "{{ plex_security_opts }}"
         cap_drop: "{{ plex_cap_drop }}"
-        cap_add: "{{ plex_cap_add }}"
+        capabilities: "{{ plex_cap_add }}"
         tmpfs: "{{ plex_tmpfs }}"
         shm_size: "{{ plex_shm_size }}"
         devices: "{{ '/dev/dri:/dev/dri' if (gpu.intel and dev_dri.stat.exists) | default(false) else omit }}"
