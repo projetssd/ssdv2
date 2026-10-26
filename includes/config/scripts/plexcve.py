@@ -1672,6 +1672,7 @@ def _find_media_mounts(
         [path for path in paths if os.path.isdir(path)],
         attrs.get("Mounts") or [],
     )
+    targets = symlink_data.get("targets") or []
     unmounted = symlink_data.get("unmounted") or []
     home = Path.home()
     home_media = (str(home / "Medias"), str(home / "local"))
@@ -1692,7 +1693,10 @@ def _find_media_mounts(
             warnings.append("mode strict : montage des cibles de symlinks en lecture seule")
     else:
         mnt_roots = [
-            root for root in unmounted if root == "/mnt" or root.startswith("/mnt/")
+            str(entry.get("root"))
+            for entry in targets
+            if entry.get("root") == "/mnt"
+            or str(entry.get("root", "")).startswith("/mnt/")
         ]
         if mnt_roots or any(str(path).startswith("/mnt") for path in paths):
             by_dest["/mnt"] = "/mnt:/mnt:ro,rslave"
@@ -2346,6 +2350,15 @@ def selftest(as_json: bool = False) -> int:
                 [str(media)], [{"Destination": "/mnt"}]
             )
             assert visible["unmounted"] == []
+            already_mounted, _, _ = _find_media_mounts(
+                {"Mounts": [{"Destination": "/mnt"}]},
+                None,
+                [str(media)],
+                media_mode="generic",
+            )
+            assert any(
+                bind.startswith("/mnt:/mnt:ro,rslave") for bind in already_mounted
+            )
             generic, _, _ = _find_media_mounts(
                 {"Mounts": []}, None, [str(media)], media_mode="generic"
             )
