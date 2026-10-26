@@ -1,0 +1,19 @@
+---
+- name: Détecter le conteneur WARP partagé
+  ansible.builtin.command:
+    cmd: "docker inspect -f '{% raw %}{{.State.Running}}{% endraw %}' warp"
+  register: stremfin_warp
+  changed_when: false
+  failed_when: false
+
+- name: Définir la sortie réseau initiale
+  ansible.builtin.set_fact:
+    stremfin_upstream_mode: "{{ 'socks' if (stremfin_warp.rc == 0 and (stremfin_warp.stdout | trim) == 'true') else 'direct' }}"
+  when: stremfin_upstream_mode is not defined
+
+- name: Afficher la sortie réseau retenue
+  ansible.builtin.debug:
+    msg:
+      - "Stremfin : sortie réseau initiale = {{ stremfin_upstream_mode }}"
+      - "{{ 'WARP détecté : socks5://warp:1080' if stremfin_upstream_mode == 'socks' else 'WARP absent : connexion directe' }}"
+      - "Ce réglage ne s'applique qu'au premier démarrage ; il se modifie dans Réglages → Lecture et réseau."

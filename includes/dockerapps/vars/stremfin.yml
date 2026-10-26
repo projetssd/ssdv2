@@ -1,0 +1,14 @@
+---
+pgrole: 'stremfin'
+intport: '8096'
+image: 'ghcr.io/guiro28/stremfin:latest'
+
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/app/data:rw"
+
+pg_env:
+  PORT: '8096'
+  DATA_DIR: '/app/data'
+  TZ: 'Europe/Paris'
+  UPSTREAM_MODE: "{{ stremfin_upstream_mode | default('direct') }}"
+  UPSTREAM_URL: 'socks5://warp:1080'

@@ -151,6 +151,7 @@ ssdv2webui - Interface d'administration SSDV2
 statping - Surveillance de vos sites Web
 stirlingpdf - Boite à outils PDF
 streamfusion - addon for Stremio streaming
+stremfin - Serveur compatible Jellyfin pour addons Stremio/Nuvio
 stremioaddonproxy - Proxy pour les addons Stremio
 stremthru - Proxy pour Stremio
 subsonic - Serveur multimédia
