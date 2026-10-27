@@ -1,3 +1,41 @@
+27/10/2026 — nouvelles applications Silo et sffs
+
+- `silo` : serveur multimedia Silo (ghcr.io/silo-server/silo-server), alternative
+  a Plex/Jellyfin. Interface web sur `<sous-domaine>`, API compatible Jellyfin
+  (Infuse, Swiftfin, Jellyfin Android TV...) sur `<sous-domaine>-jf`, DNS
+  Cloudflare cree automatiquement pour les deux.
+- compagnons crees par la pretask, avec le label `ssdv2.app=silo` (supprimes avec
+  l'application) : `db-silo` (PostgreSQL 18 + pgvector), `redis-silo`,
+  `meili-silo` (Meilisearch v1.54, version figee).
+- secrets generes une seule fois dans `<storage>/docker/<user>/silo-secrets/`
+  (meme format que StreamFusion)
+  (SILO_SECRET_KEY, mot de passe de la base, cle maitre Meilisearch).
+- recherche rapide : Meilisearch configure d'office (SILO_SEARCH_PROVIDER,
+  SILO_MEILISEARCH_URL, SILO_MEILISEARCH_API_KEY), index construit par Silo.
+- compte admin cree avec les identifiants SSDV2 (user.name / user.pass), comme
+  les autres applications (mot de passe de 8 caracteres minimum pour Silo).
+- reglages PostgreSQL calcules par Silo (POSTGRES_TUNE=auto) : base puis Silo
+  redemarres une fois a l'installation quand Silo le demande.
+- sauvegarde quotidienne de la base (pg_dump, 7 jours) dans
+  `<storage>/docker/<user>/silo/backups`, minuteur systemd `silo-backup.timer`
+  (retire avec l'application).
+- transcodage materiel detecte : `/dev/dri` (VAAPI / Quick Sync) et runtime
+  Docker `nvidia` (NVENC).
+- medias montes comme Plex : `~/Medias`, `~/local`, `/data` et `/mnt` (rslave),
+  en lecture seule.
+- `sffs` (https://github.com/Haldir31/sffs) : le catalogue d'une instance
+  StreamFusion (AllDebrid) devient une bibliotheque de films et de series dans
+  Silo, sans rien stocker : la video n'est lue chez AllDebrid qu'au lancement
+  d'une lecture. Monte `/mnt/sffs` (FUSE). Si `silo` est installe, il est
+  patche sur place (base, comptes et bibliotheques conserves) ; sinon il est
+  installe apres sffs. `<storage>/vars/silo.yml` (image modifiee) garde le
+  patch aux relances de silo ; supprimer sffs le retire. Images telechargees
+  depuis ghcr.io/haldir31 (ou construites sur le serveur), refus si la base de
+  Silo est plus recente que l'image modifiee. Configuration StreamFusion
+  generee (cle d'API dediee, cle AllDebrid de decypharr, cle TMDB et proxy de
+  StreamFusion), role Postgres en lecture seule. Prerequis : StreamFusion
+  installe par SSDV2.
+
 26/10/2026 — corrections Plex
 
 - Plex : le role Ansible utilise `capabilities` au lieu de `cap_add`

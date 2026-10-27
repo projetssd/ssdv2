@@ -1,0 +1,103 @@
+---
+# Posttask Silo : DNS de l'API Jellyfin, attente du démarrage, étapes suivantes.
+
+- name: Adresses de Silo
+  ansible.builtin.set_fact:
+    silo_host: "{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}"
+
+- name: "Enregistrement DNS de l'API compatible Jellyfin"
+  ansible.builtin.include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
+  vars:
+    subdomain: "{{ silo_host }}-jf"
+  when: cloudflare_enabled
+
+- name: "Rappel DNS (sans Cloudflare)"
+  ansible.builtin.debug:
+    msg: "Créer un enregistrement A {{ silo_host }}-jf.{{ user.domain }} -> {{ network.ipv4 }} pour les applications Jellyfin."
+  when: not cloudflare_enabled
+
+- name: Attendre que Silo réponde (migrations de la base au premier démarrage)
+  ansible.builtin.command: docker exec "{{ pgrole }}" curl -sf http://localhost:8080/api/v1/health
+  register: silo_health
+  until: silo_health.rc == 0
+  retries: 120
+  delay: 10
+  changed_when: false
+
+# POSTGRES_TUNE=auto : Silo calcule des réglages de PostgreSQL adaptés au serveur, dont certains
+# (shared_buffers, max_connections…) ne s'appliquent qu'au redémarrage de la base. Il le signale
+# dans ses journaux : la base puis Silo sont alors redémarrés une fois (à l'installation, aucun scan
+# n'est encore en cours).
+- name: Réglages de PostgreSQL en attente d'un redémarrage ?
+  ansible.builtin.shell: >-
+    docker logs --since "$(docker inspect -f '{% raw %}{{.State.StartedAt}}{% endraw %}' {{ pgrole }})" {{ pgrole }} 2>&1
+    | grep -c 'postgres restart required to finish applying auto-tuned settings' || true
+  register: silo_pg_tune
+  changed_when: false
+
+- name: Redémarrer la base puis Silo pour appliquer les réglages
+  when: silo_pg_tune.stdout | int > 0
+  block:
+    - name: Redémarrer db-{{ pgrole }}
+      ansible.builtin.command: docker restart "db-{{ pgrole }}"
+      changed_when: true
+
+    - name: Attendre la base
+      ansible.builtin.command: docker inspect -f '{% raw %}{{.State.Health.Status}}{% endraw %}' "db-{{ pgrole }}"
+      register: silo_db_health_after
+      until: silo_db_health_after.stdout == 'healthy'
+      retries: 30
+      delay: 5
+      changed_when: false
+
+    - name: Redémarrer Silo
+      ansible.builtin.command: docker restart "{{ pgrole }}"
+      changed_when: true
+
+    - name: Attendre que Silo réponde
+      ansible.builtin.command: docker exec "{{ pgrole }}" curl -sf http://localhost:8080/api/v1/health
+      register: silo_health_after
+      until: silo_health_after.rc == 0
+      retries: 60
+      delay: 5
+      changed_when: false
+
+# Comme les autres applications, Silo reprend les identifiants donnés à l'installation de SSDV2
+# (user.name / user.pass) : compte admin créé si Silo n'en a pas encore.
+- name: Silo attend-il son compte admin ?
+  ansible.builtin.command: docker exec "{{ pgrole }}" curl -sf http://localhost:8080/api/v1/auth/setup
+  register: silo_setup_status
+  changed_when: false
+  failed_when: false
+
+- name: Créer le compte admin avec les identifiants SSDV2
+  ansible.builtin.command:
+    argv: [docker, exec, -i, "{{ pgrole }}", curl, -s, -o, /dev/null, -w, "%{http_code}", -X, POST,
+           -H, "Content-Type: application/json", --data-binary, "@-", "http://localhost:8080/api/v1/auth/setup"]
+    # Les identifiants passent par l'entrée standard, jamais par la ligne de commande.
+    stdin: >-
+      {{ {'username': user.name, 'password': user.pass, 'email': user.mail | default('', true),
+          'create_default_profile': true, 'default_profile_name': user.name} | to_json }}
+  register: silo_setup
+  changed_when: silo_setup.stdout == '201'
+  failed_when: false
+  when: silo_setup_status.stdout is search('"needs_setup":\s*true')
+  no_log: true
+
+- name: Compte admin
+  ansible.builtin.debug:
+    msg: >-
+      {{ 'Compte admin créé : identifiant ' ~ user.name ~ ', mot de passe de SSDV2.'
+         if silo_setup.stdout | default('') == '201' else
+         'Compte admin non créé (code ' ~ silo_setup.stdout | default('?') ~ ', mot de passe SSDV2 de moins de 8 caractères ?) : le créer dans l''interface web.' }}
+  when: silo_setup is not skipped
+
+- name: Étapes suivantes
+  ansible.builtin.debug:
+    msg:
+      - "Silo est prêt : https://{{ silo_host }}.{{ user.domain }}"
+      - "1. Connecte-toi avec l'identifiant et le mot de passe de SSDV2 (sinon crée le compte admin dans l'interface web)."
+      - "2. Ajoute les bibliothèques. Dossiers visibles (mêmes chemins que Plex) : {{ lookup('env','HOME') }}/Medias, {{ lookup('env','HOME') }}/local, /data, /mnt."
+      - "Recherche rapide : Meilisearch (meili-{{ pgrole }}) est déjà configuré ; l'index se construit tout seul."
+      - "Applications Jellyfin (Infuse, Swiftfin…) : serveur https://{{ silo_host }}-jf.{{ user.domain }}"
+      - "Sauvegarde : base sauvegardée chaque nuit dans {{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/backups (7 jours). Garder aussi {{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}-secrets/SILO_SECRET_KEY, sans laquelle la base ne se relit pas."

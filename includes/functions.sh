@@ -780,6 +780,25 @@ function suppression_appli() {
     docker rm -f nginx piped-frontend piped-backend postgres piped-proxy hyperpipe-backend hyperpipe-frontend >/dev/null 2>&1
     manage_account_yml sub.piped " "
     ;;
+  silo)
+    # Minuteur de sauvegarde de la base (les sauvegardes restent dans le dossier de Silo si les
+    # données sont gardées).
+    sudo systemctl disable --now silo-backup.timer >/dev/null 2>&1
+    sudo rm -f /etc/systemd/system/silo-backup.service /etc/systemd/system/silo-backup.timer /usr/local/bin/silo-backup
+    sudo systemctl daemon-reload >/dev/null 2>&1
+    ;;
+  sffs)
+    # Le conteneur est supprimé sans démontage propre : retirer le montage FUSE mort.
+    # findmnt, pas mountpoint : un montage mort (« Transport endpoint is not connected ») échoue au stat.
+    while findmnt -rn /mnt/sffs >/dev/null; do sudo umount -l /mnt/sffs || break; done
+    # silo reprend sa définition d'avant sffs (catalogue, ou vars/silo.yml personnel).
+    if grep -q '^# sffs-patch' "${SETTINGS_STORAGE}/vars/silo.yml" 2>/dev/null; then
+      rm -f "${SETTINGS_STORAGE}/vars/silo.yml"
+      [ -f "${SETTINGS_STORAGE}/vars/silo.yml.avant-sffs" ] &&
+        mv "${SETTINGS_STORAGE}/vars/silo.yml.avant-sffs" "${SETTINGS_STORAGE}/vars/silo.yml"
+      echo "silo garde l'image modifiée jusqu'à sa prochaine relance (image officielle ensuite)."
+    fi
+    ;;
   jellygrail)
     sudo fusermount -uz ${SETTINGS_STORAGE}/docker/${USER}/jellygrail/Video_Library
     sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/jellygrail

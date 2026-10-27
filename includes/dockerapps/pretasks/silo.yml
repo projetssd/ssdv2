@@ -1,0 +1,211 @@
+---
+# Pretask Silo : secrets, compagnons (PostgreSQL pgvector, Redis, Meilisearch) et accélération GPU.
+
+- name: Dossiers de Silo
+  ansible.builtin.set_fact:
+    silo_dir: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}"
+    silo_secret_dir: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}-secrets"
+
+- name: Créer les dossiers de Silo
+  ansible.builtin.file:
+    path: "{{ silo_dir }}/{{ item }}"
+    state: directory
+    mode: "0755"
+  loop: [plugins, artwork, compat, transcode, download-artifacts, postgres, redis, meilisearch]
+
+- name: Créer le dossier des secrets
+  ansible.builtin.file:
+    path: "{{ silo_secret_dir }}"
+    state: directory
+    mode: "0700"
+
+# SILO_SECRET_KEY chiffre les identifiants enregistrés dans la base : il ne doit jamais changer.
+- name: Générer les secrets (une seule fois)
+  ansible.builtin.shell:
+    cmd: |
+      set -euo pipefail
+      umask 077
+      secret_file="{{ silo_secret_dir }}/{{ item }}"
+      if [ ! -s "$secret_file" ]; then
+        openssl rand -hex 32 > "$secret_file"
+        chmod 0600 "$secret_file"
+      fi
+    executable: /bin/bash
+  loop: [SILO_SECRET_KEY, SILO_DB_PASS, MEILI_MASTER_KEY]
+  changed_when: false
+  no_log: true
+
+- name: Lire les secrets
+  ansible.builtin.slurp:
+    src: "{{ silo_secret_dir }}/{{ item }}"
+  loop: [SILO_SECRET_KEY, SILO_DB_PASS, MEILI_MASTER_KEY]
+  register: silo_secret_files
+  no_log: true
+
+- name: Exposer les secrets au déploiement
+  ansible.builtin.set_fact:
+    SILO_SECRET_KEY: "{{ (silo_secret_files.results | selectattr('item', 'equalto', 'SILO_SECRET_KEY') | first).content | b64decode | trim }}"
+    SILO_DB_PASS: "{{ (silo_secret_files.results | selectattr('item', 'equalto', 'SILO_DB_PASS') | first).content | b64decode | trim }}"
+    MEILI_MASTER_KEY: "{{ (silo_secret_files.results | selectattr('item', 'equalto', 'MEILI_MASTER_KEY') | first).content | b64decode | trim }}"
+  no_log: true
+
+# --- Compagnons ---------------------------------------------------------------------------
+
+- name: Déployer db-{{ pgrole }} (PostgreSQL 18 + pgvector)
+  community.docker.docker_container:
+    name: "db-{{ pgrole }}"
+    image: pgvector/pgvector:pg18
+    pull: true
+    state: started
+    restart_policy: unless-stopped
+    labels:
+      ssdv2.app: "{{ pgrole }}"
+    shm_size: 1G
+    env:
+      POSTGRES_USER: silo
+      POSTGRES_PASSWORD: "{{ SILO_DB_PASS }}"
+      POSTGRES_DB: silo
+    volumes:
+      - "{{ silo_dir }}/postgres:/var/lib/postgresql"
+    networks:
+      - name: traefik_proxy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U silo -d silo"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+  no_log: true
+
+- name: Déployer redis-{{ pgrole }}
+  community.docker.docker_container:
+    name: "redis-{{ pgrole }}"
+    image: redis:alpine
+    pull: true
+    state: started
+    restart_policy: unless-stopped
+    labels:
+      ssdv2.app: "{{ pgrole }}"
+    volumes:
+      - "{{ silo_dir }}/redis:/data"
+    networks:
+      - name: traefik_proxy
+
+# Version figée : Meilisearch refuse d'ouvrir des données écrites par une autre version.
+- name: Déployer meili-{{ pgrole }} (Meilisearch, recherche plein texte)
+  community.docker.docker_container:
+    name: "meili-{{ pgrole }}"
+    image: getmeili/meilisearch:v1.54.0
+    pull: true
+    state: started
+    restart_policy: unless-stopped
+    labels:
+      ssdv2.app: "{{ pgrole }}"
+    env:
+      MEILI_MASTER_KEY: "{{ MEILI_MASTER_KEY }}"
+      MEILI_ENV: production
+      MEILI_NO_ANALYTICS: "true"
+    volumes:
+      - "{{ silo_dir }}/meilisearch:/meili_data"
+    networks:
+      - name: traefik_proxy
+  no_log: true
+
+- name: Attendre que la base soit prête
+  ansible.builtin.command: docker inspect -f '{% raw %}{{.State.Health.Status}}{% endraw %}' "db-{{ pgrole }}"
+  register: silo_db_health
+  until: silo_db_health.stdout == 'healthy'
+  retries: 30
+  delay: 5
+  changed_when: false
+
+# --- Accélération matérielle du transcodage -----------------------------------------------
+
+- name: Rechercher /dev/dri (Intel Quick Sync, AMD VAAPI)
+  ansible.builtin.stat:
+    path: /dev/dri
+  register: silo_dev_dri
+
+- name: Activer VAAPI / Quick Sync
+  ansible.builtin.set_fact:
+    specific_docker_info: "{{ specific_docker_info | default({}) | combine({'devices': ['/dev/dri:/dev/dri']}) }}"
+  when: silo_dev_dri.stat.exists
+
+- name: Rechercher le runtime Docker NVIDIA
+  ansible.builtin.command: docker info --format '{% raw %}{{json .Runtimes}}{% endraw %}'
+  register: silo_docker_runtimes
+  changed_when: false
+  failed_when: false
+
+- name: Activer NVENC (GPU NVIDIA)
+  ansible.builtin.set_fact:
+    specific_docker_info: >-
+      {{ specific_docker_info | default({}) | combine({'device_requests': [{'driver': 'nvidia', 'count': -1,
+         'capabilities': [['gpu', 'compute', 'utility', 'video']]}]}) }}
+  when: "'nvidia' in silo_docker_runtimes.stdout | default('')"
+
+- name: Accélération matérielle détectée
+  ansible.builtin.debug:
+    msg: >-
+      Transcodage matériel :
+      {{ ([('VAAPI/Quick Sync (/dev/dri)' if silo_dev_dri.stat.exists else ''),
+           ('NVIDIA' if 'nvidia' in silo_docker_runtimes.stdout | default('') else '')]
+          | select | join(' + ')) or 'aucun (transcodage logiciel)' }}
+
+# --- Sauvegarde de la base ------------------------------------------------------------------
+# Chaque nuit, pg_dump de la base (copie cohérente, Silo en marche) dans <dossier>/backups ; les 7
+# dernières sont gardées. Minuteur systemd (cron n'est pas toujours installé). La clé
+# <pgrole>-secrets/SILO_SECRET_KEY est indispensable pour relire une sauvegarde : la garder avec.
+
+- name: Script de sauvegarde de Silo
+  become: true
+  ansible.builtin.copy:
+    dest: "/usr/local/bin/{{ pgrole }}-backup"
+    mode: "0755"
+    content: |
+      #!/bin/bash
+      # Sauvegarde de la base de Silo (application SSDV2 {{ pgrole }}) : pg_dump au format custom.
+      # Restauration : docker exec -i db-{{ pgrole }} pg_restore -U silo -d silo --clean --if-exists < fichier.dump
+      set -euo pipefail
+      dir="{{ silo_dir }}/backups"
+      mkdir -p "$dir"
+      out="$dir/silo-$(date +%Y%m%d-%H%M).dump"
+      docker exec db-{{ pgrole }} pg_dump -U silo -Fc silo > "$out.tmp"
+      mv "$out.tmp" "$out"
+      ls -1t "$dir"/silo-*.dump | tail -n +8 | xargs -r rm -f
+      echo "$(date -Is) $out ($(du -h "$out" | cut -f1))"
+
+- name: Service et minuteur de sauvegarde
+  become: true
+  ansible.builtin.copy:
+    dest: "/etc/systemd/system/{{ item.name }}"
+    mode: "0644"
+    content: "{{ item.content }}"
+  loop:
+    - name: "{{ pgrole }}-backup.service"
+      content: |
+        [Unit]
+        Description=Sauvegarde de la base Silo ({{ pgrole }})
+        [Service]
+        Type=oneshot
+        User={{ lookup('env','USER') }}
+        ExecStart=/usr/local/bin/{{ pgrole }}-backup
+    - name: "{{ pgrole }}-backup.timer"
+      content: |
+        [Unit]
+        Description=Sauvegarde quotidienne de la base Silo ({{ pgrole }})
+        [Timer]
+        OnCalendar=*-*-* 04:30
+        RandomizedDelaySec=15m
+        Persistent=true
+        [Install]
+        WantedBy=timers.target
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Activer le minuteur de sauvegarde
+  become: true
+  ansible.builtin.systemd:
+    name: "{{ pgrole }}-backup.timer"
+    enabled: true
+    state: started
+    daemon_reload: true

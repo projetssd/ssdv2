@@ -1,0 +1,75 @@
+---
+# Posttask sffs : sffs est démarré. Installe silo (s'il était absent) ou le redéploie avec l'image
+# modifiée (<storage>/vars/silo.yml écrit par la pretask), puis crée la clé d'API Silo de sffs.
+
+# Par le mécanisme SSDV2 standard : pretask/posttask de silo (base, Redis, Meilisearch, DNS…),
+# registre. Base, comptes et bibliothèques d'un Silo existant sont conservés.
+- name: "{{ 'Redéployer' if sffs_silo_installed else 'Installer' }} Silo avec l'image modifiée"
+  ansible.builtin.command:
+    argv: [bash, "{{ settings.source }}/includes/config/scripts/generique.sh", launch_service, silo]
+  register: sffs_silo_launch
+  changed_when: true
+  failed_when: >-
+    sffs_silo_launch.rc != 0 or sffs_silo_launch.stdout is search('fatal: \[|failed=[1-9]')
+
+- name: Silo est-il enregistré et sur l'image modifiée ?
+  ansible.builtin.command: docker inspect -f '{% raw %}{{.State.Running}} {{.Config.Image}}{% endraw %}' silo
+  register: sffs_silo_state
+  changed_when: false
+  failed_when: sffs_silo_state.stdout | trim != 'true localhost/silo-sffs:latest'
+
+- name: Attendre que Silo réponde
+  ansible.builtin.command: docker exec silo curl -sf http://localhost:8080/api/v1/health
+  register: sffs_silo_health
+  until: sffs_silo_health.rc == 0
+  retries: 120
+  delay: 10
+  changed_when: false
+
+# sffs demande à Silo un scan ciblé des dossiers modifiés : il lui faut une clé d'API admin. Elle
+# est créée dès qu'un compte admin existe (relancer sffs après l'avoir créé) ; sffs relit le
+# fichier sans redémarrer.
+- name: Clé d'API de sffs déjà créée ?
+  ansible.builtin.stat:
+    path: "{{ sffs_secret_dir }}/SFFS_SILO_KEY"
+  register: sffs_key_file
+
+- name: Créer la clé d'API de sffs (compte admin requis)
+  ansible.builtin.shell:
+    cmd: |
+      set -euo pipefail
+      P="docker exec db-silo psql -U silo -d silo -qAtc"
+      admin=$($P "select id from users where role = 'admin' and enabled order by id limit 1")
+      [ -n "$admin" ] || { echo pas-d-admin; exit 0; }
+      key="sa_$(openssl rand -hex 32)"
+      hash=$(printf %s "$key" | sha256sum | cut -d' ' -f1)
+      $P "insert into api_keys(user_id,label,key_hash,key_prefix,scopes) values ($admin,'sffs','$hash','${key:0:11}','{}')" >/dev/null
+      umask 077
+      printf '%s\n' "$key" > "{{ sffs_secret_dir }}/SFFS_SILO_KEY"
+      echo cree
+    executable: /bin/bash
+  register: sffs_key
+  changed_when: sffs_key.stdout == 'cree'
+  when: not sffs_key_file.stat.exists or sffs_key_file.stat.size == 0
+  no_log: true
+
+- name: Adresse de Silo
+  ansible.builtin.shell: >-
+    bash "{{ settings.source }}/includes/config/scripts/generique.sh" get_from_account_yml sub.silo.silo 2>/dev/null | tail -1
+  register: sffs_silo_sub
+  changed_when: false
+
+- name: Étapes suivantes
+  ansible.builtin.debug:
+    msg:
+      - "Silo (avec sffs) : https://{{ sffs_silo_sub.stdout | trim }}.{{ user.domain }}"
+      - "1. Pas encore de compte admin dans Silo : le créer dans l'interface web."
+      - "2. Relance ensuite l'application sffs : elle crée la clé d'API, puis sffs crée les bibliothèques Films et Séries et demande à Silo de scanner les nouveautés StreamFusion."
+  when: sffs_key.stdout | default('') == 'pas-d-admin'
+
+- name: sffs prêt
+  ansible.builtin.debug:
+    msg:
+      - "Silo (avec sffs) : https://{{ sffs_silo_sub.stdout | trim }}.{{ user.domain }} (clé d'API de sffs en place)"
+      - "sffs crée les bibliothèques Films (/mnt/sffs/films) et Séries (/mnt/sffs/series) dès son montage (premier scan : plusieurs heures, rien n'est téléchargé)."
+  when: sffs_key.stdout | default('') != 'pas-d-admin'
