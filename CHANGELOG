@@ -17,9 +17,13 @@
   Traefik (les clients Jellyfin ne savent pas la fournir) ; Silo authentifie
   lui-même. L'interface web reste protégée par l'authentification SSDV2 choisie.
 - `sffs` : cache TMDB persistant dans `sffs-cache`, hors des données
-  applicatives. Il survit aux réinstallations et suppressions, avec migration
-  automatique de l'ancien cache : plus de rechargement complet des séries
-  (plusieurs minutes à ~20 minutes selon le catalogue).
+  applicatives. Il survit aux réinstallations et aux suppressions partielles
+  (`DELETE=0`) ; la suppression complète (`DELETE=1`) le retire avec les
+  données. Migration automatique de l'ancien cache : plus de rechargement
+  complet des séries (plusieurs minutes à ~20 minutes selon le catalogue).
+- Suppression complète : retrait explicite des volumes nommés de `silo` et
+  `silosffs`, y compris après une suppression partielle suivie d'une
+  réinstallation où le registre générique ne les avait pas re-capturés.
 
 26/10/2026 — corrections Plex
 

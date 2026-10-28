@@ -54,8 +54,15 @@ setup() {
   [ "$status" -eq 0 ]
   run grep -q 'Migrer les anciens caches sffs' "$SETTINGS_SOURCE/includes/dockerapps/pretasks/sffs.yml"
   [ "$status" -eq 0 ]
-  run grep -q 'rm -rf .*sffs-cache' "$SETTINGS_SOURCE/includes/functions.sh"
-  [ "$status" -ne 0 ]
+}
+
+@test "suppression: volumes et cache retirés en mode complet" {
+  run grep -q 'db-silo-data' "$SETTINGS_SOURCE/includes/functions.sh"
+  [ "$status" -eq 0 ]
+  run grep -q 'db-silosffs-data' "$SETTINGS_SOURCE/includes/functions.sh"
+  [ "$status" -eq 0 ]
+  run grep -q 'sffs-cache' "$SETTINGS_SOURCE/includes/functions.sh"
+  [ "$status" -eq 0 ]
 }
 
 @test "suppression: nettoyage sffs et silosffs" {
