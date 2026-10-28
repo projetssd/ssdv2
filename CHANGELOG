@@ -27,6 +27,12 @@
 - `silosffs` : cache des images désactivé à l'installation
   (`metadata.cache_images=false`), via une clé API admin temporaire supprimée
   après application.
+- `sffs` : création du catalogue initial de `silosffs` par import d'un seed
+  construit depuis `/mnt/sffs`, au lieu d'attendre un scan complet de plusieurs
+  heures. L'import n'a lieu que si la base est vide ; un rafraîchissement des
+  métadonnées est lancé ensuite pour récupérer les affiches et résumés.
+- `silosffs` : la sauvegarde avant mise à jour vérifie que `db-silosffs` est
+  réellement démarré, pour éviter un `pg_dump` en échec sur une base arrêtée.
 
 26/10/2026 — corrections Plex
 
