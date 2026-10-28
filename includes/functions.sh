@@ -819,6 +819,9 @@ function suppression_appli() {
     sudo rm -f /etc/systemd/system/silo-backup.service /etc/systemd/system/silo-backup.timer /usr/local/bin/silo-backup
     sudo systemctl daemon-reload >/dev/null 2>&1
     if [ $DELETE -eq 1 ]; then
+      # Volumes nommés : le registre générique peut les avoir perdus après une
+      # suppression partielle suivie d'une réinstallation. Nettoyage explicite.
+      docker volume rm -f db-silo-data redis-silo-data meili-silo-data >/dev/null 2>&1 || true
       sudo rm -rf "${SETTINGS_STORAGE}/docker/${USER}/silo-secrets" >/dev/null 2>&1
     fi
     ;;
@@ -828,6 +831,8 @@ function suppression_appli() {
     sudo rm -f /etc/systemd/system/silosffs-backup.service /etc/systemd/system/silosffs-backup.timer /usr/local/bin/silosffs-backup
     sudo systemctl daemon-reload >/dev/null 2>&1
     if [ $DELETE -eq 1 ]; then
+      # Volumes nommés : même correctif que pour silo après conservation des données.
+      docker volume rm -f db-silosffs-data redis-silosffs-data meili-silosffs-data >/dev/null 2>&1 || true
       sudo rm -rf "${SETTINGS_STORAGE}/docker/${USER}/silosffs-secrets" >/dev/null 2>&1
     fi
     ;;
@@ -854,9 +859,13 @@ SQL
     # ci-dessus : ils sont toujours retirés, même en suppression partielle. Une réinstallation
     # les régénère. Le marqueur de bibliothèques est aussi retiré : une nouvelle base silosffs
     # doit pouvoir les recréer.
-    # Le cache TMDB persistant (sffs-cache) est hors de ce dossier : il est conservé.
+    # Le cache TMDB persistant (sffs-cache) est hors de ce dossier : il est conservé
+    # en suppression partielle (DELETE=0) et retiré en suppression complète.
     sudo rm -rf "${SETTINGS_STORAGE}/docker/${USER}/sffs-secrets" >/dev/null 2>&1
     rm -f "${SETTINGS_STORAGE}/docker/${USER}/sffs/config/silo-libraries-created" >/dev/null 2>&1
+    if [ $DELETE -eq 1 ]; then
+      sudo rm -rf "${SETTINGS_STORAGE}/docker/${USER}/sffs-cache" >/dev/null 2>&1
+    fi
     ;;
   streamfusion)
     docker rm -f warp streamfusion taskiq-worker taskiq-scheduler meilisearch stremio-redis stremio-postgres >/dev/null 2>&1
