@@ -10,6 +10,9 @@ pgrole: 'silosffs'
 intport: '8080'
 image: 'localhost/silo-sffs:latest'
 pull_image: false
+# Désactive le cache des images à l'installation (metadata.cache_images=false).
+# Valeur texte, comme attendu par l'API Silo.
+silo_cache_images: 'false'
 
 # Sources de sffs (patchs Silo + image). `main` est testé par la CI du projet sffs ;
 # une version précise (commit) peut être épinglée dans un fichier vars personnel.
