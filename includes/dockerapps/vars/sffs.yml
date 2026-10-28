@@ -40,6 +40,14 @@ sffs_light: '0'
 # aux suppressions de l'application (DELETE=1), et évite de recharger les séries.
 sffs_cache_dir: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}-cache"
 
+# Crée le catalogue initial de silosffs par import d'un seed construit depuis
+# l'arborescence sffs, au lieu d'attendre un scan complet de plusieurs heures.
+# L'import n'est fait que si la base silosffs ne contient encore aucun média.
+sffs_catalog_seed: '1'
+# Lance un rafraîchissement des métadonnées après l'import : les affiches et
+# les résumés sont récupérés en arrière-plan, sans scan des fichiers.
+sffs_catalog_seed_refresh_metadata: '1'
+
 pg_volumes:
   # Comme decypharr : /mnt en rshared, le montage FUSE /mnt/sffs remonte vers l'hôte ; Silo monte
   # /mnt en rslave et voit chaque nouveau montage, même après un redémarrage de sffs.
@@ -85,8 +93,10 @@ pg_env:
   SFFS_SILO_FILMS: '/mnt/sffs/films'
   SFFS_SILO_SERIES: '/mnt/sffs/series'
   # Bibliothèques Films et Séries (métadonnées en français) créées dans silosffs dès que la clé
-  # d'API existe, une seule fois : une bibliothèque supprimée n'est pas recréée.
-  SFFS_SILO_LIBRARIES: '1'
+  # d'API existe, une seule fois : une bibliothèque supprimée n'est pas recréée. Avec l'import
+  # du seed, c'est le seed qui crée les bibliothèques avec last_scanned_at, pour éviter le scan
+  # initial complet ; sffs ne doit donc pas les créer avant l'import.
+  SFFS_SILO_LIBRARIES: "{{ '0' if sffs_catalog_seed | bool else '1' }}"
   SFFS_SILO_LIBRARIES_LANG: 'fr'
   SFFS_SILO_LIBRARIES_DONE: '/config/silo-libraries-created'
   GOMAXPROCS: '4'

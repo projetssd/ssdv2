@@ -62,11 +62,111 @@
   register: sffs_silo_sub
   changed_when: false
 
+# Le montage FUSE peut prendre plusieurs minutes au premier démarrage : sffs
+# charge StreamFusion et construit son arborescence avant de monter /mnt/sffs.
+- name: Attendre le montage /mnt/sffs
+  ansible.builtin.command: test -d /mnt/sffs/films -a -d /mnt/sffs/series
+  register: sffs_mount_ready
+  until: sffs_mount_ready.rc == 0
+  retries: 180
+  delay: 10
+  changed_when: false
+  when: sffs_catalog_seed | bool
+
+- name: Le catalogue silosffs contient-il déjà des médias ?
+  ansible.builtin.command: >-
+    docker exec db-silosffs psql -U silo -d silo -qAtc
+    "select count(*) from media_items"
+  register: sffs_catalog_items
+  changed_when: false
+  when: sffs_catalog_seed | bool
+
+- name: Générer le seed du catalogue depuis l'arborescence sffs
+  ansible.builtin.command:
+    argv:
+      - python3
+      - "{{ settings.source }}/includes/config/scripts/silo_catalog_seed.py"
+      - --films-dir
+      - /mnt/sffs/films
+      - --series-dir
+      - /mnt/sffs/series
+      - --output
+      - /tmp/silo-catalog-seed.json.gz
+  register: sffs_catalog_seed_run
+  when:
+    - sffs_catalog_seed | bool
+    - sffs_catalog_items.stdout | default('0') | trim | int == 0
+
+- name: Copier le seed dans silosffs
+  ansible.builtin.command: >-
+    docker cp /tmp/silo-catalog-seed.json.gz
+    silosffs:/tmp/silo-catalog-seed.json.gz
+  when: sffs_catalog_seed_run is changed
+
+- name: Importer le catalogue dans silosffs
+  ansible.builtin.shell:
+    cmd: |
+      set -euo pipefail
+      key=$(cat "{{ sffs_secret_dir }}/SFFS_SILO_KEY")
+      body='{"local_path":"/tmp/silo-catalog-seed.json.gz","conflict_mode":"skip_existing","path_rewrites":[]}'
+      response=$(printf '%s\n' "$key" | docker exec -i silosffs sh -c 'IFS= read -r k; printf "%s" "$1" | curl -sS --max-time 60 -X POST -H "Authorization: Bearer $k" -H "Content-Type: application/json" --data-binary @- http://localhost:8080/api/v2/admin/catalog/import-jobs' _ "$body")
+      job_id=$(printf '%s' "$response" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("id",""))')
+      [ -n "$job_id" ] || { echo "réponse import invalide: $response" >&2; exit 1; }
+      for _ in $(seq 1 360); do
+        job=$(printf '%s\n' "$key" | docker exec -i silosffs sh -c 'IFS= read -r k; curl -sS --max-time 30 -H "Authorization: Bearer $k" "http://localhost:8080/api/v2/admin/jobs/$1"' _ "$job_id")
+        terminal=$(printf '%s' "$job" | python3 -c 'import json,sys; print(str(json.load(sys.stdin).get("terminal", False)).lower())')
+        state=$(printf '%s' "$job" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("state", ""))')
+        if [ "$terminal" = "true" ]; then
+          if [ "$state" != "succeeded" ]; then
+            echo "import du catalogue en échec: state=$state" >&2
+            printf '%s\n' "$job" >&2
+            exit 1
+          fi
+          count=$(docker exec db-silosffs psql -U silo -d silo -qAtc "select count(*) from media_items")
+          if [ "${count:-0}" -eq 0 ]; then
+            echo "import terminé mais aucun média en base" >&2
+            exit 1
+          fi
+          echo "catalogue importé: ${count} médias (job=$job_id)"
+          exit 0
+        fi
+        sleep 15
+      done
+      echo "import non terminé après 90 min (job=$job_id)" >&2
+      exit 1
+    executable: /bin/bash
+  when: sffs_catalog_seed_run is changed
+  no_log: true
+
+- name: Rafraîchir les métadonnées des bibliothèques importées
+  ansible.builtin.shell:
+    cmd: |
+      set -euo pipefail
+      key=$(cat "{{ sffs_secret_dir }}/SFFS_SILO_KEY")
+      for id in $(docker exec db-silosffs psql -U silo -d silo -qAtc "select id from media_folders where name in ('Films','Séries') order by id"); do
+        printf '%s\n' "$key" | docker exec -i silosffs sh -c 'IFS= read -r k; id="$1"; curl -sS -f -o /dev/null -X POST -H "Authorization: Bearer $k" -H "Content-Type: application/json" -d "{\"mode\":\"full\"}" "http://localhost:8080/api/v2/libraries/$id/refresh-metadata"' _ "$id"
+      done
+    executable: /bin/bash
+  when:
+    - sffs_catalog_seed_refresh_metadata | bool
+    - sffs_catalog_seed_run is changed
+  no_log: true
+
+- name: Nettoyer le seed local
+  ansible.builtin.file:
+    path: /tmp/silo-catalog-seed.json.gz
+    state: absent
+  when: sffs_catalog_seed_run is changed
+
+- name: Nettoyer le seed dans silosffs
+  ansible.builtin.command: docker exec silosffs rm -f /tmp/silo-catalog-seed.json.gz
+  when: sffs_catalog_seed_run is changed
+  changed_when: false
+
 - name: sffs prêt
   ansible.builtin.debug:
     msg:
       - "silosffs : https://{{ sffs_silo_sub.stdout | default('silosffs', true) | trim }}.{{ user.domain }}"
-      - "sffs crée les bibliothèques Films (/mnt/sffs/films) et Séries (/mnt/sffs/series) dès que sa clé d'API est en place."
+      - "Catalogue initial : import d'un seed depuis /mnt/sffs (pas de scan complet) ; métadonnées et affiches récupérées en arrière-plan."
       - "Cache TMDB persistant : {{ sffs_cache_dir }} (conservé lors des réinstallations)."
-      - "Premier scan : plusieurs heures, rien n'est téléchargé."
-      - "Mise à jour : relancer silosffs d'abord, puis sffs."
+      - "Mise à jour : scans ciblés des dossiers modifiés par sffs ; rien n'est téléchargé."
