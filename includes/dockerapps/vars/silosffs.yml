@@ -1,0 +1,69 @@
+---
+# Silo patché pour sffs : instance indépendante de Silo, avec ses propres données,
+# comptes et bibliothèques. Les patchs viennent du projet sffs.
+# Interface web : https://<sous-domaine>.<domaine>
+# API compatible Jellyfin (Infuse, Swiftfin, Jellyfin pour Android TV…) : https://<sous-domaine>-jf.<domaine>
+# Compagnons créés par la pretask : db-silosffs (PostgreSQL 18 + pgvector), redis-silosffs, meili-silosffs.
+#
+# Installer cette application AVANT `sffs`. Elle n'utilise pas l'application `silo` officielle.
+pgrole: 'silosffs'
+intport: '8080'
+image: 'localhost/silo-sffs:latest'
+pull_image: false
+
+# Sources de sffs (patchs Silo + image). `main` est testé par la CI du projet sffs ;
+# une version précise (commit) peut être épinglée dans un fichier vars personnel.
+sffs_repo: 'https://github.com/Haldir31/sffs.git'
+sffs_repo_version: 'main'
+sffs_registry: 'ghcr.io/haldir31'
+sffs_build_local: false
+
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/plugins:/var/lib/silo/plugins"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/artwork:/var/lib/silo/artwork"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/compat:/var/lib/silo/compat"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/transcode:/tmp/silo-transcode"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/download-artifacts:/tmp/silo-download-artifacts"
+  # Médias : même mapping que Plex (templates/plex/defaults/main.yml), en lecture seule.
+  - "{{ lookup('env','HOME') }}/Medias:{{ lookup('env','HOME') }}/Medias:ro"
+  - "{{ lookup('env','HOME') }}/local:{{ lookup('env','HOME') }}/local:ro"
+  - '/data:/data:ro'
+  # /mnt : point de montage générique SSDV2 (FUSE decypharr, rclone…) ; rslave propage les sous-montages.
+  - '/mnt:/mnt:ro,rslave'
+  - '/etc/localtime:/etc/localtime:ro'
+
+pg_env:
+  MODE: 'integrated'
+  PORT: '8080'
+  JF_PORT: '8096'
+  SECRET_KEY: "{{ SILO_SECRET_KEY }}"
+  DATABASE_URL: "postgres://silo:{{ SILO_DB_PASS }}@db-{{ pgrole }}:5432/silo?sslmode=disable"
+  REDIS_URL: "redis://redis-{{ pgrole }}:6379"
+  SILO_PLUGIN_CACHE_DIR: '/var/lib/silo/plugins'
+  SILO_SF_ROOT: '/mnt/sffs'
+  POSTGRES_TUNE: 'auto'
+  # Recherche rapide par Meilisearch (meili-silosffs, créé par la pretask). Fixé ici, le réglage
+  # n'est plus modifiable dans l'interface ; Silo construit l'index seul (synchronisation chaque minute).
+  SILO_SEARCH_PROVIDER: 'meilisearch'
+  SILO_MEILISEARCH_URL: "http://meili-{{ pgrole }}:7700"
+  SILO_MEILISEARCH_API_KEY: "{{ MEILI_MASTER_KEY }}"
+  # Un seul serveur, sans répartiteur de charge devant : arrêt immédiat.
+  SILO_SHUTDOWN_DELAY: '0'
+  TZ: 'Europe/Paris'
+
+# Seconde route Traefik pour l'API compatible Jellyfin (port 8096), toujours sans authentification
+# Traefik : les applications Jellyfin ne savent pas la passer, Silo authentifie lui-même.
+# Les noms de routers/services sont propres à l'application : `silo` et `silosffs` peuvent coexister.
+extra_labels:
+  "traefik.http.routers.silosffs-jf-rtr.entrypoints": 'http,https'
+  "traefik.http.routers.silosffs-jf-rtr.rule": "Host(`{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}-jf.{{ user.domain }}`)"
+  "traefik.http.routers.silosffs-jf-rtr.tls": 'true'
+  "traefik.http.routers.silosffs-jf-rtr.tls.certresolver": 'letsencrypt'
+  "traefik.http.routers.silosffs-jf-rtr.middlewares": 'chain-no-auth@file'
+  "traefik.http.routers.silosffs-jf-rtr.service": 'silosffs-jf-svc'
+  "traefik.http.services.silosffs-jf-svc.loadbalancer.server.port": '8096'
+
+specific_docker_info:
+  restart_policy: unless-stopped
+  # Silo termine les lectures en cours à l'arrêt.
+  stop_timeout: 120

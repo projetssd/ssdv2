@@ -1,0 +1,4 @@
+---
+# Posttask silosffs : DNS Jellyfin, santé, réglages PostgreSQL et compte admin.
+- name: Finaliser silosffs
+  ansible.builtin.include_tasks: "{{ settings.source }}/includes/dockerapps/templates/generique/silo_post.yml"
