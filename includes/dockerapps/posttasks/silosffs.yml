@@ -2,3 +2,39 @@
 # Posttask silosffs : DNS Jellyfin, santé, réglages PostgreSQL et compte admin.
 - name: Finaliser silosffs
   ansible.builtin.include_tasks: "{{ settings.source }}/includes/dockerapps/templates/generique/silo_post.yml"
+
+# Le cache des images est désactivé après la création du compte admin. On utilise
+# une clé API admin temporaire, supprimée en fin de tâche, pour ne pas dépendre du
+# mot de passe SSDV2 (qui peut avoir changé depuis la création du compte Silo).
+- name: Désactiver le cache des images dans silosffs
+  ansible.builtin.shell:
+    cmd: |
+      set -euo pipefail
+      P="docker exec db-silosffs psql -U silo -d silo -qAtc"
+      admin=$($P "select id from users where role='admin' and enabled order by id limit 1")
+      [ -n "$admin" ] || { echo "aucun compte admin dans silosffs"; exit 1; }
+
+      key="sa_$(openssl rand -hex 32)"
+      hash=$(printf %s "$key" | sha256sum | cut -d' ' -f1)
+      prefix=${key:0:11}
+
+      cleanup() {
+        $P "delete from api_keys where label='ssdv2-silosffs-image-cache'" >/dev/null 2>&1 || true
+      }
+      trap cleanup EXIT
+
+      $P "delete from api_keys where label='ssdv2-silosffs-image-cache'" >/dev/null
+      $P "insert into api_keys(user_id,label,key_hash,key_prefix,scopes)
+          values ($admin,'ssdv2-silosffs-image-cache','$hash','$prefix','{}')" >/dev/null
+
+      # If-Match: * est obligatoire sur ce PUT (sinon l'API répond 428).
+      printf '%s\n' "$key" | docker exec -i silosffs sh -c 'IFS= read -r key; curl -sS -f -X PUT -H "Authorization: Bearer $key" -H "If-Match: *" -H "Content-Type: application/json" -d "{\"value\":\"{{ silo_cache_images }}\"}" http://localhost:8080/api/v2/admin/settings/metadata.cache_images >/dev/null'
+
+      value=$(printf '%s\n' "$key" | docker exec -i silosffs sh -c 'IFS= read -r key; curl -sS -f -H "Authorization: Bearer $key" http://localhost:8080/api/v2/admin/settings/metadata.cache_images')
+      printf '%s' "$value" | grep -q '"value":"{{ silo_cache_images }}"' || {
+        echo "metadata.cache_images non appliqué (attendu: {{ silo_cache_images }})"
+        exit 1
+      }
+    executable: /bin/bash
+  no_log: true
+  changed_when: false
