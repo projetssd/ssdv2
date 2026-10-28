@@ -1,0 +1,138 @@
+---
+# Posttask commune aux applications `silo` et `silosffs` : DNS Jellyfin, santé,
+# réglages PostgreSQL et création du compte admin avec les identifiants SSDV2.
+
+- name: Définir les chemins de {{ pgrole }}
+  ansible.builtin.set_fact:
+    silo_dir: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}"
+
+- name: Adresse web de {{ pgrole }}
+  ansible.builtin.set_fact:
+    silo_host: "{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}"
+
+- name: "Enregistrement DNS de l'API compatible Jellyfin"
+  ansible.builtin.include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
+  vars:
+    subdomain: "{{ silo_host }}-jf"
+  when: cloudflare_enabled
+
+- name: "Rappel DNS (sans Cloudflare)"
+  ansible.builtin.debug:
+    msg: "Créer un enregistrement A {{ silo_host }}-jf.{{ user.domain }} -> {{ network.ipv4 }} pour les applications Jellyfin."
+  when: not cloudflare_enabled
+
+- name: Attendre que {{ pgrole }} réponde (migrations de la base au premier démarrage)
+  ansible.builtin.command: docker exec "{{ pgrole }}" curl -sf http://localhost:8080/api/v1/health
+  register: silo_health
+  until: silo_health.rc == 0
+  retries: 120
+  delay: 10
+  changed_when: false
+
+# POSTGRES_TUNE=auto : Silo calcule des réglages de PostgreSQL adaptés au serveur, dont certains
+# ne s'appliquent qu'au redémarrage de la base. Le marqueur évite de redémarrer la base à chaque
+# réinstallation une fois les réglages appliqués.
+- name: Réglages PostgreSQL déjà appliqués ?
+  ansible.builtin.stat:
+    path: "{{ silo_dir }}/.pg-tuned"
+  register: silo_pg_tuned
+
+- name: Réglages de PostgreSQL en attente d'un redémarrage ?
+  ansible.builtin.shell: >-
+    docker logs --since "$(docker inspect -f '{% raw %}{{.State.StartedAt}}{% endraw %}' {{ pgrole }})" {{ pgrole }} 2>&1
+    | grep -c 'postgres restart required to finish applying auto-tuned settings' || true
+  register: silo_pg_tune
+  changed_when: false
+  when: not silo_pg_tuned.stat.exists
+
+- name: Redémarrer la base puis {{ pgrole }} pour appliquer les réglages
+  when:
+    - not silo_pg_tuned.stat.exists
+    - silo_pg_tune.stdout | default('0', true) | int > 0
+  block:
+    - name: Redémarrer db-{{ pgrole }}
+      ansible.builtin.command: docker restart "db-{{ pgrole }}"
+      changed_when: true
+
+    - name: Attendre la base
+      ansible.builtin.command: docker inspect -f '{% raw %}{{.State.Health.Status}}{% endraw %}' "db-{{ pgrole }}"
+      register: silo_db_health_after
+      until: silo_db_health_after.stdout == 'healthy'
+      retries: 30
+      delay: 5
+      changed_when: false
+
+    - name: Redémarrer {{ pgrole }}
+      ansible.builtin.command: docker restart "{{ pgrole }}"
+      changed_when: true
+
+    - name: Attendre que {{ pgrole }} réponde
+      ansible.builtin.command: docker exec "{{ pgrole }}" curl -sf http://localhost:8080/api/v1/health
+      register: silo_health_after
+      until: silo_health_after.rc == 0
+      retries: 60
+      delay: 5
+      changed_when: false
+
+    - name: Mémoriser que les réglages PostgreSQL sont appliqués
+      ansible.builtin.copy:
+        content: "{{ lookup('pipe', 'date -Is') }}\n"
+        dest: "{{ silo_dir }}/.pg-tuned"
+        mode: "0644"
+      changed_when: true
+
+# Comme les autres applications, Silo reprend les identifiants donnés à l'installation de SSDV2
+# (user.name / user.pass) : compte admin créé si Silo n'en a pas encore.
+- name: "{{ pgrole }} attend-il son compte admin ?"
+  ansible.builtin.command: docker exec "{{ pgrole }}" curl -sf http://localhost:8080/api/v1/auth/setup
+  register: silo_setup_status
+  changed_when: false
+  failed_when: false
+
+- name: Vérifier l'endpoint de configuration de {{ pgrole }}
+  ansible.builtin.assert:
+    that:
+      - silo_setup_status.rc == 0
+    fail_msg: >-
+      Impossible de vérifier le compte admin de {{ pgrole }}.
+      Vérifier que {{ pgrole }} est à jour et que son API répond.
+
+- name: Vérifier la longueur du mot de passe SSDV2 pour Silo
+  ansible.builtin.assert:
+    that:
+      - user.pass | length >= 8
+    fail_msg: >-
+      Le mot de passe SSDV2 fait moins de 8 caractères, minimum imposé par Silo.
+      Le modifier dans SSDV2, puis relancer l'installation.
+  when: silo_setup_status.stdout is search('"needs_setup":\s*true')
+
+- name: Créer le compte admin avec les identifiants SSDV2
+  ansible.builtin.command:
+    argv: [docker, exec, -i, "{{ pgrole }}", curl, -s, -o, /dev/null, -w, "%{http_code}", -X, POST,
+           -H, "Content-Type: application/json", --data-binary, "@-", "http://localhost:8080/api/v1/auth/setup"]
+    # Les identifiants passent par l'entrée standard, jamais par la ligne de commande.
+    stdin: >-
+      {{ {'username': user.name, 'password': user.pass, 'email': user.mail | default('', true),
+          'create_default_profile': true, 'default_profile_name': user.name} | to_json }}
+  register: silo_setup
+  changed_when: silo_setup.stdout == '201'
+  failed_when: false
+  when: silo_setup_status.stdout is search('"needs_setup":\s*true')
+  no_log: true
+
+- name: Compte admin
+  ansible.builtin.debug:
+    msg: >-
+      {{ 'Compte admin créé : identifiant ' ~ user.name ~ ', mot de passe de SSDV2.'
+         if silo_setup.stdout | default('') == '201' else
+         'Compte admin non créé (code ' ~ silo_setup.stdout | default('?') ~ ') : le créer dans l''interface web.' }}
+  when: silo_setup is not skipped
+
+- name: Étapes suivantes
+  ansible.builtin.debug:
+    msg:
+      - "{{ pgrole }} est prêt : https://{{ silo_host }}.{{ user.domain }}"
+      - "1. Connecte-toi avec l'identifiant et le mot de passe de SSDV2 (sinon crée le compte admin dans l'interface web)."
+      - "2. {{ 'Les bibliothèques Films et Séries seront créées par sffs.' if pgrole == 'silosffs' else 'Ajoute les bibliothèques.' }} Dossiers visibles : {{ lookup('env','HOME') }}/Medias, {{ lookup('env','HOME') }}/local, /data, /mnt."
+      - "3. Applications Jellyfin (Infuse, Swiftfin…) : serveur https://{{ silo_host }}-jf.{{ user.domain }}"
+      - "Sauvegarde : base sauvegardée chaque nuit dans {{ silo_dir }}/backups (7 jours). Garder aussi {{ silo_dir }}-secrets/SILO_SECRET_KEY, sans laquelle la base ne se relit pas."

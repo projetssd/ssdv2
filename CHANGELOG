@@ -1,3 +1,30 @@
+28/10/2026 — Silo, Silo patché et sffs (installations séparées)
+
+- `silo` : serveur multimédia officiel (PostgreSQL + pgvector, Redis,
+  Meilisearch, compte admin SSDV2, sauvegarde quotidienne).
+- `silosffs` : instance indépendante de Silo patchée pour sffs. Elle a sa
+  propre base, ses comptes, ses bibliothèques et son sous-domaine ; l'app
+  `silo` officielle n'est jamais modifiée. Les patchs suivent la version de
+  Silo officiel testée par le projet sffs (mise à jour en relançant l'app).
+- `sffs` : catalogue StreamFusion présenté comme bibliothèque de `silosffs`.
+  `sffs` exige StreamFusion et `silosffs` déjà installés, ne les installe pas
+  et ne les modifie pas. Il lit StreamFusion avec un rôle PostgreSQL en
+  lecture seule et une clé API dédiée, retirés à la suppression de sffs.
+- Suppression : `sffs` d'abord, puis `silosffs`. Supprimer `sffs` ne supprime
+  ni `silosffs` ni StreamFusion. La suppression de `silosffs` est refusée tant
+  que `sffs` est installé.
+- API Jellyfin : route `<sous-domaine>-jf` accessible sans authentification
+  Traefik (les clients Jellyfin ne savent pas la fournir) ; Silo authentifie
+  lui-même. L'interface web reste protégée par l'authentification SSDV2 choisie.
+- `sffs` : cache TMDB persistant dans `sffs-cache`, hors des données
+  applicatives. Il survit aux réinstallations et aux suppressions partielles
+  (`DELETE=0`) ; la suppression complète (`DELETE=1`) le retire avec les
+  données. Migration automatique de l'ancien cache : plus de rechargement
+  complet des séries (plusieurs minutes à ~20 minutes selon le catalogue).
+- Suppression complète : retrait explicite des volumes nommés de `silo` et
+  `silosffs`, y compris après une suppression partielle suivie d'une
+  réinstallation où le registre générique ne les avait pas re-capturés.
+
 26/10/2026 — corrections Plex
 
 - Plex : le role Ansible utilise `capabilities` au lieu de `cap_add`

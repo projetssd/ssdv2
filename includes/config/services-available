@@ -136,11 +136,14 @@ seafile - Stockage cloud open source
 seerr -  Gestion de contenu Plex/Emby
 seerrcatalog - Passerelle entre Jellyseerr et Stremio
 seasonarr - Assistant Sonarr pour packs de saisons
+sffs - Catalogue StreamFusion en bibliothèque Silo patché (prérequis : silosffs)
 sftorznab - Indexeurs Torznab StreamFusion (PostgreSQL + Meilisearch) pour Prowlarr
 shaarli - Bookmarking personnel
 shieldcontroller - Gestion NVIDIA Shield / Android TV (écran, APK, applications)
 sickchill - Gestion Films/Séries
 sickgear - Gestionnaire Films/Séries
+silo - Serveur multimédia (alternative à Plex/Jellyfin)
+silosffs - Silo patché pour sffs, instance indépendante (installer avant sffs)
 slicksync - Gestion des utilisateurs et addons Stremio/Nuvio
 sismicsreader - Agrégateur flux Web
 sonarr4k - Gestion Séries 4K
