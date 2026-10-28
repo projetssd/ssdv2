@@ -1,0 +1,55 @@
+---
+# Clone les sources de sffs et prépare une image locale :
+#   - composant `silo`  : image Silo officiel + patchs sffs (pour l'application silosffs)
+#   - composant `sffs`  : image du pont sffs (pour l'application sffs)
+# Une image déjà construite depuis les mêmes sources est conservée. Sinon l'image publiée
+# correspondante est téléchargée, ou construite localement.
+
+- name: Définir le composant et les images à préparer
+  ansible.builtin.set_fact:
+    sffs_component: "{{ sffs_build_component | default('sffs') }}"
+    sffs_component_dir: "{{ 'silo' if (sffs_build_component | default('sffs')) == 'silo' else 'sffs' }}"
+    sffs_image_name: "{{ 'localhost/silo-sffs:latest' if (sffs_build_component | default('sffs')) == 'silo' else 'localhost/sffs:latest' }}"
+    sffs_registry_image: "{{ (sffs_registry | default('ghcr.io/haldir31')) }}/{{ 'silo-sffs' if (sffs_build_component | default('sffs')) == 'silo' else 'sffs' }}:latest"
+    sffs_src_dir: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/src"
+
+- name: Sources de sffs
+  ansible.builtin.git:
+    repo: "{{ sffs_repo | default('https://github.com/Haldir31/sffs.git') }}"
+    dest: "{{ sffs_src_dir }}"
+    version: "{{ sffs_repo_version | default('main') }}"
+    force: true
+
+- name: Préparer l'image {{ sffs_image_name }} (sources à jour)
+  ansible.builtin.shell:
+    cmd: |
+      set -euo pipefail
+      label() { docker image inspect -f '{% raw %}{{index .Config.Labels "sffs.tree"}}{% endraw %}' "$1" 2>/dev/null || true; }
+      want=$(git -C "$SRC" rev-parse "HEAD:$COMPONENT_DIR")
+      [ "$(label "$IMAGE_NAME")" = "$want" ] && { echo "image à jour"; exit 0; }
+      if [ -n "$REGISTRY" ] && [ "$BUILD_LOCAL" != "1" ] &&
+         docker pull -q "$REGISTRY_IMAGE" >/dev/null 2>&1 &&
+         [ "$(label "$REGISTRY_IMAGE")" = "$want" ]; then
+        docker tag "$REGISTRY_IMAGE" "$IMAGE_NAME"
+        echo "image téléchargée"
+        exit 0
+      fi
+      echo "construction"
+      CONTAINER_ENGINE=docker SFFS_IMAGE=localhost/sffs:latest SILO_IMAGE=localhost/silo-sffs:latest \
+        SILO_SRC="$SRC/silo-src" "$SRC/build-images.sh" "$TARGET"
+    executable: /bin/bash
+  environment:
+    SRC: "{{ sffs_src_dir }}"
+    COMPONENT_DIR: "{{ sffs_component_dir }}"
+    IMAGE_NAME: "{{ sffs_image_name }}"
+    REGISTRY: "{{ sffs_registry | default('') }}"
+    REGISTRY_IMAGE: "{{ sffs_registry_image }}"
+    BUILD_LOCAL: "{{ '1' if (sffs_build_local | default(false) | bool) else '0' }}"
+    TARGET: "{{ sffs_component }}"
+  register: sffs_images
+  changed_when: sffs_images.stdout is search('téléchargée|construction')
+  check_mode: false
+
+- name: Images sffs
+  ansible.builtin.debug:
+    var: sffs_images.stdout_lines

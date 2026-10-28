@@ -1,0 +1,94 @@
+---
+# sffs : le catalogue d'une instance StreamFusion (AllDebrid) présenté comme une bibliothèque
+# de films et de séries dans Silo patché, sans rien stocker. Les vidéos ne sont lues chez
+# AllDebrid qu'au lancement d'une lecture. Sources : https://github.com/Haldir31/sffs
+#
+# Prérequis, installés séparément :
+# - StreamFusion installé par SSDV2 et fonctionnel ;
+# - application `silosffs` installée et démarrée (Silo patché, sa propre base).
+#
+# sffs ne modifie jamais l'application `silo` officielle et n'installe pas Silo.
+# Pour mettre à jour : relancer `silosffs` d'abord, puis `sffs`.
+# Fichiers sffs dans Silo : /mnt/sffs/films et /mnt/sffs/series.
+pgrole: 'sffs'
+image: 'localhost/sffs:latest'
+pull_image: false
+traefik_labels_enabled: false
+
+# Sources de sffs et des patchs Silo (clonées dans <storage>/docker/<user>/sffs/src).
+# `main` est testé par la CI du projet sffs ; une version précise (commit) peut être épinglée.
+sffs_repo: 'https://github.com/Haldir31/sffs.git'
+sffs_repo_version: 'main'
+# Images construites par le dépôt sffs (GitHub Actions). Vide, ou sffs_build_local: true :
+# construction sur le serveur.
+sffs_registry: 'ghcr.io/haldir31'
+sffs_build_local: false
+
+# Réglages de sffs (facultatifs, voir docs/ARCHITECTURE.md du dépôt sffs).
+sffs_langs: 'fr'
+sffs_per_quality: '5'
+sffs_series: '1'
+sffs_series_per_quality: '2'
+# '1' : seulement les versions déjà en cache chez AllDebrid (moins de titres, lecture immédiate).
+sffs_cached_only: '0'
+# '0' : pas de REMUX.
+sffs_remux: '1'
+# '1' : garder aussi les encodages légers (HDLight, 4KLight, mHD…).
+sffs_light: '0'
+
+pg_volumes:
+  # Comme decypharr : /mnt en rshared, le montage FUSE /mnt/sffs remonte vers l'hôte ; Silo monte
+  # /mnt en rslave et voit chaque nouveau montage, même après un redémarrage de sffs.
+  - '/mnt:/mnt:rshared'
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
+  # Clé d'API Silo (SFFS_SILO_KEY), créée après le compte admin et relue sans redémarrage.
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}-secrets:/run/secrets:ro"
+  - '/etc/localtime:/etc/localtime:ro'
+
+pg_env:
+  SF_PG_DSN: "postgres://sffs_reader:{{ SFFS_DB_PASS }}@stremio-postgres:5432/streamfusion?sslmode=disable&options=-c%20default_transaction_read_only%3Don"
+  SF_BASE: "http://{{ sffs_sf_container }}:8080"
+  SF_STREAM_CFG: "{{ SF_STREAM_CFG }}"
+  SF_PLAYBACK_CFG: "{{ SF_PLAYBACK_CFG }}"
+  SFFS_MOUNT: '/mnt/sffs'
+  SFFS_ALLOW_OTHER: '1'
+  # Seul le Silo patché « arme » un fichier avant de le lire : Plex, Jellyfin ou un scan ne
+  # déclenchent aucun téléchargement.
+  SFFS_ALLOW_COMM: '^(silo|ffmpeg|ffprobe)$'
+  SFFS_LANGS: "{{ sffs_langs }}"
+  SFFS_REQUIRE_PREFERRED_HD: '1'
+  SFFS_PER_QUALITY: "{{ sffs_per_quality }}"
+  SFFS_SERIES: "{{ sffs_series }}"
+  SFFS_SERIES_PER_QUALITY: "{{ sffs_series_per_quality }}"
+  SFFS_CACHED_ONLY: "{{ sffs_cached_only }}"
+  SFFS_REMUX: "{{ sffs_remux }}"
+  SFFS_LIGHT: "{{ sffs_light }}"
+  SFFS_TMDB_KEY: "{{ SFFS_TMDB_KEY }}"
+  # AllDebrid refuse les adresses de datacenter : même proxy que StreamFusion (PROXY_URL).
+  SFFS_DEBRID_PROXY: "{{ sffs_debrid_proxy | default('') }}"
+  SFFS_WATCH: '1m'
+  SFFS_RELOAD: '24h'
+  # Silo patché installé séparément : ne jamais cibler l'application `silo` officielle.
+  SFFS_SILO_URL: 'http://silosffs:8080'
+  SFFS_SILO_KEY_FILE: '/run/secrets/SFFS_SILO_KEY'
+  SFFS_SILO_FILMS: '/mnt/sffs/films'
+  SFFS_SILO_SERIES: '/mnt/sffs/series'
+  # Bibliothèques Films et Séries (métadonnées en français) créées dans silosffs dès que la clé
+  # d'API existe, une seule fois : une bibliothèque supprimée n'est pas recréée.
+  SFFS_SILO_LIBRARIES: '1'
+  SFFS_SILO_LIBRARIES_LANG: 'fr'
+  SFFS_SILO_LIBRARIES_DONE: '/config/silo-libraries-created'
+  GOMAXPROCS: '4'
+  TZ: 'Europe/Paris'
+
+specific_docker_info:
+  devices:
+    - '/dev/fuse:/dev/fuse:rwm'
+  capabilities:
+    - SYS_ADMIN
+  security_opts:
+    - 'apparmor:unconfined'
+  # Voir les processus de l'hôte : sffs vérifie quel programme lit un fichier (SFFS_ALLOW_COMM).
+  pid_mode: 'host'
+  restart_policy: 'always'
+  stop_timeout: 30

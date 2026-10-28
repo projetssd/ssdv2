@@ -699,6 +699,15 @@ function suppression_appli() {
       *) echo "Suppression annulée."; return 1 ;;
     esac
   fi
+  # silosffs est le Silo utilisé par sffs : le supprimer casserait sffs.
+  if [ "$APPSELECTED" = "silosffs" ]; then
+    local sffs_status
+    sffs_status=$(sqlite3 "${SETTINGS_SOURCE}/ssddb" "select status from applications where name='sffs'" 2>/dev/null || true)
+    if [ "${sffs_status:-}" = "2" ]; then
+      echo "Supprimer d'abord l'application sffs, puis silosffs." >&2
+      return 1
+    fi
+  fi
   EXTRA_SUBDOMAINS=()
   manage_account_yml sub.${APPSELECTED} " "
 
@@ -802,6 +811,51 @@ function suppression_appli() {
     docker rm -f immich_server database redis immich-machine-learning >/dev/null 2>&1
     docker volume rm model-cache >/dev/null 2>&1
     manage_account_yml sub.immich " "
+    ;;
+  silo)
+    # Minuteur de sauvegarde de la base (les sauvegardes restent dans le dossier de Silo si les
+    # données sont gardées).
+    sudo systemctl disable --now silo-backup.timer >/dev/null 2>&1
+    sudo rm -f /etc/systemd/system/silo-backup.service /etc/systemd/system/silo-backup.timer /usr/local/bin/silo-backup
+    sudo systemctl daemon-reload >/dev/null 2>&1
+    if [ $DELETE -eq 1 ]; then
+      sudo rm -rf "${SETTINGS_STORAGE}/docker/${USER}/silo-secrets" >/dev/null 2>&1
+    fi
+    ;;
+  silosffs)
+    # Même Silo patché pour sffs, avec ses propres données et son propre minuteur.
+    sudo systemctl disable --now silosffs-backup.timer >/dev/null 2>&1
+    sudo rm -f /etc/systemd/system/silosffs-backup.service /etc/systemd/system/silosffs-backup.timer /usr/local/bin/silosffs-backup
+    sudo systemctl daemon-reload >/dev/null 2>&1
+    if [ $DELETE -eq 1 ]; then
+      sudo rm -rf "${SETTINGS_STORAGE}/docker/${USER}/silosffs-secrets" >/dev/null 2>&1
+    fi
+    ;;
+  sffs)
+    # Le conteneur est supprimé sans démontage propre : retirer le montage FUSE mort.
+    # findmnt, pas mountpoint : un montage mort (« Transport endpoint is not connected ») échoue au stat.
+    while findmnt -rn /mnt/sffs >/dev/null; do sudo umount -l /mnt/sffs || break; done
+    sudo rmdir /mnt/sffs >/dev/null 2>&1 || true
+    # Accès créés par sffs dans StreamFusion : rôle en lecture seule et clé API.
+    # Ils sont retirés même en suppression partielle : sffs ne doit plus pouvoir lire la base.
+    if docker inspect -f '{{.State.Running}}' stremio-postgres >/dev/null 2>&1; then
+      docker exec -i stremio-postgres psql -U streamfusion -d streamfusion -q >/dev/null 2>&1 <<'SQL' || true
+      SELECT format('DROP OWNED BY %I', 'sffs_reader')
+        WHERE EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'sffs_reader') \gexec
+      DROP ROLE IF EXISTS sffs_reader;
+      DELETE FROM api_keys WHERE name = 'sffs';
+SQL
+    fi
+    # Clé d'API de sffs dans le Silo patché (silosffs), si la base est présente.
+    if docker inspect -f '{{.State.Running}}' db-silosffs >/dev/null 2>&1; then
+      docker exec -i db-silosffs psql -U silo -d silo -q -c "delete from api_keys where label = 'sffs'" >/dev/null 2>&1 || true
+    fi
+    # Les secrets de sffs contiennent la configuration StreamFusion liée à la clé supprimée
+    # ci-dessus : ils sont toujours retirés, même en suppression partielle. Une réinstallation
+    # les régénère. Le marqueur de bibliothèques est aussi retiré : une nouvelle base silosffs
+    # doit pouvoir les recréer.
+    sudo rm -rf "${SETTINGS_STORAGE}/docker/${USER}/sffs-secrets" >/dev/null 2>&1
+    rm -f "${SETTINGS_STORAGE}/docker/${USER}/sffs/config/silo-libraries-created" >/dev/null 2>&1
     ;;
   streamfusion)
     docker rm -f warp streamfusion taskiq-worker taskiq-scheduler meilisearch stremio-redis stremio-postgres >/dev/null 2>&1

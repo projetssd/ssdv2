@@ -1,0 +1,5 @@
+---
+# Pretask Silo officiel : pile commune (PostgreSQL pgvector, Redis, Meilisearch,
+# secrets, GPU, sauvegarde).
+- name: Déployer la pile Silo
+  ansible.builtin.include_tasks: "{{ settings.source }}/includes/dockerapps/templates/generique/silo_stack.yml"

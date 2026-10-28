@@ -1,0 +1,402 @@
+---
+# Pretask sffs : vérifications, sources/images, configuration StreamFusion.
+# sffs est un consommateur de StreamFusion et de l'application séparée `silosffs` :
+# il ne l'installe pas et ne modifie jamais l'application `silo` officielle.
+
+# --- Prérequis : rien n'est créé si l'un d'eux manque -------------------------------------
+
+- name: StreamFusion est-il installé par SSDV2 ?
+  ansible.builtin.command: sqlite3 "{{ settings.source }}/ssddb" "select status from applications where name='streamfusion'"
+  register: sffs_reg_sf
+  changed_when: false
+  check_mode: false
+  failed_when: false
+
+- name: Refuser l'installation sans StreamFusion
+  ansible.builtin.fail:
+    msg: "StreamFusion n'est pas installé par SSDV2 (ou sqlite3 manque) : l'installer d'abord."
+  when: sffs_reg_sf.rc != 0 or sffs_reg_sf.stdout | trim != '2'
+
+- name: Conteneur StreamFusion (stream-fusion ou streamfusion selon la version de SSDV2)
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      for c in $(docker ps --filter label=ssdv2.app=streamfusion --format '{% raw %}{{.Names}}{% endraw %}') stream-fusion streamfusion; do
+        case "$c" in stremio-*|taskiq-*|sftorznab*) continue ;; esac
+        if [ "$(docker inspect -f '{% raw %}{{.State.Running}}{% endraw %}' "$c" 2>/dev/null)" = true ] &&
+           docker inspect -f '{% raw %}{{.Config.Image}}{% endraw %}' "$c" | grep -q stream-fusion; then
+          echo "$c"; exit 0
+        fi
+      done
+      exit 1
+    executable: /bin/bash
+  register: sffs_sf
+  changed_when: false
+  check_mode: false
+  failed_when: false
+
+- name: État de la base StreamFusion
+  ansible.builtin.command: docker inspect -f '{% raw %}{{.State.Running}}{% endraw %}' stremio-postgres
+  register: sffs_sf_pg
+  changed_when: false
+  check_mode: false
+  failed_when: false
+
+- name: Refuser l'installation si StreamFusion est arrêté
+  ansible.builtin.fail:
+    msg: "StreamFusion (ou sa base stremio-postgres) n'est pas démarré : le lancer d'abord."
+  when: sffs_sf.rc != 0 or sffs_sf_pg.rc != 0 or sffs_sf_pg.stdout | trim != 'true'
+
+- name: Vérifier /dev/fuse
+  ansible.builtin.stat:
+    path: /dev/fuse
+  register: sffs_fuse
+  failed_when: not sffs_fuse.stat.exists
+
+# Le montage FUSE de sffs doit remonter du conteneur vers l'hôte, puis vers silosffs.
+- name: Propagation de /mnt
+  ansible.builtin.command: findmnt -no PROPAGATION --target /mnt
+  register: sffs_prop
+  changed_when: false
+  check_mode: false
+  failed_when: not (sffs_prop.stdout | trim).startswith('shared')
+
+- name: L'application silosffs est-elle installée par SSDV2 ?
+  ansible.builtin.command: sqlite3 "{{ settings.source }}/ssddb" "select status from applications where name='silosffs'"
+  register: sffs_reg_silo
+  changed_when: false
+  check_mode: false
+  failed_when: false
+
+- name: Refuser l'installation sans silosffs
+  ansible.builtin.fail:
+    msg: >-
+      L'application silosffs (Silo patché) n'est pas installée.
+      L'installer d'abord, terminer son compte admin, puis relancer sffs.
+  when: sffs_reg_silo.rc != 0 or sffs_reg_silo.stdout | trim != '2'
+
+- name: silosffs est-il démarré ?
+  ansible.builtin.command: docker inspect -f '{% raw %}{{.State.Running}}{% endraw %}' silosffs
+  register: sffs_silo_state
+  changed_when: false
+  check_mode: false
+  failed_when: false
+
+- name: Refuser sffs si silosffs est arrêté
+  ansible.builtin.fail:
+    msg: "silosffs n'est pas démarré : le relancer avant d'installer sffs."
+  when: sffs_silo_state.rc != 0 or sffs_silo_state.stdout | trim != 'true'
+
+- name: L'image locale silosffs existe-t-elle ?
+  ansible.builtin.command: docker image inspect localhost/silo-sffs:latest
+  register: sffs_silo_image
+  changed_when: false
+  check_mode: false
+  failed_when: false
+
+- name: Refuser l'installation sans image silosffs
+  ansible.builtin.fail:
+    msg: "L'image locale localhost/silo-sffs:latest est absente : relancer l'application silosffs."
+  when: sffs_silo_image.rc != 0
+
+# --- Sources et images ----------------------------------------------------------------------
+
+- name: Construire ou récupérer l'image sffs
+  ansible.builtin.include_tasks: "{{ settings.source }}/includes/dockerapps/templates/generique/sffs_images.yml"
+  vars:
+    sffs_build_component: sffs
+
+# Les patchs Silo et le pont sffs doivent venir des mêmes sources. Si silosffs a été installé
+# avant une mise à jour de sffs, il faut d'abord le relancer.
+- name: Vérifier la compatibilité des sources avec silosffs
+  ansible.builtin.shell:
+    cmd: |
+      set -euo pipefail
+      want=$(git -C "{{ sffs_src_dir }}" rev-parse HEAD:silo)
+      have=$(docker image inspect -f '{% raw %}{{index .Config.Labels "sffs.tree"}}{% endraw %}' localhost/silo-sffs:latest)
+      if [ "$have" != "$want" ]; then
+        echo "silosffs ne correspond pas aux sources sffs : relancer silosffs d'abord."
+        exit 1
+      fi
+      imgmig=$(docker image inspect -f '{% raw %}{{index .Config.Labels "sffs.silo.migration"}}{% endraw %}' localhost/silo-sffs:latest)
+      dbmig=$(docker exec db-silosffs psql -U silo -d silo -qAtc \
+        "select coalesce(max(version_id), 0) from goose_db_version where is_applied" 2>/dev/null || echo 0)
+      if [ "$dbmig" -gt "$imgmig" ]; then
+        echo "La base de silosffs est plus récente que son image : relancer silosffs."
+        exit 1
+      fi
+    executable: /bin/bash
+  changed_when: false
+  check_mode: false
+
+# --- Dossiers, secrets ----------------------------------------------------------------------
+
+- name: Chemins de sffs
+  ansible.builtin.set_fact:
+    sffs_dir: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}"
+    sffs_secret_dir: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}-secrets"
+    sffs_sf_container: "{{ sffs_sf.stdout | trim }}"
+
+- name: Créer les dossiers de sffs
+  become: true
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ lookup('env','MYUID') }}"
+    group: "{{ lookup('env','MYGID') }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: "{{ sffs_dir }}", mode: "0775" }
+    - { path: "{{ sffs_dir }}/config", mode: "0775" }
+    - { path: "{{ sffs_secret_dir }}", mode: "0700" }
+
+- name: Créer /mnt/sffs (point de montage de sffs)
+  become: true
+  ansible.builtin.file:
+    path: /mnt/sffs
+    state: directory
+    mode: "0755"
+
+- name: Lire les secrets existants
+  ansible.builtin.slurp:
+    src: "{{ sffs_secret_dir }}/{{ item }}"
+  loop: [SF_STREAM_CFG, SF_PLAYBACK_CFG, SFFS_TMDB_KEY, SFFS_DB_PASS]
+  register: sffs_existing
+  failed_when: false
+  no_log: true
+
+- name: Mémoriser les secrets existants
+  ansible.builtin.set_fact:
+    sffs_known: "{{ sffs_known | default({}) | combine({item.item: (item.content | b64decode | trim)}) }}"
+  loop: "{{ sffs_existing.results }}"
+  when: item.content is defined and (item.content | b64decode | trim | length > 0)
+  no_log: true
+
+- name: Aucun secret connu
+  ansible.builtin.set_fact:
+    sffs_known: {}
+  when: sffs_known is not defined
+
+- name: La configuration StreamFusion doit-elle être générée ?
+  ansible.builtin.set_fact:
+    sffs_cfg_missing: >-
+      {{ sffs_known.SF_STREAM_CFG is not defined or sffs_known.SF_PLAYBACK_CFG is not defined }}
+
+# --- Vérification du contrat de lecture avec StreamFusion ----------------------------------
+
+- name: Vérifier le schéma de la base StreamFusion
+  ansible.builtin.shell:
+    cmd: |
+      set -euo pipefail
+      P="docker exec stremio-postgres psql -U streamfusion -d streamfusion -qAtc"
+      cols=$($P "select column_name from information_schema.columns where table_schema='public' and table_name='torrent_items'")
+      for c in id raw_title size info_hash file_name file_index files privacy indexer \
+               languages parsed_data created_at tmdb_id seeders availability imdb_id type tmdb_media_type; do
+        grep -qx "$c" <<<"$cols" || { echo "colonne torrent_items manquante : $c"; exit 1; }
+      done
+      keys=$($P "select column_name from information_schema.columns where table_schema='public' and table_name='api_keys'")
+      for c in api_key is_active never_expire total_queries name proxied_links; do
+        grep -qx "$c" <<<"$keys" || { echo "colonne api_keys manquante : $c"; exit 1; }
+      done
+    executable: /bin/bash
+  register: sffs_schema
+  changed_when: false
+  check_mode: false
+  failed_when: false
+
+- name: Refuser une base StreamFusion incompatible
+  ansible.builtin.fail:
+    msg: >-
+      La base StreamFusion ne correspond pas au schéma attendu par sffs
+      ({{ sffs_schema.stdout | default('') | trim }}).
+      Mettre StreamFusion à jour avant d'installer sffs.
+  when: sffs_schema.rc != 0
+
+# --- Configuration StreamFusion -------------------------------------------------------------
+
+- name: Variables de StreamFusion (PROXY_URL, TMDB_API_KEY)
+  ansible.builtin.command: docker inspect -f '{% raw %}{{range .Config.Env}}{{println .}}{{end}}{% endraw %}' {{ sffs_sf_container }}
+  register: sffs_sf_env
+  changed_when: false
+  no_log: true
+
+- name: Proxy des téléchargements de sffs
+  ansible.builtin.set_fact:
+    sffs_debrid_proxy: >-
+      {{ (sffs_debrid_proxy_override | default(sffs_sf_env.stdout_lines | select('match', '^PROXY_URL=')
+         | map('regex_replace', '^PROXY_URL=', '') | first | default(''))) | trim }}
+  no_log: true
+
+- name: Adresse locale de StreamFusion (réseau traefik_proxy)
+  ansible.builtin.command: docker inspect -f '{% raw %}{{(index .NetworkSettings.Networks "traefik_proxy").IPAddress}}{% endraw %}' {{ sffs_sf_container }}
+  register: sffs_sf_ip
+  changed_when: false
+  failed_when: false
+  when: sffs_cfg_missing
+
+- name: Vérifier que StreamFusion est joignable sur traefik_proxy
+  ansible.builtin.fail:
+    msg: "StreamFusion n'est pas connecté au réseau traefik_proxy : vérifier son installation."
+  when:
+    - sffs_cfg_missing
+    - sffs_sf_ip.stdout | default('') | trim == ''
+
+- name: Adresse publique de StreamFusion (labels Traefik)
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      docker inspect -f '{% raw %}{{range $k, $v := .Config.Labels}}{{$k}}={{$v}}{{println}}{{end}}{% endraw %}' {{ sffs_sf_container }} \
+        | grep -E '^traefik\.http\.routers\.[^.]+\.rule=' | grep -v -i admin | grep -o 'Host(`[^`]*`)' | head -1 | sed 's/Host(`\(.*\)`)/https:\/\/\1/'
+    executable: /bin/bash
+  register: sffs_sf_public
+  changed_when: false
+  failed_when: false
+  when: sffs_cfg_missing
+
+- name: Créer (ou retrouver) la clé d'API StreamFusion de sffs
+  ansible.builtin.shell:
+    cmd: |
+      set -euo pipefail
+      P="docker exec stremio-postgres psql -U streamfusion -d streamfusion -qAtc"
+      $P "insert into api_keys(api_key,is_active,never_expire,total_queries,name,proxied_links)
+          select gen_random_uuid(),true,true,0,'sffs',false
+          where not exists (select 1 from api_keys where name='sffs')"
+      $P "select api_key from api_keys where name='sffs'"
+    executable: /bin/bash
+  register: sffs_sf_api_key
+  changed_when: false
+  when: sffs_cfg_missing
+  no_log: true
+
+- name: Clé AllDebrid de decypharr
+  ansible.builtin.shell:
+    cmd: |
+      python3 -c '
+      import json, sys
+      c = json.load(open(sys.argv[1]))
+      print(next(d["api_key"] for d in c.get("debrids", [])
+                 if d.get("name") == "alldebrid" and d.get("api_key")))
+      ' "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/decypharr/config/config.json"
+    executable: /bin/bash
+  register: sffs_ad_decypharr
+  changed_when: false
+  failed_when: false
+  when: sffs_cfg_missing and (sffs_alldebrid_key | default('')) == ''
+  no_log: true
+
+- name: Demander la clé AllDebrid
+  ansible.builtin.pause:
+    prompt: |
+      SSDV2_PROMPT {"id": "sffs.alldebrid_key", "label": "Clé API AllDebrid", "kind": "secret", "secret": true}
+      Entre ta clé API AllDebrid (https://alldebrid.com/apikeys)
+    echo: false
+  register: sffs_ad_prompt
+  when:
+    - sffs_cfg_missing
+    - (sffs_alldebrid_key | default('')) == ''
+    - (sffs_ad_decypharr.stdout | default('')) == ''
+  no_log: true
+
+# Même chiffrement que la page /configure de StreamFusion (POST /api/config/encode).
+- name: Générer la configuration StreamFusion de sffs
+  ansible.builtin.command:
+    argv: ["{{ sffs_src_dir }}/deploy/bin/sf-make-config.sh"]
+  environment:
+    SF_URL: "http://{{ sffs_sf_ip.stdout }}:8080"
+    SF_PUBLIC: "{{ sffs_sf_public.stdout | default('', true) | trim or ('http://' ~ sffs_sf_ip.stdout ~ ':8080') }}"
+    SF_API_KEY: "{{ sffs_sf_api_key.stdout | trim }}"
+    AD_TOKEN: >-
+      {{ ((sffs_alldebrid_key | default('', true)) or
+          (sffs_ad_decypharr.stdout | default('', true)) or
+          (sffs_ad_prompt.user_input | default('', true))) | trim }}
+    SF_LANGS: "{{ sffs_sf_langs | default('fr,multi') }}"
+  register: sffs_cfg
+  changed_when: false
+  when: sffs_cfg_missing
+  no_log: true
+
+- name: Retenir la configuration StreamFusion
+  ansible.builtin.set_fact:
+    sffs_known: >-
+      {{ sffs_known | combine({
+           'SF_STREAM_CFG': (sffs_cfg.stdout | regex_search('SF_STREAM_CFG=(\S+)', '\1') | first),
+           'SF_PLAYBACK_CFG': (sffs_cfg.stdout | regex_search('SF_PLAYBACK_CFG=(\S+)', '\1') | first)
+         }) }}
+  when: sffs_cfg_missing
+  no_log: true
+
+- name: Clé TMDB de StreamFusion
+  ansible.builtin.set_fact:
+    sffs_known: >-
+      {{ sffs_known | combine({'SFFS_TMDB_KEY': (sffs_sf_env.stdout_lines | select('match', '^TMDB_API_KEY=')
+         | map('regex_replace', '^TMDB_API_KEY=', '') | first | default(''))}) }}
+  when: sffs_known.SFFS_TMDB_KEY is not defined
+  no_log: true
+
+- name: Demander la clé TMDB
+  ansible.builtin.pause:
+    prompt: |
+      SSDV2_PROMPT {"id": "sffs.tmdb_key", "label": "Clé TMDB", "kind": "secret", "secret": true}
+      Entre ta clé API TMDB (v3), utilisée pour la liste des épisodes des séries
+    echo: false
+  register: sffs_tmdb_prompt
+  when: sffs_known.SFFS_TMDB_KEY | length == 0
+  no_log: true
+
+- name: Retenir la clé TMDB saisie
+  ansible.builtin.set_fact:
+    sffs_known: "{{ sffs_known | combine({'SFFS_TMDB_KEY': sffs_tmdb_prompt.user_input | trim}) }}"
+  when: sffs_known.SFFS_TMDB_KEY | length == 0
+  no_log: true
+
+- name: Générer le mot de passe du rôle Postgres en lecture seule
+  ansible.builtin.set_fact:
+    sffs_known: "{{ sffs_known | combine({'SFFS_DB_PASS': lookup('community.general.random_string', length=48, special=false)}) }}"
+  when: sffs_known.SFFS_DB_PASS is not defined
+  no_log: true
+
+- name: Valider la configuration de sffs
+  ansible.builtin.assert:
+    that:
+      - sffs_known.SF_STREAM_CFG | length > 20
+      - sffs_known.SF_PLAYBACK_CFG | length > 20
+      - sffs_known.SFFS_TMDB_KEY | length > 0
+    fail_msg: "Configuration StreamFusion ou clé TMDB invalide : StreamFusion doit afficher des sources pour un film de test."
+  no_log: true
+
+- name: Enregistrer les secrets
+  ansible.builtin.copy:
+    content: "{{ sffs_known[item] }}\n"
+    dest: "{{ sffs_secret_dir }}/{{ item }}"
+    mode: "0600"
+  loop: [SF_STREAM_CFG, SF_PLAYBACK_CFG, SFFS_TMDB_KEY, SFFS_DB_PASS]
+  no_log: true
+
+- name: Exposer les secrets au déploiement
+  ansible.builtin.set_fact:
+    SF_STREAM_CFG: "{{ sffs_known.SF_STREAM_CFG }}"
+    SF_PLAYBACK_CFG: "{{ sffs_known.SF_PLAYBACK_CFG }}"
+    SFFS_TMDB_KEY: "{{ sffs_known.SFFS_TMDB_KEY }}"
+    SFFS_DB_PASS: "{{ sffs_known.SFFS_DB_PASS }}"
+  no_log: true
+
+# Rôle dédié dans la base StreamFusion : SELECT sur torrent_items uniquement.
+- name: Créer ou mettre à jour le rôle sffs_reader
+  ansible.builtin.shell:
+    cmd: |
+      set -euo pipefail
+      docker exec -i stremio-postgres psql --no-psqlrc -v ON_ERROR_STOP=1 \
+        -v pass="$SFFS_DB_PASS" --username=streamfusion --dbname=streamfusion <<'SQL'
+      SELECT format('CREATE ROLE sffs_reader LOGIN PASSWORD %L', :'pass')
+        WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'sffs_reader') \gexec
+      SELECT format('ALTER ROLE sffs_reader WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT PASSWORD %L', :'pass') \gexec
+      ALTER ROLE sffs_reader SET default_transaction_read_only = on;
+      GRANT CONNECT ON DATABASE streamfusion TO sffs_reader;
+      GRANT USAGE ON SCHEMA public TO sffs_reader;
+      GRANT SELECT ON public.torrent_items TO sffs_reader;
+      SQL
+    executable: /bin/bash
+  environment:
+    SFFS_DB_PASS: "{{ SFFS_DB_PASS }}"
+  changed_when: false
+  no_log: true
