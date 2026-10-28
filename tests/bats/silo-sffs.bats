@@ -84,3 +84,14 @@ setup() {
   run grep -q 'templates/generique/silo_post.yml' "$SETTINGS_SOURCE/includes/dockerapps/posttasks/silosffs.yml"
   [ "$status" -eq 0 ]
 }
+
+@test "silosffs: cache des images désactivé à l'installation" {
+  run grep -q '^silo_cache_images:' "$SETTINGS_SOURCE/includes/dockerapps/vars/silosffs.yml"
+  [ "$status" -eq 0 ]
+  run grep -q 'metadata.cache_images' "$SETTINGS_SOURCE/includes/dockerapps/posttasks/silosffs.yml"
+  [ "$status" -eq 0 ]
+  run grep -q 'If-Match: \*' "$SETTINGS_SOURCE/includes/dockerapps/posttasks/silosffs.yml"
+  [ "$status" -eq 0 ]
+  run grep -q 'ssdv2-silosffs-image-cache' "$SETTINGS_SOURCE/includes/dockerapps/posttasks/silosffs.yml"
+  [ "$status" -eq 0 ]
+}

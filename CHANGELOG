@@ -24,6 +24,9 @@
 - Suppression complète : retrait explicite des volumes nommés de `silo` et
   `silosffs`, y compris après une suppression partielle suivie d'une
   réinstallation où le registre générique ne les avait pas re-capturés.
+- `silosffs` : cache des images désactivé à l'installation
+  (`metadata.cache_images=false`), via une clé API admin temporaire supprimée
+  après application.
 
 26/10/2026 — corrections Plex
 
