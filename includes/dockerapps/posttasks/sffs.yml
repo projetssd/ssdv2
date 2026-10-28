@@ -108,17 +108,32 @@
     cmd: |
       set -euo pipefail
       key=$(cat "{{ sffs_secret_dir }}/SFFS_SILO_KEY")
-      set +e
-      printf '%s\n' "$key" | docker exec -i silosffs sh -c 'IFS= read -r k; curl -sS --max-time 1800 -o /tmp/silo-catalog-import.out -w "%{http_code}" -X POST -H "Authorization: Bearer $k" -H "Content-Type: application/json" --data-binary "{\"local_path\":\"/tmp/silo-catalog-seed.json.gz\",\"conflict_mode\":\"skip_existing\",\"path_rewrites\":[]}" http://localhost:8080/api/v2/admin/catalog/import'
-      rc=$?
-      set -e
-      count=$(docker exec db-silosffs psql -U silo -d silo -qAtc "select count(*) from media_items")
-      if [ "${count:-0}" -eq 0 ]; then
-        echo "import du catalogue en échec (curl rc=$rc)" >&2
-        docker exec silosffs cat /tmp/silo-catalog-import.out >&2 || true
-        exit 1
-      fi
-      echo "catalogue importé: ${count} médias (curl rc=$rc)"
+      body='{"local_path":"/tmp/silo-catalog-seed.json.gz","conflict_mode":"skip_existing","path_rewrites":[]}'
+      response=$(printf '%s\n' "$key" | docker exec -i silosffs sh -c 'IFS= read -r k; printf "%s" "$1" | curl -sS --max-time 60 -X POST -H "Authorization: Bearer $k" -H "Content-Type: application/json" --data-binary @- http://localhost:8080/api/v2/admin/catalog/import-jobs' _ "$body")
+      job_id=$(printf '%s' "$response" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("id",""))')
+      [ -n "$job_id" ] || { echo "réponse import invalide: $response" >&2; exit 1; }
+      for _ in $(seq 1 360); do
+        job=$(printf '%s\n' "$key" | docker exec -i silosffs sh -c 'IFS= read -r k; curl -sS --max-time 30 -H "Authorization: Bearer $k" "http://localhost:8080/api/v2/admin/jobs/$1"' _ "$job_id")
+        terminal=$(printf '%s' "$job" | python3 -c 'import json,sys; print(str(json.load(sys.stdin).get("terminal", False)).lower())')
+        state=$(printf '%s' "$job" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("state", ""))')
+        if [ "$terminal" = "true" ]; then
+          if [ "$state" != "succeeded" ]; then
+            echo "import du catalogue en échec: state=$state" >&2
+            printf '%s\n' "$job" >&2
+            exit 1
+          fi
+          count=$(docker exec db-silosffs psql -U silo -d silo -qAtc "select count(*) from media_items")
+          if [ "${count:-0}" -eq 0 ]; then
+            echo "import terminé mais aucun média en base" >&2
+            exit 1
+          fi
+          echo "catalogue importé: ${count} médias (job=$job_id)"
+          exit 0
+        fi
+        sleep 15
+      done
+      echo "import non terminé après 90 min (job=$job_id)" >&2
+      exit 1
     executable: /bin/bash
   when: sffs_catalog_seed_run is changed
   no_log: true
