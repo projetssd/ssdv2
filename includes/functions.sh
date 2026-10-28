@@ -854,6 +854,7 @@ SQL
     # ci-dessus : ils sont toujours retirés, même en suppression partielle. Une réinstallation
     # les régénère. Le marqueur de bibliothèques est aussi retiré : une nouvelle base silosffs
     # doit pouvoir les recréer.
+    # Le cache TMDB persistant (sffs-cache) est hors de ce dossier : il est conservé.
     sudo rm -rf "${SETTINGS_STORAGE}/docker/${USER}/sffs-secrets" >/dev/null 2>&1
     rm -f "${SETTINGS_STORAGE}/docker/${USER}/sffs/config/silo-libraries-created" >/dev/null 2>&1
     ;;

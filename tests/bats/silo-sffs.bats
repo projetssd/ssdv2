@@ -43,6 +43,21 @@ setup() {
   [ "$status" -eq 0 ]
 }
 
+@test "sffs: cache TMDB persistant hors dossier applicatif" {
+  run grep -q '^sffs_cache_dir:' "$SETTINGS_SOURCE/includes/dockerapps/vars/sffs.yml"
+  [ "$status" -eq 0 ]
+  run grep -q "SFFS_TMDB_CACHE: '/cache/tmdb-tv.json'" "$SETTINGS_SOURCE/includes/dockerapps/vars/sffs.yml"
+  [ "$status" -eq 0 ]
+  run grep -q "SFFS_KNOWN_CACHE: '/cache/known-cached.json'" "$SETTINGS_SOURCE/includes/dockerapps/vars/sffs.yml"
+  [ "$status" -eq 0 ]
+  run grep -q '{{ sffs_cache_dir }}:/cache' "$SETTINGS_SOURCE/includes/dockerapps/vars/sffs.yml"
+  [ "$status" -eq 0 ]
+  run grep -q 'Migrer les anciens caches sffs' "$SETTINGS_SOURCE/includes/dockerapps/pretasks/sffs.yml"
+  [ "$status" -eq 0 ]
+  run grep -q 'rm -rf .*sffs-cache' "$SETTINGS_SOURCE/includes/functions.sh"
+  [ "$status" -ne 0 ]
+}
+
 @test "suppression: nettoyage sffs et silosffs" {
   run grep -q '^  sffs)' "$SETTINGS_SOURCE/includes/functions.sh"
   [ "$status" -eq 0 ]

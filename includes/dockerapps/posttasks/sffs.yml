@@ -67,5 +67,6 @@
     msg:
       - "silosffs : https://{{ sffs_silo_sub.stdout | default('silosffs', true) | trim }}.{{ user.domain }}"
       - "sffs crée les bibliothèques Films (/mnt/sffs/films) et Séries (/mnt/sffs/series) dès que sa clé d'API est en place."
+      - "Cache TMDB persistant : {{ sffs_cache_dir }} (conservé lors des réinstallations)."
       - "Premier scan : plusieurs heures, rien n'est téléchargé."
       - "Mise à jour : relancer silosffs d'abord, puis sffs."
