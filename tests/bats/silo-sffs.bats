@@ -85,6 +85,13 @@ setup() {
   [ "$status" -eq 0 ]
 }
 
+@test "silosffs: sauvegarde uniquement si la base tourne" {
+  run grep -q 'State.Running' "$SETTINGS_SOURCE/includes/dockerapps/templates/generique/silo_stack.yml"
+  [ "$status" -eq 0 ]
+  run grep -q '= "true"' "$SETTINGS_SOURCE/includes/dockerapps/templates/generique/silo_stack.yml"
+  [ "$status" -eq 0 ]
+}
+
 @test "silosffs: cache des images désactivé à l'installation" {
   run grep -q '^silo_cache_images:' "$SETTINGS_SOURCE/includes/dockerapps/vars/silosffs.yml"
   [ "$status" -eq 0 ]

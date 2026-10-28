@@ -71,7 +71,7 @@
     cmd: |
       set -euo pipefail
       umask 077
-      if docker inspect -f '{% raw %}{{.State.Running}}{% endraw %}' "db-{{ pgrole }}" >/dev/null 2>&1; then
+      if [ "$(docker inspect -f '{% raw %}{{.State.Running}}{% endraw %}' "db-{{ pgrole }}" 2>/dev/null || true)" = "true" ]; then
         dir="{{ silo_dir }}/backups"
         mkdir -p "$dir"
         out="$dir/pre-update-$(date +%Y%m%d-%H%M).dump"
