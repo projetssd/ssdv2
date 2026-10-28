@@ -1,0 +1,71 @@
+---
+# Posttask sffs : sffs est démarré. Il ne reste qu'à créer la clé d'API de sffs dans
+# l'application silosffs (Silo patché, installé séparément). Aucun conteneur n'est créé ici.
+
+- name: Chemins de sffs
+  ansible.builtin.set_fact:
+    sffs_secret_dir: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/sffs-secrets"
+
+- name: Attendre que silosffs réponde
+  ansible.builtin.command: docker exec silosffs curl -sf http://localhost:8080/api/v1/health
+  register: sffs_silo_health
+  until: sffs_silo_health.rc == 0
+  retries: 120
+  delay: 10
+  changed_when: false
+
+- name: Un compte admin existe-t-il dans silosffs ?
+  ansible.builtin.command: >-
+    docker exec db-silosffs psql -U silo -d silo -qAtc
+    "select count(*) from users where role = 'admin' and enabled"
+  register: sffs_silo_admin
+  changed_when: false
+  failed_when: false
+
+- name: Refuser sffs sans compte admin dans silosffs
+  ansible.builtin.fail:
+    msg: >-
+      silosffs n'a pas de compte admin actif. Terminer l'installation de silosffs
+      (créer le compte admin dans son interface web), puis relancer sffs.
+  when: sffs_silo_admin.rc != 0 or sffs_silo_admin.stdout | trim | int == 0
+
+# sffs demande à silosffs un scan ciblé des dossiers modifiés : il lui faut une clé d'API admin.
+# Elle est créée dès qu'un compte admin existe ; sffs relit le fichier sans redémarrer.
+- name: Clé d'API de sffs déjà créée ?
+  ansible.builtin.stat:
+    path: "{{ sffs_secret_dir }}/SFFS_SILO_KEY"
+  register: sffs_key_file
+
+- name: Créer la clé d'API de sffs dans silosffs
+  ansible.builtin.shell:
+    cmd: |
+      set -euo pipefail
+      P="docker exec db-silosffs psql -U silo -d silo -qAtc"
+      admin=$($P "select id from users where role = 'admin' and enabled order by id limit 1")
+      [ -n "$admin" ] || { echo pas-d-admin; exit 1; }
+      key="sa_$(openssl rand -hex 32)"
+      hash=$(printf %s "$key" | sha256sum | cut -d' ' -f1)
+      $P "delete from api_keys where label = 'sffs'" >/dev/null
+      $P "insert into api_keys(user_id,label,key_hash,key_prefix,scopes) values ($admin,'sffs','$hash','${key:0:11}','{}')" >/dev/null
+      umask 077
+      printf '%s\n' "$key" > "{{ sffs_secret_dir }}/SFFS_SILO_KEY"
+      echo cree
+    executable: /bin/bash
+  register: sffs_key
+  changed_when: sffs_key.stdout == 'cree'
+  when: not sffs_key_file.stat.exists or sffs_key_file.stat.size == 0
+  no_log: true
+
+- name: Adresse de silosffs
+  ansible.builtin.shell: >-
+    bash "{{ settings.source }}/includes/config/scripts/generique.sh" get_from_account_yml sub.silosffs.silosffs 2>/dev/null | tail -1
+  register: sffs_silo_sub
+  changed_when: false
+
+- name: sffs prêt
+  ansible.builtin.debug:
+    msg:
+      - "silosffs : https://{{ sffs_silo_sub.stdout | default('silosffs', true) | trim }}.{{ user.domain }}"
+      - "sffs crée les bibliothèques Films (/mnt/sffs/films) et Séries (/mnt/sffs/series) dès que sa clé d'API est en place."
+      - "Premier scan : plusieurs heures, rien n'est téléchargé."
+      - "Mise à jour : relancer silosffs d'abord, puis sffs."

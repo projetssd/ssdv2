@@ -1,0 +1,22 @@
+---
+# Pretask silosffs : construit (ou télécharge) l'image Silo patchée par le projet sffs,
+# puis déploie la pile Silo indépendante.
+
+- name: Vérifier que silosffs n'utilise pas le sous-domaine de silo
+  ansible.builtin.fail:
+    msg: >-
+      silosffs et silo ne peuvent pas utiliser le même sous-domaine.
+      Choisir un sous-domaine différent pour silosffs.
+  when: >-
+    (sub_enabled | default(false) | bool) and
+    (((sub['silosffs'] | default({}, true))['silosffs'] | default('', true) | trim) != '') and
+    ((((sub['silo'] | default({}, true))['silo'] | default('', true) | trim)) ==
+     (((sub['silosffs'] | default({}, true))['silosffs'] | default('', true) | trim)))
+
+- name: Construire ou récupérer l'image Silo patchée
+  ansible.builtin.include_tasks: "{{ settings.source }}/includes/dockerapps/templates/generique/sffs_images.yml"
+  vars:
+    sffs_build_component: silo
+
+- name: Déployer la pile silosffs
+  ansible.builtin.include_tasks: "{{ settings.source }}/includes/dockerapps/templates/generique/silo_stack.yml"
