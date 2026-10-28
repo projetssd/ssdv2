@@ -148,7 +148,28 @@
   loop:
     - { path: "{{ sffs_dir }}", mode: "0775" }
     - { path: "{{ sffs_dir }}/config", mode: "0775" }
+    - { path: "{{ sffs_cache_dir }}", mode: "0775" }
     - { path: "{{ sffs_secret_dir }}", mode: "0700" }
+
+# Conserve le cache TMDB existant lors de la migration vers le cache persistant :
+# sans cette copie, la première installation après mise à jour rechargerait toutes
+# les séries (plusieurs minutes à ~20 minutes selon le catalogue).
+- name: Migrer les anciens caches sffs vers le cache persistant
+  become: true
+  ansible.builtin.shell:
+    cmd: |
+      set -euo pipefail
+      for f in tmdb-tv.json known-cached.json; do
+        src="{{ sffs_dir }}/config/$f"
+        dst="{{ sffs_cache_dir }}/$f"
+        if [ -s "$src" ] && [ ! -s "$dst" ]; then
+          install -m 0600 "$src" "$dst"
+          echo "migré $f"
+        fi
+      done
+    executable: /bin/bash
+  register: sffs_cache_migration
+  changed_when: sffs_cache_migration.stdout is search('migré')
 
 - name: Créer /mnt/sffs (point de montage de sffs)
   become: true

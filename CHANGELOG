@@ -16,6 +16,10 @@
 - API Jellyfin : route `<sous-domaine>-jf` accessible sans authentification
   Traefik (les clients Jellyfin ne savent pas la fournir) ; Silo authentifie
   lui-même. L'interface web reste protégée par l'authentification SSDV2 choisie.
+- `sffs` : cache TMDB persistant dans `sffs-cache`, hors des données
+  applicatives. Il survit aux réinstallations et suppressions, avec migration
+  automatique de l'ancien cache : plus de rechargement complet des séries
+  (plusieurs minutes à ~20 minutes selon le catalogue).
 
 26/10/2026 — corrections Plex
 

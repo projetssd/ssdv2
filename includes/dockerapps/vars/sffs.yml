@@ -36,11 +36,18 @@ sffs_remux: '1'
 # '1' : garder aussi les encodages légers (HDLight, 4KLight, mHD…).
 sffs_light: '0'
 
+# Cache TMDB persistant hors du dossier applicatif : survit aux mises à jour et
+# aux suppressions de l'application (DELETE=1), et évite de recharger les séries.
+sffs_cache_dir: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}-cache"
+
 pg_volumes:
   # Comme decypharr : /mnt en rshared, le montage FUSE /mnt/sffs remonte vers l'hôte ; Silo monte
   # /mnt en rslave et voit chaque nouveau montage, même après un redémarrage de sffs.
   - '/mnt:/mnt:rshared'
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
+  # Cache TMDB persistant, séparé des données applicatives : une réinstallation
+  # ne refait pas le chargement complet des séries.
+  - "{{ sffs_cache_dir }}:/cache:rw"
   # Clé d'API Silo (SFFS_SILO_KEY), créée après le compte admin et relue sans redémarrage.
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}-secrets:/run/secrets:ro"
   - '/etc/localtime:/etc/localtime:ro'
@@ -64,6 +71,10 @@ pg_env:
   SFFS_REMUX: "{{ sffs_remux }}"
   SFFS_LIGHT: "{{ sffs_light }}"
   SFFS_TMDB_KEY: "{{ SFFS_TMDB_KEY }}"
+  # Cache TMDB persistant : évite le rechargement complet des séries après une
+  # réinstallation ou une mise à jour.
+  SFFS_TMDB_CACHE: '/cache/tmdb-tv.json'
+  SFFS_KNOWN_CACHE: '/cache/known-cached.json'
   # AllDebrid refuse les adresses de datacenter : même proxy que StreamFusion (PROXY_URL).
   SFFS_DEBRID_PROXY: "{{ sffs_debrid_proxy | default('') }}"
   SFFS_WATCH: '1m'
