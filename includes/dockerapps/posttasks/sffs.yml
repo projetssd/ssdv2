@@ -138,6 +138,34 @@
   when: sffs_catalog_seed_run is changed
   no_log: true
 
+# L'import de catalogue de Silo (catalogseed) crée les fichiers et rattache les séries
+# aux bibliothèques (media_item_libraries) mais pas les épisodes (episode_libraries).
+# Or Silo ne montre une saison que si ses épisodes sont rattachés : sans ces lignes,
+# toutes les séries s'affichent sans saison. On recrée les liens comme le scanner de
+# Silo (syncPresentState). Seuls les liens manquants sont ajoutés : la tâche répare
+# aussi une installation déjà importée. Premier passage long sur un grand catalogue
+# (déclencheurs Silo par ligne : ~30 min pour 380 000 épisodes).
+- name: Rattacher les épisodes importés à leur bibliothèque silosffs
+  ansible.builtin.command: >-
+    docker exec db-silosffs psql -U silo -d silo -v ON_ERROR_STOP=1 -qAt -c
+    "WITH ins AS (
+       INSERT INTO episode_libraries (episode_id, media_folder_id, first_seen_at)
+       SELECT mf.episode_id, mf.media_folder_id, MIN(mf.created_at)
+       FROM media_files mf
+       WHERE mf.episode_id IS NOT NULL
+         AND mf.missing_since IS NULL
+         AND NOT EXISTS (
+           SELECT 1 FROM episode_libraries el
+           WHERE el.episode_id = mf.episode_id
+             AND el.media_folder_id = mf.media_folder_id)
+       GROUP BY mf.episode_id, mf.media_folder_id
+       ON CONFLICT DO NOTHING
+       RETURNING 1)
+     SELECT count(*) FROM ins"
+  register: sffs_episode_links
+  changed_when: sffs_episode_links.stdout | trim | int > 0
+  when: sffs_catalog_seed | bool
+
 - name: Rafraîchir les métadonnées des bibliothèques importées
   ansible.builtin.shell:
     cmd: |
