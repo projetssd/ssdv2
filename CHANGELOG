@@ -1,3 +1,10 @@
+29/10/2026 — sffs : saisons visibles après l'import du catalogue
+
+- L'import du catalogue (seed) ne rattachait pas les épisodes à la
+  bibliothèque Séries de `silosffs` : toutes les séries s'affichaient sans
+  saison. La posttask de `sffs` recrée ces liens après l'import, et répare
+  une installation déjà importée en relançant `sffs`.
+
 28/10/2026 — Silo, Silo patché et sffs (installations séparées)
 
 - `silo` : serveur multimédia officiel (PostgreSQL + pgvector, Redis,
