@@ -212,6 +212,15 @@ inspectée (env, labels, binds, volumes, ports, devices, healthcheck, réseau).
 
 - Les volumes nommés déjà présents dans `HostConfig.Binds` ne sont plus
   réinjectés dans `mounts` (évite l'erreur Docker `Duplicate mount point`).
+- Les volumes anonymes (ex. `VOLUME` déclaré par l'image, absent de
+  `HostConfig.Binds`) sont rejoués par leur **nom** (`Name`) et non par leur
+  chemin hôte (`Source` de `docker inspect`) : évite l'erreur Docker
+  `invalid characters for a local volume name` et ne crée pas un nouveau
+  volume orphelin à chaque mise à jour.
+- Les destinations sont comparées sans slash final : un bind
+  `/home/u/:/home/u/:rw` couvre bien un montage de destination `/home/u`
+  (évite `Duplicate mount point`, cas `ssdv2webui`). La destination transmise
+  reste celle d'origine.
 - La recréation est **non destructive** : le nouveau conteneur est créé avant
   la suppression de l'ancien et l'ancien est restauré en cas d'échec.
 - L'IP statique et les alias des réseaux définis par l'utilisateur sont

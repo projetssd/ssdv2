@@ -37,10 +37,23 @@ except ImportError:  # pragma: no cover - dépend de l'environnement d'exécutio
     Mount = None  # type: ignore[assignment]
 
 
+def _normalize_destination(path: str | None) -> str | None:
+    """Normalise une destination en retirant les slashs finaux.
+
+    ``HostConfig.Binds`` peut contenir ``/home/u/:/home/u/:rw`` alors que
+    ``Mounts[].Destination`` vaut ``/home/u`` : sans normalisation, la
+    destination n'est pas reconnue comme couverte et le bind est réinjecté
+    dans ``mounts``, ce que Docker refuse (``Duplicate mount point``).
+    """
+    if not path:
+        return path
+    return path.rstrip("/") or "/"
+
+
 def _bind_destination(bind: str) -> str | None:
     parts = bind.split(":")
     if len(parts) >= 2:
-        return parts[1]
+        return _normalize_destination(parts[1])
     return None
 
 
@@ -60,8 +73,8 @@ def _filter_binds(
     add_destinations: set[str] | None = None,
 ) -> list[str] | None:
     """Retire les binds dont la destination est supprimée ou remplacée."""
-    drop = set(drop_destinations or [])
-    add = set(add_destinations or [])
+    drop = {_normalize_destination(dest) for dest in (drop_destinations or [])}
+    add = {_normalize_destination(dest) for dest in (add_destinations or [])}
     kept = []
     for bind in binds or []:
         dest = _bind_destination(bind)
@@ -142,19 +155,37 @@ def _mount_specs(
     fois dans ``binds`` et ``mounts``. Les volumes nommés et les binds sont
     déjà décrits par ``HostConfig.Binds`` : on ne réinjecte donc que les
     montages qui n'y figurent pas (volumes anonymes, ``--mount`` explicites…).
+
+    La source dépend du type : pour un volume, ``docker inspect`` renvoie dans
+    ``Source`` un chemin hôte (``/var/lib/docker/volumes/<nom>/_data``) alors
+    que l'API Docker attend le nom du volume (``Name``). Réutiliser ``Source``
+    produit l'erreur « invalid characters for a local volume name » et crée un
+    volume orphelin à chaque recréation. Les binds, eux, utilisent bien le
+    chemin hôte (``Source``).
+
+    Les destinations sont comparées normalisées (slash final retiré), pour
+    que ``/home/u/`` dans ``binds`` couvre ``/home/u`` dans ``mounts`` ; la
+    destination d'origine reste transmise telle quelle dans le spec.
     """
     if not mounts:
         return []
     covered = _bind_destinations(binds)
-    skip = set(drop_destinations or []) | set(add_destinations or [])
+    skip = {
+        _normalize_destination(dest)
+        for dest in list(drop_destinations or []) + list(add_destinations or [])
+    }
     result: list[dict] = []
     for mount in mounts:
         destination = mount.get("Destination")
-        source = mount.get("Source")
         mount_type = mount.get("Type")
-        if not destination or not source or destination in covered or destination in skip:
+        if mount_type == "volume":
+            source = mount.get("Name")
+        elif mount_type == "bind":
+            source = mount.get("Source")
+        else:
             continue
-        if mount_type not in ("volume", "bind"):
+        normalized = _normalize_destination(destination)
+        if not destination or not source or normalized in covered or normalized in skip:
             continue
         result.append(
             {
@@ -486,6 +517,10 @@ def run_selftest() -> int:
         assert _filter_binds(
             ["/home/u:/home/u:rw", "/tmp:/tmp:rw"], ["/home/u"], {"/home/u/Medias"}
         ) == ["/tmp:/tmp:rw"]
+        assert _filter_binds(
+            ["src:/drop:rw", "/keep:/keep:rw", "x:/x:rw"], ["/drop/"]
+        ) == ["/keep:/keep:rw", "x:/x:rw"]
+        assert _filter_binds(["a:/x:rw", "c:/z:rw"], None, {"/z/"}) == ["a:/x:rw"]
         assert _parse_publish("32400=127.0.0.1:32400") == (
             "32400/tcp",
             {"HostIp": "127.0.0.1", "HostPort": "32400"},
@@ -499,23 +534,66 @@ def run_selftest() -> int:
         assert _parse_tmpfs(["/tmp:rw,noexec"]) == {"/tmp": "rw,noexec"}
 
         binds = ["warp-data:/var/lib/cloudflare-warp:rw", "/host/path:/data"]
+        anon_name = "3cc8e5289c46602e2d9ab0deb1b86a402f81e27f9053f90cfd783872ca0e76b0"
         mounts = [
             {
                 "Type": "volume",
-                "Source": "warp-data",
+                "Name": "warp-data",
+                "Source": "/var/lib/docker/volumes/warp-data/_data",
                 "Destination": "/var/lib/cloudflare-warp",
                 "RW": True,
             },
-            {"Type": "volume", "Source": "anon", "Destination": "/anon", "RW": False},
+            {
+                "Type": "volume",
+                "Name": anon_name,
+                "Source": f"/var/lib/docker/volumes/{anon_name}/_data",
+                "Destination": "/var/lib/postgresql/data",
+                "RW": True,
+            },
+            {
+                "Type": "volume",
+                "Name": "vol-hors-binds",
+                "Source": "/var/lib/docker/volumes/vol-hors-binds/_data",
+                "Destination": "/vol",
+                "RW": False,
+            },
             {"Type": "bind", "Source": "/host/path", "Destination": "/data", "RW": True},
             {"Type": "bind", "Source": "/other", "Destination": "/other", "RW": True},
             {"Type": "tmpfs", "Source": "", "Destination": "/tmp", "RW": True},
         ]
         result = _mount_specs(mounts, binds)
         targets = sorted(mount["target"] for mount in result)
-        assert targets == ["/anon", "/other"], targets
-        anonymous = next(mount for mount in result if mount["target"] == "/anon")
-        assert anonymous["read_only"] is True
+        assert targets == ["/other", "/var/lib/postgresql/data", "/vol"], targets
+        anonymous = next(
+            mount for mount in result if mount["target"] == "/var/lib/postgresql/data"
+        )
+        assert anonymous["source"] == anon_name, anonymous
+        assert anonymous["read_only"] is False
+        named = next(mount for mount in result if mount["target"] == "/vol")
+        assert named["source"] == "vol-hors-binds", named
+        assert named["read_only"] is True
+        bind = next(mount for mount in result if mount["target"] == "/other")
+        assert bind["source"] == "/other", bind
+        assert not [
+            mount for mount in result if mount["source"].startswith("/var/lib/docker/volumes/")
+        ], result
+
+        # Destinations comparées sans slash final (cas ssdv2webui).
+        assert _bind_destination("/a:/b/:rw") == "/b"
+        assert _bind_destination("/a:/:rw") == "/"
+        covered_slash = ["/home/u:/home/u/:rw"]
+        slash_mount = [
+            {"Type": "bind", "Source": "/home/u", "Destination": "/home/u", "RW": True}
+        ]
+        assert _mount_specs(slash_mount, covered_slash) == []
+        slash_mount_reverse = [
+            {"Type": "bind", "Source": "/home/u", "Destination": "/home/u/", "RW": True}
+        ]
+        assert _mount_specs(slash_mount_reverse, ["/home/u:/home/u:rw"]) == []
+        drop_mount = [
+            {"Type": "bind", "Source": "/drop", "Destination": "/drop", "RW": True}
+        ]
+        assert _mount_specs(drop_mount, None, drop_destinations=["/drop/"]) == []
 
         attrs = {
             "HostConfig": {"NetworkMode": "traefik_proxy"},
