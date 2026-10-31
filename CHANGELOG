@@ -1,3 +1,18 @@
+31/10/2026 — mise à jour « image seule » et volumes anonymes
+
+- correction de la mise à jour « image seule » : les volumes anonymes
+  (VOLUME déclaré par l'image, absent de HostConfig.Binds) sont rejoués
+  par leur nom et non par leur chemin hôte. Corrige l'échec
+  « invalid characters for a local volume name » (cas de stremio-postgres,
+  volume anonyme de l'image postgres) ; le conteneur existant n'était pas
+  affecté et les données du volume sont conservées.
+- le volume anonyme est réutilisé (même nom), plus de volume orphelin créé
+  à chaque mise à jour.
+- correction d'un second cas de `Duplicate mount point` : `HostConfig.Binds`
+  peut contenir `/home/u/:/home/u/:rw` alors que la destination inspectée vaut
+  `/home/u` (sans slash final). Les destinations sont désormais comparées
+  normalisées, ce qui évite l'échec de mise à jour de la WebUI (`ssdv2webui`).
+
 28/10/2026 — Silo, Silo patché et sffs (installations séparées)
 
 - `silo` : serveur multimédia officiel (PostgreSQL + pgvector, Redis,
