@@ -72,3 +72,27 @@
       "X-Auth-Request-Email",
       "X-Auth-Request-Preferred-Username"
     ]
+
+
+# ==============================
+# ALLOWLIST CLOUDFLARE (uniquement)
+# Utilisee par les chaines non-Plex lorsque plex.public_https=true.
+# Source unique des CIDR : includes/dockerapps/vars/traefik.yml
+# Aucun reseau prive/Tailscale : l'acces direct public reste interdit.
+# ==============================
+
+[http.middlewares.middlewares-allowlist.ipAllowList]
+  sourceRange = [
+{% for ip in traefik_allowlist_ips %}
+    "{{ ip }}",
+{% endfor %}
+  ]
+
+
+# ==============================
+# TRANSPORT PLEX (Traefik -> Plex en HTTPS)
+# Le certificat Plex est un certificat plex.direct : verification ignoree.
+# ==============================
+
+[http.serversTransports.plex-transport]
+  insecureSkipVerify = true

@@ -1,0 +1,57 @@
+#!/bin/bash
+##############################################################################
+# Met a jour l'entree de menu Plex pour proposer le mode opt-in
+# « Plex public HTTPS » (DNS-only, 443, chain-plex + backend HTTPS).
+#
+# Ce patch n'active rien : il rend l'option visible dans le menu existant.
+# L'activation se fait ensuite depuis le menu, au choix de l'utilisateur.
+#
+# Idempotent : peut etre rejoue via FORCE_PATCH.
+##############################################################################
+
+set -u
+
+if [ -z "${SETTINGS_SOURCE:-}" ] && [ -f "${HOME}/.config/ssd/env" ]; then
+  # shellcheck disable=SC1090
+  source "${HOME}/.config/ssd/env"
+fi
+SETTINGS_SOURCE="${SETTINGS_SOURCE:-${HOME}/seedbox-compose}"
+
+MENU="${SETTINGS_SOURCE}/menu"
+MENUS="${SETTINGS_SOURCE}/includes/menus.sh"
+
+command -v sqlite3 >/dev/null 2>&1 || exit 0
+
+# 1. Mise a jour du libelle de l'entree existante (menus-plexcve.sh).
+if [ -f "$MENU" ]; then
+  sqlite3 "$MENU" "update menu
+  set texte='Audit Plex / public HTTPS (plex2shell - CVE-2026-96652/96654/96655/96656)'
+  where action='menu_plexcve';" 2>/dev/null
+fi
+
+# 2. Chargement du fichier de menu (bloc protege par marqueur).
+if [ -f "$MENUS" ] && ! grep -q '# BEGIN plexcve' "$MENUS"; then
+  cat >>"$MENUS" <<'EOF'
+# BEGIN plexcve
+# Menu d'audit et de remediation Plex2Shell.
+if [ -f "${SETTINGS_SOURCE}/includes/menus-plexcve.sh" ]; then
+  # shellcheck source=menus-plexcve.sh
+  source "${SETTINGS_SOURCE}/includes/menus-plexcve.sh"
+fi
+# END plexcve
+EOF
+fi
+
+# 3. Verification des fichiers livres avec le depot.
+for f in \
+  includes/config/scripts/plexcve.py \
+  includes/menus-plexcve.sh \
+  includes/config/playbooks/plex_dns.yml \
+  docs/plex-public-https.md; do
+  if [ ! -f "${SETTINGS_SOURCE}/${f}" ]; then
+    echo "[patch] ATTENTION : fichier manquant ${f}" >&2
+  fi
+done
+
+echo "[patch] menu Plex mis a jour (mode public HTTPS disponible)"
+exit 0

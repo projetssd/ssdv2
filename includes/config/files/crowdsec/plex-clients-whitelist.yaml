@@ -1,0 +1,6 @@
+name: local/plex-clients-whitelist
+description: "Plex/Infuse browse the media library: thumbnail 404s are not scanning"
+whitelist:
+  reason: "plex media browsing (legit 404 on thumbs/composites, hub crawl)"
+  expression:
+    - evt.Meta.traefik_router_name contains 'plex-rtr@docker' && (evt.Meta.http_path startsWith '/library/' || evt.Meta.http_path startsWith '/hubs/' || evt.Meta.http_path startsWith '/playlists/' || evt.Meta.http_path startsWith '/video/:/' || evt.Meta.http_path startsWith '/photo/:/' || evt.Meta.http_path startsWith '/web/')

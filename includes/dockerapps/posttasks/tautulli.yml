@@ -1,0 +1,55 @@
+---
+# Tautulli interroge Plex en direct. En mode Plex public HTTPS, Plex exige
+# des connexions chiffrees (secureConnections=Required) : on aligne Tautulli
+# sur le backend HTTPS interne pour eviter des timeouts/erreurs SSL.
+#
+# Tautulli reecrit config.ini a l'arret : il faut donc l'arreter avant de
+# modifier le fichier, sinon ses valeurs en memoire ecrasent la modification.
+
+- name: "Verifier si Tautulli est deja configure"
+  ansible.builtin.stat:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/tautulli/config/config.ini"
+  register: tautulli_config
+
+- name: "Aligner Tautulli sur le backend HTTPS de Plex"
+  when:
+    - tautulli_config.stat.exists
+    - (plex | default({})).public_https | default(false) | bool
+  block:
+    - name: "Arreter Tautulli avant modification de sa configuration"
+      ansible.builtin.command: docker stop tautulli
+      changed_when: true
+
+    - name: "Pointer Tautulli vers https://plex:32400"
+      ansible.builtin.replace:
+        path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/tautulli/config/config.ini"
+        regexp: "^pms_url = .*$"
+        replace: "pms_url = https://plex:32400"
+
+    - name: "Activer SSL Plex dans Tautulli"
+      ansible.builtin.replace:
+        path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/tautulli/config/config.ini"
+        regexp: "^pms_ssl = .*$"
+        replace: "pms_ssl = 1"
+
+    - name: "Utiliser le nom de conteneur Plex dans Tautulli"
+      ansible.builtin.replace:
+        path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/tautulli/config/config.ini"
+        regexp: "^pms_ip = .*$"
+        replace: "pms_ip = plex"
+
+    - name: "Forcer l'URL manuelle dans Tautulli"
+      ansible.builtin.replace:
+        path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/tautulli/config/config.ini"
+        regexp: "^pms_url_manual = .*$"
+        replace: "pms_url_manual = 1"
+
+    - name: "Ne pas verifier le certificat plex.direct dans Tautulli"
+      ansible.builtin.replace:
+        path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/tautulli/config/config.ini"
+        regexp: "^verify_ssl_cert = .*$"
+        replace: "verify_ssl_cert = 0"
+
+    - name: "Demarrer Tautulli avec la nouvelle configuration"
+      ansible.builtin.command: docker start tautulli
+      changed_when: true

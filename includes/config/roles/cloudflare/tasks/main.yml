@@ -13,6 +13,12 @@
   set_fact:
     record: "{{ (subdomain == user.domain) | ternary(user.domain,subdomain + '.' + user.domain) }}"
 
+# proxied=true par defaut (Cloudflare orange). Le mode Plex public HTTPS
+# passe proxied=false pour obtenir un enregistrement DNS-only (gris).
+- name: Set 'record_proxied' variable
+  set_fact:
+    record_proxied: "{{ proxied | default(true) | bool }}"
+
 - name: Set DNS Record
   cloudflare_dns:
     account_api_token: "{{ cloudflare.api }}"
@@ -20,14 +26,14 @@
     zone: "{{ user.domain }}"
     state: present
     solo: true
-    proxied: yes
+    proxied: "{{ record_proxied }}"
     type: A
     value: "{{ network.ipv4 }}"
     record: "{{ subdomain }}"
 
 - name: Display DNS Record
   debug:
-    msg: "DNS Record for '{{ record }}' set to '{{ network.ipv4 }}'."
+    msg: "DNS Record for '{{ record }}' set to '{{ network.ipv4 }}' (proxied={{ record_proxied }})."
 
 # Registre des sous-domaines DNS créés pour l'application : permet à la
 # suppression de retirer tous les enregistrements, y compris les sous-domaines

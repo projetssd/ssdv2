@@ -64,6 +64,17 @@ Sécurité :
     ssdv2ctl security php-cve stop <conteneur> [--force]
     ssdv2ctl security php-cve harden-host
 
+    ssdv2ctl security plex-cve scan [--deep]
+    ssdv2ctl security plex-cve report [--input FICHIER]
+    ssdv2ctl security plex-cve logs [--input FICHIER]
+    ssdv2ctl security plex-cve fix-plex [--apply] [--public-https|--no-public-https]
+    ssdv2ctl security plex-cve public-https [--apply] [--disable]
+    ssdv2ctl security plex-cve fix-remote [--apply] [--public-https]
+    ssdv2ctl security plex-cve close-port [--apply] [--ports 32400]
+    ssdv2ctl security plex-cve quarantine [--apply]
+    ssdv2ctl security plex-cve rollback --backup DIR [--apply]
+    ssdv2ctl security plex-cve selftest
+
 Conventions de sortie :
 
     - stdout : JSON uniquement (`--json` est accepté et correspond au format par défaut) ;
@@ -85,7 +96,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-VERSION = "0.7.0"
+VERSION = "0.8.0"
 SCHEMA_VERSION = 1
 
 EXIT_OK = 0
@@ -1263,6 +1274,20 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="utiliser le dernier scan en cache (pas de scan implicite)",
     )
+    plex_cve_fix_mode = plex_cve_fix.add_mutually_exclusive_group()
+    plex_cve_fix_mode.add_argument(
+        "--public-https",
+        dest="public_https",
+        action="store_true",
+        default=None,
+        help="forcer le mode Plex public HTTPS (chain-plex + backend HTTPS)",
+    )
+    plex_cve_fix_mode.add_argument(
+        "--no-public-https",
+        dest="public_https",
+        action="store_false",
+        help="forcer le mode historique (chain-no-auth + backend HTTP)",
+    )
     plex_cve_close = plex_cve_commands.add_parser(
         "close-port", parents=[plex_cve_common], help="ferme les ports via DOCKER-USER"
     )
@@ -1279,9 +1304,39 @@ def build_parser() -> argparse.ArgumentParser:
     )
     plex_cve_remote = plex_cve_commands.add_parser(
         "fix-remote", parents=[plex_cve_common],
-        help="customConnections HTTPS et désactivation du port manuel 32400",
+        help="customConnections HTTPS, prefs Plex et port manuel 32400",
     )
     plex_cve_remote.add_argument("--apply", action="store_true", help="appliquer")
+    plex_cve_remote_mode = plex_cve_remote.add_mutually_exclusive_group()
+    plex_cve_remote_mode.add_argument(
+        "--public-https",
+        dest="public_https",
+        action="store_true",
+        default=None,
+        help="appliquer secureConnections=Required, Relay=0, Publish=1",
+    )
+    plex_cve_remote_mode.add_argument(
+        "--no-public-https",
+        dest="public_https",
+        action="store_false",
+        help="forcer le mode historique (Preferred, backend HTTP)",
+    )
+    plex_cve_public = plex_cve_commands.add_parser(
+        "public-https", parents=[plex_cve_common],
+        help="active/désactive Plex public HTTPS (DNS-only, 443, allowlist)",
+    )
+    plex_cve_public.add_argument("--apply", action="store_true", help="appliquer")
+    plex_cve_public.add_argument("--dry-run", action="store_true", help="afficher le plan")
+    plex_cve_public.add_argument(
+        "--disable",
+        action="store_true",
+        help="revenir au mode Cloudflare (Plex non public)",
+    )
+    plex_cve_public.add_argument(
+        "--use-cache",
+        action="store_true",
+        help="utiliser le dernier scan en cache",
+    )
     plex_cve_quarantine = plex_cve_commands.add_parser(
         "quarantine", parents=[plex_cve_common], help="arrête et isole Plex"
     )
@@ -1453,6 +1508,10 @@ def main(argv: list[str] | None = None) -> int:
                     argv.extend(["--media-path", media_path])
                 if args.media_mode:
                     argv.extend(["--media-mode", args.media_mode])
+                if args.public_https is True:
+                    argv.append("--public-https")
+                elif args.public_https is False:
+                    argv.append("--no-public-https")
             elif args.plexcve_command == "close-port":
                 if args.apply:
                     argv.append("--apply")
@@ -1467,6 +1526,19 @@ def main(argv: list[str] | None = None) -> int:
             elif args.plexcve_command == "fix-remote":
                 if args.apply:
                     argv.append("--apply")
+                if args.public_https is True:
+                    argv.append("--public-https")
+                elif args.public_https is False:
+                    argv.append("--no-public-https")
+            elif args.plexcve_command == "public-https":
+                if args.apply:
+                    argv.append("--apply")
+                if args.dry_run:
+                    argv.append("--dry-run")
+                if args.disable:
+                    argv.append("--disable")
+                if args.use_cache:
+                    argv.append("--use-cache")
             elif args.plexcve_command == "quarantine":
                 if args.apply:
                     argv.append("--apply")

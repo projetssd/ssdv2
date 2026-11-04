@@ -6,7 +6,10 @@ pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:
-  PLEX_URL: "http://plex:32400"
+  # Plex passe en HTTPS obligatoire (secureConnections=Required) en mode
+  # public HTTPS. L'application ne sait pas ignorer un certificat auto-signe :
+  # on utilise donc le domaine public (certificat Let's Encrypt valide).
+  PLEX_URL: "{{ ('https://' ~ (sub['plex']['plex'] | default('plex', true)) ~ '.' ~ user.domain) if (plex | default({})).public_https | default(false) | bool else 'http://plex:32400' }}"
   PLEX_TOKEN: "{{ plex.token }}"
   TZ: "Europe/Paris"
 

@@ -1,3 +1,55 @@
+05/11/2026 — Plex public HTTPS : correctifs d'exploitation
+
+- Traefik `accessLog` : seuls les codes `400-599` sont journalisés. Une ligne
+  par segment vidéo Plex faisait grossir `access.log` de plusieurs Go et
+  exposait les tokens `X-Plex-Token`.
+- CrowdSec : whitelist `local/plex-clients-whitelist` livrée avec le dépôt,
+  limitée au routeur `plex-rtr` et aux chemins de lecture. `public-https
+  --apply` l'installe (et la retire en `--disable`). Corrige les bans en boucle
+  déclenchés par Infuse/Plex Web (décision par IP : tout le foyer était coupé).
+- allowlist : **Cloudflare uniquement**, suppression des réseaux
+  privés/Tailscale (aucun client n'accède aux apps via Traefik en direct).
+  Validation `plexcve.py` mise à jour en conséquence.
+- Tautulli : posttask qui aligne `pms_url` sur `https://plex:32400`
+  (`verify_ssl_cert=0`) en mode public HTTPS.
+- `plexautolanguages` : `PLEX_URL` pointe sur le domaine HTTPS public
+  (l'application ne sait pas désactiver la vérification du certificat).
+- doc : contournement Plex Web/Safari (HEVC en MPEG-TS = écran noir) et
+  applications compagnon.
+
+04/11/2026 — Plex public HTTPS (opt-in)
+
+- nouveau mode `plex.public_https` dans `account.yml` (désactivé par défaut) :
+  Plex sur `https://plex.<domaine>` en direct (DNS-only, 443, certificat
+  Let's Encrypt), sans port ; 32400 fermé et publié uniquement sur
+  `127.0.0.1`.
+- Traefik : `chain-plex@file` (CrowdSec/rate-limit/secure-headers, sans
+  allowlist), backend Plex `scheme=https` + `plex-transport@file`
+  (`insecureSkipVerify` pour le certificat `plex.direct`).
+- les chaînes non-Plex reçoivent `middlewares-allowlist@file` (Cloudflare
+  uniquement) lorsque le mode est actif : l'accès direct public aux autres
+  applications renvoie 403.
+- source unique des CIDR Cloudflare (`traefik_cloudflare_ips`) pour
+  `forwardedHeaders` et l'allowlist ; écriture des middlewares avant les
+  chaînes pour éviter l'erreur transitoire au reload Traefik.
+- DNS Plex en DNS-only via le paramètre `proxied` du rôle Cloudflare.
+- préférences Plex appliquées en HTTPS local : `secureConnections=0`
+  (Required), `RelayEnabled=0`, `PublishServerOnPlexOnlineKey=1`,
+  `customConnections=https://plex.<domaine>` sans `:443`,
+  `ManualPortMappingPort=0`.
+- `plexcve.py` : action `public-https` (activation/désactivation), scan étendu
+  (chain-plex, backend HTTPS, transport, prefs, allowlist, loopback, tokens
+  dans `access.log`), `fix-plex --public-https`, rollback complet
+  (Plex + Preferences.xml + règles Traefik + DNS).
+- menu **Audit Plex** : options 9 (activer) et 10 (restaurer), aide et textes
+  mis à jour. Patch `20261104_plex_public_https` pour les installations
+  existantes.
+- documentation : `docs/plex-public-https.md`, mise à jour de
+  `docs/plex2shell.md`, `docs/verification-32400-443.md` et
+  `docs/mecanismes.md`.
+- faux négatif connu : le voyant « Remote Access » de Plex teste 32400 et
+  peut rester jaune ; se fier à l'URL personnalisée et à un test 4G.
+
 31/10/2026 — mise à jour « image seule » et volumes anonymes
 
 - correction de la mise à jour « image seule » : les volumes anonymes

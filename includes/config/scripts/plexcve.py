@@ -20,6 +20,7 @@ Usage :
     plexcve.py report
     plexcve.py logs [--json]
     plexcve.py fix-plex [--apply] [--dry-run] [--force] [--media-path PATH]...
+    plexcve.py public-https [--apply] [--dry-run] [--disable]
     plexcve.py close-port [--apply] [--dry-run] [--ports 32400,...] [--allow-lan CIDR]
     plexcve.py quarantine [--apply]
     plexcve.py rollback [--backup DIR] [--apply]
@@ -36,6 +37,7 @@ import os
 import re
 import shutil
 import sqlite3
+import ssl
 import subprocess
 import sys
 import tempfile
@@ -46,7 +48,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
-VERSION = "1.0.0"
+try:  # Python 3.11+
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python 3.10
+    try:
+        import tomli as tomllib  # type: ignore[no-redef]
+    except ModuleNotFoundError:  # pragma: no cover
+        tomllib = None  # type: ignore[assignment]
+
+VERSION = "1.1.0"
 SCHEMA_VERSION = 1
 
 CVE_IDS = (
@@ -64,6 +74,17 @@ PLEX_PORT = 32400
 PLEX_CAP_ADD = ("CHOWN", "DAC_OVERRIDE", "FOWNER", "SETGID", "SETUID")
 ALLOWED_HOST_PORTS = {80, 443, 6881}
 DEFAULT_TRAEFIK_LOG = "docker/traefik/logs/access.log"
+DEFAULT_TRAEFIK_RULES = "docker/traefik/rules"
+
+# Mode public HTTPS (opt-in, plex.public_https dans account.yml).
+PLEX_PUBLIC_CHAIN = "chain-plex@file"
+PLEX_TRANSPORT = "plex-transport@file"
+PLEX_ALLOWLIST_MIDDLEWARE = "middlewares-allowlist@file"
+CLOUDFLARE_SAMPLE_IPS = (
+    "173.245.48.0/20",
+    "104.16.0.0/12",
+    "2400:cb00::/32",
+)
 
 ENV_FILE = Path.home() / ".config" / "ssd" / "env"
 SECRET_PATHS = (
@@ -135,6 +156,13 @@ def now_iso() -> str:
 
 def cache_path(storage: Path) -> Path:
     return storage / "conf" / "plexcve-status.json"
+
+
+def invalidate_cache(storage: Path) -> None:
+    try:
+        cache_path(storage).unlink()
+    except OSError:
+        pass
 
 
 def load_cached_scan(storage: Path) -> dict | None:
@@ -225,15 +253,25 @@ def container_ip(attrs: dict) -> str | None:
     return None
 
 
+def unverified_ssl_context() -> ssl.SSLContext:
+    """Contexte TLS pour le certificat plex.direct / l'API locale Plex."""
+    context = ssl.create_default_context()
+    context.check_hostname = False
+    context.verify_mode = ssl.CERT_NONE
+    return context
+
+
 def plex_identity(attrs: dict, name: str) -> str | None:
     ip = container_ip(attrs)
+    hosts = [host for host in (ip, "127.0.0.1") if host]
     urls = []
-    if ip:
-        urls.append(f"http://{ip}:{PLEX_PORT}/identity")
-    urls.append(f"http://127.0.0.1:{PLEX_PORT}/identity")
+    for host in hosts:
+        urls.append(f"https://{host}:{PLEX_PORT}/identity")
+        urls.append(f"http://{host}:{PLEX_PORT}/identity")
     for url in urls:
         try:
-            with urllib.request.urlopen(url, timeout=4) as response:
+            context = unverified_ssl_context() if url.startswith("https://") else None
+            with urllib.request.urlopen(url, timeout=4, context=context) as response:
                 return response.read().decode("utf-8", errors="ignore")
         except (urllib.error.URLError, OSError, TimeoutError):
             continue
@@ -245,7 +283,7 @@ def plex_identity(attrs: dict, name: str) -> str | None:
                 name,
                 "sh",
                 "-c",
-                f"curl -fsS --max-time 3 http://127.0.0.1:{PLEX_PORT}/identity",
+                f"curl -k -fsS --max-time 3 https://127.0.0.1:{PLEX_PORT}/identity",
             ],
             timeout=10,
         )
@@ -297,6 +335,66 @@ def find_mount(attrs: dict, destination: str) -> dict | None:
         if mount.get("Destination") == destination:
             return mount
     return None
+
+
+CROWDSEC_WHITELIST_FILE = "plex-clients-whitelist.yaml"
+
+
+def crowdsec_whitelist_source(source: Path) -> Path:
+    return (
+        source
+        / "includes"
+        / "config"
+        / "files"
+        / "crowdsec"
+        / CROWDSEC_WHITELIST_FILE
+    )
+
+
+def crowdsec_config_dir() -> Path | None:
+    try:
+        attrs = inspect_container("crowdsec")
+    except ToolError:
+        return None
+    mount = find_mount(attrs, "/etc/crowdsec")
+    if not mount or not mount.get("Source"):
+        return None
+    return Path(str(mount["Source"]))
+
+
+def install_crowdsec_plex_whitelist(
+    source: Path, enabled: bool
+) -> tuple[bool, str]:
+    """Installe ou retire la whitelist CrowdSec des clients Plex.
+
+    Plex Web et Infuse parcourent legitimement la bibliotheque : sans cette
+    whitelist, CrowdSec declenche http-probing/http-crawl-non_statics et
+    bannit l'IP du foyer (donc aussi l'acces aux autres apps).
+    """
+    config_dir = crowdsec_config_dir()
+    if config_dir is None:
+        return True, "CrowdSec non installe : whitelist ignoree"
+    target = config_dir / "parsers" / "s02-enrich" / CROWDSEC_WHITELIST_FILE
+    if not enabled:
+        if target.is_file():
+            try:
+                target.unlink()
+            except OSError as exc:
+                return False, str(exc)
+            run_cmd(["docker", "kill", "-s", "HUP", "crowdsec"], timeout=15)
+            return True, f"whitelist retiree : {target}"
+        return True, "whitelist absente"
+    src = crowdsec_whitelist_source(source)
+    if not src.is_file():
+        return False, f"fichier source introuvable : {src}"
+    try:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(src, target)
+        os.chmod(target, 0o644)
+    except OSError as exc:
+        return False, str(exc)
+    run_cmd(["docker", "kill", "-s", "HUP", "crowdsec"], timeout=15)
+    return True, f"whitelist installee : {target}"
 
 
 def plex_paths(attrs: dict) -> dict[str, Path | None]:
@@ -381,11 +479,25 @@ def scan_traefik(attrs: dict) -> dict:
     router = "plex-rtr"
     middleware = labels.get(f"traefik.http.routers.{router}.middlewares")
     service_port = labels.get("traefik.http.services.plex-svc.loadbalancer.server.port")
+    scheme = labels.get("traefik.http.services.plex-svc.loadbalancer.server.scheme")
+    transport = labels.get(
+        "traefik.http.services.plex-svc.loadbalancer.serverstransport"
+    )
+    entrypoints = labels.get(f"traefik.http.routers.{router}.entrypoints")
+    chain_plex = PLEX_PUBLIC_CHAIN.split("@", 1)[0] in str(middleware or "")
+    public_https = bool(
+        chain_plex or scheme == "https" or transport
+    )
     return {
         "router": router,
         "middlewares": middleware,
         "service_port": service_port,
         "has_middleware": bool(middleware),
+        "entrypoints": entrypoints,
+        "scheme": scheme or "http",
+        "serverstransport": transport,
+        "chain_plex": chain_plex,
+        "public_https": public_https,
     }
 
 
@@ -403,7 +515,9 @@ def scan_preferences(path: Path | None) -> dict:
         "custom_connections": None,
         "manual_port_mapping_mode": None,
         "manual_port_mapping_port": None,
+        "secure_connections": None,
         "relay_enabled": None,
+        "publish_server_on_plex_online_key": None,
         "has_token": False,
         "parse_error": None,
     }
@@ -419,7 +533,11 @@ def scan_preferences(path: Path | None) -> dict:
     result["custom_connections"] = root.get("customConnections")
     result["manual_port_mapping_mode"] = root.get("ManualPortMappingMode")
     result["manual_port_mapping_port"] = root.get("ManualPortMappingPort")
+    result["secure_connections"] = root.get("secureConnections")
     result["relay_enabled"] = root.get("RelayEnabled")
+    result["publish_server_on_plex_online_key"] = root.get(
+        "PublishServerOnPlexOnlineKey"
+    )
     result["has_token"] = bool((root.get("PlexOnlineToken") or "").strip())
     return result
 
@@ -656,6 +774,88 @@ def scan_traefik_log(
     result["matching_requests"] = count
     result["matched_sources"] = sorted(matched_sources)
     result["samples"] = samples
+    process.wait()
+    return result
+
+
+def scan_traefik_rules(rules_dir: Path | None) -> dict:
+    """Controle les fichiers /rules de Traefik (allowlist, chain-plex)."""
+    result = {
+        "path": str(rules_dir) if rules_dir else None,
+        "available": False,
+        "chain_plex": None,
+        "non_plex_chains": {},
+        "allowlist_ips": [],
+        "has_transport": False,
+        "error": None,
+    }
+    if not rules_dir or not rules_dir.is_dir():
+        return result
+    middlewares_path = rules_dir / "middlewares.toml"
+    chains_path = rules_dir / "middlewares-chains.toml"
+    if not middlewares_path.is_file() or not chains_path.is_file():
+        return result
+    if tomllib is None:  # pragma: no cover - Python 3.10 sans tomli
+        result["error"] = "module tomllib/tomli indisponible"
+        return result
+    try:
+        middlewares_data = tomllib.loads(
+            middlewares_path.read_text(encoding="utf-8")
+        )
+        chains_data = tomllib.loads(chains_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        # tomllib.TOMLDecodeError derive de ValueError.
+        result["error"] = str(exc)
+        return result
+    result["available"] = True
+    http_middlewares = (middlewares_data.get("http") or {}).get("middlewares") or {}
+    http_chains = (chains_data.get("http") or {}).get("middlewares") or {}
+    result["has_transport"] = "plex-transport" in (
+        (middlewares_data.get("http") or {}).get("serversTransports") or {}
+    )
+    allowlist = (
+        (http_middlewares.get("middlewares-allowlist") or {}).get("ipAllowList")
+        or {}
+    )
+    result["allowlist_ips"] = list(allowlist.get("sourceRange") or [])
+    chain_plex = (http_chains.get("chain-plex") or {}).get("chain") or {}
+    if "chain-plex" in http_chains:
+        result["chain_plex"] = list(chain_plex.get("middlewares") or [])
+    for name, spec in http_chains.items():
+        if name == "chain-plex":
+            continue
+        middlewares = (spec.get("chain") or {}).get("middlewares") or []
+        result["non_plex_chains"][name] = PLEX_ALLOWLIST_MIDDLEWARE in middlewares
+    return result
+
+
+def scan_traefik_token_leak(path: Path | None) -> dict:
+    """Detecte des tokens Plex dans les URLs du log d'acces Traefik."""
+    result = {
+        "path": str(path) if path else None,
+        "available": bool(path and path.is_file()),
+        "matches": 0,
+        "samples": [],
+    }
+    if not path or not path.is_file():
+        return result
+    try:
+        process = subprocess.Popen(
+            ["grep", "-a", "-i", "x-plex-token=", str(path)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            errors="ignore",
+        )
+    except OSError:
+        result["available"] = False
+        return result
+    assert process.stdout is not None
+    with process.stdout:
+        for line in process.stdout:
+            result["matches"] += 1
+            if len(result["samples"]) < 5:
+                result["samples"].append(redact(line.strip())[:300])
     process.wait()
     return result
 
@@ -974,6 +1174,7 @@ def _load_fixture(fixture: Path) -> dict:
         "codecs": fixture / "Codecs",
         "logs": fixture / "Logs",
         "traefik_log": fixture / "traefik.log",
+        "traefik_rules": fixture / "traefik-rules",
         "host": host,
         "media_roots": [str(media)] if media.is_dir() else [],
     }
@@ -1011,6 +1212,51 @@ def _recommendations(
             "Acces distant : garder customConnections HTTPS uniquement et "
             "desactiver le port manuel 32400 (fix-remote / option 2)."
         )
+    if "traefik_plex_chain_missing" in codes:
+        recommendations.append(
+            "Mode public HTTPS : router Plex avec chain-plex@file (option 9)."
+        )
+    if "traefik_plex_backend_not_https" in codes or "traefik_plex_transport_missing" in codes:
+        recommendations.append(
+            "Mode public HTTPS : backend Plex scheme=https + "
+            "serverstransport=plex-transport@file (option 9)."
+        )
+    if "traefik_allowlist_missing" in codes or "traefik_allowlist_on_plex" in codes:
+        recommendations.append(
+            "Mode public HTTPS : allowlist Cloudflare sur les chaines "
+            "non-Plex, absente de chain-plex (option 9)."
+        )
+    if "traefik_rules_missing" in codes or "traefik_rules_unreadable" in codes:
+        recommendations.append(
+            "Regenerer les regles Traefik (option 9 ou reinstallation Traefik)."
+        )
+    if "plex_secure_connections_not_required" in codes:
+        recommendations.append(
+            "Mode public HTTPS : secureConnections=0 (Required)."
+        )
+    if "plex_relay_enabled" in codes:
+        recommendations.append("Mode public HTTPS : desactiver Plex Relay.")
+    if "plex_publish_disabled" in codes:
+        recommendations.append(
+            "Mode public HTTPS : PublishServerOnPlexOnlineKey=1."
+        )
+    if "plex_custom_url_has_port" in codes:
+        recommendations.append(
+            "customConnections doit etre https://plex.<domaine> sans :443."
+        )
+    if "plex_manual_port_not_zero" in codes:
+        recommendations.append(
+            "Mode public HTTPS : ManualPortMappingPort=0."
+        )
+    if "plex_loopback_port_missing" in codes:
+        recommendations.append(
+            "Mode public HTTPS : publier 32400 sur 127.0.0.1 uniquement."
+        )
+    if "plex_token_in_traefik_log" in codes:
+        recommendations.append(
+            "Token Plex dans access.log : restreindre les droits du log, "
+            "le rotationner et eviter les tokens en query string."
+        )
     if "symlink_target_not_mounted" in codes:
         recommendations.append(
             "Monter les cibles de symlinks en lecture seule : /mnt en mode "
@@ -1039,6 +1285,7 @@ def _analyze(
     host: dict,
     deep: bool = False,
     media_roots: list[str] | None = None,
+    traefik_rules_dir: Path | None = None,
 ) -> dict:
     version_env = env_dict(attrs).get("VERSION")
     image = (attrs.get("Config") or {}).get("Image") or ""
@@ -1062,9 +1309,17 @@ def _analyze(
     logs = scan_logs(logs_dir)
     traefik_logs = scan_traefik_log(traefik_log, logs.get("attempts_detail", []))
     attack_path, evidence = compute_attack_path(logs, traefik_logs)
+    traefik_rules = scan_traefik_rules(traefik_rules_dir)
+    token_leak = scan_traefik_token_leak(traefik_log)
+    evidence["traefik_token_leak"] = token_leak
     plex_ports = [port for port in ports if str(port["container_port"]).startswith(str(PLEX_PORT))]
     issues: list[dict] = []
     compromised_reasons: list[str] = []
+    public_https = bool(
+        traefik.get("public_https")
+        or traefik_rules.get("chain_plex")
+        or traefik_rules.get("allowlist_ips")
+    )
 
     if version_status(version) == "vulnerable":
         issues.append(
@@ -1185,6 +1440,177 @@ def _analyze(
             }
         )
 
+    if public_https:
+        if not traefik.get("chain_plex"):
+            issues.append(
+                {
+                    "code": "traefik_plex_chain_missing",
+                    "severity": "high",
+                    "message": "mode public HTTPS : Plex n'utilise pas chain-plex@file",
+                }
+            )
+        if traefik.get("scheme") != "https":
+            issues.append(
+                {
+                    "code": "traefik_plex_backend_not_https",
+                    "severity": "high",
+                    "message": "mode public HTTPS : backend Plex en HTTP",
+                }
+            )
+        if str(traefik.get("serverstransport") or "") != PLEX_TRANSPORT:
+            issues.append(
+                {
+                    "code": "traefik_plex_transport_missing",
+                    "severity": "high",
+                    "message": "mode public HTTPS : serverstransport plex-transport@file absent",
+                }
+            )
+        if str(traefik.get("entrypoints") or "") not in ("https", ""):
+            issues.append(
+                {
+                    "code": "traefik_plex_entrypoint_not_https",
+                    "severity": "medium",
+                    "message": "mode public HTTPS : entrypoint Plex non limite a https",
+                }
+            )
+        if str(preferences_data.get("secure_connections") or "") != "0":
+            issues.append(
+                {
+                    "code": "plex_secure_connections_not_required",
+                    "severity": "high",
+                    "message": "mode public HTTPS : secureConnections != Required (0)",
+                }
+            )
+        if str(preferences_data.get("relay_enabled") or "") == "1":
+            issues.append(
+                {
+                    "code": "plex_relay_enabled",
+                    "severity": "medium",
+                    "message": "mode public HTTPS : Plex Relay actif",
+                }
+            )
+        if str(
+            preferences_data.get("publish_server_on_plex_online_key") or ""
+        ) != "1":
+            issues.append(
+                {
+                    "code": "plex_publish_disabled",
+                    "severity": "medium",
+                    "message": "mode public HTTPS : publication Plex Online desactivee",
+                }
+            )
+        custom_url = str(preferences_data.get("custom_connections") or "")
+        if ":443" in custom_url or ":32400" in custom_url:
+            issues.append(
+                {
+                    "code": "plex_custom_url_has_port",
+                    "severity": "medium",
+                    "message": "mode public HTTPS : customConnections contient un port",
+                }
+            )
+        if str(preferences_data.get("manual_port_mapping_port") or "") not in ("", "0"):
+            issues.append(
+                {
+                    "code": "plex_manual_port_not_zero",
+                    "severity": "low",
+                    "message": "mode public HTTPS : ManualPortMappingPort != 0",
+                }
+            )
+        if not any(
+            str(port.get("host_ip") or "") == "127.0.0.1" for port in plex_ports
+        ):
+            issues.append(
+                {
+                    "code": "plex_loopback_port_missing",
+                    "severity": "medium",
+                    "message": "mode public HTTPS : 32400 non publie sur 127.0.0.1",
+                }
+            )
+
+        if traefik_rules.get("error"):
+            issues.append(
+                {
+                    "code": "traefik_rules_unreadable",
+                    "severity": "medium",
+                    "message": (
+                        "regles Traefik illisibles : "
+                        + str(traefik_rules.get("error"))[:200]
+                    ),
+                }
+            )
+        elif not traefik_rules.get("available"):
+            issues.append(
+                {
+                    "code": "traefik_rules_missing",
+                    "severity": "medium",
+                    "message": "fichiers /rules Traefik introuvables",
+                }
+            )
+        if traefik_rules.get("available"):
+            chain_plex = traefik_rules.get("chain_plex")
+            if not chain_plex:
+                issues.append(
+                    {
+                        "code": "traefik_chain_plex_missing",
+                        "severity": "high",
+                        "message": "fichier Traefik : chain-plex absente",
+                    }
+                )
+            elif PLEX_ALLOWLIST_MIDDLEWARE in chain_plex:
+                issues.append(
+                    {
+                        "code": "traefik_allowlist_on_plex",
+                        "severity": "high",
+                        "message": "fichier Traefik : allowlist presente sur chain-plex",
+                    }
+                )
+            missing_chains = sorted(
+                name
+                for name, allowed in (traefik_rules.get("non_plex_chains") or {}).items()
+                if not allowed
+            )
+            if missing_chains:
+                issues.append(
+                    {
+                        "code": "traefik_allowlist_missing",
+                        "severity": "high",
+                        "message": (
+                            "fichier Traefik : allowlist absente de "
+                            + ", ".join(missing_chains)
+                        ),
+                    }
+                )
+            allowlist_ips = set(traefik_rules.get("allowlist_ips") or [])
+            if allowlist_ips and not any(
+                ip in allowlist_ips for ip in CLOUDFLARE_SAMPLE_IPS
+            ):
+                issues.append(
+                    {
+                        "code": "traefik_allowlist_cloudflare_missing",
+                        "severity": "high",
+                        "message": "fichier Traefik : allowlist sans CIDR Cloudflare",
+                    }
+                )
+            if not traefik_rules.get("has_transport"):
+                issues.append(
+                    {
+                        "code": "traefik_rules_transport_missing",
+                        "severity": "high",
+                        "message": "fichier Traefik : serversTransports plex-transport absent",
+                    }
+                )
+
+    if token_leak.get("matches"):
+        issues.append(
+            {
+                "code": "plex_token_in_traefik_log",
+                "severity": "medium",
+                "message": (
+                    f"{token_leak['matches']} token(s) Plex dans le log d'acces Traefik"
+                ),
+            }
+        )
+
     if codecs.get("has_zz"):
         compromised_reasons.append("Codecs/zz*.so")
     for item in codecs.get("suspicious") or []:
@@ -1258,11 +1684,15 @@ def _analyze(
             "mounts": mounts,
             "security": security,
             "traefik": traefik,
+            "traefik_rules": traefik_rules,
+            "token_leak": token_leak,
             "preferences": preferences_data,
             "codecs": codecs,
             "symlink_targets": symlink_targets,
             "logs": logs,
+            "public_https": public_https,
         },
+        "public_https": public_https,
         "attack_path": attack_path,
         "evidence": evidence,
         "host": host,
@@ -1273,6 +1703,7 @@ def _analyze(
             "compromised": bool(compromised_reasons),
             "vulnerable": version_status(version) == "vulnerable",
             "hardening_required": status == "hardening_required",
+            "public_https": public_https,
             "plex_conform": not (
                 {issue.get("code") for issue in issues}
                 - {"other_port_published", "watchtower_cleanup"}
@@ -1311,6 +1742,7 @@ def build_scan(
             host,
             deep=deep,
             media_roots=data.get("media_roots") or [],
+            traefik_rules_dir=data.get("traefik_rules"),
         )
         payload["schema"] = SCHEMA_VERSION
         payload["version"] = VERSION
@@ -1334,10 +1766,11 @@ def build_scan(
         "published_ports": published_ports(),
         "watchtower": watchtower_info(),
     }
+    _, storage = settings_paths()
     log_path = traefik_log
     if log_path is None:
-        _, storage = settings_paths()
         log_path = storage / DEFAULT_TRAEFIK_LOG
+    rules_dir = storage / DEFAULT_TRAEFIK_RULES
     media_roots = detect_media_paths(paths.get("db"))
     for default_root in (Path.home() / "Medias", Path.home() / "local"):
         if default_root.is_dir() and str(default_root) not in media_roots:
@@ -1351,6 +1784,7 @@ def build_scan(
         host,
         deep=deep,
         media_roots=media_roots,
+        traefik_rules_dir=rules_dir,
     )
     payload["schema"] = SCHEMA_VERSION
     payload["version"] = VERSION
@@ -1375,6 +1809,9 @@ def status_payload(payload: dict) -> dict:
             "version_env": payload.get("container", {}).get("version_env"),
             "ports": payload.get("container", {}).get("ports"),
             "traefik": payload.get("container", {}).get("traefik"),
+            "traefik_rules": payload.get("container", {}).get("traefik_rules"),
+            "token_leak": payload.get("container", {}).get("token_leak"),
+            "public_https": payload.get("container", {}).get("public_https"),
             "security": payload.get("container", {}).get("security"),
             "mounts": payload.get("container", {}).get("mounts"),
             "preferences": payload.get("container", {}).get("preferences"),
@@ -1399,6 +1836,7 @@ def report_text(payload: dict) -> str:
         f"Plex conforme : {'oui' if summary.get('plex_conform') else 'non'}",
         f"Version : {plex.get('version') or '?'} ({plex.get('version_status')})",
         f"VERSION env : {plex.get('version_env') or 'absent'}",
+        f"Mode public HTTPS : {'oui' if plex.get('public_https') else 'non'}",
         f"Chemin d'attaque : {payload.get('attack_path') or 'inconnu'}",
         "",
         "Reseau :",
@@ -1414,6 +1852,20 @@ def report_text(payload: dict) -> str:
     lines.append(
         f"  middleware Traefik : {traefik.get('middlewares') or 'ABSENT'}"
     )
+    lines.append(
+        "  backend : "
+        f"scheme={traefik.get('scheme') or '?'} "
+        f"transport={traefik.get('serverstransport') or 'aucun'} "
+        f"entrypoints={traefik.get('entrypoints') or '?'}"
+    )
+    rules = plex.get("traefik_rules") or {}
+    if rules.get("available"):
+        lines.append(
+            "  regles : "
+            f"chain-plex={'oui' if rules.get('chain_plex') is not None else 'non'} "
+            f"allowlist={'oui' if any((rules.get('non_plex_chains') or {}).values()) else 'non'} "
+            f"transport={'oui' if rules.get('has_transport') else 'non'}"
+        )
     lines.append("")
     lines.append("Montages :")
     for mount in plex.get("mounts") or []:
@@ -1442,6 +1894,16 @@ def report_text(payload: dict) -> str:
         f"{preferences.get('custom_connections')!r} "
         f"manual_mode={preferences.get('manual_port_mapping_mode')!r} "
         f"manual_port={preferences.get('manual_port_mapping_port')!r}"
+    )
+    lines.append(
+        "  secure_connections="
+        f"{preferences.get('secure_connections')!r} "
+        f"relay={preferences.get('relay_enabled')!r} "
+        f"publish={preferences.get('publish_server_on_plex_online_key')!r}"
+    )
+    token_leak = plex.get("token_leak") or {}
+    lines.append(
+        f"  Tokens Plex dans access.log : {token_leak.get('matches', 0)}"
     )
     codecs = plex.get("codecs") or {}
     lines.append("")
@@ -1582,6 +2044,34 @@ def action_text(payload: dict) -> str:
         )
         if remote.get("message"):
             lines.append(f"  {remote['message']}")
+    nested = payload.get("plex") or {}
+    if nested:
+        lines.append(
+            "Plex : "
+            f"{'OK' if nested.get('ok') else 'ECHEC'} | "
+            f"mode public HTTPS={'oui' if nested.get('public_https') else 'non'}"
+        )
+        remote = nested.get("remote_access") or {}
+        if remote:
+            lines.append(
+                "  acces distant : "
+                f"{'OK' if remote.get('ok') else 'ECHEC'} | "
+                f"{remote.get('desired_custom_connections') or '?'}"
+            )
+    validation = payload.get("validation") or {}
+    if validation:
+        lines.append(
+            f"Validation : {'OK' if validation.get('ok') else 'ECHEC'}"
+        )
+        for key, value in (validation.get("checks") or {}).items():
+            lines.append(f"  - {key}: {'OK' if value else 'ECHEC'}")
+    restore = payload.get("restore") or []
+    if restore:
+        lines.append("Restaure :")
+        for item in restore:
+            lines.append(f"  - {item}")
+    for warning in payload.get("warnings") or []:
+        lines.append(f"Attention : {warning}")
     return "\n".join(lines)
 
 
@@ -1617,17 +2107,28 @@ def _backup_dir(storage: Path) -> Path:
     return path
 
 
-def _write_backup(scan: dict, attrs: dict, paths: dict, backup: Path) -> None:
+def _write_backup(
+    scan: dict,
+    attrs: dict,
+    paths: dict,
+    backup: Path,
+    extra_files: dict[str, str] | None = None,
+    state: dict | None = None,
+) -> None:
     files = {
         "inspect.json": json.dumps(attrs, indent=2, ensure_ascii=False),
         "scan-before.json": json.dumps(scan, indent=2, ensure_ascii=False),
     }
+    files.update(extra_files or {})
+    if state is not None:
+        files["state.json"] = json.dumps(state, indent=2, ensure_ascii=False)
     codecs = paths.get("codecs")
     if codecs and Path(codecs).is_dir():
         lines = [str(item) for item in Path(codecs).rglob("*") if item.is_file()]
         files["codecs.txt"] = "\n".join(lines) + "\n"
     for name, content in files.items():
         target = backup / name
+        target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content, encoding="utf-8")
         try:
             os.chmod(target, 0o600)
@@ -1738,12 +2239,12 @@ def desired_public_url(attrs: dict, preferences: dict) -> str | None:
     rule = labels.get("traefik.http.routers.plex-rtr.rule") or ""
     match = re.search(r"Host\(`?([^`\")]+)`?\)", rule)
     if match:
-        return f"https://{match.group(1)}:443"
+        return f"https://{match.group(1)}"
     current = str(preferences.get("custom_connections") or "")
     for part in current.split(","):
         part = part.strip()
         if part.startswith("https://"):
-            return part
+            return part.removesuffix(":443")
     return None
 
 
@@ -1758,26 +2259,56 @@ def _plex_owner_token(preferences_path: Path | None) -> str | None:
     return token or None
 
 
-def _plex_api_put(ip: str, token: str, path: str) -> tuple[int | None, str]:
-    request = urllib.request.Request(
-        f"http://{ip}:{PLEX_PORT}{path}",
-        method="PUT",
-        headers={"X-Plex-Token": token},
-    )
-    try:
-        with urllib.request.urlopen(request, timeout=10) as response:
-            return response.status, response.read(500).decode("utf-8", errors="ignore")
-    except urllib.error.HTTPError as exc:
-        return exc.code, exc.read(500).decode("utf-8", errors="ignore")
-    except (urllib.error.URLError, OSError, TimeoutError) as exc:
-        return None, str(exc)
+def _plex_api_hosts(attrs: dict) -> list[str]:
+    hosts = ["127.0.0.1"]
+    ip = container_ip(attrs)
+    if ip and ip not in hosts:
+        hosts.append(ip)
+    return hosts
 
 
-def fix_remote_access(apply: bool = False) -> dict:
+def _plex_api_request(
+    attrs: dict, token: str, path: str, method: str = "PUT"
+) -> tuple[int | None, str, str | None, str | None]:
+    """Appelle l'API Plex locale en HTTPS (certificat plex.direct) puis HTTP."""
+    errors: list[str] = []
+    for host in _plex_api_hosts(attrs):
+        for scheme in ("https", "http"):
+            request = urllib.request.Request(
+                f"{scheme}://{host}:{PLEX_PORT}{path}",
+                method=method,
+                headers={"X-Plex-Token": token},
+            )
+            context = unverified_ssl_context() if scheme == "https" else None
+            try:
+                with urllib.request.urlopen(
+                    request, timeout=10, context=context
+                ) as response:
+                    return (
+                        response.status,
+                        response.read(500).decode("utf-8", errors="ignore"),
+                        host,
+                        scheme,
+                    )
+            except urllib.error.HTTPError as exc:
+                return (
+                    exc.code,
+                    exc.read(500).decode("utf-8", errors="ignore"),
+                    host,
+                    scheme,
+                )
+            except (urllib.error.URLError, OSError, TimeoutError) as exc:
+                errors.append(f"{scheme}://{host}: {exc}")
+    return None, "; ".join(errors), None, None
+
+
+def fix_remote_access(apply: bool = False, public_https: bool | None = None) -> dict:
     """Configure customConnections HTTPS et desactive le port manuel 32400.
 
-    Ne publie pas 32400. L'acces distant passe par Traefik/443. Le test
-    « Remote Access » de Plex peut rester indisponible : il teste 32400.
+    En mode public HTTPS, applique aussi secureConnections=0 (Required),
+    RelayEnabled=0 et PublishServerOnPlexOnlineKey=1. Ne publie pas 32400 :
+    l'acces distant passe par Traefik/443. Le test « Remote Access » de Plex
+    peut rester indisponible car il teste 32400.
     """
     name = find_plex_container()
     if not name:
@@ -1791,6 +2322,8 @@ def fix_remote_access(apply: bool = False) -> dict:
     attrs = inspect_container(name)
     paths = plex_paths(attrs)
     preferences = scan_preferences(paths.get("preferences"))
+    if public_https is None:
+        public_https = bool(scan_traefik(attrs).get("public_https"))
     desired = desired_public_url(attrs, preferences)
     if not desired:
         return {
@@ -1803,6 +2336,14 @@ def fix_remote_access(apply: bool = False) -> dict:
     current = preferences.get("custom_connections")
     manual_mode = preferences.get("manual_port_mapping_mode")
     manual_port = preferences.get("manual_port_mapping_port")
+    secure = preferences.get("secure_connections")
+    relay = preferences.get("relay_enabled")
+    publish = preferences.get("publish_server_on_plex_online_key")
+    prefs = {
+        "customConnections": desired,
+        "ManualPortMappingMode": "0",
+        "ManualPortMappingPort": "0",
+    }
     changes = []
     if str(current or "") != desired:
         changes.append(f"customConnections -> {desired}")
@@ -1810,15 +2351,33 @@ def fix_remote_access(apply: bool = False) -> dict:
         changes.append("ManualPortMappingMode -> 0")
     if str(manual_port or "") not in ("", "0"):
         changes.append("ManualPortMappingPort -> 0")
+    if public_https:
+        if str(secure or "") != "0":
+            changes.append("secureConnections -> 0 (Required)")
+        prefs["secureConnections"] = "0"
+        if str(relay or "") != "0":
+            changes.append("RelayEnabled -> 0")
+        prefs["RelayEnabled"] = "0"
+        if str(publish or "") != "1":
+            changes.append("PublishServerOnPlexOnlineKey -> 1")
+        prefs["PublishServerOnPlexOnlineKey"] = "1"
+    elif str(secure or "") == "0":
+        # Backend Traefik en HTTP : Required rendrait Plex injoignable.
+        changes.append("secureConnections -> 1 (Preferred, backend HTTP)")
+        prefs["secureConnections"] = "1"
     payload = {
         "schema": SCHEMA_VERSION,
         "action": "fix-remote",
         "ok": True,
         "applied": False,
+        "public_https": public_https,
         "desired_custom_connections": desired,
         "custom_connections": current,
         "manual_port_mapping_mode": manual_mode,
         "manual_port_mapping_port": manual_port,
+        "secure_connections": secure,
+        "relay_enabled": relay,
+        "publish_server_on_plex_online_key": publish,
         "changes": changes,
     }
     if not apply:
@@ -1833,32 +2392,27 @@ def fix_remote_access(apply: bool = False) -> dict:
         payload["ok"] = False
         payload["message"] = "PlexOnlineToken absent de Preferences.xml"
         return payload
-    ip = container_ip(attrs)
-    if not ip:
-        payload["ok"] = False
-        payload["message"] = "IP du conteneur Plex introuvable"
-        return payload
-    query = urllib.parse.urlencode(
-        {
-            "customConnections": desired,
-            "ManualPortMappingMode": "0",
-            "ManualPortMappingPort": "0",
-        }
+    query = urllib.parse.urlencode(prefs)
+    status, body, host, scheme = _plex_api_request(
+        attrs, token, f"/:/prefs?{query}"
     )
-    status, body = _plex_api_put(ip, token, f"/:/prefs?{query}")
     payload["prefs_status"] = status
+    payload["prefs_host"] = host
+    payload["prefs_scheme"] = scheme
     if status != 200:
         payload["ok"] = False
-        payload["message"] = f"mise a jour des prefs en echec (HTTP {status}) {body[:200]}"
+        payload["message"] = (
+            f"mise a jour des prefs en echec (HTTP {status}) {body[:200]}"
+        )
         return payload
-    refresh_status, refresh_body = _plex_api_put(
-        ip, token, "/myplex/refreshReachability"
+    refresh_status, refresh_body, _, _ = _plex_api_request(
+        attrs, token, "/myplex/refreshReachability"
     )
     payload["refresh_status"] = refresh_status
     payload["applied"] = True
     payload["ok"] = True
     payload["message"] = (
-        "Acces distant configure sur https://...:443. "
+        f"Acces distant configure sur {desired}. "
         "Le statut « non disponible » de Plex teste 32400 : il peut rester "
         "affiche sans affecter l'acces via le domaine."
     )
@@ -1871,6 +2425,38 @@ def fix_remote_access(apply: bool = False) -> dict:
     return payload
 
 
+def plex_label_overrides(
+    public_https: bool, host: str | None = None
+) -> dict[str, str]:
+    """Labels Traefik Plex pour le mode public HTTPS ou le mode historique."""
+    common = {
+        "traefik.enable": "true",
+        "traefik.http.routers.plex-rtr.service": "plex-svc",
+        "traefik.http.routers.plex-rtr.tls": "true",
+        "traefik.http.routers.plex-rtr.tls.certresolver": "letsencrypt",
+    }
+    if public_https:
+        labels = {
+            **common,
+            "traefik.http.routers.plex-rtr.entrypoints": "https",
+            "traefik.http.routers.plex-rtr.middlewares": PLEX_PUBLIC_CHAIN,
+            "traefik.http.services.plex-svc.loadbalancer.server.port": str(PLEX_PORT),
+            "traefik.http.services.plex-svc.loadbalancer.server.scheme": "https",
+            "traefik.http.services.plex-svc.loadbalancer.serverstransport": PLEX_TRANSPORT,
+        }
+        if host:
+            labels["traefik.http.routers.plex-rtr.rule"] = f"Host(`{host}`)"
+        return labels
+    # Valeur vide = suppression du label (voir recreate_app_container.py).
+    return {
+        **common,
+        "traefik.http.routers.plex-rtr.entrypoints": "http,https",
+        "traefik.http.routers.plex-rtr.middlewares": "chain-no-auth@file",
+        "traefik.http.services.plex-svc.loadbalancer.server.scheme": "",
+        "traefik.http.services.plex-svc.loadbalancer.serverstransport": "",
+    }
+
+
 def fix_plex(
     apply: bool = False,
     force: bool = False,
@@ -1879,6 +2465,8 @@ def fix_plex(
     no_pull: bool = False,
     use_cache: bool = False,
     media_mode: str = "generic",
+    public_https: bool | None = None,
+    backup_dir: Path | None = None,
 ) -> dict:
     material = media_paths or []
     source, storage = settings_paths()
@@ -1935,6 +2523,9 @@ def fix_plex(
         name = fallback
         attrs = inspect_container(name)
     paths = plex_paths(attrs)
+    live_preferences = scan_preferences(paths.get("preferences"))
+    if public_https is None:
+        public_https = bool(scan_traefik(attrs).get("public_https"))
     media_mounts, detected_paths, warnings = _find_media_mounts(
         attrs, paths.get("db"), material, media_mode=media_mode
     )
@@ -1946,8 +2537,16 @@ def fix_plex(
     ]
     changes = [
         "ajouter VERSION=latest",
-        "ajouter le middleware chain-no-auth@file",
-        "retirer la publication 0.0.0.0:32400",
+        (
+            "ajouter chain-plex@file + backend HTTPS + plex-transport@file"
+            if public_https
+            else "ajouter le middleware chain-no-auth@file"
+        ),
+        (
+            "publier 32400 sur 127.0.0.1 uniquement"
+            if public_https or localhost_port
+            else "retirer la publication 0.0.0.0:32400"
+        ),
         "retirer les montages " + (", ".join(dangerous) or "dangereux"),
         f"mode medias : {media_mode}",
         "ajouter les montages medias: " + (", ".join(media_mounts) or "aucun"),
@@ -1961,6 +2560,7 @@ def fix_plex(
             "ok": True,
             "applied": False,
             "dry_run": True,
+            "public_https": public_https,
             "message": "Plan de correction (aucune modification).",
             "changes": changes,
             "media_paths": detected_paths,
@@ -1969,10 +2569,9 @@ def fix_plex(
             "summary": scan["summary"],
         }
 
-    backup = _backup_dir(storage)
+    backup = backup_dir or _backup_dir(storage)
     _write_backup(scan, attrs, paths, backup)
 
-    live_preferences = scan_preferences(paths.get("preferences"))
     preferences_changed = {"changed": False}
     was_running = bool((attrs.get("State") or {}).get("Running"))
     if live_preferences.get("transcoder_h264_options") is not None:
@@ -2003,14 +2602,19 @@ def fix_plex(
             "message": f"helper introuvable: {helper}",
         }
 
+    desired = desired_public_url(attrs, live_preferences)
+    host = urllib.parse.urlsplit(desired).hostname if desired else None
+    label_overrides = plex_label_overrides(public_https, host)
     command = [
         _helper_python(source),
         str(helper),
         name,
         "--env",
         "VERSION=latest",
-        "--label",
-        "traefik.http.routers.plex-rtr.middlewares=chain-no-auth@file",
+        *sum(
+            (["--label", f"{key}={value}"] for key, value in label_overrides.items()),
+            [],
+        ),
         "--security-opt",
         "no-new-privileges:true",
         "--cap-drop",
@@ -2021,7 +2625,7 @@ def fix_plex(
         "--shm-size",
         "256m",
     ]
-    if localhost_port:
+    if public_https or localhost_port:
         command.extend(["--publish", f"{PLEX_PORT}=127.0.0.1:{PLEX_PORT}"])
     else:
         command.extend(["--unpublish", str(PLEX_PORT)])
@@ -2073,6 +2677,7 @@ def fix_plex(
         "action": "fix-plex",
         "ok": bool(health.get("ok")),
         "applied": True,
+        "public_https": public_https,
         "backup": str(backup),
         "changes": changes,
         "media_paths": detected_paths,
@@ -2084,16 +2689,397 @@ def fix_plex(
         "attack_path": after.get("attack_path") if after else None,
         "commands": [" ".join(command)],
     }
-    payload["remote_access"] = fix_remote_access(apply=True)
+    payload["remote_access"] = fix_remote_access(
+        apply=True, public_https=public_https
+    )
+    if public_https:
+        whitelist_ok, whitelist_output = install_crowdsec_plex_whitelist(
+            source, True
+        )
+        payload["crowdsec_whitelist"] = whitelist_output
+        if not whitelist_ok:
+            payload.setdefault("warnings", []).append(
+                "Whitelist CrowdSec Plex : " + whitelist_output
+            )
     if not payload["remote_access"].get("ok"):
         payload.setdefault("warnings", []).append(
             "Acces distant : " + str(payload["remote_access"].get("message") or "echec")
         )
+    invalidate_cache(storage)
     if use_cache:
         payload["audit_required"] = True
         payload["message"] = (
             "Correction appliquee. Relancer l'audit (option 1) pour actualiser."
         )
+    return payload
+
+
+def _ssdv2_env(source: Path, storage: Path) -> dict[str, str]:
+    environment = os.environ.copy()
+    environment["SETTINGS_SOURCE"] = str(source)
+    environment["SETTINGS_STORAGE"] = str(storage)
+    if not environment.get("USER"):
+        environment["USER"] = Path(
+            environment.get("HOME", str(Path.home()))
+        ).name
+    # Les playbooks Ansible utilisent lookup('env','MYUID'/'MYGID'/'MYGIDNAME').
+    environment.setdefault("MYUID", str(os.getuid()))
+    environment.setdefault("MYGID", str(os.getgid()))
+    if not environment.get("MYGIDNAME"):
+        try:
+            import grp
+
+            environment["MYGIDNAME"] = grp.getgrgid(os.getgid()).gr_name
+        except (ImportError, KeyError):
+            environment["MYGIDNAME"] = str(os.getgid())
+    return environment
+
+
+def _set_plex_public_flag(
+    source: Path, storage: Path, enabled: bool
+) -> tuple[bool, str]:
+    """Ecrit plex.public_https dans account.yml via la fonction bash SSDV2."""
+    script = source / "includes" / "config" / "scripts" / "generique.sh"
+    if not script.is_file():
+        return False, f"generique.sh introuvable: {script}"
+    try:
+        result = subprocess.run(
+            [
+                "/bin/bash",
+                str(script),
+                "manage_account_yml",
+                "plex.public_https",
+                "true" if enabled else "false",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=180,
+            env=_ssdv2_env(source, storage),
+            cwd=str(source),
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return False, str(exc)
+    output = (result.stdout + "\n" + result.stderr).strip()
+    if result.returncode != 0 or "impossible de continuer" in output.lower():
+        return False, output[:500] or "manage_account_yml en echec"
+    return True, output[:500]
+
+
+def _run_ansible_playbook(
+    source: Path,
+    storage: Path,
+    playbook: Path,
+    extra_vars: dict[str, str] | None = None,
+    timeout: int = 1800,
+) -> tuple[bool, str, list[str]]:
+    if not playbook.is_file():
+        return False, f"playbook introuvable: {playbook}", []
+    command = ["ansible-playbook", str(playbook)]
+    for key, value in (extra_vars or {}).items():
+        command.extend(["--extra-vars", f"{key}={value}"])
+    try:
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            env=_ssdv2_env(source, storage),
+            cwd=str(source),
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return False, str(exc), [" ".join(command)]
+    output = (result.stdout + "\n" + result.stderr).strip()
+    return result.returncode == 0, output[-2000:], [" ".join(command)]
+
+
+def _curl_status(url: str, host: str) -> int | None:
+    if not shutil.which("curl"):
+        return None
+    import time
+
+    for attempt in range(3):
+        try:
+            result = run_cmd(
+                [
+                    "curl",
+                    "-k",
+                    "-s",
+                    "-o",
+                    "/dev/null",
+                    "-w",
+                    "%{http_code}",
+                    "--resolve",
+                    f"{host}:443:127.0.0.1",
+                    url,
+                ],
+                timeout=20,
+            )
+        except ToolError:
+            result = None
+        if result is not None and result.returncode == 0:
+            try:
+                return int(result.stdout.strip()[-3:])
+            except ValueError:
+                return None
+        if attempt < 2:
+            time.sleep(2)
+    return None
+
+
+def _validate_public_https(desired: str | None, attrs: dict, scan: dict) -> dict:
+    host = urllib.parse.urlsplit(desired).hostname if desired else None
+    labels = scan_traefik(attrs)
+    prefs = (scan.get("container") or {}).get("preferences") or {}
+    rules = (scan.get("container") or {}).get("traefik_rules") or {}
+    ports = [
+        port
+        for port in scan_ports(attrs)
+        if str(port.get("container_port") or "").startswith(str(PLEX_PORT))
+    ]
+    checks = {
+        "chain_plex": bool(labels.get("chain_plex")),
+        "backend_https": labels.get("scheme") == "https",
+        "transport": str(labels.get("serverstransport") or "") == PLEX_TRANSPORT,
+        "loopback_only": bool(ports)
+        and all(port.get("host_ip") == "127.0.0.1" for port in ports),
+        "secure_required": str(prefs.get("secure_connections") or "") == "0",
+        "relay_disabled": str(prefs.get("relay_enabled") or "") == "0",
+        "published": str(prefs.get("publish_server_on_plex_online_key") or "") == "1",
+        "allowlist": bool(rules.get("available"))
+        and bool(rules.get("non_plex_chains"))
+        and all((rules.get("non_plex_chains") or {}).values()),
+        "chain_plex_no_allowlist": bool(rules.get("chain_plex"))
+        and PLEX_ALLOWLIST_MIDDLEWARE not in (rules.get("chain_plex") or []),
+    }
+    if host:
+        checks["identity"] = _curl_status(f"https://{host}/identity", host) == 200
+        checks["web"] = _curl_status(f"https://{host}/web", host) in (
+            301,
+            302,
+            303,
+            307,
+            308,
+        )
+    return {
+        "ok": all(bool(value) for value in checks.values()),
+        "host": host,
+        "checks": checks,
+    }
+
+
+def public_https(
+    apply: bool = False, disable: bool = False, use_cache: bool = False
+) -> dict:
+    """Active/desactive le mode Plex public HTTPS (opt-in)."""
+    source, storage = settings_paths()
+    if use_cache and load_cached_scan(storage) is None:
+        return {
+            "schema": SCHEMA_VERSION,
+            "action": "public-https",
+            "ok": False,
+            "applied": False,
+            "message": (
+                "Aucun audit en cache. Relancer l'audit (option 1 / scan) "
+                "ou retirer --use-cache."
+            ),
+        }
+    name = find_plex_container()
+    if not name:
+        return {
+            "schema": SCHEMA_VERSION,
+            "action": "public-https",
+            "ok": False,
+            "applied": False,
+            "message": "conteneur Plex introuvable",
+        }
+    attrs = inspect_container(name)
+    paths = plex_paths(attrs)
+    preferences = scan_preferences(paths.get("preferences"))
+    traefik = scan_traefik(attrs)
+    desired = desired_public_url(attrs, preferences)
+    target = not disable
+    changes = (
+        [
+            "activer plex.public_https dans account.yml",
+            "passer le DNS Plex en DNS-only (gris)",
+            "regenerer Traefik : allowlist Cloudflare sur les chaines non-Plex",
+            "recreer Plex : chain-plex@file, backend HTTPS, 32400 loopback",
+            "appliquer secureConnections=0, RelayEnabled=0, Publish=1",
+            f"customConnections -> {desired or 'https://plex.<domaine>'}",
+        ]
+        if target
+        else [
+            "desactiver plex.public_https dans account.yml",
+            "remettre le DNS Plex en proxied Cloudflare",
+            "regenerer Traefik sans allowlist sur les chaines non-Plex",
+            "recreer Plex : chain-no-auth@file, backend HTTP",
+        ]
+    )
+    payload = {
+        "schema": SCHEMA_VERSION,
+        "action": "public-https" if target else "public-https-disable",
+        "ok": True,
+        "applied": False,
+        "public_https": target,
+        "previous_public_https": bool(traefik.get("public_https")),
+        "desired_url": desired,
+        "changes": changes,
+    }
+    if not apply:
+        payload["dry_run"] = True
+        payload["message"] = (
+            "Plan mode Plex public HTTPS (aucune modification)."
+            if target
+            else "Plan retour au mode Cloudflare (aucune modification)."
+        )
+        return payload
+    if target and not desired:
+        payload["ok"] = False
+        payload["message"] = (
+            "URL publique Plex introuvable (label Traefik Host ou customConnections)"
+        )
+        return payload
+
+    try:
+        scan = build_scan()
+    except ToolError as exc:
+        scan = {"container": {"name": name}, "summary": {"status": "unknown"}, "error": str(exc)}
+    if (scan.get("summary") or {}).get("compromised"):
+        return {
+            "schema": SCHEMA_VERSION,
+            "action": "public-https",
+            "ok": False,
+            "applied": False,
+            "message": (
+                "IoC de compromission detecte : activation refusee. "
+                "Utiliser quarantine, rotation des secrets et restauration."
+            ),
+            "summary": scan.get("summary"),
+        }
+    backup = _backup_dir(storage)
+    rules_dir = storage / DEFAULT_TRAEFIK_RULES
+    extra_files: dict[str, str] = {}
+    for rule_name in ("middlewares.toml", "middlewares-chains.toml"):
+        rule_path = rules_dir / rule_name
+        if rule_path.is_file():
+            try:
+                extra_files[f"traefik/{rule_name}"] = rule_path.read_text(
+                    encoding="utf-8"
+                )
+            except OSError:
+                pass
+    state = {
+        "public_https_before": bool(traefik.get("public_https")),
+        "cloudflare_proxied_before": not bool(traefik.get("public_https")),
+    }
+    _write_backup(
+        scan,
+        attrs,
+        paths,
+        backup,
+        extra_files=extra_files,
+        state=state,
+    )
+
+    flag_ok, flag_output = _set_plex_public_flag(source, storage, target)
+    if not flag_ok:
+        payload.update(
+            {
+                "ok": False,
+                "backup": str(backup),
+                "message": f"ecriture de plex.public_https en echec: {flag_output}",
+            }
+        )
+        return payload
+
+    whitelist_ok, whitelist_output = install_crowdsec_plex_whitelist(source, target)
+    payload["crowdsec_whitelist"] = whitelist_output
+    if not whitelist_ok:
+        payload.setdefault("warnings", []).append(
+            "Whitelist CrowdSec Plex : " + whitelist_output
+        )
+
+    traefik_ok, traefik_output, traefik_commands = _run_ansible_playbook(
+        source,
+        storage,
+        source / "includes" / "dockerapps" / "vars" / "traefik.yml",
+    )
+    payload["traefik_commands"] = traefik_commands
+    if not traefik_ok:
+        payload.update(
+            {
+                "ok": False,
+                "backup": str(backup),
+                "message": "regeneration Traefik en echec",
+                "traefik_output": traefik_output,
+            }
+        )
+        return payload
+
+    dns_ok, dns_output, dns_commands = _run_ansible_playbook(
+        source,
+        storage,
+        source / "includes" / "config" / "playbooks" / "plex_dns.yml",
+        {"plex_dns_proxied": "false" if target else "true"},
+    )
+    payload["dns_commands"] = dns_commands
+    if not dns_ok:
+        payload.setdefault("warnings", []).append(
+            "DNS Plex non mis a jour : " + dns_output[:300]
+        )
+    elif "Cloudflare n'est pas configure" in dns_output:
+        payload.setdefault("warnings", []).append(
+            "Cloudflare non configure : creer manuellement un A DNS-only "
+            "pour plex.<domaine>."
+        )
+
+    plex_payload = fix_plex(
+        apply=True,
+        public_https=target,
+        use_cache=use_cache,
+        backup_dir=backup,
+        no_pull=True,
+    )
+    payload["plex"] = plex_payload
+    payload["applied"] = bool(plex_payload.get("applied"))
+    if not plex_payload.get("ok"):
+        payload["ok"] = False
+        payload["message"] = (
+            plex_payload.get("message") or "recreation Plex en echec"
+        )
+        payload["backup"] = str(backup)
+        return payload
+
+    if target:
+        validation = {"ok": False, "message": "validation impossible"}
+        try:
+            after = build_scan()
+            try:
+                after_attrs = inspect_container(name)
+            except ToolError:
+                after_attrs = attrs
+            validation = _validate_public_https(desired, after_attrs, after)
+            payload["summary"] = after.get("summary")
+        except ToolError as exc:
+            validation["message"] = str(exc)
+    else:
+        validation = {
+            "ok": bool(plex_payload.get("ok")),
+            "checks": {"plex_recreate": bool(plex_payload.get("ok"))},
+        }
+    payload["validation"] = validation
+    payload["backup"] = str(backup)
+    payload["ok"] = bool(plex_payload.get("ok")) and bool(validation.get("ok"))
+    invalidate_cache(storage)
+    payload["message"] = (
+        "Mode Plex public HTTPS actif."
+        if target and payload["ok"]
+        else "Retour au mode Cloudflare effectue."
+        if not target and payload["ok"]
+        else "Mode applique mais validation incomplete ; verifier les checks."
+    )
     return payload
 
 
@@ -2231,6 +3217,7 @@ def quarantine(apply: bool = False) -> dict:
 
 
 def rollback(backup: Path, apply: bool = False) -> dict:
+    backup = Path(backup)
     inspect_file = backup / "inspect.json"
     if not inspect_file.is_file():
         return {
@@ -2239,7 +3226,7 @@ def rollback(backup: Path, apply: bool = False) -> dict:
             "ok": False,
             "message": f"inspect.json absent: {inspect_file}",
         }
-    source, _ = settings_paths()
+    source, storage = settings_paths()
     helper = source / "includes" / "config" / "scripts" / "recreate_app_container.py"
     command = [
         _helper_python(source),
@@ -2249,25 +3236,117 @@ def rollback(backup: Path, apply: bool = False) -> dict:
         str(inspect_file),
         "--no-pull",
     ]
+    state: dict = {}
+    state_file = backup / "state.json"
+    if state_file.is_file():
+        try:
+            loaded = json.loads(state_file.read_text(encoding="utf-8"))
+            if isinstance(loaded, dict):
+                state = loaded
+        except (OSError, json.JSONDecodeError):
+            state = {}
+    restored: list[str] = []
+    warnings: list[str] = []
     if not apply:
+        if state:
+            restored.extend(
+                [
+                    "fichiers Traefik depuis " + str(backup / "traefik"),
+                    "Preferences.xml",
+                    "plex.public_https=" + str(state.get("public_https_before")),
+                    "DNS Plex proxied=" + str(state.get("cloudflare_proxied_before")),
+                ]
+            )
         return {
             "schema": SCHEMA_VERSION,
             "action": "rollback",
             "ok": True,
             "applied": False,
             "dry_run": True,
+            "restore": restored,
             "commands": [" ".join(command)],
         }
+
+    attrs: dict = {}
+    try:
+        attrs_raw = json.loads(inspect_file.read_text(encoding="utf-8"))
+        attrs = attrs_raw[0] if isinstance(attrs_raw, list) and attrs_raw else attrs_raw
+        paths = plex_paths(attrs if isinstance(attrs, dict) else {})
+    except (OSError, json.JSONDecodeError):
+        paths = {"preferences": None}
+
+    # 1. Preferences.xml (avant recreation du conteneur).
+    preferences_backup = backup / "Preferences.xml"
+    preferences_target = paths.get("preferences")
+    if preferences_backup.is_file() and preferences_target:
+        run_cmd(["docker", "stop", PLEX_NAME], timeout=60)
+        target = Path(preferences_target)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(preferences_backup, target)
+        try:
+            os.chmod(target, 0o600)
+        except OSError:
+            pass
+        restored.append("Preferences.xml")
+
+    # 2. Regles Traefik (avant recreation du conteneur).
+    rules_backup = backup / "traefik"
+    rules_target = storage / DEFAULT_TRAEFIK_RULES
+    if rules_backup.is_dir():
+        rules_target.mkdir(parents=True, exist_ok=True)
+        for rule_file in rules_backup.iterdir():
+            if not rule_file.is_file():
+                continue
+            shutil.copy2(rule_file, rules_target / rule_file.name)
+            restored.append(f"Traefik/{rule_file.name}")
+        run_cmd(["docker", "restart", "traefik"], timeout=60)
+
+    # 3. Flag account.yml.
+    if "public_https_before" in state:
+        flag_ok, flag_output = _set_plex_public_flag(
+            source, storage, bool(state.get("public_https_before"))
+        )
+        if flag_ok:
+            restored.append(
+                "plex.public_https=" + str(state.get("public_https_before"))
+            )
+        else:
+            warnings.append(f"flag plex.public_https non restaure: {flag_output}")
+
+    # 4. DNS Plex.
+    if "cloudflare_proxied_before" in state:
+        dns_ok, dns_output, _ = _run_ansible_playbook(
+            source,
+            storage,
+            source / "includes" / "config" / "playbooks" / "plex_dns.yml",
+            {
+                "plex_dns_proxied": "true"
+                if state.get("cloudflare_proxied_before")
+                else "false"
+            },
+        )
+        if dns_ok:
+            restored.append(
+                "DNS proxied=" + str(state.get("cloudflare_proxied_before"))
+            )
+        else:
+            warnings.append(f"DNS non restaure: {dns_output[:300]}")
+
+    # 5. Conteneur Plex depuis l'inspect sauvegarde.
     result = run_cmd(command, timeout=900)
     try:
         payload = json.loads(result.stdout.strip().splitlines()[-1])
     except (json.JSONDecodeError, IndexError):
         payload = {"ok": False, "error": result.stderr.strip()}
+    health = _wait_identity(PLEX_NAME, attrs, timeout=120)
     return {
         "schema": SCHEMA_VERSION,
         "action": "rollback",
         "ok": result.returncode == 0 and bool(payload.get("ok")),
         "applied": True,
+        "restore": restored,
+        "warnings": warnings,
+        "health": health,
         "commands": [" ".join(command)],
         "result": payload,
     }
@@ -2301,6 +3380,14 @@ def selftest(as_json: bool = False) -> int:
             prefs.write_text('<Preferences TranscoderH264Options="dump-yuv=/x"/>')
             data = scan_preferences(prefs)
             assert data["transcoder_h264_options"] == "dump-yuv=/x"
+            prefs.write_text(
+                '<Preferences secureConnections="0" RelayEnabled="0" '
+                'PublishServerOnPlexOnlineKey="1" />'
+            )
+            data = scan_preferences(prefs)
+            assert data["secure_connections"] == "0"
+            assert data["relay_enabled"] == "0"
+            assert data["publish_server_on_plex_online_key"] == "1"
             prefs.write_text("<Preferences />")
             data = scan_preferences(prefs)
             assert data["transcoder_h264_options"] is None
@@ -2375,7 +3462,48 @@ def selftest(as_json: bool = False) -> int:
                     }
                 }
             }
-            assert desired_public_url(attrs, {}) == "https://plex.example.com:443"
+            assert desired_public_url(attrs, {}) == "https://plex.example.com"
+            public_labels = plex_label_overrides(True, "plex.example.com")
+            assert public_labels["traefik.http.routers.plex-rtr.middlewares"] == PLEX_PUBLIC_CHAIN
+            assert public_labels["traefik.http.services.plex-svc.loadbalancer.server.scheme"] == "https"
+            assert public_labels["traefik.http.services.plex-svc.loadbalancer.serverstransport"] == PLEX_TRANSPORT
+            private_labels = plex_label_overrides(False)
+            assert private_labels["traefik.http.routers.plex-rtr.middlewares"] == "chain-no-auth@file"
+            assert private_labels["traefik.http.services.plex-svc.loadbalancer.server.scheme"] == ""
+
+            rules = root / "rules"
+            rules.mkdir()
+            (rules / "middlewares.toml").write_text(
+                "[http.middlewares.middlewares-allowlist.ipAllowList]\n"
+                '  sourceRange = ["10.0.0.0/8", "127.0.0.1/32", '
+                '"172.16.0.0/12", "192.168.0.0/16", "100.64.0.0/10", '
+                '"104.16.0.0/12"]\n'
+                "[http.serversTransports.plex-transport]\n"
+                "  insecureSkipVerify = true\n",
+                encoding="utf-8",
+            )
+            (rules / "middlewares-chains.toml").write_text(
+                "[http.middlewares.chain-no-auth.chain]\n"
+                '  middlewares = ["middlewares-allowlist@file"]\n'
+                "[http.middlewares.chain-plex.chain]\n"
+                '  middlewares = ["crowdsec@file"]\n',
+                encoding="utf-8",
+            )
+            rules_data = scan_traefik_rules(rules)
+            assert rules_data["available"] is True
+            assert rules_data["chain_plex"] == ["crowdsec@file"]
+            assert rules_data["non_plex_chains"]["chain-no-auth"] is True
+            assert rules_data["has_transport"] is True
+            assert rules_data["allowlist_ips"]
+
+            token_log = root / "token.log"
+            token_log.write_text(
+                '{"RequestPath":"/library/parts/1?a=1&X-Plex-Token=abc"}\n',
+                encoding="utf-8",
+            )
+            leak = scan_traefik_token_leak(token_log)
+            assert leak["matches"] == 1
+            assert "abc" not in (leak["samples"][0] if leak["samples"] else "")
 
             assert _iptables_commands([32400], None, False)[0][:3] == [
                 "iptables",
@@ -2440,6 +3568,20 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="utiliser le dernier scan en cache (pas de scan implicite)",
     )
+    fix_mode = fix.add_mutually_exclusive_group()
+    fix_mode.add_argument(
+        "--public-https",
+        dest="public_https",
+        action="store_true",
+        default=None,
+        help="forcer le mode Plex public HTTPS (chain-plex + backend HTTPS)",
+    )
+    fix_mode.add_argument(
+        "--no-public-https",
+        dest="public_https",
+        action="store_false",
+        help="forcer le mode historique (chain-no-auth + backend HTTP)",
+    )
 
     close = sub.add_parser("close-port", parents=[common], help="ferme les ports via DOCKER-USER")
     close.add_argument("--apply", action="store_true", help="appliquer")
@@ -2451,9 +3593,40 @@ def build_parser() -> argparse.ArgumentParser:
     remote = sub.add_parser(
         "fix-remote",
         parents=[common],
-        help="customConnections HTTPS et desactivation du port manuel 32400",
+        help="customConnections HTTPS, prefs Plex et port manuel 32400",
     )
     remote.add_argument("--apply", action="store_true", help="appliquer")
+    remote.add_argument(
+        "--public-https",
+        dest="public_https",
+        action="store_true",
+        default=None,
+        help="appliquer aussi secureConnections=Required, Relay=0, Publish=1",
+    )
+    remote.add_argument(
+        "--no-public-https",
+        dest="public_https",
+        action="store_false",
+        help="forcer le mode historique (Preferred, backend HTTP)",
+    )
+
+    public_parser = sub.add_parser(
+        "public-https",
+        parents=[common],
+        help="active/desactive Plex public HTTPS (DNS-only, 443, allowlist)",
+    )
+    public_parser.add_argument("--apply", action="store_true", help="appliquer")
+    public_parser.add_argument("--dry-run", action="store_true", help="afficher le plan")
+    public_parser.add_argument(
+        "--disable",
+        action="store_true",
+        help="revenir au mode Cloudflare (Plex non public)",
+    )
+    public_parser.add_argument(
+        "--use-cache",
+        action="store_true",
+        help="utiliser le dernier scan en cache",
+    )
 
     quarantine_parser = sub.add_parser("quarantine", parents=[common], help="arrete et isole Plex")
     quarantine_parser.add_argument("--apply", action="store_true", help="appliquer")
@@ -2528,6 +3701,7 @@ def main(argv: list[str] | None = None) -> int:
                 no_pull=args.no_pull,
                 use_cache=bool(args.use_cache),
                 media_mode=args.media_mode,
+                public_https=args.public_https,
             )
             emit(payload, as_json)
             return 0 if payload.get("ok") else 1
@@ -2542,7 +3716,17 @@ def main(argv: list[str] | None = None) -> int:
             emit(payload, as_json)
             return 0 if payload.get("ok") else 1
         if args.command == "fix-remote":
-            payload = fix_remote_access(apply=bool(args.apply))
+            payload = fix_remote_access(
+                apply=bool(args.apply), public_https=args.public_https
+            )
+            emit(payload, as_json)
+            return 0 if payload.get("ok") else 1
+        if args.command == "public-https":
+            payload = public_https(
+                apply=bool(args.apply and not args.dry_run),
+                disable=bool(args.disable),
+                use_cache=bool(args.use_cache),
+            )
             emit(payload, as_json)
             return 0 if payload.get("ok") else 1
         if args.command == "quarantine":
