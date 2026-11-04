@@ -1,0 +1,37 @@
+---
+# SSDV2 Relay : passerelle API AllDebrid via un Cloudflare Worker personnel.
+# Mode serve-api : HTTP privé sans CA, aucun flux vidéo.
+# Stream Fusion / Taskiq utilisent AD_BASE_URL=http://ssdv2-relay:1080
+# et ne doivent pas définir PROXY_URL.
+pgrole: 'ssdv2-relay'
+intport: '1080'
+
+image: 'ghcr.io/projetssd/ssdv2-relay:latest'
+pull_image: true
+
+pg_env:
+  RELAY_WORKER_URL: "{{ RELAY_WORKER_URL }}"
+  RELAY_TOKEN: "{{ RELAY_TOKEN }}"
+  RELAY_LISTEN_HOST: "0.0.0.0"
+  RELAY_LISTEN_PORT: "1080"
+  NODE_ENV: "production"
+
+traefik_labels_enabled: false
+
+specific_docker_info:
+  name: 'ssdv2-relay'
+  command:
+    - 'serve-api'
+  exposed_ports:
+    - '1080'
+  read_only: true
+  init: true
+  cap_drop:
+    - 'ALL'
+  security_opts:
+    - 'no-new-privileges:true'
+  restart_policy: 'unless-stopped'
+  log_driver: 'local'
+  log_options:
+    max-size: '10m'
+    max-file: '3'

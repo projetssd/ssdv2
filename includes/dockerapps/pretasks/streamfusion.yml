@@ -1,4 +1,27 @@
 ---
+# SSDV2 Relay est requis pour AllDebrid depuis la bascule AD_BASE_URL.
+- name: Vérifier la présence de SSD Relay
+  ansible.builtin.command:
+    cmd: docker inspect -f '{% raw %}{{.State.Running}}{% endraw %}' ssdv2-relay
+  register: streamfusion_relay_check
+  failed_when: false
+  changed_when: false
+
+- name: Rappeler que SSD Relay est requis avant l'installation
+  ansible.builtin.debug:
+    msg:
+      - "⚠️ SSDV2 Relay est requis pour AllDebrid."
+      - "Installez l'application « ssdv2-relay » avant de continuer."
+      - "Sans relais, Stream Fusion démarrera mais AllDebrid ne fonctionnera pas."
+  when: (streamfusion_relay_check.stdout | default('') | trim) != 'true'
+
+- name: Prendre connaissance avant de continuer
+  ansible.builtin.pause:
+    prompt: |
+      SSDV2_PROMPT {"id": "streamfusion.relay_install_first", "label": "J'ai compris", "kind": "confirm", "secret": false}
+      Installez SSDV2 Relay avant de continuer, puis appuyez sur Entrée.
+  when: (streamfusion_relay_check.stdout | default('') | trim) != 'true'
+
 - name: Ask for TMDB_API_KEY only if not provided
   pause:
     prompt: |
@@ -124,7 +147,6 @@
         - stremio-postgres
         - stremio-redis
         - stream-fusion
-        - warp-data
         - dmm-hashlists
         - sfr-db-backups
         - imdb-db
@@ -572,26 +594,6 @@
         networks:
           - name: traefik_proxy
 
-    - name: Deploy Warp
-      community.docker.docker_container:
-        name: warp
-        image: caomingjun/warp:latest
-        state: started
-        restart_policy: always
-        exposed_ports:
-          - "1080"
-        env:
-          WARP_SLEEP: "2"
-        capabilities:
-          - NET_ADMIN
-        sysctls:
-          net.ipv6.conf.all.disable_ipv6: "0"
-          net.ipv4.conf.all.src_valid_mark: "1"
-        volumes:
-          - warp-data:/var/lib/cloudflare-warp
-        networks:
-          - name: traefik_proxy
-
     - name: Deploy Taskiq worker
       community.docker.docker_container:
         name: taskiq-worker
@@ -613,7 +615,10 @@
           PG_OWNER_ROLE: "streamfusion_owner"
 
           TZ: "Europe/Paris"
-          PROXY_URL: "http://warp:1080"
+          # API AllDebrid via SSDV2 Relay (HTTP privé, sans CA).
+          # Pas de PROXY_URL : sinon la requête vers le relais passerait par
+          # WARP, qui refuse les destinations privées (503).
+          AD_BASE_URL: "http://ssdv2-relay:1080"
 
           REDIS_HOST: "stremio-redis"
           PG_HOST: "stremio-postgres"
