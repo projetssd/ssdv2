@@ -53,6 +53,33 @@ bonne action. 443 reste exposé sans middleware : ajouter
 ssdv2ctl security plex-cve scan --json | jq '.attack_path, .evidence'
 ```
 
+## Mode Plex public HTTPS
+
+Quand `plex.public_https=true` :
+
+- Plex est routé sur `chain-plex@file` (sans allowlist) ;
+- les autres applications utilisent l'allowlist Cloudflare ;
+- 32400 reste en loopback uniquement ;
+- le DNS Plex est DNS-only.
+
+Vérifier la séparation :
+
+```bash
+curl -k -s -o /dev/null -w '%{http_code}\n' \
+  --resolve plex.<domaine>:443:127.0.0.1 https://plex.<domaine>/identity
+# 200
+
+curl -k -s -o /dev/null -w '%{http_code}\n' https://sonarr.<domaine>/
+# 403 attendu depuis une IP publique non Cloudflare
+```
+
+> Depuis le VPS, `127.0.0.1` est dans l'allowlist : le test local renvoie
+> l'authentification normale, pas 403.
+
+`ssdv2ctl security plex-cve scan --json` expose `public_https`, les règles
+Traefik (`chain_plex`, `allowlist_ips`, `has_transport`) et les tokens Plex
+présents dans `access.log`.
+
 ## Limites
 
 - Le log Traefik est volumineux et peut être roté.

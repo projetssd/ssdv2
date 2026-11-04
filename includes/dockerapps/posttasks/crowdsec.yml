@@ -138,6 +138,40 @@
     mode: '0644'
   register: acquis_copy
 
+# --- Whitelist Plex -------------------------------------------------------
+# Plex Web et Infuse parcourent legitimement la bibliotheque (vignettes,
+# composites, hubs). Sans whitelist, CrowdSec les prend pour du scan
+# (http-probing / http-crawl-non_statics) et bannit l'IP du foyer, ce qui
+# coupe aussi l'acces aux autres apps. La whitelist est limitee au routeur
+# plex-rtr et aux chemins de lecture.
+- name: "Determiner si Plex est en mode public HTTPS"
+  ansible.builtin.set_fact:
+    plex_public_https_active: "{{ (plex | default({})).public_https | default(false) | bool }}"
+
+- name: "Deployer la whitelist CrowdSec des clients Plex"
+  become: true
+  ansible.builtin.copy:
+    src: "{{ settings.source }}/includes/config/files/crowdsec/plex-clients-whitelist.yaml"
+    dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/crowdsec/etc/parsers/s02-enrich/plex-clients-whitelist.yaml"
+    owner: root
+    group: root
+    mode: '0644'
+  when: plex_public_https_active
+  register: plex_whitelist_copy
+
+- name: "Retirer la whitelist CrowdSec Plex si le mode public est desactive"
+  become: true
+  ansible.builtin.file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/crowdsec/etc/parsers/s02-enrich/plex-clients-whitelist.yaml"
+    state: absent
+  when: not plex_public_https_active
+  register: plex_whitelist_remove
+
+- name: "Recharger CrowdSec apres changement de whitelist"
+  become: true
+  ansible.builtin.command: docker kill -s HUP crowdsec
+  when: (plex_whitelist_copy is changed) or (plex_whitelist_remove is changed)
+
 # --- Partie VI. Protéger l'hôte Docker avec CrowdSec (firewall bouncer iptables) ---
 
 - name: Vérifier que CrowdSec est lancé

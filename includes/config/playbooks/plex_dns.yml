@@ -1,0 +1,27 @@
+---
+# Met a jour uniquement l'enregistrement DNS de Plex.
+# Utilise par l'action `plexcve public-https` pour basculer le DNS en
+# DNS-only (gris) lors de l'activation, puis en proxied lors du rollback.
+- name: Mettre a jour l'enregistrement DNS Plex
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - "{{ playbook_dir }}/../../dockerapps/templates/generique/generique.yml"
+
+  vars:
+    pgrole: 'plex'
+    subdomain: "{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}"
+
+  tasks:
+    - name: "Set Plex DNS Record on Cloudflare (proxied={{ plex_dns_proxied | default(true) }})"
+      ansible.builtin.include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
+      vars:
+        proxied: "{{ plex_dns_proxied | default(true) | bool }}"
+      when: cloudflare_enabled
+
+    - name: "DNS Plex non configure (Cloudflare absent)"
+      ansible.builtin.debug:
+        msg: >-
+          Cloudflare n'est pas configure. Creer manuellement un enregistrement A
+          DNS-only pour {{ subdomain }}.{{ user.domain }} vers {{ network.ipv4 }}.
+      when: not cloudflare_enabled

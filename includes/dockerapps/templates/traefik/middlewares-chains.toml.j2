@@ -1,3 +1,8 @@
+# Les chaines non-Plex recoivent l'allowlist Cloudflare (uniquement)
+# uniquement lorsque le mode Plex public HTTPS est actif (opt-in).
+{% set cloudflare_only = traefik_cloudflare_only | default(false) | bool %}
+{% set allowlist_tail = ',\n    "middlewares-allowlist@file"' if cloudflare_only else '' %}
+{% set allowlist_entry = '    "middlewares-allowlist@file",\n' if cloudflare_only else '' %}
 # ==============================
 # CHAIN NO AUTH
 # ==============================
@@ -6,7 +11,7 @@
   middlewares = [
     "crowdsec@file",
     "middlewares-rate-limit@file",
-    "middlewares-secure-headers@file"
+    "middlewares-secure-headers@file"{{ allowlist_tail }}
   ]
 
 
@@ -19,7 +24,7 @@
     "crowdsec@file",
     "middlewares-rate-limit@file",
     "middlewares-secure-headers@file",
-    "middlewares-basic-auth@file"
+{{ allowlist_entry }}    "middlewares-basic-auth@file"
   ]
 
 
@@ -32,7 +37,7 @@
     "crowdsec@file",
     "middlewares-rate-limit@file",
     "middlewares-secure-headers@file",
-    "middlewares-oauth@file"
+{{ allowlist_entry }}    "middlewares-oauth@file"
   ]
 
 
@@ -45,7 +50,7 @@
     "crowdsec@file",
     "middlewares-rate-limit@file",
     "middlewares-secure-headers@file",
-    "middlewares-authelia@file"
+{{ allowlist_entry }}    "middlewares-authelia@file"
   ]
 
 
@@ -58,6 +63,19 @@
     "crowdsec@file",
     "middlewares-rate-limit@file",
     "middlewares-secure-headers@file",
-    "middlewares-oauth2-errors@file",
+{{ allowlist_entry }}    "middlewares-oauth2-errors@file",
     "middlewares-oauth2-proxy@file"
+  ]
+
+
+# ==============================
+# CHAIN PLEX (public HTTPS, WAF/CrowdSec, SANS allowlist)
+# Plex doit rester joignable directement en 443 depuis les clients Plex.
+# ==============================
+
+[http.middlewares.chain-plex.chain]
+  middlewares = [
+    "crowdsec@file",
+    "middlewares-rate-limit@file",
+    "middlewares-secure-headers@file"
   ]

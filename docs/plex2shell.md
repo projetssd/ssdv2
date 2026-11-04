@@ -32,8 +32,10 @@ Audit Plex (plex2shell)** couvrent :
 2. **Ports** : 32400 publié sur `0.0.0.0`.
 3. **Montages** : `$HOME`, `/tmp`, `/dev/shm`, `/mnt` en écriture.
 4. **Sécurité** : `no-new-privileges`, `cap_drop`, rootfs.
-5. **Traefik** : middleware `chain-no-auth@file`.
-6. **Preferences.xml** : `TranscoderH264Options`.
+5. **Traefik** : `chain-no-auth@file` (mode historique) ou `chain-plex@file`
+   + backend HTTPS + `plex-transport@file` (mode public HTTPS).
+6. **Preferences.xml** : `TranscoderH264Options`, `secureConnections`,
+   `RelayEnabled`, `PublishServerOnPlexOnlineKey`, `customConnections`.
 7. **Codecs/** : `zz*.so`, `.so` hors bundle, queue ELF uniforme.
 8. **Logs Plex** : tentatives, codes, IP sources.
 9. **Corrélation Traefik** : 32400 direct ou 443.
@@ -50,10 +52,18 @@ sur le dernier audit en cache (`${SETTINGS_STORAGE}/conf/plexcve-status.json`).
   correction, il faut relancer l'option 1 pour actualiser.
 - **Options 3 et 5** : ne scannent pas ; elles invalident aussi le cache après
   action.
+- **Option 9** : active le mode opt-in **Plex public HTTPS**
+  (`public-https --apply`).
+- **Option 10** : restaure une sauvegarde `plexsec` (Plex, Preferences.xml,
+  règles Traefik, DNS) via `rollback`.
 - Le menu reste ouvert après chaque action ; seul **8** revient au menu parent.
 - Les confirmations affichent explicitement `(o/n)`.
 - L'entête et le rapport affichent une **recommandation prioritaire** (fermer
   les ports, traiter Watchtower, etc.).
+- Le scan vérifie aussi le mode public HTTPS : `chain-plex`, backend
+  `scheme=https`, `plex-transport`, `secureConnections`, `RelayEnabled`,
+  `PublishServerOnPlexOnlineKey`, `customConnections` sans port, allowlist
+  non-Plex, loopback 32400 et tokens Plex dans `access.log`.
 
 ## Accès distant Plex
 
@@ -63,19 +73,24 @@ même si l'accès via le domaine fonctionne.
 
 Configuration correcte :
 
-- `customConnections = https://plex.<domaine>:443` **uniquement** ;
+- `customConnections = https://plex.<domaine>` **uniquement**, sans `:443` ;
 - `ManualPortMappingMode = 0` ;
 - `ManualPortMappingPort = 0` ;
-- pas de fallback `http://<ip>:32400` ;
-- Plex Relay possible en secours, avec bande passante limitée.
+- `secureConnections = 0` (Required) en mode public HTTPS ;
+- `RelayEnabled = 0` ;
+- `PublishServerOnPlexOnlineKey = 1` ;
+- pas de fallback `http://<ip>:32400`.
 
 ```bash
-ssdv2ctl security plex-cve fix-remote --apply
+ssdv2ctl security plex-cve fix-remote --apply --public-https
 ```
 
 Le statut Plex peut rester « non disponible » : il teste 32400. Les clients
 utilisent `customConnections` sur 443. Tester depuis la 4G avec l'application
 Plex. Ne pas rouvrir 32400 pour obtenir le voyant vert.
+
+Voir `docs/plex-public-https.md` pour le mode complet (DNS-only, 443,
+allowlist, rollback).
 
 ## Montages médias et symlinks
 
@@ -105,9 +120,15 @@ ssdv2ctl security plex-cve report
 ssdv2ctl security plex-cve logs
 ssdv2ctl security plex-cve fix-plex --dry-run
 ssdv2ctl security plex-cve fix-plex --apply
+ssdv2ctl security plex-cve fix-plex --apply --public-https
+ssdv2ctl security plex-cve public-https --dry-run
+ssdv2ctl security plex-cve public-https --apply
+ssdv2ctl security plex-cve public-https --disable --apply
+ssdv2ctl security plex-cve fix-remote --apply --public-https
 ssdv2ctl security plex-cve close-port --dry-run --ports 32400
 ssdv2ctl security plex-cve close-port --apply --ports 32400
 ssdv2ctl security plex-cve quarantine --apply
+ssdv2ctl security plex-cve rollback --backup <dossier> --apply
 ssdv2ctl security plex-cve selftest
 ```
 
@@ -126,7 +147,9 @@ Voir `docs/verification-32400-443.md`.
 
 1. Plex ≥ 1.43.3.10861, `VERSION=latest`.
 2. Aucun `published_ports` pour 32400 (ou `127.0.0.1:32400:32400`).
-3. `chain-no-auth@file` sur la route Plex 443.
+3. Mode historique : `chain-no-auth@file` sur la route Plex 443.
+   Mode public HTTPS : `chain-plex@file`, backend `scheme=https`,
+   `serverstransport=plex-transport@file`, entrypoint `https`.
 4. Retirer `$HOME`, `/tmp`, `/dev/shm` ; monter les médias en `:ro`.
 5. `no-new-privileges:true`, `cap_drop: ALL` + `cap_add: CHOWN, DAC_OVERRIDE,
    FOWNER, SETGID, SETUID` (s6/Plex), tmpfs `/tmp`.

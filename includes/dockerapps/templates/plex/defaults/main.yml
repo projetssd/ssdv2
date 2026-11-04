@@ -9,6 +9,16 @@
 ##########################################################################
 ---
 ################################
+# Mode public HTTPS (opt-in)
+################################
+
+# Stocke dans account.yml sous plex.public_https.
+# false (defaut) : comportement historique (chain-no-auth, backend HTTP).
+# true : https://plex.<domaine> en direct (DNS-only), backend HTTPS,
+#        allowlist Cloudflare sur les autres chaines.
+plex_public_https: "{{ (plex | default({})).public_https | default(false) | bool }}"
+
+################################
 # Folders
 ################################
 

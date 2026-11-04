@@ -133,6 +133,19 @@ def _parse_size(value: str | int | None) -> int | None:
     return number * factor
 
 
+def _apply_label_overrides(
+    existing: dict | None, overrides: dict[str, str] | None
+) -> dict[str, str]:
+    """Applique les labels ; une valeur vide supprime le label."""
+    labels = dict(existing or {})
+    for key, value in (overrides or {}).items():
+        if value == "":
+            labels.pop(key, None)
+        else:
+            labels[key] = value
+    return labels
+
+
 def _merge_list(existing: list | None, additions: list | None) -> list | None:
     if additions is None:
         return existing
@@ -304,8 +317,10 @@ def _create_container(
         ]
         environment.extend(f"{key}={value}" for key, value in merged_env.items())
 
-    labels = dict(cfg.get("Labels") or {})
-    labels.update(label_overrides or {})
+    # Convention : une surcharge `--label CLE=` (valeur vide) supprime le
+    # label. Utile pour revenir du mode Plex public HTTPS (scheme,
+    # serverstransport) sans recreer le conteneur depuis un inspect.
+    labels = _apply_label_overrides(cfg.get("Labels"), label_overrides)
     labels.update(overrides.get("labels") or {})
 
     drop_bind = overrides.get("drop_bind_destinations") or []
@@ -512,6 +527,10 @@ def run_selftest() -> int:
         api = _StubApi()
 
     try:
+        assert _apply_label_overrides(
+            {"traefik.scheme": "https", "keep": "1"},
+            {"traefik.scheme": "", "new": "2"},
+        ) == {"keep": "1", "new": "2"}
         assert _bind_destinations(["a:/b:ro", "c:/d"]) == {"/b", "/d"}
         assert _bind_destinations(None) == set()
         assert _filter_binds(

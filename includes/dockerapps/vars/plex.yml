@@ -57,6 +57,9 @@
       include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
       vars:
         subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
+        # Mode public HTTPS : DNS-only (gris) pour laisser les clients Plex
+        # se connecter directement a Traefik, sans proxy Cloudflare.
+        proxied: "{{ not plex_public_https }}"
       when: cloudflare_enabled
 
     - name: "Create Plex directories"
@@ -146,14 +149,22 @@
         default_labels:
           traefik.enable: 'true'
           ## HTTP Routers
-          traefik.http.routers.plex-rtr.entrypoints: 'http,https'
+          traefik.http.routers.plex-rtr.entrypoints: "{{ 'https' if plex_public_https | bool else 'http,https' }}"
           traefik.http.routers.plex-rtr.rule: 'Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`)'
           traefik.http.routers.plex-rtr.tls: 'true'
           traefik.http.routers.plex-rtr.service: 'plex-svc'
           traefik.http.routers.plex-rtr.tls.certresolver: 'letsencrypt'
-          traefik.http.routers.plex-rtr.middlewares: 'chain-no-auth@file'
+          traefik.http.routers.plex-rtr.middlewares: "{{ 'chain-plex@file' if plex_public_https | bool else 'chain-no-auth@file' }}"
           ## HTTP Services
           traefik.http.services.plex-svc.loadbalancer.server.port: '32400'
+
+    - name: 'Set Public HTTPS Labels'
+      set_fact:
+        default_labels: "{{ default_labels | combine({
+          'traefik.http.services.plex-svc.loadbalancer.server.scheme': 'https',
+          'traefik.http.services.plex-svc.loadbalancer.serverstransport': 'plex-transport@file'
+        }) }}"
+      when: plex_public_https | bool
 
     - name: "Create and start container"
       docker_container:
@@ -201,12 +212,18 @@
         host: 127.0.0.1
         timeout: 300
 
-    - name: "Set Custom server access URL for Remote Access"
+    # Le backend est en HTTPS local. On utilise validate_certs=no car le
+    # certificat Plex est un certificat plex.direct. secureConnections=0
+    # (Required) est applique en meme temps : l'API HTTP locale peut refuser
+    # la connexion selon la version de Plex.
+    - name: "Set Plex remote access preferences"
       vars:
-        plex_custom_url: "https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}:443"
+        plex_custom_url: "https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}"
+        plex_extra_prefs: "{{ '&secureConnections=0&RelayEnabled=0&PublishServerOnPlexOnlineKey=1' if plex_public_https | bool else '' }}"
       uri:
-        url: "http://127.0.0.1:32400/:/prefs?customConnections={{ plex_custom_url | urlencode }}&ManualPortMappingMode=0&ManualPortMappingPort=0"
+        url: "https://127.0.0.1:32400/:/prefs?customConnections={{ plex_custom_url | urlencode }}&ManualPortMappingMode=0&ManualPortMappingPort=0{{ plex_extra_prefs }}"
         method: PUT
+        validate_certs: no
         headers:
           X-Plex-Token: "{{ plex.token }}"
       register: custom_connections_resp

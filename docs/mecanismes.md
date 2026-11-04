@@ -197,6 +197,13 @@ seule fois (`apply_patches`), de façon idempotente.
 - **Plex 32400 vs 443** : les logs Plex ne donnent pas le port de destination.
   Utiliser `ssdv2ctl security plex-cve scan --json` qui corrèle avec le log
   d'accès Traefik (`attack_path`). Voir `docs/verification-32400-443.md`.
+- **Plex public HTTPS (opt-in)** : `plex.public_https=true` expose Plex sur
+  `https://plex.<domaine>` en DNS-only, avec `chain-plex@file` et backend
+  HTTPS `plex-transport`. Les autres applications passent derrière une
+  allowlist Cloudflare (`middlewares-allowlist@file`) :
+  l'accès direct public renvoie `403`. 32400 reste en loopback. Activer via
+  `ssdv2ctl security plex-cve public-https --apply` (ou menu, option 9).
+  Voir `docs/plex-public-https.md`.
 - **RC rclone de decypharr (`SEC-04`)** : decypharr lance son propre rclone RC
   sur le port 5572, sans authentification, accessible depuis les conteneurs du
   même réseau. Le service rclone de l'hôte n'expose plus de RC (corrigé), mais

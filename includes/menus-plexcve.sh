@@ -77,6 +77,9 @@ menu_plexcve() {
   local status summary_status version version_status version_env attack_path
   local attempts blocked success middleware port_public issues_count
   local last_audit has_status choice ports cache plex_conform recommendation recommendation2
+  local public_mode backup_root backup_dir backup_choice
+  local backup_index
+  local -a backup_list=()
   cache="$(plexcve_cache_file)"
 
   while true; do
@@ -94,6 +97,7 @@ menu_plexcve() {
     blocked="$(printf '%s' "${status}" | jq -r '.container.logs.blocked // 0' 2>/dev/null)"
     success="$(printf '%s' "${status}" | jq -r '.container.logs.success // 0' 2>/dev/null)"
     middleware="$(printf '%s' "${status}" | jq -r '.container.traefik.middlewares // "ABSENT"' 2>/dev/null)"
+    public_mode="$(printf '%s' "${status}" | jq -r 'if (.public_https == true or .container.public_https == true) then "oui" else "non" end' 2>/dev/null)"
     port_public="$(printf '%s' "${status}" | jq -r 'if ([.container.ports[]? | select(.host_ip == "0.0.0.0" or .host_ip == "::" or .host_ip == "")] | length) > 0 then "PUBLIE" else "ferme" end' 2>/dev/null)"
     issues_count="$(printf '%s' "${status}" | jq -r '.summary.issue_count // 0' 2>/dev/null)"
     last_audit="$(printf '%s' "${status}" | jq -r '.generated_at // "jamais"' 2>/dev/null)"
@@ -112,6 +116,7 @@ menu_plexcve() {
     echo -e " ${BWHITE}Chemin d'attaque${CEND} : ${attack_path}"
     echo -e " ${BWHITE}Tentatives${CEND} : ${attempts} (${blocked} bloquees, ${success} succes)"
     echo -e " ${BWHITE}Middleware 443${CEND} : ${middleware} | 32400 : ${port_public}"
+    echo -e " ${BWHITE}Plex public HTTPS${CEND} : ${public_mode}"
     echo -e " ${BWHITE}Problemes${CEND} : ${issues_count}"
     if [ -n "${recommendation}" ]; then
       echo -e " ${BWHITE}Recommandation${CEND} : ${recommendation}"
@@ -134,16 +139,18 @@ menu_plexcve() {
     fi
     echo -e "${CRED}---------------------------------------------------------------${CEND}"
     echo -e " ${CGREEN}1)${CEND} Audit complet Plex (scan + cache)"
-    echo -e " ${CGREEN}2)${CEND} Corriger Plex (VERSION, 32400, middleware, montages)"
+    echo -e " ${CGREEN}2)${CEND} Corriger Plex (VERSION, mode, 32400, montages)"
     echo -e " ${CGREEN}3)${CEND} Fermer les ports exposes"
     echo -e " ${CGREEN}4)${CEND} Analyser les logs d'exploitation (cache)"
     echo -e " ${CGREEN}5)${CEND} Isoler/arreter Plex"
     echo -e " ${CGREEN}6)${CEND} Rapport detaille (cache)"
     echo -e " ${CGREEN}7)${CEND} Aide / CVE Plex2Shell"
     echo -e " ${CGREEN}8)${CEND} Retour"
+    echo -e " ${CGREEN}9)${CEND} Activer Plex public HTTPS (plex.<domaine>)"
+    echo -e " ${CGREEN}10)${CEND} Restaurer l'etat avant Plex public HTTPS (rollback)"
     echo -e "${CRED}---------------------------------------------------------------${CEND}"
 
-    printf 'SSDV2_PROMPT %s\n' '{"id":"plexcve.action","label":"Choix plex2shell","kind":"choice","options":["1","2","3","4","5","6","7","8"]}' >&2
+    printf 'SSDV2_PROMPT %s\n' '{"id":"plexcve.action","label":"Choix plex2shell","kind":"choice","options":["1","2","3","4","5","6","7","8","9","10"]}' >&2
     read -rp "Votre choix : " choice
 
     case "${choice}" in
@@ -162,8 +169,13 @@ menu_plexcve() {
         fi
         echo -e "${YELLOW}La correction va :"
         echo -e "  - ajouter VERSION=latest ;"
-        echo -e "  - ajouter le middleware chain-no-auth@file sur 443 ;"
-        echo -e "  - retirer la publication 0.0.0.0:32400 ;"
+        if [ "${public_mode}" = "oui" ]; then
+          echo -e "  - conserver chain-plex@file + backend HTTPS + plex-transport@file ;"
+          echo -e "  - publier 32400 sur 127.0.0.1 uniquement ;"
+        else
+          echo -e "  - ajouter le middleware chain-no-auth@file sur 443 ;"
+          echo -e "  - retirer la publication 0.0.0.0:32400 ;"
+        fi
         echo -e "  - retirer \$HOME, /tmp et /dev/shm ;"
         echo -e "  - configurer customConnections HTTPS et desactiver le port manuel 32400 ;"
         echo -e "  - detecter les medias et monter /mnt en lecture seule (rslave) ;"
@@ -251,20 +263,112 @@ PLEX2SHELL — CVE-2026-96652 / 96654 / 96655 / 96656
    ${SETTINGS_STORAGE}/conf/plexcve-status.json.
    Apres une correction, le cache est invalide : relancer l'option 1.
 
-6. Commandes
+6. Mode Plex public HTTPS (option 9)
+   - DNS Plex en DNS-only (gris), pas de proxy Cloudflare ;
+   - Plex sur 443 avec chain-plex@file (CrowdSec/rate-limit/headers) ;
+   - backend Plex en HTTPS via plex-transport (cert plex.direct) ;
+   - 32400 ferme, publication loopback 127.0.0.1 uniquement ;
+   - allowlist Cloudflare (uniquement) sur les chaines non-Plex ;
+   - Plex : secureConnections=Required, Relay=0, Publish=1,
+     customConnections=https://plex.<domaine> (sans :443).
+   Le voyant « Remote Access » peut rester jaune (test 32400). Se fier a
+   l'URL et a l'application Plex en 4G.
+   L'option 10 restaure l'etat precedent (Plex, prefs, Traefik, DNS).
+
+7. Commandes
    ssdv2ctl security plex-cve scan --json
    ssdv2ctl security plex-cve report --input <fichier>
    ssdv2ctl security plex-cve logs --input <fichier>
    ssdv2ctl security plex-cve fix-plex --apply --use-cache
    ssdv2ctl security plex-cve fix-plex --apply --use-cache --media-mode strict
+   ssdv2ctl security plex-cve fix-plex --apply --public-https
+   ssdv2ctl security plex-cve public-https --dry-run
+   ssdv2ctl security plex-cve public-https --apply
+   ssdv2ctl security plex-cve public-https --disable --apply
    ssdv2ctl security plex-cve fix-remote --apply
    ssdv2ctl security plex-cve close-port --apply --ports 32400
    ssdv2ctl security plex-cve quarantine --apply
+   ssdv2ctl security plex-cve rollback --backup <dossier> --apply
 
-7. Limites
-   Aucune suppression de volume ou de media.
-   En cas d'IoC, le script refuse fix-plex et propose la quarantaine.
+8. Limites et pieges
+   - Aucune suppression de volume ou de media.
+   - En cas d'IoC, le script refuse fix-plex et propose la quarantaine.
+   - secureConnections=Required peut refuser l'API Plex HTTP locale :
+     le script utilise HTTPS avec verification desactivee.
+   - Le certificat Plex est plex.direct : Traefik doit utiliser
+     plex-transport avec insecureSkipVerify.
+   - Ne jamais republier 32400 sur 0.0.0.0.
+   - Verifier les tokens Plex dans access.log (chmod 600, rotation).
+   - Un ban CrowdSec provoque aussi des 403 : cscli decisions list.
 EOF
+        pause
+        ;;
+      9)
+        clear
+        logo
+        echo -e "${YELLOW}Activer Plex public HTTPS :${NC}"
+        echo -e "  - Plex sur https://plex.<domaine> (443, certificat Let's Encrypt) ;"
+        echo -e "  - DNS Plex en DNS-only (gris), sans proxy Cloudflare ;"
+        echo -e "  - 32400 ferme, publication loopback 127.0.0.1 uniquement ;"
+        echo -e "  - backend Traefik en HTTPS (certificat plex.direct) ;"
+        echo -e "  - allowlist Cloudflare (uniquement) sur les AUTRES apps :"
+        echo -e "    l'acces direct public aux autres apps renverra 403 ;"
+        echo -e "  - Plex : connexions securisees requises, Relay desactive,"
+        echo -e "    publication active, URL personnalisee sans port."
+        echo ""
+        echo -e "${YELLOW}L'application Plex devra utiliser https://plex.<domaine>.${NC}"
+        echo -e "${YELLOW}Le voyant « Remote Access » peut rester jaune : il teste 32400.${NC}"
+        echo ""
+        if plexcve_confirm "plexcve.public_https" "Activer Plex public HTTPS maintenant ?" "n"; then
+          if plexcve_run public-https --apply; then
+            rm -f "${cache}"
+            echo -e " ${CGREEN}Mode applique. Relancer l'audit (option 1) pour actualiser.${NC}"
+          fi
+        fi
+        pause
+        ;;
+      10)
+        clear
+        logo
+        local backup_root="${SETTINGS_STORAGE%/}/backup/plexsec"
+        local -a backup_list=()
+        while IFS= read -r backup_dir; do
+          backup_list+=("${backup_dir}")
+        done < <(find "${backup_root}" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sort -r)
+        if [ ${#backup_list[@]} -eq 0 ]; then
+          echo -e "${YELLOW}Aucune sauvegarde plexsec trouvee.${NC}"
+          pause
+          continue
+        fi
+        echo -e "${YELLOW}Sauvegardes disponibles :${NC}"
+        local backup_index=1
+        for backup_dir in "${backup_list[@]}"; do
+          if [ -f "${backup_dir}/state.json" ]; then
+            echo " ${backup_index}) $(basename "${backup_dir}") (mode public HTTPS)"
+          else
+            echo " ${backup_index}) $(basename "${backup_dir}") (conteneur seul)"
+          fi
+          backup_index=$((backup_index + 1))
+        done
+        printf 'SSDV2_PROMPT %s\n' '{"id":"plexcve.rollback_choice","label":"Numero de sauvegarde","kind":"text","secret":false}' >&2
+        read -rp "Numero de sauvegarde [1] : " backup_choice
+        backup_choice="${backup_choice:-1}"
+        if ! [[ "${backup_choice}" =~ ^[0-9]+$ ]] \
+          || [ "${backup_choice}" -lt 1 ] \
+          || [ "${backup_choice}" -gt ${#backup_list[@]} ]; then
+          echo -e "${RED}Choix invalide.${NC}"
+          pause
+          continue
+        fi
+        backup_dir="${backup_list[$((backup_choice - 1))]}"
+        echo -e "${YELLOW}Restauration de $(basename "${backup_dir}") :${NC}"
+        echo -e "  Plex et, si disponible, Preferences.xml, regles Traefik et DNS."
+        if plexcve_confirm "plexcve.rollback" "Restaurer cet etat maintenant ?" "n"; then
+          if plexcve_run rollback --backup "${backup_dir}" --apply; then
+            rm -f "${cache}"
+            echo -e " ${CGREEN}Restauration effectuee. Relancer l'audit (option 1).${NC}"
+          fi
+        fi
         pause
         ;;
       8|"")
