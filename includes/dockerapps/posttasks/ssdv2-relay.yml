@@ -1,0 +1,258 @@
+---
+- name: Attendre que le relais soit sain
+  ansible.builtin.command:
+    cmd: docker inspect -f '{% raw %}{{.State.Health.Status}}{% endraw %}' ssdv2-relay
+  register: ssdv2_relay_health
+  until: (ssdv2_relay_health.stdout | default('') | trim) == 'healthy'
+  retries: 30
+  delay: 2
+  changed_when: false
+  failed_when: false
+
+- name: Tester AllDebrid via le relais
+  ansible.builtin.command:
+    cmd: |
+      docker exec ssdv2-relay node -e 'fetch("http://127.0.0.1:1080/v4/ping").then(r=>r.text()).then(t=>{console.log(t);process.exit(t.includes("success")?0:1)}).catch(()=>process.exit(1))'
+  register: ssdv2_relay_ping
+  changed_when: false
+  failed_when: false
+
+- name: Afficher l'état du relais
+  ansible.builtin.debug:
+    msg:
+      - "SSD Relay : {{ ssdv2_relay_health.stdout | default('inconnu') }}"
+      - "Ping AllDebrid via le Worker : {{ 'OK' if ssdv2_relay_ping.rc | default(1) == 0 else 'ÉCHEC' }}"
+      - "Pour Stream Fusion / Taskiq : AD_BASE_URL=http://ssdv2-relay:1080"
+      - "Ne pas définir PROXY_URL : le relais n'est pas un proxy HTTP CONNECT."
+      - "Aucun port publié, aucun flux vidéo via le Worker."
+      - "Secrets conservés dans {{ ssdv2_relay_secret_dir | default('...') }} : les réinstallations ne les redemandent pas."
+
+- name: Avertir en cas d'échec du ping
+  ansible.builtin.debug:
+    msg:
+      - "⚠️ Le relais ne répond pas correctement à /v4/ping."
+      - "Vérifiez RELAY_WORKER_URL, RELAY_TOKEN et le Worker Cloudflare."
+  when: ssdv2_relay_ping.rc | default(1) != 0
+
+- name: Prendre connaissance de l'échec
+  ansible.builtin.pause:
+    prompt: |
+      SSDV2_PROMPT {"id": "ssdv2_relay.ack", "label": "J'ai compris", "kind": "confirm", "secret": false}
+      Corrigez le Worker ou les secrets, puis appuyez sur Entrée.
+  when: ssdv2_relay_ping.rc | default(1) != 0
+
+# --- Migration Stream Fusion / Taskiq vers le relais -------------------------
+
+- name: Vérifier la présence de Stream Fusion
+  ansible.builtin.command:
+    cmd: docker inspect -f '{% raw %}{{.State.Running}}{% endraw %}' stream-fusion
+  register: ssdv2_relay_sf_state
+  failed_when: false
+  changed_when: false
+
+- name: Lire l'environnement de Stream Fusion
+  ansible.builtin.command:
+    cmd: docker inspect -f '{% raw %}{{range .Config.Env}}{{println .}}{{end}}{% endraw %}' stream-fusion
+  register: ssdv2_relay_sf_env
+  failed_when: false
+  changed_when: false
+  no_log: true
+  when: ssdv2_relay_sf_state.rc | default(1) == 0
+
+- name: Vérifier la présence de Taskiq worker
+  ansible.builtin.command:
+    cmd: docker inspect -f '{% raw %}{{.State.Running}}{% endraw %}' taskiq-worker
+  register: ssdv2_relay_tw_state
+  failed_when: false
+  changed_when: false
+
+- name: Lire l'environnement de Taskiq worker
+  ansible.builtin.command:
+    cmd: docker inspect -f '{% raw %}{{range .Config.Env}}{{println .}}{{end}}{% endraw %}' taskiq-worker
+  register: ssdv2_relay_tw_env
+  failed_when: false
+  changed_when: false
+  no_log: true
+  when: ssdv2_relay_tw_state.rc | default(1) == 0
+
+- name: Déterminer la migration nécessaire
+  ansible.builtin.set_fact:
+    ssdv2_relay_sf_present: "{{ ssdv2_relay_sf_state.rc | default(1) == 0 }}"
+    ssdv2_relay_tw_present: "{{ ssdv2_relay_tw_state.rc | default(1) == 0 }}"
+    ssdv2_relay_sf_on_warp: >-
+      {{ (ssdv2_relay_sf_state.rc | default(1) == 0)
+         and ('PROXY_URL=http://warp:1080' in (ssdv2_relay_sf_env.stdout | default('')))
+         and ('AD_BASE_URL=http://ssdv2-relay:1080' not in (ssdv2_relay_sf_env.stdout | default(''))) }}
+    ssdv2_relay_tw_on_warp: >-
+      {{ (ssdv2_relay_tw_state.rc | default(1) == 0)
+         and ('PROXY_URL=http://warp:1080' in (ssdv2_relay_tw_env.stdout | default('')))
+         and ('AD_BASE_URL=http://ssdv2-relay:1080' not in (ssdv2_relay_tw_env.stdout | default(''))) }}
+    ssdv2_relay_migration_needed: >-
+      {{ ((ssdv2_relay_sf_state.rc | default(1) == 0)
+          and ('PROXY_URL=http://warp:1080' in (ssdv2_relay_sf_env.stdout | default('')))
+          and ('AD_BASE_URL=http://ssdv2-relay:1080' not in (ssdv2_relay_sf_env.stdout | default(''))))
+         or ((ssdv2_relay_tw_state.rc | default(1) == 0)
+          and ('PROXY_URL=http://warp:1080' in (ssdv2_relay_tw_env.stdout | default('')))
+          and ('AD_BASE_URL=http://ssdv2-relay:1080' not in (ssdv2_relay_tw_env.stdout | default('')))) }}
+
+- name: Afficher le résultat de la détection
+  ansible.builtin.debug:
+    msg:
+      - "Stream Fusion présent : {{ ssdv2_relay_sf_present | bool }}"
+      - "Taskiq worker présent : {{ ssdv2_relay_tw_present | bool }}"
+      - "Stream Fusion sur WARP : {{ ssdv2_relay_sf_on_warp | bool }}"
+      - "Taskiq worker sur WARP : {{ ssdv2_relay_tw_on_warp | bool }}"
+      - "Migration proposée : {{ ssdv2_relay_migration_needed | bool }}"
+
+- name: Préciser que Stream Fusion est arrêté
+  ansible.builtin.debug:
+    msg:
+      - "Stream Fusion est arrêté : sa configuration sera mise à jour et il utilisera le relais au prochain démarrage."
+  when:
+    - ssdv2_relay_migration_needed | bool
+    - ssdv2_relay_sf_present | bool
+    - (ssdv2_relay_sf_state.stdout | default('') | trim) != 'true'
+
+- name: Proposer la migration vers SSD Relay
+  ansible.builtin.pause:
+    prompt: |
+      SSDV2_PROMPT {"id":"ssdv2_relay.migrate_streamfusion","label":"Migrer Stream Fusion vers SSD Relay ?","kind":"confirm","secret":false}
+      Stream Fusion utilise actuellement WARP.
+      SSD Relay est installé et répond correctement.
+      La migration va recréer stream-fusion et taskiq-worker
+      (courte interruption) et conserver toutes les données.
+      WARP restera installé pour les autres applications.
+      Répondre o (oui) ou n (non). Entrée = oui.
+  register: ssdv2_relay_migrate_answer
+  when:
+    - ssdv2_relay_ping.rc | default(1) == 0
+    - ssdv2_relay_migration_needed | bool
+
+- name: Détecter une exécution non interactive
+  ansible.builtin.set_fact:
+    ssdv2_relay_prompt_noninteractive: >-
+      {{ 'stdin is not interactive'
+         in ((ssdv2_relay_migrate_answer | default({})).warnings | default([]) | join(' ')) }}
+  when:
+    - ssdv2_relay_ping.rc | default(1) == 0
+    - ssdv2_relay_migration_needed | bool
+
+- name: Définir la réponse de migration
+  ansible.builtin.set_fact:
+    ssdv2_relay_migrate_yes: >-
+      {{ (not (ssdv2_relay_prompt_noninteractive | default(false) | bool))
+         and (((ssdv2_relay_migrate_answer | default({'user_input': ''})).user_input | default('') | lower)
+              in ['', 'o', 'oui', 'y', 'yes', 'true']) }}
+  when:
+    - ssdv2_relay_ping.rc | default(1) == 0
+    - ssdv2_relay_migration_needed | bool
+
+- name: Indiquer que la confirmation n'est pas disponible
+  ansible.builtin.debug:
+    msg:
+      - "La migration n'a pas été confirmée : l'installation s'exécute en mode non interactif."
+      - "Relancez l'installation du relais depuis l'interface SSDV2 pour confirmer la migration."
+  when: ssdv2_relay_prompt_noninteractive | default(false) | bool
+
+- name: Migrer stream-fusion vers SSD Relay
+  ansible.builtin.shell:
+    cmd: |
+      set -euo pipefail
+      py="{{ settings.source }}/venv/bin/python"
+      [ -x "$py" ] || py=python3
+      "$py" "{{ settings.source }}/includes/config/scripts/recreate_app_container.py" \
+        stream-fusion --no-pull \
+        --env AD_BASE_URL=http://ssdv2-relay:1080 \
+        --env PROXY_URL=
+    executable: /bin/bash
+  register: ssdv2_relay_migrate_sf
+  failed_when: false
+  when:
+    - ssdv2_relay_ping.rc | default(1) == 0
+    - ssdv2_relay_sf_on_warp | bool
+    - ssdv2_relay_migrate_yes | default(false) | bool
+
+- name: Migrer taskiq-worker vers SSD Relay
+  ansible.builtin.shell:
+    cmd: |
+      set -euo pipefail
+      py="{{ settings.source }}/venv/bin/python"
+      [ -x "$py" ] || py=python3
+      "$py" "{{ settings.source }}/includes/config/scripts/recreate_app_container.py" \
+        taskiq-worker --no-pull \
+        --env AD_BASE_URL=http://ssdv2-relay:1080 \
+        --env PROXY_URL=
+    executable: /bin/bash
+  register: ssdv2_relay_migrate_tw
+  failed_when: false
+  when:
+    - ssdv2_relay_ping.rc | default(1) == 0
+    - ssdv2_relay_tw_on_warp | bool
+    - ssdv2_relay_migrate_yes | default(false) | bool
+
+- name: Afficher le résultat de la migration
+  ansible.builtin.debug:
+    msg:
+      - "stream-fusion : {{ 'OK' if ((ssdv2_relay_migrate_sf | default({})).rc | default(1)) == 0 else 'ÉCHEC' }}"
+      - "taskiq-worker : {{ 'OK' if ((ssdv2_relay_migrate_tw | default({})).rc | default(1)) == 0 else 'ÉCHEC' }}"
+      - "WARP reste installé pour les autres applications."
+  when: ssdv2_relay_migrate_yes | default(false) | bool
+
+- name: Avertir en cas d'échec de migration
+  ansible.builtin.debug:
+    msg:
+      - "⚠️ Une migration a échoué. Le helper a tenté de restaurer l'ancien conteneur."
+      - "stream-fusion : {{ (ssdv2_relay_migrate_sf | default({})).stdout | default('') | trim }}"
+      - "taskiq-worker : {{ (ssdv2_relay_migrate_tw | default({})).stdout | default('') | trim }}"
+  when:
+    - ssdv2_relay_migrate_yes | default(false) | bool
+    - ((ssdv2_relay_migrate_sf | default({})).rc | default(0)) != 0
+      or ((ssdv2_relay_migrate_tw | default({})).rc | default(0)) != 0
+
+- name: Indiquer que la migration a été refusée
+  ansible.builtin.debug:
+    msg:
+      - "Migration non effectuée. Stream Fusion reste sur WARP."
+      - "Vous pourrez relancer l'installation du relais pour migrer plus tard."
+  when:
+    - ssdv2_relay_migration_needed | bool
+    - not (ssdv2_relay_migrate_yes | default(false) | bool)
+    - not (ssdv2_relay_prompt_noninteractive | default(false) | bool)
+
+- name: Indiquer qu'aucune migration n'était nécessaire
+  ansible.builtin.debug:
+    msg:
+      - "Stream Fusion n'est pas installé : aucune migration nécessaire."
+  when:
+    - not (ssdv2_relay_sf_present | bool)
+    - not (ssdv2_relay_tw_present | bool)
+
+- name: Indiquer que Stream Fusion utilise déjà le relais
+  ansible.builtin.debug:
+    msg:
+      - "Stream Fusion / Taskiq utilisent déjà SSD Relay (ou ne sont pas sur WARP)."
+  when:
+    - (ssdv2_relay_sf_present | bool) or (ssdv2_relay_tw_present | bool)
+    - not (ssdv2_relay_migration_needed | bool)
+
+# --- Protection de Warp ------------------------------------------------------
+
+- name: Vérifier le registre Streamfusion
+  ansible.builtin.stat:
+    path: "{{ settings.storage }}/conf/streamfusion.containers"
+  register: ssdv2_relay_sf_registry
+  changed_when: false
+
+- name: Retirer Warp du registre Streamfusion
+  ansible.builtin.lineinfile:
+    path: "{{ settings.storage }}/conf/streamfusion.containers"
+    line: "warp"
+    state: absent
+  when: ssdv2_relay_sf_registry.stat.exists
+
+- name: Confirmer que Warp reste disponible
+  ansible.builtin.debug:
+    msg:
+      - "Warp reste installé et n'est plus référencé dans le registre Streamfusion."
+      - "Les futurs reinstalls de Stream Fusion ne le supprimeront pas."
+  when: ssdv2_relay_sf_registry.stat.exists

@@ -1,0 +1,153 @@
+---
+# Prépare les secrets du relais avant le déploiement générique.
+# Le Worker Cloudflare reste déployé manuellement (voir docs/WORKER-MANUEL.md
+# du dépôt ssdv2-relay) : l'installateur ne fait que stocker son URL et son token.
+
+# Garde anti-doublon : l'ancien relais lancé par Compose porte aussi l'alias
+# ssdv2-relay sur traefik_proxy. Il doit être arrêté avant l'installation.
+- name: Vérifier qu'aucun relais Compose ne tourne déjà
+  ansible.builtin.command:
+    cmd: docker inspect -f '{% raw %}{{.State.Running}}{% endraw %}' ssdv2-relay-ssdv2-relay-1
+  register: ssdv2_relay_legacy
+  failed_when: false
+  changed_when: false
+
+- name: Refuser un doublon d'alias ssdv2-relay
+  ansible.builtin.fail:
+    msg: >-
+      Le conteneur Compose ssdv2-relay-ssdv2-relay-1 est encore actif.
+      Arrêtez-le avant d'installer l'application SSDV2, sinon deux conteneurs
+      porteront l'alias ssdv2-relay sur traefik_proxy.
+  when: (ssdv2_relay_legacy.stdout | default('') | trim) == 'true'
+
+- name: Définir le dossier des secrets SSD Relay
+  ansible.builtin.set_fact:
+    ssdv2_relay_secret_dir: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/ssdv2-relay-secrets"
+
+- name: Créer le dossier des secrets SSD Relay
+  ansible.builtin.file:
+    path: "{{ ssdv2_relay_secret_dir }}"
+    state: directory
+    mode: "0700"
+
+- name: Lire l'URL Worker déjà enregistrée
+  ansible.builtin.slurp:
+    src: "{{ ssdv2_relay_secret_dir }}/RELAY_WORKER_URL"
+  register: ssdv2_relay_worker_url_file
+  failed_when: false
+  no_log: true
+
+- name: Lire le token Worker déjà enregistré
+  ansible.builtin.slurp:
+    src: "{{ ssdv2_relay_secret_dir }}/RELAY_TOKEN"
+  register: ssdv2_relay_token_file
+  failed_when: false
+  no_log: true
+
+- name: Réutiliser les secrets SSD Relay existants
+  ansible.builtin.debug:
+    msg:
+      - "Secrets SSD Relay déjà enregistrés : aucune saisie nécessaire."
+      - "Fichiers : {{ ssdv2_relay_secret_dir }}/RELAY_WORKER_URL et RELAY_TOKEN"
+  when:
+    - (ssdv2_relay_worker_url_file.content | default('') | length) > 0
+    - (ssdv2_relay_token_file.content | default('') | length) > 0
+
+- name: Demander l'URL du Worker Cloudflare
+  ansible.builtin.pause:
+    prompt: |
+      SSDV2_PROMPT {"id": "ssdv2_relay.worker_url", "label": "URL du Worker Cloudflare", "kind": "text", "secret": false}
+      Exemple : https://ssdv2-relay.xxxxxxxx.workers.dev
+  register: ssdv2_relay_worker_url_prompt
+  when: (ssdv2_relay_worker_url_file.content | default('') | length) == 0
+
+- name: Demander le token du Worker Cloudflare
+  ansible.builtin.pause:
+    prompt: |
+      SSDV2_PROMPT {"id": "ssdv2_relay.token", "label": "Token du Worker (64 hex)", "kind": "secret", "secret": true}
+      Token défini dans le Worker Cloudflare (RELAY_TOKEN).
+    echo: false
+  register: ssdv2_relay_token_prompt
+  when: (ssdv2_relay_token_file.content | default('') | length) == 0
+  no_log: true
+
+- name: Définir les paramètres du relais
+  ansible.builtin.set_fact:
+    RELAY_WORKER_URL: >-
+      {{ ((ssdv2_relay_worker_url_file.content | b64decode | trim)
+          if (ssdv2_relay_worker_url_file.content | default('') | length) > 0
+          else (ssdv2_relay_worker_url_prompt.user_input | default('') | trim))
+         | regex_replace('/+$', '') }}
+    RELAY_TOKEN: >-
+      {{ ((ssdv2_relay_token_file.content | b64decode | trim)
+          if (ssdv2_relay_token_file.content | default('') | length) > 0
+          else (ssdv2_relay_token_prompt.user_input | default('') | trim))
+         | trim }}
+  no_log: true
+
+- name: Afficher les paramètres reçus (sans le token)
+  ansible.builtin.debug:
+    msg:
+      - "URL Worker : {{ RELAY_WORKER_URL }}"
+      - "Longueur du token : {{ RELAY_TOKEN | length }}"
+
+- name: Valider l'URL du Worker
+  ansible.builtin.assert:
+    that:
+      - RELAY_WORKER_URL is match('^https://[A-Za-z0-9.-]+$')
+    fail_msg: >-
+      URL Worker invalide : « {{ RELAY_WORKER_URL }} ».
+      Attendu : https://<worker>.workers.dev, sans chemin, sans paramètre et sans slash final.
+      Si une ancienne valeur est enregistrée, supprimez
+      {{ ssdv2_relay_secret_dir }}/RELAY_WORKER_URL puis relancez.
+    quiet: true
+
+- name: Valider le token du Worker
+  ansible.builtin.assert:
+    that:
+      - RELAY_TOKEN | length == 64
+      - RELAY_TOKEN is match('^[a-fA-F0-9]+$')
+    fail_msg: >-
+      Token invalide : longueur {{ RELAY_TOKEN | length }}.
+      Attendu : 64 caractères hexadécimaux (0-9, a-f), sans guillemets ni espaces.
+      Si une ancienne valeur est enregistrée, supprimez
+      {{ ssdv2_relay_secret_dir }}/RELAY_TOKEN puis relancez.
+    quiet: true
+
+- name: Enregistrer l'URL du Worker
+  ansible.builtin.copy:
+    content: "{{ RELAY_WORKER_URL }}\n"
+    dest: "{{ ssdv2_relay_secret_dir }}/RELAY_WORKER_URL"
+    mode: "0600"
+    force: true
+  no_log: true
+
+- name: Enregistrer le token du Worker
+  ansible.builtin.copy:
+    content: "{{ RELAY_TOKEN }}\n"
+    dest: "{{ ssdv2_relay_secret_dir }}/RELAY_TOKEN"
+    mode: "0600"
+    force: true
+  no_log: true
+
+- name: Vérifier la joignabilité du Worker
+  ansible.builtin.uri:
+    url: "{{ RELAY_WORKER_URL }}/health"
+    method: GET
+    status_code: 200
+    timeout: 10
+    headers:
+      User-Agent: "curl/8.5.0"
+  register: ssdv2_relay_worker_health
+  retries: 2
+  delay: 2
+  until: ssdv2_relay_worker_health.status | default(0) == 200
+  failed_when: false
+  changed_when: false
+
+- name: Avertir si le Worker ne répond pas
+  ansible.builtin.debug:
+    msg:
+      - "⚠️ Le Worker {{ RELAY_WORKER_URL }}/health ne répond pas correctement."
+      - "Vérifiez l'URL et le déploiement Cloudflare avant d'utiliser le relais."
+  when: ssdv2_relay_worker_health.status | default(0) != 200

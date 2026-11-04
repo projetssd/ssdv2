@@ -3,3 +3,32 @@
     msg:
       - "Configuration Stream Fusion : https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}/admin"
       - "Documentation premier démarrage : https://docs.streamfusion.link/guides/premier-demarrage/"
+
+- name: Vérifier la présence de SSD Relay après installation
+  ansible.builtin.command:
+    cmd: docker inspect -f '{% raw %}{{.State.Running}}{% endraw %}' ssdv2-relay
+  register: streamfusion_relay_post
+  failed_when: false
+  changed_when: false
+
+- name: Afficher le rappel SSD Relay
+  ansible.builtin.debug:
+    msg:
+      - "⚠️ SSD Relay n'est pas installé."
+      - "Stream Fusion utilise maintenant AD_BASE_URL=http://ssdv2-relay:1080."
+      - "Tant que l'application ssdv2-relay n'est pas installée, AllDebrid ne fonctionnera pas."
+      - "Installez « ssdv2-relay » depuis le catalogue SSDV2, renseignez RELAY_WORKER_URL et RELAY_TOKEN."
+  when: (streamfusion_relay_post.stdout | default('') | trim) != 'true'
+
+- name: Prendre connaissance du rappel SSD Relay
+  ansible.builtin.pause:
+    prompt: |
+      SSDV2_PROMPT {"id": "streamfusion.relay_required", "label": "J'ai compris", "kind": "confirm", "secret": false}
+      Installez SSDV2 Relay pour rétablir AllDebrid, puis appuyez sur Entrée.
+  when: (streamfusion_relay_post.stdout | default('') | trim) != 'true'
+
+- name: Confirmer que SSD Relay est actif
+  ansible.builtin.debug:
+    msg:
+      - "SSD Relay détecté : AD_BASE_URL=http://ssdv2-relay:1080 est actif."
+  when: (streamfusion_relay_post.stdout | default('') | trim) == 'true'

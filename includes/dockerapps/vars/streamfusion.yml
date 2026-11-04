@@ -31,7 +31,10 @@ pg_env:
 
   TZ: "Europe/Paris"
   USE_HTTPS: "true"
-  PROXY_URL: "http://warp:1080"
+  # API AllDebrid via SSDV2 Relay (HTTP privé, sans CA).
+  # Ne pas remettre PROXY_URL : le client aiohttp ferait transiter la requête
+  # vers le relais via WARP, qui refuse les destinations privées (503).
+  AD_BASE_URL: "http://ssdv2-relay:1080"
 
   REDIS_HOST: "stremio-redis"
   PG_HOST: "stremio-postgres"
