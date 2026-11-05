@@ -18,8 +18,9 @@ pg_env:
   AUTH_USER: "{{ user.name }}"
   AUTH_PASS: "{{ user.pass }}"
   TZ: 'Europe/Paris'
-  # Sortie réseau initiale. Modifiable ensuite dans l'onglet Réseau de l'UI.
-  # Mettre socks / socks5://warp:1080 pour utiliser WARP dès le premier démarrage.
+  # Proxy par défaut créé au premier démarrage (migration initiale).
+  # Mettre socks / socks5://warp:1080 pour créer un profil SOCKS5 par défaut.
+  # Ensuite, les proxies se gèrent dans l'onglet Proxies de l'application.
   UPSTREAM_MODE: 'direct'
   UPSTREAM_URL: ''
 
