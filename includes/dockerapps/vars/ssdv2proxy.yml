@@ -3,6 +3,8 @@
 # Interface Web avec login propre à l'application ; les routes consommées par
 # Stremio (/u/..., /play, anciennes URLs /<id>/...) restent publiques.
 # Le login de l'application utilise les identifiants SSDV2 (user.name/user.pass).
+# Le playbook générique connecte ce conteneur à traefik_proxy : il peut donc
+# joindre le relais SSDV2 sur http://ssdv2-relay:1080 pour le laboratoire AllDebrid.
 pgrole: 'ssdv2proxy'
 intport: '7000'
 image: 'ghcr.io/projetssd/ssdv2-proxy-manager:latest'
@@ -23,6 +25,8 @@ pg_env:
   # Ensuite, les proxies se gèrent dans l'onglet Proxies de l'application.
   UPSTREAM_MODE: 'direct'
   UPSTREAM_URL: ''
+  # Relais AllDebrid détecté automatiquement sur le réseau traefik_proxy.
+  SSDV2_RELAY_URL: 'http://ssdv2-relay:1080'
 
 # Les routes consommées par Stremio doivent rester publiques. L'interface et
 # l'API de gestion restent protégées par Traefik (si activé) et par le login
