@@ -23,12 +23,12 @@ pg_env:
   UPSTREAM_MODE: 'direct'
   UPSTREAM_URL: ''
 
-# L'application gère elle-même l'authentification de l'interface et expose des
-# routes publiques pour Stremio. Un router public prioritaire évite la double
-# authentification Traefik sur l'ensemble du host.
+# Les routes consommées par Stremio doivent rester publiques. L'interface et
+# l'API de gestion restent protégées par Traefik (si activé) et par le login
+# propre de l'application. Choisir « aucune » dans SSDV2 évite la double auth.
 extra_labels:
   traefik.http.routers.ssdv2proxy-public-rtr.entrypoints: 'http,https'
-  traefik.http.routers.ssdv2proxy-public-rtr.rule: "Host(`{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}`)"
+  traefik.http.routers.ssdv2proxy-public-rtr.rule: "Host(`{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}`) && (Path(`/play`) || PathPrefix(`/u/`) || PathRegexp(`^/[a-f0-9]+/`))"
   traefik.http.routers.ssdv2proxy-public-rtr.priority: '100'
   traefik.http.routers.ssdv2proxy-public-rtr.tls: 'true'
   traefik.http.routers.ssdv2proxy-public-rtr.tls.certresolver: 'letsencrypt'
