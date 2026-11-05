@@ -195,6 +195,11 @@ est fermé, le statut peut rester **jaune/indisponible** même si l'accès via
   (`verify_ssl_cert=0`) et `plexautolanguages` sur
   `https://plex.<domaine>` (certificat Let's Encrypt valide, l'app ne sait pas
   ignorer un certificat auto-signé).
+  ⚠️ `plex.token` doit être un **token de compte** (login Plex), jamais le
+  `PlexOnlineToken` du serveur : python-plexapi ré-enregistre alors le serveur
+  comme `provides="controller"` sur plex.tv, et les clients Plex ne le voient
+  plus (accueil vide). Le posttask arrête automatiquement
+  `plexautolanguages` dans ce cas.
 - **Plex Web sur Safari** : Safari ne décode pas le HEVC dans un conteneur
   MPEG-TS. Plex « copie » la vidéo HEVC pour Safari, ce qui donne un écran
   noir avec du son. Contournement côté client : forcer un débit inférieur à
@@ -227,6 +232,7 @@ est fermé, le statut peut rester **jaune/indisponible** même si l'accès via
 - `includes/config/files/crowdsec/plex-clients-whitelist.yaml`
 - `includes/dockerapps/posttasks/crowdsec.yml`
 - `includes/dockerapps/posttasks/tautulli.yml`
+- `includes/dockerapps/posttasks/plexautolanguages.yml`
 - `includes/dockerapps/vars/plexautolanguages.yml`
 - `includes/config/scripts/recreate_app_container.py`
 - `includes/menus-plexcve.sh`
