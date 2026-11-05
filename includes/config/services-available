@@ -151,6 +151,7 @@ sonarr - Gestion Séries Usenet et BitTorren
 speedtest - Teste vitesse Internet
 speedtesttracker - Teste vitesse Internet
 ssdv2-relay - Relais API AllDebrid via Cloudflare Worker (sans CA)
+ssdv2proxy - Gestion centralisée des manifestes Stremio et liens d'installation
 ssdv2webui - Interface d'administration SSDV2
 statping - Surveillance de vos sites Web
 stirlingpdf - Boite à outils PDF

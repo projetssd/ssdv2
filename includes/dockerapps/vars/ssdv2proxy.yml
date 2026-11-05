@@ -1,0 +1,36 @@
+---
+# SSDv2 Proxy Manager — gestion centralisée des manifestes Stremio.
+# Interface Web avec login propre à l'application ; les routes consommées par
+# Stremio (/u/..., /play, anciennes URLs /<id>/...) restent publiques.
+# Le login de l'application utilise les identifiants SSDV2 (user.name/user.pass).
+pgrole: 'ssdv2proxy'
+intport: '7000'
+image: 'ghcr.io/projetssd/ssdv2-proxy-manager:latest'
+
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}:/app/data:rw"
+
+pg_env:
+  PORT: '7000'
+  DATA_DIR: '/app/data'
+  NODE_ENV: 'production'
+  PUBLIC_URL: "https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}"
+  AUTH_USER: "{{ user.name }}"
+  AUTH_PASS: "{{ user.pass }}"
+  TZ: 'Europe/Paris'
+  # Sortie réseau initiale. Modifiable ensuite dans l'onglet Réseau de l'UI.
+  # Mettre socks / socks5://warp:1080 pour utiliser WARP dès le premier démarrage.
+  UPSTREAM_MODE: 'direct'
+  UPSTREAM_URL: ''
+
+# L'application gère elle-même l'authentification de l'interface et expose des
+# routes publiques pour Stremio. Un router public prioritaire évite la double
+# authentification Traefik sur l'ensemble du host.
+extra_labels:
+  traefik.http.routers.ssdv2proxy-public-rtr.entrypoints: 'http,https'
+  traefik.http.routers.ssdv2proxy-public-rtr.rule: "Host(`{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}`)"
+  traefik.http.routers.ssdv2proxy-public-rtr.priority: '100'
+  traefik.http.routers.ssdv2proxy-public-rtr.tls: 'true'
+  traefik.http.routers.ssdv2proxy-public-rtr.tls.certresolver: 'letsencrypt'
+  traefik.http.routers.ssdv2proxy-public-rtr.middlewares: 'chain-no-auth@file'
+  traefik.http.routers.ssdv2proxy-public-rtr.service: 'ssdv2proxy-svc'
