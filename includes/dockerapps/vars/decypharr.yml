@@ -23,9 +23,6 @@ specific_docker_info:
   healthcheck:
     test: >
       /bin/sh -c "
-      if ping -c 1 -W 1 172.18.0.250 >/dev/null 2>&1; then
-        ip route | grep -q 'default via 172.18.0.250' || ip route replace default via 172.18.0.250;
-      fi;
       wget -qO- --timeout=2 http://localhost:8282/health 2>/dev/null || exit 0
       "
     interval: "30s"
