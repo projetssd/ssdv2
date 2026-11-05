@@ -1,4 +1,12 @@
 ---
+# Plex Auto Languages utilise python-plexapi. Si on lui fournit le token du
+# serveur (PlexOnlineToken) au lieu d'un token de compte, plex.tv re-associe
+# l'appareil du serveur a ce client : l'entree du serveur passe en
+# provides="controller" et les clients Plex ne le voient plus comme serveur
+# (accueil vide, "serveur introuvable").
+#
+# On refuse donc de demarrer l'application dans ce cas.
+
 - name: 'Stop {{ pgrole }}'
   docker_container:
     labels:
@@ -6,11 +14,49 @@
     name: '{{ pgrole }}'
     state: stopped
 
+- name: "Lire les preferences Plex (token serveur)"
+  ansible.builtin.slurp:
+    src: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/plex/config/Library/Application Support/Plex Media Server/Preferences.xml"
+  register: plex_preferences_raw
+  no_log: true
+  failed_when: false
+
+- name: "Extraire le token serveur Plex"
+  ansible.builtin.set_fact:
+    plex_server_token: >-
+      {{
+        (plex_preferences_raw.content | default('') | b64decode
+         | regex_search('PlexOnlineToken="([^"]+)"', '\1'))
+        | default([], true) | first | default('', true)
+      }}
+  no_log: true
+
+- name: "Determiner si plex.token est le token du serveur"
+  ansible.builtin.set_fact:
+    plex_token_is_server_token: >-
+      {{
+        (plex_server_token | default('') | length > 0)
+        and ((plex.token | default('')) == (plex_server_token | default('')))
+      }}
+  no_log: true
+
 - name: Copy conf
   become: yes
   template:
     src: "{{ settings.source }}/includes/dockerapps/templates/plex_auto_languages/config.yml.j2"
     dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config/config.yaml"
+  when: not (plex_token_is_server_token | bool)
 
 - name: 'Deploying {{pgrole}}'
   docker_container: "{{ docker_info }}"
+  when: not (plex_token_is_server_token | bool)
+
+- name: "Avertir : un token de compte Plex est requis"
+  ansible.builtin.debug:
+    msg: >-
+      plex.token contient le token du serveur (PlexOnlineToken) : Plex Auto
+      Languages reste arrete. python-plexapi re-enregistrerait le serveur comme
+      client (provides=controller) sur plex.tv, ce qui le rend invisible dans
+      les clients Plex. Fournir un token de compte Plex (menu SSDV2 : login
+      Plex) puis relancer l'application.
+  when: plex_token_is_server_token | bool

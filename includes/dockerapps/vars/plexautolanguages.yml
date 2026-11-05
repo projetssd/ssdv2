@@ -10,6 +10,8 @@ pg_env:
   # public HTTPS. L'application ne sait pas ignorer un certificat auto-signe :
   # on utilise donc le domaine public (certificat Let's Encrypt valide).
   PLEX_URL: "{{ ('https://' ~ (sub['plex']['plex'] | default('plex', true)) ~ '.' ~ user.domain) if (plex | default({})).public_https | default(false) | bool else 'http://plex:32400' }}"
+  # IMPORTANT : plex.token doit etre un token de COMPTE, jamais le
+  # PlexOnlineToken du serveur (voir posttasks/plexautolanguages.yml).
   PLEX_TOKEN: "{{ plex.token }}"
   TZ: "Europe/Paris"
 

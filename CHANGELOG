@@ -14,6 +14,10 @@
   (`verify_ssl_cert=0`) en mode public HTTPS.
 - `plexautolanguages` : `PLEX_URL` pointe sur le domaine HTTPS public
   (l'application ne sait pas désactiver la vérification du certificat).
+- `plexautolanguages` : garde-fou — si `plex.token` est le token du serveur
+  (`PlexOnlineToken`), l'application est arrêtée. python-plexapi
+  ré-enregistrerait le serveur comme client (`provides="controller"`) sur
+  plex.tv, ce qui le rend invisible dans les clients Plex.
 - doc : contournement Plex Web/Safari (HEVC en MPEG-TS = écran noir) et
   applications compagnon.
 
