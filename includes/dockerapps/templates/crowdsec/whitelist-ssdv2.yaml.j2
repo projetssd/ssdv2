@@ -6,6 +6,9 @@ whitelist:
 {% if network.ipv4 is defined and network.ipv4 %}
 {% set _ = whitelist_ips.append(network.ipv4) %}
 {% endif %}
+{% if crowdsec_egress_ip is defined and crowdsec_egress_ip and crowdsec_egress_ip not in whitelist_ips %}
+{% set _ = whitelist_ips.append(crowdsec_egress_ip) %}
+{% endif %}
 {% for ip in crowdsec_whitelist_config.ips | default([], true) %}
 {% set _ = whitelist_ips.append(ip) %}
 {% endfor %}
@@ -23,7 +26,25 @@ whitelist:
 {% for cidr in whitelist_cidrs %}
     - "{{ cidr }}"
 {% endfor %}
+{% set media_fqdns = [] %}
+{% if sub is defined and user is defined and user.domain is defined and user.domain %}
+{% for app in ['jellyfin', 'polyfin', 'silo', 'silosffs', 'stremfin', 'streamfusion', 'plex', 'flixor'] %}
+{% if sub[app] is defined and sub[app][app] is defined and sub[app][app] | trim | length > 0 %}
+{% set _ = media_fqdns.append(sub[app][app] | trim ~ '.' ~ user.domain) %}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% set media_fqdns = media_fqdns | unique %}
+{% set media_fqdn_list = [] %}
+{% for fqdn in media_fqdns %}
+{% set _ = media_fqdn_list.append('"' ~ fqdn ~ '"') %}
+{% endfor %}
+{% set media_fqdn_list = media_fqdn_list | join(', ') %}
   expression:
+{% if media_fqdns %}
+    # 404/403 normaux des applications média : indépendant de l'IP du client.
+    - 'evt.Meta.http_status in ["403", "404"] && evt.Meta.target_fqdn in [{{ media_fqdn_list }}]'
+{% endif %}
     # 404 normaux des clients et de l'admin Polyfin/Jellyfin/Silo.
     - 'evt.Meta.http_status == "404" && evt.Meta.http_verb == "GET" && (evt.Meta.http_path startsWith "/api/v2/favorites/" || evt.Meta.http_path startsWith "/api/v2/watchlist/" || evt.Meta.http_path startsWith "/admin/api/")'
 {% if sub is defined and sub.ssdv2webui is defined and sub.ssdv2webui.ssdv2webui is defined and sub.ssdv2webui.ssdv2webui | trim | length > 0 and user is defined and user.domain is defined and user.domain %}
@@ -38,6 +59,10 @@ whitelist:
     # Chemins de flux opaques de StreamFusion : jamais du probing.
     - 'evt.Meta.http_verb == "GET" && evt.Meta.http_path startsWith "/gAAAA"'
 {% if crowdsec_whitelist_config.media_crawl is not defined or crowdsec_whitelist_config.media_crawl is none or crowdsec_whitelist_config.media_crawl | bool %}
+{% if media_fqdns %}
+    # Navigation légitime sur les domaines média (crawl, hubs, vignettes...).
+    - 'evt.Meta.http_verb in ["GET", "HEAD"] && evt.Meta.http_status in ["200", "206", "304"] && evt.Meta.target_fqdn in [{{ media_fqdn_list }}]'
+{% endif %}
     # Navigation légitime dans les applis média : évite http-crawl-non_statics.
     - 'evt.Meta.http_verb in ["GET", "HEAD"] && evt.Meta.http_status in ["200", "206", "304"] && (evt.Meta.http_path startsWith "/Items/" || evt.Meta.http_path startsWith "/Users/" || evt.Meta.http_path startsWith "/stremfin/api/" || evt.Meta.http_path startsWith "/playback/" || evt.Meta.http_path startsWith "/gAAAA" || evt.Meta.http_path startsWith "/api/v2/")'
 {% endif %}

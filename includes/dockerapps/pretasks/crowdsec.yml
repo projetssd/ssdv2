@@ -4,6 +4,33 @@
   with_items:
     - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}"
 
+# L'ancien conteneur peut avoir des ports malformés (7422/tcp/tcp) ou un
+# binding 0.0.0.0:8080 hérité d'une ancienne version. Le module
+# community.docker ne sait pas le réconcilier et échoue avant la posttask,
+# empêchant le déploiement de la whitelist. Les données sont dans des bind
+# mounts : on repart d'un conteneur propre à chaque installation.
+- name: Supprimer l'ancien conteneur CrowdSec
+  ansible.builtin.command: docker rm -f crowdsec
+  failed_when: false
+  changed_when: false
+
+- name: Vérifier que le port 8181 est libre
+  ansible.builtin.shell: |
+    set -o pipefail
+    ss -ltn '( sport = :8181 )' | tail -n +2 | grep -q .
+  args:
+    executable: /bin/bash
+  register: crowdsec_port_8181
+  changed_when: false
+  failed_when: false
+
+- name: Échouer si le port 8181 est déjà utilisé
+  ansible.builtin.fail:
+    msg: >-
+      Le port 127.0.0.1:8181 est déjà utilisé par un autre service.
+      Libère-le avant de relancer CrowdSec (le LAPI en a besoin).
+  when: crowdsec_port_8181.rc == 0
+
 - name: crowdsec
   docker_container:
     labels:
