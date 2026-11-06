@@ -6,7 +6,9 @@ traefik.http.routers.{{pgrole}}-rtr.rule: 'Host(`{{ sub[pgrole][pgrole] if sub_e
 traefik.http.routers.{{pgrole}}-rtr.tls: 'true'
 
 ## Middlewares
-{% if auth_enabled and sub[pgrole].auth | default('') == 'basique' %}
+{% if traefik_middleware_override is defined and traefik_middleware_override %}
+traefik.http.routers.{{pgrole}}-rtr.middlewares: '{{ traefik_middleware_override }}'
+{% elif auth_enabled and sub[pgrole].auth | default('') == 'basique' %}
 traefik.http.routers.{{pgrole}}-rtr.middlewares: 'chain-basic-auth@file'
 {% elif auth_enabled and sub[pgrole].auth | default('') == 'oauth' %}
 traefik.http.routers.{{pgrole}}-rtr.middlewares: 'chain-oauth@file'
