@@ -1,3 +1,16 @@
+06/11/2026 — Beszel : agent derrière Cloudflare Access
+
+- l'agent utilise désormais `HUB_URL=http://127.0.0.1:8090` par défaut au lieu
+  de l'URL publique : la connexion WebSocket interne contourne Cloudflare
+  Access (fini les `unexpected status code: 302`).
+- le hub publie son port uniquement sur `127.0.0.1`, ce qui rend cette URL
+  interne joignable depuis l'agent en `network_mode: host` sans exposer le
+  service.
+- l'agent écoute uniquement sur `127.0.0.1:45876` : plus de port SSH agent
+  exposé publiquement, le mode WebSocket reste suffisant.
+- `beszel_agent_hub_url` et `beszel_agent_listen_bind` sont surchargeables
+  dans `~/seedbox/vars/beszel.yml`.
+
 06/11/2026 — CrowdSec : correctif de mise à jour
 
 - recréation propre du conteneur CrowdSec avant chaque installation :

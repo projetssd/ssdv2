@@ -172,7 +172,7 @@
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/beszel_agent_data:/var/lib/beszel-agent:rw"
     env:
-      LISTEN: "{{ beszel_agent_listen }}"
+      LISTEN: "{{ beszel_agent_listen_bind | default('127.0.0.1:' ~ beszel_agent_listen, true) }}"
       KEY: "{{ beszel_hub_public_key }}"
       TOKEN: "{{ beszel_agent_token }}"
-      HUB_URL: "https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}"
+      HUB_URL: "{{ beszel_agent_hub_url | default('http://127.0.0.1:' ~ intport, true) }}"
