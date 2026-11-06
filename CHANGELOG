@@ -4,6 +4,9 @@
   corrige les ports malformés (`7422/tcp/tcp`) et l'ancien binding
   `0.0.0.0:8080` qui empêchaient la posttask et donc le déploiement de la
   whitelist.
+- LAPI publié sur un port libre choisi par Docker sur `127.0.0.1` : plus de
+  conflit avec un service déjà présent sur 8181. Le firewall bouncer est
+  configuré avec le port réellement attribué.
 - exclusion des 404/403 sur les domaines média (Polyfin, Jellyfin, Silo,
   Stremfin, StreamFusion, Plex), indépendante de l'IP du client.
 - ajout de l'IP publique de sortie réelle (`api.ipify.org`) à la whitelist.

@@ -119,9 +119,9 @@ une exclusion.
 
 - **`Bind for 0.0.0.0:8080 failed: port is already allocated`** : ancien
   conteneur CrowdSec. La pretask le supprime désormais automatiquement.
-- **Port 8181 déjà utilisé** : un autre service écoute sur
-  `127.0.0.1:8181`. La pretask s'arrête avec un message explicite ; libérer le
-  port avant de relancer CrowdSec.
+- **Port LAPI** : Docker publie le LAPI sur un port libre choisi
+  automatiquement sur `127.0.0.1`. Aucun conflit avec un autre service ; la
+  posttask configure le firewall bouncer avec le port réellement attribué.
 - **Whitelist absente** : la posttask vérifie désormais `cscli parsers list` et
   échoue clairement si `whitelist-ssdv2` n'est pas chargée.
 

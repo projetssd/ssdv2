@@ -14,23 +14,9 @@
   failed_when: false
   changed_when: false
 
-- name: Vérifier que le port 8181 est libre
-  ansible.builtin.shell: |
-    set -o pipefail
-    ss -ltn '( sport = :8181 )' | tail -n +2 | grep -q .
-  args:
-    executable: /bin/bash
-  register: crowdsec_port_8181
-  changed_when: false
-  failed_when: false
-
-- name: Échouer si le port 8181 est déjà utilisé
-  ansible.builtin.fail:
-    msg: >-
-      Le port 127.0.0.1:8181 est déjà utilisé par un autre service.
-      Libère-le avant de relancer CrowdSec (le LAPI en a besoin).
-  when: crowdsec_port_8181.rc == 0
-
+# Le LAPI est publié sur la loopback via un port libre choisi par Docker :
+# aucun conflit possible avec un autre service (8181 ou autre). La posttask
+# lit ensuite le port réellement attribué pour configurer le firewall bouncer.
 - name: crowdsec
   docker_container:
     labels:
@@ -38,7 +24,7 @@
     image: crowdsecurity/crowdsec:latest
     name: crowdsec
     ports:
-      - "127.0.0.1:8181:8080"
+      - "127.0.0.1::8080"
     exposed_ports:
       - "7422" # AppSec (WAF), non publie sur l'hote
     volumes:
