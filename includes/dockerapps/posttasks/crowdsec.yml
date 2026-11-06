@@ -244,6 +244,16 @@
     msg: "Impossible de récupérer la clé API du bouncer firewall CrowdSec."
   when: firewall_bouncer_api_key is not defined or firewall_bouncer_api_key == ""
 
+- name: Lire le port LAPI publié par CrowdSec
+  become: true
+  ansible.builtin.command: >-
+    docker inspect -f '{% raw %}{{ (index (index .NetworkSettings.Ports "8080/tcp") 0).HostPort }}{% endraw %}' crowdsec
+  register: crowdsec_lapi_port
+  changed_when: false
+  retries: 10
+  delay: 2
+  until: crowdsec_lapi_port.stdout | trim | length > 0
+
 # Déploiement de la conf du bouncer firewall
 # (Chemin standard : /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml)
 - name: Déployer la configuration du firewall bouncer (iptables)
@@ -255,7 +265,7 @@
     group: root
     mode: '0600'
     content: |
-      api_url: http://127.0.0.1:8181/
+      api_url: http://127.0.0.1:{{ crowdsec_lapi_port.stdout | trim }}/
       api_key: {{ firewall_bouncer_api_key }}
 
       # Mode iptables (par défaut avec ce package)
