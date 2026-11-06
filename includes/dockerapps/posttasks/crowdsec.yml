@@ -380,6 +380,22 @@
       + (crowdsec_whitelist_config.cidrs | default([], true))
     }}
 
+- name: Valider les domaines et routeurs de la whitelist CrowdSec
+  ansible.builtin.assert:
+    that:
+      - item is string
+      - item | trim | length > 0
+      - item is match('^[A-Za-z0-9._@-]+$')
+    fail_msg: >-
+      Entrée invalide dans whitelist.yml (fqdns/routers) : {{ item }}.
+      Utiliser un nom de domaine ou un nom de routeur Traefik simple.
+    quiet: true
+  loop: >-
+    {{
+      (crowdsec_whitelist_config.fqdns | default([], true))
+      + (crowdsec_whitelist_config.routers | default([], true))
+    }}
+
 - name: Créer le dossier des sauvegardes CrowdSec
   become: true
   ansible.builtin.file:
@@ -491,6 +507,39 @@
   ansible.builtin.fail:
     msg: "La whitelist whitelist-ssdv2 n'est pas chargée par CrowdSec."
   when: "'whitelist-ssdv2' not in crowdsec_whitelist_loaded.stdout"
+
+# Vérifie qu'une requête GET légitime d'une application de confiance (401
+# inclus, cas typique d'un client Polyfin/Crosswatch avec un token expiré)
+# est bien ignorée par la whitelist. Le test utilise un routeur connu de la
+# whitelist et ne dépend donc pas de l'IP source ni du DNS réel.
+- name: Vérifier que les applis de confiance sont ignorées par la whitelist
+  become: true
+  ansible.builtin.shell: |
+    set -o pipefail
+    docker exec crowdsec cscli explain --type traefik --log '{"ClientAddr":"203.0.113.42:12345","ClientHost":"203.0.113.42","ClientPort":"12345","ClientUsername":"-","DownstreamContentSize":0,"DownstreamStatus":401,"Duration":1000,"OriginContentSize":0,"OriginDuration":0,"OriginStatus":401,"Overhead":1000,"RequestAddr":"crosswatch.{{ user.domain }}","RequestContentSize":0,"RequestCount":1,"RequestHost":"crosswatch.{{ user.domain }}","RequestMethod":"GET","RequestPath":"/api/config","RequestPort":"-","RequestProtocol":"HTTP/2.0","RequestScheme":"https","RetryAttempts":0,"RouterName":"crosswatch-rtr@docker","StartLocal":"2026-01-01T00:00:00.000000+01:00","StartUTC":"2026-01-01T00:00:00.000000Z","TLSCipher":"TLS_AES_128_GCM_SHA256","TLSVersion":"1.3","entryPointName":"https","level":"info","msg":"","request_User-Agent":"Mozilla/5.0","request_X-Forwarded-For":"203.0.113.42","request_X-Forwarded-Proto":"https","time":"2026-01-01T00:00:00+01:00"}' \
+      | grep -q 'ignored by whitelist'
+  args:
+    executable: /bin/bash
+  register: crowdsec_whitelist_behavior
+  changed_when: false
+  failed_when: false
+  retries: 3
+  delay: 2
+  until: crowdsec_whitelist_behavior.rc == 0
+  when: >-
+    crowdsec_whitelist_config.trusted_apps is not defined
+    or crowdsec_whitelist_config.trusted_apps is none
+    or crowdsec_whitelist_config.trusted_apps | bool
+
+- name: Échouer si la whitelist ne couvre pas les applis de confiance
+  ansible.builtin.fail:
+    msg: >-
+      La whitelist SSDV2 ne couvre pas les requêtes GET des applications
+      média/compagnons (test Crosswatch 401). Vérifier trusted_apps, fqdns
+      et routers dans whitelist.yml.
+  when:
+    - crowdsec_whitelist_config.trusted_apps is not defined or crowdsec_whitelist_config.trusted_apps is none or crowdsec_whitelist_config.trusted_apps | bool
+    - crowdsec_whitelist_behavior.rc | default(1) != 0
 
 # --- Nettoyage unique des décisions locales existantes ---
 

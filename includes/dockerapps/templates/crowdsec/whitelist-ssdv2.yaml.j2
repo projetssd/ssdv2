@@ -1,7 +1,7 @@
 name: whitelist-ssdv2
-description: "SSDV2 : serveur et applications média"
+description: "SSDV2 : serveur, applications média et compagnons"
 whitelist:
-  reason: "SSDV2: legitimate server and media app traffic"
+  reason: "SSDV2: legitimate server, media and companion app traffic"
 {% set whitelist_ips = [] %}
 {% if network.ipv4 is defined and network.ipv4 %}
 {% set _ = whitelist_ips.append(network.ipv4) %}
@@ -26,21 +26,66 @@ whitelist:
 {% for cidr in whitelist_cidrs %}
     - "{{ cidr }}"
 {% endfor %}
+{% set media_apps = ['jellyfin', 'polyfin', 'emby', 'silo', 'silosffs', 'stremfin', 'streamfusion', 'plex', 'flixor'] %}
+{% set trusted_apps = media_apps + ['crosswatch', 'scrob', 'nuviomanager', 'seerr', 'tautulli'] %}
 {% set media_fqdns = [] %}
+{% set trusted_fqdns = [] %}
 {% if sub is defined and user is defined and user.domain is defined and user.domain %}
-{% for app in ['jellyfin', 'polyfin', 'silo', 'silosffs', 'stremfin', 'streamfusion', 'plex', 'flixor'] %}
+{% for app in media_apps %}
 {% if sub[app] is defined and sub[app][app] is defined and sub[app][app] | trim | length > 0 %}
 {% set _ = media_fqdns.append(sub[app][app] | trim ~ '.' ~ user.domain) %}
 {% endif %}
 {% endfor %}
+{% for app in trusted_apps %}
+{% if sub[app] is defined and sub[app][app] is defined and sub[app][app] | trim | length > 0 %}
+{% set _ = trusted_fqdns.append(sub[app][app] | trim ~ '.' ~ user.domain) %}
 {% endif %}
+{% endfor %}
+{% endif %}
+{% for fqdn in crowdsec_whitelist_config.fqdns | default([], true) %}
+{% set _ = trusted_fqdns.append(fqdn | trim) %}
+{% endfor %}
 {% set media_fqdns = media_fqdns | unique %}
 {% set media_fqdn_list = [] %}
 {% for fqdn in media_fqdns %}
 {% set _ = media_fqdn_list.append('"' ~ fqdn ~ '"') %}
 {% endfor %}
 {% set media_fqdn_list = media_fqdn_list | join(', ') %}
+{% set trusted_fqdns = trusted_fqdns | unique %}
+{% set trusted_fqdn_list = [] %}
+{% for fqdn in trusted_fqdns %}
+{% set _ = trusted_fqdn_list.append('"' ~ fqdn ~ '"') %}
+{% endfor %}
+{% set trusted_fqdn_list = trusted_fqdn_list | join(', ') %}
+{% set trusted_routers = [] %}
+{% for app in trusted_apps %}
+{% set _ = trusted_routers.append(app ~ '-rtr@docker') %}
+{% endfor %}
+{% for router in crowdsec_whitelist_config.routers | default([], true) %}
+{% set _ = trusted_routers.append(router | trim) %}
+{% endfor %}
+{% set trusted_routers = trusted_routers | unique %}
+{% set trusted_router_list = [] %}
+{% for router in trusted_routers %}
+{% set _ = trusted_router_list.append('"' ~ router ~ '"') %}
+{% endfor %}
+{% set trusted_router_list = trusted_router_list | join(', ') %}
   expression:
+{% if crowdsec_whitelist_config.trusted_apps is not defined or crowdsec_whitelist_config.trusted_apps is none or crowdsec_whitelist_config.trusted_apps | bool %}
+    # Trafic légitime des applications média et compagnons : on se base sur le
+    # routeur Traefik (ou le FQDN), jamais sur l'adresse IP du client. Tous les
+    # statuts sont couverts (401/499 inclus) pour les GET/HEAD.
+    - 'evt.Meta.traefik_router_name in [{{ trusted_router_list }}] && evt.Meta.http_verb in ["GET", "HEAD"]'
+{% if trusted_fqdns %}
+    - 'evt.Meta.target_fqdn in [{{ trusted_fqdn_list }}] && evt.Meta.http_verb in ["GET", "HEAD"]'
+{% endif %}
+    # Écritures légitimes des applis média (progression de lecture, playback).
+    # Les endpoints d'authentification restent protégés contre le brute-force.
+    - 'evt.Meta.traefik_router_name in [{{ trusted_router_list }}] && evt.Meta.http_verb in ["POST", "PUT", "PATCH", "DELETE"] && evt.Meta.http_status in ["401", "403"] && (evt.Meta.http_path startsWith "/api/v2/" || evt.Meta.http_path startsWith "/Sessions/" || evt.Meta.http_path startsWith "/Playback/" || evt.Meta.http_path startsWith "/playback/" || evt.Meta.http_path startsWith "/Items/" || evt.Meta.http_path startsWith "/Users/") && not (evt.Meta.http_path matches "(?i)/authenticate")'
+{% if trusted_fqdns %}
+    - 'evt.Meta.target_fqdn in [{{ trusted_fqdn_list }}] && evt.Meta.http_verb in ["POST", "PUT", "PATCH", "DELETE"] && evt.Meta.http_status in ["401", "403"] && (evt.Meta.http_path startsWith "/api/v2/" || evt.Meta.http_path startsWith "/Sessions/" || evt.Meta.http_path startsWith "/Playback/" || evt.Meta.http_path startsWith "/playback/" || evt.Meta.http_path startsWith "/Items/" || evt.Meta.http_path startsWith "/Users/") && not (evt.Meta.http_path matches "(?i)/authenticate")'
+{% endif %}
+{% endif %}
 {% if media_fqdns %}
     # 404/403 normaux des applications média : indépendant de l'IP du client.
     - 'evt.Meta.http_status in ["403", "404"] && evt.Meta.target_fqdn in [{{ media_fqdn_list }}]'

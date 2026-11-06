@@ -9,6 +9,22 @@ ips: []
 # Minimum accepté : /24 en IPv4, /48 en IPv6.
 cidrs: []
 
+# Whitelist IP indépendante de l'adresse du client : toutes les requêtes
+# GET/HEAD des applications média et compagnons (Polyfin, Jellyfin, Silo,
+# StreamFusion, Plex, Crosswatch, Scrob, etc.) sont exclues des scénarios
+# CrowdSec, quel que soit le statut HTTP (401/403/404/499 compris).
+# Mettre false pour revenir à un contrôle plus strict par IP.
+trusted_apps: true
+
+# Domaines supplémentaires à considérer comme applications de confiance.
+# Utile pour une application non détectée automatiquement ou un domaine
+# personnalisé. Exemple : mon-app.exemple.fr
+fqdns: []
+
+# Routeurs Traefik supplémentaires à considérer comme applications de
+# confiance. Exemple : mon-app-rtr@docker
+routers: []
+
 # Supprime les faux positifs de type "crawl" sur les applications média
 # (GET/HEAD 200/206/304 sur /Items/, /Users/, /stremfin/api/, /playback/,
 # /gAAAA..., /api/v2/). Mettre false pour revenir à un contrôle plus strict.
