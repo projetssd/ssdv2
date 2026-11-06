@@ -14,11 +14,21 @@ pg_env:
 
 specific_docker_info:
   restart_policy: unless-stopped
+  # Le hub est sur traefik_proxy : publication loopback uniquement, pour que
+  # l'agent (network_mode: host) le joigne sans passer par Cloudflare Access.
+  published_ports:
+    - "127.0.0.1:{{ intport }}:{{ intport }}"
   healthcheck:
-    test: ['CMD', '/beszel', 'health', '--url', 'http://localhost:8090']
+    test: ['CMD', '/beszel', 'health', '--url', 'http://localhost:{{ intport }}']
     interval: 30s
     start_period: 10s
     timeout: 5s
 
+# URL interne par défaut : contourne Cloudflare Access.
+# Surcharge possible dans ~/seedbox/vars/beszel.yml.
+beszel_agent_hub_url: "http://127.0.0.1:{{ intport }}"
+
 beszel_agent_image: 'henrygd/beszel-agent:latest'
 beszel_agent_listen: '45876'
+# En mode WebSocket l'agent n'a pas besoin d'être joignable de l'extérieur.
+beszel_agent_listen_bind: "127.0.0.1:{{ beszel_agent_listen }}"
