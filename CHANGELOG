@@ -1,3 +1,21 @@
+06/11/2026 — CrowdSec : exclusion des applis indépendante de l'IP
+
+- whitelist `whitelist-ssdv2` étendue aux routeurs Traefik des applications
+  média et compagnons (Polyfin, Jellyfin, Emby, Silo, SiloSFFS, Stremfin,
+  StreamFusion, Plex, Flixor, Crosswatch, Scrob, Nuvio Manager, Seerr,
+  Tautulli).
+- tous les `GET`/`HEAD` de ces routeurs sont ignorés quel que soit le statut
+  HTTP (200, 206, 304, 400, 401, 403, 404, 499…). Corrige les bans déclenchés
+  par un client avec un token expiré ou par le polling d'un tableau de bord,
+  sans dépendre de l'adresse IP du client.
+- les `POST`/`PUT`/`PATCH`/`DELETE` de playback/progression en 401/403 sont
+  couverts, mais les chemins d'authentification (contenant `/authenticate`,
+  dont `/Users/AuthenticateByName`) restent protégés contre le brute-force.
+- nouvelles options `trusted_apps`, `fqdns` et `routers` dans
+  `crowdsec/whitelist.yml` pour ajouter une application de confiance.
+- validation des domaines/routeurs et test automatique `cscli explain`
+  (requête Crosswatch 401) dans la posttask.
+
 06/11/2026 — Beszel : agent derrière Cloudflare Access
 
 - l'agent utilise désormais `HUB_URL=http://127.0.0.1:8090` par défaut au lieu
