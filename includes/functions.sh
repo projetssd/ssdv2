@@ -509,7 +509,7 @@ function choose_services() {
   echo -e " ${BWHITE}-->" $(gettext "Services en cours d'installation") ":${NC}"
   rm -Rf "${SERVICESPERUSER}" >/dev/null 2>&1
   touch $SERVICESPERUSER
-  jq -r '.selected_lines[] | split("-")[0] | gsub("\""; "")' output.json > $SERVICESPERUSER
+  jq -r '.selected_lines[] | split(" - ")[0] | gsub("\""; "")' output.json > $SERVICESPERUSER
   echo -e "${GREEN}$(cat $SERVICESPERUSER)${NC}"
 }
 
@@ -1904,7 +1904,7 @@ function applis_perso_create() {
 function copie_applis() {
   rm -Rf "${SERVICESPERUSER}" >/dev/null 2>&1
   touch $SERVICESPERUSER
-  jq -r '.selected_lines[] | split("-")[0] | gsub("\""; "")' output.json | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' > "$SERVICESPERUSER"
+  jq -r '.selected_lines[] | split(" - ")[0] | gsub("\""; "")' output.json | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' > "$SERVICESPERUSER"
   echo -e "\e[36m##" $(gettext "Copie des fichiers dans le dossier vars") "##\e[0m"  
   while IFS= read -r line; do
     if [ -e "${SETTINGS_SOURCE}/includes/dockerapps/vars/${line}.yml" ]; then

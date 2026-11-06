@@ -32,7 +32,7 @@ def catalog_entries():
             line = line.strip()
             if not line or line.startswith("#"):
                 continue
-            entries.append(line.split("-")[0].strip())
+            entries.append(line.split(" - ", 1)[0].strip())
     return entries
 
 
