@@ -307,11 +307,124 @@
   changed_when: false
   failed_when: crowdsec_collections_tainted.rc == 0
 
+# --- Exclusions SSDV2 (serveur et faux positifs des applis média) ---
+
+- name: Créer la configuration locale des exclusions CrowdSec
+  become: true
+  ansible.builtin.template:
+    src: "{{ settings.source }}/includes/dockerapps/templates/crowdsec/whitelist-config.yml.j2"
+    dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/crowdsec/whitelist.yml"
+    owner: "{{ lookup('env','USER') }}"
+    group: "{{ lookup('env','MYGID') }}"
+    mode: '0644'
+    force: false
+
+- name: Lire la configuration locale des exclusions CrowdSec
+  ansible.builtin.slurp:
+    src: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/crowdsec/whitelist.yml"
+  register: crowdsec_whitelist_config_raw
+
+- name: Analyser la configuration locale des exclusions CrowdSec
+  ansible.builtin.set_fact:
+    crowdsec_whitelist_config: "{{ (crowdsec_whitelist_config_raw.content | b64decode | from_yaml) | default({}, true) }}"
+
+- name: Valider les IP et réseaux de la whitelist CrowdSec
+  ansible.builtin.assert:
+    that:
+      - >-
+        (item | ansible.netcommon.ipaddr) and (
+          (item | ansible.netcommon.ipaddr('version') | int == 4 and item | ansible.netcommon.ipaddr('prefix') | int >= 24)
+          or
+          (item | ansible.netcommon.ipaddr('version') | int == 6 and item | ansible.netcommon.ipaddr('prefix') | int >= 48)
+        )
+    fail_msg: >-
+      Entrée invalide ou trop large dans whitelist.yml : {{ item }}.
+      Utiliser une IP exacte, un CIDR IPv4 >= /24 ou un CIDR IPv6 >= /48.
+    quiet: true
+  loop: >-
+    {{
+      ([network.ipv4] if network.ipv4 is defined and network.ipv4 else [])
+      + (crowdsec_whitelist_config.ips | default([], true))
+      + (crowdsec_whitelist_config.cidrs | default([], true))
+    }}
+
+- name: Créer le dossier des sauvegardes CrowdSec
+  become: true
+  ansible.builtin.file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/crowdsec/backups"
+    state: directory
+    owner: "{{ lookup('env','USER') }}"
+    group: "{{ lookup('env','MYGID') }}"
+    mode: '0700'
+
+- name: Vérifier la whitelist CrowdSec actuelle
+  become: true
+  ansible.builtin.stat:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/crowdsec/etc/parsers/s02-enrich/whitelist-ssdv2.yaml"
+  register: crowdsec_whitelist_current
+
+- name: Sauvegarder la whitelist CrowdSec actuelle
+  become: true
+  ansible.builtin.copy:
+    src: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/crowdsec/etc/parsers/s02-enrich/whitelist-ssdv2.yaml"
+    dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/crowdsec/backups/whitelist-ssdv2.yaml.bak"
+    remote_src: true
+    owner: "{{ lookup('env','USER') }}"
+    group: "{{ lookup('env','MYGID') }}"
+    mode: '0600'
+  when: crowdsec_whitelist_current.stat.exists
+  changed_when: false
+
+- name: Déployer la whitelist CrowdSec SSDV2
+  become: true
+  block:
+    - name: Rendre la whitelist CrowdSec SSDV2
+      ansible.builtin.template:
+        src: "{{ settings.source }}/includes/dockerapps/templates/crowdsec/whitelist-ssdv2.yaml.j2"
+        dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/crowdsec/etc/parsers/s02-enrich/whitelist-ssdv2.yaml"
+        owner: root
+        group: root
+        mode: '0644'
+      register: crowdsec_whitelist_deploy
+
+    - name: Tester la configuration CrowdSec avec la whitelist
+      ansible.builtin.command: docker exec crowdsec crowdsec -t
+      register: crowdsec_whitelist_test
+      changed_when: false
+      when: crowdsec_whitelist_deploy.changed
+  rescue:
+    - name: Restaurer la whitelist CrowdSec précédente
+      ansible.builtin.copy:
+        src: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/crowdsec/backups/whitelist-ssdv2.yaml.bak"
+        dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/crowdsec/etc/parsers/s02-enrich/whitelist-ssdv2.yaml"
+        remote_src: true
+        owner: root
+        group: root
+        mode: '0644'
+      when: crowdsec_whitelist_current.stat.exists
+
+    - name: Supprimer une whitelist invalide sans version précédente
+      ansible.builtin.file:
+        path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/crowdsec/etc/parsers/s02-enrich/whitelist-ssdv2.yaml"
+        state: absent
+      when:
+        - not crowdsec_whitelist_current.stat.exists
+        - crowdsec_whitelist_deploy is defined
+        - crowdsec_whitelist_deploy.changed | default(false)
+
+    - name: Échouer si la configuration CrowdSec est invalide
+      ansible.builtin.fail:
+        msg: "La whitelist CrowdSec SSDV2 est invalide ; l'ancienne configuration a été restaurée."
+
 # Restart CrowdSec
 - name: Redémarrer CrowdSec si la configuration CrowdSec a changé
   become: true
   ansible.builtin.command: docker restart crowdsec
-  when: acquis_copy.changed or crowdsec_appsec_config.changed or crowdsec_base_config_install.changed
+  when: >-
+    acquis_copy.changed
+    or crowdsec_appsec_config.changed
+    or crowdsec_base_config_install.changed
+    or (crowdsec_whitelist_deploy.changed | default(false))
 
 - name: Attendre que CrowdSec soit relancé
   become: true
@@ -334,3 +447,41 @@
   retries: 12
   delay: 5
   until: crowdsec_appsec_health.rc == 0
+
+# --- Nettoyage des décisions pour les IP/réseaux whitelistés ---
+
+- name: Supprimer les décisions CrowdSec pour les IP whitelistées
+  become: true
+  ansible.builtin.command: docker exec crowdsec cscli decisions delete --ip {{ item }}
+  loop: >-
+    {{
+      ([network.ipv4] if network.ipv4 is defined and network.ipv4 else [])
+      + (crowdsec_whitelist_config.ips | default([], true))
+    }}
+  register: crowdsec_decisions_ip
+  changed_when: false
+  failed_when: false
+
+- name: Supprimer les décisions CrowdSec pour les réseaux whitelistés
+  become: true
+  ansible.builtin.command: docker exec crowdsec cscli decisions delete --range {{ item }} --contained
+  loop: >-
+    {{
+      ['100.64.0.0/10', 'fc00::/7', 'fe80::/10']
+      + (crowdsec_whitelist_config.cidrs | default([], true))
+    }}
+  register: crowdsec_decisions_cidr
+  changed_when: false
+  failed_when: false
+
+- name: Signaler les décisions CrowdSec non supprimées (IP)
+  ansible.builtin.debug:
+    msg: "Échec de suppression pour {{ item.item }} : {{ item.stderr | default('') }}"
+  loop: "{{ crowdsec_decisions_ip.results | default([]) }}"
+  when: item.rc | default(0) != 0
+
+- name: Signaler les décisions CrowdSec non supprimées (réseaux)
+  ansible.builtin.debug:
+    msg: "Échec de suppression pour {{ item.item }} : {{ item.stderr | default('') }}"
+  loop: "{{ crowdsec_decisions_cidr.results | default([]) }}"
+  when: item.rc | default(0) != 0

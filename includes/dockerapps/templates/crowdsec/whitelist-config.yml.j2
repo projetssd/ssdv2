@@ -1,0 +1,15 @@
+# Configuration des exclusions CrowdSec de SSDV2.
+#
+# IP exactes à ne jamais bannir (IPv4 ou IPv6).
+# Exemple : 89.82.54.117
+ips: []
+
+# Réseaux CIDR à ne jamais bannir (IPv4 ou IPv6).
+# Exemple : 2001:861:20d2:bc00::/64
+# Minimum accepté : /24 en IPv4, /48 en IPv6.
+cidrs: []
+
+# Supprime les faux positifs de type "crawl" sur les applications média
+# (GET/HEAD 200/206/304 sur /Items/, /Users/, /stremfin/api/, /playback/,
+# /gAAAA..., /api/v2/). Mettre false pour revenir à un contrôle plus strict.
+media_crawl: true
