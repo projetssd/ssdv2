@@ -1,0 +1,43 @@
+name: whitelist-ssdv2
+description: "SSDV2 : serveur et applications média"
+whitelist:
+  reason: "SSDV2: legitimate server and media app traffic"
+{% set whitelist_ips = [] %}
+{% if network.ipv4 is defined and network.ipv4 %}
+{% set _ = whitelist_ips.append(network.ipv4) %}
+{% endif %}
+{% for ip in crowdsec_whitelist_config.ips | default([], true) %}
+{% set _ = whitelist_ips.append(ip) %}
+{% endfor %}
+{% if whitelist_ips %}
+  ip:
+{% for ip in whitelist_ips %}
+    - "{{ ip }}"
+{% endfor %}
+{% endif %}
+{% set whitelist_cidrs = ['100.64.0.0/10', 'fc00::/7', 'fe80::/10'] %}
+{% for cidr in crowdsec_whitelist_config.cidrs | default([], true) %}
+{% set _ = whitelist_cidrs.append(cidr) %}
+{% endfor %}
+  cidr:
+{% for cidr in whitelist_cidrs %}
+    - "{{ cidr }}"
+{% endfor %}
+  expression:
+    # 404 normaux des clients et de l'admin Polyfin/Jellyfin/Silo.
+    - 'evt.Meta.http_status == "404" && evt.Meta.http_verb == "GET" && (evt.Meta.http_path startsWith "/api/v2/favorites/" || evt.Meta.http_path startsWith "/api/v2/watchlist/" || evt.Meta.http_path startsWith "/admin/api/")'
+{% if sub is defined and sub.ssdv2webui is defined and sub.ssdv2webui.ssdv2webui is defined and sub.ssdv2webui.ssdv2webui | trim | length > 0 and user is defined and user.domain is defined and user.domain %}
+    # 404 normaux du WebUI SSDV2 : routes absentes selon la version.
+    - 'evt.Meta.http_status == "404" && evt.Meta.http_verb == "GET" && evt.Meta.target_fqdn == "{{ sub.ssdv2webui.ssdv2webui | trim }}.{{ user.domain }}" && evt.Meta.http_path startsWith "/api/v1/"'
+{% endif %}
+    # Racine du site www : un 404 normal n'est pas du probing.
+    - 'evt.Meta.http_status == "404" && evt.Meta.http_verb == "GET" && evt.Meta.target_fqdn startsWith "www." && evt.Meta.http_path == "/"'
+    # 403 normaux des clients média (Silo, Streamyfin, Polyfin).
+    - 'evt.Meta.http_status == "403" && evt.Meta.http_verb == "POST" && (evt.Meta.http_path startsWith "/api/v2/playback/" || evt.Meta.http_path == "/Sessions/Capabilities/Full")'
+    - 'evt.Meta.http_status == "403" && evt.Meta.http_verb == "GET" && evt.Meta.http_path startsWith "/playback/"'
+    # Chemins de flux opaques de StreamFusion : jamais du probing.
+    - 'evt.Meta.http_verb == "GET" && evt.Meta.http_path startsWith "/gAAAA"'
+{% if crowdsec_whitelist_config.media_crawl is not defined or crowdsec_whitelist_config.media_crawl is none or crowdsec_whitelist_config.media_crawl | bool %}
+    # Navigation légitime dans les applis média : évite http-crawl-non_statics.
+    - 'evt.Meta.http_verb in ["GET", "HEAD"] && evt.Meta.http_status in ["200", "206", "304"] && (evt.Meta.http_path startsWith "/Items/" || evt.Meta.http_path startsWith "/Users/" || evt.Meta.http_path startsWith "/stremfin/api/" || evt.Meta.http_path startsWith "/playback/" || evt.Meta.http_path startsWith "/gAAAA" || evt.Meta.http_path startsWith "/api/v2/")'
+{% endif %}

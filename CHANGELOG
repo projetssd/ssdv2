@@ -1,3 +1,17 @@
+06/11/2026 — CrowdSec : exclusions SSDV2
+
+- whitelist générique `whitelist-ssdv2` déployée par la posttask CrowdSec :
+  IP publique du serveur, réseaux Tailscale/ULA/link-local, faux positifs des
+  applications média (404 Polyfin/WebUI, 403 playback, crawl `/Items`,
+  `/Users`, `/playback`, `/gAAAA`, `/api/v2/`).
+- fichier `crowdsec/whitelist.yml` pour les IP/CIDR propres à l'utilisateur,
+  avec `media_crawl` activable ou désactivable.
+- suppression automatique des décisions CrowdSec pour les IP/réseaux
+  whitelistés, y compris les décisions CAPI présentes lors du nettoyage
+  (elles peuvent réapparaître ensuite).
+- validation `crowdsec -t` avant redémarrage et restauration de la whitelist
+  précédente en cas d'erreur.
+
 05/11/2026 — Plex public HTTPS : correctifs d'exploitation
 
 - Traefik `accessLog` : seuls les codes `400-599` sont journalisés. Une ligne
