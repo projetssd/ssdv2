@@ -23,21 +23,42 @@ La posttask `includes/dockerapps/posttasks/crowdsec.yml` déploie :
 Cette whitelist contient par défaut :
 
 - l'IP publique du serveur (`network.ipv4` dans `account.yml`) ;
+- l'IP publique de sortie réelle, découverte via `https://api.ipify.org` si
+  elle diffère (serveur derrière un VPN, changement d'adresse) ;
 - les réseaux Tailscale/CGNAT (`100.64.0.0/10`), IPv6 ULA (`fc00::/7`) et
   link-local (`fe80::/10`) ;
-- les 404 normaux de Polyfin/Jellyfin/Silo (`/api/v2/favorites/`,
-  `/api/v2/watchlist/`, `/admin/api/`) ;
+- tous les 404/403 des domaines média Polyfin/Jellyfin/Silo/Stremfin/
+  StreamFusion/Plex : ces faux positifs ne dépendent plus de l'IP du client ;
 - les 404 normaux du WebUI SSDV2 sur son sous-domaine (`/api/v1/`) ;
 - la racine `www.<domaine>` en 404 ;
-- les 403 normaux des clients média (`/api/v2/playback/`,
-  `/Sessions/Capabilities/Full`, `/playback/`) ;
 - les chemins de flux opaques de StreamFusion (`/gAAAA...`) ;
-- la navigation légitime des applis média (`/Items/`, `/Users/`,
-  `/stremfin/api/`, `/playback/`, `/gAAAA...`, `/api/v2/`) pour éviter
-  `http-crawl-non_statics`.
+- la navigation légitime des applis média (200/206/304) si `media_crawl` est
+  actif.
 
-Après déploiement, les décisions CrowdSec actives pour l'IP du serveur et les
-IP/réseaux ajoutés par l'utilisateur sont supprimées.
+Après déploiement, la posttask supprime une seule fois toutes les décisions
+locales existantes. Un fichier marqueur évite de répéter cette opération.
+
+## Mise à jour d'une installation existante
+
+Les anciennes installations peuvent avoir un conteneur CrowdSec avec des ports
+malformés (`7422/tcp/tcp`) ou un ancien binding `0.0.0.0:8080`. La pretask
+supprime désormais ce conteneur et le recrée proprement. Les données CrowdSec
+sont conservées dans les bind mounts.
+
+Procédure unique pour tous les serveurs :
+
+```sh
+cd ~/seedbox-compose
+git pull
+ssdv2ctl app recreate crowdsec
+```
+
+Aucune IP personnelle n'est à saisir. Le patch :
+
+- recrée le conteneur CrowdSec avec les bons ports ;
+- déploie la whitelist ;
+- débloque les décisions locales existantes ;
+- vérifie que `whitelist-ssdv2` est bien chargée.
 
 ## Ajouter une IP ou un réseau
 
@@ -76,30 +97,43 @@ docker exec crowdsec cscli decisions delete --ip 1.2.3.4
 docker exec crowdsec cscli decisions delete --range 2001:db8::/64 --contained
 ```
 
-Une IP ajoutée à `whitelist.yml` puis une relance de CrowdSec déclenchent aussi
-ce nettoyage.
+La migration initiale de la posttask supprime une fois toutes les décisions
+locales. Pour une urgence sur n'importe quel serveur, sans connaître l'IP :
+
+```sh
+docker exec crowdsec cscli decisions delete --all
+```
 
 ## Vérifier
 
 ```sh
 docker exec crowdsec cscli parsers list | grep whitelist-ssdv2
-docker exec crowdsec cscli decisions list --ip 1.2.3.4
+docker exec crowdsec cscli decisions list
 docker exec crowdsec cscli explain --type traefik --log '<ligne de log>'
 ```
 
 `cscli explain` indique `ignored by whitelist` lorsqu'une requête correspond à
 une exclusion.
 
+## Dépannage
+
+- **`Bind for 0.0.0.0:8080 failed: port is already allocated`** : ancien
+  conteneur CrowdSec. La pretask le supprime désormais automatiquement.
+- **Port 8181 déjà utilisé** : un autre service écoute sur
+  `127.0.0.1:8181`. La pretask s'arrête avec un message explicite ; libérer le
+  port avant de relancer CrowdSec.
+- **Whitelist absente** : la posttask vérifie désormais `cscli parsers list` et
+  échoue clairement si `whitelist-ssdv2` n'est pas chargée.
+
 ## Limites
 
+- Les 404/403 sur les domaines média sont volontairement ignorés : un scanner
+  qui probe ces domaines ne sera pas banni. Les applications sont
+  authentifiées ; c'est le compromis pour éviter les faux positifs des clients.
 - Une whitelist locale empêche CrowdSec de créer de nouvelles décisions, mais
   ne neutralise pas forcément une décision reçue de la blocklist CAPI. Le
   nettoyage de la posttask supprime les décisions présentes au moment de la
   relance ; une décision CAPI peut réapparaître ensuite.
-- Les exclusions 404 sur `/admin/api/` et sur la racine `www.<domaine>` sont
-  volontairement larges : elles évitent les faux positifs des interfaces
-  d'administration et des sites statiques, au prix d'une détection de probing
-  réduite sur ces préfixes.
 - L'exclusion `media_crawl` est volontairement large pour les applications
   média. La passer à `false` dans `whitelist.yml` restaure un contrôle plus
   strict, au prix de possibles faux positifs.

@@ -1,3 +1,16 @@
+06/11/2026 — CrowdSec : correctif de mise à jour
+
+- recréation propre du conteneur CrowdSec avant chaque installation :
+  corrige les ports malformés (`7422/tcp/tcp`) et l'ancien binding
+  `0.0.0.0:8080` qui empêchaient la posttask et donc le déploiement de la
+  whitelist.
+- exclusion des 404/403 sur les domaines média (Polyfin, Jellyfin, Silo,
+  Stremfin, StreamFusion, Plex), indépendante de l'IP du client.
+- ajout de l'IP publique de sortie réelle (`api.ipify.org`) à la whitelist.
+- nettoyage unique des décisions locales existantes lors de la migration,
+  sans demander l'IP de l'utilisateur.
+- vérification explicite que `whitelist-ssdv2` est chargée par CrowdSec.
+
 06/11/2026 — CrowdSec : exclusions SSDV2
 
 - whitelist générique `whitelist-ssdv2` déployée par la posttask CrowdSec :

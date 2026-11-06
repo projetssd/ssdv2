@@ -328,6 +328,28 @@
   ansible.builtin.set_fact:
     crowdsec_whitelist_config: "{{ (crowdsec_whitelist_config_raw.content | b64decode | from_yaml) | default({}, true) }}"
 
+# L'IP publique vue par internet peut différer de network.ipv4 : VPN de
+# l'hôte, changement d'adresse, etc. On l'ajoute aussi à la whitelist.
+- name: Découvrir l'IP publique sortante
+  ansible.builtin.uri:
+    url: https://api.ipify.org
+    return_content: true
+    timeout: 10
+  register: crowdsec_egress
+  changed_when: false
+  failed_when: false
+
+- name: Lire l'IP publique sortante
+  ansible.builtin.set_fact:
+    crowdsec_egress_ip: "{{ crowdsec_egress.content | default('') | trim }}"
+
+- name: Ignorer une IP publique sortante invalide
+  ansible.builtin.set_fact:
+    crowdsec_egress_ip: ""
+  when:
+    - crowdsec_egress_ip | length > 0
+    - not (crowdsec_egress_ip | ansible.netcommon.ipaddr)
+
 - name: Valider les IP et réseaux de la whitelist CrowdSec
   ansible.builtin.assert:
     that:
@@ -448,6 +470,66 @@
   delay: 5
   until: crowdsec_appsec_health.rc == 0
 
+- name: Vérifier que la whitelist SSDV2 est chargée
+  become: true
+  ansible.builtin.command: docker exec crowdsec cscli parsers list
+  register: crowdsec_whitelist_loaded
+  changed_when: false
+  failed_when: false
+
+- name: Échouer si la whitelist SSDV2 n'est pas chargée
+  ansible.builtin.fail:
+    msg: "La whitelist whitelist-ssdv2 n'est pas chargée par CrowdSec."
+  when: "'whitelist-ssdv2' not in crowdsec_whitelist_loaded.stdout"
+
+# --- Nettoyage unique des décisions locales existantes ---
+
+- name: Vérifier si le nettoyage initial des décisions a été fait
+  ansible.builtin.stat:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/crowdsec/.unban-local-done"
+  register: crowdsec_unban_done
+
+- name: Lister les décisions locales CrowdSec
+  become: true
+  ansible.builtin.command: docker exec crowdsec cscli decisions list -o json
+  register: crowdsec_local_decisions
+  changed_when: false
+  failed_when: false
+  when: not crowdsec_unban_done.stat.exists
+
+- name: Supprimer les décisions locales existantes (migration unique)
+  become: true
+  ansible.builtin.command: docker exec crowdsec cscli decisions delete --id {{ item.id }}
+  loop: >-
+    {{
+      (
+        (((crowdsec_local_decisions.stdout | default('') | trim) or '[]') | from_json | default([], true))
+        | selectattr('decisions')
+        | map(attribute='decisions')
+        | flatten
+        | list
+      )
+      if not crowdsec_unban_done.stat.exists else []
+    }}
+  register: crowdsec_unban_deletes
+  when: not crowdsec_unban_done.stat.exists
+  changed_when: false
+  failed_when: false
+
+- name: Marquer le nettoyage initial des décisions comme fait
+  become: true
+  ansible.builtin.file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/crowdsec/.unban-local-done"
+    state: touch
+    owner: "{{ lookup('env','USER') }}"
+    group: "{{ lookup('env','MYGID') }}"
+    mode: '0644'
+  when:
+    - not crowdsec_unban_done.stat.exists
+    - crowdsec_local_decisions is defined
+    - crowdsec_local_decisions.rc | default(1) == 0
+    - (crowdsec_unban_deletes.results | default([]) | selectattr('rc', 'defined') | selectattr('rc', 'ne', 0) | list | length) == 0
+
 # --- Nettoyage des décisions pour les IP/réseaux whitelistés ---
 
 - name: Supprimer les décisions CrowdSec pour les IP whitelistées
@@ -455,8 +537,11 @@
   ansible.builtin.command: docker exec crowdsec cscli decisions delete --ip {{ item }}
   loop: >-
     {{
-      ([network.ipv4] if network.ipv4 is defined and network.ipv4 else [])
-      + (crowdsec_whitelist_config.ips | default([], true))
+      (
+        ([network.ipv4] if network.ipv4 is defined and network.ipv4 else [])
+        + ([crowdsec_egress_ip] if crowdsec_egress_ip | default('') else [])
+        + (crowdsec_whitelist_config.ips | default([], true))
+      ) | unique
     }}
   register: crowdsec_decisions_ip
   changed_when: false
