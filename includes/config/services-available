@@ -110,6 +110,7 @@ piwigo - Gestion d'albums photo
 plausible - Alternative  à Google Analytics
 plexautolanguages - Addon plex sous titres
 plex - Serveur multimédia
+polyfin - Serveur compatible Jellyfin (addons Stremio/Nuvio, IPTV) - auth Traefik : aucune
 portainer - Gestion docker
 prestashop - Plateforme e-commerce
 prowlarr - Indexeur de scraping

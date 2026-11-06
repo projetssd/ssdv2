@@ -1,0 +1,41 @@
+---
+# Polyfin : serveur compatible Jellyfin (addons Stremio/Nuvio, musique Eclipse, IPTV).
+# Web/admin : https://<sous-domaine>.<domaine>/
+# Polyfin gère ses propres comptes : l'authentification Traefik est forcée à
+# « aucune », car les applis Jellyfin ne savent pas passer une auth HTTP.
+pgrole: 'polyfin'
+intport: '8096'
+
+# Image officielle du projet. `latest` suit les releases stables ; pour figer
+# une version, utiliser par exemple ghcr.io/moodiness/polyfin:0.61.2.
+image: 'ghcr.io/moodiness/polyfin:latest'
+pull_image: true
+
+# Forcé par le template générique : les applis Jellyfin ne gèrent pas l'auth HTTP.
+traefik_middleware_override: 'chain-no-auth@file'
+
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/data:rw"
+  - '/etc/localtime:/etc/localtime:ro'
+  # Médias locaux, à décommenter si besoin :
+  # - "{{ lookup('env','HOME') }}/Medias:{{ lookup('env','HOME') }}/Medias:ro"
+  # - '/mnt:/mnt:ro,rslave'
+
+pg_env:
+  POLYFIN_DATABASE_URL: "postgresql://polyfin:{{ POLYFIN_DB_PASS }}@db-{{ pgrole }}:5432/polyfin"
+  POLYFIN_SECRET_KEY: "{{ POLYFIN_SECRET_KEY }}"
+  POLYFIN_DATA_DIR: '/data'
+  TZ: 'Europe/Paris'
+  # Tuners HDHomeRun non joignables en broadcast (réseau bridge) :
+  # POLYFIN_HDHOMERUN_ADDRESSES: '192.168.1.20'
+
+# Configuration Docker de base, reprise par la pretask qui y ajoute le GPU détecté.
+# Ne pas définir specific_docker_info ici : les extra-vars ont priorité sur set_fact
+# et empêcheraient la détection GPU de la pretask.
+polyfin_docker_info:
+  restart_policy: unless-stopped
+  read_only: true
+  cap_drop:
+    - ALL
+  security_opts:
+    - 'no-new-privileges:true'

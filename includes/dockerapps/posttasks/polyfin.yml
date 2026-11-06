@@ -1,0 +1,53 @@
+---
+# Déclare Traefik comme proxy connu et renseigne l'adresse publique, puis
+# recharge Polyfin si l'un des deux a changé. Idempotent : une réinstallation
+# où les deux valeurs sont déjà correctes ne redémarre pas le conteneur.
+
+- name: Polyfin | Attendre que l'application réponde
+  ansible.builtin.command: docker exec {{ pgrole }} /polyfin healthcheck
+  register: polyfin_health
+  until: polyfin_health.rc == 0
+  retries: 60
+  delay: 3
+  changed_when: false
+
+- name: Polyfin | Déclarer Traefik et l'adresse publique
+  environment:
+    POLYFIN_PUBLIC_ADDRESS: "https://{{ subdomain }}.{{ user.domain }}"
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      docker exec -i db-{{ pgrole }} psql -U {{ pgrole }} -d {{ pgrole }} -tA \
+        -v ON_ERROR_STOP=1 -v public_address="$POLYFIN_PUBLIC_ADDRESS" <<'SQL'
+      UPDATE settings
+      SET known_proxy_names = CASE
+            WHEN 'traefik' = ANY(known_proxy_names) THEN known_proxy_names
+            ELSE array_append(known_proxy_names, 'traefik')
+          END,
+          public_address = CASE
+            WHEN coalesce(public_address, '') = '' THEN :'public_address'
+            ELSE public_address
+          END
+      WHERE NOT ('traefik' = ANY(known_proxy_names))
+         OR coalesce(public_address, '') = '';
+      SQL
+    executable: /bin/bash
+  register: polyfin_proxy_update
+  changed_when: "'UPDATE 1' in polyfin_proxy_update.stdout"
+  retries: 30
+  delay: 2
+  until: polyfin_proxy_update.rc == 0
+
+- name: Polyfin | Recharger les paramètres
+  ansible.builtin.command: docker restart {{ pgrole }}
+  when: polyfin_proxy_update.changed
+  changed_when: true
+
+- name: Polyfin | Attendre après redémarrage
+  ansible.builtin.command: docker exec {{ pgrole }} /polyfin healthcheck
+  register: polyfin_health_after
+  until: polyfin_health_after.rc == 0
+  retries: 60
+  delay: 3
+  changed_when: false
+  when: polyfin_proxy_update.changed

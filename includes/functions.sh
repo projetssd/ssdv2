@@ -793,6 +793,13 @@ function suppression_appli() {
     sudo fusermount -uz ${SETTINGS_STORAGE}/docker/${USER}/jellygrail/Video_Library
     sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/jellygrail
     ;;
+  polyfin)
+    # Ancien emplacement des secrets, avant leur déplacement dans le dossier
+    # applicatif. Les nouveaux secrets sont supprimés avec le dossier polyfin.
+    if [ $DELETE -eq 1 ]; then
+      sudo rm -rf "${SETTINGS_STORAGE}/docker/${USER}/polyfin-secrets" >/dev/null 2>&1
+    fi
+    ;;
   espocrm*)
     sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/mysql
     sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/espocrm >/dev/null 2>&1

@@ -1,0 +1,186 @@
+---
+# Pretask Polyfin : génère les secrets, prépare les dossiers, déploie
+# PostgreSQL 18 et détecte les accélérateurs graphiques avant le conteneur
+# principal (image officielle ghcr.io/moodiness/polyfin).
+
+- name: Polyfin | Présenter l'installation
+  ansible.builtin.debug:
+    msg:
+      - "Installation de Polyfin depuis l'image officielle."
+      - "Image : {{ image }}"
+      - "Authentification Traefik forcée à « aucune » (Polyfin gère ses comptes)."
+      - "Détection GPU : /dev/dri et runtime NVIDIA."
+      - "PostgreSQL 18 sera déployé comme compagnon db-{{ pgrole }}."
+
+- name: Polyfin | Créer le dossier applicatif
+  become: true
+  ansible.builtin.file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}"
+    state: directory
+    owner: "{{ lookup('env','MYUID') }}"
+    group: "{{ lookup('env','MYGID') }}"
+    mode: '0775'
+
+- name: Polyfin | Créer les dossiers de données et de secrets
+  become: true
+  ansible.builtin.file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/{{ item.name }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { name: 'data', owner: '65532', group: '65532', mode: '0775' }
+    - { name: 'db', owner: "{{ lookup('env','MYUID') }}", group: "{{ lookup('env','MYGID') }}", mode: '0775' }
+    - { name: 'secrets', owner: "{{ lookup('env','MYUID') }}", group: "{{ lookup('env','MYGID') }}", mode: '0700' }
+
+# Migration depuis l'ancien emplacement (hors dossier applicatif), sans changer
+# le mot de passe de la base ni la clé de chiffrement. L'ancien dossier est
+# conservé jusqu'à validation pour permettre un retour arrière.
+- name: Polyfin | Reprendre les secrets de l'ancien emplacement
+  become: true
+  ansible.builtin.shell:
+    cmd: |
+      set -euo pipefail
+      old="{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}-secrets"
+      new="{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/secrets"
+      uid="{{ lookup('env','MYUID') }}"
+      gid="{{ lookup('env','MYGID') }}"
+      for f in db_pass secret_key; do
+        if [ -s "$old/$f" ] && [ ! -s "$new/$f" ]; then
+          cp -p "$old/$f" "$new/$f"
+          chown "$uid:$gid" "$new/$f"
+          chmod 0600 "$new/$f"
+        fi
+      done
+    executable: /bin/bash
+  changed_when: false
+  no_log: true
+
+- name: Polyfin | Générer les secrets (une seule fois)
+  ansible.builtin.shell:
+    cmd: |
+      set -euo pipefail
+      umask 077
+      dir="{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/secrets"
+      if [ ! -s "$dir/db_pass" ]; then
+        openssl rand -hex 24 > "$dir/db_pass"
+        chmod 0600 "$dir/db_pass"
+      fi
+      if [ ! -s "$dir/secret_key" ]; then
+        openssl rand -base64 32 | tr -d '\n' > "$dir/secret_key"
+        chmod 0600 "$dir/secret_key"
+      fi
+    executable: /bin/bash
+  changed_when: false
+  no_log: true
+
+- name: Polyfin | Lire les secrets
+  ansible.builtin.slurp:
+    src: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/secrets/{{ item }}"
+  loop: [db_pass, secret_key]
+  register: polyfin_secrets
+  no_log: true
+
+- name: Polyfin | Exposer les secrets au déploiement
+  ansible.builtin.set_fact:
+    POLYFIN_DB_PASS: "{{ (polyfin_secrets.results | selectattr('item', 'equalto', 'db_pass') | first).content | b64decode | trim }}"
+    POLYFIN_SECRET_KEY: "{{ (polyfin_secrets.results | selectattr('item', 'equalto', 'secret_key') | first).content | b64decode | trim }}"
+  no_log: true
+
+- name: Polyfin | Déployer db-{{ pgrole }} (PostgreSQL 18.6)
+  community.docker.docker_container:
+    name: "db-{{ pgrole }}"
+    image: 'postgres:18.6'
+    pull: true
+    state: started
+    restart_policy: unless-stopped
+    labels:
+      ssdv2.app: "{{ pgrole }}"
+    shm_size: 1G
+    env:
+      POSTGRES_USER: polyfin
+      POSTGRES_PASSWORD: "{{ POLYFIN_DB_PASS }}"
+      POSTGRES_DB: polyfin
+    volumes:
+      # PostgreSQL 18 range son dossier de données versionné sous /var/lib/postgresql.
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/db:/var/lib/postgresql"
+      - '/etc/localtime:/etc/localtime:ro'
+    networks:
+      - name: traefik_proxy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U polyfin -d polyfin"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    stop_timeout: 60
+  no_log: true
+
+- name: Polyfin | Attendre que PostgreSQL soit prêt
+  ansible.builtin.command: docker inspect -f '{% raw %}{{.State.Health.Status}}{% endraw %}' "db-{{ pgrole }}"
+  register: polyfin_db_health
+  until: polyfin_db_health.stdout == 'healthy'
+  retries: 30
+  delay: 5
+  changed_when: false
+  check_mode: false
+
+- name: Polyfin | Rechercher /dev/dri (Intel Quick Sync, AMD VAAPI)
+  ansible.builtin.stat:
+    path: /dev/dri
+  register: polyfin_dev_dri
+
+- name: Polyfin | Rechercher le runtime Docker NVIDIA
+  ansible.builtin.command: docker info --format '{% raw %}{{json .Runtimes}}{% endraw %}'
+  register: polyfin_runtimes
+  changed_when: false
+  failed_when: false
+
+- name: Polyfin | Copier la configuration Docker de base
+  ansible.builtin.set_fact:
+    polyfin_info: "{{ polyfin_docker_info }}"
+
+# L'image arm64 de Polyfin ne fournit pas libva : /dev/dri n'y sert à rien.
+- name: Polyfin | Activer VAAPI / Quick Sync
+  ansible.builtin.set_fact:
+    polyfin_info: "{{ polyfin_info | combine({'devices': ['/dev/dri:/dev/dri']}) }}"
+    polyfin_vaapi: true
+  when:
+    - polyfin_dev_dri.stat.exists
+    - ansible_facts['architecture'] in ['x86_64', 'amd64']
+
+- name: Polyfin | Identifier les groupes des nœuds de rendu
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop:
+    - /dev/dri/renderD128
+    - /dev/dri/card0
+  register: polyfin_dri_nodes
+  when: polyfin_vaapi | default(false)
+
+- name: Polyfin | Autoriser l'accès aux nœuds de rendu
+  ansible.builtin.set_fact:
+    polyfin_info: "{{ polyfin_info | combine({'group_add': (polyfin_dri_nodes.results | selectattr('stat.exists') | map(attribute='stat.gid') | unique | list)}) }}"
+  when:
+    - polyfin_vaapi | default(false)
+    - polyfin_dri_nodes.results is defined
+    - polyfin_dri_nodes.results | selectattr('stat.exists') | list | length > 0
+
+- name: Polyfin | Activer NVENC
+  ansible.builtin.set_fact:
+    polyfin_info: >-
+      {{ polyfin_info | combine({'device_requests': [{'driver': 'nvidia', 'count': -1,
+         'capabilities': [['gpu', 'compute', 'utility', 'video']]}]}) }}
+  when: "'nvidia' in polyfin_runtimes.stdout | default('')"
+
+- name: Polyfin | Exposer specific_docker_info
+  ansible.builtin.set_fact:
+    specific_docker_info: "{{ polyfin_info }}"
+
+- name: Polyfin | Accélération matérielle détectée
+  ansible.builtin.debug:
+    msg: >-
+      Transcodage matériel :
+      {{ ([('VAAPI/Quick Sync (/dev/dri)' if polyfin_vaapi | default(false) else ''),
+           ('NVIDIA' if 'nvidia' in polyfin_runtimes.stdout | default('') else '')]
+          | select | join(' + ')) or 'aucun (transcodage logiciel)' }}
