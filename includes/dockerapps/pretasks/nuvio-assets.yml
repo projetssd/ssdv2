@@ -1,0 +1,54 @@
+---
+- name: Créer le dossier de données Nuvio
+  ansible.builtin.file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/donnees"
+    state: directory
+    owner: "{{ lookup('env','USER') }}"
+    group: "{{ lookup('env','USER') }}"
+    mode: '0775'
+
+- name: Vérifier la clé TMDB
+  ansible.builtin.stat:
+    path: "{{ settings.storage }}/conf/{{ pgrole }}.tmdb-key"
+  register: nuvio_tmdb_stat
+
+- name: Demander la clé TMDB
+  ansible.builtin.pause:
+    prompt: |
+      SSDV2_PROMPT {"id":"nuvio-assets.tmdb_key","label":"Clé API TMDB v3","kind":"secret","secret":true}
+      Colle la clé API TMDB v3 (themoviedb.org → Paramètres → API)
+    echo: no
+  register: nuvio_tmdb_prompt
+  when: not nuvio_tmdb_stat.stat.exists
+  no_log: true
+
+- name: Écrire la clé TMDB
+  ansible.builtin.copy:
+    content: "{{ (nuvio_tmdb_prompt.user_input | default('')) | trim }}\n"
+    dest: "{{ settings.storage }}/conf/{{ pgrole }}.tmdb-key"
+    owner: "{{ lookup('env','USER') }}"
+    group: "{{ lookup('env','USER') }}"
+    mode: '0600'
+  when: not nuvio_tmdb_stat.stat.exists
+  no_log: true
+
+- name: Lire la clé TMDB
+  ansible.builtin.slurp:
+    src: "{{ settings.storage }}/conf/{{ pgrole }}.tmdb-key"
+  register: nuvio_tmdb_slurp
+  no_log: true
+
+- name: Définir la clé TMDB
+  ansible.builtin.set_fact:
+    nuvio_tmdb_key: "{{ nuvio_tmdb_slurp.content | b64decode | trim }}"
+  no_log: true
+
+- name: Vérifier la clé TMDB
+  ansible.builtin.assert:
+    that:
+      - nuvio_tmdb_key | length > 0
+      - nuvio_tmdb_key != 'ta-cle-tmdb'
+    fail_msg: "Clé TMDB absente ou invalide"
+  no_log: true
+
+
