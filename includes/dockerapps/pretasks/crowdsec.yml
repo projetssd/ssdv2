@@ -24,7 +24,7 @@
     image: crowdsecurity/crowdsec:latest
     name: crowdsec
     ports:
-      - "127.0.0.1::8080"
+      - "127.0.0.1:8181:8080"
     exposed_ports:
       - "7422" # AppSec (WAF), non publie sur l'hote
     volumes:
