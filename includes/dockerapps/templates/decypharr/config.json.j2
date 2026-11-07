@@ -1,6 +1,7 @@
 {
   "session_secret": "{{ decypharr_instance_session_secret }}",
   "use_auth": true,
+  "max_active_downloads": {{ decypharr_instance_max_downloads | default(5) }},
   "bind_address": "0.0.0.0",
   "url_base": "/",
   "port": "8282",

@@ -32,6 +32,7 @@
       {{ decypharr_instance_api_token_file | default(settings.storage ~ 'conf/' ~ pgrole ~ '.api-token') }}
     decypharr_instance_reset: "{{ decypharr_instance_reset | default(false) }}"
     decypharr_instance_download_uncached: "{{ decypharr_instance_download_uncached | default(true) }}"
+    decypharr_instance_max_downloads: "{{ decypharr_instance_max_downloads | default(5) }}"
     decypharr_instance_config_dir: >-
       {{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config
     decypharr_instance_ui_username: "{{ decypharr_instance_ui_username | default(lookup('env','USER')) }}"
