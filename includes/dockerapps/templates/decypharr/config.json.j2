@@ -25,7 +25,7 @@
       "name": "{{ decypharr_instance_arr }}",
       "host": "{{ decypharr_instance_arr_host }}",
       "token": "{{ decypharr_instance_arr_token }}",
-      "download_uncached": false,
+      "download_uncached": {{ decypharr_instance_download_uncached | default(true) | bool | tojson }},
       "selected_debrid": "{{ decypharr_instance_provider }}",
       "source": "auto"
     }
