@@ -157,6 +157,7 @@
     ########################################################################
 
     - name: Prepare docker info
+      no_log: "{{ docker_no_log | default(false) | bool }}"
       ansible.builtin.set_fact:
         docker_info:
           name: "{{ pgrole }}"
@@ -173,11 +174,13 @@
       when: docker_deploy_enabled
 
     - name: Add specific docker info
+      no_log: "{{ docker_no_log | default(false) | bool }}"
       ansible.builtin.set_fact:
         docker_info: "{{ docker_info | combine(specific_docker_info, recursive=True) }}"
       when: docker_deploy_enabled and specific_docker_info is defined
 
     - name: Normalize security_opts for docker_container
+      no_log: "{{ docker_no_log | default(false) | bool }}"
       ansible.builtin.set_fact:
         docker_info: "{{ docker_info | combine({'security_opts': [docker_info.security_opts]}) }}"
       when:
@@ -186,6 +189,7 @@
         - docker_info.security_opts is string
 
     - name: Deploy container {{ pgrole }}
+      no_log: "{{ docker_no_log | default(false) | bool }}"
       community.docker.docker_container: "{{ docker_info }}"  # noqa: args[module]
       when: docker_deploy_enabled
 

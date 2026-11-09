@@ -1,0 +1,10 @@
+---
+- name: Préparer la configuration Filebrowser avant démarrage
+  ansible.builtin.include_tasks: "{{ settings.source }}/includes/dockerapps/templates/generique/persistent_permissions.yml"
+  vars:
+    permission_roots:
+      - path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config"
+        owner: "{{ lookup('env','MYUID') }}"
+        group: "{{ lookup('env','MYGID') }}"
+        directory_mode: '0750'
+        file_mode: '0640'

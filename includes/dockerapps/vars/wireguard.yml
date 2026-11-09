@@ -1,11 +1,12 @@
 ---
 pgrole: 'wireguard'
-intport: '7878'
+traefik_labels_enabled: false
 image: 'ghcr.io/linuxserver/wireguard'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/config:/config"
   - "/lib/modules:/lib/modules"
 pg_env:
+  LOG_CONFS: 'false'
   PUID: '{{user.userid}}'
   PGID: '{{user.groupid}}'
   TZ: 'Europe/Paris'

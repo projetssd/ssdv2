@@ -88,12 +88,17 @@ Les chemins proviennent de ``SETTINGS_SOURCE`` / ``SETTINGS_STORAGE``, sinon de
 from __future__ import annotations
 
 import argparse
+import base64
+import io
 import json
 import os
 import re
+import selectors
 import sqlite3
 import subprocess
 import sys
+import tarfile
+import time
 from pathlib import Path
 
 VERSION = "0.8.0"
@@ -1058,6 +1063,63 @@ def command_plexcve(
     return payload
 
 
+def _read_peer_archive(argv: list[str], timeout: float = 10) -> bytes:
+    """Lecture bornée en mémoire ; stderr n'entre jamais dans les erreurs publiques."""
+    limit = 1024 * 1024
+    try:
+        with subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                              stdin=subprocess.DEVNULL) as process:
+            try:
+                assert process.stdout is not None
+                result = bytearray()
+                deadline = time.monotonic() + timeout
+                with selectors.DefaultSelector() as selector:
+                    selector.register(process.stdout, selectors.EVENT_READ)
+                    while True:
+                        remaining = deadline - time.monotonic()
+                        if remaining <= 0 or not selector.select(remaining):
+                            raise CtlError("peer_qr_unavailable", "Lecture du QR code expirée")
+                        chunk = os.read(process.stdout.fileno(), 65536)
+                        if not chunk:
+                            break
+                        result.extend(chunk)
+                        if len(result) > limit:
+                            raise CtlError("peer_qr_invalid", "QR code trop volumineux")
+                if process.wait(timeout=max(0.01, deadline - time.monotonic())) != 0:
+                    raise CtlError("peer_qr_unavailable", "QR code WireGuard indisponible")
+                return bytes(result)
+            finally:
+                if process.poll() is None:
+                    process.kill()
+                    process.wait()
+    except (OSError, subprocess.TimeoutExpired):
+        raise CtlError("peer_qr_unavailable", "QR code WireGuard indisponible") from None
+
+
+def command_peer_qr(source: Path, app: str) -> dict:
+    require_app(source, app)
+    if app != "wireguard":
+        raise CtlError("invalid_app", "QR code disponible uniquement pour WireGuard")
+    archive = _read_peer_archive(["docker", "cp", "wireguard:/config/peer1/peer1.png", "-"])
+    try:
+        with tarfile.open(fileobj=io.BytesIO(archive), mode="r:") as tar:
+            members = tar.getmembers()
+            if (len(members) != 1 or members[0].name != "peer1.png"
+                    or not members[0].isfile() or members[0].size > 512 * 1024):
+                raise ValueError
+            stream = tar.extractfile(members[0])
+            if stream is None:
+                raise ValueError
+            png = stream.read(512 * 1024 + 1)
+            if (len(png) < 45 or not png.startswith(b"\x89PNG\r\n\x1a\n")
+                    or png[12:16] != b"IHDR" or png[-8:-4] != b"IEND"):
+                raise ValueError
+    except (tarfile.TarError, ValueError, OSError):
+        raise CtlError("peer_qr_invalid", "QR code WireGuard invalide") from None
+    return {"schema": SCHEMA_VERSION, "app": app, "peer": "1",
+            "png_base64": base64.b64encode(png).decode("ascii")}
+
+
 def emit(payload: dict) -> None:
     json.dump(payload, sys.stdout, ensure_ascii=False, indent=2)
     sys.stdout.write("\n")
@@ -1096,6 +1158,8 @@ def build_parser() -> argparse.ArgumentParser:
     app_commands = app.add_subparsers(dest="app_command", required=True)
     app_status = app_commands.add_parser("status", help="état factuel d'une application")
     add_app_arguments(app_status)
+    peer_qr = app_commands.add_parser("peer-qr", help="lit le QR code privé du premier pair WireGuard")
+    add_app_arguments(peer_qr)
     actions = {
         "start": "démarre les conteneurs de l'application",
         "stop": "arrête les conteneurs de l'application",
@@ -1363,6 +1427,8 @@ def main(argv: list[str] | None = None) -> int:
             emit(command_apps_list(source))
         elif args.command == "app" and args.app_command == "status":
             emit(command_app_status(source, storage, args.app))
+        elif args.command == "app" and args.app_command == "peer-qr":
+            emit(command_peer_qr(source, args.app))
         elif args.command == "app" and args.app_command in ACTION_COMMANDS:
             payload = command_app_action(source, storage, args.app, args.app_command)
             emit(payload)

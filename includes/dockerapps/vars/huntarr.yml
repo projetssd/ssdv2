@@ -9,8 +9,6 @@ pg_env:
   PGID: "{{ lookup('env','MYGID') }}"
   TZ: "Europe/Paris"
 specific_docker_info:
-  ports:
-    - "9705:9705"
   restart_policy: "always"
   log_driver: "journald"
   log_options:

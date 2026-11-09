@@ -4,6 +4,7 @@ image: 'lscr.io/linuxserver/changedetection.io:latest'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/datastore:/datastore:rw"
 pg_env:
+  TZ: 'Europe/Paris'
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
   WEBDRIVER_URL: "http://browser-chrome:4444/wd/hub"

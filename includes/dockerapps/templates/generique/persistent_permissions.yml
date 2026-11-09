@@ -1,0 +1,53 @@
+---
+# permission_roots: [{path, directory_mode, file_mode, owner?, group?}]
+- name: Vérifier les racines persistantes
+  ansible.builtin.stat:
+    path: "{{ item.path }}"
+    follow: false
+  loop: "{{ permission_roots }}"
+  register: persistent_roots_stat
+
+- name: Refuser une racine persistante symbolique
+  ansible.builtin.assert:
+    that: not (item.stat.islnk | default(false))
+    fail_msg: "Le dossier persistant doit être un répertoire réel : {{ item.item.path }}"
+  loop: "{{ persistent_roots_stat.results }}"
+
+- name: Préparer les racines persistantes
+  become: true
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    mode: "{{ item.directory_mode }}"
+    owner: "{{ item.owner | default(omit) }}"
+    group: "{{ item.group | default(omit) }}"
+    follow: false
+  loop: "{{ permission_roots }}"
+  register: persistent_roots_created
+
+- name: Inventorier les données sans suivre les liens
+  become: true
+  ansible.builtin.find:
+    paths: "{{ item.path }}"
+    recurse: true
+    hidden: true
+    follow: false
+    file_type: any
+  loop: "{{ permission_roots }}"
+  register: persistent_entries
+
+- name: Réparer les droits des répertoires et fichiers ordinaires
+  become: true
+  ansible.builtin.file:
+    path: "{{ item.1.path }}"
+    mode: "{{ item.0.item.directory_mode if item.1.isdir else item.0.item.file_mode }}"
+    owner: "{{ item.0.item.owner | default(omit) }}"
+    group: "{{ item.0.item.group | default(omit) }}"
+    follow: false
+  loop: "{{ persistent_entries.results | subelements('files') }}"
+  when: item.1.isdir or item.1.isreg
+  register: persistent_rights_repaired
+
+- name: Mémoriser la réparation des permissions
+  ansible.builtin.set_fact:
+    persistent_permissions_changed: "{{ persistent_roots_created.changed or persistent_rights_repaired.changed }}"

@@ -6,6 +6,7 @@ pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
 pg_env:
+  TZ: 'Europe/Paris'
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
   #DOCKER_MODS: 'ghcr.io/gilbn/theme.park:sonarr'

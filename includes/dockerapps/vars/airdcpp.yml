@@ -11,6 +11,7 @@ pg_volumes:
   - "{{ lookup('env','HOME') }}/Medias:/Share:rw"
 
 pg_env:
+  TZ: 'Europe/Paris'
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
 

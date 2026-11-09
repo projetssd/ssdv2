@@ -1,0 +1,17 @@
+---
+- name: Préparer les données Baïkal avant démarrage
+  ansible.builtin.include_tasks: "{{ settings.source }}/includes/dockerapps/templates/generique/persistent_permissions.yml"
+  vars:
+    # L'entrypoint amont attribue les données à nginx:nginx. Ne pas imposer
+    # l'UID de l'utilisateur hôte aux données existantes.
+    permission_roots:
+      - path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config"
+        directory_mode: '0750'
+        file_mode: '0640'
+      - path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/Specific"
+        directory_mode: '0750'
+        file_mode: '0640'
+
+- name: Rejouer l'entrypoint si les permissions ont été réparées
+  ansible.builtin.set_fact:
+    specific_docker_info: "{{ specific_docker_info | default({}) | combine({'restart': persistent_permissions_changed or (specific_docker_info | default({})).get('restart', false)}) }}"

@@ -1,11 +1,9 @@
-- name:
-  debug:
-    msg:
-    - "Une fois l'installation terminée, il faut afficher les logs pour avoir le qrcode (commande docker logs -f wireguard puis faire entrée)  !!"
-    - "Une fois que vous avez scanné le qrcode, ctrl+c pour sortir des logs"
+---
+- name: Attendre le premier QR code WireGuard
+  ansible.builtin.wait_for:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config/peer1/peer1.png"
+    timeout: 60
 
-- name: Prendre connaissance du message ci dessus
-  pause:
-    prompt: |
-      SSDV2_PROMPT {"id": "wireguard.ack", "label": "Continuer", "kind": "confirm", "secret": false}
-      Prendre connaissance du message ci dessus, puis faire entrée
+- name: Indiquer comment afficher le QR code WireGuard
+  ansible.builtin.debug:
+    msg: "Le QR code est disponible depuis la fiche WireGuard de la WebUI ; il est affiché directement en installation CLI interactive."

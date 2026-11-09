@@ -5,6 +5,7 @@ image: 'lscr.io/linuxserver/kasm:latest'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/profiles:/profiles"
 pg_env:
+  TZ: 'Europe/Paris'
   KASM_PORT: "443"
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"

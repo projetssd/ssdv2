@@ -1,0 +1,26 @@
+---
+- name: Préparer les dossiers Metube avant démarrage
+  ansible.builtin.include_tasks: "{{ settings.source }}/includes/dockerapps/templates/generique/persistent_permissions.yml"
+  vars:
+    permission_roots:
+      - path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config"
+        owner: "{{ lookup('env','MYUID') }}"
+        group: "{{ lookup('env','MYGID') }}"
+        directory_mode: '0750'
+        file_mode: '0640'
+      - path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/downloads"
+        owner: "{{ lookup('env','MYUID') }}"
+        group: "{{ lookup('env','MYGID') }}"
+        directory_mode: '0755'
+        file_mode: '0644'
+
+- name: Préparer les destinations de téléchargement Metube
+  become: true
+  ansible.builtin.file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/downloads/{{ item }}"
+    state: directory
+    owner: "{{ lookup('env','MYUID') }}"
+    group: "{{ lookup('env','MYGID') }}"
+    mode: '0755'
+    follow: false
+  loop: ['videos', 'audios']

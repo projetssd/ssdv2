@@ -5,6 +5,10 @@ image: 'caomingjun/warp:latest'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}:/var/lib/cloudflare-warp"
 traefik_labels_enabled: false
+
+pg_env:
+  TZ: 'Europe/Paris'
+
 specific_docker_info:
   capabilities:
     - NET_ADMIN

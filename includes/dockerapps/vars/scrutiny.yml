@@ -7,6 +7,7 @@ pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/influxdb:/opt/scrutiny/influxdb"
   - "/run/udev:/run/udev:ro"
 pg_env:
+  TZ: 'Europe/Paris'
   PUID: "{{ lookup('env','MYUID') }}"
   PGID: "{{ lookup('env','MYGID') }}"
   TIMEZONE: "Europe/Paris"

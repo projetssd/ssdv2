@@ -628,7 +628,31 @@ launch_service () {
         fi
     fi
 
+    if [[ ${rc} -eq 0 && "${line}" == wireguard ]]; then
+        display_wireguard_qr
+    fi
     return ${rc}
+}
+
+function display_wireguard_qr() {
+  # Hors Ansible et hors stdout : aucun QR code dans les sorties de jobs.
+  if [[ "${SSDV2_NON_INTERACTIVE:-0}" != 1 ]] && [ -t 0 ] && [ -w /dev/tty ]; then
+    docker exec wireguard /app/show-peer 1 </dev/null >/dev/tty 2>/dev/null || true
+  fi
+}
+
+# Les réseaux ne sont pas suivis par le registre des conteneurs/volumes.
+function cleanup_app_network() {
+  local app_network="$1" endpoints
+  if ! endpoints=$(docker network inspect "$app_network" --format '{{len .Containers}}' 2>/dev/null); then
+    return 0  # Réseau déjà absent : suppression idempotente.
+  fi
+  if [[ "$endpoints" == 0 ]]; then
+    docker network rm "$app_network" >/dev/null 2>&1 ||
+      printf 'Réseau %s conservé : suppression impossible.\n' "$app_network" >&2
+  else
+    printf 'Réseau %s conservé : des conteneurs y sont encore connectés.\n' "$app_network" >&2
+  fi
 }
 
 function manage_apps() {
@@ -743,6 +767,12 @@ function suppression_appli() {
   # nécessaire pour les installations antérieures au label ssdv2.app et sera
   # retiré progressivement.
   case $APPSELECTED in
+  bitwarden)
+    cleanup_app_network bw-net
+    ;;
+  sismicsreader)
+    cleanup_app_network sismicsreader-net
+    ;;
   oauth)
     manage_account_yml oauth.client " "
     manage_account_yml oauth.secret " "
@@ -762,7 +792,10 @@ function suppression_appli() {
     ;;
   jitsi)
     docker rm -f prosody jicofo jvb
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/.jitsi-meet-cfg
+    cleanup_app_network meet.jitsi
+    if [ $DELETE -eq 1 ]; then
+      sudo rm -rf "${SETTINGS_STORAGE}/docker/${USER}/.jitsi-meet-cfg"
+    fi
     ;;
   nextcloud)
     docker rm -f collabora coturn office

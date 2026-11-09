@@ -10,6 +10,9 @@ pgrole: 'decypharrgate'
 image: 'openresty/openresty:1.27.1.2-alpine'
 traefik_labels_enabled: false
 
+pg_env:
+  TZ: 'Europe/Paris'
+
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}:/etc/nginx/conf.d:ro"
 
