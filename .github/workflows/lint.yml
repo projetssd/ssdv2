@@ -46,6 +46,8 @@ jobs:
           if [ "${#files[@]}" -gt 0 ]; then
             python -m py_compile "${files[@]}"
           fi
+      - name: Tests du transport privé WireGuard
+        run: python3 tests/test_peer_qr.py
 
   bats:
     runs-on: ubuntu-24.04
@@ -85,6 +87,11 @@ jobs:
             echo "syntax-check: $f"
             ansible-playbook --syntax-check "$f"
           done
+      - name: Tests des permissions sur dossiers temporaires
+        run: |
+          export ANSIBLE_PLAYBOOK="$(command -v ansible-playbook)"
+          test -x "$ANSIBLE_PLAYBOOK"
+          python3 tests/test_persistent_permissions.py
 
   yaml:
     runs-on: ubuntu-24.04

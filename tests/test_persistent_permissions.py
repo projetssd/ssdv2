@@ -1,13 +1,15 @@
 """Exécute uniquement le helper de permissions sur des données temporaires."""
 import json
 import os
+import shutil
 from pathlib import Path
 import subprocess
 import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-ANSIBLE = ROOT / "venv/bin/ansible-playbook"
+ANSIBLE = Path(os.environ.get("ANSIBLE_PLAYBOOK") or shutil.which("ansible-playbook")
+               or ROOT / "venv/bin/ansible-playbook")
 
 
 @unittest.skipUnless(ANSIBLE.is_file(), "Ansible local requis")
