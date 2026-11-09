@@ -1,4 +1,6 @@
 # database
+# Internal audit reports stay outside the public repository.
+/docs/audits/
 ssddb
 *retry
 .prerequis.lock
