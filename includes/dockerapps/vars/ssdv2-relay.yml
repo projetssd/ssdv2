@@ -3,11 +3,16 @@
 # Mode serve-api : HTTP privé sans CA, aucun flux vidéo.
 # Stream Fusion / Taskiq utilisent AD_BASE_URL=http://ssdv2-relay:1080
 # et ne doivent pas définir PROXY_URL.
+#
+# Seuls RELAY_WORKER_URL et RELAY_TOKEN sont nécessaires : ils sont demandés
+# (ou réutilisés) par la pretask. La clé API AllDebrid est facultative et
+# n'est pas utilisée par le relais (elle reste gérée par Stream Fusion).
 pgrole: 'ssdv2-relay'
 intport: '1080'
 
 image: 'ghcr.io/projetssd/ssdv2-relay:latest'
 pull_image: true
+docker_no_log: true
 
 pg_env:
   RELAY_WORKER_URL: "{{ RELAY_WORKER_URL }}"
