@@ -30,6 +30,36 @@
     state: directory
     mode: "0700"
 
+- name: Vérifier la présence des nouveaux fichiers de secrets
+  ansible.builtin.stat:
+    path: "{{ ssdv2_relay_secret_dir }}/{{ item }}"
+    follow: false
+  loop: ['RELAY_WORKER_URL', 'RELAY_TOKEN']
+  register: ssdv2_relay_new_secret_files
+  no_log: true
+
+- name: Reprendre une ancienne paire complète sans écraser la nouvelle configuration
+  when: (ssdv2_relay_new_secret_files.results | selectattr('stat.exists') | list | length) == 0
+  no_log: true
+  block:
+    - name: Lire les anciens secrets SSD Relay
+      ansible.builtin.slurp:
+        src: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}-secrets/{{ item }}"
+      loop: ['RELAY_WORKER_URL', 'RELAY_TOKEN']
+      register: ssdv2_relay_old_secret_files
+      failed_when: false
+
+    - name: Importer uniquement une paire ancienne complète
+      ansible.builtin.copy:
+        content: "{{ item.content | b64decode }}"
+        dest: "{{ ssdv2_relay_secret_dir }}/{{ item.item }}"
+        mode: '0600'
+        force: false
+      loop: "{{ ssdv2_relay_old_secret_files.results }}"
+      when:
+        - (ssdv2_relay_old_secret_files.results[0].content | default('') | b64decode | trim | length) > 0
+        - (ssdv2_relay_old_secret_files.results[1].content | default('') | b64decode | trim | length) > 0
+
 - name: Lire l'URL Worker déjà enregistrée
   ansible.builtin.slurp:
     src: "{{ ssdv2_relay_secret_dir }}/RELAY_WORKER_URL"

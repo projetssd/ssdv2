@@ -12,6 +12,7 @@ intport: '1080'
 
 image: 'ghcr.io/projetssd/ssdv2-relay:latest'
 pull_image: true
+docker_no_log: true
 
 pg_env:
   RELAY_WORKER_URL: "{{ RELAY_WORKER_URL }}"

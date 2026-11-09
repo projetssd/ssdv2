@@ -87,6 +87,11 @@ jobs:
             echo "syntax-check: $f"
             ansible-playbook --syntax-check "$f"
           done
+      - name: Tests Relay et Proxy sur données fictives
+        run: |
+          export ANSIBLE_PLAYBOOK="$(command -v ansible-playbook)"
+          test -x "$ANSIBLE_PLAYBOOK"
+          python3 tests/test_relay_proxy.py
       - name: Tests des permissions sur dossiers temporaires
         run: |
           export ANSIBLE_PLAYBOOK="$(command -v ansible-playbook)"
