@@ -8,6 +8,7 @@
 pgrole: 'ssdv2proxy'
 intport: '7000'
 image: 'ghcr.io/projetssd/ssdv2-proxy-manager:latest'
+docker_no_log: true
 
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}:/app/data:rw"
