@@ -1193,7 +1193,8 @@ class Audit:
         for entry in document.get("findings", []) or []:
             app = entry["app"]
             if app not in self.records:
-                self.stale.append({"app": app, "path": entry.get("path"), "detail": entry["detail"],
+                self.stale.append({"app": app, "code": entry["code"], "path": entry.get("path"),
+                                   "detail": entry["detail"],
                                    "reason": "application absente du catalogue"})
                 continue
             rel = entry["path"]
@@ -1202,8 +1203,8 @@ class Audit:
             line = entry.get("line", 1)
             if needle:
                 if not path.is_file():
-                    self.stale.append({"app": app, "path": rel, "detail": entry["detail"],
-                                       "reason": "fichier absent"})
+                    self.stale.append({"app": app, "code": entry["code"], "path": rel,
+                                       "detail": entry["detail"], "reason": "fichier absent"})
                     continue
                 found = None
                 for index, text in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
@@ -1211,7 +1212,8 @@ class Audit:
                         found = index
                         break
                 if found is None:
-                    self.stale.append({"app": app, "path": rel, "detail": entry["detail"],
+                    self.stale.append({"app": app, "code": entry["code"], "path": rel,
+                                       "detail": entry["detail"],
                                        "reason": f"motif introuvable : {needle}"})
                     continue
                 line = found
