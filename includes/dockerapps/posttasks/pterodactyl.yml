@@ -3,6 +3,7 @@
   include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
   vars:
     subdomain: "wings"
+  when: cloudflare_enabled
 
 - name: 'Deploying wings'
   docker_container:
@@ -28,7 +29,7 @@
       traefik.http.routers.wings-rtr.rule: "Host(`wings.{{ user.domain }}`)"
       traefik.http.routers.wings-rtr.tls: 'true'
       traefik.http.routers.wings-rtr.tls.certresolver: "letsencrypt"
-      traefik.http.routers.{{pgrole}}-rtr.service: 'wings-svc'
+      traefik.http.routers.wings-rtr.service: 'wings-svc'
       traefik.http.services.wings-svc.loadbalancer.server.port: "443"
     networks:
       - name: 'traefik_proxy'

@@ -1,3 +1,20 @@
+10/11/2026 — Applications : corrections fonctionnelles (webdav, mattermost, etc.)
+
+- `webdav` : le conteneur redémarrait faute de `SERVER_NAME` (Apache). Router
+  borné au Host, TLS + `chain-basic-auth@file`, `GID` corrigé. Vérifié sur
+  serveur : 401 sans identifiants, 200 en `GET`, 207 en `PROPFIND`.
+- `mattermost` : la base `db-mattermost` est désormais déployée par la posttask
+  `postgresql` (le DSN pointait vers un conteneur inexistant). L'image
+  officielle reste amd64 uniquement : elle ne démarre pas sur un hôte arm64.
+- `pterodactyl` : DNS `wings` conditionné à Cloudflare, router `wings-rtr`
+  corrigé.
+- `immich` : branche de suppression désormais atteignable, `immich-app` et
+  le volume `model-cache` protégés par `DELETE=1`.
+- `nextcloud` : `turnserver.conf` écrit sous le même chemin que le volume.
+- `emdash` : `pull_image: false` pour l'image locale.
+- audit : `HOSTLESSAUTH`, `WRONGROUTER`, `CFUNCONDITIONAL`, `GID`,
+  `MISSINGDEP`, `LOCALPULL` à 0.
+
 10/11/2026 — Ports Web hôte et variables mortes
 
 - ports Web publiés sur l'hôte retirés pour `decypharr`, `emby`, `frenchio`,

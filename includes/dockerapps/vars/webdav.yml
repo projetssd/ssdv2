@@ -7,7 +7,9 @@ pg_volumes:
 pg_env:
   #aucune authentification, on laisse le script la gerer par traefik
   UID: "{{ lookup('env','MYUID') }}"
-  GID: "{{ lookup('env','MYUID') }}"
+  GID: "{{ lookup('env','MYGID') }}"
+  # Requis par l'image (ServerName Apache) ; sans lui, le conteneur redémarre.
+  SERVER_NAME: "{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}"
   BASIC_AUTH_ENABLED: "false"
   WEBDAV_OPERATIONS: "GET OPTIONS PROPFIND"
 
@@ -44,23 +46,13 @@ traefik_labels_enabled: false
 specific_docker_info:
   labels:
     traefik.enable: "true"
-    traefik.http.routers.webdav.service: "webdav"
-
-    # Register Middleware ====================================================
-    traefik.http.routers.webdav.middlewares: "compresstraefik,ratelimit"
-
-    # =================================================================================
-    traefik.http.middlewares.compresstraefik.compress: "true"
-    traefik.http.services.webdav.loadbalancer.server.port: "8080"
-    traefik.http.services.webdav.loadbalancer.passhostheader: "true"
-
-    # Use PathPrefix rule to catch all requests
-    traefik.http.routers.webdav.rule: "PathPrefix(`/`)"
-    traefik.http.routers.webdav.entrypoints: "http,https"
-
-    # Rate Limiting Middleware (Per IP) =====================================
-    traefik.http.middlewares.ratelimit.ratelimit.average: "5"
-    traefik.http.middlewares.ratelimit.ratelimit.burst: "6"
-    traefik.http.middlewares.ratelimit.ratelimit.sourcecriterion.ipstrategy.depth: "1"
+    traefik.http.routers.webdav-rtr.entrypoints: "http,https"
+    traefik.http.routers.webdav-rtr.rule: "Host(`{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}`)"
+    traefik.http.routers.webdav-rtr.tls: "true"
+    traefik.http.routers.webdav-rtr.tls.certresolver: "letsencrypt"
+    traefik.http.routers.webdav-rtr.middlewares: "chain-basic-auth@file"
+    traefik.http.routers.webdav-rtr.service: "webdav-svc"
+    traefik.http.services.webdav-svc.loadbalancer.server.port: "8080"
+    traefik.http.services.webdav-svc.loadbalancer.passhostheader: "true"
 
 

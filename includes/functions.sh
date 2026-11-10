@@ -1091,10 +1091,13 @@ function suppression_appli() {
     remove_app_containers "$APPSELECTED" mariadb paperless broker
     manage_account_yml sub.paperless " "
     ;;
-  immich_server)
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/immich-app >/dev/null 2>&1
+  immich)
+    # Le dossier immich-app et le volume model-cache appartiennent à immich.
+    if [ $DELETE -eq 1 ]; then
+      remove_app_dir "$APPSELECTED" "immich-app"
+      docker volume rm model-cache >/dev/null 2>&1
+    fi
     remove_app_containers "$APPSELECTED" immich_server database redis immich-machine-learning
-    docker volume rm model-cache >/dev/null 2>&1
     manage_account_yml sub.immich " "
     ;;
   silo)

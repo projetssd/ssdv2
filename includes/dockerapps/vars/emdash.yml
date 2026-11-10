@@ -2,6 +2,7 @@
 pgrole: 'emdash'
 intport: '4321'
 image: 'emdash:ssdv2'
+pull_image: false
 
 # EmDash est construit localement depuis le dépôt officiel.
 # Le pretask récupère le dépôt, applique les correctifs nécessaires,

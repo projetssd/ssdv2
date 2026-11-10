@@ -18,4 +18,5 @@ pg_env:
   MM_SERVICESETTINGS_SITEURL: "https://{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{ user.domain }}"
 
 posttasks:
+  - "postgresql"
   - "mattermost_post"
