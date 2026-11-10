@@ -125,3 +125,6 @@ fabric.properties
 .idea/codestream.xml
 
 # End of https://www.toptal.com/developers/gitignore/api/cloud9,phpstorm
+
+# Rapports d'audit générés (artefacts dérivés, voir scripts/audit/README.md)
+/docs/audits/

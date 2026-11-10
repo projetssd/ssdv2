@@ -653,6 +653,202 @@ function json_array_from_lines() {
 # Liste les conteneurs rattachés à une application : label ssdv2.app (nouvelles
 # installations), registre enregistré à l'installation, puis conventions de
 # nommage SSDV2. Ne supprime rien, retourne une liste triée unique.
+# ---------------------------------------------------------------------------
+# Propriété des ressources avant suppression
+#
+# Une ressource n'est supprimée que si son appartenance exclusive à
+# l'application est établie. Les statuts de la base ne sont pas utilisés : une
+# application arrêtée, en échec ou en cours de réinstallation conserve le même
+# statut, et une installation ancienne peut ne plus y figurer.
+#
+# Preuves acceptées pour un conteneur :
+#   1. convention SSDV2 (`<app>`, `db-<app>`, `redis-<app>`, `memcached-<app>`) ;
+#   2. nom déclaré par les hooks de l'application ;
+#   3. nom présent dans son registre `conf/<app>.containers`.
+# Dans les cas 2 et 3, aucune autre application ne doit déclarer ce nom ni
+# l'inscrire dans son registre : sinon la ressource est partagée ou inconnue.
+# ---------------------------------------------------------------------------
+
+# Fichiers de configuration d'une application (source + surcharges utilisateur).
+function app_config_files() {
+  local app="$1" file
+  for file in \
+    "${SETTINGS_SOURCE}/includes/dockerapps/vars/${app}.yml" \
+    "${SETTINGS_SOURCE}/includes/dockerapps/pretasks/${app}.yml" \
+    "${SETTINGS_SOURCE}/includes/dockerapps/posttasks/${app}.yml" \
+    "${SETTINGS_STORAGE}/vars/${app}.yml" \
+    "${SETTINGS_STORAGE}/conf/${app}.yml"; do
+    [ -f "$file" ] && printf '%s\n' "$file"
+  done
+}
+
+# Tous les fichiers déclarant des ressources (hooks partagés inclus).
+function all_config_files() {
+  find "${SETTINGS_SOURCE}/includes/dockerapps/vars" \
+       "${SETTINGS_SOURCE}/includes/dockerapps/pretasks" \
+       "${SETTINGS_SOURCE}/includes/dockerapps/posttasks" \
+       "${SETTINGS_SOURCE}/includes/dockerapps/templates" \
+       "${SETTINGS_STORAGE}/vars" "${SETTINGS_STORAGE}/conf" \
+       -type f -name '*.yml' 2>/dev/null
+}
+
+function name_is_convention() {
+  local app="$1" name="$2"
+  case "$name" in
+    "$app"|"db-$app"|"redis-$app"|"memcached-$app") return 0 ;;
+  esac
+  return 1
+}
+
+# Vrai si le conteneur est déclaré dans les fichiers fournis sur stdin.
+function files_declare_container() {
+  local name="$1"
+  xargs -r grep -lE "^[[:space:]]*(-[[:space:]]+)?name:[[:space:]]*['\"]?${name}['\"]?[[:space:]]*$|docker[[:space:]]+run[^#]*--name[= ]${name}([[:space:]]|$)" 2>/dev/null \
+    | head -n1 | grep -q .
+}
+
+function app_declares_container() {
+  local app="$1" name="$2"
+  [ -n "$(app_config_files "$app")" ] || return 1
+  app_config_files "$app" | files_declare_container "$name"
+}
+
+function others_declare_container() {
+  local app="$1" name="$2"
+  all_config_files | grep -vxF -e "${SETTINGS_SOURCE}/includes/dockerapps/vars/${app}.yml" \
+                                     -e "${SETTINGS_SOURCE}/includes/dockerapps/pretasks/${app}.yml" \
+                                     -e "${SETTINGS_SOURCE}/includes/dockerapps/posttasks/${app}.yml" \
+                                     -e "${SETTINGS_STORAGE}/vars/${app}.yml" \
+                                     -e "${SETTINGS_STORAGE}/conf/${app}.yml" \
+    | grep -v "^${SETTINGS_SOURCE}/includes/dockerapps/templates/${app}/" \
+    | files_declare_container "$name"
+}
+
+function in_own_registry() {
+  local app="$1" name="$2"
+  local registry="${SETTINGS_STORAGE}/conf/${app}.containers"
+  [ -f "$registry" ] && grep -qxF "$name" "$registry"
+}
+
+function in_other_registry() {
+  local app="$1" name="$2" registry
+  for registry in "${SETTINGS_STORAGE}"/conf/*.containers; do
+    [ -f "$registry" ] || continue
+    [ "$(basename "$registry" .containers)" = "$app" ] && continue
+    grep -qxF "$name" "$registry" && return 0
+  done
+  return 1
+}
+
+# Propriété exclusive d'un conteneur pour cette application.
+function container_owned_by_app() {
+  local app="$1" name="$2" evidence=1
+  # La convention de nommage est un indice, pas une preuve : un conteneur
+  # `<app>` ou `db-<app>` peut être partagé. Elle ne dispense pas de vérifier
+  # les registres et déclarations des autres applications.
+  if name_is_convention "$app" "$name"; then evidence=0; fi
+  if in_own_registry "$app" "$name"; then evidence=0; fi
+  if app_declares_container "$app" "$name"; then evidence=0; fi
+  [ "$evidence" -eq 0 ] || return 1
+  # Preuve contraire : ressource revendiquée ailleurs.
+  if in_other_registry "$app" "$name"; then return 1; fi
+  if others_declare_container "$app" "$name"; then return 1; fi
+  return 0
+}
+
+# Message non sensible expliquant une conservation.
+function keep_resource_message() {
+  local app="$1" kind="$2" name="$3" reason="$4"
+  printf 'Ressource conservée (%s) : %s %s — %s\n' "$app" "$kind" "$name" "$reason"
+  log_write "Ressource conservée (${app}) : ${kind} ${name} — ${reason}" >/dev/null 2>&1
+}
+
+# Filtre sur stdin : ne garde que les conteneurs possédés par l'application.
+function filter_owned_containers() {
+  local app="$1" name
+  while IFS= read -r name; do
+    [ -n "$name" ] || continue
+    if container_owned_by_app "$app" "$name"; then
+      printf '%s\n' "$name"
+    else
+      keep_resource_message "$app" conteneur "$name" "propriété non établie, ressource partagée ou héritée"
+    fi
+  done
+}
+
+# Supprime les conteneurs possédés par l'application, conserve les autres.
+function remove_app_containers() {
+  local app="$1"
+  shift
+  local name kept=""
+  for name in "$@"; do
+    if container_owned_by_app "$app" "$name"; then
+      kept="${kept} ${name}"
+    else
+      keep_resource_message "$app" conteneur "$name" "propriété non établie, ressource partagée ou héritée"
+    fi
+  done
+  [ -n "${kept// /}" ] || return 0
+  # shellcheck disable=SC2086
+  docker rm -f ${kept} >/dev/null 2>&1
+}
+
+# Propriété d'un dossier persistant hors du dossier applicatif.
+function dir_owned_by_app() {
+  local app="$1" segment="$2" pattern
+  case "$segment" in
+    "$app"|"$app"-*) return 0 ;;
+  esac
+  # Le dossier doit être un enfant direct de .../docker/<user>/ : un
+  # sous-dossier d'une autre application ne prouve aucun partage.
+  pattern="docker/[^/]+/${segment}([:/\"']|$)"
+  # Référencé par l'application elle-même ?
+  if ! app_config_files "$app" | xargs -r grep -lE "$pattern" 2>/dev/null | grep -q .; then
+    return 1
+  fi
+  # Référencé ailleurs ?
+  if all_config_files | grep -vxF -e "${SETTINGS_SOURCE}/includes/dockerapps/vars/${app}.yml" \
+                                       -e "${SETTINGS_SOURCE}/includes/dockerapps/pretasks/${app}.yml" \
+                                       -e "${SETTINGS_SOURCE}/includes/dockerapps/posttasks/${app}.yml" \
+                                       -e "${SETTINGS_STORAGE}/vars/${app}.yml" \
+                                       -e "${SETTINGS_STORAGE}/conf/${app}.yml" \
+      | xargs -r grep -lE "$pattern" 2>/dev/null | grep -q .; then
+    return 1
+  fi
+  return 0
+}
+
+# Supprime un dossier persistant seulement si sa propriété est établie.
+function remove_app_dir() {
+  local app="$1" segment="$2" path="${SETTINGS_STORAGE}/docker/${USER}/${2}"
+  if dir_owned_by_app "$app" "$segment"; then
+    sudo rm -rf "$path" >/dev/null 2>&1
+  else
+    keep_resource_message "$app" dossier "$path" "référencé par une autre application ou introuvable dans la configuration"
+  fi
+}
+
+# Volumes : uniquement ceux du registre propre, et jamais un volume partagé.
+function remove_app_volumes() {
+  local app="$1"
+  local own="${SETTINGS_STORAGE}/conf/${app}.volumes"
+  local volume other
+  [ -f "$own" ] || return 0
+  while IFS= read -r volume; do
+    [ -n "$volume" ] || continue
+    for other in "${SETTINGS_STORAGE}"/conf/*.volumes; do
+      [ -f "$other" ] || continue
+      [ "$other" = "$own" ] && continue
+      if grep -qxF "$volume" "$other"; then
+        keep_resource_message "$app" volume "$volume" "présent dans le registre d'une autre application"
+        continue 2
+      fi
+    done
+    docker volume rm -f "$volume" >/dev/null 2>&1
+  done <"$own"
+}
+
+
 function collect_app_containers() {
   local app="$1"
   local registry="${SETTINGS_STORAGE}/conf/${app}.containers"
@@ -718,7 +914,7 @@ function suppression_appli() {
   # y compris lors d'un reinit. Les volumes nommés sont conservés et gérés via
   # le registre (supprimés uniquement si DELETE=1).
   local target_containers
-  target_containers=$(collect_app_containers "${APPSELECTED}")
+  target_containers=$(collect_app_containers "${APPSELECTED}" | filter_owned_containers "${APPSELECTED}")
   log_write "Suppression de ${APPSELECTED} - conteneurs ciblés: $(printf '%s' "${target_containers}" | tr '\n' ' ')" >/dev/null 2>&1
   printf '%s\n' "${target_containers}" | xargs -r docker rm -f -v >/dev/null 2>&1
 
@@ -726,7 +922,7 @@ function suppression_appli() {
     log_write "Suppresion de ${APPSELECTED}, données supprimées" >/dev/null 2>&1
     sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/$APPSELECTED >/dev/null 2>&1
     if [ -f "$volreg" ]; then
-      xargs -r docker volume rm -f < "$volreg" >/dev/null 2>&1
+      remove_app_volumes "${APPSELECTED}"
     fi
   else
     log_write "Suppresion de ${APPSELECTED}, données conservées" >/dev/null 2>&1
@@ -750,10 +946,10 @@ function suppression_appli() {
     manage_account_yml oauth.account " "
     ;;
   seafile)
-    docker rm -f memcached >/dev/null 2>&1
+    remove_app_containers "$APPSELECTED" memcached
     ;;
   varken)
-    docker rm -f influxdb telegraf grafana >/dev/null 2>&1
+    remove_app_containers "$APPSELECTED" influxdb telegraf grafana
     if [ $DELETE -eq 1 ]; then
       sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/telegraf
       sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/grafana
@@ -761,37 +957,49 @@ function suppression_appli() {
     fi
     ;;
   jitsi)
-    docker rm -f prosody jicofo jvb
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/.jitsi-meet-cfg
+    remove_app_containers "$APPSELECTED" prosody jicofo jvb
+    if [ $DELETE -eq 1 ]; then
+      remove_app_dir "$APPSELECTED" ".jitsi-meet-cfg"
+    fi
     ;;
   nextcloud)
-    docker rm -f collabora coturn office
-    rm -rf ${SETTINGS_STORAGE}/docker/${USER}/coturn
+    remove_app_containers "$APPSELECTED" collabora coturn office
+    if [ $DELETE -eq 1 ]; then
+      remove_app_dir "$APPSELECTED" "coturn"
+    fi
     EXTRA_SUBDOMAINS+=("collabora" "office")
     ;;
   rtorrentvpn)
     rm ${SETTINGS_STORAGE}/conf/rutorrent-vpn.yml
     ;;
   jackett)
-    docker rm -f flaresolverr >/dev/null 2>&1
+    remove_app_containers "$APPSELECTED" flaresolverr
     ;;
   petio)
-    docker rm -f mongo >/dev/null 2>&1
+    remove_app_containers "$APPSELECTED" mongo
     ;;
   vinkunja)
-    docker rm -f vikunja-api >/dev/null 2>&1
+    remove_app_containers "$APPSELECTED" vikunja-api
     ;;
   zurg)
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/zurg
+    if [ $DELETE -eq 1 ]; then
+      remove_app_dir "$APPSELECTED" "zurg"
+    fi
     ;;
   piped*|nginx|hyperpipe*)
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/piped
-    docker rm -f nginx piped-frontend piped-backend postgres piped-proxy hyperpipe-backend hyperpipe-frontend >/dev/null 2>&1
+    if [ $DELETE -eq 1 ]; then
+      remove_app_dir "$APPSELECTED" "piped"
+    fi
+    remove_app_containers "$APPSELECTED" nginx piped-frontend piped-backend postgres piped-proxy hyperpipe-backend hyperpipe-frontend
     manage_account_yml sub.piped " "
     ;;
   jellygrail)
-    sudo fusermount -uz ${SETTINGS_STORAGE}/docker/${USER}/jellygrail/Video_Library
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/jellygrail
+    # Démontage systématique (un montage FUSE orphelin reste bloquant), données conservées
+    # en suppression partielle.
+    sudo fusermount -uz ${SETTINGS_STORAGE}/docker/${USER}/jellygrail/Video_Library 2>/dev/null || true
+    if [ $DELETE -eq 1 ]; then
+      remove_app_dir "$APPSELECTED" "jellygrail"
+    fi
     ;;
   polyfin)
     # Ancien emplacement des secrets, avant leur déplacement dans le dossier
@@ -801,21 +1009,25 @@ function suppression_appli() {
     fi
     ;;
   espocrm*)
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/mysql
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/espocrm >/dev/null 2>&1
-    docker rm -f espocrm espocrm-websocket espocrm-daemon mysql >/dev/null 2>&1
+    if [ $DELETE -eq 1 ]; then
+      remove_app_dir "$APPSELECTED" "mysql"
+      remove_app_dir "$APPSELECTED" "espocrm"
+    fi
+    remove_app_containers "$APPSELECTED" espocrm espocrm-websocket espocrm-daemon mysql
     manage_account_yml sub.espocrm " "
     ;;
   paperless)
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/mariadb
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/paperless >/dev/null 2>&1
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/redis >/dev/null 2>&1
-    docker rm -f mariadb paperless broker >/dev/null 2>&1
+    if [ $DELETE -eq 1 ]; then
+      remove_app_dir "$APPSELECTED" "mariadb"
+      remove_app_dir "$APPSELECTED" "paperless"
+      remove_app_dir "$APPSELECTED" "redis"
+    fi
+    remove_app_containers "$APPSELECTED" mariadb paperless broker
     manage_account_yml sub.paperless " "
     ;;
   immich_server)
     sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/immich-app >/dev/null 2>&1
-    docker rm -f immich_server database redis immich-machine-learning >/dev/null 2>&1
+    remove_app_containers "$APPSELECTED" immich_server database redis immich-machine-learning
     docker volume rm model-cache >/dev/null 2>&1
     manage_account_yml sub.immich " "
     ;;
@@ -875,21 +1087,23 @@ SQL
     fi
     ;;
   streamfusion)
-    docker rm -f warp streamfusion taskiq-worker taskiq-scheduler meilisearch stremio-redis stremio-postgres >/dev/null 2>&1
+    # warp n'est pas un compagnon de streamfusion : il est déployé par sftorznab et
+    # stremthru. Le supprimer ici coupe le proxy des autres applications.
+    remove_app_containers "$APPSELECTED" streamfusion taskiq-worker taskiq-scheduler meilisearch stremio-redis stremio-postgres
     if [ $DELETE -eq 1 ]; then
         manage_account_yml sub.streamfusion " "
     fi
     ;;
   mediaflowproxy)
-    docker rm -f redis-mediaflowproxy >/dev/null 2>&1
+    remove_app_containers "$APPSELECTED" redis-mediaflowproxy
     ;;
   sftorznab)
-    docker rm -f sftorznab-broker sftorznab-meili >/dev/null 2>&1
+    remove_app_containers "$APPSELECTED" sftorznab-broker sftorznab-meili
     # Fallback legacy : le registre <app>.dns couvre le cas personnalisé.
     EXTRA_SUBDOMAINS+=("${sousdomaine}-meili")
     ;;
   pterodactyl)
-    docker rm -f wings >/dev/null 2>&1
+    remove_app_containers "$APPSELECTED" wings
     # Fallback legacy : wings.<domaine> créé par le posttask.
     EXTRA_SUBDOMAINS+=("wings")
     ;;
@@ -907,7 +1121,7 @@ SQL
     ;;
 
   ssd-backend|ssd-frontend|saison-frontend)
-    docker rm -f ssd-backend ssd-frontend saison-frontend >/dev/null 2>&1
+    remove_app_containers "$APPSELECTED" ssd-backend ssd-frontend saison-frontend
 
     manage_account_yml sub.webui " "
 
