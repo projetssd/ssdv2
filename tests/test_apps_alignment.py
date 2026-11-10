@@ -64,6 +64,15 @@ PRETASK_BAD = """\
   community.docker.docker_network:
     name: 'badapp-net'
 
+- name: Redéployer le conteneur avec ses paramètres
+  community.docker.docker_container: "{{ docker_info }}"
+
+- name: Appeler une API avec le jeton
+  ansible.builtin.uri:
+    url: "http://127.0.0.1/api"
+    headers:
+      Authorization: "Bearer {{ fixture_token }}"
+
 - name: Base dédiée nommée de façon générique
   community.docker.docker_container:
     name: mariadb
@@ -221,6 +230,14 @@ class AppsAlignmentTest(unittest.TestCase):
     def test_foreign_container_deletion(self):
         details = [f["detail"] for f in self.findings("badapp", "OTHERAPPDELETE")]
         self.assertTrue(any("warp-fixture" in d and "otherapp" in d for d in details), details)
+
+    def test_hook_redeploy_without_no_log_is_reported(self):
+        details = [f["detail"] for f in self.findings("badapp", "GENLOG")]
+        self.assertTrue(any("Hook redéployant" in d for d in details), details)
+
+    def test_uri_with_bearer_is_reported(self):
+        details = [f["detail"] for f in self.findings("badapp", "TASKLOG")]
+        self.assertTrue(any("uri" in d and "Authorization" in d for d in details), details)
 
     def test_states_and_integration(self):
         states = self.data["apps"]["badapp"]["states"]

@@ -493,6 +493,7 @@ class Audit:
         self.catalog_orphans: list[str] = []
         # Constats volontairement écartés, justifiés dans curated_findings.yml.
         self.acknowledged: set[tuple[str, str, str]] = set()
+        self.acknowledged_reasons: dict[tuple[str, str, str], str] = {}
         self.acknowledged_seen: list[tuple[str, str]] = []
 
     # ------------------------------------------------------------------ collecte
@@ -648,6 +649,7 @@ class Audit:
             self.check_prompts(app, record)
             self.check_debug(app, record)
             self.check_task_secrets(app, record)
+            self.check_deploy_hooks(app, record)
             self.check_cycle(app, record)
         self.check_catalogue_vars_files()
         self.check_legacy_deletions()
@@ -863,6 +865,49 @@ class Audit:
                                  + bare.strip())
                         break
 
+    MODULE_SECRET = re.compile(
+        r"(?:password|passwd|token|secret|Authorization|api_?key|X-Plex-Token|--client-secret)",
+        re.I,
+    )
+
+    def _sensitive_payload(self, kind, payload):
+        """Champs sensibles d'une tâche, selon le type de module.
+
+        Les modules `uri`, `command`, `shell` et `get_url` n'ont pas d'`env` :
+        on inspecte les en-têtes, le corps et la commande, en repérant les
+        variables interpolées dont le nom est secret.
+        """
+        keys: list[str] = []
+        if kind == "docker_container" and isinstance(payload, dict):
+            env = payload.get("env")
+            if isinstance(env, dict):
+                keys += [str(k) for k, v in env.items() if is_sensitive(k, v)]
+            return keys
+        if kind == "set_fact" and isinstance(payload, dict):
+            return [str(k) for k, v in payload.items() if is_sensitive(k, v)]
+        if kind in ("uri", "get_url") and isinstance(payload, dict):
+            for header, value in (payload.get("headers") or {}).items():
+                if self.MODULE_SECRET.search(str(header)) or self.MODULE_SECRET.search(str(value)):
+                    keys.append(str(header))
+            body = payload.get("body")
+            if isinstance(body, dict):
+                keys += [str(k) for k, v in body.items() if is_sensitive(k, v)]
+            url = str(payload.get("url", ""))
+            if self.MODULE_SECRET.search(url):
+                keys.append("url")
+            return keys
+        if kind in ("command", "shell", "docker_container_exec"):
+            text = str(payload)
+            for expression in re.findall(r"{{(.*?)}}", text):
+                bare = expression.split("|")[0]
+                if self.SECRET_NAME.search(bare) and not self.SECRET_EXCLUDE_NAME.search(bare):
+                    keys.append(bare.strip())
+            for literal in ("--client-secret", "X-Plex-Token", "PGPASSWORD", "--password"):
+                if literal in text:
+                    keys.append(literal)
+            return keys
+        return keys
+
     def check_task_secrets(self, app, record):
         """Tâches qui manipulent un secret sans protection, hors invites."""
         for rel in record["files"]:
@@ -871,20 +916,34 @@ class Audit:
             for task, protected in tasks(self.repo.load(rel), app=app):
                 if protected:
                     continue
-                for kind in ("docker_container", "set_fact"):
+                for kind in ("docker_container", "set_fact", "uri", "get_url",
+                             "command", "shell", "docker_container_exec"):
                     payload = module(task, kind)
-                    if not isinstance(payload, dict):
+                    if payload is None:
                         continue
-                    candidate = payload.get("env", {}) if kind == "docker_container" else payload
-                    if not isinstance(candidate, dict):
-                        continue
-                    keys = [str(k) for k, v in candidate.items() if is_sensitive(k, v)]
+                    keys = self._sensitive_payload(kind, payload)
                     if not keys:
                         continue
                     self.add(app, "TASKLOG", "secrets", "P1", rel,
                              getattr(task, "line", 1),
                              f"Tâche {kind} manipulant des champs sensibles sans no_log : "
-                             + ", ".join(keys))
+                             + ", ".join(sorted(set(keys))))
+
+    def check_deploy_hooks(self, app, record):
+        """Hooks qui redéploient `docker_info` (donc `pg_env`) sans masquage."""
+        for rel in record["files"]:
+            if not rel.endswith((".yml", ".yaml")) or not self.repo.exists(rel):
+                continue
+            for task, protected in tasks(self.repo.load(rel), app=app):
+                payload = module(task, "docker_container")
+                if not isinstance(payload, str) or "docker_info" not in payload:
+                    continue
+                if protected:
+                    continue
+                self.add(app, "GENLOG", "secrets", "P1", rel,
+                         getattr(task, "line", 1),
+                         "Hook redéployant docker_info sans no_log : les paramètres "
+                         "sensibles repartent dans le journal")
 
     def check_cycle(self, app, record):
         stat_paths = set()
@@ -1123,7 +1182,9 @@ class Audit:
             return
         document = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
         for entry in document.get("acknowledged", []) or []:
-            self.acknowledged.add((entry["app"], entry["code"], str(entry.get("target", ""))))
+            key = (entry["app"], entry["code"], str(entry.get("target", "")))
+            self.acknowledged.add(key)
+            self.acknowledged_reasons[key] = entry.get("reason", "")
 
     def load_curated(self, path: Path):
         if not path.is_file():
@@ -1239,6 +1300,17 @@ def write_outputs(audit: Audit, repo: Repo, out: Path, baseline: dict | None = N
         for finding in record["findings"]:
             codes[finding["code"]].add(app)
     all_files = sorted({rel for record in audit.records.values() for rel in record["files"]})
+    acknowledged_entries = [
+        {
+            "app": app,
+            "code": code,
+            "target": target,
+            "reason": audit.acknowledged_reasons.get((app, code, target), ""),
+            "seen": (app, f"{code} {target}".strip()) in audit.acknowledged_seen,
+        }
+        for app, code, target in sorted(audit.acknowledged)
+    ]
+
     git_sha = repo.sha()
     git_branch = repo.branch()
 
@@ -1272,7 +1344,9 @@ def write_outputs(audit: Audit, repo: Repo, out: Path, baseline: dict | None = N
         "catalog_orphans": audit.catalog_orphans,
         "stale_curated": audit.stale,
         "acknowledged": [
-            {"app": app, "code": code, "target": target}
+            {"app": app, "code": code, "target": target,
+             "reason": audit.acknowledged_reasons.get((app, code, target), ""),
+             "applied": (app, f"{code} {target}".strip()) in audit.acknowledged_seen}
             for app, code, target in sorted(audit.acknowledged)
         ],
         "acknowledged_seen": [f"{app}: {label}" for app, label in audit.acknowledged_seen],
@@ -1293,7 +1367,7 @@ def write_outputs(audit: Audit, repo: Repo, out: Path, baseline: dict | None = N
     fields = [
         "application", "description", "type_integration", "fichiers_audites",
         *AXES, "priorite_max", "codes_ecarts", "nb_ecarts", "preuves",
-        "recommandations", "verifications_restantes",
+        "recommandations", "verifications_restantes", "ecarts_assumes",
     ]
     with (out / "apps-alignment.csv").open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields)
@@ -1317,6 +1391,11 @@ def write_outputs(audit: Audit, repo: Repo, out: Path, baseline: dict | None = N
                 "verifications_restantes": " | ".join(
                     f"{c['axis']}: {c['path']}:{c['line']} — {c['detail']}"
                     for c in audit.checks[app]
+                ),
+                "ecarts_assumes": " | ".join(
+                    f"{entry['code']} {entry['target']}: {entry['reason']}"
+                    for entry in acknowledged_entries
+                    if entry["app"] == app
                 ),
             })
 
@@ -1519,7 +1598,21 @@ def write_outputs(audit: Audit, repo: Repo, out: Path, baseline: dict | None = N
             )
         emit()
 
-    emit("## 6. Chantiers transverses")
+    emit("## 6. Écarts assumés (hors compteurs)")
+    emit()
+    if acknowledged_entries:
+        emit("Ces constats sont volontairement exclus des compteurs. Ils restent "
+             "listés ici avec leur justification : aucune suppression silencieuse.")
+        emit()
+        emit("| Application | Constat | Cible | Justification |")
+        emit("|---|---|---|---|")
+        for entry in acknowledged_entries:
+            emit(f"| {entry['app']} | {entry['code']} | `{entry['target']}` | "
+                 f"{entry['reason'].replace('|', '&#124;')} |")
+    else:
+        emit("Aucun écart assumé.")
+    emit()
+    emit("## 7. Chantiers transverses")
     emit()
     emit("Ces familles se corrigent par un changement unique et non application par application.")
     emit()
@@ -1531,7 +1624,7 @@ def write_outputs(audit: Audit, repo: Repo, out: Path, baseline: dict | None = N
         emit(f"| {code} | {lever} | {len(codes[code])} | {detail} |")
     emit()
     if baseline:
-        emit("## 7. Écart avec une référence")
+        emit("## 8. Écart avec une référence")
         emit()
         emit(f"Référence : `{baseline.get('branch')}` ({str(baseline.get('commit', ''))[:12]}) — "
              f"{baseline.get('totals', {}).get('occurrences', '?')} occurrences.")
@@ -1563,7 +1656,7 @@ def write_outputs(audit: Audit, repo: Repo, out: Path, baseline: dict | None = N
         else:
             emit("Aucun écart de constats entre les deux branches.")
         emit()
-        emit("## 8. Ordre de remise en conformité")
+        emit("## 9. Ordre de remise en conformité")
     emit()
     emit("1. **P0/P1 secrets et données** : couper les fuites de journaux, corriger les suppressions destructives.")
     emit("2. **P1 cycle de vie** : réseaux et fichiers hors dossier applicatif, réinstallation idempotente.")
