@@ -1,3 +1,14 @@
+10/11/2026 — Stremio : fichier de tâches YAML réparé et exclusion CI retirée
+
+- `includes/dockerapps/pretasks/stremio/stremio_base.yml` avait un guillemet non
+  fermé (`MEILI_MASTER_KEY`) : le fichier n'était pas du Jinja non parsable,
+  contrairement au commentaire du job `yaml` qui l'excluait du contrôle.
+- l'exclusion est retirée : les 369 fichiers YAML de `includes/dockerapps` sont
+  désormais validés en CI, et le fichier réparé reste explicitement vérifié.
+- aucun changement d'exécution : le fichier et `postgres_setup.yml` ne sont
+  référencés par aucun hook. Leur suppression éventuelle fera l'objet d'un
+  nettoyage séparé.
+
 06/11/2026 — CrowdSec : exclusion des applis indépendante de l'IP
 
 - whitelist `whitelist-ssdv2` étendue aux routeurs Traefik des applications
