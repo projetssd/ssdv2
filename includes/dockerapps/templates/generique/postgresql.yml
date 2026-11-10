@@ -20,7 +20,7 @@
       - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/init:/docker-entrypoint-initdb.d"
     env:
       POSTGRES_USER: "{{pgrole}}"
-      POSTGRES_PASSWORD: "{{pgrole}}"
+      POSTGRES_PASSWORD: "{{ pg_db_password | default(pgrole) }}"
       POSTGRES_DB: "{{pgrole}}"
     restart_policy: unless-stopped
     networks:

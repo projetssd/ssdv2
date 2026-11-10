@@ -1194,6 +1194,11 @@ SQL
 
       # Supprimer tous les volumes Docker liés à 'coolify'
       docker volume ls --format "{{.Name}}" | grep -i 'coolify' | xargs -r docker volume rm -f
+
+      # Retirer la clé SSH ajoutée par la posttask (bloc marqué uniquement)
+      if sudo grep -q "BEGIN SSDV2 COOLIFY" ~/.ssh/authorized_keys 2>/dev/null; then
+        sudo sed -i '/# BEGIN SSDV2 COOLIFY/,/# END SSDV2 COOLIFY/d' ~/.ssh/authorized_keys
+      fi
     fi
     ;;
 

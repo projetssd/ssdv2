@@ -11,7 +11,7 @@ pg_env:
   PGID: "{{ lookup('env','MYGID') }}"
   WORDPRESS_DB_HOST: "db-{{ pgrole }}"
   WORDPRESS_DB_USER: "{{ pgrole }}"
-  WORDPRESS_DB_PASSWORD: "{{ pgrole }}"
+  WORDPRESS_DB_PASSWORD: "{{ pg_db_password | default(pgrole) }}"
   WORDPRESS_DB_NAME: "{{ pgrole }}"
 
 posttasks:

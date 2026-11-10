@@ -1,3 +1,23 @@
+10/11/2026 — Mots de passe de base : génération pour les nouvelles installations
+
+- nouvelles installations des applications dont la base est créée par les
+  templates `mariadb`/`postgresql` : mot de passe généré une fois et conservé
+  dans `.../<app>/db_password` (`0600`) ; `wordpress`, `mattermost` et `ttrss`
+  utilisent la même valeur côté application et côté base.
+- installations existantes : comportement inchangé (`{{ pgrole }}`) tant que le
+  fichier de secret est absent ; une réinstallation relit la valeur persistante.
+- les applications qui initialisent leur base dans une pretask conservent
+  `{{ pgrole }}` : la détection générique ne peut pas s'appliquer avant leur
+  initialisation. Documenté comme écart assumé, migration à prévoir séparément.
+- Coolify : clé SSH ajoutée de façon idempotente (bloc marqué) et retirée en
+  suppression complète ; les trois étapes manuelles (guacamole, pterodactyl,
+  rtorrentvpn) sont documentées comme telles.
+- Vérifié sur serveur : wordpress et ttrss (MariaDB et PostgreSQL) —
+  mot de passe généré, authentification base OK, valeur identique après
+  réinstallation.
+- audit : `FIXEDSECRET` 26 → 0 (dont 20 écarts assumés), `KEYCLEAN` 0,
+  `MANUALSTEP` documentés. **0 constat restant.**
+
 10/11/2026 — EspoCRM : disposition de volumes officielle
 
 - l'image EspoCRM refuse désormais un montage direct de `/var/www/html` et

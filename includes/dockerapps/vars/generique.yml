@@ -115,6 +115,32 @@
       changed_when: false
       when: not cloudflare_enabled and dns_required
 
+    # Mot de passe des bases gérées par les templates (mariadb/postgresql) :
+    # persistant pour les nouvelles installations, inchangé pour l'existant.
+    - name: Vérifier si la base applicative contient déjà des données
+      ansible.builtin.find:
+        paths: "{{ pg_db_data_dir | default(settings.storage ~ '/docker/' ~ lookup('env','USER') ~ '/' ~ pgrole ~ '/db-' ~ pgrole) }}"
+        file_type: any
+      register: pg_db_contents
+      changed_when: false
+      when: (posttasks | default([])) | intersect(['mariadb', 'postgresql', 'mariadb_officiel']) | length > 0
+
+    - name: Vérifier la présence du mot de passe de base persistant
+      ansible.builtin.stat:
+        path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/db_password"
+      register: pg_db_secret_file
+      when: (posttasks | default([])) | intersect(['mariadb', 'postgresql', 'mariadb_officiel']) | length > 0
+
+    - name: Déterminer le mot de passe de base
+      no_log: true
+      ansible.builtin.set_fact:
+        pg_db_password: >-
+          {{ lookup('password', settings.storage + '/docker/' + lookup('env','USER')
+             + '/' + pgrole + '/db_password length=32 chars=ascii_letters,digits')
+             if (pg_db_secret_file.stat.exists or (pg_db_contents.matched | default(0)) == 0)
+             else pgrole }}
+      when: (posttasks | default([])) | intersect(['mariadb', 'postgresql', 'mariadb_officiel']) | length > 0
+
     - name: Initialize labels
       ansible.builtin.set_fact:
         pg_labels: {}

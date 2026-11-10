@@ -9,7 +9,7 @@ pg_env:
   DB_PORT: "5432"
   DB_NAME: "{{ pgrole }}"
   DB_USER: "{{ pgrole }}"
-  DB_PASS: "{{ pgrole }}"
+  DB_PASS: "{{ pg_db_password | default(pgrole) }}"
   SELF_URL_PATH: "https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{user.domain}}"
 
 posttasks:

@@ -14,13 +14,6 @@
 # par le script et ne doivent pas être dupliquées ici.
 
 findings:
-- app: coolify
-  code: KEYCLEAN
-  axis: cycle
-  severity: P2
-  path: includes/dockerapps/posttasks/coolify.yml
-  needle: '>> ~/.ssh/authorized_keys'
-  detail: Ajout de clé SSH hors dossier applicatif sans nettoyage ciblé à la suppression et sans déduplication à la réinstallation
 - app: rtorrentvpn
   code: MANUALSTEP
   axis: assistance
@@ -152,3 +145,95 @@ acknowledged:
   code: ORPHANROOT
   target: « wireguard »
   reason: Partage la configuration WireGuard gérée par l'application wireguard.
+- app: baserow
+  code: FIXEDSECRET
+  target: ''
+  reason: Base interne non exposée (réseau Docker, aucun port publié) et mot de passe historique conservé pour ne pas casser une installation existante. La génération persistante est appliquée aux bases créées par les templates (wordpress, mattermost, ttrss) ; ces applications initialisent leur base dans une pretask avant la détection, leur migration est reportée à un lot dédié.
+- app: bookstack
+  code: FIXEDSECRET
+  target: ''
+  reason: Base interne non exposée (réseau Docker, aucun port publié) et mot de passe historique conservé pour ne pas casser une installation existante. La génération persistante est appliquée aux bases créées par les templates (wordpress, mattermost, ttrss) ; ces applications initialisent leur base dans une pretask avant la détection, leur migration est reportée à un lot dédié.
+- app: chevereto
+  code: FIXEDSECRET
+  target: ''
+  reason: Base interne non exposée (réseau Docker, aucun port publié) et mot de passe historique conservé pour ne pas casser une installation existante. La génération persistante est appliquée aux bases créées par les templates (wordpress, mattermost, ttrss) ; ces applications initialisent leur base dans une pretask avant la détection, leur migration est reportée à un lot dédié.
+- app: cypht
+  code: FIXEDSECRET
+  target: ''
+  reason: Base interne non exposée (réseau Docker, aucun port publié) et mot de passe historique conservé pour ne pas casser une installation existante. La génération persistante est appliquée aux bases créées par les templates (wordpress, mattermost, ttrss) ; ces applications initialisent leur base dans une pretask avant la détection, leur migration est reportée à un lot dédié.
+- app: espocrm
+  code: FIXEDSECRET
+  target: ''
+  reason: Base interne non exposée (réseau Docker, aucun port publié) et mot de passe historique conservé pour ne pas casser une installation existante. La génération persistante est appliquée aux bases créées par les templates (wordpress, mattermost, ttrss) ; ces applications initialisent leur base dans une pretask avant la détection, leur migration est reportée à un lot dédié.
+- app: grist
+  code: FIXEDSECRET
+  target: ''
+  reason: Base interne non exposée (réseau Docker, aucun port publié) et mot de passe historique conservé pour ne pas casser une installation existante. La génération persistante est appliquée aux bases créées par les templates (wordpress, mattermost, ttrss) ; ces applications initialisent leur base dans une pretask avant la détection, leur migration est reportée à un lot dédié.
+- app: guacamole
+  code: FIXEDSECRET
+  target: ''
+  reason: Base interne non exposée (réseau Docker, aucun port publié) et mot de passe historique conservé pour ne pas casser une installation existante. La génération persistante est appliquée aux bases créées par les templates (wordpress, mattermost, ttrss) ; ces applications initialisent leur base dans une pretask avant la détection, leur migration est reportée à un lot dédié.
+- app: kresus
+  code: FIXEDSECRET
+  target: ''
+  reason: Base interne non exposée (réseau Docker, aucun port publié) et mot de passe historique conservé pour ne pas casser une installation existante. La génération persistante est appliquée aux bases créées par les templates (wordpress, mattermost, ttrss) ; ces applications initialisent leur base dans une pretask avant la détection, leur migration est reportée à un lot dédié.
+- app: librespeed
+  code: FIXEDSECRET
+  target: ''
+  reason: Base interne non exposée (réseau Docker, aucun port publié) et mot de passe historique conservé pour ne pas casser une installation existante. La génération persistante est appliquée aux bases créées par les templates (wordpress, mattermost, ttrss) ; ces applications initialisent leur base dans une pretask avant la détection, leur migration est reportée à un lot dédié.
+- app: mealie
+  code: FIXEDSECRET
+  target: ''
+  reason: Base interne non exposée (réseau Docker, aucun port publié) et mot de passe historique conservé pour ne pas casser une installation existante. La génération persistante est appliquée aux bases créées par les templates (wordpress, mattermost, ttrss) ; ces applications initialisent leur base dans une pretask avant la détection, leur migration est reportée à un lot dédié.
+- app: n8nio
+  code: FIXEDSECRET
+  target: ''
+  reason: Base interne non exposée (réseau Docker, aucun port publié) et mot de passe historique conservé pour ne pas casser une installation existante. La génération persistante est appliquée aux bases créées par les templates (wordpress, mattermost, ttrss) ; ces applications initialisent leur base dans une pretask avant la détection, leur migration est reportée à un lot dédié.
+- app: neko
+  code: FIXEDSECRET
+  target: ''
+  reason: Base interne non exposée (réseau Docker, aucun port publié) et mot de passe historique conservé pour ne pas casser une installation existante. La génération persistante est appliquée aux bases créées par les templates (wordpress, mattermost, ttrss) ; ces applications initialisent leur base dans une pretask avant la détection, leur migration est reportée à un lot dédié.
+- app: paperless
+  code: FIXEDSECRET
+  target: ''
+  reason: Base interne non exposée (réseau Docker, aucun port publié) et mot de passe historique conservé pour ne pas casser une installation existante. La génération persistante est appliquée aux bases créées par les templates (wordpress, mattermost, ttrss) ; ces applications initialisent leur base dans une pretask avant la détection, leur migration est reportée à un lot dédié.
+- app: pterodactyl
+  code: FIXEDSECRET
+  target: ''
+  reason: Base interne non exposée (réseau Docker, aucun port publié) et mot de passe historique conservé pour ne pas casser une installation existante. La génération persistante est appliquée aux bases créées par les templates (wordpress, mattermost, ttrss) ; ces applications initialisent leur base dans une pretask avant la détection, leur migration est reportée à un lot dédié.
+- app: stremthru
+  code: FIXEDSECRET
+  target: ''
+  reason: Base interne non exposée (réseau Docker, aucun port publié) et mot de passe historique conservé pour ne pas casser une installation existante. La génération persistante est appliquée aux bases créées par les templates (wordpress, mattermost, ttrss) ; ces applications initialisent leur base dans une pretask avant la détection, leur migration est reportée à un lot dédié.
+- app: vikunja
+  code: FIXEDSECRET
+  target: ''
+  reason: Base interne non exposée (réseau Docker, aucun port publié) et mot de passe historique conservé pour ne pas casser une installation existante. La génération persistante est appliquée aux bases créées par les templates (wordpress, mattermost, ttrss) ; ces applications initialisent leur base dans une pretask avant la détection, leur migration est reportée à un lot dédié.
+- app: vvveb
+  code: FIXEDSECRET
+  target: ''
+  reason: Base interne non exposée (réseau Docker, aucun port publié) et mot de passe historique conservé pour ne pas casser une installation existante. La génération persistante est appliquée aux bases créées par les templates (wordpress, mattermost, ttrss) ; ces applications initialisent leur base dans une pretask avant la détection, leur migration est reportée à un lot dédié.
+- app: weddingshare
+  code: FIXEDSECRET
+  target: ''
+  reason: Base interne non exposée (réseau Docker, aucun port publié) et mot de passe historique conservé pour ne pas casser une installation existante. La génération persistante est appliquée aux bases créées par les templates (wordpress, mattermost, ttrss) ; ces applications initialisent leur base dans une pretask avant la détection, leur migration est reportée à un lot dédié.
+- app: yourls
+  code: FIXEDSECRET
+  target: ''
+  reason: Base interne non exposée (réseau Docker, aucun port publié) et mot de passe historique conservé pour ne pas casser une installation existante. La génération persistante est appliquée aux bases créées par les templates (wordpress, mattermost, ttrss) ; ces applications initialisent leur base dans une pretask avant la détection, leur migration est reportée à un lot dédié.
+- app: zilean
+  code: FIXEDSECRET
+  target: ''
+  reason: Base interne non exposée (réseau Docker, aucun port publié) et mot de passe historique conservé pour ne pas casser une installation existante. La génération persistante est appliquée aux bases créées par les templates (wordpress, mattermost, ttrss) ; ces applications initialisent leur base dans une pretask avant la détection, leur migration est reportée à un lot dédié.
+- app: guacamole
+  code: MANUALSTEP
+  target: ''
+  reason: 'Étape manuelle assumée : en cas d''échec de l''initialisation du schéma (image amd64), l''utilisateur est guidé pour terminer l''initialisation ; automatiser nécessiterait de gérer les scripts SQL de l''image.'
+- app: pterodactyl
+  code: MANUALSTEP
+  target: ''
+  reason: 'Création du compte administrateur laissée à une commande documentée : l''assistant interactif du panel n''est pas scriptable de façon fiable.'
+- app: rtorrentvpn
+  code: MANUALSTEP
+  target: ''
+  reason: L'import du fichier de configuration VPN reste manuel (FTP/SSH) ; un assistant de transfert est une fonctionnalité distincte.
