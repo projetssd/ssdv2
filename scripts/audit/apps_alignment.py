@@ -175,6 +175,9 @@ EVIDENCE = {
     "DEBUGSECRET": ("tâche `debug` interpolant une valeur secrète",
                     "le secret est recopié dans la sortie d'installation et les journaux Ansible",
                     "confirmé (code)"),
+    "TASKLOG": ("tâche `set_fact` ou `docker_container` d'un hook exposant un champ sensible",
+                "le secret apparaît dans le résultat de tâche et les journaux d'installation",
+                "confirmé (code)"),
     "GENLOG": ("`no_log` des tâches de déploiement vaut `docker_no_log | default(false)`",
                "les paramètres sensibles de `pg_env` apparaissent en verbosité et dans les journaux",
                "confirmé (code)"),
@@ -643,6 +646,7 @@ class Audit:
             self.check_deployment(app, main, data, record)
             self.check_env(app, main, data)
             self.check_prompts(app, record)
+            self.check_task_secrets(app, record)
             self.check_cycle(app, record)
         self.check_catalogue_vars_files()
         self.check_legacy_deletions()
@@ -806,19 +810,29 @@ class Audit:
                     self.add(app, "PROMPTLOG", "secrets", "P1", rel,
                              getattr(task, "line", 1),
                              "Invite déclarée secrète sans no_log hérité ou local")
+
+    def check_task_secrets(self, app, record):
+        """Tâches qui manipulent un secret sans protection, hors invites."""
+        for rel in record["files"]:
+            if not rel.endswith((".yml", ".yaml")) or not self.repo.exists(rel):
+                continue
+            for task, protected in tasks(self.repo.load(rel), app=app):
+                if protected:
+                    continue
                 for kind in ("docker_container", "set_fact"):
                     payload = module(task, kind)
                     if not isinstance(payload, dict):
                         continue
                     candidate = payload.get("env", {}) if kind == "docker_container" else payload
-                    if not isinstance(candidate, dict) or protected:
+                    if not isinstance(candidate, dict):
                         continue
                     keys = [str(k) for k, v in candidate.items() if is_sensitive(k, v)]
-                    if keys:
-                        self.add(app, "TASKLOG", "secrets", "P1", rel,
-                                 getattr(task, "line", 1),
-                                 f"Tâche {kind} manipulant des champs sensibles sans no_log : "
-                                 + ", ".join(keys))
+                    if not keys:
+                        continue
+                    self.add(app, "TASKLOG", "secrets", "P1", rel,
+                             getattr(task, "line", 1),
+                             f"Tâche {kind} manipulant des champs sensibles sans no_log : "
+                             + ", ".join(keys))
 
     def check_cycle(self, app, record):
         stat_paths = set()
