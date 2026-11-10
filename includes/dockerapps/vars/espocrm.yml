@@ -1,6 +1,5 @@
 ---
 pgrole: 'espocrm'
-intport: '8080'
 image: 'espocrm/espocrm'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/var/www/html"

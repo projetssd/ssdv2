@@ -1,3 +1,15 @@
+10/11/2026 — Ports Web hôte et variables mortes
+
+- ports Web publiés sur l'hôte retirés pour `decypharr`, `emby`, `frenchio`,
+  `grabb2rss`, `huntarr`, `radarr`, `seerrcatalog`, `sonarr` et `syncthing`
+  (seul `8384` retiré ; `22000`/`21027` conservés). L'accès reste via Traefik et
+  l'authentification n'est plus contournable par l'IP du serveur.
+- `intport` retiré des applications à labels spécifiques ou sans interface Web
+  (`bitwarden`, `coolify`, `espocrm`, `minecraft`, `ssdv2-relay`,
+  `streamfusion`, `warp`, `webdav`) : la valeur n'était pas consommée.
+- audit : `WEBHOSTPORT` et `INTIGNORED` passent à 0 ; le point WebDAV devient
+  une question de vérification du port réel de l'image.
+
 10/11/2026 — Réseaux applicatifs nettoyés et fuseau par défaut
 
 - les réseaux `<app>-net` créés par les templates mariadb/postgresql/redis sont

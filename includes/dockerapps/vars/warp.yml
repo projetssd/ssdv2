@@ -1,6 +1,5 @@
 ---
 pgrole: 'warp'
-intport: '1080'
 image: 'caomingjun/warp:latest'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}:/var/lib/cloudflare-warp"

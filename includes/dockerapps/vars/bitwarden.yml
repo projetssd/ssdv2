@@ -1,6 +1,5 @@
 ---
 pgrole: 'bitwarden'
-intport: '80'
 image: 'bitwardenrs/server:latest'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}:/data"

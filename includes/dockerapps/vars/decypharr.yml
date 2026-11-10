@@ -17,8 +17,6 @@ specific_docker_info:
     - NET_ADMIN 
   security_opts:
     - apparmor:unconfined
-  ports:
-    - "8282:8282"
   restart_policy: "always"
   healthcheck:
     test: >

@@ -19,5 +19,3 @@ specific_docker_info:
     timeout: "10s"
     retries: 3
     start_period: "10s"
-  ports:
-    - "7000:7000"

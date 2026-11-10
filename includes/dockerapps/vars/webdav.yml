@@ -1,7 +1,6 @@
 ---
 # https://github.com/vaggeliskls/webdav-server/tree/main ( Modifier les variables environnement en fonction de vos besoins )
 pgrole: 'webdav'
-intport: '80'
 image: 'ghcr.io/vaggeliskls/webdav-server:latest'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/var/lib/dav/data"

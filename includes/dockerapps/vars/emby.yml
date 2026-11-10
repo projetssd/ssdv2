@@ -10,6 +10,3 @@ pg_env:
   UID: "{{ lookup('env','MYUID') }}"
   GID: "{{ lookup('env','MYGID') }}"
   GIDLIST: "{{ lookup('env','MYGID') }}"
-specific_docker_info:
-  ports:
-    - '8096:8096'

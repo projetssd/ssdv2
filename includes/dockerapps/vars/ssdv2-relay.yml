@@ -8,7 +8,6 @@
 # (ou réutilisés) par la pretask. La clé API AllDebrid est facultative et
 # n'est pas utilisée par le relais (elle reste gérée par Stream Fusion).
 pgrole: 'ssdv2-relay'
-intport: '1080'
 
 image: 'ghcr.io/projetssd/ssdv2-relay:latest'
 pull_image: true

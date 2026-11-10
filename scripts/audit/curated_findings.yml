@@ -140,13 +140,6 @@ findings:
   path: includes/dockerapps/vars/webdav.yml
   needle: PathPrefix(`/`)
   detail: Router sans règle Host ni chaîne d’authentification SSDV2 ; BASIC_AUTH_ENABLED=false. Le sous-domaine et le choix d’authentification ne bornent pas ce router
-- app: webdav
-  code: PORTCONFLICT
-  axis: traefik
-  severity: P2
-  path: includes/dockerapps/vars/webdav.yml
-  needle: 'loadbalancer.server.port:'
-  detail: intport=80 mais service Traefik configuré sur 8080 ; port réellement écouté à vérifier auprès de l’image
 - app: pterodactyl
   code: WRONGROUTER
   axis: traefik
@@ -280,6 +273,11 @@ checks:
   path: includes/dockerapps/pretasks/seerrcatalog.yml
   needle: Entrez une clé de votre choix
   detail: Clé interne demandée à l’utilisateur ; confirmer si une génération persistante suffit
+- app: webdav
+  axis: traefik
+  path: includes/dockerapps/vars/webdav.yml
+  needle: 'loadbalancer.server.port:'
+  detail: 'Le service Traefik pointe 8080 : confirmer le port réellement écouté par l''image webdav'
 acknowledged:
 - app: sffs
   code: PARTIALDELETE

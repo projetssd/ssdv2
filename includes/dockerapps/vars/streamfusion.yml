@@ -1,6 +1,5 @@
 ---
 pgrole: 'streamfusion'
-intport: '8080'
 
 image: 'laster13/stream-fusion-reborn:latest'
 

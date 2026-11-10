@@ -13,10 +13,6 @@ pg_env:
   PGID: "{{ lookup('env','MYGID') }}"
   TZ: "Europe/Paris"
 
-specific_docker_info:
-  ports:
-    - '8000:8000'
-
 restart: unless-stopped
 healthcheck:
   test: ["CMD", "curl", "-f", "http://localhost:8000/health"]

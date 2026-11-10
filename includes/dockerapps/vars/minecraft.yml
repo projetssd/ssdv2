@@ -1,6 +1,5 @@
 ---
 pgrole: 'minecraft'
-intport: '25565'
 image: 'itzg/minecraft-server'
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/data:/data"

@@ -1,6 +1,5 @@
 ---
 pgrole: 'coolify'
-intport: '8000'
 image: 'ghcr.io/coollabsio/coolify:latest'
 pg_env:
   APP_ID: "{{ lookup('pipe', 'openssl rand -hex 16') }}"
