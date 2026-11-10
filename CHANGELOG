@@ -13,6 +13,30 @@
 - tests dédiés (`tests/test_apps_alignment.py`, 15 cas, fixture sans Docker) et
   exécution en CI. Aucune application n'est modifiée par ce lot.
 
+10/11/2026 — Suppression : la réinstallation ne doit plus effacer les données
+
+- une suppression partielle (`suppression_appli <app> 0`, utilisée par
+  « réinitialiser » et réinstaller) conserve désormais les données pour
+  `paperless`, `espocrm`, `nextcloud` (`coturn`), `jitsi`, `zurg`,
+  `jellygrail` et `piped`. Ces branches legacy faisaient un `rm -rf` sans
+  tester `DELETE`, alors que l'interface annonce « les volumes ne seront pas
+  supprimés ».
+- `jellygrail` démonte toujours le point FUSE (un montage mort bloque la
+  réinstallation) mais ne supprime les fichiers qu'en suppression complète.
+- la suppression de StreamFusion ne retire plus le conteneur `warp`, qui est
+  déployé par `sftorznab` et `stremthru` : il coupait le proxy des autres
+  applications.
+- `sffs` conserve son cache TMDB et documente le retrait volontaire de
+  `sffs-secrets` (lié à la clé d'API supprimée, régénéré à l'installation).
+- un conteneur enregistré par une autre application encore installée n'est plus
+  supprimé : `suppression_appli` recoupe `conf/<app>.containers` avec les
+  applications présentes en base. Corrige la pile Stremio partagée par
+  `sftorznab` et `streamfusion` (`stremio-postgres`, `stremio-redis`), et la
+  classe entière des conteneurs communs.
+- nouveau `tests/bats/suppression.bats` : 14 cas avec `docker`, `sudo`,
+  Ansible et SQLite simulés ; une suppression partielle préserve les données,
+  une suppression complète les retire.
+
 06/11/2026 — CrowdSec : exclusion des applis indépendante de l'IP
 
 - whitelist `whitelist-ssdv2` étendue aux routeurs Traefik des applications
