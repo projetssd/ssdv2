@@ -2,7 +2,9 @@
 - name: Set 'secret_connect' variable
   no_log: true
   set_fact:
-    secret_connect: "{{lookup('community.general.random_string', length=20, special=false)}}"
+    secret_connect: >-
+      {{ lookup('password', settings.storage + '/docker/' + lookup('env','USER')
+         + '/firefoxsyncserver/secret_connect length=20 chars=ascii_letters,digits') }}
 
 - name: Set 'nom_court' variable
   set_fact:

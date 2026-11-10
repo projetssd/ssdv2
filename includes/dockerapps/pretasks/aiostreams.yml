@@ -1,20 +1,17 @@
 ---
-- name: Générer une clé aléatoire hexadécimale de 32 octets
-  ansible.builtin.command: "openssl rand -hex 32"
-  register: random_key
-  changed_when: false
-
-- name: Sauvegarder la clé dans une variable de fait
-  no_log: true
-  ansible.builtin.set_fact:
-    my_secret_key: "{{ random_key.stdout }}"
-
 - name: Créer le dossier aiostreams
   file:
     path: "{{ settings.storage }}/docker/{{ lookup('env', 'USER') }}/aiostreams"
     state: directory
     owner: "{{ lookup('env','USER') }}"
     mode: '0755'
+
+- name: Lire ou générer la clé secrète persistante
+  no_log: true
+  ansible.builtin.set_fact:
+    my_secret_key: >-
+      {{ lookup('password', settings.storage + '/docker/' + lookup('env','USER')
+         + '/aiostreams/secret_key length=64 chars=hexdigits') }}
 
 - name: Créer le fichier .env
   template:

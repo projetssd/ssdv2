@@ -1,16 +1,20 @@
 ---
 pgrole: 'coolify'
 image: 'ghcr.io/coollabsio/coolify:latest'
+
+# Secrets persistants : générés une fois, relus à chaque réinstallation.
+coolify_secret_dir: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/coolify/secrets"
+
 pg_env:
-  APP_ID: "{{ lookup('pipe', 'openssl rand -hex 16') }}"
-  APP_KEY: "base64:{{ lookup('pipe', 'openssl rand -base64 32') | trim }}"
+  APP_ID: "{{ lookup('password', coolify_secret_dir + '/app_id length=32 chars=hexdigits') }}"
+  APP_KEY: "base64:{{ lookup('password', coolify_secret_dir + '/app_key length=64 chars=ascii_letters,digits') }}"
   DB_USERNAME: "coolify"
-  DB_PASSWORD: "{{ lookup('pipe', 'openssl rand -base64 32') | trim }}"
+  DB_PASSWORD: "{{ lookup('password', coolify_secret_dir + '/db_password length=64 chars=ascii_letters,digits') }}"
   DB_DATABASE: "coolify"
-  REDIS_PASSWORD: "{{ lookup('pipe', 'openssl rand -base64 32') | trim }}"
-  PUSHER_APP_ID: "{{ lookup('pipe', 'openssl rand -hex 32') }}"
-  PUSHER_APP_KEY: "{{ lookup('pipe', 'openssl rand -hex 32') }}"
-  PUSHER_APP_SECRET: "{{ lookup('pipe', 'openssl rand -hex 32') }}"
+  REDIS_PASSWORD: "{{ lookup('password', coolify_secret_dir + '/redis_password length=64 chars=ascii_letters,digits') }}"
+  PUSHER_APP_ID: "{{ lookup('password', coolify_secret_dir + '/pusher_app_id length=64 chars=hexdigits') }}"
+  PUSHER_APP_KEY: "{{ lookup('password', coolify_secret_dir + '/pusher_app_key length=64 chars=hexdigits') }}"
+  PUSHER_APP_SECRET: "{{ lookup('password', coolify_secret_dir + '/pusher_app_secret length=64 chars=hexdigits') }}"
   LETSENCRYPT_EMAIL: "{{ user.mail }}"
   APP_ENV: "local"
   APP_NAME: "Coolify"

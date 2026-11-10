@@ -1,3 +1,16 @@
+10/11/2026 — Secrets persistants : plus de régénération à chaque réinstallation
+
+- `aiostreams`, `firefoxsyncserver`, `coolify` : secrets générés une seule fois
+  dans des fichiers `0600` puis relus. Le `.env` de Coolify reste stable.
+- `authelia` : `jwt_secret`, `session.secret` et `storage.encryption_key` sont
+  importés depuis `configuration.yml` au premier passage puis conservés ;
+  une réinstallation ne casse plus les sessions ni les secrets chiffrés.
+- `immich` : mot de passe PostgreSQL persistant ; sur une base existante sans
+  fichier de secret, `ALTER USER` aligne la base sur la nouvelle valeur.
+- Vérifié sur serveur : aiostreams, authelia et firefoxsyncserver conservent
+  leurs secrets après réinstallation (`0600`, absents des journaux).
+- audit : `ROTATESECRET` 5 → 0, plus aucune application P1.
+
 10/11/2026 — Ménage : hooks dupliqués, options ignorées, fichiers internes
 
 - `rutorrent` et `seasonarr` ne déclarent plus leur pretask homonyme : elle était

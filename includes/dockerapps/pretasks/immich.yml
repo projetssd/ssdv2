@@ -4,9 +4,31 @@
   docker_volume:
     name: model-cache
 
-- name: Generate random string
-  shell: echo "$RANDOM$(date)$RANDOM" | sha256sum | base64 | head -c10
-  register: random_string_output
+- name: Vérifier si la base Immich contient déjà des données
+  ansible.builtin.find:
+    paths: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/immich-app/postgres"
+    file_type: any
+    patterns: "PG_VERSION"
+  register: immich_db_version
+  changed_when: false
+
+- name: Vérifier la présence du mot de passe persistant
+  ansible.builtin.stat:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/immich-app/secrets/db_password"
+  register: immich_password_file
+
+# Base existante sans fichier de secret : ancienne installation. On génère une
+# valeur persistante puis on l'applique à PostgreSQL (ALTER USER) pour que
+# l'application et la base restent cohérentes.
+- name: Générer ou relire le mot de passe base Immich
+  no_log: true
+  ansible.builtin.set_fact:
+    immich_db_password: >-
+      {{ lookup('password', settings.storage + '/docker/' + lookup('env','USER')
+         + '/immich-app/secrets/db_password length=32 chars=ascii_letters,digits') }}
+    immich_db_migrate: >-
+      {{ (immich_db_version.matched | default(0) > 0)
+         and (not immich_password_file.stat.exists) }}
 
 
 - name: Create immich-machine-learning
@@ -17,7 +39,7 @@
     name: immich-machine-learning
     image: ghcr.io/immich-app/immich-machine-learning:release
     env:
-      DB_PASSWORD: '{{ random_string_output.stdout }}'
+      DB_PASSWORD: '{{ immich_db_password }}'
       DB_USERNAME: postgres
       DB_DATABASE_NAME: immich
       DB_DATA_LOCATION: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/immich-app/postgres"
@@ -48,7 +70,7 @@
     name: database
     image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0@sha256:bcf63357191b76a916ae5eb93464d65c07511da41e3bf7a8416db519b40b1c23
     env:
-      POSTGRES_PASSWORD: '{{ random_string_output.stdout }}'
+      POSTGRES_PASSWORD: '{{ immich_db_password }}'
       POSTGRES_USER: postgres
       POSTGRES_DB: immich
       POSTGRES_INITDB_ARGS: '--data-checksums'
@@ -62,6 +84,20 @@
     restart_policy: always
     networks:
       - name: traefik_proxy
+
+- name: Aligner le mot de passe PostgreSQL sur une installation existante
+  no_log: true
+  community.docker.docker_container_exec:
+    container: database
+    command: >-
+      psql -U postgres -d immich -c
+      "ALTER USER postgres WITH PASSWORD '{{ immich_db_password }}'"
+  register: immich_alter
+  until: immich_alter.rc == 0
+  retries: 30
+  delay: 3
+  changed_when: false
+  when: immich_db_migrate | bool
 
 - name: Define middleware chain
   set_fact:
@@ -84,7 +120,7 @@
     name: immich_server
     image: ghcr.io/immich-app/immich-server:release
     env:
-      DB_PASSWORD: '{{ random_string_output.stdout }}'
+      DB_PASSWORD: '{{ immich_db_password }}'
       DB_USERNAME: postgres
       DB_DATABASE_NAME: immich
       DB_DATA_LOCATION: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/immich-app/postgres"

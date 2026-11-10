@@ -14,13 +14,6 @@
 # par le script et ne doivent pas être dupliquées ici.
 
 findings:
-- app: authelia
-  code: ROTATESECRET
-  axis: cycle
-  severity: P1
-  path: includes/dockerapps/pretasks/authelia.yml
-  needle: Create new hashed encryption_key
-  detail: Clé de chiffrement du stockage et secrets de session régénérés sans garde à chaque installation ; configuration réécrite malgré la base conservée
 - app: stremthru
   code: ORPHANDATA
   axis: cycle
@@ -49,41 +42,6 @@ findings:
   path: includes/dockerapps/posttasks/coolify.yml
   needle: '>> ~/.ssh/authorized_keys'
   detail: Ajout de clé SSH hors dossier applicatif sans nettoyage ciblé à la suppression et sans déduplication à la réinstallation
-- app: coolify
-  code: ROTATESECRET
-  axis: cycle
-  severity: P1
-  path: includes/dockerapps/vars/coolify.yml
-  needle: 'APP_KEY:'
-  detail: Les secrets sont générés par lookup(pipe) sans lecture de valeurs persistantes ; la posttask réécrit .env à chaque installation, malgré les données conservées
-- app: mattermost
-  code: WORLDWRITE
-  axis: permissions
-  severity: P2
-  path: includes/dockerapps/posttasks/mattermost_post.yml
-  needle: chmod -R 777
-  detail: Dossier applicatif rendu récursivement accessible en écriture à tous les utilisateurs
-- app: aiostreams
-  code: ROTATESECRET
-  axis: cycle
-  severity: P1
-  path: includes/dockerapps/pretasks/aiostreams.yml
-  needle: openssl rand -hex 32
-  detail: Secret régénéré sans garde ni relecture persistante à chaque installation ; stabilité des sessions ou données protégées non garantie
-- app: firefoxsyncserver
-  code: ROTATESECRET
-  axis: cycle
-  severity: P1
-  path: includes/dockerapps/pretasks/firefoxsyncserver.yml
-  needle: 'secret_connect:'
-  detail: Secret régénéré sans garde ni relecture persistante à chaque installation ; stabilité des sessions ou données protégées non garantie
-- app: immich
-  code: ROTATESECRET
-  axis: cycle
-  severity: P1
-  path: includes/dockerapps/pretasks/immich.yml
-  needle: random_string_output
-  detail: 'Mot de passe PostgreSQL/immich généré à chaque installation sans relecture persistante : une réinstallation sur des données conservées peut désynchroniser la base de son mot de passe'
 - app: rtorrentvpn
   code: MANUALSTEP
   axis: assistance

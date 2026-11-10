@@ -11,7 +11,7 @@ pg_env:
   ADDON_ID: "aiostreams.viren070.com"
   PORT: "3000"
   BASE_URL: "https://aiostreams.{{ user.domain }}"
-  SECRET_KEY: "{{ random_key.stdout }}"
+  SECRET_KEY: "{{ my_secret_key }}"
   DATABASE_URI: "sqlite://./data/db.sqlite"
   BUILTIN_STREMTHRU_URL: "https://stremthru.{{ user.domain }}"
   LOG_LEVEL: "http"

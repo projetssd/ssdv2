@@ -4,23 +4,66 @@
   with_items:
     - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}"
 
-- name: Create new hashed jwt_secret
-  no_log: true
-  shell: |
-    docker run --rm authelia/authelia:latest authelia crypto rand --length 64 --charset alphanumeric | cut -d: -f2 | sed 's/ //g'
-  register: jwt_secret
+- name: Créer le dossier des secrets Authelia
+  file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/secrets"
+    state: directory
+    mode: '0700'
+    owner: "{{user.userid}}"
+    group: "{{user.groupid}}"
 
-- name: Create new hashed secret
+# Les secrets existants sont relus depuis configuration.yml au premier passage
+# puis conservés : une clé de chiffrement régénérée invaliderait les données.
+- name: Lire la configuration existante
+  ansible.builtin.slurp:
+    src: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/configuration.yml"
+  register: authelia_config_raw
+  failed_when: false
   no_log: true
-  shell: |
-    docker run --rm authelia/authelia:latest authelia crypto rand --length 64 --charset alphanumeric | cut -d: -f2 | sed 's/ //g'
-  register: secret
 
-- name: Create new hashed encryption_key
+- name: Extraire les secrets existants
+  ansible.builtin.set_fact:
+    authelia_existing: >-
+      {{ (authelia_config_raw.content | b64decode | from_yaml)
+         if (authelia_config_raw.content | default('') | length > 0) else {} }}
   no_log: true
-  shell: |
-    docker run --rm authelia/authelia:latest authelia crypto rand --length 64 --charset alphanumeric | cut -d: -f2 | sed 's/ //g'
-  register: encryption_key
+
+- name: Importer jwt_secret existant
+  ansible.builtin.copy:
+    content: "{{ authelia_existing.jwt_secret }}\n"
+    dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/secrets/jwt_secret"
+    mode: '0600'
+    force: false
+  when: authelia_existing.jwt_secret is defined
+  no_log: true
+
+- name: Importer session.secret existant
+  ansible.builtin.copy:
+    content: "{{ (authelia_existing.session | default({})).secret }}\n"
+    dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/secrets/session_secret"
+    mode: '0600'
+    force: false
+  when: (authelia_existing.session | default({})).secret is defined
+  no_log: true
+
+- name: Importer encryption_key existant
+  ansible.builtin.copy:
+    content: "{{ (authelia_existing.storage | default({})).encryption_key }}\n"
+    dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/secrets/encryption_key"
+    mode: '0600'
+    force: false
+  when: (authelia_existing.storage | default({})).encryption_key is defined
+  no_log: true
+
+- name: Charger les secrets persistants Authelia
+  no_log: true
+  ansible.builtin.set_fact:
+    jwt_secret:
+      stdout: "{{ lookup('password', settings.storage + '/docker/' + lookup('env','USER') + '/authelia/secrets/jwt_secret length=64 chars=ascii_letters,digits') }}"
+    secret:
+      stdout: "{{ lookup('password', settings.storage + '/docker/' + lookup('env','USER') + '/authelia/secrets/session_secret length=64 chars=ascii_letters,digits') }}"
+    encryption_key:
+      stdout: "{{ lookup('password', settings.storage + '/docker/' + lookup('env','USER') + '/authelia/secrets/encryption_key length=64 chars=ascii_letters,digits') }}"
 
 - name: Create new hashed
   no_log: true
