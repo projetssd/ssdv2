@@ -9,11 +9,23 @@ setup() {
   export SETTINGS_SOURCE="$BATS_TEST_DIRNAME/../.."
   export USER="fixture"
   export DOCKER_LOG="$TESTDIR/docker.log"
+  export REMOVED_LOG="$TESTDIR/removed.log"
+  : >"$REMOVED_LOG"
   mkdir -p "$TESTDIR/conf" "$TESTDIR/bin" "$TESTDIR/vars" "$TESTDIR/docker/$USER"
 
   cat >"$TESTDIR/bin/docker" <<'EOF'
 #!/bin/bash
 printf '%s\n' "$*" >>"$DOCKER_LOG"
+case "$1" in
+  rm)
+    shift
+    # Journalise un nom par ligne pour des assertions exactes.
+    for arg in "$@"; do
+      case "$arg" in -*) continue ;; esac
+      printf '%s\n' "$arg" >>"$REMOVED_LOG"
+    done
+    ;;
+esac
 case "$*" in
   *"label=ssdv2.app="*) ;;
   *inspect*) exit 1 ;;
@@ -44,12 +56,24 @@ EOF
 
   cat >"$TESTDIR/bin/sqlite3" <<'EOF'
 #!/bin/bash
+# Répond uniquement à la requête de statut utilisée par suppression_appli.
+query="$*"
 cat >/dev/null 2>&1
+case "$query" in
+  *"applications where name="*)
+    name=$(printf '%s' "$query" | sed -n "s/.*name='\([^']*\)'.*/\1/p")
+    if [ -n "$name" ] && [ -f "${INSTALLED_APPS:-/dev/null}" ] && grep -qxF "$name" "$INSTALLED_APPS"; then
+      printf '2\n'
+    fi
+    ;;
+esac
 exit 0
 EOF
   chmod +x "$TESTDIR/bin/sqlite3"
 
   export ANSIBLE_LOG="$TESTDIR/ansible.log"
+  export INSTALLED_APPS="$TESTDIR/installed-apps"
+  : >"$INSTALLED_APPS"
 
   export PATH="$TESTDIR/bin:$PATH"
 
@@ -111,7 +135,7 @@ assert_absent() {
   [ "$status" -eq 0 ]
   assert_exists espocrm
   assert_exists mysql
-  run grep -F "rm -f" "$DOCKER_LOG"
+  run grep -qxF "espocrm" "$REMOVED_LOG"
   [ "$status" -eq 0 ]
 }
 
@@ -154,9 +178,9 @@ assert_absent() {
 @test "streamfusion ne supprime pas le conteneur warp des autres applications" {
   run suppression_appli streamfusion 1
   [ "$status" -eq 0 ]
-  run grep -E "rm -f .*\bwarp\b" "$DOCKER_LOG"
+  run grep -qxF "warp" "$REMOVED_LOG"
   [ "$status" -ne 0 ]
-  run grep -F "streamfusion" "$DOCKER_LOG"
+  run grep -qxF "streamfusion" "$REMOVED_LOG"
   [ "$status" -eq 0 ]
 }
 
@@ -166,4 +190,48 @@ assert_absent() {
   [ "$status" -eq 0 ]
   assert_exists sffs-cache
   assert_absent sffs-secrets
+}
+
+@test "un conteneur enregistré par une autre application installée est conservé" {
+  printf 'stremio-postgres\nstremio-redis\n' >"$SETTINGS_STORAGE/conf/sftorznab.containers"
+  printf 'sftorznab\n' >"$INSTALLED_APPS"
+  run suppression_appli streamfusion 1
+  [ "$status" -eq 0 ]
+  run grep -qxF "stremio-postgres" "$REMOVED_LOG"
+  [ "$status" -ne 0 ]
+  run grep -qxF "stremio-redis" "$REMOVED_LOG"
+  [ "$status" -ne 0 ]
+  grep -qxF "streamfusion" "$REMOVED_LOG"
+}
+
+@test "les conteneurs partagés sont retirés quand l'autre application n'est plus installée" {
+  printf 'stremio-postgres\nstremio-redis\n' >"$SETTINGS_STORAGE/conf/sftorznab.containers"
+  : >"$INSTALLED_APPS"
+  run suppression_appli streamfusion 1
+  [ "$status" -eq 0 ]
+  grep -qxF "stremio-postgres" "$REMOVED_LOG"
+  grep -qxF "stremio-redis" "$REMOVED_LOG"
+}
+
+@test "la liste générique exclut aussi le conteneur d'une autre application installée" {
+  printf 'paperless\n' >"$SETTINGS_STORAGE/conf/otherapp.containers"
+  printf 'otherapp\n' >"$INSTALLED_APPS"
+  make_data paperless
+  run suppression_appli paperless 0
+  [ "$status" -eq 0 ]
+  run grep -qxF "paperless" "$REMOVED_LOG"
+  [ "$status" -ne 0 ]
+  run grep -qxF "db-paperless" "$REMOVED_LOG"
+  [ "$status" -eq 0 ]
+  assert_exists paperless
+}
+
+@test "le registre d'une application non installée ne protège pas un conteneur" {
+  printf 'paperless\n' >"$SETTINGS_STORAGE/conf/otherapp.containers"
+  : >"$INSTALLED_APPS"
+  make_data paperless
+  run suppression_appli paperless 0
+  [ "$status" -eq 0 ]
+  run grep -qxF "paperless" "$REMOVED_LOG"
+  [ "$status" -eq 0 ]
 }

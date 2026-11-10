@@ -653,6 +653,54 @@ function json_array_from_lines() {
 # Liste les conteneurs rattachés à une application : label ssdv2.app (nouvelles
 # installations), registre enregistré à l'installation, puis conventions de
 # nommage SSDV2. Ne supprime rien, retourne une liste triée unique.
+# Conteneurs enregistrés par une AUTRE application encore installée.
+# Le registre `conf/<app>.containers` fait foi : deux applications peuvent
+# déployer des conteneurs de même nom (pile Stremio), et supprimer l'une ne doit
+# pas couper l'autre.
+function containers_owned_by_other_apps() {
+  local app="$1" registry other status
+  for registry in "${SETTINGS_STORAGE}"/conf/*.containers; do
+    [ -f "$registry" ] || continue
+    other=$(basename "$registry" .containers)
+    [ "$other" = "$app" ] && continue
+    status=$(sqlite3 "${SETTINGS_SOURCE}/ssddb" \
+      "select status from applications where name='${other}'" 2>/dev/null || true)
+    [ "${status:-}" = "2" ] || continue
+    cat "$registry"
+  done | sed '/^[[:space:]]*$/d' | sort -u
+}
+
+# Filtre sur stdin les noms de conteneurs possédés ailleurs.
+function filter_foreign_containers() {
+  local app="$1" foreign
+  # `</dev/null` : le calcul ne doit pas consommer le flux de la pipeline.
+  foreign=$(containers_owned_by_other_apps "$app" </dev/null)
+  if [ -n "$foreign" ]; then
+    grep -vxF -f <(printf '%s\n' "$foreign") || true
+  else
+    cat
+  fi
+}
+
+# Supprime les conteneurs de l'application, en conservant ceux enregistrés par
+# une autre application encore installée.
+function remove_app_containers() {
+  local app="$1"
+  shift
+  local foreign name kept=""
+  foreign=$(containers_owned_by_other_apps "$app" </dev/null)
+  for name in "$@"; do
+    if [ -n "$foreign" ] && printf '%s\n' "$foreign" | grep -qxF "$name"; then
+      log_write "Conteneur ${name} conservé : enregistré par une autre application" >/dev/null 2>&1
+      continue
+    fi
+    kept="${kept} ${name}"
+  done
+  [ -n "${kept// /}" ] || return 0
+  # shellcheck disable=SC2086
+  docker rm -f ${kept} >/dev/null 2>&1
+}
+
 function collect_app_containers() {
   local app="$1"
   local registry="${SETTINGS_STORAGE}/conf/${app}.containers"
@@ -718,7 +766,7 @@ function suppression_appli() {
   # y compris lors d'un reinit. Les volumes nommés sont conservés et gérés via
   # le registre (supprimés uniquement si DELETE=1).
   local target_containers
-  target_containers=$(collect_app_containers "${APPSELECTED}")
+  target_containers=$(collect_app_containers "${APPSELECTED}" | filter_foreign_containers "${APPSELECTED}")
   log_write "Suppression de ${APPSELECTED} - conteneurs ciblés: $(printf '%s' "${target_containers}" | tr '\n' ' ')" >/dev/null 2>&1
   printf '%s\n' "${target_containers}" | xargs -r docker rm -f -v >/dev/null 2>&1
 
@@ -750,10 +798,10 @@ function suppression_appli() {
     manage_account_yml oauth.account " "
     ;;
   seafile)
-    docker rm -f memcached >/dev/null 2>&1
+    remove_app_containers "$APPSELECTED" memcached
     ;;
   varken)
-    docker rm -f influxdb telegraf grafana >/dev/null 2>&1
+    remove_app_containers "$APPSELECTED" influxdb telegraf grafana
     if [ $DELETE -eq 1 ]; then
       sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/telegraf
       sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/grafana
@@ -761,13 +809,13 @@ function suppression_appli() {
     fi
     ;;
   jitsi)
-    docker rm -f prosody jicofo jvb
+    remove_app_containers "$APPSELECTED" prosody jicofo jvb
     if [ $DELETE -eq 1 ]; then
       sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/.jitsi-meet-cfg
     fi
     ;;
   nextcloud)
-    docker rm -f collabora coturn office
+    remove_app_containers "$APPSELECTED" collabora coturn office
     if [ $DELETE -eq 1 ]; then
       rm -rf ${SETTINGS_STORAGE}/docker/${USER}/coturn
     fi
@@ -777,13 +825,13 @@ function suppression_appli() {
     rm ${SETTINGS_STORAGE}/conf/rutorrent-vpn.yml
     ;;
   jackett)
-    docker rm -f flaresolverr >/dev/null 2>&1
+    remove_app_containers "$APPSELECTED" flaresolverr
     ;;
   petio)
-    docker rm -f mongo >/dev/null 2>&1
+    remove_app_containers "$APPSELECTED" mongo
     ;;
   vinkunja)
-    docker rm -f vikunja-api >/dev/null 2>&1
+    remove_app_containers "$APPSELECTED" vikunja-api
     ;;
   zurg)
     if [ $DELETE -eq 1 ]; then
@@ -794,7 +842,7 @@ function suppression_appli() {
     if [ $DELETE -eq 1 ]; then
       sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/piped
     fi
-    docker rm -f nginx piped-frontend piped-backend postgres piped-proxy hyperpipe-backend hyperpipe-frontend >/dev/null 2>&1
+    remove_app_containers "$APPSELECTED" nginx piped-frontend piped-backend postgres piped-proxy hyperpipe-backend hyperpipe-frontend
     manage_account_yml sub.piped " "
     ;;
   jellygrail)
@@ -817,7 +865,7 @@ function suppression_appli() {
       sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/mysql
       sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/espocrm >/dev/null 2>&1
     fi
-    docker rm -f espocrm espocrm-websocket espocrm-daemon mysql >/dev/null 2>&1
+    remove_app_containers "$APPSELECTED" espocrm espocrm-websocket espocrm-daemon mysql
     manage_account_yml sub.espocrm " "
     ;;
   paperless)
@@ -826,12 +874,12 @@ function suppression_appli() {
       sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/paperless >/dev/null 2>&1
       sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/redis >/dev/null 2>&1
     fi
-    docker rm -f mariadb paperless broker >/dev/null 2>&1
+    remove_app_containers "$APPSELECTED" mariadb paperless broker
     manage_account_yml sub.paperless " "
     ;;
   immich_server)
     sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/immich-app >/dev/null 2>&1
-    docker rm -f immich_server database redis immich-machine-learning >/dev/null 2>&1
+    remove_app_containers "$APPSELECTED" immich_server database redis immich-machine-learning
     docker volume rm model-cache >/dev/null 2>&1
     manage_account_yml sub.immich " "
     ;;
@@ -893,21 +941,21 @@ SQL
   streamfusion)
     # warp n'est pas un compagnon de streamfusion : il est déployé par sftorznab et
     # stremthru. Le supprimer ici coupe le proxy des autres applications.
-    docker rm -f streamfusion taskiq-worker taskiq-scheduler meilisearch stremio-redis stremio-postgres >/dev/null 2>&1
+    remove_app_containers "$APPSELECTED" streamfusion taskiq-worker taskiq-scheduler meilisearch stremio-redis stremio-postgres
     if [ $DELETE -eq 1 ]; then
         manage_account_yml sub.streamfusion " "
     fi
     ;;
   mediaflowproxy)
-    docker rm -f redis-mediaflowproxy >/dev/null 2>&1
+    remove_app_containers "$APPSELECTED" redis-mediaflowproxy
     ;;
   sftorznab)
-    docker rm -f sftorznab-broker sftorznab-meili >/dev/null 2>&1
+    remove_app_containers "$APPSELECTED" sftorznab-broker sftorznab-meili
     # Fallback legacy : le registre <app>.dns couvre le cas personnalisé.
     EXTRA_SUBDOMAINS+=("${sousdomaine}-meili")
     ;;
   pterodactyl)
-    docker rm -f wings >/dev/null 2>&1
+    remove_app_containers "$APPSELECTED" wings
     # Fallback legacy : wings.<domaine> créé par le posttask.
     EXTRA_SUBDOMAINS+=("wings")
     ;;
@@ -925,7 +973,7 @@ SQL
     ;;
 
   ssd-backend|ssd-frontend|saison-frontend)
-    docker rm -f ssd-backend ssd-frontend saison-frontend >/dev/null 2>&1
+    remove_app_containers "$APPSELECTED" ssd-backend ssd-frontend saison-frontend
 
     manage_account_yml sub.webui " "
 

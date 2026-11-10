@@ -13,7 +13,12 @@
   applications.
 - `sffs` conserve son cache TMDB et documente le retrait volontaire de
   `sffs-secrets` (lié à la clé d'API supprimée, régénéré à l'installation).
-- nouveau `tests/bats/suppression.bats` : 10 cas avec `docker`, `sudo`,
+- un conteneur enregistré par une autre application encore installée n'est plus
+  supprimé : `suppression_appli` recoupe `conf/<app>.containers` avec les
+  applications présentes en base. Corrige la pile Stremio partagée par
+  `sftorznab` et `streamfusion` (`stremio-postgres`, `stremio-redis`), et la
+  classe entière des conteneurs communs.
+- nouveau `tests/bats/suppression.bats` : 14 cas avec `docker`, `sudo`,
   Ansible et SQLite simulés ; une suppression partielle préserve les données,
   une suppression complète les retire.
 
