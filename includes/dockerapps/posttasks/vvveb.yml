@@ -44,6 +44,12 @@
 - name: Définir le mot de passe administrateur (persistant, généré une fois)
   ansible.builtin.set_fact:
     vvveb_admin_password: "{{ lookup('password', settings.storage + '/docker/' + lookup('env','USER') + '/vvveb-secrets/admin_password length=20 chars=ascii_letters,digits') }}"
+  no_log: true
+
+- name: Restreindre l'accès au mot de passe administrateur
+  ansible.builtin.file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/vvveb-secrets/admin_password"
+    mode: '0600'
 
 # Première installation uniquement. En réinstallation, config/db.php existe et
 # l'installation est sautée : aucune attente de type « premier démarrage ».
@@ -87,7 +93,8 @@
       - "Instance : https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}"
       - "Administration : https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}/admin"
       - "Utilisateur : admin"
-      - "Mot de passe : {{ vvveb_admin_password }}"
+      - "Mot de passe : voir {{ settings.storage }}/docker/{{ lookup('env','USER') }}/vvveb-secrets/admin_password"
+      - "  (fichier en 0600, jamais journalisé)"
       - "=================================================="
   when: vvveb_install_cmd.rc | default(1) == 0
 

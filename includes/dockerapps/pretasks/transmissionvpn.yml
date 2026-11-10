@@ -24,9 +24,11 @@
     prompt: |
       SSDV2_PROMPT {"id": "transmissionvpn.password", "label": "Mot de passe VPN", "kind": "secret", "secret": true}
       Enter value for OPENVPN_PASSWORD
-    echo: "yes"
+    echo: no
   register: myregister
+  no_log: true
 - name: set var
+  no_log: true
   set_fact:
     password: "{{ myregister.user_input }}"
 - name: prompt for network

@@ -18,6 +18,8 @@
       traefik.http.routers.oauth2proxy-rtr.middlewares: 'chain-no-auth@file'
 
 - name: Deploy OAuth2 Proxy
+  # --client-secret est passé en argument.
+  no_log: true
   docker_container:
     name: 'oauth2-proxy'
     hostname: 'oauth2-proxy'

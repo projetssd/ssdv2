@@ -8,11 +8,9 @@
   shell: echo "$RANDOM$(date)$RANDOM" | sha256sum | base64 | head -c10
   register: random_string_output
 
-- name: Show the generated random string
-  debug:
-    msg: "Generated random string: {{ random_string_output.stdout }}"
 
 - name: Create immich-machine-learning
+  no_log: true
   community.docker.docker_container:
     labels:
       ssdv2.app: "{{pgrole}}"
@@ -43,6 +41,7 @@
       - name: traefik_proxy
 
 - name: Create database
+  no_log: true
   community.docker.docker_container:
     labels:
       ssdv2.app: "{{pgrole}}"
@@ -80,6 +79,7 @@
       {% endif %}
 
 - name: Create immich_server
+  no_log: true
   community.docker.docker_container:
     name: immich_server
     image: ghcr.io/immich-app/immich-server:release

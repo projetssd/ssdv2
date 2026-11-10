@@ -94,6 +94,10 @@ jobs:
           export ANSIBLE_PLAYBOOK="$(command -v ansible-playbook)"
           test -x "$ANSIBLE_PLAYBOOK"
           python3 tests/test_relay_proxy.py
+      - name: Tests d'hygiène des secrets
+        run: |
+          export ANSIBLE_PLAYBOOK="$(command -v ansible-playbook)"
+          python3 tests/test_secret_hygiene.py
 
   yaml:
     runs-on: ubuntu-24.04
