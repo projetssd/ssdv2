@@ -12,8 +12,13 @@
   register: homarr_secret_key_file
 
 - name: Generate Homarr secret encryption key
-  ansible.builtin.shell: "openssl rand -hex 32 > {{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/appdata/secret_encryption_key"
+  ansible.builtin.shell: "umask 077; openssl rand -hex 32 > {{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/appdata/secret_encryption_key"
   when: not homarr_secret_key_file.stat.exists
+
+- name: Restreindre l'accès à la clé Homarr
+  ansible.builtin.file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/appdata/secret_encryption_key"
+    mode: '0600'
 
 - name: Read Homarr secret encryption key
   ansible.builtin.slurp:

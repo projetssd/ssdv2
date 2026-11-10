@@ -1,0 +1,11 @@
+---
+# L'image tourne avec user: MYUID:MYGID ; Docker créerait le sous-dossier
+# config en root au montage. On le prépare avec le bon propriétaire.
+- name: Créer le dossier de configuration Navidrome
+  become: true
+  ansible.builtin.file:
+    path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config"
+    state: directory
+    mode: '0755'
+    owner: "{{ lookup('env','MYUID') }}"
+    group: "{{ lookup('env','MYGID') }}"

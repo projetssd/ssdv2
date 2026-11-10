@@ -9,7 +9,7 @@
 - name: Change directory rights
   become: yes
   command:
-    cmd: "chmod -R 777 {{ settings.storage }}/docker/{{user.name}}/{{pgrole}}"
+    cmd: "chmod -R u+rwX,g+rwX {{ settings.storage }}/docker/{{user.name}}/{{pgrole}}"
 
 - name: 'Deploying {{pgrole}}'
   no_log: true

@@ -21,13 +21,6 @@ findings:
   path: includes/dockerapps/pretasks/authelia.yml
   needle: Create new hashed encryption_key
   detail: Clé de chiffrement du stockage et secrets de session régénérés sans garde à chaque installation ; configuration réécrite malgré la base conservée
-- app: authelia
-  code: SECRETFILEMODE
-  axis: permissions
-  severity: P2
-  path: includes/dockerapps/pretasks/authelia.yml
-  needle: 'dest:'
-  detail: Templates de configuration contenant des secrets écrits sans mode restrictif explicite ; permissions dépendantes du contexte
 - app: stremthru
   code: ORPHANDATA
   axis: cycle
@@ -63,20 +56,6 @@ findings:
   path: includes/dockerapps/vars/coolify.yml
   needle: 'APP_KEY:'
   detail: Les secrets sont générés par lookup(pipe) sans lecture de valeurs persistantes ; la posttask réécrit .env à chaque installation, malgré les données conservées
-- app: homarr
-  code: SECRETFILEMODE
-  axis: permissions
-  severity: P2
-  path: includes/dockerapps/pretasks/homarr.yml
-  needle: openssl rand -hex 32 >
-  detail: Clé générée dans un dossier 0755 sans umask restrictif ni chmod/mode explicite sur le fichier ; permissions dépendantes de l’environnement
-- app: navidrome
-  code: SUBDIRUID
-  axis: permissions
-  severity: P1
-  path: includes/dockerapps/vars/navidrome.yml
-  needle: /config:/data
-  detail: 'Conteneur lancé sous MYUID:MYGID, bind du sous-dossier config sans préparation de ce sous-dossier : Docker peut le créer root et empêcher l’écriture au premier démarrage'
 - app: mattermost
   code: WORLDWRITE
   axis: permissions

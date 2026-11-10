@@ -12,7 +12,7 @@
   file:
     path: "{{item}}"
     state: "directory"
-    mode: "0777"
+    mode: "0775"
     owner: "{{user.userid}}"
     group: "{{user.groupid}}"
     recurse: "yes"

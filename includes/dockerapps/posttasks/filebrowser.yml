@@ -10,7 +10,7 @@
   file:
     path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/filebrowser/config"
     state: directory
-    mode: 0777
+    mode: 0775
     owner: "{{user.userid}}"
     group: "{{user.groupid}}"
 - name: Rights
@@ -19,7 +19,7 @@
     path: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/filebrowser/config"
     state: directory
     recurse: yes
-    mode: 0777
+    mode: 0775
     owner: "{{user.userid}}"
     group: "{{user.groupid}}"
 

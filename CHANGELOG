@@ -1,3 +1,14 @@
+10/11/2026 — Permissions : fin des 0777 et des secrets en lecture globale
+
+- dossiers applicatifs en `0775` au lieu de `0777` pour `baikal`, `filebrowser`,
+  `guacamole`, `metube`, `decypharrseed` ; `mattermost` n'est plus rendu
+  récursivement accessible à tous (`u+rwX,g+rwX`).
+- fichiers de secrets en `0600` : `authelia` (`configuration.yml`,
+  `users.yml`) et `homarr` (clé générée avec `umask 077` + mode explicite).
+- `navidrome` : le sous-dossier `config` est créé en pretask avec
+  `MYUID:MYGID`, évitant un montage créé en root.
+- audit : `WORLDWRITE`, `SECRETFILEMODE` et `SUBDIRUID` à 0.
+
 10/11/2026 — Applications : corrections fonctionnelles (webdav, mattermost, etc.)
 
 - `webdav` : le conteneur redémarrait faute de `SERVER_NAME` (Apache). Router
