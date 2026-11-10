@@ -1,3 +1,28 @@
+10/11/2026 — Déploiement générique : paramètres sensibles masqués par défaut
+
+- les quatre tâches du déploiement (`Prepare docker info`, `Add specific docker
+  info`, `Normalize security_opts`, `Deploy container`) passent de
+  `docker_no_log: false` par défaut à **masqué par défaut**. `~/.ansible.cfg`
+  définit un `log_path` persistant : les `pg_env` de toutes les applications
+  y étaient recopiés en clair, y compris sans verbosité.
+- l'ancien comportement reste disponible explicitement avec
+  `docker_no_log: false` dans les variables d'une application ; `ssdv2proxy` et
+  `ssdv2-relay`, qui l'activaient déjà, sont inchangés.
+- les hooks qui redéploient le conteneur (`docker_container: "{{ docker_info }}"`)
+  sont masqués à leur tour : navidrome, metube, rutorrentcm, rtorrentvpn,
+  rflood, mariadb_restart, baikal, plexautolanguages, emby, filebrowser,
+  sabnzbd et mattermost. Sans cela la valeur restait dans les journaux malgré
+  le nouveau défaut.
+- `tests/test_relay_proxy.py` vérifie les trois cas (défaut masqué, opt-out
+  explicite, opt-in) sur une valeur fictive, y compris lorsque la tâche échoue,
+  et contrôle que tous les hooks réutilisant `docker_info` sont masqués.
+- limite documentée et testée, versions par versions : sur les deux versions
+  mesurées (`ansible-core 2.18.20` en CI, `2.21.0` en local), le résultat de
+  tâche est censuré. En 2.21.0 uniquement, un bandeau `[ERROR]` reprend le
+  message d'échec du module et exposerait un secret que le module y écrirait.
+  Aucune conclusion n'est tirée pour les autres versions. Détail, commandes et
+  canaux dans `docs/ansible-no-log.md`.
+
 10/11/2026 — Secrets : plus aucune valeur dans les journaux d'installation
 
 - invites secrètes : `echo: no` et `no_log: true` sur toutes les `pause`

@@ -12,4 +12,5 @@
     cmd: "chmod -R 777 {{ settings.storage }}/docker/{{user.name}}/{{pgrole}}"
 
 - name: 'Deploying {{pgrole}}'
+  no_log: true
   docker_container: "{{ docker_info }}"

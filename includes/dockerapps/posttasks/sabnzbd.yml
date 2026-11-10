@@ -101,4 +101,5 @@
   when: not inicheck.stat.exists
 
 - name: 'Deploying {{pgrole}}'
+  no_log: true
   docker_container: "{{ docker_info }}"

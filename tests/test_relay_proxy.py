@@ -1,5 +1,6 @@
 """Contrôles Ansible ciblés sur fixtures, sans Docker ni accès réseau."""
 import json
+import re
 import importlib.util
 import os
 from pathlib import Path
@@ -18,35 +19,61 @@ ANSIBLE = Path(os.environ.get("ANSIBLE_PLAYBOOK") or shutil.which("ansible-playb
 
 @unittest.skipUnless(ANSIBLE.is_file(), "Ansible requis")
 class ProxyLoggingTest(unittest.TestCase):
-    def test_generic_deployment_masks_opted_in_app_and_preserves_default(self):
+    """Le déploiement générique masque les paramètres Docker par défaut.
+
+    `~/.ansible.cfg` définit `log_path`, donc toute valeur non masquée est écrite
+    dans un journal persistant, pas seulement affichée en verbosité.
+    """
+
+    def run_deployment(self, tmp, docker_no_log="absent"):
         generic = yaml.safe_load((ROOT / "includes/dockerapps/vars/generique.yml").read_text())[0]
-        start = next(i for i,t in enumerate(generic['tasks']) if t['name']=='Prepare docker info')
-        tasks = generic['tasks'][start:start+4]
-        for opted_in in [True, False]:
-            with self.subTest(opted_in=opted_in), tempfile.TemporaryDirectory() as tmp:
-                selected = json.loads(json.dumps(tasks))
-                deployment = selected[-1]
-                del deployment['community.docker.docker_container']
-                deployment['ansible.builtin.fail'] = {'msg': '{{ docker_info.env.AUTH_PASS }}'}
-                # Une erreur du module peut contenir les arguments Docker :
-                # provoquer ce cas sur une valeur fictive, avec verbosité.
-                marker = 'fixture-pass-relay-proxy-845731'
-                variables = dict(pgrole='test-app', image='fixture:local',
-                                 docker_deploy_enabled=True, pg_labels={},
-                                 pg_env={'AUTH_PASS': marker},
-                                 specific_docker_info={'security_opts': 'no-new-privileges:true'})
-                if opted_in:
-                    variables['docker_no_log'] = True
-                play = [{'hosts':'localhost', 'gather_facts':False, 'vars':variables,'tasks':selected}]
-                path = Path(tmp) / 'play.json'
-                path.write_text(json.dumps(play))
-                result = subprocess.run([str(ANSIBLE),'-i','localhost,','-c','local',str(path),'-vv'],
-                                        capture_output=True,text=True,timeout=60)
-                self.assertNotEqual(result.returncode, 0)
-                output = result.stdout + result.stderr
-                self.assertEqual(marker in output, not opted_in, output)
-        proxy = yaml.safe_load((ROOT/'includes/dockerapps/vars/ssdv2proxy.yml').read_text())
-        self.assertIs(proxy['docker_no_log'], True)
+        start = next(i for i, t in enumerate(generic["tasks"]) if t["name"] == "Prepare docker info")
+        tasks = generic["tasks"][start:start + 4]
+        selected = json.loads(json.dumps(tasks))
+        deployment = selected[-1]
+        del deployment["community.docker.docker_container"]
+        # Échec réaliste : le message ne contient pas le secret. Ce qui doit
+        # rester masqué, c'est `docker_info.env` reconstruit par les tâches
+        # précédentes (et donc le journal persistant), pas le texte de l'erreur.
+        deployment["ansible.builtin.fail"] = {"msg": "fixture: échec de déploiement"}
+        # Une erreur du module peut contenir les arguments Docker : provoquer ce
+        # cas sur une valeur fictive, avec verbosité.
+        marker = "fixture-pass-relay-proxy-845731"
+        variables = dict(pgrole="test-app", image="fixture:local",
+                         docker_deploy_enabled=True, pg_labels={},
+                         pg_env={"AUTH_PASS": marker},
+                         specific_docker_info={"security_opts": "no-new-privileges:true"})
+        if docker_no_log != "absent":
+            variables["docker_no_log"] = docker_no_log
+        play = [{"hosts": "localhost", "gather_facts": False,
+                 "vars": variables, "tasks": selected}]
+        path = Path(tmp) / "play.json"
+        path.write_text(json.dumps(play))
+        result = subprocess.run([str(ANSIBLE), "-i", "localhost,", "-c", "local", str(path), "-vv"],
+                                capture_output=True, text=True, timeout=60)
+        self.assertNotEqual(result.returncode, 0)
+        return marker, result.stdout + result.stderr
+
+    def test_default_masks_secrets_including_on_error(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            marker, output = self.run_deployment(tmp)
+            self.assertNotIn(marker, output)
+
+    def test_explicit_opt_out_restores_verbose_output(self):
+        # Le comportement historique reste accessible, explicitement.
+        with tempfile.TemporaryDirectory() as tmp:
+            marker, output = self.run_deployment(tmp, docker_no_log=False)
+            self.assertIn(marker, output)
+
+    def test_explicit_opt_in_still_masks(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            marker, output = self.run_deployment(tmp, docker_no_log=True)
+            self.assertNotIn(marker, output)
+
+    def test_apps_that_opted_in_keep_the_option(self):
+        for name in ("ssdv2proxy", "ssdv2-relay"):
+            app = yaml.safe_load((ROOT / f"includes/dockerapps/vars/{name}.yml").read_text())
+            self.assertIs(app["docker_no_log"], True, name)
 
 
 @unittest.skipUnless(ANSIBLE.is_file(), "Ansible requis")
@@ -167,6 +194,108 @@ class RelayContainerStateTest(unittest.TestCase):
                 self.assertEqual(container.stop.called,running)
                 self.assertEqual(client.api.start.called,running)
                 client.images.pull.assert_not_called()
+
+
+
+
+@unittest.skipUnless(ANSIBLE.is_file(), "Ansible requis")
+class HookRedeployLoggingTest(unittest.TestCase):
+    """Les hooks qui redéploient `docker_info` doivent masquer les paramètres."""
+
+    def test_all_docker_info_redeploys_are_masked(self):
+        import glob
+        unmasked = []
+        for path in glob.glob(str(ROOT / "includes/dockerapps/**/*.yml"), recursive=True):
+            if path.endswith("stremio_base.yml"):
+                continue
+            try:
+                document = yaml.safe_load(Path(path).read_text())
+            except yaml.YAMLError:
+                continue
+            stack = [(document, False)]
+            while stack:
+                node, inherited = stack.pop()
+                if isinstance(node, list):
+                    for item in node:
+                        stack.append((item, inherited))
+                    continue
+                if not isinstance(node, dict):
+                    continue
+                raw_no_log = node.get("no_log")
+                if raw_no_log is True:
+                    local_protected = True
+                elif isinstance(raw_no_log, str) and re.search(r"default\(\s*false\s*\)", raw_no_log):
+                    local_protected = False
+                elif raw_no_log is not None:
+                    local_protected = str(raw_no_log).strip().lower() not in ("false", "no")
+                else:
+                    local_protected = False
+                protected = inherited or local_protected
+                for key, value in node.items():
+                    if str(key).split(".")[-1] == "docker_container" and \
+                            str(value).strip() in ("{{ docker_info }}", "{{docker_info}}"):
+                        if not protected:
+                            unmasked.append(f"{Path(path).relative_to(ROOT)}: {node.get('name')}")
+                for child in node.values():
+                    if isinstance(child, (list, dict)):
+                        stack.append((child, protected))
+        self.assertEqual(unmasked, [])
+
+    def run_task(self, tmp, task, variables):
+        play = [{"hosts": "localhost", "gather_facts": False,
+                 "vars": variables, "tasks": [task]}]
+        path = Path(tmp) / "play.json"
+        path.write_text(json.dumps(play))
+        return subprocess.run(
+            [str(ANSIBLE), "-i", "localhost,", "-c", "local", str(path), "-vv"],
+            capture_output=True, text=True, timeout=60,
+        )
+
+    def test_masked_redeploy_keeps_progress_and_hides_secret(self):
+        marker = "fixture-docker-info-secret-7712"
+        task = {
+            "name": "Deploying test-app",
+            "no_log": True,
+            "community.docker.docker_container": {"name": "test-app", "state": "started"},
+        }
+        # Le module est remplacé par un échec statique : ce qui doit rester
+        # masqué, c'est le contenu de docker_info (donc env).
+        task.pop("community.docker.docker_container")
+        task["ansible.builtin.fail"] = {"msg": "échec simulé"}
+        with tempfile.TemporaryDirectory() as tmp:
+            result = self.run_task(tmp, task, {
+                "docker_info": {"name": "test-app", "env": {"SECRET": marker}},
+            })
+        output = result.stdout + result.stderr
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotIn(marker, output)
+        self.assertIn("Deploying test-app", output)
+
+    def test_no_log_censors_result_and_error_line_depends_on_version(self):
+        # Le résultat de tâche est toujours masqué (vérifié sur ansible-core
+        # 2.18.20 et 2.21.0). Le bandeau `[ERROR]` qui reprend le message du
+        # module n'existe qu'en 2.21.0 : il expose un secret que le module
+        # écrit lui-même. Voir docs/ansible-no-log.md.
+        marker = "fixture-module-error-secret-9913"
+        task = {
+            "name": "Échec avec message",
+            "no_log": True,
+            "ansible.builtin.fail": {"msg": "échec : " + marker},
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            result = self.run_task(tmp, task, {})
+        output = result.stdout + result.stderr
+        version = subprocess.run([str(ANSIBLE), "--version"], capture_output=True, text=True).stdout
+        match = re.search(r"\[core (\d+)\.(\d+)\.(\d+)\]", version)
+        self.assertIsNotNone(match, version)
+        core = tuple(int(part) for part in match.groups())
+        self.assertIn("censored", output)
+        if core >= (2, 21, 0):
+            self.assertIn(marker, output,
+                          f"ansible-core {core} : bandeau [ERROR] attendu, secret exposé")
+        else:
+            self.assertNotIn(marker, output,
+                             f"ansible-core {core} : aucune fuite attendue dans le bandeau")
 
 
 if __name__ == '__main__':
