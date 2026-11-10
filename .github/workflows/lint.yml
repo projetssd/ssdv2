@@ -46,6 +46,8 @@ jobs:
           if [ "${#files[@]}" -gt 0 ]; then
             python -m py_compile "${files[@]}"
           fi
+      - name: Tests du moteur d'audit add-app
+        run: python3 tests/test_apps_alignment.py
 
   bats:
     runs-on: ubuntu-24.04
