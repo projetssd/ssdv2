@@ -22,4 +22,5 @@
     - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/downloads/audios"
 
 - name: 'Deploying {{pgrole}}'
+  no_log: true
   docker_container: "{{ docker_info }}"

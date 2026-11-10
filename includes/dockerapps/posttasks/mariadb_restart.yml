@@ -10,4 +10,5 @@
   include_tasks: "{{ settings.source }}/includes/dockerapps/templates/generique/mariadb.yml"
 
 - name: 'Deploying {{pgrole}}'
+  no_log: true
   docker_container: "{{ docker_info }}"

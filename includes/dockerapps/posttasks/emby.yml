@@ -35,5 +35,6 @@
     ignore_errors: yes
 
   - name: 'Deploying {{pgrole}}'
+    no_log: true
     docker_container: "{{ docker_info }}"
   when: not xmlcheck.stat.exists
