@@ -115,13 +115,11 @@ jobs:
           pip install pyyaml
           python3 - <<'PY'
           import glob, yaml, sys
-          # stremio_base.yml contient des constructions Jinja non parsables par PyYAML
-          skip = {'includes/dockerapps/pretasks/stremio/stremio_base.yml'}
+          # Aucune exclusion : un fichier YAML invalide doit être signalé, même
+          # s'il n'est pas encore référencé par un hook.
           failed = []
           files = glob.glob('includes/dockerapps/**/*.yml', recursive=True)
           for f in files:
-              if f in skip:
-                  continue
               try:
                   yaml.safe_load(open(f).read())
               except Exception as exc:
@@ -130,7 +128,13 @@ jobs:
               for f, e in failed:
                   print(f"YAML invalide: {f} -> {e}")
               sys.exit(1)
-          print(f"YAML OK ({len(files) - len(skip)} fichiers)")
+          # Garde-fou ciblé : ce fichier était exclu pour une erreur de guillemet,
+          # pas pour du Jinja. Il doit rester lisible.
+          tasks = yaml.safe_load(open(
+              'includes/dockerapps/pretasks/stremio/stremio_base.yml').read())
+          if not isinstance(tasks, list) or not tasks:
+              sys.exit('stremio_base.yml ne contient aucune tâche lisible')
+          print(f"YAML OK ({len(files)} fichiers, stremio_base.yml inclus)")
           PY
 
   ansible-lint:
