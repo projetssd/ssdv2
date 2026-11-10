@@ -269,7 +269,7 @@
           REDIS_HOST: "stremio-redis"
           PG_USER: "streamfusion"
           PG_PASS: "streamfusion"
-          MEILI_MASTER_KEY: "{{ MEILI_MASTER_KEY }}
+          MEILI_MASTER_KEY: "{{ MEILI_MASTER_KEY }}"
           TZ: "Europe/Paris"
           PROXY_URL: http://warp:1080
           REDIS_HOST: stremio-redis
