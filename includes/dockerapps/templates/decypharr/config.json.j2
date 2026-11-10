@@ -1,0 +1,253 @@
+{
+  "session_secret": "{{ decypharr_instance_session_secret }}",
+  "use_auth": true,
+  "max_active_downloads": {{ decypharr_instance_max_downloads | default(5) }},
+  "bind_address": "0.0.0.0",
+  "url_base": "/",
+  "port": "8282",
+  "log_level": "info",
+  "debrids": [
+    {
+      "provider": "alldebrid",
+      "name": "{{ decypharr_instance_provider }}",
+      "api_key": "{{ decypharr_instance_alldebrid_key }}",
+      "download_api_keys": [
+        "{{ decypharr_instance_alldebrid_key }}"
+      ],
+      "rate_limit": "250/minute",
+      "minimum_free_slot": 1,
+      "torrents_refresh_interval": "10m",
+      "download_links_refresh_interval": "5m",
+      "workers": 350,
+      "auto_expire_links_after": "3d"
+    }
+  ],
+  "arrs": [
+    {
+      "name": "{{ decypharr_instance_arr }}",
+      "host": "{{ decypharr_instance_arr_host }}",
+      "token": "{{ decypharr_instance_arr_token }}",
+      "download_uncached": {{ decypharr_instance_download_uncached | default(true) | bool | tojson }},
+      "selected_debrid": "{{ decypharr_instance_provider }}",
+      "source": "auto"
+    }
+  ],
+  "usenet": {
+    "max_connections": 10,
+    "processing_max_connections": 10,
+    "read_ahead": "16MB",
+    "body_pipeline_depth": 2,
+    "socket_read_buffer": "4MB",
+    "socket_write_buffer": "1MB",
+    "processing_timeout": "10m",
+    "availability_sample_percent": 10,
+    "import_availability_sample_percent": 1
+  },
+  "mount": {
+    "type": "rclone",
+    "mount_path": "{{ decypharr_instance_mount }}",
+    "rclone": {
+      "port": "5572",
+      "cache_dir": "/tmp/rclone",
+      "vfs_cache_mode": "writes",
+      "vfs_cache_max_age": "1h",
+      "vfs_cache_poll_interval": "1m",
+      "vfs_read_chunk_size_limit": "off",
+      "buffer_size": "10M",
+      "async_read": false,
+      "transfers": 4,
+      "uid": 1000,
+      "gid": 1000,
+      "umask": "0022",
+      "attr_timeout": "1s",
+      "dir_cache_time": "5m",
+      "log_level": "INFO"
+    },
+    "dfs": {
+      "cache_expiry": "24h",
+      "cache_dir": "/tmp/decypharr-cache",
+      "disk_cache_size": "20GB",
+      "chunk_size": "8MB",
+      "read_ahead_size": "32MB",
+      "uid": 1000,
+      "gid": 1000,
+      "umask": "0022"
+    },
+    "external_rclone": {}
+  },
+  "nfs": {
+    "bind_address": "0.0.0.0",
+    "port": 20490,
+    "allowed_networks": [
+      "127.0.0.0/8",
+      "10.0.0.0/8",
+      "172.16.0.0/12",
+      "192.168.0.0/16",
+      "::1/128",
+      "fc00::/7",
+      "fe80::/10"
+    ]
+  },
+  "smb": {
+    "bind_address": "0.0.0.0",
+    "port": 1445,
+    "share_name": "decypharr",
+    "allowed_networks": [
+      "127.0.0.0/8",
+      "10.0.0.0/8",
+      "172.16.0.0/12",
+      "192.168.0.0/16",
+      "::1/128",
+      "fc00::/7",
+      "fe80::/10"
+    ]
+  },
+  "share_cache": {
+    "enabled": false
+  },
+  "allowed_file_types": [
+    "3gp",
+    "ac3",
+    "aiff",
+    "alac",
+    "amr",
+    "ape",
+    "asf",
+    "asx",
+    "avc",
+    "avi",
+    "bin",
+    "bivx",
+    "dat",
+    "divx",
+    "dts",
+    "dv",
+    "dvr-ms",
+    "flac",
+    "fli",
+    "flv",
+    "ifo",
+    "m2ts",
+    "m2v",
+    "m3u",
+    "m4a",
+    "m4p",
+    "m4v",
+    "mid",
+    "midi",
+    "mk3d",
+    "mka",
+    "mkv",
+    "mov",
+    "mp2",
+    "mp3",
+    "mp4",
+    "mpa",
+    "mpeg",
+    "mpg",
+    "nrg",
+    "nsv",
+    "nuv",
+    "ogg",
+    "ogm",
+    "ogv",
+    "pva",
+    "qt",
+    "ra",
+    "rm",
+    "rmvb",
+    "strm",
+    "svq3",
+    "ts",
+    "ty",
+    "viv",
+    "vob",
+    "voc",
+    "vp3",
+    "wav",
+    "webm",
+    "wma",
+    "wmv",
+    "wpl",
+    "wtv",
+    "wv",
+    "xvid"
+  ],
+  "remove_stalled_after": "10m",
+  "notifications": {},
+  "download_folder": "{{ decypharr_instance_download }}",
+  "refresh_interval": "30s",
+  "categories": [
+    "{{ decypharr_instance_category }}"
+  ],
+  "folder_naming": "original_no_ext",
+  "default_download_action": "symlink",
+  "refresh_dirs": "__all__",
+  "retries": 3,
+  "repair": {
+    "source": "arr",
+    "workers": 5,
+    "nntp_connection_percent": 20,
+    "strategy": "per_entry",
+    "recheck_interval": "168h",
+    "enabled": false
+  },
+  "strm": {
+    "secret": "{{ decypharr_instance_strm_secret }}",
+    "delivery_mode": "proxy",
+    "download_sidecars": true,
+    "sidecar_max_size": "32MB"
+  },
+  "hearsay": {
+    "participate": true,
+    "publish": true,
+    "advice_mode": "shadow"
+  },
+  "queue_cleanup": {
+    "rules": [
+      {
+        "id": "failed_download",
+        "match": "Failed download",
+        "action": "blacklist_research"
+      },
+      {
+        "id": "title_mismatch",
+        "match": "Title mismatch; automatic import is not possible",
+        "action": "import"
+      },
+      {
+        "id": "matched_by_id",
+        "match": "Matched to series/movie by ID",
+        "action": "import"
+      },
+      {
+        "id": "unable_to_parse",
+        "match": "Unable to parse download",
+        "action": "blacklist_research"
+      },
+      {
+        "id": "no_eligible_files",
+        "match": "No files found are eligible for import",
+        "action": "blacklist_research"
+      },
+      {
+        "id": "episodes_missing",
+        "match": "Episodes not imported or missing from the release",
+        "action": "blacklist_research"
+      },
+      {
+        "id": "file_empty",
+        "match": "Downloaded file is empty",
+        "action": "blacklist_research"
+      },
+      {
+        "id": "invalid_local_path",
+        "match": "Not a valid local path (remote path mapping)"
+      },
+      {
+        "id": "not_grabbed",
+        "match": "Not grabbed by the arr / no category"
+      }
+    ]
+  }
+}

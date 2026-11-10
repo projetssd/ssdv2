@@ -1,0 +1,179 @@
+---
+# Génère la configuration d'une instance Decypharr.
+# Variables attendues (définies dans les vars de l'application) :
+#   decypharr_instance_arr, decypharr_instance_provider,
+#   decypharr_instance_arr_host, decypharr_instance_mount,
+#   decypharr_instance_download, decypharr_instance_category,
+#   decypharr_instance_key_file, decypharr_instance_reset.
+# Les secrets sont lus dans des fichiers 600 ou générés automatiquement.
+
+- name: Définir l'Arr cible
+  ansible.builtin.set_fact:
+    decypharr_instance_arr: >-
+      {{ decypharr_instance_arr | default('sonarr' if pgrole == 'decypharr' else 'radarr') }}
+
+- name: Définir les paramètres par défaut de l'instance
+  ansible.builtin.set_fact:
+    decypharr_instance_provider: >-
+      {{ decypharr_instance_provider | default('alldebrid-' ~ decypharr_instance_arr) }}
+    decypharr_instance_arr_host: >-
+      {{ decypharr_instance_arr_host | default('http://' ~ decypharr_instance_arr ~ ':' ~ (8989 if decypharr_instance_arr == 'sonarr' else 7878)) }}
+    decypharr_instance_mount: >-
+      {{ decypharr_instance_mount | default('/mnt/alldebrid-' ~ decypharr_instance_arr) }}
+    decypharr_instance_download: >-
+      {{ decypharr_instance_download | default(lookup('env','HOME') ~ '/local/' ~ decypharr_instance_arr) }}
+    decypharr_instance_category: >-
+      {{ decypharr_instance_category | default(decypharr_instance_arr) }}
+    decypharr_instance_key_file: >-
+      {{ decypharr_instance_key_file | default(settings.storage ~ 'conf/' ~ pgrole ~ '.alldebrid-key') }}
+    decypharr_instance_ui_password_file: >-
+      {{ decypharr_instance_ui_password_file | default(settings.storage ~ 'conf/' ~ pgrole ~ '.ui-password') }}
+    decypharr_instance_api_token_file: >-
+      {{ decypharr_instance_api_token_file | default(settings.storage ~ 'conf/' ~ pgrole ~ '.api-token') }}
+    decypharr_instance_reset: "{{ decypharr_instance_reset | default(false) }}"
+    decypharr_instance_download_uncached: "{{ decypharr_instance_download_uncached | default(true) }}"
+    decypharr_instance_max_downloads: "{{ decypharr_instance_max_downloads | default(5) }}"
+    decypharr_instance_config_dir: >-
+      {{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config
+    decypharr_instance_ui_username: "{{ decypharr_instance_ui_username | default(lookup('env','USER')) }}"
+
+- name: Vérifier la configuration existante
+  ansible.builtin.stat:
+    path: "{{ decypharr_instance_config_dir }}/config.json"
+  register: decypharr_instance_config_stat
+
+- name: Déterminer si la configuration doit être générée
+  ansible.builtin.set_fact:
+    decypharr_instance_needs_config: >-
+      {{ (not decypharr_instance_config_stat.stat.exists) or (decypharr_instance_reset | bool) }}
+
+- name: Générer la configuration Decypharr
+  when: decypharr_instance_needs_config | bool
+  block:
+    - name: Créer le dossier de configuration
+      ansible.builtin.file:
+        path: "{{ decypharr_instance_config_dir }}"
+        state: directory
+        owner: "{{ user.userid }}"
+        group: "{{ user.groupid }}"
+        mode: '0700'
+
+    - name: Créer le dossier rclone
+      ansible.builtin.file:
+        path: "{{ decypharr_instance_config_dir }}/rclone"
+        state: directory
+        owner: "{{ user.userid }}"
+        group: "{{ user.groupid }}"
+        mode: '0700'
+
+    - name: Vérifier la clé AllDebrid
+      ansible.builtin.stat:
+        path: "{{ decypharr_instance_key_file }}"
+      register: decypharr_instance_key_stat
+
+    - name: Demander la clé AllDebrid
+      ansible.builtin.pause:
+        prompt: |
+          SSDV2_PROMPT {"id":"{{ pgrole }}.alldebrid_key","label":"Clé API AllDebrid {{ pgrole }}","kind":"secret","secret":true}
+          Entrer la clé API AllDebrid pour {{ pgrole }}
+        echo: no
+      register: decypharr_instance_key_prompt
+      when: not decypharr_instance_key_stat.stat.exists
+      no_log: true
+
+    - name: Lire la clé AllDebrid
+      ansible.builtin.slurp:
+        src: "{{ decypharr_instance_key_file }}"
+      register: decypharr_instance_key_slurp
+      when: decypharr_instance_key_stat.stat.exists
+      no_log: true
+
+    - name: Définir la clé AllDebrid
+      ansible.builtin.set_fact:
+        decypharr_instance_alldebrid_key: >-
+          {{ (decypharr_instance_key_slurp.content | b64decode | trim)
+             if decypharr_instance_key_stat.stat.exists
+             else (decypharr_instance_key_prompt.user_input | default('') | trim) }}
+      no_log: true
+
+    - name: Vérifier la clé AllDebrid
+      ansible.builtin.assert:
+        that:
+          - decypharr_instance_alldebrid_key | length > 0
+        fail_msg: "Clé AllDebrid absente pour {{ pgrole }}"
+      no_log: true
+
+    - name: Lire la configuration de l'Arr
+      ansible.builtin.slurp:
+        src: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ decypharr_instance_arr }}/config/config.xml"
+      register: decypharr_instance_arr_config
+      no_log: true
+
+    - name: Extraire la clé API de l'Arr
+      ansible.builtin.set_fact:
+        decypharr_instance_arr_token: >-
+          {{ (decypharr_instance_arr_config.content | b64decode
+              | regex_findall('<ApiKey>([^<]+)</ApiKey>') | first) | default('', true) }}
+      no_log: true
+
+    - name: Vérifier la clé API de l'Arr
+      ansible.builtin.assert:
+        that:
+          - decypharr_instance_arr_token | length > 0
+        fail_msg: "Clé API {{ decypharr_instance_arr }} introuvable"
+      no_log: true
+
+    - name: Générer le mot de passe UI, le token API et les secrets
+      ansible.builtin.set_fact:
+        decypharr_instance_ui_password: "{{ lookup('password', decypharr_instance_ui_password_file, length=24, chars='ascii_letters,digits') }}"
+        decypharr_instance_api_token: "{{ lookup('password', decypharr_instance_api_token_file, length=64, chars='0123456789abcdef') }}"
+        decypharr_instance_session_secret: "{{ lookup('pipe','openssl rand -hex 32') }}"
+        decypharr_instance_strm_secret: "{{ lookup('pipe','openssl rand -hex 32') }}"
+      no_log: true
+
+    - name: Calculer le hash bcrypt du mot de passe UI
+      ansible.builtin.set_fact:
+        decypharr_instance_ui_password_hash: "{{ decypharr_instance_ui_password | password_hash('bcrypt') }}"
+      no_log: true
+
+    - name: Sécuriser les fichiers de secrets
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: file
+        owner: "{{ lookup('env','USER') }}"
+        group: "{{ lookup('env','USER') }}"
+        mode: '0600'
+      loop:
+        - "{{ decypharr_instance_ui_password_file }}"
+        - "{{ decypharr_instance_api_token_file }}"
+
+    - name: Générer config.json
+      ansible.builtin.template:
+        src: "{{ settings.source }}/includes/dockerapps/templates/decypharr/config.json.j2"
+        dest: "{{ decypharr_instance_config_dir }}/config.json"
+        owner: "{{ user.userid }}"
+        group: "{{ user.groupid }}"
+        mode: '0600'
+      no_log: true
+
+    - name: Générer auth.json
+      ansible.builtin.template:
+        src: "{{ settings.source }}/includes/dockerapps/templates/decypharr/auth.json.j2"
+        dest: "{{ decypharr_instance_config_dir }}/auth.json"
+        owner: "{{ user.userid }}"
+        group: "{{ user.groupid }}"
+        mode: '0600'
+      no_log: true
+
+    - name: Copier la configuration rclone
+      ansible.builtin.copy:
+        src: "{{ settings.source }}/includes/dockerapps/templates/decypharr/rclone.conf"
+        dest: "{{ decypharr_instance_config_dir }}/rclone/rclone.conf"
+        owner: "{{ user.userid }}"
+        group: "{{ user.groupid }}"
+        mode: '0600'
+
+- name: Configuration Decypharr existante conservée
+  ansible.builtin.debug:
+    msg: "Configuration existante conservée pour {{ pgrole }} ({{ decypharr_instance_config_dir }})"
+  when: not (decypharr_instance_needs_config | bool)

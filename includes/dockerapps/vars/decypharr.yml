@@ -23,7 +23,7 @@ specific_docker_info:
   healthcheck:
     test: >
       /bin/sh -c "
-      wget -qO- --timeout=2 http://localhost:8282/health 2>/dev/null || exit 0
+      wget -qO- --timeout=2 http://localhost:8282/version >/dev/null || exit 1
       "
     interval: "30s"
     timeout: "10s"

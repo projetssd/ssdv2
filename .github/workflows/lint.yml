@@ -90,6 +90,7 @@ jobs:
           export ANSIBLE_PLAYBOOK="$(command -v ansible-playbook)"
           test -x "$ANSIBLE_PLAYBOOK"
           python3 tests/test_relay_proxy.py
+          python3 tests/test_decypharr_config.py
 
   yaml:
     runs-on: ubuntu-24.04
