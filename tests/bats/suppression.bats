@@ -253,7 +253,7 @@ assert_absent() {
 @test "la liste générique ne garde que les conteneurs possédés" {
   printf 'shared-db\n' >"$SETTINGS_STORAGE/conf/paperless.containers"
   printf 'shared-db\n' >"$SETTINGS_STORAGE/conf/otherapp.containers"
-  output="$(printf 'shared-db\ndb-paperless\n' | filter_owned_containers paperless)"
+  output="$(printf 'shared-db\ndb-paperless\n' | filter_owned_containers paperless 2>&1)"
   [[ "$output" == *"db-paperless"* ]]
   [[ "$output" != "shared-db"* ]]
   [[ "$output" == *"Ressource conservée (paperless)"* ]]
