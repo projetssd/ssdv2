@@ -272,9 +272,10 @@ class HookRedeployLoggingTest(unittest.TestCase):
         self.assertIn("Deploying test-app", output)
 
     def test_no_log_censors_result_and_error_line_depends_on_version(self):
-        # Le résultat de tâche est toujours masqué. Le bandeau `[ERROR]` qui
-        # reprend le message du module est apparu avec ansible-core 2.21 : il
-        # expose un secret que le module écrit lui-même dans son erreur.
+        # Le résultat de tâche est toujours masqué (vérifié sur ansible-core
+        # 2.18.20 et 2.21.0). Le bandeau `[ERROR]` qui reprend le message du
+        # module n'existe qu'en 2.21.0 : il expose un secret que le module
+        # écrit lui-même. Voir docs/ansible-no-log.md.
         marker = "fixture-module-error-secret-9913"
         task = {
             "name": "Échec avec message",

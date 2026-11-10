@@ -99,10 +99,12 @@
 - `tests/test_relay_proxy.py` vérifie les trois cas (défaut masqué, opt-out
   explicite, opt-in) sur une valeur fictive, y compris lorsque la tâche échoue,
   et contrôle que tous les hooks réutilisant `docker_info` sont masqués.
-- limite documentée et testée : le résultat de tâche est toujours censuré, mais
-  ansible-core 2.21 ajoute un bandeau `[ERROR]` qui reprend le message d'échec
-  du module (absent en 2.18). Un module qui écrit un secret dans son erreur
-  l'expose donc, indépendamment de `no_log`.
+- limite documentée et testée, versions par versions : sur les deux versions
+  mesurées (`ansible-core 2.18.20` en CI, `2.21.0` en local), le résultat de
+  tâche est censuré. En 2.21.0 uniquement, un bandeau `[ERROR]` reprend le
+  message d'échec du module et exposerait un secret que le module y écrirait.
+  Aucune conclusion n'est tirée pour les autres versions. Détail, commandes et
+  canaux dans `docs/ansible-no-log.md`.
 
 10/11/2026 — Stremio : fichier de tâches YAML réparé et exclusion CI retirée
 
