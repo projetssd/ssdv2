@@ -175,62 +175,6 @@ findings:
   path: includes/dockerapps/vars/alfred.yml
   needle: 'hostname:'
   detail: hostname placé à la racine ; le playbook générique ne le transmet pas au conteneur
-- app: bookstack
-  code: DEBUGSECRET
-  axis: secrets
-  severity: P0
-  path: includes/dockerapps/pretasks/appkey.yml
-  needle: Clé générée pour bookstack
-  detail: 'Secret persistant affiché en clair par une tâche debug : la valeur est recopiée dans la sortie Ansible et dans les journaux d''installation, où elle survit aux rotations ultérieures.'
-- app: speedtesttracker
-  code: DEBUGSECRET
-  axis: secrets
-  severity: P0
-  path: includes/dockerapps/pretasks/appkey.yml
-  needle: Clé générée pour SpeedTestTracker
-  detail: 'Secret persistant affiché en clair par une tâche debug : la valeur est recopiée dans la sortie Ansible et dans les journaux d''installation, où elle survit aux rotations ultérieures.'
-- app: vikunja
-  code: DEBUGSECRET
-  axis: secrets
-  severity: P0
-  path: includes/dockerapps/pretasks/appkey.yml
-  needle: JWT Secret pour Vikunja
-  detail: 'Secret persistant affiché en clair par une tâche debug : la valeur est recopiée dans la sortie Ansible et dans les journaux d''installation, où elle survit aux rotations ultérieures.'
-- app: immich
-  code: DEBUGSECRET
-  axis: secrets
-  severity: P0
-  path: includes/dockerapps/pretasks/immich.yml
-  needle: 'Generated random string:'
-  detail: 'Secret persistant affiché en clair par une tâche debug : la valeur est recopiée dans la sortie Ansible et dans les journaux d''installation, où elle survit aux rotations ultérieures.'
-- app: mediaflowproxy
-  code: DEBUGSECRET
-  axis: secrets
-  severity: P0
-  path: includes/dockerapps/posttasks/mediaflowproxy.yml
-  needle: 'API_PASSWORD :'
-  detail: 'Secret persistant affiché en clair par une tâche debug : la valeur est recopiée dans la sortie Ansible et dans les journaux d''installation, où elle survit aux rotations ultérieures.'
-- app: ssdv2webui
-  code: DEBUGSECRET
-  axis: secrets
-  severity: P1
-  path: includes/dockerapps/posttasks/ssdv2webui.yml
-  needle: '2. Jeton d''installation :'
-  detail: 'Jeton de premier démarrage affiché en clair. Restitution volontaire à l''utilisateur, mais la valeur part aussi dans les journaux Ansible et dans `docker logs` : séparer la restitution console de la journalisation persistante.'
-- app: symlink
-  code: DEBUGSECRET
-  axis: secrets
-  severity: P1
-  path: includes/dockerapps/posttasks/symlink.yml
-  needle: '2. Jeton d''installation :'
-  detail: 'Jeton de premier démarrage affiché en clair. Restitution volontaire à l''utilisateur, mais la valeur part aussi dans les journaux Ansible et dans `docker logs` : séparer la restitution console de la journalisation persistante.'
-- app: vvveb
-  code: DEBUGSECRET
-  axis: secrets
-  severity: P0
-  path: includes/dockerapps/posttasks/vvveb.yml
-  needle: 'Mot de passe : {{ vvveb_admin_password }}'
-  detail: 'Secret persistant affiché en clair par une tâche debug : la valeur est recopiée dans la sortie Ansible et dans les journaux d''installation, où elle survit aux rotations ultérieures.'
 - app: aiostreams
   code: ROTATESECRET
   axis: cycle
@@ -273,6 +217,13 @@ findings:
   path: includes/dockerapps/posttasks/guacamole.yml
   needle: initialisée manuellement
   detail: En cas d'échec du schéma, poursuite avec demande d'initialisation manuelle plutôt qu'assistance ou échec exploitable
+- app: immich
+  code: DEBUGSECRET
+  axis: secrets
+  severity: P0
+  path: includes/dockerapps/pretasks/immich.yml
+  needle: 'Generated random string:'
+  detail: Mot de passe de base généré puis affiché en clair par debug ; la valeur est recopiée dans le journal persistant.
 checks:
 - app: plexautolanguages
   axis: traefik
@@ -334,3 +285,19 @@ acknowledged:
   code: PARTIALDELETE
   target: sffs-secrets
   reason: 'Retrait documenté dans functions.sh : les secrets sffs contiennent la configuration StreamFusion liée à la clé d''API supprimée juste avant, et une réinstallation les régénère. Le cache persistant sffs-cache reste, lui, protégé par DELETE=1.'
+- app: airdcpp
+  code: DEBUGSECRET
+  target: dpasswd
+  reason: 'Identifiants de démonstration fournis par l''image et affichés pour le premier accès : ils ne protègent aucune donnée utilisateur et l''utilisateur doit les voir. À remplacer par un compte personnel.'
+- app: bookstack
+  code: DEBUGSECRET
+  target: dpasswd
+  reason: 'Identifiants de démonstration fournis par l''image et affichés pour le premier accès : ils ne protègent aucune donnée utilisateur et l''utilisateur doit les voir. À remplacer par un compte personnel.'
+- app: mealie
+  code: DEBUGSECRET
+  target: dpasswd
+  reason: 'Identifiants de démonstration fournis par l''image et affichés pour le premier accès : ils ne protègent aucune donnée utilisateur et l''utilisateur doit les voir. À remplacer par un compte personnel.'
+- app: ttrss
+  code: DEBUGSECRET
+  target: dpasswd
+  reason: 'Identifiants de démonstration fournis par l''image et affichés pour le premier accès : ils ne protègent aucune donnée utilisateur et l''utilisateur doit les voir. À remplacer par un compte personnel.'

@@ -96,6 +96,12 @@ PRETASK_OTHER = """\
     image: fixture/warp:latest
 """
 
+PRETASK_BAD_DEBUG = """\
+- name: Afficher le secret généré
+  ansible.builtin.debug:
+    msg: "Clé interne : {{ fixture_api_key }}"
+"""
+
 POSTTASK_BAD = """\
 ---
 - name: Attendre un artefact de premier démarrage
@@ -134,7 +140,7 @@ def build_repo(root: Path) -> None:
     (dockerapps / "vars" / "badapp.yml").write_text(VARS_BAD)
     (dockerapps / "vars" / "otherapp.yml").write_text(VARS_OTHER)
     (dockerapps / "vars" / "orphan.yml").write_text("---\npgrole: 'orphan'\nimage: 'x/y'\n")
-    (dockerapps / "pretasks" / "badapp.yml").write_text(PRETASK_BAD)
+    (dockerapps / "pretasks" / "badapp.yml").write_text(PRETASK_BAD + PRETASK_BAD_DEBUG)
     (dockerapps / "pretasks" / "otherapp.yml").write_text(PRETASK_OTHER)
     (dockerapps / "posttasks" / "badapp.yml").write_text(POSTTASK_BAD)
 
@@ -190,7 +196,7 @@ class AppsAlignmentTest(unittest.TestCase):
 
     def test_secrets_prompts_ports_network(self):
         codes = self.codes("badapp")
-        for code in ("FIXEDSECRET", "GENLOG", "PROMPTECHO", "PROMPTLOG",
+        for code in ("FIXEDSECRET", "GENLOG", "PROMPTECHO", "PROMPTLOG", "DEBUGSECRET",
                      "WEBHOSTPORT", "NETWORKCLEAN", "IDEMPOTENT"):
             self.assertIn(code, codes, f"constat {code} attendu")
 
@@ -250,7 +256,7 @@ class AppsAlignmentTest(unittest.TestCase):
         curated.write_text(
             "findings:\n"
             "  - app: badapp\n"
-            "    code: DEBUGSECRET\n"
+            "    code: SHELLSECRET\n"
             "    axis: secrets\n"
             "    severity: P0\n"
             "    path: includes/dockerapps/vars/badapp.yml\n"
@@ -267,7 +273,7 @@ class AppsAlignmentTest(unittest.TestCase):
         data = json.loads((out / "apps-alignment.json").read_text())
         self.assertEqual(len(data["stale_curated"]), 1)
         self.assertNotIn(
-            "DEBUGSECRET",
+            "SHELLSECRET",
             {f["code"] for f in data["apps"]["badapp"]["findings"]},
         )
 

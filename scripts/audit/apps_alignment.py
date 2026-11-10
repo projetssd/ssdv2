@@ -646,6 +646,7 @@ class Audit:
             self.check_deployment(app, main, data, record)
             self.check_env(app, main, data)
             self.check_prompts(app, record)
+            self.check_debug(app, record)
             self.check_task_secrets(app, record)
             self.check_cycle(app, record)
         self.check_catalogue_vars_files()
@@ -762,14 +763,27 @@ class Audit:
                              getattr(specific, "lines", {}).get("ports", self.line_of(main, "pg_env")),
                              f"Port Web {text} publié sur l'hôte en plus du routage Traefik")
 
+    def generic_no_log_default(self) -> bool:
+        """Vrai si le playbook générique masque les paramètres Docker par défaut."""
+        document = self.repo.load("includes/dockerapps/vars/generique.yml")
+        for task in walk(document):
+            if isinstance(task, dict) and task.get("name") == "Prepare docker info":
+                return bool(re.search(r"default\(\s*true\s*\)", str(task.get("no_log", ""))))
+        return False
+
     def check_env(self, app, main, data):
         env = data.get("pg_env")
         if not isinstance(env, dict):
             return
         sensitive = [k for k, v in env.items() if is_sensitive(k, v)]
+        masked = self.generic_no_log_default()
+        if data.get("docker_no_log") is False:
+            masked = False
+        elif data.get("docker_no_log") is True:
+            masked = True
         if (
             sensitive
-            and data.get("docker_no_log") is not True
+            and not masked
             and data.get("docker_deploy_enabled", True) is not False
         ):
             self.add(app, "GENLOG", "secrets", "P1", main, self.line_of(main, "pg_env"),
@@ -810,6 +824,44 @@ class Audit:
                     self.add(app, "PROMPTLOG", "secrets", "P1", rel,
                              getattr(task, "line", 1),
                              "Invite déclarée secrète sans no_log hérité ou local")
+
+    SECRET_EXCLUDE_NAME = re.compile(
+        r"(?:masked|_dir$|_path$|_file$|_id$|_name$|_url$|_env$|_length$|_exists$)",
+        re.I,
+    )
+    SECRET_NAME = re.compile(
+        r"(?:password|passwd|secret|token|apikey|api_key|appkey|jwtsecret|jwt_secret|"
+        r"adminpassword|admin_password|_key$)",
+        re.I,
+    )
+
+    def check_debug(self, app, record):
+        """Une tâche `debug` ne doit pas interpoler une valeur secrète.
+
+        La valeur est recopiée dans le journal persistant (`log_path`), où elle
+        survit à toute rotation ultérieure. Les chemins de fichiers sont exclus :
+        afficher où lire un secret n'est pas l'afficher.
+        """
+        for rel in record["files"]:
+            if not rel.endswith((".yml", ".yaml")) or not self.repo.exists(rel):
+                continue
+            for task, _ in tasks(self.repo.load(rel), app=app):
+                debug = module(task, "debug")
+                if debug is None:
+                    continue
+                text = str(debug.get("msg", "")) + " " + str(debug.get("var", ""))
+                for expression in re.findall(r"{{(.*?)}}", text):
+                    if "/" in expression or "settings.storage" in expression:
+                        continue
+                    bare = expression.split("|")[0]
+                    if self.SECRET_EXCLUDE_NAME.search(bare.strip()):
+                        continue
+                    if self.SECRET_NAME.search(bare):
+                        self.add(app, "DEBUGSECRET", "secrets", "P0", rel,
+                                 getattr(task, "line", 1),
+                                 "Secret interpolé dans un message d'installation : "
+                                 + bare.strip())
+                        break
 
     def check_task_secrets(self, app, record):
         """Tâches qui manipulent un secret sans protection, hors invites."""
@@ -1004,9 +1056,6 @@ class Audit:
                                  f"La branche de {app} supprime le dossier « {segment} », monté par "
                                  f"{', '.join(sorted(foreign))}{evidence}, sans vérifier DELETE=1")
                     elif app in owners or segment == app or segment.startswith(app + "-"):
-                        if (app, "PARTIALDELETE", segment) in self.acknowledged:
-                            self.acknowledged_seen.append((app, f"PARTIALDELETE {segment}"))
-                            continue
                         self.add(app, "PARTIALDELETE", "cycle", "P1", "includes/functions.sh", rel,
                                  f"La branche de {app} supprime « {segment} » (données propres) sans "
                                  "vérifier DELETE=1 : une réinstallation (suppression partielle) l'efface")
@@ -1043,6 +1092,31 @@ class Audit:
                                  f"{', '.join(sorted(foreign))} (preuve : {foreign[name_app][0]})")
 
     # ------------------------------------------------------------------ curation
+    def apply_acknowledged(self):
+        """Retire les constats déclarés et justifiés dans `acknowledged`."""
+        if not self.acknowledged:
+            return
+        for app, record in self.records.items():
+            kept = []
+            for finding in record["findings"]:
+                matched = next(
+                    (
+                        (code, target)
+                        for owner, code, target in sorted(self.acknowledged)
+                        if owner == app
+                        and code == finding["code"]
+                        and (not target or target in finding["detail"])
+                    ),
+                    None,
+                )
+                if matched:
+                    self.acknowledged_seen.append(
+                        (app, f"{matched[0]} {matched[1]}".strip())
+                    )
+                    continue
+                kept.append(finding)
+            record["findings"] = kept
+
     def load_acknowledged(self, path: Path):
         """Charge les écarts assumés avant les contrôles structurels."""
         if not path.is_file():
@@ -1606,6 +1680,7 @@ def main(argv=None):
     audit.structural()
     curated = repo.path(args.curated)
     audit.load_curated(curated)
+    audit.apply_acknowledged()
     syntax = syntax_checks(audit, repo)
     baseline = json.loads(Path(args.compare).read_text(encoding="utf-8")) if args.compare else None
     totals, stale = write_outputs(audit, repo, repo.path(args.out), baseline)
