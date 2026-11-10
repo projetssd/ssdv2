@@ -1,3 +1,18 @@
+10/11/2026 — Audit : moteur de conformité des applications au contrat `add-app`
+
+- nouveau `scripts/audit/apps_alignment.py` : audit statique en lecture seule du
+  catalogue, des variables, des hooks et de la suppression ; rapport Markdown,
+  matrice CSV, JSON et backlog priorisé dans `docs/audits/` (ignoré par Git).
+- neuf axes contrôlés (catalogue, déploiement, assistance, secrets, Traefik,
+  persistance, permissions, cycle de vie, minimalisme) avec, pour chaque
+  famille, déclencheur, impact et niveau de certitude.
+- les suppressions croisées ne sont plus déduites d'un nom de dossier : la
+  propriété est prouvée par le montage du volume ou la création du conteneur.
+  Les constats périmés d'une autre branche sont marqués `stale_curated` et les
+  écarts assumés sont déclarés et justifiés.
+- tests dédiés (`tests/test_apps_alignment.py`, 15 cas, fixture sans Docker) et
+  exécution en CI. Aucune application n'est modifiée par ce lot.
+
 10/11/2026 — Stremio : fichier de tâches YAML réparé et exclusion CI retirée
 
 - `includes/dockerapps/pretasks/stremio/stremio_base.yml` avait un guillemet non
