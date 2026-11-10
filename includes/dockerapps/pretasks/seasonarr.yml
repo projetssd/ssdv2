@@ -4,6 +4,7 @@
     seasonarr_jwtsecret_exists: "{{ seasonarr is defined and seasonarr.jwtsecret is defined and seasonarr.jwtsecret is not none and (seasonarr.jwtsecret | trim | length > 0) }}"
 
 - name: Generer un JWT secret si non defini pour Seasonarr
+  no_log: true
   set_fact:
     seasonarr_jwtsecret: "{{ lookup('password', '/dev/null length=64 chars=ascii_letters,digits') }}"
   when: not seasonarr_jwtsecret_exists
@@ -13,6 +14,7 @@
     seasonarr: "{{ (seasonarr | default({})) | combine({'jwtsecret': (seasonarr_jwtsecret if not seasonarr_jwtsecret_exists else seasonarr.jwtsecret)}) }}"
 
 - name: Ajouter le JWT secret dans le vault si genere
+  no_log: true
   shell: |
     source ${SETTINGS_SOURCE}/profile.sh
     manage_account_yml seasonarr.jwtsecret "{{ seasonarr.jwtsecret }}"

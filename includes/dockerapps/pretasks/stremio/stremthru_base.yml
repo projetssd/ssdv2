@@ -25,6 +25,7 @@
           - "Redis exists: {{ redis_exists }}"
 
     - name: Deploy stremthru-postgres
+      no_log: true
       community.docker.docker_container:
         labels:
           ssdv2.app: "{{pgrole}}"

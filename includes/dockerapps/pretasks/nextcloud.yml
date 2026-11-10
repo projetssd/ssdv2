@@ -70,6 +70,7 @@
     - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/coturn"
 
 - name: 'SECRET'
+  no_log: true
   shell: |
     openssl rand -hex 16
   register: secret
@@ -121,6 +122,7 @@
       traefik.http.services.collabora-svc.loadbalancer.server.port: '9980'
 
 - name: Create and start Collabora container
+  no_log: true
   docker_container:
     name: collabora
     image: 'collabora/code'

@@ -22,6 +22,7 @@
 
 # === Phase 2 : Créer le superuser via le CLI Beszel ===
 - name: Créer le superuser Beszel via CLI
+  no_log: true
   ansible.builtin.command: >
     docker exec {{ pgrole }} /beszel superuser upsert
     {{ beszel_admin_email }} {{ beszel_admin_password }}
@@ -31,6 +32,7 @@
 
 # === Phase 3 : Authentification PocketBase ===
 - name: Authentification superuser PocketBase
+  no_log: true
   ansible.builtin.uri:
     url: "{{ beszel_hub_url }}/api/collections/_superusers/auth-with-password"
     method: POST
@@ -42,6 +44,7 @@
   register: beszel_auth
 
 - name: Définir le token PocketBase
+  no_log: true
   ansible.builtin.set_fact:
     beszel_pb_token: "{{ beszel_auth.json.token }}"
 
@@ -55,11 +58,13 @@
   changed_when: false
 
 - name: Définir la clé publique
+  no_log: true
   ansible.builtin.set_fact:
     beszel_hub_public_key: "{{ beszel_pubkey_raw.stdout }}"
 
 # === Phase 5 : Obtenir l'ID de l'utilisateur ===
 - name: Obtenir la liste des utilisateurs
+  no_log: true
   ansible.builtin.uri:
     url: "{{ beszel_hub_url }}/api/collections/users/records"
     method: GET
@@ -74,6 +79,7 @@
 
 # === Phase 6 : Créer un token universel (idempotent) ===
 - name: Chercher un token existant pour cet utilisateur
+  no_log: true
   ansible.builtin.uri:
     url: "{{ beszel_hub_url }}/api/collections/universal_tokens/records?filter=user='{{ beszel_user_id }}'"
     method: GET
@@ -83,6 +89,7 @@
   register: beszel_existing_tokens
 
 - name: Créer un token d'enregistrement
+  no_log: true
   ansible.builtin.uri:
     url: "{{ beszel_hub_url }}/api/collections/universal_tokens/records"
     method: POST
@@ -97,15 +104,18 @@
   when: beszel_existing_tokens.json['items'] | length == 0
 
 - name: Réutiliser le token existant
+  no_log: true
   ansible.builtin.set_fact:
     beszel_token_result: "{{ { 'json': beszel_existing_tokens.json['items'][0] } }}"
   when: beszel_existing_tokens.json['items'] | length > 0
 
 - name: Générer un token UUID
+  no_log: true
   ansible.builtin.set_fact:
     beszel_agent_token: "{{ lookup('pipe', 'uuidgen') }}"
 
 - name: Mettre à jour le token avec la valeur générée
+  no_log: true
   ansible.builtin.uri:
     url: "{{ beszel_hub_url }}/api/collections/universal_tokens/records/{{ beszel_token_result.json.id }}"
     method: PATCH
@@ -118,6 +128,7 @@
 
 # === Phase 7 : Créer le système dans Beszel (idempotent) ===
 - name: Chercher un système existant
+  no_log: true
   ansible.builtin.uri:
     url: "{{ beszel_hub_url }}/api/collections/systems/records?filter=name='{{ pgrole }}'"
     method: GET
@@ -127,6 +138,7 @@
   register: beszel_existing_systems
 
 - name: Créer le système dans Beszel
+  no_log: true
   ansible.builtin.uri:
     url: "{{ beszel_hub_url }}/api/collections/systems/records"
     method: POST
@@ -159,6 +171,7 @@
     group: "{{ lookup('env','MYGID') }}"
 
 - name: Déployer beszel-agent
+  no_log: true
   community.docker.docker_container:
     labels:
       ssdv2.app: "{{pgrole}}"

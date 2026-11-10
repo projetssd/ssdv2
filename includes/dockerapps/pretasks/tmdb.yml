@@ -4,6 +4,7 @@
     tmdb_api_key_exists: "{{ not (tmdb.apikey is undefined or tmdb.apikey is none or (tmdb.apikey | trim | length == 0)) }}"
 
 - name: Ask TMDB_API_KEY if missing
+  no_log: true
   pause:
     prompt: |
       SSDV2_PROMPT {"id": "tmdb.apikey", "label": "Clé TMDB", "kind": "secret", "secret": true}
@@ -13,11 +14,13 @@
   when: not tmdb_api_key_exists
 
 - name: Update TMDB_API_KEY
+  no_log: true
   set_fact:
     tmdb:
       apikey: "{{ tmdb_api_key_input.user_input if not tmdb_api_key_exists else tmdb.apikey }}"
 
 - name: Add TMDB_API_KEY in the vault
+  no_log: true
   shell: |
     source ${SETTINGS_SOURCE}/profile.sh
     manage_account_yml tmdb.apikey "{{ tmdb.apikey }}"

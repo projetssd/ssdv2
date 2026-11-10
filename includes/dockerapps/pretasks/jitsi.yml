@@ -1,31 +1,37 @@
 ---
 
 - name: JICOFO_COMPONENT_SECRET
+  no_log: true
   shell: |
     openssl rand -hex 16
   register: jicofo_component_secret
 
 - name: JICOFO_AUTH_PASSWORD
+  no_log: true
   shell: |
     openssl rand -hex 16
   register: jicofo_auth_passwd
 
 - name: JVB_AUTH_PASSWORD
+  no_log: true
   shell: |
     openssl rand -hex 16
   register: jvb_auth_passwd
 
 - name: JIGASI_XMPP_PASSWORD
+  no_log: true
   shell: |
     openssl rand -hex 16
   register: jigasi_xmpp_password
 
 - name: JIBRI_RECORDER_PASSWORD
+  no_log: true
   shell: |
     openssl rand -hex 16
   register: jibri_recorder_password
 
 - name: JIBRI_XMPP_PASSWORD
+  no_log: true
   shell: |
     openssl rand -hex 16
   register: jibri_xmpp_password

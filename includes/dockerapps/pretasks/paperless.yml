@@ -12,6 +12,7 @@
       - name: traefik_proxy
 
 - name: Create mariadb
+  no_log: true
   docker_container:
     labels:
       ssdv2.app: "{{pgrole}}"

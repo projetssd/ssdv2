@@ -33,6 +33,7 @@
           Mot de passe pour Dozzle
         echo: no
       register: dozzle_pass_input
+      no_log: true
 
     - name: Générer users.yml pour l'authentification Dozzle
       shell: |

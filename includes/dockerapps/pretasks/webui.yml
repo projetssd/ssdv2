@@ -230,6 +230,7 @@
       {{ 'activé avec ' ~ alldebrid_proxy_url if alldebrid_proxy_enabled else 'désactivé' }}
 
 - name: Deploy ssd-backend
+  no_log: true
   community.docker.docker_container:
     name: ssd-backend
     image: ghcr.io/laster13/ssd-backend:latest

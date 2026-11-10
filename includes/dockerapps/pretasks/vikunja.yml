@@ -9,6 +9,7 @@
     recurse: yes
 
 - name: 'Deploying db-{{pgrole}}'
+  no_log: true
   docker_container:
     labels:
       ssdv2.app: "{{pgrole}}"

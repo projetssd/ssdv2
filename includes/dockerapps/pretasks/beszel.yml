@@ -21,8 +21,10 @@
       Mot de passe de l'administrateur Beszel
     echo: no
   register: beszel_password_input
+  no_log: true
 
 - name: Définir les identifiants Beszel
+  no_log: true
   ansible.builtin.set_fact:
     beszel_admin_email: "{{ beszel_email_input.user_input }}"
     beszel_admin_password: "{{ beszel_password_input.user_input }}"
