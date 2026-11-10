@@ -302,3 +302,26 @@ assert_absent() {
   [ "$status" -ne 0 ]
   [[ "$message" == *"Ressource conservée (paperless)"* ]]
 }
+
+@test "un fichier appartenant à une application non installée ne protège pas" {
+  mkdir -p "$SETTINGS_STORAGE/vars"
+  cat >"$SETTINGS_STORAGE/vars/ghostapp.yml" <<'YML'
+pgrole: ghostapp
+specific_docker_info:
+  labels:
+    trace: "name: legacy-widget"
+YML
+  printf '  name: legacy-widget\n' >>"$SETTINGS_STORAGE/vars/ghostapp.yml"
+  printf 'legacy-widget\n' >"$SETTINGS_STORAGE/conf/paperless.containers"
+  run remove_app_containers paperless legacy-widget
+  [ "$status" -eq 0 ]
+  grep -qxF "legacy-widget" "$REMOVED_LOG"
+}
+
+@test "le registre propre reste une preuve après sa suppression" {
+  printf 'legacy-extra\n' >"$SETTINGS_STORAGE/conf/paperless.containers"
+  OWN_CONTAINERS_CACHE=$(cat "$SETTINGS_STORAGE/conf/paperless.containers")
+  rm -f "$SETTINGS_STORAGE/conf/paperless.containers"
+  run in_own_registry paperless legacy-extra
+  [ "$status" -eq 0 ]
+}

@@ -714,20 +714,66 @@ function app_declares_container() {
 }
 
 function others_declare_container() {
-  local app="$1" name="$2"
-  all_config_files | grep -vxF -e "${SETTINGS_SOURCE}/includes/dockerapps/vars/${app}.yml" \
-                                     -e "${SETTINGS_SOURCE}/includes/dockerapps/pretasks/${app}.yml" \
-                                     -e "${SETTINGS_SOURCE}/includes/dockerapps/posttasks/${app}.yml" \
-                                     -e "${SETTINGS_STORAGE}/vars/${app}.yml" \
-                                     -e "${SETTINGS_STORAGE}/conf/${app}.yml" \
-    | grep -v "^${SETTINGS_SOURCE}/includes/dockerapps/templates/${app}/" \
-    | files_declare_container "$name"
+  local app="$1" name="$2" other file
+  # 1. Fichiers propres à une application installée.
+  while IFS= read -r other; do
+    [ -n "$other" ] || continue
+    [ "$other" = "$app" ] && continue
+    if app_config_files "$other" | files_declare_container "$name"; then
+      return 0
+    fi
+  done < <(installed_app_names)
+  # 2. Fichiers partagés qui déclarent le nom, mais seulement s'ils sont
+  #    réellement utilisés : un fichier mort ne doit pas bloquer une suppression.
+  while IFS= read -r file; do
+    [ -n "$file" ] || continue
+    printf '%s\n' "$file" | files_declare_container "$name" || continue
+    file_referenced_by_installed_app "$file" && return 0
+  done < <(all_config_files | grep -vxF -e "${SETTINGS_SOURCE}/includes/dockerapps/vars/${app}.yml" \
+                                        -e "${SETTINGS_SOURCE}/includes/dockerapps/pretasks/${app}.yml" \
+                                        -e "${SETTINGS_SOURCE}/includes/dockerapps/posttasks/${app}.yml" \
+                                        -e "${SETTINGS_STORAGE}/vars/${app}.yml" \
+                                        -e "${SETTINGS_STORAGE}/conf/${app}.yml" \
+                                        | grep -v "^${SETTINGS_SOURCE}/includes/dockerapps/templates/${app}/")
+  return 1
 }
+
+# Registre propre mis en cache : suppression_appli le supprime avant d'exécuter
+# les branches legacy, qui doivent encore pouvoir s'appuyer sur cette preuve.
+OWN_CONTAINERS_CACHE=""
 
 function in_own_registry() {
   local app="$1" name="$2"
   local registry="${SETTINGS_STORAGE}/conf/${app}.containers"
+  if [ -n "$OWN_CONTAINERS_CACHE" ]; then
+    printf '%s\n' "$OWN_CONTAINERS_CACHE" | grep -qxF "$name"
+    return
+  fi
   [ -f "$registry" ] && grep -qxF "$name" "$registry"
+}
+
+# Applications installées : base + registres présents.
+function installed_app_names() {
+  {
+    sqlite3 "${SETTINGS_SOURCE}/ssddb" "select name from applications;" 2>/dev/null || true
+    local registry
+    for registry in "${SETTINGS_STORAGE}"/conf/*.containers; do
+      [ -f "$registry" ] && basename "$registry" .containers
+    done
+  } | sed '/^[[:space:]]*$/d' | sort -u
+}
+
+# Vrai si un fichier partagé est référencé par une application installée.
+function file_referenced_by_installed_app() {
+  local file="$1" app base rel
+  base=$(basename "$file")
+  rel=${file#"${SETTINGS_SOURCE}/"}
+  while IFS= read -r app; do
+    [ -n "$app" ] || continue
+    app_config_files "$app" \
+      | xargs -r grep -qF -e "$rel" -e "$base" 2>/dev/null && return 0
+  done < <(installed_app_names)
+  return 1
 }
 
 function in_other_registry() {
@@ -907,6 +953,7 @@ function suppression_appli() {
   EXTRA_SUBDOMAINS=()
   manage_account_yml sub.${APPSELECTED} " "
 
+  OWN_CONTAINERS_CACHE=""
   registry="${SETTINGS_STORAGE}/conf/${APPSELECTED}.containers"
   volreg="${SETTINGS_STORAGE}/conf/${APPSELECTED}.volumes"
 
@@ -928,6 +975,9 @@ function suppression_appli() {
     log_write "Suppresion de ${APPSELECTED}, données conservées" >/dev/null 2>&1
   fi
 
+  # Les branches legacy s'exécutent après ce nettoyage : on conserve la preuve
+  # de propriété du registre propre pour la suite.
+  OWN_CONTAINERS_CACHE=$(cat "$registry" 2>/dev/null || true)
   rm -f "$registry" "$volreg"
 
   rm ${SETTINGS_STORAGE}/conf/$APPSELECTED.yml >/dev/null 2>&1
