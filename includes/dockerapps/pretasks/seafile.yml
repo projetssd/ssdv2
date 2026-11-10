@@ -94,6 +94,7 @@
       - name: seafile-net
 
 - name: Deploying db-seafile
+  no_log: true
   docker_container:
     labels:
       ssdv2.app: "{{pgrole}}"

@@ -9,6 +9,7 @@
     sftorznab_expose: "{{ sftorznab_expose_public | default(false) | bool }}"
 
 - name: Déployer le broker AllDebrid
+  no_log: true
   community.docker.docker_container:
     labels:
       ssdv2.app: "{{pgrole}}"

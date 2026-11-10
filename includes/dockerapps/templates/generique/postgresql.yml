@@ -5,6 +5,7 @@
     state: present
 
 - name: 'Deploying db-{{pgrole}}'
+  no_log: true
   docker_container:
     keep_volumes: false
     labels:

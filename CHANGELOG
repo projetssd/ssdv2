@@ -23,6 +23,101 @@
   Aucune conclusion n'est tirée pour les autres versions. Détail, commandes et
   canaux dans `docs/ansible-no-log.md`.
 
+10/11/2026 — Secrets : plus aucune valeur dans les journaux d'installation
+
+- invites secrètes : `echo: no` et `no_log: true` sur toutes les `pause`
+  marquées `"secret": true` (`ygege`, `transmissionvpn`, `seerrcatalog`,
+  `decypharrseed`, `nzbdav`, `trakt`, `tmdb`, claim Plex). `echo: "yes"` sur un
+  mot de passe affichait la saisie au terminal et dans la transcription.
+- 39 tâches de hooks (`set_fact`, `docker_container`, `shell`) masquées : elles
+  exposaient des mots de passe de base, jetons et clés dans le résultat de tâche,
+  y compris via les templates `mariadb`, `mariadb_officiel` et `postgresql`.
+- les secrets réels ne sont plus affichés par `debug` (`appkey`, `immich`). Les
+  jetons de premier démarrage (`ssdv2webui`, `symlink`) et la clé d'API
+  `mediaflowproxy` restent accessibles, mais par un fichier en 0600 dont le
+  chemin est indiqué : plus de valeur secrète dans la sortie ni dans les
+  journaux.
+- tâches `uri`, `command` et `shell` porteuses de secrets également masquées :
+  authentification et jetons de `beszel`, génération de secrets `authelia`,
+  `jitsi` et `nextcloud`, écritures de coffre `appkey`, `trakt`, `seasonarr`,
+  en-tête `X-Plex-Token`, `--client-secret` d'oauth2-proxy, broker
+  `sftorznab` et worker `streamfusion`.
+- `ygege` : `config.json` passe en 0600 et la sérialisation JSON utilise
+  `to_nice_json` (une saisie avec guillemet ou antislash ne casse plus le fichier).
+- nouveau `tests/test_secret_hygiene.py` : contrat sur toutes les invites et
+  `debug`, plus deux exécutions Ansible réelles (`-vv`) qui vérifient qu'un
+  secret fictif n'apparaît nulle part, qu'une réinstallation conserve le secret
+  et que le fichier de restitution est en 0600 même s'il a été créé en 0644.
+
+10/11/2026 — Suppression : la réinstallation ne doit plus effacer les données
+
+- une suppression partielle (`suppression_appli <app> 0`, utilisée par
+  « réinitialiser » et réinstaller) conserve désormais les données pour
+  `paperless`, `espocrm`, `nextcloud` (`coturn`), `jitsi`, `zurg`,
+  `jellygrail` et `piped`. Ces branches legacy faisaient un `rm -rf` sans
+  tester `DELETE`, alors que l'interface annonce « les volumes ne seront pas
+  supprimés ».
+- `jellygrail` démonte toujours le point FUSE (un montage mort bloque la
+  réinstallation) mais ne supprime les fichiers qu'en suppression complète.
+- la suppression de StreamFusion ne retire plus le conteneur `warp`, qui est
+  déployé par `sftorznab` et `stremthru` : il coupait le proxy des autres
+  applications.
+- `sffs` conserve son cache TMDB et documente le retrait volontaire de
+  `sffs-secrets` (lié à la clé d'API supprimée, régénéré à l'installation).
+- une ressource n'est supprimée que si sa **propriété exclusive** est établie :
+  convention `<app>`/`db-<app>`/`redis-<app>`/`memcached-<app>`, déclaration par
+  les hooks de l'application, ou présence dans son registre — et dans aucun
+  registre ni déclaration tiers. La convention de nommage est un indice, pas une
+  preuve : elle ne dispense pas de vérifier les autres applications. Le statut
+  en base n'est plus utilisé : une application arrêtée, en échec, en
+  réinstallation ou absente de la base protège toujours ses ressources.
+- sinon la ressource est **conservée** avec un message non sensible expliquant
+  pourquoi (`Ressource conservée (<app>) : conteneur|dossier|volume <nom> —
+  propriété non établie`). Cela couvre les installations anciennes sans
+  registre et les piles partagées (`sftorznab`/`streamfusion`).
+- dossiers persistants : suppression seulement si le chemin est sous
+  `.../<app>` ou référencé uniquement par l'application ; un dossier référencé
+  par une autre application est conservé.
+- volumes : un volume présent dans le registre d'une autre application n'est
+  jamais retiré, même en suppression complète.
+- réseaux : aucun code ne supprime de réseau dans `suppression_appli` ; les
+  réseaux `<app>-net` restent donc non nettoyés (constat `NETWORKCLEAN`, lot
+  séparé). Aucun réseau partagé ne peut être retiré aujourd'hui.
+- nouveau `tests/bats/suppression.bats` : 18 cas avec `docker`, `sudo`,
+  Ansible et SQLite simulés ; registre absent, application dépendante sans
+  statut, partage dans les deux sens, dernier utilisateur, ressource inconnue,
+  dossier et volume partagés.
+- `tests/manual/suppression-e2e.sh` : essai de bout en bout sur un démon Docker
+  jetable (installation, réinstallation, suppression partagée). Refuse
+  explicitement `unix:///var/run/docker.sock`. **Non exécuté** faute de démon
+  isolé sur la machine de développement.
+
+10/11/2026 — Audit : moteur de conformité des applications au contrat `add-app`
+
+- nouveau `scripts/audit/apps_alignment.py` : audit statique en lecture seule du
+  catalogue, des variables, des hooks et de la suppression ; rapport Markdown,
+  matrice CSV, JSON et backlog priorisé dans `docs/audits/` (ignoré par Git).
+- neuf axes contrôlés (catalogue, déploiement, assistance, secrets, Traefik,
+  persistance, permissions, cycle de vie, minimalisme) avec, pour chaque
+  famille, déclencheur, impact et niveau de certitude.
+- les suppressions croisées ne sont plus déduites d'un nom de dossier : la
+  propriété est prouvée par le montage du volume ou la création du conteneur.
+  Les constats périmés d'une autre branche sont marqués `stale_curated` et les
+  écarts assumés sont déclarés et justifiés.
+- tests dédiés (`tests/test_apps_alignment.py`, 15 cas, fixture sans Docker) et
+  exécution en CI. Aucune application n'est modifiée par ce lot.
+
+10/11/2026 — Stremio : fichier de tâches YAML réparé et exclusion CI retirée
+
+- `includes/dockerapps/pretasks/stremio/stremio_base.yml` avait un guillemet non
+  fermé (`MEILI_MASTER_KEY`) : le fichier n'était pas du Jinja non parsable,
+  contrairement au commentaire du job `yaml` qui l'excluait du contrôle.
+- l'exclusion est retirée : les 369 fichiers YAML de `includes/dockerapps` sont
+  désormais validés en CI, et le fichier réparé reste explicitement vérifié.
+- aucun changement d'exécution : le fichier et `postgres_setup.yml` ne sont
+  référencés par aucun hook. Leur suppression éventuelle fera l'objet d'un
+  nettoyage séparé.
+
 06/11/2026 — CrowdSec : exclusion des applis indépendante de l'IP
 
 - whitelist `whitelist-ssdv2` étendue aux routeurs Traefik des applications

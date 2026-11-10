@@ -10,5 +10,6 @@
     prompt: |
       SSDV2_PROMPT {"id": "decypharrseed.password", "label": "Mot de passe", "kind": "secret", "secret": true}
       Choisir votre password
-    echo: yes
+    echo: no
   register: password
+  no_log: true

@@ -217,6 +217,8 @@
     # (Required) est applique en meme temps : l'API HTTP locale peut refuser
     # la connexion selon la version de Plex.
     - name: "Set Plex remote access preferences"
+      # L'en-tête contient le jeton Plex.
+      no_log: true
       vars:
         plex_custom_url: "https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}"
         plex_extra_prefs: "{{ '&secureConnections=0&RelayEnabled=0&PublishServerOnPlexOnlineKey=1' if plex_public_https | bool else '' }}"

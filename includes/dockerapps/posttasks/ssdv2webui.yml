@@ -1,9 +1,9 @@
 ---
 # Instructions après installation : le compte administrateur est créé par
-# l'assistant /setup (ADR-0019). Le jeton est journalisé par l'application au
-# premier démarrage et reste disponible dans son volume de données jusqu'à la
-# création du compte (il est ensuite supprimé). Il est affiché ici pour éviter
-# d'avoir à consulter les journaux.
+# l'assistant /setup (ADR-0019). Le jeton est écrit par l'application au premier
+# démarrage et reste dans son volume de données jusqu'à la création du compte
+# (il est ensuite supprimé). Il n'est jamais affiché ni journalisé : seul le
+# chemin du fichier, restreint en 0600, est indiqué à l'utilisateur.
 
 - name: Définir l'URL et le dossier de données de la WebUI
   ansible.builtin.set_fact:
@@ -33,19 +33,11 @@
     path: "{{ ssdv2webui_data_dir }}/setup-token"
   register: ssdv2webui_token_final
 
-- name: Lire le jeton d'installation
-  ansible.builtin.slurp:
-    src: "{{ ssdv2webui_data_dir }}/setup-token"
-  register: ssdv2webui_token_raw
-  failed_when: false
+- name: Restreindre l'accès au jeton d'installation
+  ansible.builtin.file:
+    path: "{{ ssdv2webui_data_dir }}/setup-token"
+    mode: '0600'
   when: ssdv2webui_token_final.stat.exists
-
-- name: Définir le jeton d'installation
-  ansible.builtin.set_fact:
-    ssdv2webui_setup_token: "{{ ssdv2webui_token_raw.content | b64decode | trim }}"
-  when:
-    - ssdv2webui_token_raw is not skipped
-    - ssdv2webui_token_raw.content is defined
 
 - name: Afficher les instructions de premier démarrage
   ansible.builtin.debug:
@@ -58,13 +50,13 @@
       - ""
       - "Assistant /setup : création du compte administrateur"
       - "  1. Ouvrez {{ ssdv2webui_url }}/setup"
-      - "  2. Jeton d'installation : {{ ssdv2webui_setup_token }}"
-      - "     (également dans les journaux : docker logs ssdv2webui 2>&1 | grep -i jeton)"
+      - "  2. Jeton d'installation : {{ ssdv2webui_data_dir }}/setup-token"
+      - "     (fichier en 0600 : sudo cat {{ ssdv2webui_data_dir }}/setup-token)"
       - "  3. Identifiant + mot de passe (>= 12 caractères)."
       - "  4. Étape « Sécurité » : le mode d'authentification est détecté"
       - "     (interne par défaut ; proxy si un proxy de confiance est configuré)."
       - "=================================================="
-  when: ssdv2webui_setup_token is defined
+  when: ssdv2webui_token_final.stat.exists
 
 - name: Afficher les instructions (compte déjà initialisé)
   ansible.builtin.debug:
@@ -76,4 +68,4 @@
       - "Aucun jeton d'installation : un compte administrateur existe déjà"
       - "(ou WEBUI_ADMIN_PASSWORD est fourni). Connectez-vous directement."
       - "=================================================="
-  when: ssdv2webui_setup_token is not defined
+  when: not ssdv2webui_token_final.stat.exists

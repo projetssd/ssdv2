@@ -1,5 +1,6 @@
 ---
 - name: Deploy db-{{ pgrole }}
+  no_log: true
   community.docker.docker_container:
     labels:
       ssdv2.app: "{{pgrole}}"

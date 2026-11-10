@@ -595,6 +595,7 @@
           - name: traefik_proxy
 
     - name: Deploy Taskiq worker
+      no_log: true
       community.docker.docker_container:
         name: taskiq-worker
         image: laster13/stream-fusion-reborn:latest
