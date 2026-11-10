@@ -1,3 +1,15 @@
+10/11/2026 — Réseaux applicatifs nettoyés et fuseau par défaut
+
+- les réseaux `<app>-net` créés par les templates mariadb/postgresql/redis sont
+  supprimés après la disparition des conteneurs, uniquement s'ils sont vides ;
+  sinon ils sont conservés avec un message explicite. Même traitement pour
+  `bw-net` (bitwarden), `meet.jitsi` (jitsi), `mattermost-net` et
+  `sismicsreader-net`. Ferme les 37 constats `NETWORKCLEAN`.
+- `TZ: Europe/Paris` est fourni par défaut dans `docker_info` ; une application
+  peut toujours le surcharger dans `pg_env`. Ferme les 32 constats `TZ`.
+- audit : les deux règles tiennent compte du défaut générique et du nettoyage
+  réseau mutualisé.
+
 10/11/2026 — Correctifs d'intégration : EspoCRM, Coolify et doublons YAML
 
 - `espocrm` et `coolify` référençaient `check.stat.exists`, variable jamais

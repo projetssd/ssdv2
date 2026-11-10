@@ -841,6 +841,20 @@ function remove_app_containers() {
   docker rm -f ${kept} >/dev/null 2>&1
 }
 
+# Supprime un réseau applicatif uniquement s'il est vide. Les réseaux ne sont
+# pas suivis par le registre : on vérifie les extrémités avant toute suppression.
+function cleanup_app_network() {
+  local network="$1" endpoints
+  [ -n "$network" ] || return 0
+  docker network inspect "$network" >/dev/null 2>&1 || return 0
+  endpoints=$(docker network inspect "$network" --format '{{len .Containers}}' 2>/dev/null || true)
+  if [ "${endpoints:-1}" = "0" ]; then
+    docker network rm "$network" >/dev/null 2>&1 || true
+  else
+    keep_resource_message "$APPSELECTED" réseau "$network" "encore utilisé par un conteneur"
+  fi
+}
+
 # Propriété d'un dossier persistant hors du dossier applicatif.
 function dir_owned_by_app() {
   local app="$1" segment="$2" pattern
@@ -1190,6 +1204,15 @@ SQL
       sudo rm -rf "${SETTINGS_STORAGE}/docker/${USER}/vvveb-secrets" >/dev/null 2>&1
     fi
     ;;
+  esac
+
+  # Réseaux dédiés : le réseau <app>-net des templates, plus les noms explicites.
+  cleanup_app_network "${APPSELECTED}-net"
+  case "$APPSELECTED" in
+    bitwarden) cleanup_app_network bw-net ;;
+    jitsi) cleanup_app_network meet.jitsi ;;
+    mattermost) cleanup_app_network mattermost-net ;;
+    sismicsreader) cleanup_app_network sismicsreader-net ;;
   esac
 
   if docker ps -a --format '{{.Names}}' | grep -qx "${APPSELECTED}"; then

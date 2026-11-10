@@ -164,7 +164,8 @@
           image: "{{ image }}"
           pull: "{{ pull_image | default(true) }}"
           volumes: "{{ pg_volumes | default([]) }}"
-          env: "{{ pg_env | default({}) }}"
+          # Fuseau par défaut : une application peut le surcharger dans pg_env.
+          env: "{{ {'TZ': 'Europe/Paris'} | combine(pg_env | default({})) }}"
           restart_policy: unless-stopped
           networks:
             - name: traefik_proxy

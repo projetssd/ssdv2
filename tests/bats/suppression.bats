@@ -27,6 +27,10 @@ case "$1" in
     ;;
 esac
 case "$*" in
+  "network inspect"*"--format"*) printf '%s\n' "${NETWORK_ENDPOINTS:-0}" ;;
+  "network inspect"*)
+    if [ "${NETWORK_EXISTS:-0}" = "1" ]; then exit 0; else exit 1; fi
+    ;;
   *"label=ssdv2.app="*) ;;
   *inspect*) exit 1 ;;
 esac
@@ -334,4 +338,29 @@ YML
   run grep -qxF "shared-db" "$REMOVED_LOG"
   [ "$status" -ne 0 ]
   grep -qxF "db-paperless" "$REMOVED_LOG"
+}
+
+@test "un réseau vide est supprimé" {
+  export NETWORK_EXISTS=1 NETWORK_ENDPOINTS=0
+  run cleanup_app_network paperless-net
+  [ "$status" -eq 0 ]
+  grep -q "network rm paperless-net" "$DOCKER_LOG"
+}
+
+@test "un réseau encore utilisé est conservé avec un message" {
+  export NETWORK_EXISTS=1 NETWORK_ENDPOINTS=2
+  run cleanup_app_network paperless-net
+  [ "$status" -eq 0 ]
+  local message="$output"
+  run grep -q "network rm paperless-net" "$DOCKER_LOG"
+  [ "$status" -ne 0 ]
+  [[ "$message" == *"Ressource conservée"*"réseau paperless-net"* ]]
+}
+
+@test "un réseau absent est ignoré" {
+  export NETWORK_EXISTS=0
+  run cleanup_app_network paperless-net
+  [ "$status" -eq 0 ]
+  run grep -q "network rm paperless-net" "$DOCKER_LOG"
+  [ "$status" -ne 0 ]
 }

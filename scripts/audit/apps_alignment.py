@@ -736,7 +736,7 @@ class Audit:
                 self.add(app, "DOUBLEHOOK", "minimalisme", "P3", main, self.line_of(main, key),
                          f"Chargement homonyme automatique puis explicite de {key}")
         env = data.get("pg_env")
-        if isinstance(env, dict) and generic:
+        if isinstance(env, dict) and generic and not self.generic_tz_default():
             if "TZ" not in env and not any(
                 "/etc/localtime" in str(v) for v in (volumes or [])
             ):
@@ -771,6 +771,17 @@ class Audit:
         for task in walk(document):
             if isinstance(task, dict) and task.get("name") == "Prepare docker info":
                 return bool(re.search(r"default\(\s*true\s*\)", str(task.get("no_log", ""))))
+        return False
+
+    def generic_tz_default(self) -> bool:
+        """Vrai si le playbook générique fournit un TZ par défaut."""
+        document = self.repo.load("includes/dockerapps/vars/generique.yml")
+        for task in walk(document):
+            if isinstance(task, dict) and task.get("name") == "Prepare docker info":
+                payload = module(task, "set_fact") or {}
+                info = payload.get("docker_info") if isinstance(payload, dict) else None
+                if isinstance(info, dict):
+                    return "TZ" in str(info.get("env", ""))
         return False
 
     def check_env(self, app, main, data):
@@ -987,6 +998,10 @@ class Audit:
                         cleaned = (
                             f"docker network rm {resolved}" in functions_text
                             or f"cleanup_app_network {resolved}" in functions_text
+                            or (
+                                resolved == f"{app}-net"
+                                and 'cleanup_app_network "${APPSELECTED}-net"' in functions_text
+                            )
                         )
                         if not cleaned:
                             self.add(app, "NETWORKCLEAN", "cycle", "P2", rel,
