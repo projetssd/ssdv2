@@ -48,6 +48,7 @@
   when: not (plex_token_is_server_token | bool)
 
 - name: 'Deploying {{pgrole}}'
+  no_log: true
   docker_container: "{{ docker_info }}"
   when: not (plex_token_is_server_token | bool)
 

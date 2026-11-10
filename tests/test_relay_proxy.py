@@ -1,5 +1,6 @@
 """Contrôles Ansible ciblés sur fixtures, sans Docker ni accès réseau."""
 import json
+import re
 import importlib.util
 import os
 from pathlib import Path
@@ -193,6 +194,99 @@ class RelayContainerStateTest(unittest.TestCase):
                 self.assertEqual(container.stop.called,running)
                 self.assertEqual(client.api.start.called,running)
                 client.images.pull.assert_not_called()
+
+
+
+
+@unittest.skipUnless(ANSIBLE.is_file(), "Ansible requis")
+class HookRedeployLoggingTest(unittest.TestCase):
+    """Les hooks qui redéploient `docker_info` doivent masquer les paramètres."""
+
+    def test_all_docker_info_redeploys_are_masked(self):
+        import glob
+        unmasked = []
+        for path in glob.glob(str(ROOT / "includes/dockerapps/**/*.yml"), recursive=True):
+            if path.endswith("stremio_base.yml"):
+                continue
+            try:
+                document = yaml.safe_load(Path(path).read_text())
+            except yaml.YAMLError:
+                continue
+            stack = [(document, False)]
+            while stack:
+                node, inherited = stack.pop()
+                if isinstance(node, list):
+                    for item in node:
+                        stack.append((item, inherited))
+                    continue
+                if not isinstance(node, dict):
+                    continue
+                raw_no_log = node.get("no_log")
+                if raw_no_log is True:
+                    local_protected = True
+                elif isinstance(raw_no_log, str) and re.search(r"default\(\s*false\s*\)", raw_no_log):
+                    local_protected = False
+                elif raw_no_log is not None:
+                    local_protected = str(raw_no_log).strip().lower() not in ("false", "no")
+                else:
+                    local_protected = False
+                protected = inherited or local_protected
+                for key, value in node.items():
+                    if str(key).split(".")[-1] == "docker_container" and \
+                            str(value).strip() in ("{{ docker_info }}", "{{docker_info}}"):
+                        if not protected:
+                            unmasked.append(f"{Path(path).relative_to(ROOT)}: {node.get('name')}")
+                for child in node.values():
+                    if isinstance(child, (list, dict)):
+                        stack.append((child, protected))
+        self.assertEqual(unmasked, [])
+
+    def run_task(self, tmp, task, variables):
+        play = [{"hosts": "localhost", "gather_facts": False,
+                 "vars": variables, "tasks": [task]}]
+        path = Path(tmp) / "play.json"
+        path.write_text(json.dumps(play))
+        return subprocess.run(
+            [str(ANSIBLE), "-i", "localhost,", "-c", "local", str(path), "-vv"],
+            capture_output=True, text=True, timeout=60,
+        )
+
+    def test_masked_redeploy_keeps_progress_and_hides_secret(self):
+        marker = "fixture-docker-info-secret-7712"
+        task = {
+            "name": "Deploying test-app",
+            "no_log": True,
+            "community.docker.docker_container": {"name": "test-app", "state": "started"},
+        }
+        # Le module est remplacé par un échec statique : ce qui doit rester
+        # masqué, c'est le contenu de docker_info (donc env).
+        task.pop("community.docker.docker_container")
+        task["ansible.builtin.fail"] = {"msg": "échec simulé"}
+        with tempfile.TemporaryDirectory() as tmp:
+            result = self.run_task(tmp, task, {
+                "docker_info": {"name": "test-app", "env": {"SECRET": marker}},
+            })
+        output = result.stdout + result.stderr
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotIn(marker, output)
+        self.assertIn("Deploying test-app", output)
+
+    def test_module_error_message_is_not_masked(self):
+        # Comportement constaté, à requalifier si Ansible change : no_log masque
+        # le résultat de tâche, pas un message d'erreur produit par un module.
+        marker = "fixture-module-error-secret-9913"
+        task = {
+            "name": "Échec avec message",
+            "no_log": True,
+            "ansible.builtin.fail": {"msg": "échec : " + marker},
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            result = self.run_task(tmp, task, {})
+        output = result.stdout + result.stderr
+        version = subprocess.run([str(ANSIBLE), "--version"], capture_output=True, text=True)
+        version = " ".join(version.stdout.split()[:3])
+        self.assertIn(marker, output, f"comportement Ansible modifié ({version})")
+        self.assertIn("censored", output, version)
 
 
 if __name__ == '__main__':
