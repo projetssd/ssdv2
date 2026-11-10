@@ -2,7 +2,10 @@
 pgrole: 'espocrm'
 image: 'espocrm/espocrm'
 pg_volumes:
-  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}:/var/www/html"
+  # Disposition officielle de l'image (montage de /var/www/html interdit).
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/custom:/var/www/html/custom"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/data:/var/www/html/data"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}/client-custom:/var/www/html/client/custom"
   - '/etc/localtime:/etc/localtime:ro'
 pg_env:
   PUID: "{{ lookup('env','MYUID') }}"

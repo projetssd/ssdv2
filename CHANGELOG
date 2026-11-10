@@ -1,3 +1,15 @@
+10/11/2026 — EspoCRM : disposition de volumes officielle
+
+- l'image EspoCRM refuse désormais un montage direct de `/var/www/html` et
+  exige `custom`, `data` et `client/custom`. Les trois conteneurs (application,
+  daemon, websocket) utilisent ces trois volumes.
+- validation serveur : installation complète, page de connexion accessible
+  (401 sans identifiant, 200 avec), `data/config.php` conservé après
+  réinstallation.
+- migration des anciennes installations : déplacer `custom/`, `data/` et
+  `client/custom` de l'ancien dossier vers les nouveaux sous-dossiers avant
+  réinstallation.
+
 10/11/2026 — Données hors dossier applicatif : suppressions ciblées et partages documentés
 
 - `streamfusion` : `streamfusion-secrets` supprimé en suppression complète.

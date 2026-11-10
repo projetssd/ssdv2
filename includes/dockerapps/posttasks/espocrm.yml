@@ -12,7 +12,9 @@
     name: espocrm-daemon
     image: espocrm/espocrm
     volumes:
-      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/espocrm:/var/www/html"
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/espocrm/custom:/var/www/html/custom"
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/espocrm/data:/var/www/html/data"
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/espocrm/client-custom:/var/www/html/client/custom"
     entrypoint: docker-daemon.sh
     restart_policy: always
     networks:
@@ -28,7 +30,9 @@
       ESPOCRM_CONFIG_WEB_SOCKET_ZERO_M_Q_SUBSCRIBER_DSN: "tcp://*:7777"
       ESPOCRM_CONFIG_WEB_SOCKET_ZERO_M_Q_SUBMISSION_DSN: "tcp://espocrm-websocket:7777"
     volumes:
-      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/espocrm:/var/www/html"
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/espocrm/custom:/var/www/html/custom"
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/espocrm/data:/var/www/html/data"
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/espocrm/client-custom:/var/www/html/client/custom"
     entrypoint: docker-websocket.sh
     labels:
       ssdv2.app: "{{pgrole}}"
