@@ -290,3 +290,15 @@ assert_absent() {
   [ "$status" -eq 0 ]
   grep -q "volume rm -f shared-vol" "$DOCKER_LOG"
 }
+
+@test "un nom conventionnel revendiqué par une autre application est conservé" {
+  # `<app>` et `db-<app>` sont des indices, pas une preuve : si une autre
+  # application enregistre ce nom, la ressource n'est pas retirée.
+  printf 'paperless\n' >"$SETTINGS_STORAGE/conf/otherapp.containers"
+  run remove_app_containers paperless paperless
+  [ "$status" -eq 0 ]
+  local message="$output"
+  run grep -qxF "paperless" "$REMOVED_LOG"
+  [ "$status" -ne 0 ]
+  [[ "$message" == *"Ressource conservée (paperless)"* ]]
+}

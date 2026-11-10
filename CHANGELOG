@@ -16,9 +16,10 @@
 - une ressource n'est supprimée que si sa **propriété exclusive** est établie :
   convention `<app>`/`db-<app>`/`redis-<app>`/`memcached-<app>`, déclaration par
   les hooks de l'application, ou présence dans son registre — et dans aucun
-  registre tiers. Le statut en base n'est plus utilisé : une application
-  arrêtée, en échec, en réinstallation ou absente de la base protège toujours
-  ses ressources.
+  registre ni déclaration tiers. La convention de nommage est un indice, pas une
+  preuve : elle ne dispense pas de vérifier les autres applications. Le statut
+  en base n'est plus utilisé : une application arrêtée, en échec, en
+  réinstallation ou absente de la base protège toujours ses ressources.
 - sinon la ressource est **conservée** avec un message non sensible expliquant
   pourquoi (`Ressource conservée (<app>) : conteneur|dossier|volume <nom> —
   propriété non établie`). Cela couvre les installations anciennes sans
