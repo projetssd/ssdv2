@@ -762,11 +762,15 @@ function suppression_appli() {
     ;;
   jitsi)
     docker rm -f prosody jicofo jvb
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/.jitsi-meet-cfg
+    if [ $DELETE -eq 1 ]; then
+      sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/.jitsi-meet-cfg
+    fi
     ;;
   nextcloud)
     docker rm -f collabora coturn office
-    rm -rf ${SETTINGS_STORAGE}/docker/${USER}/coturn
+    if [ $DELETE -eq 1 ]; then
+      rm -rf ${SETTINGS_STORAGE}/docker/${USER}/coturn
+    fi
     EXTRA_SUBDOMAINS+=("collabora" "office")
     ;;
   rtorrentvpn)
@@ -782,16 +786,24 @@ function suppression_appli() {
     docker rm -f vikunja-api >/dev/null 2>&1
     ;;
   zurg)
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/zurg
+    if [ $DELETE -eq 1 ]; then
+      sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/zurg
+    fi
     ;;
   piped*|nginx|hyperpipe*)
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/piped
+    if [ $DELETE -eq 1 ]; then
+      sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/piped
+    fi
     docker rm -f nginx piped-frontend piped-backend postgres piped-proxy hyperpipe-backend hyperpipe-frontend >/dev/null 2>&1
     manage_account_yml sub.piped " "
     ;;
   jellygrail)
-    sudo fusermount -uz ${SETTINGS_STORAGE}/docker/${USER}/jellygrail/Video_Library
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/jellygrail
+    # Démontage systématique (un montage FUSE orphelin reste bloquant), données conservées
+    # en suppression partielle.
+    sudo fusermount -uz ${SETTINGS_STORAGE}/docker/${USER}/jellygrail/Video_Library 2>/dev/null || true
+    if [ $DELETE -eq 1 ]; then
+      sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/jellygrail
+    fi
     ;;
   polyfin)
     # Ancien emplacement des secrets, avant leur déplacement dans le dossier
@@ -801,15 +813,19 @@ function suppression_appli() {
     fi
     ;;
   espocrm*)
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/mysql
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/espocrm >/dev/null 2>&1
+    if [ $DELETE -eq 1 ]; then
+      sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/mysql
+      sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/espocrm >/dev/null 2>&1
+    fi
     docker rm -f espocrm espocrm-websocket espocrm-daemon mysql >/dev/null 2>&1
     manage_account_yml sub.espocrm " "
     ;;
   paperless)
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/mariadb
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/paperless >/dev/null 2>&1
-    sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/redis >/dev/null 2>&1
+    if [ $DELETE -eq 1 ]; then
+      sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/mariadb
+      sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/paperless >/dev/null 2>&1
+      sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/redis >/dev/null 2>&1
+    fi
     docker rm -f mariadb paperless broker >/dev/null 2>&1
     manage_account_yml sub.paperless " "
     ;;
@@ -875,7 +891,9 @@ SQL
     fi
     ;;
   streamfusion)
-    docker rm -f warp streamfusion taskiq-worker taskiq-scheduler meilisearch stremio-redis stremio-postgres >/dev/null 2>&1
+    # warp n'est pas un compagnon de streamfusion : il est déployé par sftorznab et
+    # stremthru. Le supprimer ici coupe le proxy des autres applications.
+    docker rm -f streamfusion taskiq-worker taskiq-scheduler meilisearch stremio-redis stremio-postgres >/dev/null 2>&1
     if [ $DELETE -eq 1 ]; then
         manage_account_yml sub.streamfusion " "
     fi
