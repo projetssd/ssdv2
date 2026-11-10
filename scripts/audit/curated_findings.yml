@@ -14,27 +14,6 @@
 # par le script et ne doivent pas être dupliquées ici.
 
 findings:
-- app: stremthru
-  code: ORPHANDATA
-  axis: cycle
-  severity: P2
-  path: includes/dockerapps/pretasks/stremio/stremthru_base.yml
-  needle: stremthru-postgres:/var/lib
-  detail: Les bind mounts stremthru-postgres et stremthru-redis sont hors du dossier applicatif et aucun nettoyage dédié ne les retire en suppression complète
-- app: streamfusion
-  code: ORPHANDATA
-  axis: cycle
-  severity: P2
-  path: includes/dockerapps/pretasks/streamfusion.yml
-  needle: streamfusion-secrets
-  detail: Le dossier streamfusion-secrets est hors du dossier applicatif ; la branche de suppression ne le retire pas en mode complet
-- app: webui
-  code: ORPHANDATA
-  axis: cycle
-  severity: P2
-  path: includes/functions.sh
-  needle: '  ssd-backend|ssd-frontend|saison-frontend)'
-  detail: Le nettoyage projet-ssd vise les noms des compagnons, alors que l’identifiant catalogue est webui ; vérifier et aligner le nettoyage des données hors dossier webui
 - app: coolify
   code: KEYCLEAN
   axis: cycle
@@ -145,3 +124,31 @@ acknowledged:
   code: DEBUGSECRET
   target: dpasswd
   reason: 'Identifiants de démonstration fournis par l''image et affichés pour le premier accès : ils ne protègent aucune donnée utilisateur et l''utilisateur doit les voir. À remplacer par un compte personnel.'
+- app: decypharrseed
+  code: ORPHANROOT
+  target: « decypharr »
+  reason: 'Réutilise volontairement la configuration et les données de Decypharr : c''est la version « seed » du même service.'
+- app: jfago
+  code: ORPHANROOT
+  target: « jellyfin »
+  reason: Lit la configuration de Jellyfin pour gérer les invitations ; le dossier appartient à Jellyfin.
+- app: symlink
+  code: ORPHANROOT
+  target: « radarr »
+  reason: Accès en lecture aux configuration/bibliothèques Radarr nécessaire à la création des liens.
+- app: symlink
+  code: ORPHANROOT
+  target: « sonarr »
+  reason: Accès en lecture aux configuration/bibliothèques Sonarr nécessaire à la création des liens.
+- app: tautulli
+  code: ORPHANROOT
+  target: « plex »
+  reason: Lit les journaux Plex (montage en lecture seule), ressource de l'application Plex.
+- app: transmissionvpn
+  code: ORPHANROOT
+  target: « transmission »
+  reason: Partage volontairement les données et la configuration de Transmission.
+- app: wireguardui
+  code: ORPHANROOT
+  target: « wireguard »
+  reason: Partage la configuration WireGuard gérée par l'application wireguard.

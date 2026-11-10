@@ -1160,7 +1160,15 @@ SQL
     # stremthru. Le supprimer ici coupe le proxy des autres applications.
     remove_app_containers "$APPSELECTED" streamfusion taskiq-worker taskiq-scheduler meilisearch stremio-redis stremio-postgres
     if [ $DELETE -eq 1 ]; then
+        remove_app_dir "$APPSELECTED" "streamfusion-secrets"
         manage_account_yml sub.streamfusion " "
+    fi
+    ;;
+  stremthru)
+    remove_app_containers "$APPSELECTED" stremthru stremthru-postgres stremthru-redis
+    if [ $DELETE -eq 1 ]; then
+      remove_app_dir "$APPSELECTED" "stremthru-postgres"
+      remove_app_dir "$APPSELECTED" "stremthru-redis"
     fi
     ;;
   mediaflowproxy)
@@ -1189,7 +1197,7 @@ SQL
     fi
     ;;
 
-  ssd-backend|ssd-frontend|saison-frontend)
+  ssd-backend|ssd-frontend|saison-frontend|webui)
     remove_app_containers "$APPSELECTED" ssd-backend ssd-frontend saison-frontend
 
     manage_account_yml sub.webui " "

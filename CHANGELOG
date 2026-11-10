@@ -1,3 +1,14 @@
+10/11/2026 — Données hors dossier applicatif : suppressions ciblées et partages documentés
+
+- `streamfusion` : `streamfusion-secrets` supprimé en suppression complète.
+- `stremthru` : dossiers `stremthru-postgres` et `stremthru-redis` supprimés en
+  suppression complète (nouvelle branche de suppression).
+- `webui` : la branche de nettoyage couvre désormais l'identifiant `webui`, donc
+  `projet-ssd` est bien retiré.
+- partages volontaires documentés comme écarts assumés : `decypharrseed`,
+  `jfago`, `symlink`, `tautulli`, `transmissionvpn`, `wireguardui`.
+- audit : `ORPHANDATA` 3 → 0, `ORPHANROOT` 7 → 0 (assumés) ; 30 occurrences.
+
 10/11/2026 — Secrets persistants : plus de régénération à chaque réinstallation
 
 - `aiostreams`, `firefoxsyncserver`, `coolify` : secrets générés une seule fois
