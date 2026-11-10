@@ -46,6 +46,10 @@ jobs:
           if [ "${#files[@]}" -gt 0 ]; then
             python -m py_compile "${files[@]}"
           fi
+      - name: Dépendances du moteur d'audit
+        run: python3 -m pip install --quiet pyyaml
+      - name: Tests du moteur d'audit add-app
+        run: python3 tests/test_apps_alignment.py
 
   bats:
     runs-on: ubuntu-24.04
