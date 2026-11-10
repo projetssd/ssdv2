@@ -1,3 +1,14 @@
+10/11/2026 — Correctifs d'intégration : EspoCRM, Coolify et doublons YAML
+
+- `espocrm` et `coolify` référençaient `check.stat.exists`, variable jamais
+  définie : l'installation échouait avant même de créer le conteneur. Remplacé
+  par `auth_enabled`, comme les autres applications.
+- clés `no_log` dupliquées retirées (`sftorznab`, `stremio_base`) : plus
+  d'avertissement YAML au déploiement.
+- reste ouvert : l'image EspoCRM actuelle refuse le montage `/var/www/html`
+  (nouvelle disposition de volumes requise) ; l'intégration devra être adaptée
+  séparément.
+
 10/11/2026 — DNS Cloudflare : enregistrement créé aussi pour les labels spécifiques
 
 - la création de l'enregistrement Cloudflare était conditionnée à

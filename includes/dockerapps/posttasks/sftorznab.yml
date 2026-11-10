@@ -51,7 +51,6 @@
       - ALL
     security_opts:
       - no-new-privileges:true
-  no_log: true
 
 - name: Préparer le compte rendu Prowlarr
   set_fact:

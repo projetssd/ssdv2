@@ -26,7 +26,7 @@ labels:
   traefik.http.routers.coolify-app.tls: "true"
   traefik.http.routers.coolify-app.tls.certresolver: "letsencrypt"
   ## Middlewares
-  traefik.http.routers.coolify-app.middlewares: "{{ 'chain-authelia@file' if check.stat.exists and sub[pgrole].auth == 'authelia' | default(false)
+  traefik.http.routers.coolify-app.middlewares: "{{ 'chain-authelia@file' if auth_enabled and sub[pgrole].auth == 'authelia' | default(false)
   else 'chain-basic-auth@file' if auth_enabled and sub[pgrole].auth == 'basique' | default(false)
   else 'chain-oauth@file' if auth_enabled and sub[pgrole].auth == 'oauth' | default(false) 
   else 'chain-no-auth@file' if auth_enabled and sub[pgrole].auth == 'aucune'}}"
