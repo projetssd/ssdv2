@@ -78,6 +78,11 @@
 - dossiers persistants : suppression seulement si le chemin est sous
   `.../<app>` ou référencé uniquement par l'application ; un dossier référencé
   par une autre application est conservé.
+- corrections issues d'un essai réel : le registre propre est mis en cache avant
+  d'être supprimé (sinon les branches legacy perdaient la preuve de propriété) ;
+  les messages de conservation passent sur stderr (un nom conservé était repris
+  par `xargs docker rm`) ; les déclarations d'applications non installées ou de
+  fichiers non référencés ne bloquent plus une suppression.
 - volumes : un volume présent dans le registre d'une autre application n'est
   jamais retiré, même en suppression complète.
 - réseaux : aucun code ne supprime de réseau dans `suppression_appli` ; les
@@ -91,6 +96,8 @@
   jetable (installation, réinstallation, suppression partagée). Refuse
   explicitement `unix:///var/run/docker.sock`. **Non exécuté** faute de démon
   isolé sur la machine de développement.
+- `pretasks/streamfusion.yml` : clé `no_log` dupliquée retirée (avertissement
+  Ansible au déploiement).
 
 10/11/2026 — Audit : moteur de conformité des applications au contrat `add-app`
 

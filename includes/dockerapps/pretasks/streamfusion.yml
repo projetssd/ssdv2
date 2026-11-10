@@ -641,7 +641,6 @@
         restart_policy: unless-stopped
         networks:
           - name: traefik_proxy
-      no_log: true
 
     - name: Deploy Taskiq scheduler
       community.docker.docker_container:
