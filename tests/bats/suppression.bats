@@ -325,3 +325,13 @@ YML
   run in_own_registry paperless legacy-extra
   [ "$status" -eq 0 ]
 }
+
+@test "un conteneur conservé n'est jamais transmis à la suppression" {
+  printf 'shared-db\n' >"$SETTINGS_STORAGE/conf/paperless.containers"
+  printf 'shared-db\n' >"$SETTINGS_STORAGE/conf/otherapp.containers"
+  target=$(printf 'shared-db\ndb-paperless\n' | filter_owned_containers paperless 2>/dev/null)
+  printf '%s\n' "$target" | xargs -r docker rm -f -v
+  run grep -qxF "shared-db" "$REMOVED_LOG"
+  [ "$status" -ne 0 ]
+  grep -qxF "db-paperless" "$REMOVED_LOG"
+}

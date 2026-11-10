@@ -805,7 +805,9 @@ function container_owned_by_app() {
 # Message non sensible expliquant une conservation.
 function keep_resource_message() {
   local app="$1" kind="$2" name="$3" reason="$4"
-  printf 'Ressource conservée (%s) : %s %s — %s\n' "$app" "$kind" "$name" "$reason"
+  # stderr : ce message ne doit jamais entrer dans une liste de conteneurs à
+  # supprimer (le nom conservé y serait interprété comme une cible).
+  printf 'Ressource conservée (%s) : %s %s — %s\n' "$app" "$kind" "$name" "$reason" >&2
   log_write "Ressource conservée (${app}) : ${kind} ${name} — ${reason}" >/dev/null 2>&1
 }
 
