@@ -18,35 +18,61 @@ ANSIBLE = Path(os.environ.get("ANSIBLE_PLAYBOOK") or shutil.which("ansible-playb
 
 @unittest.skipUnless(ANSIBLE.is_file(), "Ansible requis")
 class ProxyLoggingTest(unittest.TestCase):
-    def test_generic_deployment_masks_opted_in_app_and_preserves_default(self):
+    """Le déploiement générique masque les paramètres Docker par défaut.
+
+    `~/.ansible.cfg` définit `log_path`, donc toute valeur non masquée est écrite
+    dans un journal persistant, pas seulement affichée en verbosité.
+    """
+
+    def run_deployment(self, tmp, docker_no_log="absent"):
         generic = yaml.safe_load((ROOT / "includes/dockerapps/vars/generique.yml").read_text())[0]
-        start = next(i for i,t in enumerate(generic['tasks']) if t['name']=='Prepare docker info')
-        tasks = generic['tasks'][start:start+4]
-        for opted_in in [True, False]:
-            with self.subTest(opted_in=opted_in), tempfile.TemporaryDirectory() as tmp:
-                selected = json.loads(json.dumps(tasks))
-                deployment = selected[-1]
-                del deployment['community.docker.docker_container']
-                deployment['ansible.builtin.fail'] = {'msg': '{{ docker_info.env.AUTH_PASS }}'}
-                # Une erreur du module peut contenir les arguments Docker :
-                # provoquer ce cas sur une valeur fictive, avec verbosité.
-                marker = 'fixture-pass-relay-proxy-845731'
-                variables = dict(pgrole='test-app', image='fixture:local',
-                                 docker_deploy_enabled=True, pg_labels={},
-                                 pg_env={'AUTH_PASS': marker},
-                                 specific_docker_info={'security_opts': 'no-new-privileges:true'})
-                if opted_in:
-                    variables['docker_no_log'] = True
-                play = [{'hosts':'localhost', 'gather_facts':False, 'vars':variables,'tasks':selected}]
-                path = Path(tmp) / 'play.json'
-                path.write_text(json.dumps(play))
-                result = subprocess.run([str(ANSIBLE),'-i','localhost,','-c','local',str(path),'-vv'],
-                                        capture_output=True,text=True,timeout=60)
-                self.assertNotEqual(result.returncode, 0)
-                output = result.stdout + result.stderr
-                self.assertEqual(marker in output, not opted_in, output)
-        proxy = yaml.safe_load((ROOT/'includes/dockerapps/vars/ssdv2proxy.yml').read_text())
-        self.assertIs(proxy['docker_no_log'], True)
+        start = next(i for i, t in enumerate(generic["tasks"]) if t["name"] == "Prepare docker info")
+        tasks = generic["tasks"][start:start + 4]
+        selected = json.loads(json.dumps(tasks))
+        deployment = selected[-1]
+        del deployment["community.docker.docker_container"]
+        # Échec réaliste : le message ne contient pas le secret. Ce qui doit
+        # rester masqué, c'est `docker_info.env` reconstruit par les tâches
+        # précédentes (et donc le journal persistant), pas le texte de l'erreur.
+        deployment["ansible.builtin.fail"] = {"msg": "fixture: échec de déploiement"}
+        # Une erreur du module peut contenir les arguments Docker : provoquer ce
+        # cas sur une valeur fictive, avec verbosité.
+        marker = "fixture-pass-relay-proxy-845731"
+        variables = dict(pgrole="test-app", image="fixture:local",
+                         docker_deploy_enabled=True, pg_labels={},
+                         pg_env={"AUTH_PASS": marker},
+                         specific_docker_info={"security_opts": "no-new-privileges:true"})
+        if docker_no_log != "absent":
+            variables["docker_no_log"] = docker_no_log
+        play = [{"hosts": "localhost", "gather_facts": False,
+                 "vars": variables, "tasks": selected}]
+        path = Path(tmp) / "play.json"
+        path.write_text(json.dumps(play))
+        result = subprocess.run([str(ANSIBLE), "-i", "localhost,", "-c", "local", str(path), "-vv"],
+                                capture_output=True, text=True, timeout=60)
+        self.assertNotEqual(result.returncode, 0)
+        return marker, result.stdout + result.stderr
+
+    def test_default_masks_secrets_including_on_error(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            marker, output = self.run_deployment(tmp)
+            self.assertNotIn(marker, output)
+
+    def test_explicit_opt_out_restores_verbose_output(self):
+        # Le comportement historique reste accessible, explicitement.
+        with tempfile.TemporaryDirectory() as tmp:
+            marker, output = self.run_deployment(tmp, docker_no_log=False)
+            self.assertIn(marker, output)
+
+    def test_explicit_opt_in_still_masks(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            marker, output = self.run_deployment(tmp, docker_no_log=True)
+            self.assertNotIn(marker, output)
+
+    def test_apps_that_opted_in_keep_the_option(self):
+        for name in ("ssdv2proxy", "ssdv2-relay"):
+            app = yaml.safe_load((ROOT / f"includes/dockerapps/vars/{name}.yml").read_text())
+            self.assertIs(app["docker_no_log"], True, name)
 
 
 @unittest.skipUnless(ANSIBLE.is_file(), "Ansible requis")
