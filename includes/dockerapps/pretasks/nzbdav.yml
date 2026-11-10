@@ -10,14 +10,19 @@
     prompt: |
       SSDV2_PROMPT {"id": "nzbdav.password", "label": "Mot de passe", "kind": "secret", "secret": true}
       Choisir votre password
-    echo: yes
+    echo: no
   register: password
+  no_log: true
 
 # ---- OBLIGATOIRE : Obscurcir le mot de passe ----
 - name: Obscure password with rclone
   command: "rclone obscure {{ password.user_input }}"
   register: obscure_pw
   changed_when: false
+  # Le mot de passe passerait dans la ligne de commande (visible via `ps`)
+  # et dans la sortie de tâche : la valeur est masquée, seul le résultat
+  # obscurci est ensuite utilisé.
+  no_log: true
 
 - name: Create /mnt/usenet with user permissions
   become: yes

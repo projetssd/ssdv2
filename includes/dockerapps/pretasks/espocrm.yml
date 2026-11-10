@@ -1,5 +1,6 @@
 ---
 - name: Create espocrm-daemon
+  no_log: true
   docker_container:
     labels:
       ssdv2.app: "{{pgrole}}"

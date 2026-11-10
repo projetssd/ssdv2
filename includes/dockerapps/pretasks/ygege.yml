@@ -17,10 +17,12 @@
     prompt: |
       SSDV2_PROMPT {"id": "ygege.password", "label": "Mot de passe YGG", "kind": "secret", "secret": true}
       Enter value for YGG_PASSWORD (your YGG account password)
-    echo: "yes"
+    echo: no
   register: ygg_password_input
+  no_log: true
 
 - name: set YGG password var
+  no_log: true
   set_fact:
     ygg_password: "{{ ygg_password_input.user_input }}"
 
@@ -43,19 +45,16 @@
   become: true
 
 - name: Create ygege config.json from template
+  # Sérialisation JSON : une saisie contenant guillemet ou antislash ne doit pas
+  # produire un fichier invalide. Le fichier contient le mot de passe du compte
+  # YGG : permissions restreintes et tâche masquée.
+  no_log: true
   copy:
-    content: |
-      {
-        "username": "{{ ygg_username }}",
-        "password": "{{ ygg_password }}",
-        "bind_ip": "0.0.0.0",
-        "bind_port": 8715,
-        "log_level": "debug"
-      }
+    content: "{{ {'username': ygg_username, 'password': ygg_password, 'bind_ip': '0.0.0.0', 'bind_port': 8715, 'log_level': 'debug'} | to_nice_json }}\n"
     dest: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/ygege/config.json"
     owner: "{{ lookup('env','USER') }}"
     group: "{{ lookup('env','USER') }}"
-    mode: '0644'
+    mode: '0600'
   become: true
 
 - name: Display configuration created

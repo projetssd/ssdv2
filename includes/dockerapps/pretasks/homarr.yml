@@ -21,5 +21,6 @@
   register: homarr_secret_key
 
 - name: Set Homarr secret encryption key fact
+  no_log: true
   ansible.builtin.set_fact:
     homarr_secret_encryption_key: "{{ homarr_secret_key.content | b64decode | trim }}"

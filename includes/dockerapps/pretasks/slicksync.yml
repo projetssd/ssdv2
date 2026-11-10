@@ -9,5 +9,6 @@
     group: "{{ lookup('env','MYGID') }}"
 
 - name: Generate or load the persistent JWT secret for {{ pgrole }}
+  no_log: true
   ansible.builtin.set_fact:
     slicksync_jwt_secret: "{{ lookup('password', settings.storage + '/docker/' + lookup('env','USER') + '/' + pgrole + '/jwt_secret length=64 chars=ascii_letters,digits') }}"

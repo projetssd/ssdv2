@@ -1,3 +1,23 @@
+10/11/2026 — Secrets : plus aucune valeur dans les journaux d'installation
+
+- invites secrètes : `echo: no` et `no_log: true` sur toutes les `pause`
+  marquées `"secret": true` (`ygege`, `transmissionvpn`, `seerrcatalog`,
+  `decypharrseed`, `nzbdav`, `trakt`, `tmdb`, claim Plex). `echo: "yes"` sur un
+  mot de passe affichait la saisie au terminal et dans la transcription.
+- 39 tâches de hooks (`set_fact`, `docker_container`, `shell`) masquées : elles
+  exposaient des mots de passe de base, jetons et clés dans le résultat de tâche,
+  y compris via les templates `mariadb`, `mariadb_officiel` et `postgresql`.
+- les secrets réels ne sont plus affichés par `debug` (`appkey`, `immich`). Les
+  jetons de premier démarrage (`ssdv2webui`, `symlink`) et la clé d'API
+  `mediaflowproxy` restent accessibles, mais par un fichier en 0600 dont le
+  chemin est indiqué : plus de valeur secrète dans la sortie ni dans les
+  journaux.
+- `ygege` : `config.json` passe en 0600 et la sérialisation JSON utilise
+  `to_nice_json` (une saisie avec guillemet ou antislash ne casse plus le fichier).
+- nouveau `tests/test_secret_hygiene.py` : contrat sur toutes les invites et
+  `debug`, plus deux exécutions Ansible réelles (`-vv`) qui vérifient qu'un
+  secret fictif n'apparaît nulle part et que le fichier de restitution est en 0600.
+
 06/11/2026 — CrowdSec : exclusion des applis indépendante de l'IP
 
 - whitelist `whitelist-ssdv2` étendue aux routeurs Traefik des applications

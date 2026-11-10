@@ -77,6 +77,7 @@
       traefik.http.services.prestashop-svc.loadbalancer.server.port: "80"
 
 - name: Deploying db-prestashop
+  no_log: true
   docker_container:
     labels:
       ssdv2.app: "{{pgrole}}"

@@ -25,6 +25,7 @@
   register: password
 
 - name: Generate random key
+  no_log: true
   set_fact:
     my_random_key: lookup('community.general.random_string', length=20)
 

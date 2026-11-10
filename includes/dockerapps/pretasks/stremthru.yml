@@ -65,8 +65,10 @@
           Entrer le password Alldebrid
         echo: no
       register: ad_password_input
+      no_log: true
 
     - name: Set AD_PASSWORD
+      no_log: true
       set_fact:
         AD_PASSWORD: "{{ ad_password_input.user_input | default('', true) }}"
 
@@ -77,8 +79,10 @@
           Entrer le token Alldebrid
         echo: no
       register: ad_token_input
+      no_log: true
 
     - name: Set AD_TOKEN
+      no_log: true
       set_fact:
         AD_TOKEN: "{{ ad_token_input.user_input | default('', true) }}"
 

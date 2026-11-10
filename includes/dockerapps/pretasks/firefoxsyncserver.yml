@@ -1,5 +1,6 @@
 ---
 - name: Set 'secret_connect' variable
+  no_log: true
   set_fact:
     secret_connect: "{{lookup('community.general.random_string', length=20, special=false)}}"
 

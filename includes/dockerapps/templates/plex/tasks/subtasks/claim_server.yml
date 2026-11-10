@@ -26,6 +26,7 @@
 
 
 - name: Claim Server | Get Plex Media Server claim code via prompts
+  no_log: true
   block:
 
   - name: "Claim Server | Ask user for Plex Media Server claim code"
@@ -34,6 +35,7 @@
         SSDV2_PROMPT {"id": "plex.claim_code", "label": "Code de claim Plex", "kind": "secret", "secret": true}
         Please visit 'https://plex.tv/claim', login with your Plex account,
         copy the 'Claim Code', paste it below, and press ENTER.
+      echo: no
     register: plex_claim_code_prompt
 
   - name: "Claim Server | Set 'plex_claim_code' variable"

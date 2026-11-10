@@ -20,5 +20,6 @@
   register: scrob_secret_key_raw
 
 - name: Définir la clé secrète
+  no_log: true
   ansible.builtin.set_fact:
     scrob_secret_key: "{{ scrob_secret_key_raw.content | b64decode | trim }}"

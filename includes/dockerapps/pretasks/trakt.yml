@@ -9,8 +9,9 @@
     prompt: |
       SSDV2_PROMPT {"id": "trakt.client_id", "label": "Client ID Trakt", "kind": "text", "secret": false}
       Please enter your TRAKT_CLIENT_ID
-    echo: yes
+    echo: no
   register: trakt_client_id_input
+  no_log: true
   when: not trakt_client_id_exists
 
 - name: Ask TRAKT_CLIENT_SECRET if missing
@@ -18,11 +19,13 @@
     prompt: |
       SSDV2_PROMPT {"id": "trakt.client_secret", "label": "Client secret Trakt", "kind": "secret", "secret": true}
       Please enter your TRAKT_CLIENT_SECRET
-    echo: yes
+    echo: no
   register: trakt_client_secret_input
+  no_log: true
   when: not trakt_client_secret_exists
 
 - name: Update TRAKT_CLIENT_ID and TRAKT_CLIENT_SECRET
+  no_log: true
   set_fact:
     trakt:
       id: "{{ trakt_client_id_input.user_input if not trakt_client_id_exists else trakt.id }}"

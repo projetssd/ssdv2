@@ -4,6 +4,7 @@
     seasonarr_jwtsecret_exists: "{{ seasonarr is defined and seasonarr.jwtsecret is defined and seasonarr.jwtsecret is not none and (seasonarr.jwtsecret | trim | length > 0) }}"
 
 - name: Generer un JWT secret si non defini pour Seasonarr
+  no_log: true
   set_fact:
     seasonarr_jwtsecret: "{{ lookup('password', '/dev/null length=64 chars=ascii_letters,digits') }}"
   when: not seasonarr_jwtsecret_exists

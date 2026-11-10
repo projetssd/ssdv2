@@ -6,6 +6,7 @@
         jwt_secret_exists: "{{ not (vikunja.jwtsecret is undefined or vikunja.jwtsecret is none or (vikunja.jwtsecret | trim | length == 0)) }}"
 
     - name: Générer un JWT secret si non défini pour Vikunja
+      no_log: true
       set_fact:
         vikunja_jwtsecret: "{{ lookup('password', '/dev/null length=64 chars=ascii_letters,digits') }}"
       when: not jwt_secret_exists
@@ -23,9 +24,6 @@
         executable: /bin/bash
       when: vikunja_jwtsecret is defined
 
-    - name: Afficher le JWT secret final pour Vikunja
-      debug:
-        msg: "JWT Secret pour Vikunja : {{ vikunja.jwtsecret }}"
   when: pgrole == "vikunja"
 
 # Bloc pour SpeedTestTracker
@@ -40,6 +38,7 @@
       when: not appkey_speedtesttracker_exists
 
     - name: Ajouter le préfixe `base64:` à la clé pour SpeedTestTracker
+      no_log: true
       set_fact:
         app_key: "base64:{{ raw_key.stdout }}"
       when: not appkey_speedtesttracker_exists
@@ -57,9 +56,6 @@
         executable: /bin/bash
       when: appkey.speedtesttracker is defined
 
-    - name: Afficher la clé finale pour SpeedTestTracker
-      debug:
-        msg: "Clé générée pour SpeedTestTracker : {{ appkey.speedtesttracker }}"
   when: pgrole == "speedtesttracker"
 
 # Bloc pour Bookstack
@@ -74,6 +70,7 @@
       when: not appkey_bookstack_exists
 
     - name: Ajouter le préfixe `base64:` à la clé pour bookstack
+      no_log: true
       set_fact:
         app_key: "base64:{{ raw_key.stdout }}"
       when: not appkey_bookstack_exists
@@ -91,7 +88,4 @@
         executable: /bin/bash
       when: appkey.bookstack is defined
 
-    - name: Afficher la clé finale pour bookstack
-      debug:
-        msg: "Clé générée pour bookstack : {{ appkey.bookstack }}"
   when: pgrole == "bookstack"

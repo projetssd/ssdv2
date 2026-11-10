@@ -121,6 +121,7 @@
       traefik.http.services.collabora-svc.loadbalancer.server.port: '9980'
 
 - name: Create and start Collabora container
+  no_log: true
   docker_container:
     name: collabora
     image: 'collabora/code'

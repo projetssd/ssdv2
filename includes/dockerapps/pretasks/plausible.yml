@@ -123,6 +123,7 @@
     state: present
 
 - name: Deploying {{ pgrole }} DB
+  no_log: true
   docker_container:
     labels:
       ssdv2.app: "{{pgrole}}"
