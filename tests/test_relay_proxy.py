@@ -271,9 +271,10 @@ class HookRedeployLoggingTest(unittest.TestCase):
         self.assertNotIn(marker, output)
         self.assertIn("Deploying test-app", output)
 
-    def test_module_error_message_is_not_masked(self):
-        # Comportement constaté, à requalifier si Ansible change : no_log masque
-        # le résultat de tâche, pas un message d'erreur produit par un module.
+    def test_no_log_censors_result_and_error_line_depends_on_version(self):
+        # Le résultat de tâche est toujours masqué. Le bandeau `[ERROR]` qui
+        # reprend le message du module est apparu avec ansible-core 2.21 : il
+        # expose un secret que le module écrit lui-même dans son erreur.
         marker = "fixture-module-error-secret-9913"
         task = {
             "name": "Échec avec message",
@@ -283,10 +284,17 @@ class HookRedeployLoggingTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             result = self.run_task(tmp, task, {})
         output = result.stdout + result.stderr
-        version = subprocess.run([str(ANSIBLE), "--version"], capture_output=True, text=True)
-        version = " ".join(version.stdout.split()[:3])
-        self.assertIn(marker, output, f"comportement Ansible modifié ({version})")
-        self.assertIn("censored", output, version)
+        version = subprocess.run([str(ANSIBLE), "--version"], capture_output=True, text=True).stdout
+        match = re.search(r"\[core (\d+)\.(\d+)\.(\d+)\]", version)
+        self.assertIsNotNone(match, version)
+        core = tuple(int(part) for part in match.groups())
+        self.assertIn("censored", output)
+        if core >= (2, 21, 0):
+            self.assertIn(marker, output,
+                          f"ansible-core {core} : bandeau [ERROR] attendu, secret exposé")
+        else:
+            self.assertNotIn(marker, output,
+                             f"ansible-core {core} : aucune fuite attendue dans le bandeau")
 
 
 if __name__ == '__main__':
