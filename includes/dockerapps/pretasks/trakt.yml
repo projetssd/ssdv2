@@ -32,6 +32,7 @@
       secret: "{{ trakt_client_secret_input.user_input if not trakt_client_secret_exists else trakt.secret }}"
 
 - name: Add TRAKT_CLIENT_ID and TRAKT_CLIENT_SECRET in the vault
+  no_log: true
   shell: |
     source ${SETTINGS_SOURCE}/profile.sh
     manage_account_yml trakt.id "{{ trakt.id }}"

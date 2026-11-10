@@ -12,11 +12,17 @@
   `mediaflowproxy` restent accessibles, mais par un fichier en 0600 dont le
   chemin est indiqué : plus de valeur secrète dans la sortie ni dans les
   journaux.
+- tâches `uri`, `command` et `shell` porteuses de secrets également masquées :
+  authentification et jetons de `beszel`, génération de secrets `authelia`,
+  `jitsi` et `nextcloud`, écritures de coffre `appkey`, `trakt`, `seasonarr`,
+  en-tête `X-Plex-Token`, `--client-secret` d'oauth2-proxy, broker
+  `sftorznab` et worker `streamfusion`.
 - `ygege` : `config.json` passe en 0600 et la sérialisation JSON utilise
   `to_nice_json` (une saisie avec guillemet ou antislash ne casse plus le fichier).
 - nouveau `tests/test_secret_hygiene.py` : contrat sur toutes les invites et
   `debug`, plus deux exécutions Ansible réelles (`-vv`) qui vérifient qu'un
-  secret fictif n'apparaît nulle part et que le fichier de restitution est en 0600.
+  secret fictif n'apparaît nulle part, qu'une réinstallation conserve le secret
+  et que le fichier de restitution est en 0600 même s'il a été créé en 0644.
 
 06/11/2026 — CrowdSec : exclusion des applis indépendante de l'IP
 

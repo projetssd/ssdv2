@@ -70,6 +70,7 @@
     - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/coturn"
 
 - name: 'SECRET'
+  no_log: true
   shell: |
     openssl rand -hex 16
   register: secret

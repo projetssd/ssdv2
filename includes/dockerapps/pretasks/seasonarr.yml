@@ -14,6 +14,7 @@
     seasonarr: "{{ (seasonarr | default({})) | combine({'jwtsecret': (seasonarr_jwtsecret if not seasonarr_jwtsecret_exists else seasonarr.jwtsecret)}) }}"
 
 - name: Ajouter le JWT secret dans le vault si genere
+  no_log: true
   shell: |
     source ${SETTINGS_SOURCE}/profile.sh
     manage_account_yml seasonarr.jwtsecret "{{ seasonarr.jwtsecret }}"

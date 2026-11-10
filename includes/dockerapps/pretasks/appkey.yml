@@ -17,6 +17,7 @@
           jwtsecret: "{{ vikunja_jwtsecret if not jwt_secret_exists else vikunja.jwtsecret }}"
 
     - name: Ajouter le JWT secret dans le vault si généré
+      no_log: true
       shell: |
         source ${SETTINGS_SOURCE}/profile.sh
         manage_account_yml vikunja.jwtsecret "{{ vikunja.jwtsecret }}"
@@ -49,6 +50,7 @@
           speedtesttracker: "{{ app_key if not appkey_speedtesttracker_exists else appkey.speedtesttracker }}"
 
     - name: Ajouter appkey.speedtesttracker dans le vault si généré
+      no_log: true
       shell: |
         source ${SETTINGS_SOURCE}/profile.sh
         manage_account_yml appkey.speedtesttracker "{{ appkey.speedtesttracker }}"
@@ -81,6 +83,7 @@
           bookstack: "{{ app_key if not appkey_bookstack_exists else appkey.bookstack }}"
 
     - name: Ajouter appkey.bookstack dans le vault si généré
+      no_log: true
       shell: |
         source ${SETTINGS_SOURCE}/profile.sh
         manage_account_yml appkey.bookstack "{{ appkey.bookstack }}"

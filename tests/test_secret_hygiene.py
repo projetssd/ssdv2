@@ -105,16 +105,22 @@ class PromptContractTest(unittest.TestCase):
 
 @unittest.skipUnless(ANSIBLE.is_file(), "Ansible requis")
 class SecretOutputTest(unittest.TestCase):
-    def run_hook(self, hook, variables, extra_files=None):
-        directory = tempfile.TemporaryDirectory()
-        self.addCleanup(directory.cleanup)
-        base = Path(directory.name)
-        storage = base / "storage"
-        storage.mkdir()
+    def run_hook(self, hook, variables, extra_files=None, storage=None, token_mode=0o600):
+        if storage is None:
+            directory = tempfile.TemporaryDirectory()
+            self.addCleanup(directory.cleanup)
+            base = Path(directory.name)
+            storage = base / "storage"
+            storage.mkdir()
+        else:
+            base = storage.parent
         data_dir = storage / "docker" / os.environ.get("USER", "fixture") / "ssdv2webui" / "data"
-        data_dir.mkdir(parents=True)
+        data_dir.mkdir(parents=True, exist_ok=True)
         token = "fixture-token-3d9c1f"
-        (data_dir / "setup-token").write_text(token + "\n")
+        token_file = data_dir / "setup-token"
+        if not token_file.exists():
+            token_file.write_text(token + "\n")
+            token_file.chmod(token_mode)
         if extra_files:
             extra_files(storage, data_dir, token)
         variables = dict(variables, settings={"storage": str(storage)})
@@ -149,6 +155,52 @@ class SecretOutputTest(unittest.TestCase):
         token_file = storage / "docker" / os.environ.get("USER", "fixture") / "ssdv2webui" / "data" / "setup-token"
         self.assertTrue(token_file.is_file())
         self.assertEqual(oct(token_file.stat().st_mode & 0o777), "0o600")
+
+    def test_setup_token_mode_is_tightened_even_if_created_permissive(self):
+        output, storage, token = self.run_hook(
+            "ssdv2webui.yml",
+            {
+                "pgrole": "ssdv2webui",
+                "sub_enabled": False,
+                "user": {"domain": "example.invalid"},
+                "ssdv2webui_existing_db": {"stat": {"exists": True}},
+            },
+            token_mode=0o644,
+        )
+        self.assertNotIn(token, output)
+        token_file = (
+            storage / "docker" / os.environ.get("USER", "fixture")
+            / "ssdv2webui" / "data" / "setup-token"
+        )
+        self.assertEqual(oct(token_file.stat().st_mode & 0o777), "0o600")
+
+    def test_mediaflowproxy_password_is_preserved_on_reinstall(self):
+        def prepare(storage, _data_dir, _token):
+            (storage / "docker" / os.environ.get("USER", "fixture") / "mediaflowproxy").mkdir(
+                parents=True, exist_ok=True)
+
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        storage = Path(directory.name) / "storage"
+        storage.mkdir()
+        variables = {
+            "pgrole": "mediaflowproxy",
+            "sub_enabled": False,
+            "user": {"domain": "example.invalid"},
+        }
+        password_file = (
+            storage / "docker" / os.environ.get("USER", "fixture")
+            / "mediaflowproxy" / "api_password"
+        )
+        first_output, _, _ = self.run_hook(
+            "mediaflowproxy.yml", variables, extra_files=prepare, storage=storage)
+        first = password_file.read_text().strip()
+        second_output, _, _ = self.run_hook(
+            "mediaflowproxy.yml", variables, extra_files=prepare, storage=storage)
+        second = password_file.read_text().strip()
+        self.assertEqual(first, second)
+        self.assertNotIn(first, first_output)
+        self.assertNotIn(second, second_output)
 
     def test_mediaflowproxy_password_is_never_printed(self):
         def prepare(storage, _data_dir, _token):

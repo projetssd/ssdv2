@@ -5,23 +5,27 @@
     - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{pgrole}}"
 
 - name: Create new hashed jwt_secret
+  no_log: true
   shell: |
     docker run --rm authelia/authelia:latest authelia crypto rand --length 64 --charset alphanumeric | cut -d: -f2 | sed 's/ //g'
   register: jwt_secret
 
 - name: Create new hashed secret
+  no_log: true
   shell: |
     docker run --rm authelia/authelia:latest authelia crypto rand --length 64 --charset alphanumeric | cut -d: -f2 | sed 's/ //g'
   register: secret
 
 - name: Create new hashed encryption_key
+  no_log: true
   shell: |
     docker run --rm authelia/authelia:latest authelia crypto rand --length 64 --charset alphanumeric | cut -d: -f2 | sed 's/ //g'
   register: encryption_key
 
 - name: Create new hashed
+  no_log: true
   shell: |
-    docker run authelia/authelia:4.37.5 authelia hash-password {{user.pass}} | cut -d: -f2 | sed 's/ //g'
+    docker run authelia/authelia:4.37.5 authelia hash-password {{ user.pass | quote }} | cut -d: -f2 | sed 's/ //g'
   register: password
 
 - name: Generate random key
