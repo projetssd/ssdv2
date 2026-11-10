@@ -76,12 +76,6 @@
       ansible.builtin.set_fact:
         docker_deploy_enabled: "{{ docker_deploy_enabled | default(true) }}"
 
-    - name: "Set DNS Record on CloudFlare"
-      ansible.builtin.include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
-      vars:
-        subdomain: "{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}"
-      when: cloudflare_enabled and (traefik_labels_enabled | bool)
-
     # Un enregistrement DNS n'est utile que si un router Traefik est exposé :
     # labels génériques, ou labels spécifiques fournis par l'application
     # (specific_docker_info.labels ou labels consommés par une posttask).
@@ -91,6 +85,12 @@
           {{ (traefik_labels_enabled | bool)
              or (specific_docker_info | default({})).labels is defined
              or (labels | default('') | length > 0) }}
+
+    - name: "Set DNS Record on CloudFlare"
+      ansible.builtin.include_tasks: "{{ settings.source }}/includes/config/roles/cloudflare/tasks/main.yml"
+      vars:
+        subdomain: "{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}"
+      when: cloudflare_enabled and dns_required
 
     - name: "Prompt user to create an A record"
       ansible.builtin.pause:

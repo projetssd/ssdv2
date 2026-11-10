@@ -1,3 +1,14 @@
+10/11/2026 — DNS Cloudflare : enregistrement créé aussi pour les labels spécifiques
+
+- la création de l'enregistrement Cloudflare était conditionnée à
+  `traefik_labels_enabled` uniquement. Une application qui fournit ses propres
+  labels (`specific_docker_info.labels`, cas `streamfusion`) n'obtenait donc
+  aucun enregistrement DNS : le sous-domaine ne résolvait plus après une
+  réinstallation.
+- `dns_required` est calculé avant l'appel Cloudflare et sert de condition aux
+  deux parcours (Cloudflare actif, ou création manuelle). Aucun autre
+  changement de routage.
+
 10/11/2026 — Déploiement générique : paramètres sensibles masqués par défaut
 
 - les quatre tâches du déploiement (`Prepare docker info`, `Add specific docker
