@@ -2,7 +2,6 @@
 pgrole: 'alfred'
 intport: '5000'
 image: 'ghcr.io/pukabyte/alfred:latest'
-hostname: alfred
 pg_volumes:
   - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}:/app/data"
   - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}"
@@ -16,5 +15,6 @@ pg_env:
   DRY_RUN: "true"
   RUN_ON_STARTUP: "true"
 specific_docker_info:
+  hostname: alfred
   user: "{{ lookup('env','MYUID') }}:{{ lookup('env','MYGID') }}"
 

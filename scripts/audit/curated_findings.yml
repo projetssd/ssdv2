@@ -63,20 +63,6 @@ findings:
   path: includes/dockerapps/posttasks/mattermost_post.yml
   needle: chmod -R 777
   detail: Dossier applicatif rendu récursivement accessible en écriture à tous les utilisateurs
-- app: grabb2rss
-  code: IGNOREDOPTION
-  axis: deploiement
-  severity: P2
-  path: includes/dockerapps/vars/grabb2rss.yml
-  needle: 'healthcheck:'
-  detail: healthcheck placé à la racine des variables et non dans specific_docker_info ; le playbook générique ne le transmet pas à Docker
-- app: alfred
-  code: IGNOREDOPTION
-  axis: minimalisme
-  severity: P3
-  path: includes/dockerapps/vars/alfred.yml
-  needle: 'hostname:'
-  detail: hostname placé à la racine ; le playbook générique ne le transmet pas au conteneur
 - app: aiostreams
   code: ROTATESECRET
   axis: cycle

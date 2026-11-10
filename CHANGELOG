@@ -1,3 +1,14 @@
+10/11/2026 — Ménage : hooks dupliqués, options ignorées, fichiers internes
+
+- `rutorrent` et `seasonarr` ne déclarent plus leur pretask homonyme : elle était
+  chargée automatiquement puis une seconde fois explicitement.
+- `alfred` : `hostname` déplacé sous `specific_docker_info` (transmis au
+  conteneur). `grabb2rss` : `healthcheck` et `restart_policy` déplacés sous
+  `specific_docker_info`.
+- audit : les fichiers volontairement internes (`exemple`, `generique`,
+  `gluetun`, `traefik`) restent listés dans le rapport mais ne sont plus
+  comptés comme écarts de catalogue.
+
 10/11/2026 — Permissions : fin des 0777 et des secrets en lecture globale
 
 - dossiers applicatifs en `0775` au lieu de `0777` pour `baikal`, `filebrowser`,

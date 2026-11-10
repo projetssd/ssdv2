@@ -13,10 +13,11 @@ pg_env:
   PGID: "{{ lookup('env','MYGID') }}"
   TZ: "Europe/Paris"
 
-restart: unless-stopped
-healthcheck:
-  test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-  interval: 30s
-  timeout: 10s
-  retries: 3
-  start_period: 10s
+specific_docker_info:
+  restart_policy: unless-stopped
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+    start_period: 10s

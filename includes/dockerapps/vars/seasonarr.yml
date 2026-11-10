@@ -14,5 +14,3 @@ pg_env:
   DATABASE_URL: 'sqlite:///./data/seasonarr.db'
   JWT_SECRET_KEY: "{{ seasonarr.jwtsecret }}"
 
-pretasks:
-  - seasonarr

@@ -314,6 +314,9 @@ REJECTED = {
 
 SEVERITY_ORDER = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}
 
+# Fichiers de variables volontairement hors catalogue (interne, exemple).
+INTERNAL_VARS = {"exemple", "generique", "gluetun", "traefik"}
+
 # Chantiers transverses : un seul correctif ferme plusieurs dizaines de constats.
 SYSTEMIC = {
     "GENLOG": ("generique.yml", "Même mécanisme pour toutes : les tâches `set_fact`/`docker_container` "
@@ -678,8 +681,9 @@ class Audit:
                 {"files": [f"includes/dockerapps/vars/{name}.yml"], "unresolved": [],
                  "findings": [], "data": self.repo.load(f"includes/dockerapps/vars/{name}.yml")},
             )
-            self.add(name, "CATALOGORPHAN", "catalogue", severity,
-                     f"includes/dockerapps/vars/{name}.yml", 1, detail)
+            if name not in INTERNAL_VARS:
+                self.add(name, "CATALOGORPHAN", "catalogue", severity,
+                         f"includes/dockerapps/vars/{name}.yml", 1, detail)
         for app in self.apps:
             if app not in catalog:  # pragma: no cover - garde-fou
                 continue
