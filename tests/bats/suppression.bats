@@ -192,46 +192,101 @@ assert_absent() {
   assert_absent sffs-secrets
 }
 
-@test "un conteneur enregistré par une autre application installée est conservé" {
-  printf 'stremio-postgres\nstremio-redis\n' >"$SETTINGS_STORAGE/conf/sftorznab.containers"
-  printf 'sftorznab\n' >"$INSTALLED_APPS"
-  run suppression_appli streamfusion 1
+@test "une application dépendante sans statut en base protège son conteneur" {
+  printf 'stremio-postgres\n' >"$SETTINGS_STORAGE/conf/sftorznab.containers"
+  # Aucune entrée en base : l'application peut être arrêtée, en échec ou
+  # réinstallée, elle dépend toujours de la ressource.
+  : >"$INSTALLED_APPS"
+  run remove_app_containers streamfusion stremio-postgres streamfusion
   [ "$status" -eq 0 ]
   run grep -qxF "stremio-postgres" "$REMOVED_LOG"
-  [ "$status" -ne 0 ]
-  run grep -qxF "stremio-redis" "$REMOVED_LOG"
   [ "$status" -ne 0 ]
   grep -qxF "streamfusion" "$REMOVED_LOG"
 }
 
-@test "les conteneurs partagés sont retirés quand l'autre application n'est plus installée" {
+@test "streamfusion puis sftorznab : chacun protège la pile de l'autre" {
   printf 'stremio-postgres\nstremio-redis\n' >"$SETTINGS_STORAGE/conf/sftorznab.containers"
-  : >"$INSTALLED_APPS"
-  run suppression_appli streamfusion 1
+  run remove_app_containers streamfusion stremio-postgres stremio-redis
   [ "$status" -eq 0 ]
-  grep -qxF "stremio-postgres" "$REMOVED_LOG"
-  grep -qxF "stremio-redis" "$REMOVED_LOG"
-}
-
-@test "la liste générique exclut aussi le conteneur d'une autre application installée" {
-  printf 'paperless\n' >"$SETTINGS_STORAGE/conf/otherapp.containers"
-  printf 'otherapp\n' >"$INSTALLED_APPS"
-  make_data paperless
-  run suppression_appli paperless 0
-  [ "$status" -eq 0 ]
-  run grep -qxF "paperless" "$REMOVED_LOG"
+  run grep -qxF "stremio-postgres" "$REMOVED_LOG"
   [ "$status" -ne 0 ]
-  run grep -qxF "db-paperless" "$REMOVED_LOG"
+
+  : >"$REMOVED_LOG"
+  printf 'streamfusion\nstremio-postgres\nstremio-redis\n' >"$SETTINGS_STORAGE/conf/streamfusion.containers"
+  run remove_app_containers sftorznab stremio-postgres stremio-redis
   [ "$status" -eq 0 ]
-  assert_exists paperless
+  run grep -qxF "stremio-postgres" "$REMOVED_LOG"
+  [ "$status" -ne 0 ]
 }
 
-@test "le registre d'une application non installée ne protège pas un conteneur" {
-  printf 'paperless\n' >"$SETTINGS_STORAGE/conf/otherapp.containers"
-  : >"$INSTALLED_APPS"
-  make_data paperless
-  run suppression_appli paperless 0
+@test "le dernier utilisateur d'un conteneur partagé peut le retirer" {
+  printf 'mariadb\n' >"$SETTINGS_STORAGE/conf/otherapp.containers"
+  run remove_app_containers paperless mariadb
   [ "$status" -eq 0 ]
-  run grep -qxF "paperless" "$REMOVED_LOG"
+  run grep -qxF "mariadb" "$REMOVED_LOG"
+  [ "$status" -ne 0 ]
+
+  : >"$REMOVED_LOG"
+  rm -f "$SETTINGS_STORAGE/conf/otherapp.containers"
+  run remove_app_containers paperless mariadb
   [ "$status" -eq 0 ]
+  grep -qxF "mariadb" "$REMOVED_LOG"
+}
+
+@test "registre absent : la déclaration dans les hooks suffit" {
+  rm -f "$SETTINGS_STORAGE/conf"/*.containers
+  run remove_app_containers paperless mariadb
+  [ "$status" -eq 0 ]
+  grep -qxF "mariadb" "$REMOVED_LOG"
+}
+
+@test "propriété inconnue : ressource conservée avec un message explicite" {
+  run remove_app_containers paperless ressource-inconnue
+  [ "$status" -eq 0 ]
+  local message="$output"
+  run grep -qxF "ressource-inconnue" "$REMOVED_LOG"
+  [ "$status" -ne 0 ]
+  [[ "$message" == *"Ressource conservée (paperless)"* ]]
+  [[ "$message" == *"propriété non établie"* ]]
+}
+
+@test "la liste générique ne garde que les conteneurs possédés" {
+  printf 'shared-db\n' >"$SETTINGS_STORAGE/conf/paperless.containers"
+  printf 'shared-db\n' >"$SETTINGS_STORAGE/conf/otherapp.containers"
+  output="$(printf 'shared-db\ndb-paperless\n' | filter_owned_containers paperless)"
+  [[ "$output" == *"db-paperless"* ]]
+  [[ "$output" != "shared-db"* ]]
+  [[ "$output" == *"Ressource conservée (paperless)"* ]]
+}
+
+@test "dossier partagé : conservé tant qu'une autre application le référence" {
+  mkdir -p "$SETTINGS_STORAGE/vars"
+  printf 'pgrole: otherapp\npg_volumes:\n  - "{{ settings.storage }}/docker/{{ lookup('"'"'env'"'"','"'"'USER'"'"') }}/mariadb:/data"\n' \
+    >"$SETTINGS_STORAGE/vars/otherapp.yml"
+  make_data mariadb
+  run remove_app_dir paperless mariadb
+  [ "$status" -eq 0 ]
+  assert_exists mariadb
+  [[ "$output" == *"Ressource conservée (paperless)"* ]]
+
+  rm -f "$SETTINGS_STORAGE/vars/otherapp.yml"
+  run remove_app_dir paperless mariadb
+  [ "$status" -eq 0 ]
+  assert_absent mariadb
+}
+
+@test "volume partagé : conservé, puis retiré pour le dernier utilisateur" {
+  printf 'shared-vol\n' >"$SETTINGS_STORAGE/conf/paperless.volumes"
+  printf 'shared-vol\n' >"$SETTINGS_STORAGE/conf/otherapp.volumes"
+  run remove_app_volumes paperless
+  [ "$status" -eq 0 ]
+  local message="$output"
+  run grep -q "volume rm -f shared-vol" "$DOCKER_LOG"
+  [ "$status" -ne 0 ]
+  [[ "$message" == *"Ressource conservée (paperless) : volume shared-vol"* ]]
+
+  rm -f "$SETTINGS_STORAGE/conf/otherapp.volumes"
+  run remove_app_volumes paperless
+  [ "$status" -eq 0 ]
+  grep -q "volume rm -f shared-vol" "$DOCKER_LOG"
 }

@@ -28,14 +28,32 @@
   applications.
 - `sffs` conserve son cache TMDB et documente le retrait volontaire de
   `sffs-secrets` (lié à la clé d'API supprimée, régénéré à l'installation).
-- un conteneur enregistré par une autre application encore installée n'est plus
-  supprimé : `suppression_appli` recoupe `conf/<app>.containers` avec les
-  applications présentes en base. Corrige la pile Stremio partagée par
-  `sftorznab` et `streamfusion` (`stremio-postgres`, `stremio-redis`), et la
-  classe entière des conteneurs communs.
-- nouveau `tests/bats/suppression.bats` : 14 cas avec `docker`, `sudo`,
-  Ansible et SQLite simulés ; une suppression partielle préserve les données,
-  une suppression complète les retire.
+- une ressource n'est supprimée que si sa **propriété exclusive** est établie :
+  convention `<app>`/`db-<app>`/`redis-<app>`/`memcached-<app>`, déclaration par
+  les hooks de l'application, ou présence dans son registre — et dans aucun
+  registre tiers. Le statut en base n'est plus utilisé : une application
+  arrêtée, en échec, en réinstallation ou absente de la base protège toujours
+  ses ressources.
+- sinon la ressource est **conservée** avec un message non sensible expliquant
+  pourquoi (`Ressource conservée (<app>) : conteneur|dossier|volume <nom> —
+  propriété non établie`). Cela couvre les installations anciennes sans
+  registre et les piles partagées (`sftorznab`/`streamfusion`).
+- dossiers persistants : suppression seulement si le chemin est sous
+  `.../<app>` ou référencé uniquement par l'application ; un dossier référencé
+  par une autre application est conservé.
+- volumes : un volume présent dans le registre d'une autre application n'est
+  jamais retiré, même en suppression complète.
+- réseaux : aucun code ne supprime de réseau dans `suppression_appli` ; les
+  réseaux `<app>-net` restent donc non nettoyés (constat `NETWORKCLEAN`, lot
+  séparé). Aucun réseau partagé ne peut être retiré aujourd'hui.
+- nouveau `tests/bats/suppression.bats` : 18 cas avec `docker`, `sudo`,
+  Ansible et SQLite simulés ; registre absent, application dépendante sans
+  statut, partage dans les deux sens, dernier utilisateur, ressource inconnue,
+  dossier et volume partagés.
+- `tests/manual/suppression-e2e.sh` : essai de bout en bout sur un démon Docker
+  jetable (installation, réinstallation, suppression partagée). Refuse
+  explicitement `unix:///var/run/docker.sock`. **Non exécuté** faute de démon
+  isolé sur la machine de développement.
 
 10/11/2026 — Secrets : plus aucune valeur dans les journaux d'installation
 
