@@ -98,6 +98,10 @@ jobs:
         run: |
           export ANSIBLE_PLAYBOOK="$(command -v ansible-playbook)"
           python3 tests/test_secret_hygiene.py
+      - name: Tests d'intégration add-app (#100-#103)
+        run: |
+          export ANSIBLE_PLAYBOOK="$(command -v ansible-playbook)"
+          python3 tests/test_integration_addapp.py
 
   yaml:
     runs-on: ubuntu-24.04
