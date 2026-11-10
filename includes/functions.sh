@@ -720,6 +720,7 @@ function others_declare_container() {
                                      -e "${SETTINGS_SOURCE}/includes/dockerapps/posttasks/${app}.yml" \
                                      -e "${SETTINGS_STORAGE}/vars/${app}.yml" \
                                      -e "${SETTINGS_STORAGE}/conf/${app}.yml" \
+    | grep -v "^${SETTINGS_SOURCE}/includes/dockerapps/templates/${app}/" \
     | files_declare_container "$name"
 }
 
@@ -741,20 +742,18 @@ function in_other_registry() {
 
 # Propriété exclusive d'un conteneur pour cette application.
 function container_owned_by_app() {
-  local app="$1" name="$2"
-  name_is_convention "$app" "$name" && return 0
-  if in_other_registry "$app" "$name"; then
-    return 1
-  fi
-  if in_own_registry "$app" "$name"; then
-    others_declare_container "$app" "$name" && return 1
-    return 0
-  fi
-  if app_declares_container "$app" "$name"; then
-    others_declare_container "$app" "$name" && return 1
-    return 0
-  fi
-  return 1
+  local app="$1" name="$2" evidence=1
+  # La convention de nommage est un indice, pas une preuve : un conteneur
+  # `<app>` ou `db-<app>` peut être partagé. Elle ne dispense pas de vérifier
+  # les registres et déclarations des autres applications.
+  if name_is_convention "$app" "$name"; then evidence=0; fi
+  if in_own_registry "$app" "$name"; then evidence=0; fi
+  if app_declares_container "$app" "$name"; then evidence=0; fi
+  [ "$evidence" -eq 0 ] || return 1
+  # Preuve contraire : ressource revendiquée ailleurs.
+  if in_other_registry "$app" "$name"; then return 1; fi
+  if others_declare_container "$app" "$name"; then return 1; fi
+  return 0
 }
 
 # Message non sensible expliquant une conservation.
