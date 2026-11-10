@@ -1,3 +1,0 @@
----
-- name: Générer la configuration de l'instance Decypharr
-  ansible.builtin.include_tasks: "{{ settings.source }}/includes/dockerapps/templates/generique/decypharr_instance.yml"
