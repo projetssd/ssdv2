@@ -125,10 +125,19 @@ class HookInteractionTest(unittest.TestCase):
 class SuppressionGuardTest(unittest.TestCase):
     def test_guard_functions_exist(self):
         text = (ROOT / "includes/functions.sh").read_text()
-        for needle in ("containers_owned_by_other_apps", "filter_foreign_containers",
-                       "remove_app_containers"):
-            self.assertIn(needle, text)
-        self.assertIn('applications where name=', text)
+        for needle in ("container_owned_by_app", "filter_owned_containers",
+                       "remove_app_containers", "dir_owned_by_app", "remove_app_dir",
+                       "remove_app_volumes", "keep_resource_message"):
+            self.assertTrue(needle in text, needle)
+
+    def test_status_is_not_used_as_ownership_proof(self):
+        # Le statut en base ne distingue pas une application arrêtée, en échec ou
+        # réinstallée : il ne doit plus servir de preuve de propriété.
+        text = (ROOT / "includes/functions.sh").read_text()
+        guard = text[text.index("function container_owned_by_app"):]
+        guard = guard[:guard.index("function filter_owned_containers")]
+        self.assertNotIn("applications where name=", guard)
+        self.assertNotIn("status", guard)
 
 
 if __name__ == "__main__":
