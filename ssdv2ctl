@@ -1645,6 +1645,10 @@ def main(argv: list[str] | None = None) -> int:
                 argv.extend(["--backup", args.backup])
             payload = command_oauth2_repair(source, storage, argv)
             emit(payload)
+            if args.oauth2_command == "status":
+                # Le diagnostic est déjà émis : ne pas ajouter une seconde
+                # enveloppe d'erreur. Le code de sortie signale l'état.
+                return EXIT_OK if payload.get("ok") else EXIT_ERROR
             if not payload.get("ok"):
                 return fail(
                     CtlError(

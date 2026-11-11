@@ -525,13 +525,22 @@ def collect_status(source: Path, storage: Path) -> dict:
     inspect = _docker_inspect(OAUTH2_CONTAINER)
     checks.append(_check("container", inspect is not None, OAUTH2_CONTAINER))
     if inspect:
-        checks.append(_check("container_current", _container_is_current(inspect),
-                             "image/flags/montage à jour"))
+        current = _container_is_current(inspect)
+        checks.append(_check(
+            "container_current",
+            current,
+            "image/flags/montage à jour" if current else "conteneur à recréer",
+        ))
         config = inspect.get("Config") or {}
         checks.append(_check("image", OAUTH2_IMAGE in str(config.get("Image") or ""),
                              str(config.get("Image") or "")))
-    host_ok = not _template_updates(templates_repo)
-    checks.append(_check("templates_host", host_ok, TEMPLATES_CONTAINER_DIR))
+    template_updates = _template_updates(templates_repo)
+    checks.append(_check(
+        "templates_host",
+        not template_updates,
+        TEMPLATES_CONTAINER_DIR if not template_updates
+        else f"à installer : {', '.join(template_updates)}",
+    ))
 
     middlewares_path = rules_dir / MIDDLEWARES
     chains_path = rules_dir / CHAINS
