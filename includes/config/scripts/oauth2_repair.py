@@ -771,8 +771,7 @@ def rollback(source: Path, storage: Path, backup_arg: str | None, apply: bool) -
         backup = candidates[-1]
     if not backup.is_dir():
         raise RepairError(f"sauvegarde introuvable: {backup}")
-    if _docker_inspect(OAUTH2_BACKUP) is None:
-        raise RepairError(f"conteneur de sauvegarde introuvable: {OAUTH2_BACKUP}")
+    has_container_backup = _docker_inspect(OAUTH2_BACKUP) is not None
     if not apply:
         return {
             "schema": SCHEMA_VERSION,
@@ -780,6 +779,7 @@ def rollback(source: Path, storage: Path, backup_arg: str | None, apply: bool) -
             "ok": True,
             "applied": False,
             "backup": str(backup),
+            "container_restore": has_container_backup,
             "message": "dry-run : relancer avec --apply pour restaurer",
         }
     for name in (MIDDLEWARES, CHAINS):
@@ -787,6 +787,17 @@ def rollback(source: Path, storage: Path, backup_arg: str | None, apply: bool) -
         if candidate.is_file():
             _validate_toml(candidate)
     restored = _restore_files(storage, backup)
+    if not has_container_backup:
+        return {
+            "schema": SCHEMA_VERSION,
+            "action": "oauth2.rollback",
+            "ok": True,
+            "applied": True,
+            "backup": str(backup),
+            "restored": restored,
+            "container_restored": False,
+            "message": "règles restaurées ; aucune sauvegarde de conteneur (réparation sans recréation)",
+        }
     failed = f"oauth2-proxy-pre-rollback-{_now()}"
     _run(["docker", "stop", OAUTH2_CONTAINER], timeout=60, check=True)
     _run(["docker", "rename", OAUTH2_CONTAINER, failed], timeout=30, check=True)
@@ -807,6 +818,7 @@ def rollback(source: Path, storage: Path, backup_arg: str | None, apply: bool) -
         "applied": True,
         "backup": str(backup),
         "restored": restored,
+        "container_restored": True,
     }
 
 
@@ -843,6 +855,8 @@ def _print_rollback(payload: dict) -> None:
     print(f"Sauvegarde : {payload.get('backup')}")
     for item in payload.get("restored", []):
         print(f"  - restauré : {item}")
+    if payload.get("container_restored") is False:
+        print("  - conteneur inchangé (sauvegarde sans recréation)")
     if not payload.get("applied"):
         print("\nDry-run : relancer avec --apply pour restaurer.")
     print(f"\nRésultat : {'OK' if payload.get('ok') else 'ÉCHEC'}")
