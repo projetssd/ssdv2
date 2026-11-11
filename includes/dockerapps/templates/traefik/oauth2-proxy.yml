@@ -17,6 +17,24 @@
       traefik.http.services.oauth2proxy-svc.loadbalancer.server.port: '4180'
       traefik.http.routers.oauth2proxy-rtr.middlewares: 'chain-no-auth@file'
 
+- name: 'Créer le dossier des templates OAuth2'
+  become: true
+  ansible.builtin.file:
+    path: /etc/oauth2_proxy/templates
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: 'Installer les templates OAuth2'
+  become: true
+  ansible.builtin.copy:
+    src: '{{ settings.source }}/includes/dockerapps/templates/traefik/oauth2-proxy-templates/'
+    dest: /etc/oauth2_proxy/templates/
+    owner: root
+    group: root
+    mode: '0644'
+
 - name: Deploy OAuth2 Proxy
   # --client-secret est passé en argument.
   no_log: true
@@ -35,12 +53,16 @@
       - '127.0.0.1:4180:4180'
     volumes:
       - /etc/oauth2_proxy/emails.txt:/etc/oauth2_proxy/emails.txt:ro
+      - /etc/oauth2_proxy/templates:/etc/oauth2_proxy/templates:ro
     command:
       # ⭐ Google OAuth
       - '--provider=google'
       - '--client-id={{ oauth2proxy.client }}'
       - '--client-secret={{ oauth2proxy.secret }}'
       - '--redirect-url=https://oauth2-proxy.{{ user.domain }}/oauth2/callback'
+
+      # ⭐ Pages personnalisées SSDV2 (sign_in.html et error.html)
+      - '--custom-templates-dir=/etc/oauth2_proxy/templates'
 
       # ⭐ CRITICAL: ForwardAuth mode
       - '--reverse-proxy=true'

@@ -57,6 +57,27 @@ cookie et oauth2-proxy rejoue un rafraîchissement Google à **chaque** requête
 Le routeur `oauth2-proxy-path@file` a une priorité de 1000 afin de ne jamais
 être éclipsé par un routeur applicatif.
 
+## Pages personnalisées
+
+Les pages `sign_in.html` et `error.html` sont versionnées dans
+`includes/dockerapps/templates/traefik/oauth2-proxy-templates/`. Le template
+Ansible les copie dans `/etc/oauth2_proxy/templates` (mode 0644) et le conteneur
+les monte en lecture seule avec
+`--custom-templates-dir=/etc/oauth2_proxy/templates`.
+
+Ce sont des templates Go (`{{define "sign_in.html"}}` /
+`{{define "error.html"}}`) compatibles OAuth2 Proxy ≥ 7.15.2. Le formulaire de
+connexion doit conserver :
+
+- `action="{{.ProxyPrefix}}/start"` et le champ caché `rd` (destination) ;
+- les variables `.StatusCode`, `.SignInMessage`, `.CustomLogin` et `.Footer`.
+
+La page d'erreur couvre 401, 403, 404 et les autres statuts ; le 403 est utilisé
+notamment lorsqu'un compte Google n'est pas dans `authenticated-emails-file`.
+
+Après modification, recréer le conteneur `oauth2-proxy` : le dossier est copié
+au déploiement, puis monté en lecture seule.
+
 ## Déploiement
 
 Les nouvelles règles Traefik sont rechargées à chaud (`providers.file.watch`).

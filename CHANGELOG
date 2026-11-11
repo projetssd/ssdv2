@@ -14,6 +14,9 @@
   multi-onglets.
 - routeur `/oauth2/` en priorité 1000 pour ne plus être éclipsé par un routeur
   applicatif.
+- pages de connexion et d'erreur personnalisées SSDV2 (`sign_in.html`,
+  `error.html`) copiées dans `/etc/oauth2_proxy/templates` et activées par
+  `--custom-templates-dir`.
 - documentation `docs/oauth2-proxy.md`.
 
 06/11/2026 — CrowdSec : exclusion des applis indépendante de l'IP
