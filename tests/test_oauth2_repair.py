@@ -178,3 +178,33 @@ def test_restore_files():
         assert (rules / oauth2_repair.CHAINS).read_text(encoding="utf-8") == "old-ch"
         assert not (rules / oauth2_repair.BRIDGES).exists()
         assert oauth2_repair.BRIDGES + " (supprimé)" in restored
+
+
+def test_print_status_summary():
+    import contextlib
+    import io
+
+    payload = {
+        "ok": False,
+        "image": "quay.io/oauth2-proxy/oauth2-proxy:v7.6.0",
+        "expected_image": oauth2_repair.OAUTH2_IMAGE,
+        "summary": {
+            "container_update": True,
+            "templates_missing": 2,
+            "traefik_corrections": 5,
+            "bridges_missing": 11,
+        },
+        "refresh_count_10m": 0,
+        "next_action": "ssdv2ctl security oauth2 repair --apply",
+        "checks": [{"ok": False, "detail": "status 401-403 au lieu de 401"}],
+    }
+    output = io.StringIO()
+    with contextlib.redirect_stdout(output):
+        oauth2_repair._print_status(payload)
+    text = output.getvalue()
+    assert "réparation requise" in text
+    assert "v7.6.0" in text
+    assert "2 fichier(s) à installer" in text
+    assert "5 correction(s)" in text
+    assert "11 pont(s) API à créer" in text
+    assert "ssdv2ctl security oauth2 repair --apply" in text

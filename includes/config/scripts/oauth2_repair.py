@@ -517,28 +517,34 @@ def collect_status(source: Path, storage: Path) -> dict:
     rules_dir = storage / RULES_RELATIVE
     templates_repo = source / TEMPLATES_RELATIVE
     checks: list[dict] = []
+    repo_ok = (templates_repo / "sign_in.html").is_file() and (templates_repo / "error.html").is_file()
     checks.append(_check(
         "templates_repo",
-        (templates_repo / "sign_in.html").is_file() and (templates_repo / "error.html").is_file(),
-        str(templates_repo),
+        repo_ok,
+        "templates présents" if repo_ok else f"templates absents : {templates_repo}",
     ))
     inspect = _docker_inspect(OAUTH2_CONTAINER)
-    checks.append(_check("container", inspect is not None, OAUTH2_CONTAINER))
+    checks.append(_check(
+        "container",
+        inspect is not None,
+        "conteneur présent" if inspect else "conteneur oauth2-proxy absent",
+    ))
+    current = False
+    image = None
     if inspect:
         current = _container_is_current(inspect)
         checks.append(_check(
             "container_current",
             current,
-            "image/flags/montage à jour" if current else "conteneur à recréer",
+            "à jour" if current else "à recréer (image, flags ou montage)",
         ))
-        config = inspect.get("Config") or {}
-        checks.append(_check("image", OAUTH2_IMAGE in str(config.get("Image") or ""),
-                             str(config.get("Image") or "")))
+        image = str((inspect.get("Config") or {}).get("Image") or "")
+        checks.append(_check("image", OAUTH2_IMAGE in image, image or "image inconnue"))
     template_updates = _template_updates(templates_repo)
     checks.append(_check(
         "templates_host",
         not template_updates,
-        TEMPLATES_CONTAINER_DIR if not template_updates
+        "installés" if not template_updates
         else f"à installer : {', '.join(template_updates)}",
     ))
 
@@ -546,36 +552,60 @@ def collect_status(source: Path, storage: Path) -> dict:
     chains_path = rules_dir / CHAINS
     mw_text = middlewares_path.read_text(encoding="utf-8") if middlewares_path.is_file() else ""
     ch_text = chains_path.read_text(encoding="utf-8") if chains_path.is_file() else ""
-    checks.append(_check("errors_401", 'status = ["401"]' in mw_text, ERRORS_SECTION))
+
+    errors_ok = 'status = ["401"]' in mw_text
+    checks.append(_check(
+        "errors_401", errors_ok,
+        "OK" if errors_ok else "status 401-403 au lieu de 401",
+    ))
     forward_match = re.search(
         r"\[http\.middlewares\.middlewares-oauth2-proxy\.forwardAuth\](.*?)(?=\n\[|\Z)",
         mw_text,
         re.S,
     )
     forward_block = forward_match.group(1) if forward_match else ""
+    trust_ok = not re.search(r"(?m)^\s*trustForwardHeader\s*=", forward_block)
     checks.append(_check(
-        "trust_forward_header",
-        not re.search(r"(?m)^\s*trustForwardHeader\s*=", forward_block),
-        FORWARD_SECTION,
+        "trust_forward_header", trust_ok,
+        "OK" if trust_ok else "trustForwardHeader encore présent",
     ))
-    checks.append(_check("add_auth_cookies", f'addAuthCookiesToResponse = ["{OAUTH2_COOKIE}"]' in mw_text,
-                         FORWARD_SECTION))
-    checks.append(_check("path_priority", "priority = 1000" in mw_text, PATH_SECTION))
-    checks.append(_check("api_chain", f"[http.middlewares.{CHAIN_API_NAME}.chain]" in ch_text,
-                         CHAINS))
+    cookie_ok = f'addAuthCookiesToResponse = ["{OAUTH2_COOKIE}"]' in mw_text
+    checks.append(_check(
+        "add_auth_cookies", cookie_ok,
+        "OK" if cookie_ok else "addAuthCookiesToResponse absent",
+    ))
+    priority_ok = "priority = 1000" in mw_text
+    checks.append(_check(
+        "path_priority", priority_ok,
+        "OK" if priority_ok else "priorité 1000 absente",
+    ))
+    api_ok = f"[http.middlewares.{CHAIN_API_NAME}.chain]" in ch_text
+    checks.append(_check(
+        "api_chain", api_ok,
+        "OK" if api_ok else f"chaîne {CHAIN_API_NAME} absente",
+    ))
 
     blocks = _bridge_blocks(source)
     bridge_path = rules_dir / BRIDGES
     bridge_text = bridge_path.read_text(encoding="utf-8") if bridge_path.is_file() else ""
     missing = [block["name"] for block in blocks if f"[http.routers.{block['name']}]" not in bridge_text]
-    checks.append(_check("bridges", not missing, ", ".join(missing) or "à jour"))
+    checks.append(_check(
+        "bridges",
+        not missing,
+        "OK" if not missing else f"{len(missing)} pont(s) manquant(s)",
+    ))
 
     refreshes = 0
     if inspect:
         logs = _run(["docker", "logs", "--since", "10m", OAUTH2_CONTAINER], timeout=30)
         refreshes = (logs.stdout + logs.stderr).count("Refreshing session")
-    checks.append(_check("refresh_burst", refreshes <= 20, f"{refreshes} rafraîchissements sur 10 min"))
+    checks.append(_check("refresh_burst", refreshes <= 20, f"{refreshes} sur 10 min"))
 
+    rule_checks = {"errors_401", "trust_forward_header", "add_auth_cookies",
+                   "path_priority", "api_chain"}
+    traefik_corrections = sum(
+        1 for item in checks if item["name"] in rule_checks and not item["ok"]
+    )
     ok = all(item["ok"] for item in checks)
     return {
         "schema": SCHEMA_VERSION,
@@ -583,9 +613,17 @@ def collect_status(source: Path, storage: Path) -> dict:
         "ok": ok,
         "status": "ok" if ok else "repair_required",
         "checks": checks,
+        "summary": {
+            "container_update": not current,
+            "templates_missing": len(template_updates),
+            "traefik_corrections": traefik_corrections,
+            "bridges_missing": len(missing),
+        },
+        "next_action": None if ok else "ssdv2ctl security oauth2 repair --apply",
         "bridges": [block["name"] for block in blocks],
         "refresh_count_10m": refreshes,
-        "image": (inspect.get("Config") or {}).get("Image") if inspect else None,
+        "image": image,
+        "expected_image": OAUTH2_IMAGE,
     }
 
 
@@ -837,10 +875,42 @@ def rollback(source: Path, storage: Path, backup_arg: str | None, apply: bool) -
 
 def _print_status(payload: dict) -> None:
     print("OAuth2 Proxy — diagnostic")
-    for item in payload.get("checks", []):
-        mark = "OK " if item["ok"] else "KO "
-        print(f"  [{mark}] {item['name']}: {item['detail']}")
-    print(f"\nVerdict : {'à jour' if payload.get('ok') else 'réparation requise'}")
+    ok = payload.get("ok")
+    summary = payload.get("summary") or {}
+    print(f"État          : {'à jour' if ok else 'réparation requise'}")
+
+    image = payload.get("image") or "absente"
+    expected = payload.get("expected_image") or OAUTH2_IMAGE
+    if image != expected and not ok:
+        print(f"Image         : {image}  (attendu {expected})")
+    else:
+        print(f"Image         : {image}")
+
+    if summary.get("container_update"):
+        print("Conteneur     : à recréer")
+    if summary.get("templates_missing"):
+        print(f"Templates     : {summary['templates_missing']} fichier(s) à installer")
+    else:
+        print("Templates     : installés")
+    if summary.get("traefik_corrections"):
+        print(f"Règles Traefik: {summary['traefik_corrections']} correction(s) à appliquer")
+    else:
+        print("Règles Traefik: à jour")
+    if summary.get("bridges_missing"):
+        print(f"Applications  : {summary['bridges_missing']} pont(s) API à créer")
+    else:
+        print("Applications  : à jour")
+    print(f"Rafraîchis.   : {payload.get('refresh_count_10m', 0)} sur 10 min")
+
+    if ok:
+        print("\nTous les contrôles sont OK.")
+        return
+    print(f"\nProchaine étape : {payload.get('next_action')}")
+    fails = [item for item in payload.get("checks", []) if not item["ok"]]
+    if fails:
+        print("\nPoints à corriger :")
+        for item in fails:
+            print(f"  - {item['detail']}")
 
 
 def _print_repair(payload: dict) -> None:

@@ -101,10 +101,14 @@ unique, idempotent : `includes/config/scripts/oauth2_repair.py`.
 
 ```bash
 ssdv2ctl security oauth2 status            # diagnostic JSON
+ssdv2ctl security oauth2 status --text     # diagnostic lisible
 ssdv2ctl security oauth2 repair            # dry-run
 ssdv2ctl security oauth2 repair --apply    # applique
 ssdv2ctl security oauth2 rollback          # restaure la dernière sauvegarde
 ```
+
+Le JSON reste le format par défaut ; `--text` produit un résumé compact
+(image, conteneur, templates, règles, applications, prochaine étape).
 
 Le backend peut aussi être appelé directement :
 
