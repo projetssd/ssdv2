@@ -85,6 +85,49 @@ En revanche, les **labels Docker des applications déjà installées** ne change
 qu'à la recréation du conteneur : après mise à jour des templates, recréer les
 applications protégées par OAuth2 pour obtenir le routeur API/SSE.
 
+## Application et réparation
+
+L'application sur une installation existante est automatisée par un backend
+unique, idempotent : `includes/config/scripts/oauth2_repair.py`.
+
+### Menu
+
+**Sécurisation système → Sécuriser Traefik avec OAuth2 Proxy** :
+
+- **Diagnostic OAuth2 Proxy** : lecture seule ;
+- **Réparer / mettre à jour OAuth2 Proxy** : confirmation puis application.
+
+### Terminal
+
+```bash
+ssdv2ctl security oauth2 status            # diagnostic JSON
+ssdv2ctl security oauth2 repair            # dry-run
+ssdv2ctl security oauth2 repair --apply    # applique
+ssdv2ctl security oauth2 rollback          # restaure la dernière sauvegarde
+```
+
+Le backend peut aussi être appelé directement :
+
+```bash
+python3 includes/config/scripts/oauth2_repair.py status
+python3 includes/config/scripts/oauth2_repair.py repair --apply
+```
+
+### Ce que fait `repair --apply`
+
+1. sauvegarde des règles Traefik dans `~/backup/oauth2-repair/<date>/` ;
+2. correction idempotente de `middlewares.toml` et `middlewares-chains.toml` ;
+3. installation des pages dans `/etc/oauth2_proxy/templates` ;
+4. recréation de `oauth2-proxy` en v7.15.6 si nécessaire, avec test préalable
+   sur un port local et sauvegarde `oauth2-proxy-pre-repair` ;
+5. génération des routeurs API/SSE de transition pour les applications déjà
+   installées, sans recréer leurs conteneurs ;
+6. vérification de `/ping`, de la page de connexion et du rendu des erreurs.
+
+Si tout est déjà à jour, le script ne redémarre rien. Les routeurs de transition
+peuvent être supprimés après recréation des applications avec les nouveaux
+labels (`--no-bridges` ou suppression de `oauth2-api-bridges.toml`).
+
 ## Vérification
 
 ```bash
