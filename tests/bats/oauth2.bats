@@ -6,6 +6,9 @@ setup() {
 }
 
 @test "oauth2: commandes ssdv2ctl disponibles" {
+  run python3 "$SETTINGS_SOURCE/ssdv2ctl" security oauth2 status --help
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"--text"* ]]
   run python3 "$SETTINGS_SOURCE/ssdv2ctl" security oauth2 --help
   [ "$status" -eq 0 ]
   [[ "$output" == *"status"* ]]

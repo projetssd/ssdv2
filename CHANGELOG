@@ -7,6 +7,8 @@
 - réparation idempotente : sauvegarde, correction des règles Traefik,
   installation des pages, recréation conditionnelle d'oauth2-proxy, génération
   des routeurs API/SSE de transition, vérifications finales.
+- sortie `--text` lisible pour `status`, `repair` et `rollback` (résumé compact
+  et prochaine action), le JSON restant le format par défaut.
 - rollback vers le conteneur et les règles sauvegardés.
 
 11/11/2026 — OAuth2 Proxy : sessions fiables et routes API préservées
