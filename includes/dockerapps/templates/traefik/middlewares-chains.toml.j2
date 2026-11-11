@@ -69,6 +69,21 @@
 
 
 # ==============================
+# CHAIN OAUTH2 PROXY — API / SSE
+# Même authentification, mais sans le middleware errors : les 401/403 du
+# backend et du ForwardAuth sont transmis tels quels (JSON, SSE, CLI).
+# ==============================
+
+[http.middlewares.chain-oauth2-proxy-api.chain]
+  middlewares = [
+    "crowdsec@file",
+    "middlewares-rate-limit@file",
+    "middlewares-secure-headers@file",
+{{ allowlist_entry }}    "middlewares-oauth2-proxy@file"
+  ]
+
+
+# ==============================
 # CHAIN PLEX (public HTTPS, WAF/CrowdSec, SANS allowlist)
 # Plex doit rester joignable directement en 443 depuis les clients Plex.
 # ==============================

@@ -1,29 +1,46 @@
 traefik.enable: 'true'
 
+{% set middleware_override = traefik_middleware_override if (traefik_middleware_override is defined and traefik_middleware_override) else '' %}
+{% set host_rule = 'Host(`' ~ (sub[pgrole][pgrole] if sub_enabled else pgrole) ~ '.' ~ user.domain ~ '`)' %}
+{% if middleware_override %}
+{% set auth_chain = middleware_override %}
+{% elif auth_enabled and sub[pgrole].auth | default('') == 'basique' %}
+{% set auth_chain = 'chain-basic-auth@file' %}
+{% elif auth_enabled and sub[pgrole].auth | default('') == 'oauth' %}
+{% set auth_chain = 'chain-oauth@file' %}
+{% elif auth_enabled and sub[pgrole].auth | default('') == 'authelia' %}
+{% set auth_chain = 'chain-authelia@file' %}
+{% elif (auth_enabled and sub[pgrole].auth | default('') == 'oauth2-proxy') or ((oauth2proxy_enabled | bool) and sub[pgrole].auth | default('') != 'aucune') %}
+{% set auth_chain = 'chain-oauth2-proxy@file' %}
+{% else %}
+{% set auth_chain = 'chain-no-auth@file' %}
+{% endif %}
+{% set oauth2_auth = auth_chain == 'chain-oauth2-proxy@file' %}
+
 ## HTTP Routers
 traefik.http.routers.{{pgrole}}-rtr.entrypoints: 'http,https'
-traefik.http.routers.{{pgrole}}-rtr.rule: 'Host(`{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}`)' 
+traefik.http.routers.{{pgrole}}-rtr.rule: '{{ host_rule }}{% if oauth2_auth %} && HeaderRegexp(`Accept`, `(?i)text/html`){% endif %}'
 traefik.http.routers.{{pgrole}}-rtr.tls: 'true'
+{% if oauth2_auth %}
+traefik.http.routers.{{pgrole}}-rtr.priority: '20'
+{% endif %}
 
 ## Middlewares
-{% if traefik_middleware_override is defined and traefik_middleware_override %}
-traefik.http.routers.{{pgrole}}-rtr.middlewares: '{{ traefik_middleware_override }}'
-{% elif auth_enabled and sub[pgrole].auth | default('') == 'basique' %}
-traefik.http.routers.{{pgrole}}-rtr.middlewares: 'chain-basic-auth@file'
-{% elif auth_enabled and sub[pgrole].auth | default('') == 'oauth' %}
-traefik.http.routers.{{pgrole}}-rtr.middlewares: 'chain-oauth@file'
-{% elif auth_enabled and sub[pgrole].auth | default('') == 'authelia' %}
-traefik.http.routers.{{pgrole}}-rtr.middlewares: 'chain-authelia@file'
-{% elif auth_enabled and sub[pgrole].auth | default('') == 'oauth2-proxy' %}
-traefik.http.routers.{{pgrole}}-rtr.middlewares: 'chain-oauth2-proxy@file'
-{% elif oauth2proxy_enabled and sub[pgrole].auth | default('') != 'aucune' %}
-traefik.http.routers.{{pgrole}}-rtr.middlewares: 'chain-oauth2-proxy@file'
-{% else %}
-traefik.http.routers.{{pgrole}}-rtr.middlewares: 'chain-no-auth@file'
-{% endif %}
+traefik.http.routers.{{pgrole}}-rtr.middlewares: '{{ auth_chain }}'
 
 traefik.http.routers.{{pgrole}}-rtr.service: '{{pgrole}}-svc'
 traefik.http.routers.{{pgrole}}-rtr.tls.certresolver: 'letsencrypt'
+
+{% if oauth2_auth %}
+## API / SSE : pas de middleware d'erreur OAuth, les 401/403 passent tels quels.
+traefik.http.routers.{{pgrole}}-api-rtr.entrypoints: 'http,https'
+traefik.http.routers.{{pgrole}}-api-rtr.rule: '{{ host_rule }}'
+traefik.http.routers.{{pgrole}}-api-rtr.priority: '10'
+traefik.http.routers.{{pgrole}}-api-rtr.tls: 'true'
+traefik.http.routers.{{pgrole}}-api-rtr.tls.certresolver: 'letsencrypt'
+traefik.http.routers.{{pgrole}}-api-rtr.service: '{{pgrole}}-svc'
+traefik.http.routers.{{pgrole}}-api-rtr.middlewares: 'chain-oauth2-proxy-api@file'
+{% endif %}
 
 ## HTTP Services
 traefik.http.services.{{pgrole}}-svc.loadbalancer.server.port: "{{ intport }}"

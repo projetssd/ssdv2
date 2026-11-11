@@ -78,20 +78,39 @@ specific_docker_info:
     traefik.http.routers.stream-fusion-public-rtr.middlewares: "chain-no-auth@file"
 
     # =========================
-    # ROUTER ADMIN PROTÉGÉ
+    # ROUTER ADMIN PROTÉGÉ — navigation HTML
     # =========================
-    traefik.http.routers.stream-fusion-admin-rtr.rule: "Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`) && PathPrefix(`/admin`)"
+    traefik.http.routers.stream-fusion-admin-rtr.rule: "Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`) && PathPrefix(`/admin`) && HeaderRegexp(`Accept`, `(?i)text/html`)"
     traefik.http.routers.stream-fusion-admin-rtr.entrypoints: "http,https"
     traefik.http.routers.stream-fusion-admin-rtr.tls: "true"
     traefik.http.routers.stream-fusion-admin-rtr.tls.certresolver: "letsencrypt"
-    traefik.http.routers.stream-fusion-admin-rtr.priority: "100"
+    traefik.http.routers.stream-fusion-admin-rtr.priority: "110"
     traefik.http.routers.stream-fusion-admin-rtr.service: "stream-fusion-svc"
     traefik.http.routers.stream-fusion-admin-rtr.middlewares: >-
       {% if auth_enabled and sub[pgrole].auth | default('') == 'basique' %}chain-basic-auth@file
       {% elif auth_enabled and sub[pgrole].auth | default('') == 'oauth' %}chain-oauth@file
       {% elif auth_enabled and sub[pgrole].auth | default('') == 'authelia' %}chain-authelia@file
       {% elif auth_enabled and sub[pgrole].auth | default('') == 'oauth2-proxy' %}chain-oauth2-proxy@file
-      {% elif oauth2proxy_enabled and sub[pgrole].auth | default('') != 'aucune' %}chain-oauth2-proxy@file
+      {% elif (oauth2proxy_enabled | bool) and sub[pgrole].auth | default('') != 'aucune' %}chain-oauth2-proxy@file
+      {% else %}chain-no-auth@file
+      {% endif %}
+
+    # =========================
+    # ROUTER ADMIN PROTÉGÉ — API / SSE
+    # Sans middleware d'erreur OAuth : les 401/403 applicatifs restent lisibles.
+    # =========================
+    traefik.http.routers.stream-fusion-admin-api-rtr.rule: "Host(`{{sub[pgrole][pgrole] if sub_enabled else pgrole}}.{{user.domain}}`) && PathPrefix(`/admin`)"
+    traefik.http.routers.stream-fusion-admin-api-rtr.entrypoints: "http,https"
+    traefik.http.routers.stream-fusion-admin-api-rtr.tls: "true"
+    traefik.http.routers.stream-fusion-admin-api-rtr.tls.certresolver: "letsencrypt"
+    traefik.http.routers.stream-fusion-admin-api-rtr.priority: "100"
+    traefik.http.routers.stream-fusion-admin-api-rtr.service: "stream-fusion-svc"
+    traefik.http.routers.stream-fusion-admin-api-rtr.middlewares: >-
+      {% if auth_enabled and sub[pgrole].auth | default('') == 'basique' %}chain-basic-auth@file
+      {% elif auth_enabled and sub[pgrole].auth | default('') == 'oauth' %}chain-oauth@file
+      {% elif auth_enabled and sub[pgrole].auth | default('') == 'authelia' %}chain-authelia@file
+      {% elif auth_enabled and sub[pgrole].auth | default('') == 'oauth2-proxy' %}chain-oauth2-proxy-api@file
+      {% elif (oauth2proxy_enabled | bool) and sub[pgrole].auth | default('') != 'aucune' %}chain-oauth2-proxy-api@file
       {% else %}chain-no-auth@file
       {% endif %}
 
