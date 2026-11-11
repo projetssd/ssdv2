@@ -18,10 +18,13 @@
       traefik.http.routers.oauth2proxy-rtr.middlewares: 'chain-no-auth@file'
 
 - name: Deploy OAuth2 Proxy
+  # --client-secret est passé en argument.
+  no_log: true
   docker_container:
     name: 'oauth2-proxy'
     hostname: 'oauth2-proxy'
-    image: 'quay.io/oauth2-proxy/oauth2-proxy:v7.6.0'
+    # ≥ 7.15.2 : correctif CVE-2026-40575 (contournement via X-Forwarded-Uri).
+    image: 'quay.io/oauth2-proxy/oauth2-proxy:v7.15.6'
     pull: yes
     restart_policy: unless-stopped
     state: started
@@ -38,14 +41,15 @@
       - '--client-id={{ oauth2proxy.client }}'
       - '--client-secret={{ oauth2proxy.secret }}'
       - '--redirect-url=https://oauth2-proxy.{{ user.domain }}/oauth2/callback'
-      
+
       # ⭐ CRITICAL: ForwardAuth mode
       - '--reverse-proxy=true'
-      - '--skip-auth-route=^/oauth2/(start|callback|validate|sign_out)'
+      # Seuls les proxies listés peuvent fournir X-Forwarded-* (CVE-2026-40575).
+      - '--trusted-proxy-ip={{ oauth2_proxy_trusted_proxies }}'
       - '--set-xauthrequest=true'
       - '--auth-logging=true'
       - '--request-logging=true'
-      
+
       # ⭐ Sécurité des cookies
       - '--cookie-name=_oauth2_proxy'
       - '--cookie-secret={{ oauth2proxy.openssl }}'
@@ -54,11 +58,14 @@
       - '--cookie-samesite=lax'
       - '--cookie-expire=720h'
       - '--cookie-refresh=1h'
+      # Connexions parallèles (plusieurs onglets) sans collision de cookie CSRF.
+      - '--cookie-csrf-per-request=true'
+      - '--cookie-csrf-expire=10m'
       - '--cookie-domain=.{{ user.domain }}'
-      
+
       # ⭐ IMPORTANT: Autoriser tous les domaines du wildcard
       - '--whitelist-domain=.{{ user.domain }}'
       - '--authenticated-emails-file=/etc/oauth2_proxy/emails.txt'
-      
+
       # ⭐ Server
       - '--http-address=0.0.0.0:4180'
