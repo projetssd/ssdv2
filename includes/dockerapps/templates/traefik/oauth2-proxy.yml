@@ -17,13 +17,32 @@
       traefik.http.services.oauth2proxy-svc.loadbalancer.server.port: '4180'
       traefik.http.routers.oauth2proxy-rtr.middlewares: 'chain-no-auth@file'
 
+- name: 'Créer le dossier des templates OAuth2'
+  become: true
+  ansible.builtin.file:
+    path: /etc/oauth2_proxy/templates
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: 'Installer les templates OAuth2'
+  become: true
+  ansible.builtin.copy:
+    src: '{{ settings.source }}/includes/dockerapps/templates/traefik/oauth2-proxy-templates/'
+    dest: /etc/oauth2_proxy/templates/
+    owner: root
+    group: root
+    mode: '0644'
+
 - name: Deploy OAuth2 Proxy
   # --client-secret est passé en argument.
   no_log: true
   docker_container:
     name: 'oauth2-proxy'
     hostname: 'oauth2-proxy'
-    image: 'quay.io/oauth2-proxy/oauth2-proxy:v7.6.0'
+    # ≥ 7.15.2 : correctif CVE-2026-40575 (contournement via X-Forwarded-Uri).
+    image: 'quay.io/oauth2-proxy/oauth2-proxy:v7.15.6'
     pull: yes
     restart_policy: unless-stopped
     state: started
@@ -34,20 +53,25 @@
       - '127.0.0.1:4180:4180'
     volumes:
       - /etc/oauth2_proxy/emails.txt:/etc/oauth2_proxy/emails.txt:ro
+      - /etc/oauth2_proxy/templates:/etc/oauth2_proxy/templates:ro
     command:
       # ⭐ Google OAuth
       - '--provider=google'
       - '--client-id={{ oauth2proxy.client }}'
       - '--client-secret={{ oauth2proxy.secret }}'
       - '--redirect-url=https://oauth2-proxy.{{ user.domain }}/oauth2/callback'
-      
+
+      # ⭐ Pages personnalisées SSDV2 (sign_in.html et error.html)
+      - '--custom-templates-dir=/etc/oauth2_proxy/templates'
+
       # ⭐ CRITICAL: ForwardAuth mode
       - '--reverse-proxy=true'
-      - '--skip-auth-route=^/oauth2/(start|callback|validate|sign_out)'
+      # Seuls les proxies listés peuvent fournir X-Forwarded-* (CVE-2026-40575).
+      - '--trusted-proxy-ip={{ oauth2_proxy_trusted_proxies }}'
       - '--set-xauthrequest=true'
       - '--auth-logging=true'
       - '--request-logging=true'
-      
+
       # ⭐ Sécurité des cookies
       - '--cookie-name=_oauth2_proxy'
       - '--cookie-secret={{ oauth2proxy.openssl }}'
@@ -56,11 +80,14 @@
       - '--cookie-samesite=lax'
       - '--cookie-expire=720h'
       - '--cookie-refresh=1h'
+      # Connexions parallèles (plusieurs onglets) sans collision de cookie CSRF.
+      - '--cookie-csrf-per-request=true'
+      - '--cookie-csrf-expire=10m'
       - '--cookie-domain=.{{ user.domain }}'
-      
+
       # ⭐ IMPORTANT: Autoriser tous les domaines du wildcard
       - '--whitelist-domain=.{{ user.domain }}'
       - '--authenticated-emails-file=/etc/oauth2_proxy/emails.txt'
-      
+
       # ⭐ Server
       - '--http-address=0.0.0.0:4180'
