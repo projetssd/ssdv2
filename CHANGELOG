@@ -1,3 +1,37 @@
+11/11/2026 — OAuth2 Proxy : diagnostic et réparation assistés
+
+- nouvelle commande `ssdv2ctl security oauth2 status|repair|rollback` et
+  backend `includes/config/scripts/oauth2_repair.py`.
+- deux entrées de menu sous « Sécuriser Traefik avec OAuth2 Proxy » :
+  diagnostic (lecture seule) et réparation avec confirmation.
+- réparation idempotente : sauvegarde, correction des règles Traefik,
+  installation des pages, recréation conditionnelle d'oauth2-proxy, génération
+  des routeurs API/SSE de transition, vérifications finales.
+- sortie `--text` lisible pour `status`, `repair` et `rollback` (résumé compact
+  et prochaine action), le JSON restant le format par défaut.
+- rollback vers le conteneur et les règles sauvegardés.
+
+11/11/2026 — OAuth2 Proxy : sessions fiables et routes API préservées
+
+- passage à oauth2-proxy v7.15.6 (correctif CVE-2026-40575) avec
+  `--trusted-proxy-ip` et suppression de `--skip-auth-route`.
+- séparation des chaînes Traefik : `chain-oauth2-proxy` (navigation HTML,
+  middleware `errors` limité aux 401) et `chain-oauth2-proxy-api` (API/SSE,
+  sans `errors`).
+- deux routeurs par application protégée (`<app>-rtr` HTML et `<app>-api-rtr`)
+  pour ne plus transformer un 401/403 applicatif en page de connexion OAuth2.
+- `addAuthCookiesToResponse = ["_oauth2_proxy"]` sur le ForwardAuth : le cookie
+  rafraîchi est renvoyé au navigateur, fin des rafraîchissements Google à
+  chaque requête (rafales de plus de 100 refresh/seconde observées).
+- `--cookie-csrf-per-request` et `--cookie-csrf-expire` pour les connexions
+  multi-onglets.
+- routeur `/oauth2/` en priorité 1000 pour ne plus être éclipsé par un routeur
+  applicatif.
+- pages de connexion et d'erreur personnalisées SSDV2 (`sign_in.html`,
+  `error.html`) copiées dans `/etc/oauth2_proxy/templates` et activées par
+  `--custom-templates-dir`.
+- documentation `docs/oauth2-proxy.md`.
+
 10/11/2026 — Mots de passe de base : génération pour les nouvelles installations
 
 - nouvelles installations des applications dont la base est créée par les

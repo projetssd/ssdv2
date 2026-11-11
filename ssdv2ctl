@@ -75,6 +75,13 @@ Sécurité :
     ssdv2ctl security plex-cve rollback --backup DIR [--apply]
     ssdv2ctl security plex-cve selftest
 
+    ssdv2ctl security oauth2 status
+    ssdv2ctl security oauth2 repair [--apply] [--no-bridges]
+    ssdv2ctl security oauth2 rollback [--backup DIR] [--apply]
+
+    Ajouter --text à ces commandes pour une sortie lisible (le JSON reste le
+    format par défaut).
+
 Conventions de sortie :
 
     - stdout : JSON uniquement (`--json` est accepté et correspond au format par défaut) ;
@@ -118,6 +125,7 @@ SSDDB_RELATIVE = Path("ssddb")
 GENERIQUE_RELATIVE = Path("includes/config/scripts/generique.sh")
 PHPCVE_RELATIVE = Path("includes/config/scripts/phpcve.py")
 PLEXCVE_RELATIVE = Path("includes/config/scripts/plexcve.py")
+OAUTH2_REPAIR_RELATIVE = Path("includes/config/scripts/oauth2_repair.py")
 PATCH_REGISTRIES_RELATIVE = Path("patches/20260916_backfill_registries")
 REGISTRY_KINDS = ("containers", "volumes", "dns")
 
@@ -1058,6 +1066,66 @@ def command_plexcve(
     return payload
 
 
+def command_oauth2_repair(
+    source: Path, storage: Path, argv: list[str], timeout: int = INSTALL_TIMEOUT
+) -> dict:
+    """Exécute le backend oauth2_repair.py et retourne son JSON."""
+    script = source / OAUTH2_REPAIR_RELATIVE
+    if not script.is_file():
+        raise CtlError("oauth2_repair_unavailable", f"backend oauth2 introuvable: {script}")
+    python = sys.executable or "python3"
+    try:
+        result = subprocess.run(
+            [python, str(script), *argv, "--json"],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            env=_bash_environment(source, storage),
+            check=False,
+            stdin=subprocess.DEVNULL,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise CtlError("oauth2_repair_failed", f"exécution oauth2 impossible: {exc}") from exc
+    text = result.stdout.strip()
+    start = text.find("{")
+    end = text.rfind("}")
+    payload = None
+    if start >= 0 and end > start:
+        try:
+            payload = json.loads(text[start : end + 1])
+        except json.JSONDecodeError:
+            payload = None
+    if not isinstance(payload, dict):
+        detail = result.stderr.strip() or text or "sortie vide"
+        raise CtlError("oauth2_repair_failed", f"réponse oauth2 invalide: {detail}")
+    return payload
+
+
+def command_oauth2_text(
+    source: Path, storage: Path, argv: list[str], timeout: int = INSTALL_TIMEOUT
+) -> int:
+    """Exécute le backend oauth2_repair.py en mode texte lisible."""
+    script = source / OAUTH2_REPAIR_RELATIVE
+    if not script.is_file():
+        raise CtlError("oauth2_repair_unavailable", f"backend oauth2 introuvable: {script}")
+    python = sys.executable or "python3"
+    try:
+        result = subprocess.run(
+            [python, str(script), *argv],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            env=_bash_environment(source, storage),
+            check=False,
+            stdin=subprocess.DEVNULL,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise CtlError("oauth2_repair_failed", f"exécution oauth2 impossible: {exc}") from exc
+    sys.stdout.write(result.stdout)
+    sys.stderr.write(result.stderr)
+    return result.returncode
+
+
 def emit(payload: dict) -> None:
     json.dump(payload, sys.stdout, ensure_ascii=False, indent=2)
     sys.stdout.write("\n")
@@ -1351,6 +1419,39 @@ def build_parser() -> argparse.ArgumentParser:
     plex_cve_commands.add_parser(
         "selftest", parents=[plex_cve_common], help="tests internes"
     )
+
+    oauth2 = security_commands.add_parser(
+        "oauth2", help="OAuth2 Proxy : diagnostic, réparation et rollback"
+    )
+    oauth2_commands = oauth2.add_subparsers(dest="oauth2_command", required=True)
+    oauth2_common = argparse.ArgumentParser(add_help=False)
+    oauth2_common.add_argument("--json", action="store_true", help="sortie JSON (défaut)")
+    oauth2_common.add_argument("--text", action="store_true", help="sortie lisible (au lieu de JSON)")
+    oauth2_commands.add_parser(
+        "status", parents=[oauth2_common],
+        help="diagnostic en lecture seule (image, flags, règles, templates)",
+    )
+    oauth2_repair = oauth2_commands.add_parser(
+        "repair", parents=[oauth2_common],
+        help="applique les correctifs OAuth2 (dry-run sans --apply)",
+    )
+    oauth2_repair.add_argument(
+        "--apply", action="store_true", help="appliquer les changements"
+    )
+    oauth2_repair.add_argument(
+        "--no-bridges", action="store_true",
+        help="ne pas générer les routeurs API/SSE de transition",
+    )
+    oauth2_rollback = oauth2_commands.add_parser(
+        "rollback", parents=[oauth2_common],
+        help="restaure la dernière sauvegarde oauth2-repair",
+    )
+    oauth2_rollback.add_argument(
+        "--backup", help="dossier de sauvegarde à restaurer"
+    )
+    oauth2_rollback.add_argument(
+        "--apply", action="store_true", help="appliquer la restauration"
+    )
     return parser
 
 
@@ -1561,6 +1662,29 @@ def main(argv: list[str] | None = None) -> int:
                     CtlError(
                         "plex_cve_failed",
                         payload.get("message") or "action plex-cve en échec",
+                    )
+                )
+        elif args.command == "security" and args.security_command == "oauth2":
+            argv = [args.oauth2_command]
+            if args.oauth2_command in ("repair", "rollback") and args.apply:
+                argv.append("--apply")
+            if args.oauth2_command == "repair" and args.no_bridges:
+                argv.append("--no-bridges")
+            if args.oauth2_command == "rollback" and args.backup:
+                argv.extend(["--backup", args.backup])
+            if args.text:
+                return command_oauth2_text(source, storage, argv)
+            payload = command_oauth2_repair(source, storage, argv)
+            emit(payload)
+            if args.oauth2_command == "status":
+                # Le diagnostic est déjà émis : ne pas ajouter une seconde
+                # enveloppe d'erreur. Le code de sortie signale l'état.
+                return EXIT_OK if payload.get("ok") else EXIT_ERROR
+            if not payload.get("ok"):
+                return fail(
+                    CtlError(
+                        "oauth2_repair_failed",
+                        payload.get("message") or "action OAuth2 en échec",
                     )
                 )
         else:

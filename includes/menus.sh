@@ -22,6 +22,43 @@ menu_secu_system_oauth2_proxy() {
 }
 
 
+menu_secu_system_oauth2_status() {
+  clear
+  logo
+  echo -e "${CCYAN}"$(gettext "DIAGNOSTIC OAUTH2 PROXY")"${CEND}"
+  echo -e "${CRED}-------------------------------------${CEND}"
+  echo ""
+  python3 "${SETTINGS_SOURCE}/includes/config/scripts/oauth2_repair.py" status
+  echo ""
+  read -r -p "$(gettext "Appuyer sur ENTRÉE pour continuer")" _
+}
+
+
+menu_secu_system_oauth2_repair() {
+  clear
+  logo
+  echo -e "${CCYAN}"$(gettext "RÉPARATION OAUTH2 PROXY")"${CEND}"
+  echo -e "${CRED}-------------------------------------${CEND}"
+  echo ""
+  echo "$(gettext "Cette opération met à jour oauth2-proxy et les règles Traefik.")"
+  echo "$(gettext "Une brève interruption des applications protégées est possible.")"
+  echo "$(gettext "Une sauvegarde est créée avant toute modification.")"
+  echo ""
+  read -r -p "$(gettext "Appliquer les correctifs OAuth2 ? (y/N) ")" answer
+  case "${answer,,}" in
+    y|yes|o|oui)
+      echo ""
+      python3 "${SETTINGS_SOURCE}/includes/config/scripts/oauth2_repair.py" repair --apply
+      ;;
+    *)
+      echo "$(gettext "Annulé.")"
+      ;;
+  esac
+  echo ""
+  read -r -p "$(gettext "Appuyer sur ENTRÉE pour continuer")" _
+}
+
+
 menu_install_authelia() {
   clear
   logo

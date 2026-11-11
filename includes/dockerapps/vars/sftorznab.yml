@@ -71,8 +71,8 @@ specific_docker_info: >-
           'chain-basic-auth@file' if (auth_enabled and sub[pgrole].auth | default('') == 'basique')
           else 'chain-oauth@file' if (auth_enabled and sub[pgrole].auth | default('') == 'oauth')
           else 'chain-authelia@file' if (auth_enabled and sub[pgrole].auth | default('') == 'authelia')
-          else 'chain-oauth2-proxy@file' if (auth_enabled and sub[pgrole].auth | default('') == 'oauth2-proxy')
-          else 'chain-oauth2-proxy@file' if (oauth2proxy_enabled and sub[pgrole].auth | default('') != 'aucune')
+          else 'chain-oauth2-proxy-api@file' if (auth_enabled and sub[pgrole].auth | default('') == 'oauth2-proxy')
+          else 'chain-oauth2-proxy-api@file' if (oauth2proxy_enabled and sub[pgrole].auth | default('') != 'aucune')
           else 'chain-no-auth@file'
         ),
 
