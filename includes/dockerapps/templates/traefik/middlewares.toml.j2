@@ -45,9 +45,12 @@
     authResponseHeaders = ["Remote-User", "Remote-Groups"]
 
 
-# ✅ Error middleware pour redirection vers login OAuth2
+# ✅ Error middleware pour redirection vers login OAuth2.
+# Uniquement 401 : les 403 applicatifs (CSRF, permissions) doivent rester intacts.
+# Ce middleware ne doit être appliqué qu'aux routeurs de navigation HTML ; les
+# routeurs API/SSE utilisent chain-oauth2-proxy-api (sans errors).
 [http.middlewares.middlewares-oauth2-errors.errors]
-  status = ["401-403"]
+  status = ["401"]
   service = "oauth2proxy-svc@docker"
   query = "/oauth2/sign_in?rd={url}"
 
@@ -55,6 +58,8 @@
 [http.routers.oauth2-proxy-path]
   rule = "HostRegexp(`^[a-z0-9-]+[.]{{ user.domain }}$`) && PathPrefix(`/oauth2/`)"
   entryPoints = ["https"]
+  # Priorité haute : ce routeur ne doit jamais être éclipsé par un routeur applicatif.
+  priority = 1000
   service = "oauth2proxy-svc@docker"
   middlewares = ["chain-no-auth@file"]
   [http.routers.oauth2-proxy-path.tls]
@@ -65,7 +70,12 @@
 [http.middlewares.middlewares-oauth2-proxy]
   [http.middlewares.middlewares-oauth2-proxy.forwardAuth]
     address = "http://oauth2-proxy:4180/oauth2/auth"
-    trustForwardHeader = true
+    # Ne pas relayer un X-Forwarded-Uri fourni par le client : Traefik réécrit
+    # les en-têtes depuis la requête réelle (défense en profondeur CVE-2026-40575).
+    # trustForwardHeader est déprécié dans Traefik v3.
+    # Recopier le cookie de session rafraîchi vers le navigateur. Sans cela,
+    # le refresh est rejoué à chaque requête (cookie obsolète côté client).
+    addAuthCookiesToResponse = ["_oauth2_proxy"]
     # ⭐ IMPORTANT: Headers renvoyés par oauth2-proxy au container upstream
     authResponseHeaders = [
       "X-Auth-Request-User",

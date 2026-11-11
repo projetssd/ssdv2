@@ -10,6 +10,9 @@
     pgerro: 'error-pages'
     subdomain: "{{sub[pgrole][pgrole] if sub_enabled else pgrole}}"
     oauth2proxy_enabled: "{{ oauth_enabled and oauth_type | default('') == 'oauth2-proxy' }}"
+    # Réseaux autorisés à fournir X-Forwarded-* à oauth2-proxy.
+    # Surchargeable dans group_vars si le sous-réseau Docker diffère.
+    oauth2_proxy_trusted_proxies: '172.16.0.0/12'
     # Source unique des CIDR Cloudflare (forwardedHeaders + allowlist).
     traefik_cloudflare_ips:
       - 173.245.48.0/20
