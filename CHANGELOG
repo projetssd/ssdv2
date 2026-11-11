@@ -1,3 +1,14 @@
+11/11/2026 — OAuth2 Proxy : diagnostic et réparation assistés
+
+- nouvelle commande `ssdv2ctl security oauth2 status|repair|rollback` et
+  backend `includes/config/scripts/oauth2_repair.py`.
+- deux entrées de menu sous « Sécuriser Traefik avec OAuth2 Proxy » :
+  diagnostic (lecture seule) et réparation avec confirmation.
+- réparation idempotente : sauvegarde, correction des règles Traefik,
+  installation des pages, recréation conditionnelle d'oauth2-proxy, génération
+  des routeurs API/SSE de transition, vérifications finales.
+- rollback vers le conteneur et les règles sauvegardés.
+
 11/11/2026 — OAuth2 Proxy : sessions fiables et routes API préservées
 
 - passage à oauth2-proxy v7.15.6 (correctif CVE-2026-40575) avec
