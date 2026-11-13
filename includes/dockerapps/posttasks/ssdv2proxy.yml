@@ -1,0 +1,118 @@
+---
+# VPN natifs SSDv2 Proxy Manager.
+#
+# Le conteneur web n'a jamais accès au socket Docker : les tunnels WireGuard et
+# OpenVPN sont lancés par un contrôleur séparé (ssdv2-vpn-controller), déployé
+# ici. Le contrôleur s'auto-inspecte sous ce nom, exige son montage /app/data
+# et le réseau commun traefik_proxy. Les applications locales peuvent ainsi
+# joindre les passerelles ssdv2-vpn-<id> (ports 8888 et 1080, authentifiés),
+# sans publier de ports sur l’hôte. Un seul réseau par passerelle conserve
+# eth0 comme interface Docker attendue par le pare-feu VPN.
+
+- name: Vérifier le réseau commun des applications
+  docker_network:
+    name: 'traefik_proxy'
+    state: present
+
+- name: Déployer le contrôleur VPN ssdv2-vpn-controller
+  docker_container:
+    name: 'ssdv2-vpn-controller'
+    image: '{{ image }}'
+    command: ['vpn-controller']
+    # Le contrôleur lit le socket Docker : il tourne en root dans son propre
+    # conteneur, sans privilège supplémentaire hormis DAC_OVERRIDE.
+    user: '0:0'
+    init: true
+    read_only: true
+    tmpfs:
+      - '/tmp:rw,noexec,nosuid,size=8m'
+      - '/run:rw,noexec,nosuid,size=8m'
+    cap_drop:
+      - 'ALL'
+    capabilities:
+      - 'DAC_OVERRIDE'
+    security_opts:
+      - 'no-new-privileges:true'
+    env:
+      DATA_DIR: '/app/data'
+      VPN_CONTROLLER_NAME: 'ssdv2-vpn-controller'
+      VPN_NETWORK: 'traefik_proxy'
+    volumes:
+      - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}:/app/data"
+      - '/var/run/docker.sock:/var/run/docker.sock'
+    networks:
+      - name: 'traefik_proxy'
+    labels:
+      ssdv2.app: "{{ pgrole }}"
+    restart_policy: unless-stopped
+    recreate: true
+    pull: false
+    state: started
+
+# Les anciennes passerelles restent sur leur ancien réseau : le contrôleur
+# compare leur configuration VPN, pas leur réseau. Seules celles qui n'ont pas
+# encore accès au réseau commun sont recréées, avec leurs secrets conservés.
+- name: Lister les passerelles VPN gérées par ssdv2proxy
+  ansible.builtin.command:
+    argv:
+      - docker
+      - ps
+      - -aq
+      - --filter
+      - 'label=ssdv2.vpn.owner=ssdv2-proxy-manager'
+  register: ssdv2proxy_vpn_gateways
+  changed_when: false
+
+- name: Examiner les réseaux des passerelles VPN
+  docker_container_info:
+    name: '{{ item }}'
+  loop: '{{ ssdv2proxy_vpn_gateways.stdout_lines }}'
+  register: ssdv2proxy_vpn_gateway_info
+  no_log: true
+
+- name: Migrer les anciennes passerelles vers le réseau commun
+  docker_container:
+    name: '{{ item.item }}'
+    state: absent
+  loop: '{{ ssdv2proxy_vpn_gateway_info.results }}'
+  when:
+    - item.exists | default(false)
+    - "'traefik_proxy' not in (item.container.NetworkSettings.Networks | default({}))"
+  no_log: true
+
+# L'image exécute le conteneur web en node (uid 1000) tandis que le contrôleur
+# écrit vpn/status.json en root. Si vpn/ était créé par le contrôleur, le web
+# ne pourrait plus y créer ses profils : on force le propriétaire attendu.
+- name: Préparer le dossier des profils VPN
+  become: true
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: 1000
+    group: 1000
+    mode: '0700'
+  loop:
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/vpn"
+    - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/vpn/profiles"
+
+- name: Connecter {{ pgrole }} au réseau commun des applications
+  docker_network:
+    name: 'traefik_proxy'
+    connected:
+      - '{{ pgrole }}'
+    appends: yes
+
+- name: Vérifier l'état du contrôleur VPN
+  docker_container_info:
+    name: 'ssdv2-vpn-controller'
+  register: ssdv2proxy_vpn_controller
+  failed_when: false
+  changed_when: false
+
+- name: Signaler un contrôleur VPN inactif
+  ansible.builtin.debug:
+    msg:
+      - "⚠️ Le contrôleur VPN n'est pas actif : l'ajout de VPN restera en attente."
+      - "Vérifier les journaux : docker logs ssdv2-vpn-controller"
+  when: ssdv2proxy_vpn_controller.container is not defined or
+        not (ssdv2proxy_vpn_controller.container.State.Running | default(false))

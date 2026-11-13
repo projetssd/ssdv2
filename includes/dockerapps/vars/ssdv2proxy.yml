@@ -1,8 +1,9 @@
 ---
 # SSDv2 Proxy Manager — gestion centralisée des manifestes Stremio.
-# Interface Web avec login propre à l'application ; les routes consommées par
-# Stremio (/u/..., /play, anciennes URLs /<id>/...) restent publiques.
-# Le login de l'application utilise les identifiants SSDV2 (user.name/user.pass).
+# Interface Web avec son propre login ; les routes consommées par Stremio
+# (/u/..., /play, anciennes URLs /<id>/...) restent publiques.
+# Login : identifiant SSDV2 (user.name) + mot de passe dédié demandé à
+# l'installation, conservé en 0600 dans conf/.
 # Le playbook générique connecte ce conteneur à traefik_proxy : il peut donc
 # joindre le relais SSDV2 sur http://ssdv2-relay:1080 pour le laboratoire AllDebrid.
 pgrole: 'ssdv2proxy'
@@ -19,7 +20,12 @@ pg_env:
   NODE_ENV: 'production'
   PUBLIC_URL: "https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}"
   AUTH_USER: "{{ user.name }}"
-  AUTH_PASS: "{{ user.pass }}"
+  # Login propre à l'application (distinct de SSDV2 et de Traefik).
+  # Le mot de passe est demandé à l'installation (12 caractères minimum, exigés
+  # par l'administration des VPN) puis conservé en 0600 hors du dossier
+  # applicatif, celui-ci appartenant à l'UID du conteneur. Pour le changer :
+  # supprimer {{ settings.storage }}/conf/{{ pgrole }}.auth puis réinstaller.
+  AUTH_PASS: "{{ lookup('file', settings.storage + '/conf/' + pgrole + '.auth') | trim }}"
   TZ: 'Europe/Paris'
   # Proxy par défaut créé au premier démarrage (migration initiale).
   # Mettre socks / socks5://warp:1080 pour créer un profil SOCKS5 par défaut.
@@ -28,6 +34,13 @@ pg_env:
   UPSTREAM_URL: ''
   # Relais AllDebrid détecté automatiquement sur le réseau traefik_proxy.
   SSDV2_RELAY_URL: 'http://ssdv2-relay:1080'
+  # Gestion des VPN natifs (WireGuard/OpenVPN) depuis l'interface.
+  # L'application refuse ces routes si le drapeau est absent ou si AUTH_PASS
+  # fait moins de 12 caractères. Les passerelles sont lancées par le contrôleur
+  # privilégié ssdv2-vpn-controller déployé par posttasks/ssdv2proxy.yml.
+  # Les proxies VPN sont accessibles aux applications sur traefik_proxy,
+  # avec authentification, sans port publié sur l’hôte.
+  VPN_MANAGER_ENABLED: 'true'
 
 # Les routes consommées par Stremio doivent rester publiques. L'interface et
 # l'API de gestion restent protégées par Traefik (si activé) et par le login
