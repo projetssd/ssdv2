@@ -1211,6 +1211,20 @@ SQL
       sudo rm -rf ${SETTINGS_STORAGE}/docker/${USER}/projet-ssd >/dev/null 2>&1
     fi
     ;;
+  ssdv2proxy)
+    # Passerelles VPN créées à l'exécution par ssdv2-vpn-controller : elles
+    # portent le label ssdv2.vpn.owner (et non ssdv2.app), donc elles
+    # n'apparaissent ni dans le registre automatique ni dans les conventions
+    # de nom. Suppression ciblée par label.
+    docker ps -aq --filter 'label=ssdv2.vpn.owner=ssdv2-proxy-manager' \
+      | xargs -r docker rm -f >/dev/null 2>&1 || true
+    # Mot de passe de l'interface (conf/ssdv2proxy.auth) : secret hors dossier
+    # applicatif, retiré en suppression complète uniquement (conservé avec les
+    # données, comme le login de l'application).
+    if [ $DELETE -eq 1 ]; then
+      rm -f "${SETTINGS_STORAGE}/conf/${APPSELECTED}.auth" >/dev/null 2>&1
+    fi
+    ;;
   vvveb)
     # Le réseau dédié (créé par la posttask mariadb) n'est pas tracké par le
     # registre conteneurs/volumes : suppression ciblée ici.

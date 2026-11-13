@@ -1,0 +1,50 @@
+---
+# Mot de passe de la page de login du Proxy Manager.
+#
+# L'application utilise AUTH_USER/AUTH_PASS pour son propre login (distinct de
+# SSDV2 et de Traefik) et refuse l'administration des VPN tant que AUTH_PASS
+# fait moins de 12 caractères. On le demande donc une seule fois, on le
+# conserve en 0600 et on le réutilise aux réinstallations suivantes.
+
+- name: Vérifier la présence du mot de passe d'administration
+  ansible.builtin.stat:
+    path: "{{ settings.storage }}/conf/{{ pgrole }}.auth"
+  register: ssdv2proxy_auth_file
+
+# Un fichier absent, vide ou trop court est traité comme manquant : on ne doit
+# jamais démarrer l'interface sans mot de passe valide (12 caractères + \n).
+- name: Déterminer si le mot de passe doit être demandé
+  ansible.builtin.set_fact:
+    ssdv2proxy_auth_missing: "{{ not ssdv2proxy_auth_file.stat.exists or (ssdv2proxy_auth_file.stat.size | default(0)) < 13 }}"
+
+- name: Demander le mot de passe d'administration
+  ansible.builtin.pause:
+    prompt: |
+      SSDV2_PROMPT {"id":"ssdv2proxy.auth_pass","label":"Mot de passe d'administration du Proxy Manager (12 caractères minimum)","kind":"secret","secret":true}
+      Mot de passe de l'interface SSDv2 Proxy Manager — 12 caractères minimum :
+    echo: no
+  register: ssdv2proxy_auth_prompt
+  # Redemande tant que la saisie est trop courte (ou vide si le terminal
+  # n'est pas interactif : l'installation échoue alors explicitement).
+  until: (ssdv2proxy_auth_prompt.user_input | default('') | length) >= 12
+  retries: 5
+  delay: 1
+  when: ssdv2proxy_auth_missing | bool
+  no_log: true
+
+- name: Enregistrer le mot de passe d'administration
+  ansible.builtin.copy:
+    content: "{{ ssdv2proxy_auth_prompt.user_input | default('') }}\n"
+    dest: "{{ settings.storage }}/conf/{{ pgrole }}.auth"
+    owner: "{{ lookup('env','USER') }}"
+    group: "{{ lookup('env','USER') }}"
+    mode: '0600'
+  no_log: true
+  when: ssdv2proxy_auth_missing | bool
+
+- name: Rappeler où le mot de passe est conservé
+  ansible.builtin.debug:
+    msg:
+      - "Mot de passe de l'interface conservé dans {{ settings.storage }}/conf/{{ pgrole }}.auth (0600)."
+      - "Pour le modifier : supprimer ce fichier puis réinstaller l'application."
+  when: ssdv2proxy_auth_missing | bool
