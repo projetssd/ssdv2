@@ -7,10 +7,15 @@ on:
       - "tests/test_telemetry.py"
       - "autoinstall.sh"
       - "seedbox.sh"
+      - "profile.sh"
   push:
     paths:
       - "includes/config/scripts/telemetry.py"
+      - "includes/config/scripts/install_telemetry_timer.sh"
       - "tests/test_telemetry.py"
+      - "autoinstall.sh"
+      - "seedbox.sh"
+      - "profile.sh"
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -21,4 +26,4 @@ jobs:
           python-version: "3.12"
       - run: python -m unittest discover -s tests -p 'test_telemetry.py' -v
       - run: python -m py_compile includes/config/scripts/telemetry.py
-      - run: bash -n autoinstall.sh seedbox.sh includes/config/scripts/install_telemetry_timer.sh
+      - run: bash -n profile.sh autoinstall.sh seedbox.sh includes/config/scripts/install_telemetry_timer.sh

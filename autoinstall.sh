@@ -465,10 +465,19 @@ ensure_docker_runtime
 prepare_traefik_vars
 traefik
 
-# Statistiques communautaires : opération facultative et non bloquante.
+# Statistiques communautaires : installation et premier inventaire sans action utilisateur.
 if [ -f "${SETTINGS_SOURCE}/includes/config/scripts/install_telemetry_timer.sh" ]; then
   run_root env SSDV2_OWNER="${CURRENT_USER}" SETTINGS_SOURCE="${SETTINGS_SOURCE}" \
     bash "${SETTINGS_SOURCE}/includes/config/scripts/install_telemetry_timer.sh" >/dev/null 2>&1 || true
+fi
+if [ -f "${SETTINGS_SOURCE}/includes/config/scripts/telemetry.py" ]; then
+  # Envoyer sous l'utilisateur propriétaire (l'identifiant persiste dans son HOME).
+  if [ "$(id -un)" = "${CURRENT_USER}" ]; then
+    env SETTINGS_SOURCE="${SETTINGS_SOURCE}" python3 "${SETTINGS_SOURCE}/includes/config/scripts/telemetry.py" sync >/dev/null 2>&1 &
+  else
+    sudo -n -u "${CURRENT_USER}" env SETTINGS_SOURCE="${SETTINGS_SOURCE}" HOME="${CURRENT_HOME}" \
+      python3 "${SETTINGS_SOURCE}/includes/config/scripts/telemetry.py" sync >/dev/null 2>&1 &
+  fi
 fi
 
 log "Installation SSDv2 terminée avec succès."
