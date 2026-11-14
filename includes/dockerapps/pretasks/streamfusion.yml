@@ -1,77 +1,150 @@
 ---
-# SSDV2 Relay est requis pour AllDebrid depuis la bascule AD_BASE_URL.
-- name: Vérifier la présence de SSD Relay
+- name: Set StreamFusion secrets directory
+  ansible.builtin.set_fact:
+    streamfusion_secret_dir: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/streamfusion-secrets"
+    streamfusion_stored: {}
+    streamfusion_runtime: {}
+
+- name: Create StreamFusion secrets directory
+  ansible.builtin.file:
+    path: "{{ streamfusion_secret_dir }}"
+    state: directory
+    mode: '0700'
+
+- name: Lire les réglages StreamFusion mémorisés
+  ansible.builtin.slurp:
+    src: "{{ streamfusion_secret_dir }}/{{ item }}"
+  loop: ['TMDB_API_KEY', 'ADMIN_SECRET_KEY', 'AD_BASE_URL', 'PROXY_URL']
+  register: streamfusion_stored_files
+  failed_when: false
+  no_log: true
+
+- name: Reprendre les fichiers présents, y compris un proxy vide
+  ansible.builtin.set_fact:
+    streamfusion_stored: "{{ streamfusion_stored | combine({item.item: item.content | b64decode | trim}) }}"
+  loop: "{{ streamfusion_stored_files.results }}"
+  when: item.content is defined
+  no_log: true
+
+- name: Lire les réglages de l'ancien conteneur StreamFusion
   ansible.builtin.command:
-    cmd: docker inspect -f '{% raw %}{{.State.Running}}{% endraw %}' ssdv2-relay
-  register: streamfusion_relay_check
+    argv:
+      - docker
+      - inspect
+      - --format
+      - '{% raw %}{{json .Config.Env}}{% endraw %}'
+      - stream-fusion
+  register: streamfusion_existing_env
   failed_when: false
   changed_when: false
+  no_log: true
 
-- name: Rappeler que SSD Relay est requis avant l'installation
-  ansible.builtin.debug:
-    msg:
-      - "⚠️ SSDV2 Relay est requis pour AllDebrid."
-      - "Installez l'application « ssdv2-relay » avant de continuer."
-      - "Sans relais, Stream Fusion démarrera mais AllDebrid ne fonctionnera pas."
-  when: (streamfusion_relay_check.stdout | default('') | trim) != 'true'
+- name: Extraire uniquement les quatre réglages de l'ancien conteneur
+  ansible.builtin.set_fact:
+    streamfusion_runtime: "{{ streamfusion_runtime | combine({item.split('=', 1)[0]: item.split('=', 1)[1]}) }}"
+  loop: "{{ (streamfusion_existing_env.stdout | from_json) if streamfusion_existing_env.rc == 0 else [] }}"
+  when: item.split('=', 1)[0] in ['TMDB_API_KEY', 'ADMIN_SECRET_KEY', 'AD_BASE_URL', 'PROXY_URL']
+  no_log: true
 
-- name: Prendre connaissance avant de continuer
+- name: Donner la priorité aux fichiers mémorisés
+  ansible.builtin.set_fact:
+    streamfusion_stored: "{{ streamfusion_runtime | combine(streamfusion_stored) }}"
+  no_log: true
+
+- name: Demander s'il faut modifier les réglages mémorisés
   ansible.builtin.pause:
     prompt: |
-      SSDV2_PROMPT {"id": "streamfusion.relay_install_first", "label": "J'ai compris", "kind": "confirm", "secret": false}
-      Installez SSDV2 Relay avant de continuer, puis appuyez sur Entrée.
-  when: (streamfusion_relay_check.stdout | default('') | trim) != 'true'
+      SSDV2_PROMPT {"id":"streamfusion.reconfigure","label":"Modifier les réglages mémorisés ?","kind":"confirm","secret":false,"default":"n"}
+      Entrée/n = conserver ; o = reposer les quatre questions. Les secrets restent masqués.
+  register: streamfusion_reconfigure_prompt
+  when:
+    - streamfusion_stored | length > 0
+    - streamfusion_reconfigure is not defined
 
-- name: Ask for TMDB_API_KEY only if not provided
-  pause:
+- name: Déterminer si les quatre questions doivent être reposées
+  ansible.builtin.set_fact:
+    streamfusion_configure: "{{ streamfusion_reconfigure | default((streamfusion_reconfigure_prompt.user_input | default('') | trim | lower) in ['o', 'oui', 'y', 'yes', 'true']) | bool }}"
+
+- name: Demander TMDB_API_KEY
+  ansible.builtin.pause:
     prompt: |
       SSDV2_PROMPT {"id": "streamfusion.tmdb_key", "label": "Clé TMDB", "kind": "secret", "secret": true}
-      Entre ta clé TMDB_API_KEY
+      Clé TMDB obligatoire. Entrée conserve une clé déjà mémorisée.
     echo: false
-  register: tmdb_api_key_prompt
-  when: streamfusion_tmdb_api_key is not defined or (streamfusion_tmdb_api_key | string | trim) == ""
+  register: streamfusion_tmdb_key_prompt
+  when:
+    - streamfusion_tmdb_api_key is not defined
+    - streamfusion_configure | bool or 'TMDB_API_KEY' not in streamfusion_stored
   no_log: true
 
-- name: Ask for ADMIN_SECRET_KEY only if not provided
-  pause:
+- name: Demander ADMIN_SECRET_KEY
+  ansible.builtin.pause:
     prompt: |
-      SSDV2_PROMPT {"id": "streamfusion.admin_key", "label": "Clé ADMIN", "kind": "secret", "secret": true}
-      Entre ta ADMIN_KEY pour accéder à l'interface d'administration StreamFusion (minimum 32 caractères)
+      SSDV2_PROMPT {"id": "streamfusion.admin_key", "label": "Clé ADMIN (minimum 32 caractères)", "kind": "secret", "secret": true}
+      Clé ADMIN (minimum 32 caractères). Entrée = conserver la valeur existante.
     echo: false
-  register: admin_secret_key_prompt
-  when: streamfusion_admin_secret_key is not defined or (streamfusion_admin_secret_key | string | trim) == ""
+  register: streamfusion_admin_key_prompt
+  when:
+    - streamfusion_admin_secret_key is not defined
+    - streamfusion_configure | bool or 'ADMIN_SECRET_KEY' not in streamfusion_stored
   no_log: true
 
-- name: Set provided StreamFusion secret facts
-  set_fact:
-    TMDB_API_KEY: "{{ (streamfusion_tmdb_api_key | default(tmdb_api_key_prompt.user_input | default(''), true) | string | trim) }}"
-    ADMIN_SECRET_KEY: "{{ (streamfusion_admin_secret_key | default(admin_secret_key_prompt.user_input | default(''), true) | string | trim) }}"
+- name: Demander AD_BASE_URL
+  ansible.builtin.pause:
+    prompt: |
+      SSDV2_PROMPT {"id": "streamfusion.ad_base_url", "label": "URL API AllDebrid (recommandée : https://api.alldebrid.com)", "kind": "text", "secret": false}
+      AD_BASE_URL : Entrée conserve la valeur existante, sinon utilise https://api.alldebrid.com.
+    echo: true
+  register: streamfusion_ad_base_url_prompt
+  when:
+    - streamfusion_ad_base_url is not defined
+    - streamfusion_configure | bool or 'AD_BASE_URL' not in streamfusion_stored
+
+- name: Demander PROXY_URL
+  ansible.builtin.pause:
+    prompt: |
+      SSDV2_PROMPT {"id": "streamfusion.proxy_url", "label": "URL du proxy (facultative)", "kind": "secret", "secret": true}
+      PROXY_URL facultatif. Entrée conserve le proxy existant, sinon aucun proxy ; - = désactiver.
+    echo: false
+  register: streamfusion_proxy_url_prompt
+  when:
+    - streamfusion_proxy_url is not defined
+    - streamfusion_configure | bool or 'PROXY_URL' not in streamfusion_stored
+  no_log: true
+
+- name: Résoudre les quatre réglages StreamFusion
+  ansible.builtin.set_fact:
+    TMDB_API_KEY: "{{ streamfusion_tmdb_api_key | default((streamfusion_tmdb_key_prompt.user_input | default('') | trim) or streamfusion_stored.get('TMDB_API_KEY', '')) | string | trim }}"
+    ADMIN_SECRET_KEY: "{{ streamfusion_admin_secret_key | default((streamfusion_admin_key_prompt.user_input | default('') | trim) or streamfusion_stored.get('ADMIN_SECRET_KEY', '')) | string | trim }}"
+    AD_BASE_URL: "{{ streamfusion_ad_base_url | default((streamfusion_ad_base_url_prompt.user_input | default('') | trim) or streamfusion_stored.get('AD_BASE_URL', 'https://api.alldebrid.com')) | string | trim }}"
+    PROXY_URL: "{{ streamfusion_proxy_url | default((streamfusion_proxy_url_prompt.user_input | default('') | trim) or streamfusion_stored.get('PROXY_URL', '')) | string | trim }}"
+  no_log: true
+
+- name: Désactiver explicitement le proxy
+  ansible.builtin.set_fact:
+    PROXY_URL: "{{ '' if PROXY_URL == '-' else PROXY_URL }}"
+  no_log: true
+
+- name: Vérifier les réglages sans exposer leur contenu
+  ansible.builtin.set_fact:
+    streamfusion_settings_valid: >-
+      {{ (TMDB_API_KEY | length > 0)
+         and (ADMIN_SECRET_KEY | length >= 32)
+         and (AD_BASE_URL is match('^https?://[^\s]+$'))
+         and ('\n' not in PROXY_URL) and ('\r' not in PROXY_URL) }}
   no_log: true
 
 - name: Validate provided StreamFusion secret facts
-  assert:
-    that:
-      - TMDB_API_KEY | length > 0
-      - ADMIN_SECRET_KEY | length >= 32
-    fail_msg: "TMDB_API_KEY est vide ou ADMIN_KEY contient moins de 32 caractères."
-  no_log: true
+  ansible.builtin.assert:
+    that: streamfusion_settings_valid | bool
+    fail_msg: "Configuration incomplète ou invalide : TMDB requis, ADMIN minimum 32 caractères, AD_BASE_URL HTTP(S). Fournir les valeurs manquantes ou relancer en mode interactif."
 
-- name: Set StreamFusion secrets directory
-  set_fact:
-    streamfusion_secret_dir: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/streamfusion-secrets"
-
-- name: Create StreamFusion secrets directory
-  file:
-    path: "{{ streamfusion_secret_dir }}"
-    state: directory
-    mode: "0700"
-
-- name: Persist ADMIN_SECRET_KEY
-  copy:
-    content: "{{ ADMIN_SECRET_KEY }}\n"
-    dest: "{{ streamfusion_secret_dir }}/ADMIN_SECRET_KEY"
-    mode: "0600"
-    force: true
+- name: Mémoriser les quatre réglages StreamFusion
+  ansible.builtin.copy:
+    content: "{{ lookup('vars', item) }}\n"
+    dest: "{{ streamfusion_secret_dir }}/{{ item }}"
+    mode: '0600'
+  loop: ['TMDB_API_KEY', 'ADMIN_SECRET_KEY', 'AD_BASE_URL', 'PROXY_URL']
   no_log: true
 
 - name: Generate persistent StreamFusion internal secrets
@@ -615,10 +688,9 @@
           PG_OWNER_ROLE: "streamfusion_owner"
 
           TZ: "Europe/Paris"
-          # API AllDebrid via SSDV2 Relay (HTTP privé, sans CA).
-          # Pas de PROXY_URL : sinon la requête vers le relais passerait par
-          # WARP, qui refuse les destinations privées (503).
-          AD_BASE_URL: "http://ssdv2-relay:1080"
+          # Partager les réglages de routage avec le conteneur principal.
+          AD_BASE_URL: "{{ pg_env.AD_BASE_URL }}"
+          PROXY_URL: "{{ pg_env.PROXY_URL | default(omit) }}"
 
           REDIS_HOST: "stremio-redis"
           PG_HOST: "stremio-postgres"
