@@ -1,0 +1,24 @@
+name: Telemetry privacy checks
+on:
+  pull_request:
+    paths:
+      - "includes/config/scripts/telemetry.py"
+      - "includes/config/scripts/install_telemetry_timer.sh"
+      - "tests/test_telemetry.py"
+      - "autoinstall.sh"
+      - "seedbox.sh"
+  push:
+    paths:
+      - "includes/config/scripts/telemetry.py"
+      - "tests/test_telemetry.py"
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m unittest discover -s tests -p 'test_telemetry.py' -v
+      - run: python -m py_compile includes/config/scripts/telemetry.py
+      - run: bash -n autoinstall.sh seedbox.sh includes/config/scripts/install_telemetry_timer.sh
