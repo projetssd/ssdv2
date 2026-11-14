@@ -1,0 +1,3 @@
+# Mainteneur : remplacer ce fichier par UNE URL HTTPS, sur une seule ligne.
+# Exemple de format : https://metrics.example.org/api/v1/snapshot
+# Sans URL valide, le collecteur n'envoie rien.
