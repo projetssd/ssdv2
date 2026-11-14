@@ -146,22 +146,22 @@ def image_tag(image: str) -> str:
 
 
 def docker_apps() -> dict[str, tuple[str, str]] | None:
-    fmt = '{{.Label "ssdv2.app"}}\t{{.Names}}\t{{.Image}}'
+    fmt = '{{.Label "ssdv2.app"}}\t{{.Names}}\t{{.Image}}\t{{.Label "org.opencontainers.image.version"}}'
     raw = command("docker", "ps", "-a", "--filter", "label=ssdv2.app", "--format", fmt, timeout=12)
     if raw is None:
         return None
     rows: dict[str, tuple[str, str]] = {}
     for line in raw.splitlines():
         fields = line.split("\t")
-        if len(fields) != 3:
+        if len(fields) != 4:
             continue
-        app, name, image = fields
+        app, name, image, oci_version = fields
         if not APP_RE.fullmatch(app):
             continue
         # Le container applicatif principal prime sur les dépendances DB/cache.
         score = 2 if name == app else (1 if name.startswith(app + "-") else 0)
         if app not in rows or (score > rows[app][0]):
-            rows[app] = (score, image_tag(image))
+            rows[app] = (score, oci_version if VERSION_RE.fullmatch(oci_version) else image_tag(image))
     return {app: item[1] for app, item in rows.items()}
 
 
