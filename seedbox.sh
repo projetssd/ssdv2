@@ -145,6 +145,9 @@ IS_INSTALLED=$(select_seedbox_param "installed")
 if [ "${IS_INSTALLED:-0}" = "1" ] && [ -f "${SETTINGS_SOURCE}/includes/config/scripts/install_telemetry_timer.sh" ]; then
   sudo -n env SSDV2_OWNER="${SUDO_USER:-$(id -un)}" SETTINGS_SOURCE="${SETTINGS_SOURCE}" \
     bash "${SETTINGS_SOURCE}/includes/config/scripts/install_telemetry_timer.sh" >/dev/null 2>&1 || true
+  # Premier inventaire après une mise à jour, sans attendre le timer quotidien.
+  # La commande respecte la désactivation et la temporisation locale d'une heure.
+  python3 "${SETTINGS_SOURCE}/includes/config/scripts/telemetry.py" sync >/dev/null 2>&1 &
 fi
 
 if [ $mode_install = "manuel" ]; then
