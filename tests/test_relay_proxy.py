@@ -114,33 +114,84 @@ class RelayConfigurationTest(unittest.TestCase):
                         self.assertEqual((dest/filename).stat().st_mode & 0o777,0o600)
                 for filename,content in legacy.items(): self.assertEqual((old/filename).read_text(),content+'\n')
 
-    def test_migration_selection_and_noninteractive_confirmation(self):
-        original=yaml.safe_load((ROOT/'includes/dockerapps/posttasks/ssdv2-relay.yml').read_text())
-        names={'Déterminer la migration nécessaire','Déterminer si une migration est nécessaire',
-               'Détecter une exécution non interactive','Définir la réponse de migration',
-               'Migrer stream-fusion vers SSD Relay','Migrer taskiq-worker vers SSD Relay'}
-        tasks=json.loads(json.dumps([t for t in original if t['name'] in names]))
-        for task in tasks:
-            if 'ansible.builtin.shell' in task:
-                name='stream-fusion' if 'stream-fusion' in task['name'] else 'taskiq-worker'
-                del task['ansible.builtin.shell']
-                task.pop('register')
-                task['ansible.builtin.set_fact']={'migration_calls':"{{ migration_calls + ['"+name+"'] }}"}
-        cases=[(True,False,{'user_input':' o '},['stream-fusion']),
-               (False,True,{'user_input':'oui'},['taskiq-worker']),
-               (True,True,{},[]), (True,True,{'user_input':'n'},[]),
-               (False,False,{},[])]
-        for sf,tw,answer,expected in cases:
-            with self.subTest(sf=sf,tw=tw,answer=answer),tempfile.TemporaryDirectory() as tmp:
-                variables=dict(ssdv2_relay_ping={'rc':0},migration_calls=[],expected=expected,
-                    ssdv2_relay_sf_state={'rc':0,'stdout':'false'},
-                    ssdv2_relay_tw_state={'rc':0,'stdout':'true'},
-                    ssdv2_relay_sf_env={'stdout':'PROXY_URL=http://warp:1080' if sf else 'AD_BASE_URL=http://ssdv2-relay:1080'},
-                    ssdv2_relay_tw_env={'stdout':'PROXY_URL=http://warp:1080' if tw else 'AD_BASE_URL=http://ssdv2-relay:1080'},
-                    ssdv2_relay_migrate_answer=answer)
-                check={'name':'Check selected containers','ansible.builtin.assert':{'that':'migration_calls == expected'}}
-                result=self.run_play(tasks+[check],variables,Path(tmp))
-                self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+    def test_relay_posttasks_leave_streamfusion_routing_and_containers_unchanged(self):
+        original = yaml.safe_load((ROOT / 'includes/dockerapps/posttasks/ssdv2-relay.yml').read_text())
+        allowed = {'ansible.builtin.command', 'ansible.builtin.debug',
+                   'ansible.builtin.stat', 'ansible.builtin.lineinfile'}
+        # Refuser aussi les anciennes migrations par shell, pause ou inclusion.
+        for task in original:
+            modules = [key for key in task if key.startswith('ansible.') or key.startswith('community.')]
+            self.assertEqual(len(modules), 1, task['name'])
+            self.assertIn(modules[0], allowed, task['name'])
+
+        cases = [('warp-running', 0, True, 'http://warp:1080'),
+                 ('already-relay-stopped', 1, True, ''),
+                 ('no-registry', 0, False, 'http://custom-proxy:1080')]
+        marker = 'fixture-streamfusion-secret-629713'
+        for case, ping_rc, has_registry, proxy_url in cases:
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as tmp:
+                directory = Path(tmp)
+                conf = directory / 'conf'
+                conf.mkdir()
+                registry = conf / 'streamfusion.containers'
+                if has_registry:
+                    registry.write_text('stream-fusion\nwarp\ntaskiq-worker\n')
+                secrets = directory / 'docker' / os.environ.get('USER', '') / 'streamfusion-secrets'
+                secrets.mkdir(parents=True)
+                values = {'AD_BASE_URL': 'http://ssdv2-relay:1080' if not proxy_url
+                          else 'https://api.alldebrid.com', 'PROXY_URL': proxy_url,
+                          'TMDB_API_KEY': marker, 'ADMIN_SECRET_KEY': marker + '-admin',
+                          'SECRET_API_KEY': marker + '-internal'}
+                for key, value in values.items():
+                    path = secrets / key
+                    path.write_text(value + '\n')
+                    path.chmod(0o600)
+                # Une description de conteneur ne doit jamais être lue ou modifiée.
+                state = directory / 'containers.json'
+                state.write_text(json.dumps({'stream-fusion': case, 'taskiq-worker': case,
+                                             'env': values}))
+                protected = [state, *secrets.iterdir()]
+                before = {path: (path.read_bytes(), path.stat().st_mtime_ns, path.stat().st_mode)
+                          for path in protected}
+
+                calls = directory / 'docker-calls.jsonl'
+                docker = directory / 'docker-fixture'
+                docker.write_text(
+                    '#!/usr/bin/env python3\nimport json, sys\n'
+                    + 'with open(' + repr(str(calls)) + ', "a") as log:\n'
+                    + '    log.write(json.dumps(sys.argv[1:]) + "\\n")\n'
+                    + 'if sys.argv[1:3] == ["inspect", "-f"] and sys.argv[-1] == "ssdv2-relay":\n'
+                    + '    print("healthy")\n'
+                    + 'elif sys.argv[1:3] == ["exec", "ssdv2-relay"]:\n'
+                    + '    sys.exit(' + str(ping_rc) + ')\n'
+                    + 'else:\n    sys.exit(99)\n')
+                docker.chmod(0o700)
+                tasks = json.loads(json.dumps(original))
+                for task in tasks:
+                    command = task.get('ansible.builtin.command')
+                    if command:
+                        self.assertTrue(command['cmd'].startswith('docker '))
+                        command['cmd'] = str(docker) + command['cmd'][len('docker'):]
+
+                result = self.run_play(tasks, dict(settings={'storage': tmp, 'source': str(ROOT)}), directory)
+                output = result.stdout + result.stderr
+                self.assertEqual(result.returncode, 0, output)
+                commands = [json.loads(line) for line in calls.read_text().splitlines()]
+                self.assertEqual(len(commands), 2)
+                self.assertEqual(commands[0][-1], 'ssdv2-relay')
+                self.assertEqual(commands[1][:2], ['exec', 'ssdv2-relay'])
+                self.assertNotIn('SSDV2_PROMPT', output)
+                self.assertNotIn(marker, output)
+                for wording in ['http://ssdv2-relay:1080', 'AD_BASE_URL', 'PROXY_URL',
+                                'facultative', 'Stremio', 'lecture directe', 'aucun flux vidéo']:
+                    self.assertIn(wording, output)
+                self.assertEqual('⚠️ Le relais ne répond pas correctement' in output, ping_rc != 0)
+                for path, snapshot in before.items():
+                    self.assertEqual((path.read_bytes(), path.stat().st_mtime_ns, path.stat().st_mode), snapshot)
+                if has_registry:
+                    self.assertEqual(registry.read_text(), 'stream-fusion\ntaskiq-worker\n')
+                else:
+                    self.assertFalse(registry.exists())
 
     def test_relay_opts_in_to_masking(self):
         relay=yaml.safe_load((ROOT/'includes/dockerapps/vars/ssdv2-relay.yml').read_text())

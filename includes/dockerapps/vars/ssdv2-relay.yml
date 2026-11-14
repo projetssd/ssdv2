@@ -1,8 +1,10 @@
 ---
 # SSDV2 Relay : passerelle API AllDebrid via un Cloudflare Worker personnel.
 # Mode serve-api : HTTP privé sans CA, aucun flux vidéo.
-# Stream Fusion / Taskiq utilisent AD_BASE_URL=http://ssdv2-relay:1080
-# et ne doivent pas définir PROXY_URL.
+# Intégration facultative : renseigner http://ssdv2-relay:1080 dans AD_BASE_URL
+# depuis l'assistant StreamFusion si souhaité, jamais dans PROXY_URL.
+# Usage prévu : Stremio en lecture directe ; le relais ne transporte pas la vidéo.
+# L'installation du relais ne modifie pas les réglages de StreamFusion / Taskiq.
 #
 # Seuls RELAY_WORKER_URL et RELAY_TOKEN sont nécessaires : ils sont demandés
 # (ou réutilisés) par la pretask. La clé API AllDebrid est facultative et

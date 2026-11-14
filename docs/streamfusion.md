@@ -86,13 +86,41 @@ pouvez également laisser ce champ vide si Proxy Manager gère ensuite la vidéo
 Pour un proxy directement utilisé par StreamFusion, renseignez une URL joignable
 depuis les conteneurs, avec ses identifiants si nécessaires.
 
-**SSDV2 Relay reste facultatif.** Si vous l'utilisez pour l'API AllDebrid,
-renseignez son adresse dans `AD_BASE_URL`. Un éventuel proxy StreamFusion doit
-pouvoir joindre cette adresse, notamment si le relais utilise un nom Docker
-privé. Le relais AllDebrid ne transporte pas la vidéo.
-
 Laissez SSDV2 terminer le déploiement. Les secrets internes sont générés
 et conservés automatiquement ; les réinstallations les réutilisent.
+
+### Utiliser facultativement SSDV2 Relay
+
+L'installation ou la réinstallation de **ssdv2-relay** affiche son état et les
+consignes d'utilisation, sans modifier `AD_BASE_URL`, `PROXY_URL` ou les secrets
+mémorisés de StreamFusion, ni recréer `stream-fusion` ou `taskiq-worker`.
+
+Pour choisir le relais, installez-le puis relancez l'assistant d'installation
+StreamFusion. Acceptez de modifier les réglages mémorisés et renseignez cette
+adresse dans **`AD_BASE_URL`** :
+
+```text
+http://ssdv2-relay:1080
+```
+
+Cette adresse est joignable depuis le réseau Docker commun SSDV2. Ce n'est pas
+un proxy HTTP CONNECT : **ne la renseignez pas dans `PROXY_URL`**. Si vous gardez
+un autre proxy dans StreamFusion, celui-ci doit pouvoir joindre l'adresse du
+relais, notamment son nom Docker privé. L'installateur du relais ne vide pas
+votre réglage proxy.
+
+L'usage prévu est **Stremio avec lecture directe des liens vidéo par le lecteur**.
+Le relais traite les échanges avec l'API AllDebrid pour récupérer les informations
+et les liens ; **il ne transporte aucun flux vidéo**. Il ne peut pas servir de
+sortie média à StreamFusion ou SSDV2 Proxy Manager. Une réponse API réussie ne
+valide pas une lecture vidéo qui passerait par le serveur.
+
+Si une ancienne installation vous a déjà basculé vers le relais, vos réglages
+restent inchangés. Pour revenir à l'API officielle, relancez l'assistant
+StreamFusion, répondez **oui** à la modification des réglages et saisissez
+explicitement `https://api.alldebrid.com` dans `AD_BASE_URL`. **Entrée conserve
+l'ancienne adresse**. Le choix de `PROXY_URL` reste indépendant : conservez-le,
+changez-le ou saisissez `-` pour le désactiver selon votre mode réseau.
 
 ## Premier accès et clés utilisateur
 
