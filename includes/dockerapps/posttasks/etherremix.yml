@@ -1,0 +1,102 @@
+---
+- name: Lire les informations du conteneur Ether-Remix
+  community.docker.docker_container_info:
+    name: "{{ pgrole }}"
+  register: etherremix_running
+
+- name: Définir l'adresse locale de l'API Ether-Remix
+  ansible.builtin.set_fact:
+    etherremix_api_url: "http://{{ etherremix_running.container.NetworkSettings.Networks.traefik_proxy.IPAddress }}:{{ intport }}/ether/api"
+
+- name: Attendre l'API Ether-Remix
+  ansible.builtin.uri:
+    url: "{{ etherremix_api_url }}/bootstrap"
+    use_proxy: false
+    return_content: true
+  register: etherremix_bootstrap
+  until: etherremix_bootstrap.status | default(0) == 200
+  retries: 30
+  delay: 2
+  changed_when: false
+
+- name: Vérifier le contrat d'initialisation Ether-Remix
+  ansible.builtin.assert:
+    that:
+      - etherremix_bootstrap.json.ownerConfigured is boolean
+      - etherremix_bootstrap.json.setupComplete is boolean
+      - etherremix_bootstrap.json.authRequired is boolean
+    fail_msg: "L'API Ether-Remix ne permet pas de vérifier la présence du propriétaire. Aucun compte n'a été modifié."
+
+- name: Initialiser le propriétaire Ether-Remix
+  when:
+    - not etherremix_bootstrap.json.ownerConfigured
+    - not etherremix_bootstrap.json.setupComplete
+    - not etherremix_bootstrap.json.authRequired
+  block:
+    - name: Demander l'identifiant du propriétaire Ether-Remix
+      ansible.builtin.pause:
+        prompt: |
+          SSDV2_PROMPT {"id":"etherremix.username","label":"Identifiant du propriétaire Ether-Remix","kind":"text","secret":false}
+          Identifiant du propriétaire Ether-Remix
+      register: etherremix_owner_username
+
+    - name: Vérifier l'identifiant Ether-Remix
+      ansible.builtin.assert:
+        that:
+          - etherremix_owner_username.user_input | length > 0
+          - etherremix_owner_username.user_input | length <= 128
+          - etherremix_owner_username.user_input == (etherremix_owner_username.user_input | trim)
+        fail_msg: "Saisir un identifiant de 1 à 128 caractères sans espace au début ni à la fin, puis relancer l'installation."
+
+    - name: Demander le mot de passe du propriétaire Ether-Remix
+      ansible.builtin.pause:
+        prompt: |
+          SSDV2_PROMPT {"id":"etherremix.password","label":"Mot de passe Ether-Remix (12 caractères minimum)","kind":"secret","secret":true}
+          Mot de passe du propriétaire Ether-Remix (12 caractères minimum)
+        echo: false
+      register: etherremix_owner_password
+      no_log: true
+
+    - name: Contrôler la longueur du mot de passe Ether-Remix
+      ansible.builtin.set_fact:
+        etherremix_password_valid: "{{ 12 <= (etherremix_owner_password.user_input | length) <= 1024 }}"
+      no_log: true
+
+    - name: Vérifier le mot de passe Ether-Remix
+      ansible.builtin.assert:
+        that:
+          - etherremix_password_valid | bool
+        fail_msg: "Le mot de passe doit contenir de 12 à 1024 caractères. Relancer l'installation pour le saisir à nouveau."
+
+    - name: Créer le propriétaire via l'API locale Ether-Remix
+      ansible.builtin.uri:
+        url: "{{ etherremix_api_url }}/setup/local"
+        method: POST
+        use_proxy: false
+        headers:
+          X-Ether-Request: '1'
+        body_format: json
+        body:
+          username: "{{ etherremix_owner_username.user_input }}"
+          password: "{{ etherremix_owner_password.user_input }}"
+        status_code: 200
+      changed_when: true
+      no_log: true
+
+    - name: Vérifier que le propriétaire a été créé
+      ansible.builtin.uri:
+        url: "{{ etherremix_api_url }}/bootstrap"
+        use_proxy: false
+      register: etherremix_owner_check
+      failed_when: not (etherremix_owner_check.json.ownerConfigured | default(false))
+      changed_when: false
+
+    - name: Effacer les identifiants temporaires des variables d'installation
+      ansible.builtin.set_fact:
+        etherremix_owner_username: {}
+        etherremix_owner_password: {}
+      no_log: true
+
+- name: Indiquer l'accès à la console Ether-Remix
+  ansible.builtin.debug:
+    msg: "Ouvrir https://{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}/ether/ et se connecter avec le compte propriétaire pour terminer l'assistant."

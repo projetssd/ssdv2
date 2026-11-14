@@ -410,7 +410,7 @@ function subdomain() {
 function subdomain_unitaire() {
   line=$1
   echo ""
-  printf 'SSDV2_PROMPT %s\n' 'SSDV2_PROMPT {"id": "app.subdomain_custom", "label": "Personnaliser le sous-domaine ?", "kind": "confirm", "secret": false}' >&2
+  printf 'SSDV2_PROMPT %s\n' '{"id": "app.subdomain_custom", "label": "Personnaliser le sous-domaine ?", "kind": "confirm", "secret": false}' >&2
   echo >&2 -n -e "${BWHITE}-->" $(gettext "Personnaliser le sous domaine pour") "${line} : (y/n) ?" "${CEND}"
   read OUI
 
@@ -418,7 +418,7 @@ function subdomain_unitaire() {
   if [[ "$OUI" == "y" ]] || [[ "$OUI" == "Y" ]]; then
     echo -e " ${CRED}-->"$(gettext "NE PAS SAISIR LE NOM DE DOMAINE - LES POINTS NE SONT PAS ACCEPTES")"${NC}"
     echo ""
-    printf 'SSDV2_PROMPT %s\n' 'SSDV2_PROMPT {"id": "app.subdomain", "label": "Sous-domaine", "kind": "text", "secret": false}' >&2
+    printf 'SSDV2_PROMPT %s\n' '{"id": "app.subdomain", "label": "Sous-domaine", "kind": "text", "secret": false}' >&2
     echo >&2 -n -e "${BWHITE}-->" $(gettext "Sous domaine pour") "${line} : " "${CEND}"
     read SUBDOMAIN
   else
@@ -432,7 +432,7 @@ function auth() {
   echo ""
   for line in $(cat $SERVICESPERUSER); do
 
-    printf 'SSDV2_PROMPT %s\n' 'SSDV2_PROMPT {"id": "app.auth", "label": "Authentification", "kind": "choice", "secret": false, "options": [{"value": "1", "label": "basique"}, {"value": "2", "label": "oauth"}, {"value": "3", "label": "authelia"}, {"value": "4", "label": "aucune"}, {"value": "5", "label": "oauth2-proxy"}]}' >&2
+    printf 'SSDV2_PROMPT %s\n' '{"id": "app.auth", "label": "Authentification", "kind": "choice", "secret": false, "options": [{"value": "1", "label": "basique"}, {"value": "2", "label": "oauth"}, {"value": "3", "label": "authelia"}, {"value": "4", "label": "aucune"}, {"value": "5", "label": "oauth2-proxy"}]}' >&2
     read -rp $'\e\033[1;37m --> Authentification '${line}' [ Enter ] 1 => basique (défaut) | 2 => oauth | 3 => authelia | 4 => aucune | 5 => oauth2-proxy: ' AUTH
 
     case $AUTH in
@@ -470,7 +470,7 @@ function auth_unitaire() {
   line=$1
   echo ""
 
-  printf 'SSDV2_PROMPT %s\n' 'SSDV2_PROMPT {"id": "app.auth", "label": "Authentification", "kind": "choice", "secret": false, "options": [{"value": "1", "label": "basique"}, {"value": "2", "label": "oauth"}, {"value": "3", "label": "authelia"}, {"value": "4", "label": "aucune"}, {"value": "5", "label": "oauth2-proxy"}]}' >&2
+  printf 'SSDV2_PROMPT %s\n' '{"id": "app.auth", "label": "Authentification", "kind": "choice", "secret": false, "options": [{"value": "1", "label": "basique"}, {"value": "2", "label": "oauth"}, {"value": "3", "label": "authelia"}, {"value": "4", "label": "aucune"}, {"value": "5", "label": "oauth2-proxy"}]}' >&2
   read -rp $'\e\033[1;37m --> Authentification '${line}' [ Enter ] 1 => basique (défaut) | 2 => oauth | 3 => authelia | 4 => aucune | 5 => oauth2-proxy: ' AUTH
 
   case $AUTH in
@@ -564,7 +564,13 @@ launch_service () {
             fi
 
             tempauth=$(get_from_account_yml sub.${line}.auth)
-            if [ "${tempauth}" = notfound ]; then
+            # Le middleware forcé prend le pas sur le choix stocké dans Traefik.
+            # Ne pas demander un choix qui serait ignoré et garder le compte cohérent.
+            if grep -Eq "^traefik_middleware_override:[[:space:]]*['\"]?chain-no-auth@file['\"]?[[:space:]]*(#.*)?$" "$effective_path"; then
+                if [ "${tempauth}" != aucune ]; then
+                    manage_account_yml "sub.${line}.auth" aucune
+                fi
+            elif [ "${tempauth}" = notfound ]; then
                 auth_unitaire ${line}
             fi
         fi
@@ -927,7 +933,7 @@ function demander_conservation_donnees() {
   local app="$1"
   local rep=""
   while :; do
-    printf 'SSDV2_PROMPT %s\n' 'SSDV2_PROMPT {"id": "app.keep_data", "label": "Conserver les données ?", "kind": "confirm", "secret": false}' >&2
+    printf 'SSDV2_PROMPT %s\n' '{"id": "app.keep_data", "label": "Conserver les données ?", "kind": "confirm", "secret": false}' >&2
     if ! read -rp "Conserver les données de ${app} ? (o/n) : " rep; then
       # EOF (Ctrl-D ou stdin épuisé) : on n'entame pas la suppression.
       return 2

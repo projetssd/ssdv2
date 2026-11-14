@@ -1,0 +1,22 @@
+---
+# Console : https://<sous-domaine>.<domaine>/ether/
+# Les clients multimédias utilisent l'authentification d'Ether-Remix.
+pgrole: 'etherremix'
+intport: '32400'
+image: 'ghcr.io/aerya/ether-remix:latest'
+
+traefik_middleware_override: 'chain-no-auth@file'
+
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/cache:/cache:rw"
+  # Sources locales accessibles aux mêmes chemins que sur l'hôte, en lecture seule.
+  - "{{ lookup('env','HOME') }}:{{ lookup('env','HOME') }}:ro"
+  - '/mnt:/mnt:ro,rslave'
+
+pg_env:
+  PUID: "{{ lookup('env','MYUID') }}"
+  PGID: "{{ lookup('env','MYGID') }}"
+  TZ: 'Europe/Paris'
+
+# Le réseau bridge SSDV2 ne permet pas la découverte Plex locale GDM ni l'UPnP.
