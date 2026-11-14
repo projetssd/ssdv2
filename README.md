@@ -53,6 +53,18 @@ La documentation officielle vous accompagne dans la préparation de votre serveu
 
 Avant de commencer, vérifiez les prérequis techniques et prenez connaissance des recommandations de sécurisation proposées dans la documentation.
 
+## Statistiques communautaires (confidentialité)
+
+SSDV2 mesure automatiquement les installations actives et les applications utilisées pour suivre l'évolution du projet. Le relevé est quotidien, pseudonyme et ne transmet pas les adresses IP, MAC, noms de serveurs, domaines, paramètres ou secrets. Cloudflare peut néanmoins traiter l'adresse IP au niveau du réseau.
+
+Seuls un identifiant aléatoire, la branche/révision SSDV2 et les noms/versions des applications sont envoyés. **La collecte peut être désactivée à tout moment, sans affecter SSDV2 :**
+
+```bash
+python3 ~/seedbox-compose/includes/config/scripts/telemetry.py disable
+```
+
+La politique de fonctionnement, la conservation et la commande de suppression de l'identifiant local sont détaillées dans [la documentation de télémétrie](docs/telemetry.md).
+
 ## Documentation et ressources
 
 | Ressource | Description |

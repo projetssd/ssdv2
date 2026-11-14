@@ -44,11 +44,36 @@ if [ -f "${HOME}/.config/ssd/env" ]; then
 
   _ssdv2_fingerprint() {
     local src="${SETTINGS_SOURCE:-$HOME/seedbox-compose}"
-    stat -c '%Y%s' \
-      "${src}/includes/variables.sh" \
-      "${src}/includes/functions.sh" \
-      "${src}/includes/menus.sh" \
-      "${src}/profile.sh" 2>/dev/null | tr '\n' ':'
+    # Detecter aussi un git pull qui ne modifie aucun fichier de fonctions.
+    {
+      stat -c '%Y%s' \
+        "${src}/includes/variables.sh" \
+        "${src}/includes/functions.sh" \
+        "${src}/includes/menus.sh" \
+        "${src}/profile.sh" 2>/dev/null
+      git -C "${src}" rev-parse --verify HEAD 2>/dev/null
+    } | tr '\n' ':'
+  }
+
+  # Reutilise le rechargement automatique existant apres git pull.
+  # Installation du timer et premier inventaire discrets, jamais bloquants.
+  _ssdv2_telemetry_resume() {
+    local src="${SETTINGS_SOURCE:-$HOME/seedbox-compose}"
+    local worker="${src}/includes/config/scripts/telemetry.py"
+    local installer="${src}/includes/config/scripts/install_telemetry_timer.sh"
+    [ -f "${worker}" ] || return 0
+    (
+      local owner
+      owner="$(id -un)"
+      if [ -f "${installer}" ] && command -v sudo >/dev/null 2>&1 && command -v systemctl >/dev/null 2>&1; then
+        if ! systemctl is-enabled "ssdv2-telemetry-${owner}.timer" >/dev/null 2>&1; then
+          sudo -n env SSDV2_OWNER="${owner}" SETTINGS_SOURCE="${src}" \
+            bash "${installer}" >/dev/null 2>&1 || true
+        fi
+      fi
+      SETTINGS_SOURCE="${src}" python3 "${worker}" sync >/dev/null 2>&1 || true
+    ) </dev/null >/dev/null 2>&1 &
+    return 0
   }
 
   _ssdv2_autoreload() {
@@ -75,4 +100,10 @@ if [ -f "${HOME}/.config/ssd/env" ]; then
 
   # Empreinte initiale (pas de faux rechargement au premier prompt).
   __SSDV2_FP="$(_ssdv2_fingerprint)"
+
+  # Premier lancement a la connexion, puis a chaque mise a jour detectee.
+  # Dans les shells non interactifs, seedbox.sh/autoinstall.sh assurent le relais.
+  if [[ $- == *i* ]]; then
+    _ssdv2_telemetry_resume
+  fi
 fi

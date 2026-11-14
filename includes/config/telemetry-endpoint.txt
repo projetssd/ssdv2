@@ -1,0 +1,1 @@
+https://ssdv2-analytics.kesurof.workers.dev/api/v1/snapshot
