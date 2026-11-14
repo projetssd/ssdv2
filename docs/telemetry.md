@@ -40,9 +40,18 @@ python3 ~/seedbox-compose/includes/config/scripts/telemetry.py forget
 
 Autre moyen : configurer `SSDV2_TELEMETRY=off` dans l'environnement du service, ou créer `~/.config/ssd/telemetry.disabled`.
 
-## Exécution
+## Exécution automatique
 
-Le collecteur utilise uniquement la bibliothèque standard Python, avec un timer systemd quotidien. Une indisponibilité de Cloudflare, de Docker ou du réseau n'interrompt **jamais** SSDV2. En cas de défaillance de Docker ou de SQLite, aucun snapshot incomplet n'est envoyé.
+Le collecteur utilise uniquement la bibliothèque standard Python. **Aucune commande de configuration de la télémétrie n'est demandée à l'utilisateur :**
+
+- **Installation / autoinstall :** le timer systemd est installé et un premier inventaire est déclenché automatiquement sous l'utilisateur propriétaire.
+- **`git pull` dans un shell Bash SSDv2 interactif :** le mécanisme déjà présent dans `profile.sh` (`PROMPT_COMMAND`) détecte la nouvelle révision Git à l'invite suivante et lance silencieusement le collecteur. Il tente aussi d'activer le timer, sans demander de mot de passe.
+- **`seedbox` / `seedbox.sh` :** l'installation du timer et le premier relevé sont réessayés automatiquement.
+- **Après l'initialisation :** le timer systemd déclenche les relevés quotidiens, même sans ouvrir le menu.
+
+Un `git pull` dans une session où `profile.sh` n'a pas été chargé (shell non interactif, zsh, automatisation) ne peut pas à lui seul exécuter du code après téléchargement : le prochain lancement de SSDv2 assure le relais. Si le serveur refuse `sudo -n`, le relevé ponctuel reste non bloquant mais l'installation du timer nécessite les droits prévus pour SSDv2.
+
+Une indisponibilité de Cloudflare, de Docker ou du réseau n'interrompt **jamais** SSDv2. En cas de défaillance de Docker ou de SQLite, aucun snapshot incomplet n'est envoyé.
 
 L'API et le dashboard sont dans le dépôt privé `projetssd/ssdv2-analytics`.
 
