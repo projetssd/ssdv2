@@ -475,8 +475,8 @@ if [ -f "${SETTINGS_SOURCE}/includes/config/scripts/telemetry.py" ]; then
   if [ "$(id -un)" = "${CURRENT_USER}" ]; then
     SETTINGS_SOURCE="${SETTINGS_SOURCE}" python3 "${SETTINGS_SOURCE}/includes/config/scripts/telemetry.py" sync >/dev/null 2>&1 &
   else
-    run_root -u "${CURRENT_USER}" env SETTINGS_SOURCE="${SETTINGS_SOURCE}" HOME="${CURRENT_HOME}" \
-      python3 "${SETTINGS_SOURCE}/includes/config/scripts/telemetry.py" sync >/dev/null 2>&1 || true
+    sudo -n -u "${CURRENT_USER}" env SETTINGS_SOURCE="${SETTINGS_SOURCE}" HOME="${CURRENT_HOME}" \
+      python3 "${SETTINGS_SOURCE}/includes/config/scripts/telemetry.py" sync >/dev/null 2>&1 &
   fi
 fi
 
