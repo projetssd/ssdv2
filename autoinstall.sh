@@ -465,5 +465,11 @@ ensure_docker_runtime
 prepare_traefik_vars
 traefik
 
+# Statistiques communautaires : opération facultative et non bloquante.
+if [ -f "${SETTINGS_SOURCE}/includes/config/scripts/install_telemetry_timer.sh" ]; then
+  run_root env SSDV2_OWNER="${CURRENT_USER}" SETTINGS_SOURCE="${SETTINGS_SOURCE}" \
+    bash "${SETTINGS_SOURCE}/includes/config/scripts/install_telemetry_timer.sh" >/dev/null 2>&1 || true
+fi
+
 log "Installation SSDv2 terminée avec succès."
 exit 0
