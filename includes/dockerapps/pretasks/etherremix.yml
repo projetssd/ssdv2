@@ -1,0 +1,70 @@
+---
+- name: Définir le dossier de configuration Ether-Remix
+  ansible.builtin.set_fact:
+    etherremix_config_dir: "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config"
+
+- name: Créer le dossier de configuration Ether-Remix
+  become: true
+  ansible.builtin.file:
+    path: "{{ etherremix_config_dir }}"
+    state: directory
+    owner: "{{ lookup('env','MYUID') }}"
+    group: "{{ lookup('env','MYGID') }}"
+    mode: '0700'
+
+- name: Vérifier la présence de la configuration Ether-Remix
+  ansible.builtin.stat:
+    path: "{{ etherremix_config_dir }}/config.json"
+  register: etherremix_config_file
+
+- name: Lire la configuration Ether-Remix
+  ansible.builtin.slurp:
+    src: "{{ etherremix_config_dir }}/config.json"
+  register: etherremix_config_raw
+  no_log: true
+  when: etherremix_config_file.stat.exists
+
+- name: Déterminer si l'accès distant doit être activé
+  ansible.builtin.set_fact:
+    etherremix_config: "{{ (etherremix_config_raw.content | b64decode | from_json) if etherremix_config_file.stat.exists else {} }}"
+  no_log: true
+
+- name: Préparer l'accès à la console derrière Traefik
+  when: not (etherremix_config.get('server', {}).get('allowRemoteConsole', false) | bool)
+  block:
+    - name: Vérifier si le conteneur existe
+      community.docker.docker_container_info:
+        name: "{{ pgrole }}"
+      register: etherremix_container
+
+    # L'application écrit elle-même config.json : l'arrêter avant la modification.
+    # Le déploiement générique redémarre ensuite le conteneur.
+    - name: Arrêter Ether-Remix avant de modifier sa configuration
+      community.docker.docker_container:
+        name: "{{ pgrole }}"
+        state: stopped
+      when: etherremix_container.exists
+
+    - name: Relire la configuration après l'arrêt
+      ansible.builtin.slurp:
+        src: "{{ etherremix_config_dir }}/config.json"
+      register: etherremix_config_stopped
+      no_log: true
+      when: etherremix_config_file.stat.exists
+
+    - name: Conserver la dernière configuration enregistrée
+      ansible.builtin.set_fact:
+        etherremix_config: "{{ etherremix_config_stopped.content | b64decode | from_json }}"
+      no_log: true
+      when: etherremix_config_file.stat.exists
+
+    - name: Autoriser la console Ether-Remix derrière Traefik
+      become: true
+      ansible.builtin.copy:
+        dest: "{{ etherremix_config_dir }}/config.json"
+        content: "{{ etherremix_config | combine({'server': {'allowRemoteConsole': true}}, recursive=True) | to_nice_json }}\n"
+        owner: "{{ lookup('env','MYUID') }}"
+        group: "{{ lookup('env','MYGID') }}"
+        mode: '0600'
+        backup: true
+      no_log: true
