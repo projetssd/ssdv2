@@ -58,6 +58,7 @@ Avant de commencer, vérifiez les prérequis techniques et prenez connaissance d
 | Ressource | Description |
 | :--- | :--- |
 | [Documentation officielle](https://projetssd.github.io/ssdv2_docs/) | Installation, configuration, applications et maintenance |
+| [StreamFusion](docs/streamfusion.md) | Réglages mémorisés et commande de changement du proxy |
 | [Mécanismes internes](docs/mecanismes.md) | Fonctionnement du déploiement, registres et sécurité |
 | [Historique des changements](CHANGELOG) | Évolutions et corrections apportées au projet |
 | [Charte graphique SSDv2](https://github.com/projetssd/branding) | Logos, couleurs et design system (accès selon les droits au dépôt) |

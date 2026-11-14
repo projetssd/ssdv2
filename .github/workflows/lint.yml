@@ -89,6 +89,10 @@ jobs:
             echo "syntax-check: $f"
             ansible-playbook --syntax-check "$f"
           done
+      - name: Tests StreamFusion sur données fictives
+        run: |
+          export ANSIBLE_PLAYBOOK="$(command -v ansible-playbook)"
+          python3 tests/test_streamfusion.py
       - name: Tests Relay et Proxy sur données fictives
         run: |
           export ANSIBLE_PLAYBOOK="$(command -v ansible-playbook)"

@@ -1964,6 +1964,42 @@ function change_password() {
   launch_service traefik
 }
 
+# Modifier le proxy StreamFusion sans rejouer les questions ni mettre à jour l'image.
+function streamfusion_proxy() {
+  local proxy_value py
+  if [ "$#" -gt 1 ]; then
+    echo 'Usage : streamfusion_proxy [URL|--disable]' >&2
+    return 2
+  fi
+  case "${1-}" in
+    --help|-h)
+      echo 'Usage : streamfusion_proxy [URL|--disable] ; sans argument : saisie masquée.'
+      return 0
+      ;;
+    --disable) proxy_value='' ;;
+    '')
+      if [ "$#" -eq 1 ]; then
+        proxy_value=''
+      else
+        printf 'SSDV2_PROMPT %s\n' '{"id":"streamfusion.proxy_url","label":"Nouveau proxy (- pour désactiver)","kind":"secret","secret":true}' >&2
+        printf 'PROXY_URL (- pour désactiver) : ' >&2
+        IFS= read -rs proxy_value || return 1
+        printf '\n' >&2
+        if [ -z "$proxy_value" ]; then
+          echo 'Aucune modification ; utilisez --disable pour désactiver le proxy.' >&2
+          return 0
+        fi
+        [ "$proxy_value" != '-' ] || proxy_value=''
+      fi
+      ;;
+    --*) echo 'Usage : streamfusion_proxy [URL|--disable]' >&2; return 2 ;;
+    *) proxy_value="$1" ;;
+  esac
+  py="${SETTINGS_SOURCE}/venv/bin/python"
+  [ -x "$py" ] || py=python3
+  printf '%s' "$proxy_value" | SETTINGS_STORAGE="${SETTINGS_STORAGE}" "$py" "${SETTINGS_SOURCE}/includes/config/scripts/streamfusion_proxy.py"
+}
+
 function relance_container() {
   line=$1
   log_write "Relance du container ${line}" >/dev/null 2>&1
