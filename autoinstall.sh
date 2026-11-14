@@ -473,7 +473,7 @@ fi
 if [ -f "${SETTINGS_SOURCE}/includes/config/scripts/telemetry.py" ]; then
   # Envoyer sous l'utilisateur propriétaire (l'identifiant persiste dans son HOME).
   if [ "$(id -un)" = "${CURRENT_USER}" ]; then
-    SETTINGS_SOURCE="${SETTINGS_SOURCE}" python3 "${SETTINGS_SOURCE}/includes/config/scripts/telemetry.py" sync >/dev/null 2>&1 &
+    env SETTINGS_SOURCE="${SETTINGS_SOURCE}" python3 "${SETTINGS_SOURCE}/includes/config/scripts/telemetry.py" sync >/dev/null 2>&1 &
   else
     sudo -n -u "${CURRENT_USER}" env SETTINGS_SOURCE="${SETTINGS_SOURCE}" HOME="${CURRENT_HOME}" \
       python3 "${SETTINGS_SOURCE}/includes/config/scripts/telemetry.py" sync >/dev/null 2>&1 &
