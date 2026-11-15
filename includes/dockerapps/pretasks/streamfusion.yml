@@ -210,6 +210,11 @@
     fail_msg: "Un secret StreamFusion est invalide ou deux secrets qui doivent être distincts sont identiques."
   no_log: true
 
+- name: Enable Alkodique for existing and new StreamFusion installations
+  ansible.builtin.set_fact:
+    pg_env: "{{ pg_env | default({}) | combine({'SFR_ALKO_ENABLED': 'true'}) }}"
+  no_log: true
+
 - name: Stremio Base Pre-task Setup
   block:
     - name: Create StreamFusion Docker volumes
@@ -452,6 +457,8 @@
           REVOKE ALL ON DATABASE streamfusion FROM PUBLIC;
           GRANT CONNECT ON DATABASE streamfusion
             TO streamfusion_runtime, streamfusion_migration, streamfusion_restore;
+          -- Alkodique utilise des tables temporaires avec le rôle runtime.
+          GRANT TEMPORARY ON DATABASE streamfusion TO streamfusion_runtime;
 
           REVOKE CREATE ON SCHEMA public FROM PUBLIC;
           REVOKE CREATE ON SCHEMA public FROM streamfusion_runtime;
@@ -618,6 +625,7 @@
               )
               AND pg_has_role('streamfusion_restore', 'pg_signal_backend', 'MEMBER')
               AND pg_has_role('streamfusion_restore', 'pg_signal_backend', 'USAGE')
+              AND has_database_privilege('streamfusion_runtime', 'streamfusion', 'TEMPORARY')
               AND (
                 SELECT pg_get_userbyid(datdba)
                 FROM pg_database
@@ -706,6 +714,7 @@
         command: python -m taskiq worker stream_fusion.worker:broker
         env:
           SECRET_API_KEY: "{{ SECRET_API_KEY }}"
+          SFR_ALKO_ENABLED: "true"
           CONFIG_SECRET_KEY: "{{ CONFIG_SECRET_KEY }}"
           PEER_MASTER_KEY: "{{ PEER_MASTER_KEY }}"
           TMDB_API_KEY: "{{ TMDB_API_KEY }}"
