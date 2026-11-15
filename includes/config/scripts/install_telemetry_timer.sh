@@ -35,12 +35,12 @@ ProtectControlGroups=true
 EOF
 cat >"$timer_path" <<EOF
 [Unit]
-Description=Daily SSDV2 statistics refresh
+Description=SSDV2 inventory check (hourly, upload only when needed)
 
 [Timer]
-OnCalendar=daily
+OnCalendar=hourly
 OnBootSec=15min
-RandomizedDelaySec=3h
+RandomizedDelaySec=10min
 Persistent=true
 Unit=${service_name}.service
 
@@ -50,3 +50,5 @@ EOF
 chmod 0644 "$service_path" "$timer_path"
 systemctl daemon-reload >/dev/null
 systemctl enable --now "${service_name}.timer" >/dev/null
+# Recharger aussi la cadence des timers déjà actifs lors des mises à jour.
+systemctl restart "${service_name}.timer" >/dev/null

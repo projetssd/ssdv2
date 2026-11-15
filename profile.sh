@@ -66,7 +66,9 @@ if [ -f "${HOME}/.config/ssd/env" ]; then
       local owner
       owner="$(id -un)"
       if [ -f "${installer}" ] && command -v sudo >/dev/null 2>&1 && command -v systemctl >/dev/null 2>&1; then
-        if ! systemctl is-enabled "ssdv2-telemetry-${owner}.timer" >/dev/null 2>&1; then
+        # Mettre à jour aussi les anciens timers quotidiens sans intervention.
+        if ! systemctl is-enabled "ssdv2-telemetry-${owner}.timer" >/dev/null 2>&1 ||
+           ! grep -qx 'OnCalendar=hourly' "/etc/systemd/system/ssdv2-telemetry-${owner}.timer" 2>/dev/null; then
           sudo -n env SSDV2_OWNER="${owner}" SETTINGS_SOURCE="${src}" \
             bash "${installer}" >/dev/null 2>&1 || true
         fi

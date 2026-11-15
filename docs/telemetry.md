@@ -4,7 +4,7 @@ SSDV2 propose un **inventaire pseudonyme automatique** et non bloquant pour mesu
 
 ## Données transmises
 
-Une fois par jour environ, un petit snapshot HTTPS contient uniquement :
+Un relevé HTTPS est envoyé lors de la première détection, puis après un changement observé (révision Git ou version applicative). En l'absence de changement, un relevé de présence est transmis au maximum une fois par jour. Il contient uniquement :
 - Un UUIDv4 aléatoire propre à l'installation (fichier local `~/.config/ssd/telemetry-id`, mode 0600). Il ne provient ni de l'IP, ni de la MAC, ni du matériel.
 - La branche du dépôt (`master`, `dev` ou `unknown`) et une révision Git courte.
 - Les noms des applications installées figurant dans le catalogue SSDV2 et leur tag Docker (`unknown` si absent).
@@ -47,11 +47,11 @@ Le collecteur utilise uniquement la bibliothèque standard Python. **Aucune comm
 - **Installation / autoinstall :** le timer systemd est installé et un premier inventaire est déclenché automatiquement sous l'utilisateur propriétaire.
 - **`git pull` dans un shell Bash SSDv2 interactif :** le mécanisme déjà présent dans `profile.sh` (`PROMPT_COMMAND`) détecte la nouvelle révision Git à l'invite suivante et lance silencieusement le collecteur. Il tente aussi d'activer le timer, sans demander de mot de passe.
 - **`seedbox` / `seedbox.sh` :** l'installation du timer et le premier relevé sont réessayés automatiquement.
-- **Après l'initialisation :** le timer systemd déclenche les relevés quotidiens, même sans ouvrir le menu.
+- **Après l'initialisation :** le timer systemd vérifie l'inventaire toutes les heures, y compris après un `git pull` non interactif ; il envoie immédiatement un état modifié et au maximum un relevé de présence quotidien si l'état est inchangé.
 
 Un `git pull` dans une session où `profile.sh` n'a pas été chargé (shell non interactif, zsh, automatisation) ne peut pas à lui seul exécuter du code après téléchargement : le prochain lancement de SSDv2 assure le relais. Si le serveur refuse `sudo -n`, le relevé ponctuel reste non bloquant mais l'installation du timer nécessite les droits prévus pour SSDv2.
 
-Une indisponibilité de Cloudflare, de Docker ou du réseau n'interrompt **jamais** SSDv2. En cas de défaillance de Docker ou de SQLite, aucun snapshot incomplet n'est envoyé.
+Une indisponibilité de Cloudflare, de Docker ou du réseau n'interrompt **jamais** SSDv2. En cas de défaillance de Docker ou de SQLite, aucun snapshot incomplet n'est envoyé. Les échecs réseau sont réessayés lors de la vérification suivante. Un diagnostic minimal est conservé uniquement sur le serveur dans `~/.config/ssd/telemetry-last-result.json` (état et date, aucune donnée d'installation). La commande `python3 includes/config/scripts/telemetry.py status` permet au mainteneur local de le consulter en cas d'incident.
 
 L'API et le dashboard sont dans le dépôt privé `projetssd/ssdv2-analytics`.
 
