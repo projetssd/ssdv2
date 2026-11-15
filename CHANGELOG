@@ -1,3 +1,12 @@
+15/11/2026 — StreamFusion : commande de proxy réparée avec le SDK Docker 7.x
+
+- `streamfusion_proxy` (saisie masquée, `--disable` ou URL en argument) échouait
+  systématiquement avec « Impossible de configurer le proxy » : `DockerClient`
+  n'expose pas le protocole context manager avec le SDK 7.x, la fermeture est
+  désormais explicite (`close()` en `finally`).
+- test de non-régression couvrant un client sans `__enter__`/`__exit__`, avec
+  vérification de la fermeture sur les chemins de succès et d'échec.
+
 11/11/2026 — OAuth2 Proxy : diagnostic et réparation assistés
 
 - nouvelle commande `ssdv2ctl security oauth2 status|repair|rollback` et
