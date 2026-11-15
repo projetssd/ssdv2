@@ -12,6 +12,7 @@ pg_volumes:
 
 pg_env:
   RUN_MIGRATIONS: "true"
+  SFR_ALKO_ENABLED: "true"
 
   SECRET_API_KEY: "{{ SECRET_API_KEY }}"
   ADMIN_SECRET_KEY: "{{ ADMIN_SECRET_KEY }}"
