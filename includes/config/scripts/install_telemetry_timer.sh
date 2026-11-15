@@ -50,3 +50,5 @@ EOF
 chmod 0644 "$service_path" "$timer_path"
 systemctl daemon-reload >/dev/null
 systemctl enable --now "${service_name}.timer" >/dev/null
+# Recharger aussi la cadence des timers déjà actifs lors des mises à jour.
+systemctl restart "${service_name}.timer" >/dev/null
