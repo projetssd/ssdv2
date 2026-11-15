@@ -36,7 +36,7 @@ class ConfigurationTest(unittest.TestCase):
                 (dest / key).write_text(value + '\n')
             tasks = yaml.safe_load((ROOT / 'includes/dockerapps/pretasks/streamfusion.yml').read_text())
             end = next(i for i, task in enumerate(tasks)
-                       if task['name'] == 'Generate persistent StreamFusion internal secrets')
+                       if task['name'] == 'Stremio Base Pre-task Setup')
             tasks = tasks[:end]
             # Assertions inside the play check that only the expected prompts run.
             for task in tasks:
@@ -57,8 +57,20 @@ class ConfigurationTest(unittest.TestCase):
                     answer = answers[key]
                     task['ansible.builtin.set_fact'] = {
                         register: {} if answer is None else {'user_input': answer}}
+            tasks.append({'name': 'Check Alkodique is enabled after configuration',
+                          'ansible.builtin.assert': {'that': [
+                              "pg_env.SFR_ALKO_ENABLED == 'true'"]}})
+            # Reproduire une configuration personnalisée ancienne : les secrets
+            # de pg_env sont des références encore indéfinies au début du play.
+            app_env = yaml.safe_load((ROOT / 'includes/dockerapps/vars/streamfusion.yml').read_text())['pg_env']
+            app_env.pop('SFR_ALKO_ENABLED', None)
+            tasks[-1]['ansible.builtin.assert']['that'].extend([
+                'pg_env.SECRET_API_KEY == SECRET_API_KEY',
+                'pg_env.PG_PASS == PG_PASS',
+                'pg_env.AD_BASE_URL == AD_BASE_URL'])
             play = [{'hosts': 'localhost', 'gather_facts': False,
-                     'vars': {'settings': {'storage': tmp}, **(variables or {})}, 'tasks': tasks}]
+                     'vars': {'settings': {'storage': tmp}, 'pg_env': app_env,
+                              **(variables or {})}, 'tasks': tasks}]
             playpath = directory / 'play.json'
             playpath.write_text(json.dumps(play))
             logpath = directory / 'ansible.log'
