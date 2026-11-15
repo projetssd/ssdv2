@@ -35,12 +35,12 @@ ProtectControlGroups=true
 EOF
 cat >"$timer_path" <<EOF
 [Unit]
-Description=Daily SSDV2 statistics refresh
+Description=SSDV2 inventory check (hourly, upload only when needed)
 
 [Timer]
-OnCalendar=daily
+OnCalendar=hourly
 OnBootSec=15min
-RandomizedDelaySec=3h
+RandomizedDelaySec=10min
 Persistent=true
 Unit=${service_name}.service
 
