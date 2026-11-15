@@ -51,7 +51,7 @@ Cette whitelist contient par défaut :
 
 Les applications de confiance détectées automatiquement sont :
 
-`jellyfin`, `polyfin`, `emby`, `silo`, `silosffs`, `stremfin`, `streamfusion`, `plex`,
+`jellyfin`, `polyfin`, `etherremix`, `emby`, `silo`, `silosffs`, `stremfin`, `streamfusion`, `plex`,
 `flixor`, `crosswatch`, `scrob`, `nuviomanager`, `seerr`, `tautulli`.
 
 Après déploiement, la posttask supprime une seule fois toutes les décisions
@@ -69,16 +69,32 @@ Procédure unique pour tous les serveurs :
 ```sh
 cd ~/seedbox-compose
 git pull
-ssdv2ctl app recreate crowdsec
+./seedbox.sh
 ```
 
-Aucune IP personnelle n'est à saisir. Le patch :
+Aucune IP personnelle n'est à saisir. Le patch
+`20261115_crowdsec_etherremix` est appliqué au lancement du menu ou à la
+prochaine action de gestion WebUI. Il met à jour uniquement les exclusions,
+sans réinstaller CrowdSec, mettre son image à jour ni supprimer de décision.
+Il conserve les réglages de `whitelist.yml`, valide le parser et recharge
+CrowdSec seulement si nécessaire.
+
+Pour forcer uniquement cette mise à jour depuis un terminal SSDV2 :
+
+```sh
+source ~/seedbox-compose/profile.sh
+FORCE_PATCH=20261115_crowdsec_etherremix apply_patches
+```
+
+Un `git pull` seul télécharge le correctif ; l'application passe par le menu
+ou une action WebUI. Une installation complète via
+`ssdv2ctl app recreate crowdsec` reste possible. Elle :
 
 - recrée le conteneur CrowdSec avec les bons ports ;
 - déploie la whitelist ;
 - débloque les décisions locales existantes ;
 - vérifie que `whitelist-ssdv2` est bien chargée ;
-- vérifie qu'une requête Crosswatch 401 est bien ignorée par la whitelist.
+- vérifie que les requêtes Crosswatch et Ether-Remix en GET 401 sont bien ignorées par la whitelist.
 
 ## Ajouter une IP ou un réseau
 

@@ -1,0 +1,7 @@
+---
+- name: Mettre à jour les exclusions CrowdSec SSDV2
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Appliquer les exclusions sans réinstaller CrowdSec
+      ansible.builtin.include_tasks: "{{ settings.source }}/includes/dockerapps/templates/crowdsec/whitelist-tasks.yml"
