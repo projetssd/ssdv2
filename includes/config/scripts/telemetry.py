@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import fcntl
+import hashlib
 import json
 import os
 import re
@@ -28,6 +29,8 @@ ENDPOINT_FILE = SOURCE / "includes" / "config" / "telemetry-endpoint.txt"
 ID_FILE = CONFIG / "telemetry-id"
 DISABLED_FILE = CONFIG / "telemetry.disabled"
 LAST_SEND_FILE = CONFIG / "telemetry-last-send"
+LAST_FINGERPRINT_FILE = CONFIG / "telemetry-last-fingerprint"
+LAST_RESULT_FILE = CONFIG / "telemetry-last-result.json"
 LOCK_FILE = CONFIG / "telemetry.lock"
 APP_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,47}$")
 VERSION_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9.+_-]{0,39}$")
@@ -93,7 +96,9 @@ def installation_id() -> str:
 def command(*argv: str, timeout: int = 8) -> str | None:
     try:
         result = subprocess.run(argv, text=True, capture_output=True, timeout=timeout, check=False)
-        return result.stdout.strip() if result.returncode == 0 else None
+        # Ne pas supprimer les tabulations finales : elles marquent une colonne
+        # de label OCI vide dans la sortie structurée de docker ps.
+        return result.stdout.rstrip("\r\n") if result.returncode == 0 else None
     except (OSError, subprocess.TimeoutExpired):
         return None
 
@@ -194,7 +199,7 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 def send(url: str, payload: dict) -> None:
     body = json.dumps(payload, ensure_ascii=True, separators=(",", ":")).encode("ascii")
     if len(body) > 24_576:
-        return
+        raise ValueError("snapshot exceeds ingestion limit")
     req = urllib.request.Request(
         url, data=body, headers={"Content-Type": "application/json", "User-Agent": "SSDV2-telemetry/1"},
         method="POST"
@@ -203,6 +208,24 @@ def send(url: str, payload: dict) -> None:
     with handler.open(req, timeout=5) as response:
         if response.status != 204:
             raise RuntimeError("Telemetry endpoint declined snapshot")
+
+
+def record_result(state: str) -> None:
+    """Diagnostic local limité à un état et un horodatage, jamais d'ID ou d'URL."""
+    private_file(LAST_RESULT_FILE, json.dumps({
+        "state": state, "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    }) + "\n")
+
+
+def payload_fingerprint(payload: dict) -> str:
+    """Empreinte de l'inventaire public, sans identifiant d'installation."""
+    public_fields = {
+        "branch": payload["branch"],
+        "core_version": payload["core_version"],
+        "apps": payload["apps"],
+    }
+    raw = json.dumps(public_fields, separators=(",", ":"), sort_keys=True)
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 
 def sync(force: bool = False) -> None:
@@ -218,17 +241,35 @@ def sync(force: bool = False) -> None:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
             return
+        # Une révision Git ou une application modifiée contourne immédiatement
+        # la temporisation, contrairement aux inventaires inchangés.
+        payload = snapshot()
+        if payload is None:
+            record_result("inventory_unavailable")
+            return
+        fingerprint = payload_fingerprint(payload)
         try:
             last = float(LAST_SEND_FILE.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             last = 0.0
-        if not force and time.time() - last < 3600:
+        try:
+            previous = LAST_FINGERPRINT_FILE.read_text(encoding="utf-8").strip()
+        except OSError:
+            previous = ""
+        # Réduire les requêtes réseau tout en restant réactif à chaque mise à jour.
+        if not force and previous == fingerprint and time.time() - last < 24 * 3600:
             return
-        payload = snapshot()
-        if payload is None:
+        try:
+            send(url, payload)
+        except urllib.error.HTTPError as exc:
+            record_result("http_" + str(exc.code))
             return
-        send(url, payload)
+        except (OSError, ValueError, RuntimeError, urllib.error.URLError):
+            record_result("network_error")
+            return
         private_file(LAST_SEND_FILE, str(time.time()))
+        private_file(LAST_FINGERPRINT_FILE, fingerprint + "\n")
+        record_result("ok")
 
 
 def main() -> None:
@@ -239,6 +280,12 @@ def main() -> None:
     if args.action == "status":
         print("Collecte :", "activée" if enabled() else "désactivée")
         print("Point de collecte :", "configuré" if endpoint() else "non configuré")
+        try:
+            last_result = json.loads(LAST_RESULT_FILE.read_text(encoding="utf-8"))
+            print("Dernier résultat :", last_result.get("state", "inconnu"))
+            print("Date du dernier essai :", last_result.get("at", "inconnue"))
+        except (OSError, ValueError):
+            print("Dernier résultat : aucun envoi tenté")
         return
     if args.action == "disable":
         ensure_config()
@@ -254,6 +301,8 @@ def main() -> None:
         private_file(DISABLED_FILE, "disabled\n")
         ID_FILE.unlink(missing_ok=True)
         LAST_SEND_FILE.unlink(missing_ok=True)
+        LAST_FINGERPRINT_FILE.unlink(missing_ok=True)
+        LAST_RESULT_FILE.unlink(missing_ok=True)
         print("Identifiant local supprimé, collecte désactivée. Les agrégats anonymisés sont conservés côté serveur.")
         return
     try:
