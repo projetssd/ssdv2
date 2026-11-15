@@ -75,6 +75,9 @@ if [ -f "${HOME}/.config/ssd/env" ]; then
       fi
       SETTINGS_SOURCE="${src}" python3 "${worker}" sync >/dev/null 2>&1 || true
     ) </dev/null >/dev/null 2>&1 &
+    # Retirer uniquement ce job de la table Bash : pas de notification « Done »
+    # au prochain prompt, tout en laissant la collecte se terminer en arrière-plan.
+    disown "$!" 2>/dev/null || true
     return 0
   }
 
