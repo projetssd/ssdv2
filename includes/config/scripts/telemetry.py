@@ -96,7 +96,9 @@ def installation_id() -> str:
 def command(*argv: str, timeout: int = 8) -> str | None:
     try:
         result = subprocess.run(argv, text=True, capture_output=True, timeout=timeout, check=False)
-        return result.stdout.strip() if result.returncode == 0 else None
+        # Ne pas supprimer les tabulations finales : elles marquent une colonne
+        # de label OCI vide dans la sortie structurée de docker ps.
+        return result.stdout.rstrip("\r\n") if result.returncode == 0 else None
     except (OSError, subprocess.TimeoutExpired):
         return None
 
