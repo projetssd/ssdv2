@@ -37,6 +37,35 @@ except ImportError:  # pragma: no cover - dépend de l'environnement d'exécutio
     Mount = None  # type: ignore[assignment]
 
 
+def _normalize_exposed_ports(ports) -> list[tuple[str, str]]:
+    """Convert inspect keys to SDK tuples, repairing repeated protocol suffixes."""
+    normalized = set()
+    for value in ports:
+        parts = str(value).split("/")
+        port = parts[0]
+        protocol = parts[1] if len(parts) > 1 else "tcp"
+        if not port.isdigit() or not 1 <= int(port) <= 65535:
+            raise ValueError(f"Invalid exposed port: {value}")
+        if protocol not in {"tcp", "udp", "sctp"} or any(
+            suffix != protocol for suffix in parts[2:]
+        ):
+            raise ValueError(f"Invalid exposed port: {value}")
+        normalized.add((port, protocol))
+    return sorted(normalized)
+
+
+def _normalize_port_bindings(bindings: dict | None) -> dict:
+    """Conserve les publications hôte et refuse les doublons contradictoires."""
+    normalized = {}
+    for key, value in (bindings or {}).items():
+        port, protocol = _normalize_exposed_ports([key])[0]
+        canonical = f"{port}/{protocol}"
+        if canonical in normalized and normalized[canonical] != value:
+            raise ValueError(f"Conflicting port bindings: {canonical}")
+        normalized[canonical] = value
+    return normalized
+
+
 def _normalize_destination(path: str | None) -> str | None:
     """Normalise une destination en retirant les slashs finaux.
 
@@ -333,7 +362,7 @@ def _create_container(
         binds = list(binds or []) + list(add_binds)
 
     port_bindings = _apply_port_overrides(
-        hc.get("PortBindings"),
+        _normalize_port_bindings(hc.get("PortBindings")),
         overrides.get("unpublish_ports"),
         overrides.get("publish_ports"),
     )
@@ -410,7 +439,7 @@ def _create_container(
         entrypoint=cfg.get("Entrypoint"),
         environment=environment,
         labels=labels or None,
-        ports=sorted(exposed) or None,
+        ports=_normalize_exposed_ports(exposed) or None,
         user=cfg.get("User") or None,
         working_dir=cfg.get("WorkingDir") or None,
         domainname=cfg.get("Domainname") or None,

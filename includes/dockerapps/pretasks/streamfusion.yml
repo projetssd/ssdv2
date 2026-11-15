@@ -667,6 +667,36 @@
         networks:
           - name: traefik_proxy
 
+    - name: Repair duplicated Docker port protocols before deployment
+      ansible.builtin.command:
+        argv:
+          - "{{ ansible_playbook_python }}"
+          - -c
+          - |
+            import importlib.util
+            import sys
+            import docker
+            spec = importlib.util.spec_from_file_location('recreate', sys.argv[1])
+            helper = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(helper)
+            client = docker.from_env()
+            repaired = False
+            for name in ('taskiq-worker', 'taskiq-scheduler', 'stream-fusion'):
+                try:
+                    container = client.containers.get(name)
+                except docker.errors.NotFound:
+                    continue
+                ports = container.attrs.get('Config', {}).get('ExposedPorts') or {}
+                if any(port.count('/') > 1 for port in ports):
+                    helper._normalize_exposed_ports(ports)
+                    helper.recreate_container(client, container, pull=False)
+                    repaired = True
+            print('repaired' if repaired else 'unchanged')
+          - "{{ settings.source }}/includes/config/scripts/recreate_app_container.py"
+      register: streamfusion_port_repair
+      changed_when: "'repaired' in streamfusion_port_repair.stdout"
+      no_log: true
+
     - name: Deploy Taskiq worker
       community.docker.docker_container:
         name: taskiq-worker
