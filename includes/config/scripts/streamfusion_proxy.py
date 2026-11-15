@@ -68,13 +68,22 @@ def main() -> int:
         return 1
     storage = Path(os.environ.get('SETTINGS_STORAGE') or Path.home() / 'seedbox')
     directory = storage / 'docker' / os.environ['USER'] / 'streamfusion-secrets'
+    # Fermeture explicite : selon les versions, le SDK Docker n'expose pas
+    # toujours le protocole context manager sur DockerClient (7.1.0 : non).
+    client = None
     try:
-        with docker.from_env() as client:
-            return 0 if configure_proxy(client, directory, sys.stdin.read()) else 1
+        client = docker.from_env()
+        return 0 if configure_proxy(client, directory, sys.stdin.read()) else 1
     except Exception:
         print('Impossible de configurer le proxy. Vérifiez Docker et les permissions du dossier des secrets.',
               file=sys.stderr)
         return 1
+    finally:
+        if client is not None:
+            try:
+                client.close()
+            except Exception:
+                pass
 
 
 if __name__ == '__main__':

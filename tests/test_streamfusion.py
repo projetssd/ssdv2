@@ -196,6 +196,37 @@ class ProxyTest(unittest.TestCase):
                     recreate.assert_not_called()
                     self.assertFalse((Path(tmp) / 'PROXY_URL').exists())
 
+    def test_main_accepts_client_without_context_manager(self):
+        """SDK Docker 7.x : DockerClient n'expose pas __enter__/__exit__."""
+        class StubClient:
+            closed = False
+
+            def close(self):
+                self.closed = True
+
+        client = StubClient()
+
+        class StubDocker:
+            @staticmethod
+            def from_env():
+                return client
+
+        with tempfile.TemporaryDirectory() as tmp, \
+                patch.object(proxy, 'docker', StubDocker), \
+                patch.dict(os.environ, {'SETTINGS_STORAGE': tmp}), \
+                patch.object(sys, 'stdin', io.StringIO('http://proxy:1080')):
+            with patch.object(proxy, 'configure_proxy', return_value=True) as configure:
+                self.assertEqual(proxy.main(), 0)
+                configure.assert_called_once()
+            self.assertTrue(client.closed)
+
+            client.closed = False
+            with patch.object(proxy, 'configure_proxy', side_effect=RuntimeError('secret-fixture')):
+                with contextlib.redirect_stderr(io.StringIO()) as output:
+                    self.assertEqual(proxy.main(), 1)
+            self.assertNotIn('secret-fixture', output.getvalue())
+            self.assertTrue(client.closed)
+
     def test_shell_command_uses_masked_stdin_and_disable(self):
         with tempfile.TemporaryDirectory() as tmp:
             directory = Path(tmp)
