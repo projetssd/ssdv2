@@ -151,5 +151,15 @@ class TelemetryTests(unittest.TestCase):
         self.assertNotEqual(telemetry.payload_fingerprint(old), telemetry.payload_fingerprint(new))
 
 
+    def test_docker_output_preserves_missing_oci_label(self):
+        response = unittest.mock.Mock(returncode=0,
+                                     stdout="sonarr\tsonarr\tghcr.io/owner/sonarr:4.0\t\n")
+        with patch.object(telemetry.subprocess, "run", return_value=response):
+            raw = telemetry.command("docker", "ps")
+        self.assertTrue(raw.endswith("\t"))
+        with patch.object(telemetry, "command", return_value=raw):
+            self.assertEqual(telemetry.docker_apps(), {"sonarr": "4.0"})
+
+
 if __name__ == "__main__":
     unittest.main()
