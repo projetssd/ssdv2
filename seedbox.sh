@@ -169,6 +169,8 @@ if [ $mode_install = "manuel" ]; then
         if [ -f "${SETTINGS_SOURCE}/includes/config/scripts/install_telemetry_timer.sh" ]; then
           sudo -n env SSDV2_OWNER="${SUDO_USER:-$(id -un)}" SETTINGS_SOURCE="${SETTINGS_SOURCE}" \
             bash "${SETTINGS_SOURCE}/includes/config/scripts/install_telemetry_timer.sh" >/dev/null 2>&1 || true
+          # Une installation neuve déclenche aussi un relevé sans attendre systemd.
+          env SETTINGS_SOURCE="${SETTINGS_SOURCE}" python3 "${SETTINGS_SOURCE}/includes/config/scripts/telemetry.py" sync >/dev/null 2>&1 &
         fi
         echo $(gettext "L'installation est maintenant terminée.")
         echo $(gettext "Pour le configurer ou modifier les applis, vous pouvez le relancer")
