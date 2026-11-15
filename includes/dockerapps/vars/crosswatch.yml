@@ -1,0 +1,12 @@
+---
+pgrole: 'crosswatch'
+intport: '8787'
+image: 'ghcr.io/cenodude/crosswatch:latest'
+
+pg_volumes:
+  - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}/config:/config:rw"
+
+pg_env:
+  APP_UID: "{{ lookup('env','MYUID') }}"
+  APP_GID: "{{ lookup('env','MYGID') }}"
+  TZ: 'Europe/Paris'
