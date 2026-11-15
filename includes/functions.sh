@@ -2167,7 +2167,11 @@ function apply_patches() {
     if grep -qxF -- "${patch}" "${marker}"; then
       if [ "$FORCE_PATCH" = "1" ] || [ "$FORCE_PATCH" = "$patch" ]; then
         echo "⚠ Réinstallation forcée du patch : ${patch}"
-        bash "${SETTINGS_SOURCE}/patches/${patch}" >> "${SETTINGS_STORAGE}/conf/${patch}.log" 2>&1
+        if ! bash "${SETTINGS_SOURCE}/patches/${patch}" >> "${SETTINGS_STORAGE}/conf/${patch}.log" 2>&1; then
+          echo "⚠ Échec du patch : ${patch} (voir ${SETTINGS_STORAGE}/conf/${patch}.log)" >&2
+          shopt -u nullglob
+          return 1
+        fi
       else
         # patch déjà appliqué → on ne fait rien
         :
@@ -2175,7 +2179,11 @@ function apply_patches() {
     else
       # première installation du patch
       echo "✔ Application du patch : ${patch}"
-      bash "${SETTINGS_SOURCE}/patches/${patch}"
+      if ! bash "${SETTINGS_SOURCE}/patches/${patch}"; then
+        echo "⚠ Échec du patch : ${patch} ; il sera retenté à la prochaine action." >&2
+        shopt -u nullglob
+        return 1
+      fi
       echo "${patch}" >>"${marker}"
     fi
   done

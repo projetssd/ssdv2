@@ -1,0 +1,31 @@
+#!/bin/bash
+# Mise à jour ciblée des exclusions CrowdSec après git pull.
+# Rejouable avec FORCE_PATCH=20261115_crowdsec_etherremix.
+set -euo pipefail
+
+if [ -z "${SETTINGS_SOURCE:-}" ] && [ -f "${HOME}/.config/ssd/env" ]; then
+  # shellcheck disable=SC1090
+  source "${HOME}/.config/ssd/env"
+fi
+SETTINGS_SOURCE="${SETTINGS_SOURCE:-${HOME}/seedbox-compose}"
+
+if ! command -v docker >/dev/null 2>&1; then
+  echo '[patch] Docker indisponible : mise à jour CrowdSec impossible.' >&2
+  exit 1
+fi
+if ! docker info >/dev/null 2>&1; then
+  echo '[patch] Docker inaccessible : relancer la mise à jour avec les droits SSDV2.' >&2
+  exit 1
+fi
+if [ "$(docker inspect --format '{{.State.Running}}' crowdsec 2>/dev/null || true)" != true ]; then
+  echo '[patch] CrowdSec absent ou arrêté : exclusions appliquées à sa prochaine installation.'
+  exit 0
+fi
+
+if [ -x "${SETTINGS_SOURCE}/venv/bin/ansible-playbook" ]; then
+  ansible_command="${SETTINGS_SOURCE}/venv/bin/ansible-playbook"
+else
+  ansible_command=ansible-playbook
+fi
+"${ansible_command}" "${SETTINGS_SOURCE}/includes/config/playbooks/crowdsec_whitelist.yml"
+echo '[patch] Exclusions CrowdSec mises à jour (Ether-Remix inclus).'

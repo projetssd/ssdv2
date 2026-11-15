@@ -26,7 +26,7 @@ whitelist:
 {% for cidr in whitelist_cidrs %}
     - "{{ cidr }}"
 {% endfor %}
-{% set media_apps = ['jellyfin', 'polyfin', 'emby', 'silo', 'silosffs', 'stremfin', 'streamfusion', 'plex', 'flixor'] %}
+{% set media_apps = ['jellyfin', 'polyfin', 'etherremix', 'emby', 'silo', 'silosffs', 'stremfin', 'streamfusion', 'plex', 'flixor'] %}
 {% set trusted_apps = media_apps + ['crosswatch', 'scrob', 'nuviomanager', 'seerr', 'tautulli'] %}
 {% set media_fqdns = [] %}
 {% set trusted_fqdns = [] %}
