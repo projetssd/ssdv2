@@ -9,10 +9,9 @@
 # sans publier de ports sur l’hôte. Un seul réseau par passerelle conserve
 # eth0 comme interface Docker attendue par le pare-feu VPN.
 #
-# À partir de la v2.1, le contrôleur suit le conteneur de l'application
-# (VPN_APP_NAME) : si celle-ci passe sur une nouvelle image hors SSDV2, il se
-# recrée lui-même avec cette image. Une réinstallation SSDV2 le recrée de toute
-# façon ici. Les versions antérieures ignorent ces réglages.
+# Le contrôleur suit le conteneur de l'application (VPN_APP_NAME) : si celle-ci
+# passe sur une nouvelle image hors SSDV2, il se recrée lui-même avec cette
+# image. Une réinstallation SSDV2 le recrée de toute façon ici.
 
 - name: Vérifier le réseau commun des applications
   docker_network:

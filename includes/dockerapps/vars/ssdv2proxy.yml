@@ -1,8 +1,8 @@
 ---
 # SSDv2 Proxy Manager — gestion centralisée des manifestes Stremio.
 # Interface Web avec son propre login ; les routes consommées par Stremio
-# (/u/..., /play) restent publiques. Les anciennes URLs /<id>/... ne sont
-# servies que jusqu'à la v0.6 (retirées en v2).
+# (/u/..., /play) restent publiques. Depuis la v2, la mise à jour depuis la
+# v0.6 migre les données automatiquement (copie dans config.json.pre-v5.bak).
 # Login : identifiant SSDV2 (user.name) + mot de passe dédié demandé à
 # l'installation, conservé en 0600 dans conf/.
 # Le playbook générique connecte ce conteneur à traefik_proxy : il peut donc
@@ -44,7 +44,7 @@ pg_env:
 # propre de l'application. Choisir « aucune » dans SSDV2 évite la double auth.
 extra_labels:
   traefik.http.routers.ssdv2proxy-public-rtr.entrypoints: 'http,https'
-  traefik.http.routers.ssdv2proxy-public-rtr.rule: "Host(`{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}`) && (Path(`/play`) || PathPrefix(`/u/`) || PathRegexp(`^/[a-f0-9]+/`))"
+  traefik.http.routers.ssdv2proxy-public-rtr.rule: "Host(`{{ sub[pgrole][pgrole] if sub_enabled else pgrole }}.{{ user.domain }}`) && (Path(`/play`) || PathPrefix(`/u/`))"
   traefik.http.routers.ssdv2proxy-public-rtr.priority: '100'
   traefik.http.routers.ssdv2proxy-public-rtr.tls: 'true'
   traefik.http.routers.ssdv2proxy-public-rtr.tls.certresolver: 'letsencrypt'
