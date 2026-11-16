@@ -1,7 +1,8 @@
 ---
 # SSDv2 Proxy Manager — gestion centralisée des manifestes Stremio.
 # Interface Web avec son propre login ; les routes consommées par Stremio
-# (/u/..., /play, anciennes URLs /<id>/...) restent publiques.
+# (/u/..., /play) restent publiques. Les anciennes URLs /<id>/... ne sont
+# servies que jusqu'à la v0.6 (retirées en v2).
 # Login : identifiant SSDV2 (user.name) + mot de passe dédié demandé à
 # l'installation, conservé en 0600 dans conf/.
 # Le playbook générique connecte ce conteneur à traefik_proxy : il peut donc
@@ -27,11 +28,7 @@ pg_env:
   # supprimer {{ settings.storage }}/conf/{{ pgrole }}.auth puis réinstaller.
   AUTH_PASS: "{{ lookup('file', settings.storage + '/conf/' + pgrole + '.auth') | trim }}"
   TZ: 'Europe/Paris'
-  # Proxy par défaut créé au premier démarrage (migration initiale).
-  # Mettre socks / socks5://warp:1080 pour créer un profil SOCKS5 par défaut.
-  # Ensuite, les proxies se gèrent dans l'onglet Proxies de l'application.
-  UPSTREAM_MODE: 'direct'
-  UPSTREAM_URL: ''
+  # Les sorties réseau (proxies, VPN) se gèrent dans l'interface de l'application.
   # Relais AllDebrid détecté automatiquement sur le réseau traefik_proxy.
   SSDV2_RELAY_URL: 'http://ssdv2-relay:1080'
   # Gestion des VPN natifs (WireGuard/OpenVPN) depuis l'interface.

@@ -8,6 +8,11 @@
 # joindre les passerelles ssdv2-vpn-<id> (ports 8888 et 1080, authentifiés),
 # sans publier de ports sur l’hôte. Un seul réseau par passerelle conserve
 # eth0 comme interface Docker attendue par le pare-feu VPN.
+#
+# À partir de la v2.1, le contrôleur suit le conteneur de l'application
+# (VPN_APP_NAME) : si celle-ci passe sur une nouvelle image hors SSDV2, il se
+# recrée lui-même avec cette image. Une réinstallation SSDV2 le recrée de toute
+# façon ici. Les versions antérieures ignorent ces réglages.
 
 - name: Vérifier le réseau commun des applications
   docker_network:
@@ -37,6 +42,7 @@
       DATA_DIR: '/app/data'
       VPN_CONTROLLER_NAME: 'ssdv2-vpn-controller'
       VPN_NETWORK: 'traefik_proxy'
+      VPN_APP_NAME: '{{ pgrole }}'
     volumes:
       - "{{ settings.storage }}/docker/{{ lookup('env','USER') }}/{{ pgrole }}:/app/data"
       - '/var/run/docker.sock:/var/run/docker.sock'
@@ -44,6 +50,7 @@
       - name: 'traefik_proxy'
     labels:
       ssdv2.app: "{{ pgrole }}"
+      ssdv2.vpn.role: 'controller'
     restart_policy: unless-stopped
     recreate: true
     pull: false
